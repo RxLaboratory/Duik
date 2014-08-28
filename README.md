@@ -16,3 +16,5 @@ _Developpers:_
 • /Utils/convert.jsxinc is the tool used to convert the images of the UI to ASCII included in the file duik_images.jsxinc
 
 • /Releases/ contains all the old releases of Duik back to the first open source version 5
+
+• /UI/ contains the .psd and .png files for the icons of the buttons
