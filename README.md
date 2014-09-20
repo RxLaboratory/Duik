@@ -20,4 +20,5 @@ Copy "Duik.jsx", "duik\_images.jsxinc" and "duik\_translations.jsxinc" to the "S
 ###Compatibility:
 
 After Effects CS4: works but the appearance of the buttons makes them sometimes hard to read
+
 CS5, CS5.5, CS6, CC, CC2014: full compatibility
