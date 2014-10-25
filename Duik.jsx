@@ -33,31 +33,6 @@ function DuIK(wnd)
 	var version = "14.12";
 	//================
 
-//================
-//INSTALLATION CHECKS
-//================
-{
-var translationsFile = new File("Duik_translations.jsxinc");
-var imagesFile = new File("Duik_images.jsxinc");
-var installError = "Installation error:";
-var isInstallError = false;
-if (!translationsFile.exists)
-{
-	installError += "\r\nTranslations file not found, please make sure \"Duik_translations.jsxinc\" is in the same folder as \"Duik.jsx\"";
-	isInstallError = true;
-}
-if (!imagesFile.exists)
-{
-	installError += "\r\Images file not found, please make sure \"Duik_images.jsxinc\" is in the same folder as \"Duik.jsx\"";
-	isInstallError = true;
-}
-if (isInstallError)
-{
-	alert(installError,"Installation error",true);
-}
-delete translationsFile, imagesFile, installError, isInstallError;
-}
-	
 //===============================================
 //PREFERENCES
 //===============================================
