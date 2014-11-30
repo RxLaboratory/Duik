@@ -30,7 +30,7 @@ function DuIK(wnd)
 {
 
 	//================
-	var version = "14.12";
+	var version = "14.2 Alpha";
 	//================
 
 //===============================================
@@ -51,6 +51,7 @@ if (! app.settings.haveSetting("duik", "ctrlSizeAuto")){app.settings.saveSetting
 if (! app.settings.haveSetting("duik", "boneSizeAuto")){app.settings.saveSetting("duik","boneSizeAuto","true");}
 if (! app.settings.haveSetting("duik", "boneSizeAutoValue")){app.settings.saveSetting("duik","boneSizeAutoValue","1");}
 if (! app.settings.haveSetting("duik", "ctrlSizeAutoValue")){app.settings.saveSetting("duik","ctrlSizeAutoValue","1");}
+if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
 }
 
 
@@ -1263,7 +1264,7 @@ if (positiontous.value){
 				freq.name = "YPos Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
 				freq.name = "ZPos Frequency";
-				calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos sAmplitude\")(1));\n" +  "[X[0],Y[1],Z[2]]";
+				calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos Amplitude\")(1));\n" +  "[X[0],Y[1],Z[2]]";
 			}
 		if (positionX.value && positionY.value && !positionZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
@@ -1499,6 +1500,8 @@ function bone(){
 	
 	verifNoms();
 	
+	//TODO PRENDRE EN COMPTE LA COULEUR EN VERSION SOLID
+	
 	//  début de groupe d'annulation
 	app.beginUndoGroup("Duik - Bone");
 
@@ -1661,9 +1664,17 @@ function roue() {
 			var curseur = calqueroue.Effects.addProperty("ADBE Slider Control");
 			curseur.name = getMessage(105);
 			curseur(1).setValue(OA);
+			var curseurReverse = calqueroue.Effects.addProperty("ADBE Checkbox Control");
+			curseurReverse.name = getMessage(186);
 
-			if (roueH.value) calqueroue.transform.rotation.expression = "O = thisLayer.toWorld(thisLayer.anchorPoint);\n" + "R = thisLayer.effect('" + getMessage(105) + "')(1);\n" + "R > 0 ? value + radiansToDegrees(O[0]/R) : 0 ;";
-			else calqueroue.transform.rotation.expression = "var R = thisLayer.effect('Rayon')(1);\n" + 
+			if (roueH.value) calqueroue.transform.rotation.expression = "O = thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
+																		"R = thisLayer.effect('" + getMessage(105) + "')(1);\n" + 
+																		"Rev = thisLayer.effect('" + getMessage(186) + "')(1);\n" + 
+																		"result = 0;\n" +
+																		"R > 0 ? result = radiansToDegrees(O[0]/R) : result = 0 ;" +
+																		"Rev == 1 ? value - result : value + result;";
+			else calqueroue.transform.rotation.expression = "R = thisLayer.effect('" + getMessage(105) + "')(1);\n" + 
+															"Rev = thisLayer.effect('" + getMessage(186) + "')(1);\n" + 
 															"var precision = 1;\n" + 
 															"function pos(frame)\n" + 
 															"{\n" + 
@@ -1680,9 +1691,9 @@ function roue() {
 															"if (pos(i+precision)[0] - pos(i)[0] > 0) distance += length(pos(i+precision),pos(i));\n" + 
 															"else distance -= length(pos(i+precision),pos(i));\n" + 
 															"}\n" + 
-															"return value + radiansToDegrees(distance/R) ;\n" + 
+															"return radiansToDegrees(distance/R) ;\n" + 
 															"}\n" + 
-															"roue();";
+															"Rev == 1 ? value - roue() : value + roue();";
 			
 			//  fin de groupe d'annulation
 			app.endUndoGroup();
@@ -3324,6 +3335,19 @@ function addVGroup(conteneur){
 	groupe.margins = 0;
 	return groupe;
 }
+//fonction pour ajouter des séparateurs
+function addSeparator(conteneur,name) {
+	conteneur = addHGroup(conteneur);
+	conteneur.margins = 5;
+	if (name.length > 0)
+	{
+		var textName = conteneur.add("statictext",undefined,name);
+		textName.alignment = ["left","fill"];
+	}
+	var separator1 = conteneur.add("panel",undefined);
+	separator1.alignment = ["fill","center"];
+	separator1.height = 0;
+}
 //fonction pour les boites de dialogue
 function createDialog(titre,hasokbutton,okfonction){
 	var f = new Window ("palette",titre,undefined,{closeButton:false,resizeable:false});
@@ -3840,21 +3864,32 @@ function createDialog(titre,hasokbutton,okfonction){
 		boutonMAJ.onClick = function() {
 			if (MAJ(version)) { alert(getMessage(78)); };
 			}
+		
+		addSeparator(panosettings,getMessage(117));
+		
 		//boutons options bones et controleurs
 		//type de bones
 		var groupeBoneType = addHGroup(panosettings);
 		groupeBoneType.add("statictext",undefined,getMessage(165));
 		var boutonBoneType = groupeBoneType.add("dropdownlist",undefined,[getMessage(166),getMessage(167)]);
 		boutonBoneType.selection = eval(app.settings.getSetting("duik", "boneType"));
-		boutonBoneType.onChange = function() { app.settings.saveSetting("duik", "boneType",boutonBoneType.selection.index) };
+		boutonBoneType.onChange = function() {
+			app.settings.saveSetting("duik", "boneType",boutonBoneType.selection.index);
+			boutonBoneColor.enabled = boutonBoneType.selection == 0;
+			};
 		//taille des bones
 		var groupeBoneSize = addHGroup(panosettings);
 		var groupeBoneSizeAuto = addHGroup(panosettings);
 		groupeBoneSize.add("statictext",undefined,getMessage(168));
 		var boutonBoneSize = groupeBoneSize.add("edittext",undefined,app.settings.getSetting("duik", "boneSize"));
 		boutonBoneSize.onChange = function() { app.settings.saveSetting("duik", "boneSize",boutonBoneSize.text); };
+		boutonBoneSize.text = app.settings.getSetting("duik","boneSize");
 		var boutonBoneSizeAuto = groupeBoneSizeAuto.add("checkbox",undefined,getMessage(170));
-		boutonBoneSizeAuto.onClick = function() { app.settings.saveSetting("duik", "boneSizeAuto",boutonBoneSizeAuto.value); boutonBoneSize.enabled = !boutonBoneSizeAuto.value; boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value;};
+		boutonBoneSizeAuto.onClick = function() {
+			app.settings.saveSetting("duik", "boneSizeAuto",boutonBoneSizeAuto.value);
+			boutonBoneSize.enabled = !boutonBoneSizeAuto.value;
+			boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value;
+			};
 		boutonBoneSizeAuto.value = eval(app.settings.getSetting("duik", "boneSizeAuto"));
 		boutonBoneSizeAuto.alignment = ["fill","bottom"];
 		var boutonBoneSizeAutoValue = groupeBoneSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
@@ -3862,6 +3897,16 @@ function createDialog(titre,hasokbutton,okfonction){
 		boutonBoneSizeAutoValue.onChange = function () {app.settings.saveSetting("duik", "boneSizeAutoValue",boutonBoneSizeAutoValue.selection.index)};
 		boutonBoneSize.enabled = !boutonBoneSizeAuto.value ;
 		boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value ;
+		var groupeBoneColor = addHGroup(panosettings);
+		groupeBoneColor.add("statictext",undefined,getMessage(187));
+		var boutonBoneColorSharp = groupeBoneColor.add("statictext",undefined,"#");
+		boutonBoneColorSharp.alignment = ["right","fill"];
+		var boutonBoneColor = groupeBoneColor.add("edittext",undefined,"FF0000");
+		boutonBoneColor.onChange = function() { app.settings.saveSetting("duik", "boneColor",boutonBoneColor.text); };
+		boutonBoneColor.text = app.settings.getSetting("duik","boneColor");
+		boutonBoneColor.enabled = boutonBoneType.selection == 0;
+		
+		addSeparator(panosettings,getMessage(116));
 		
 		//taille des controleurs
 		var groupeCtrlSize = addHGroup(panosettings);
@@ -3869,6 +3914,7 @@ function createDialog(titre,hasokbutton,okfonction){
 		groupeCtrlSize.add("statictext",undefined,getMessage(169));
 		var boutonCtrlSize = groupeCtrlSize.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
 		boutonCtrlSize.onChange = function() { app.settings.saveSetting("duik", "ctrlSize",boutonCtrlSize.text); };
+		boutonCtrlSize.text = app.settings.getSetting("duik","ctrlSize");
 		var boutonCtrlSizeAuto = groupeCtrlSizeAuto.add("checkbox",undefined,getMessage(170));
 		boutonCtrlSizeAuto.onClick = function() { app.settings.saveSetting("duik", "ctrlSizeAuto",boutonCtrlSizeAuto.value); boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value; boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value;};
 		boutonCtrlSizeAuto.value = eval(app.settings.getSetting("duik", "ctrlSizeAuto"));
