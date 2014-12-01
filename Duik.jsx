@@ -1169,10 +1169,14 @@ function addGoal(layer,ctrl){
 function controleur(){
 
 	//vérifions qu'il n'y a qu'un calque sélectionné 
-	 if (app.project.activeItem.selectedLayers.length == 1) {
+	 if (app.project.activeItem.selectedLayers.length > 0) {
 			//  début de groupe d'annulation
-			app.beginUndoGroup("Duik - Controleur " + app.project.activeItem.selectedLayers[0].name);
-			addController(app.project.activeItem.selectedLayers[0]);
+			app.beginUndoGroup("Duik - " + getMessage(116));
+			var layers = app.project.activeItem.selectedLayers;
+			for (i = 0 ; i < layers.length ; i++)
+			{
+				addController(layers[i]);
+			}
 			//fin du groupe d'annulation
 			app.endUndoGroup();
 		} else { alert(getMessage(11)); }
@@ -2383,34 +2387,38 @@ app.endUndoGroup();
 function zero(){
 	
 //vérifions qu'il y a 1 layer sélectionnés
-if (app.project.activeItem.selectedLayers.length == 1) {	
+if (app.project.activeItem.selectedLayers.length > 0) {	
 	
 	verifNoms();
 			//  début de groupe d'annulation
 			app.beginUndoGroup("Duik - Zero");	
 	
-	var calque = app.project.activeItem.selectedLayers[0];
+	var calques = app.project.activeItem.selectedLayers;
 
-	//créer un zéro
-var zero = app.project.activeItem.layers.addNull();
-var calqueparent = calque.parent;
-calque.parent = null;
-zero.position.setValue(calque.position.value);
-zero.rotation.setValue(calque.rotation.value);
-zero.name = "Zero_" + calque.name.slice(-24);
-calque.parent = zero;
+	for (i = 0 ; i < calques.length ; i++)
+	{
+		var calque = calques[i];
+		//créer un zéro
+		var zero = app.project.activeItem.layers.addNull();
+		var calqueparent = calque.parent;
+		calque.parent = null;
+		zero.position.setValue(calque.position.value);
+		zero.rotation.setValue(calque.rotation.value);
+		zero.name = "Zero_" + calque.name.slice(-24);
+		calque.parent = zero;
 
-//lier le zéro au bone du bout
-zero.parent = calqueparent;
+		//lier le zéro au bone du bout
+		zero.parent = calqueparent;
 
-//verrouiller et masquer le zéro
-zero.moveToEnd();
-zero.guideLayer = true;
-zero.locked = true;
-zero.shy = true;
-zero.enabled = false;
+		//verrouiller et masquer le zéro
+		zero.moveToEnd();
+		zero.guideLayer = true;
+		zero.locked = true;
+		zero.shy = true;
+		zero.enabled = false;
+	}
 	
-				//  fin de groupe d'annulation
+			//  fin de groupe d'annulation
 			app.endUndoGroup();
 	
 	
