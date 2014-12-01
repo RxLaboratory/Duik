@@ -1500,8 +1500,6 @@ function bone(){
 	
 	verifNoms();
 	
-	//TODO PRENDRE EN COMPTE LA COULEUR EN VERSION SOLID
-	
 	//  début de groupe d'annulation
 	app.beginUndoGroup("Duik - Bone");
 
@@ -1550,7 +1548,14 @@ function bone(){
 				bone.source.height = boneTaille;
 				bone.transform.anchorPoint.setValue([bone.source.width/2,bone.source.height/2]);
 			}
-			else bone = app.project.activeItem.layers.addSolid([1,0,0],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
+			else
+			{
+				var colorString = app.settings.getSetting("duik","boneColor");
+				var red = parseInt(colorString.substr(0,2),16)/255.0;
+				var green = parseInt(colorString.substr(2,2),16)/255.0;
+				var blue = parseInt(colorString.substr(4,2),16)/255.0;
+				bone = app.project.activeItem.layers.addSolid([red,green,blue],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
+			}
 			//mettre le bone à la position du coin : utiliser une expression pour avoir la position en mode world du coin
 			var filet = coin.propertyGroup().propertyGroup();
 			var marionnette = filet.propertyGroup().propertyGroup().propertyGroup();
