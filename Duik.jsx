@@ -1212,243 +1212,123 @@ function addController(bone){
 }
 	 
 //FONCTION CONF WIGGLE POSITION
-function wiggleconfpos(){
-	
-if (positiontous.value){positionX.enabled = false ; positionY.enabled = false ; positionZ.enabled = false;}
-else{positionX.enabled = true ; positionY.enabled = true ; positionZ.enabled = true;}
-	
-	}
-
-//FONCTION CONF WIGGLE ROTATION
-function wiggleconfrot(){
-	
-if (rotationtous.value){rotationX.enabled = false ; rotationY.enabled = false ; rotationZ.enabled = false;}
-else{rotationX.enabled = true ; rotationY.enabled = true ; rotationZ.enabled = true;}
-	
-	}
-
-//FONCTION CONF WIGGLE ECHELLE
-function wiggleconfscale(){
-	
-if (echelletous.value){echelleX.enabled = false ; echelleY.enabled = false ; }
-else{echelleX.enabled = true ; echelleY.enabled = true ;}
-	
-	}
+function wiggleconf3D(){
+	if (wiggle3Dtous.value){wiggle3DX.enabled = false ; wiggle3DY.enabled = false ; wiggle3DZ.enabled = false;}
+	else{wiggle3DX.enabled = true ; wiggle3DY.enabled = true ; wiggle3DZ.enabled = true;}
+}
+function wiggleconf2D(){
+	if (wiggle2Dtous.value){wiggle2DX.enabled = false ; wiggle2DY.enabled = false;}
+	else{wiggle2DX.enabled = true ; wiggle2DY.enabled = true;}
+}
 
 //FONCTION WIGGLE OK
-function wigglevalid(){
+function wiggle3D(){
 
 //vérifions qu'il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1){
+if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0){
 	
 			//  début de groupe d'annulation
 			app.beginUndoGroup("Duik - Wiggle");
-			
-//le calque sélectionné
+//le calque
 var calque = app.project.activeItem.selectedLayers[0];
-var calquetridi = calque.threeDLayer;
+//la prop
+var prop = calque.selectedProperties.pop();
 
-if (positiontous.value){
+if (!prop.canSetExpression) return;
+
+var isEffect = false;
+
+	if (prop.parentProperty.isEffect){
+		var effetIndex = prop.propertyIndex;
+		var effetProfondeur = prop.propertyDepth;
+		var effetParentName = prop.parentProperty.name;
+		isEffect = true;
+	}
+
+if (wiggle3Dtous.value){
 	amp = calque.Effects.addProperty("ADBE Slider Control");
-	amp.name = "Pos Amplitude";
+	amp.name = "Wiggle Amplitude";
 	freq = calque.Effects.addProperty("ADBE Slider Control");
-	freq.name = "Pos Frequency";
-	calque.transform.position.expression = "wiggle(effect(\"Pos Frequency\")(1),effect(\"Pos Amplitude\")(1))";
+	freq.name = "Wiggle Frequency";
+	if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+	prop.expression = "wiggle(effect(\"Wiggle Frequency\")(1),effect(\"Wiggle Amplitude\")(1))";
 	} else {
-		if (calquetridi && positionX.value && positionY.value && positionZ.value){
+		if (wiggle3DX.value && wiggle3DY.value && wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XPos Amplitude";
+				amp.name = "X Wiggle Amplitude";
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YPos Amplitude";
+				amp.name = "Y Wiggle Amplitude";
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZPos Amplitude";
+				amp.name = "Z Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XPos Frequency";
+				freq.name = "X Wiggle Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YPos Frequency";
+				freq.name = "Y Wiggle Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZPos Frequency";
-				calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos Amplitude\")(1));\n" +  "[X[0],Y[1],Z[2]]";
+				freq.name = "Z Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				calque.transform.position.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" + "Z=wiggle(effect(\"Z Wiggle Frequency\")(1),effect(\"Z Wiggle Amplitude\")(1));\n" +  "[X[0],Y[1],Z[2]]";
 			}
-		if (positionX.value && positionY.value && !positionZ.value){
+		else if (wiggle3DX.value && wiggle3DY.value && !wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XPos Amplitude";
+				amp.name = "X Wiggle Amplitude";
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YPos Amplitude";
+				amp.name = "Y Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XPos Frequency";
+				freq.name = "X Wiggle Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YPos Frequency";
-				if (calquetridi){calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "[X[0],Y[1],transform.position[2]]";}
-				else {calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "[X[0],Y[1]]";}
+				freq.name = "Y Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" + "[X[0],Y[1],value[2]]";
 			}
-		if (calquetridi && positionX.value && !positionY.value && positionZ.value){
+		else if (wiggle3DX.value && !wiggle3DY.value && wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XPos Amplitude";
+				amp.name = "X Wiggle Amplitude";
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZPos Amplitude";
+				amp.name = "Z Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XPos Frequency";
+				freq.name = "X Wiggle Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZPos Frequency";
-				calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos Amplitude\")(1));\n" + "[X[0],transform.position[1],Z[2]]";
+				freq.name = "Z Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "Z=wiggle(effect(\"Z Wiggle Frequency\")(1),effect(\"Z Wiggle Amplitude\")(1));\n" + "[X[0],value[1],Z[2]]";
 			}
-		if (calquetridi && !positionX.value && positionY.value && positionZ.value) {
+		else if (!wiggle3DX.value && wiggle3DY.value && wiggle3DZ.value) {
 			amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YPos Amplitude";
+				amp.name = "Y Wiggle Amplitude";
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZPos Amplitude";
+				amp.name = "Z Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YPos Frequency";
+				freq.name = "Y Wiggle Frequency";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZPos Frequency";
-				calque.transform.position.expression = "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos Amplitude\")(1));\n" + "[transform.position[0],Y[1],Z[2]]";
+				freq.name = "Z Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" + "Z=wiggle(effect(\"Z Wiggle Frequency\")(1),effect(\"Z Wiggle Amplitude\")(1));\n" + "[value[0],Y[1],Z[2]]";
 			}
-		if (positionX.value && !positionY.value && !positionZ.value){
+		else if (wiggle3DX.value && !wiggle3DY.value && !wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XPos Amplitude";
+				amp.name = "X Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XPos Frequency";
-				if (calquetridi){calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "[X[0],transform.position[1],transform.position[2]]";}
-				else {calque.transform.position.expression = "X=wiggle(effect(\"XPos Frequency\")(1),effect(\"XPos Amplitude\")(1));\n" + "[X[0],transform.position[1]]";}
+				freq.name = "X Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "[X[0],value[1],value[2]]";
 				}
-		if (!positionX.value && positionY.value && !positionZ.value){
+		else if (!wiggle3DX.value && wiggle3DY.value && !wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YPos Amplitude";
+				amp.name = "Y Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YPos Frequency";
-				if (calquetridi){calque.transform.position.expression = "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "[transform.position[0],Y[1],transform.position[2]]";}
-				else{calque.transform.position.expression = "Y=wiggle(effect(\"YPos Frequency\")(1),effect(\"YPos Amplitude\")(1));\n" + "[transform.position[0],Y[1]]";}
+				freq.name = "Y Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" + "[value[0],Y[1],value[2]]";
 			}
-		if (calquetridi && !positionX.value && !positionY.value && positionZ.value){
+		else if (!wiggle3DX.value && !wiggle3DY.value && wiggle3DZ.value){
 				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZPos Amplitude";
+				amp.name = "Z Wiggle Amplitude";
 				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZPos Frequency";
-				calque.transform.position.expression = "Z=wiggle(effect(\"ZPos Frequency\")(1),effect(\"ZPos Amplitude\")(1));\n" + "[transform.position[0],transform.position[1],Z[2]]";
+				freq.name = "Z Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Z=wiggle(effect(\"Z Wiggle Frequency\")(1),effect(\"Z Wiggle Amplitude\")(1));\n" + "[value[0],value[1],Z[2]]";
 			}
-		if (!calquetridi && positionZ.value) {alert("Le calque sélectionné n'est pas un calque 3D, impossible d'y ajouter un wiggle sur l'axe Z","Attention !");}
-	}
-
-if (echelletous.value){
-	amp = calque.Effects.addProperty("ADBE Slider Control");
-	amp.name = "Scale Amplitude";
-	freq = calque.Effects.addProperty("ADBE Slider Control");
-	freq.name = "Scale Frequency";
-	calque.transform.scale.expression = "wiggle(effect(\"Scale Frequency\")(1),effect(\"Scale Amplitude\")(1))";
-	}else{
-		if (echelleX.value){
-			amp = calque.Effects.addProperty("ADBE Slider Control");
-			amp.name = "Scale X Amplitude";
-			freq = calque.Effects.addProperty("ADBE Slider Control");
-			freq.name = "Scale X Frequency";
-			calque.transform.scale.expression = "X=wiggle(effect(\"Scale X Frequency\")(1),effect(\"Scale X Amplitude\")(1));\n" + "[X[0],transform.scale[1]]";
-			}
-		if (echelleY.value){
-			amp = calque.Effects.addProperty("ADBE Slider Control");
-			amp.name = "Scale Y Amplitude";
-			freq = calque.Effects.addProperty("ADBE Slider Control");
-			freq.name = "Scale Y Frequency";
-			calque.transform.scale.expression = "Y=wiggle(effect(\"Scale Y Frequency\")(1),effect(\"Scale Y Amplitude\")(1));\n" + "[transform.scale[0],Y[1]]";
-			}
-	}
-
-if (rotationtous.value){
-	amp = calque.Effects.addProperty("ADBE Slider Control");
-	amp.name = "Rot Amplitude";
-	freq = calque.Effects.addProperty("ADBE Slider Control");
-	freq.name = "Rot Frequency";
-	if(calquetridi){calque.transform.orientation.expression = "wiggle(effect(\"Rot Frequency\")(1),effect(\"Rot Amplitude\")(1))";}
-	else{calque.transform.rotation.expression = "wiggle(effect(\"Rot Frequency\")(1),effect(\"Rot Amplitude\")(1))";}
-	} else {
-		if (rotationX.value && rotationY.value && rotationZ.value){
-				calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XRot Amplitude";
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YRot Amplitude";
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XRot Frequency";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YRot Frequency";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZRot Frequency";
-				calque.transform.orientation.expression = "X=wiggle(effect(\"XRot Frequency\")(1),effect(\"XRot Amplitude\")(1));\n" + "Y=wiggle(effect(\"YRot Frequency\")(1),effect(\"YRot Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZRot Frequency\")(1),effect(\"ZRot Amplitude\")(1));\n" +  "[Y[0],X[1],Z[2]]";
-			}
-		if (rotationX.value && rotationY.value && !rotationZ.value){
-				calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XRot Amplitude";
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XRot Frequency";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YRot Frequency";
-				calque.transform.orientation.expression = "X=wiggle(effect(\"XRot Frequency\")(1),effect(\"XRot Amplitude\")(1));\n" + "Y=wiggle(effect(\"YRot Frequency\")(1),effect(\"YRot Amplitude\")(1));\n" + "[Y[0],X[1],transform.orientation[2]]";
-			}
-		if (rotationX.value && !rotationY.value && rotationZ.value){
-				calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XRot Amplitude";
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XRot Frequency";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZRot Frequency";
-				calque.transform.orientation.expression = "X=wiggle(effect(\"XRot Frequency\")(1),effect(\"XRot Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZRot Frequency\")(1),effect(\"ZRot Amplitude\")(1));\n" + "[transform.orientation[0],X[1],Z[2]]";
-			}
-		if (!rotationX.value && rotationY.value && rotationZ.value) {
-			calque.threeDLayer = true;
-			amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YRot Amplitude";
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YRot Frequency";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZRot Frequency";
-				calque.transform.orientation.expression = "Y=wiggle(effect(\"YRot Frequency\")(1),effect(\"YRot Amplitude\")(1));\n" + "Z=wiggle(effect(\"ZRot Frequency\")(1),effect(\"ZRot Amplitude\")(1));\n" + "[Y[0],transform.orientation[1],Z[2]]";
-			}
-		if (rotationX.value && !rotationY.value && !rotationZ.value){
-			calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "XRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "XRot Frequency";
-				calque.transform.orientation.expression = "X=wiggle(effect(\"XRot Frequency\")(1),effect(\"XRot Amplitude\")(1));\n" + "[transform.orientation[0],X[1],transform.orientation[2]]";
-				}
-		if (!rotationX.value && rotationY.value && !rotationZ.value){
-			calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "YRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "YRot Frequency";
-				calque.transform.orientation.expression = "Y=wiggle(effect(\"YRot Frequency\")(1),effect(\"YRot Amplitude\")(1));\n" + "[Y[0],transform.orientation[1],transform.orientation[2]]";
-			}
-		if (!rotationX.value && !rotationY.value && rotationZ.value){
-			calque.threeDLayer = true;
-				amp = calque.Effects.addProperty("ADBE Slider Control");
-				amp.name = "ZRot Amplitude";
-				freq = calque.Effects.addProperty("ADBE Slider Control");
-				freq.name = "ZRot Frequency";
-				calque.transform.orientation.expression = "Z=wiggle(effect(\"ZRot Frequency\")(1),effect(\"ZRot Amplitude\")(1));\n" + "[transform.orientation[0],transform.orientation[1],Z[2]]";
-			}
-	}
-
-
-
-
-
-if (opacitebouton.value){
-			amp = calque.Effects.addProperty("ADBE Slider Control");
-			amp.name = "Opa Amplitude";
-			freq = calque.Effects.addProperty("ADBE Slider Control");
-			freq.name = "Opa Frequency";
-			calque.transform.opacity.expression = "wiggle(effect(\"Opa Frequency\")(1),effect(\"Opa Amplitude\")(1))";
 	}
 
 			//fin du groupe d'annulation			
@@ -1456,13 +1336,135 @@ if (opacitebouton.value){
 
 } else { alert(getMessage(12)); }
 
-fenetrewiggle.close();
+fenetrewiggle3D.close();
+}
+function wiggle2D(){
+
+//vérifions qu'il n'y a qu'un calque sélectionné
+if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0){
+	
+			//  début de groupe d'annulation
+			app.beginUndoGroup("Duik - Wiggle");
+//le calque
+var calque = app.project.activeItem.selectedLayers[0];
+//la prop
+var prop = calque.selectedProperties.pop();
+
+if (!prop.canSetExpression) return;
+
+var isEffect = false;
+
+	if (prop.parentProperty.isEffect){
+		var effetIndex = prop.propertyIndex;
+		var effetProfondeur = prop.propertyDepth;
+		var effetParentName = prop.parentProperty.name;
+		isEffect = true;
+	}
+
+if (wiggle2Dtous.value){
+	amp = calque.Effects.addProperty("ADBE Slider Control");
+	amp.name = "Wiggle Amplitude";
+	freq = calque.Effects.addProperty("ADBE Slider Control");
+	freq.name = "Wiggle Frequency";
+	if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+	prop.expression = "wiggle(effect(\"Wiggle Frequency\")(1),effect(\"Wiggle Amplitude\")(1))";
+	}
+	else {
+		if (wiggle2DX.value && wiggle2DY.value){
+				amp = calque.Effects.addProperty("ADBE Slider Control");
+				amp.name = "X Wiggle Amplitude";
+				amp = calque.Effects.addProperty("ADBE Slider Control");
+				amp.name = "Y Wiggle Amplitude";
+				freq = calque.Effects.addProperty("ADBE Slider Control");
+				freq.name = "X Wiggle Frequency";
+				freq = calque.Effects.addProperty("ADBE Slider Control");
+				freq.name = "Y Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" +  "[X[0],Y[1]]";
+			}
+		else if (wiggle2DX.value && !wiggle2DY.value){
+				amp = calque.Effects.addProperty("ADBE Slider Control");
+				amp.name = "X Wiggle Amplitude";
+				freq = calque.Effects.addProperty("ADBE Slider Control");
+				freq.name = "X Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"X Wiggle Frequency\")(1),effect(\"X Wiggle Amplitude\")(1));\n" + "[X[0],value[1]]";
+			}
+		else if (!wiggle2DX.value && wiggle2DY.value) {
+			amp = calque.Effects.addProperty("ADBE Slider Control");
+				amp.name = "Y Wiggle Amplitude";
+				freq = calque.Effects.addProperty("ADBE Slider Control");
+				freq.name = "Y Wiggle Frequency";
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"Y Wiggle Frequency\")(1),effect(\"Y Wiggle Amplitude\")(1));\n" + "[value[0],Y[1]]";
+			}
+	}
+
+			//fin du groupe d'annulation			
+			app.endUndoGroup();
+
+} else { alert(getMessage(12)); }
+
+fenetrewiggle2D.close();
+}
+function wiggle1D(){
+
+//vérifions qu'il n'y a qu'un calque sélectionné
+if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0){
+	
+			//  début de groupe d'annulation
+			app.beginUndoGroup("Duik - Wiggle");
+//le calque
+var calque = app.project.activeItem.selectedLayers[0];
+//la prop
+var prop = calque.selectedProperties.pop();
+
+if (!prop.canSetExpression) return;
+
+	var isEffect = false;
+
+	if (prop.parentProperty.isEffect){
+		var effetIndex = prop.propertyIndex;
+		var effetProfondeur = prop.propertyDepth;
+		var effetParentName = prop.parentProperty.name;
+		isEffect = true;
+	}
+
+	amp = calque.Effects.addProperty("ADBE Slider Control");
+	amp.name = "Wiggle Amplitude";
+	freq = calque.Effects.addProperty("ADBE Slider Control");
+	freq.name = "Wiggle Frequency";
+	
+	if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+	
+	prop.expression = "wiggle(effect(\"Wiggle Frequency\")(1),effect(\"Wiggle Amplitude\")(1))";
+
+
+			//fin du groupe d'annulation			
+			app.endUndoGroup();
+
+} else { alert(getMessage(12)); }
+
+fenetrewiggle2D.close();
 }
 
 //FONCTION WIGGLE
 function wiggle(){
-	fenetrewiggle.show();
+	//regarder le nombre d'axes dans la propriété sélectionnée
+	var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
+	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+	{
+		fenetrewiggle3D.show();
 	}
+	else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
+	{
+		fenetrewiggle2D.show();
+	}
+	else
+	{
+		wiggle1D();
+	}
+}
 
 //FONCTION RECURSIVE QUI RECUPERE TOUS LES PUPPET PINS D'UN CALQUE
 function getPuppetPins(prop) {
@@ -3549,46 +3551,36 @@ function createDialog(titre,hasokbutton,okfonction){
 		roueH.value = true;
 		}
 
-		// la fenetre du wiggle
+		// la fenetre du wiggle 3D
 		{
-		var fenetrewiggle = createDialog("Wiggle",true,wigglevalid);
-		fenetrewiggle.groupe.orientation = "column";
-		// position
-		var positioncadre = fenetrewiggle.groupe.add("panel",undefined,"Position");
-		positioncadre.orientation = "row";
-		//separer ou toutes
-		var positiontous = positioncadre.add("checkbox",undefined,getMessage(66));
-		positiontous.value = true;
-		positiontous.onClick = wiggleconfpos;
-		//x y z
-		var positionX = positioncadre.add("checkbox",undefined,"X");
-		var positionY = positioncadre.add("checkbox",undefined,"Y");
-		var positionZ = positioncadre.add("checkbox",undefined,"Z");
-		positionX.enabled = false;
-		positionY.enabled = false;
-		positionZ.enabled = false;
-		// échelle
-		var echellecadre = fenetrewiggle.groupe.add("panel",undefined,getMessage(67));
-		echellecadre.orientation = "row";
-		var echelletous = echellecadre.add("checkbox",undefined,getMessage(66));
-		echelletous.onClick = wiggleconfscale;
-		//x y
-		var echelleX = echellecadre.add("checkbox",undefined,"X");
-		var echelleY = echellecadre.add("checkbox",undefined,"Y");	
-		// rotation
-		var rotationcadre = fenetrewiggle.groupe.add("panel",undefined,"Rotation");
-		rotationcadre.orientation = "row";
-		//separer ou toutes
-		var rotationtous = rotationcadre.add("checkbox",undefined,getMessage(66));
-		rotationtous.value = false;
-		rotationtous.onClick = wiggleconfrot;
-		//x y z
-		var rotationX = rotationcadre.add("checkbox",undefined,"X");
-		var rotationY = rotationcadre.add("checkbox",undefined,"Y");
-		var rotationZ = rotationcadre.add("checkbox",undefined,"Z");
-		// opacité
-		var opacitebouton = fenetrewiggle.groupe.add("checkbox",undefined,getMessage(68));
-
+			var fenetrewiggle3D = createDialog("Wiggle",true,wiggle3D);
+			fenetrewiggle3D.groupe.orientation = "row";
+			//separer ou toutes
+			var wiggle3Dtous = fenetrewiggle3D.groupe.add("checkbox",undefined,getMessage(66));
+			wiggle3Dtous.value = true;
+			wiggle3Dtous.onClick = wiggleconf3D;
+			//x y z
+			var wiggle3DX = fenetrewiggle3D.groupe.add("checkbox",undefined,"X");
+			var wiggle3DY = fenetrewiggle3D.groupe.add("checkbox",undefined,"Y");
+			var wiggle3DZ = fenetrewiggle3D.groupe.add("checkbox",undefined,"Z");
+			wiggle3DX.enabled = false;
+			wiggle3DY.enabled = false;
+			wiggle3DZ.enabled = false;
+		}
+		
+		// la fenetre du wiggle 2D
+		{
+			var fenetrewiggle2D = createDialog("Wiggle",true,wiggle2D);
+			fenetrewiggle2D.groupe.orientation = "row";
+			//separer ou toutes
+			var wiggle2Dtous = fenetrewiggle2D.groupe.add("checkbox",undefined,getMessage(66));
+			wiggle2Dtous.value = true;
+			wiggle2Dtous.onClick = wiggleconf2D;
+			//x y z
+			var wiggle2DX = fenetrewiggle2D.groupe.add("checkbox",undefined,"X");
+			var wiggle2DY = fenetrewiggle2D.groupe.add("checkbox",undefined,"Y");
+			wiggle2DX.enabled = false;
+			wiggle2DY.enabled = false;
 		}
 		
 		// la fenetre de la calculatrice
