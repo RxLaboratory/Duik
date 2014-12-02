@@ -3209,8 +3209,6 @@ if (app.project.activeItem.selectedLayers.length == 1)
 	if (calque.selectedProperties.length != 0)
 	{
 		verifNoms();
-		
-		app.beginUndoGroup("Duik - Rotmorph");
 		//Prendre l'effet
 		var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 		//on vérifie si on peut mettre une expression, sinon inutile de continuer
