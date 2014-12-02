@@ -172,8 +172,8 @@ var reponse = reply.lastIndexOf("version",reply.length);
 if(reponse != -1){
 newVersion = reply.slice(reponse+8,reply.length+1);
 if (version == newVersion) {return true} else {alert(getMessage(2));}
-}else {alert(getMessage(3),"Attention",true);}
-} else {alert(getMessage(4),"Attention",true);}
+}
+}
 }
 
 //UTILE : TROUVE L'INDEX D'UNE STRING DANS UN ARRAY DE STRINGS
