@@ -1565,11 +1565,11 @@ function bone(){
 			var marionnette = filet.propertyGroup().propertyGroup().propertyGroup();
 			if (calque instanceof ShapeLayer)
 			{
-				bone.position.expression = "thisComp.layer('" + calque.name + "').effect('" + marionnette.name + "').arap.mesh('" + filet.name + "').deform('" + coin.name + "').position";
+				bone.position.expression = "thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position";
 			}
 			else
 			{
-				bone.position.expression = "thisComp.layer('" + calque.name + "').toWorld(thisComp.layer('" + calque.name + "').effect('" + marionnette.name + "').arap.mesh('" + filet.name + "').deform('" + coin.name + "').position)";
+				bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position)";
 			}
 			bone.position.setValue(bone.position.value);
 			bone.position.expression = "";
