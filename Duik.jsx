@@ -30,7 +30,7 @@ function DuIK(wnd)
 {
 
 	//================
-	var version = "14.2 Alpha";
+	var version = "14.2";
 	//================
 
 //===============================================
@@ -2209,8 +2209,8 @@ var renamed = false;
 //FONCTION SPRING
 function spring()
 {
-	// Vérifions si il n'y a qu'un calque sélectionné
-	if (app.project.activeItem.selectedLayers.length != 1){ alert(getMessage(47),getMessage(49)); return;}
+	// Vérifions si il y a des calques sélectionnés
+	if (app.project.activeItem.selectedLayers.length < 1){ alert(getMessage(47),getMessage(49)); return;}
 		
 	var calque = app.project.activeItem.selectedLayers[0];
 
