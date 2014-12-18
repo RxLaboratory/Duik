@@ -30,7 +30,7 @@ function DuIK(wnd)
 {
 
 	//================
-	var version = "15.alpha1";
+	var version = "14.2";
 	//================
 
 //===============================================
@@ -3288,214 +3288,6 @@ if (app.project.activeItem.selectedLayers.length == 1)
 	}
 }
 
-//FONCTION MULTIPLAN
-function multiplan()
-{
-	//début du groupe d'annulation
-	app.beginUndoGroup("Multi Plan");
-
-	//le nombre de couches
-	nbre = eval(nombre.text);
-	//la couche caméra
-	camNbre = Math.ceil(nbre/2);
-
-
-	if (pos.value && !sca.value)
-	{
-		//créer un zéro
-		var zero = app.project.activeItem.layers.addNull();
-		zero.name = "Zero_multiplan";
-		//verrouiller et masquer le zéro
-		zero.moveToEnd();
-		zero.guideLayer = true;
-		zero.locked = true;
-		zero.shy = true;
-		zero.enabled = false;
-
-		for (i=1;i<=nbre;i++)
-		{
-			var numero = "L00";
-			i < 10 ? numero = "L0" + i : numero = "L" + i ;
-			//créer les nuls et leurs zéros
-			var calque = app.project.activeItem.layers.addNull() ;
-			calque.parent = zero;
-			if (i == camNbre) 
-			{
-				calque.name = numero + " cam";
-			}
-			else
-			{
-				calque.name = numero;
-				calque.locked = true;
-			}
-			delete calque;
-		}
-	
-		delete zero;
-
-		//ajouter les expressions et curseurs
-		for (i=1;i<=nbre;i++)
-		{
-			//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-			if (i != camNbre-nbre%2+1 )
-			{
-				var calque = app.project.activeItem.layer(i);
-				var curseur = calque.Effects.addProperty("ADBE Slider Control");
-				curseur.name = "influence position";
-				(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-				delete curseur;
-				calque.transform.position.expression = "thisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"influence position\")(1)";
-			}
-		}
-   }
-
-	if (!pos.value && sca.value)
-	{
-		//créer un zéro
-		var zero = app.project.activeItem.layers.addNull();
-		zero.name = "Zero_multiplan";
-		//verrouiller et masquer le zéro
-		zero.moveToEnd();
-		zero.guideLayer = true;
-		zero.locked = true;
-		zero.shy = true;
-		zero.enabled = false;
-
-		for (i=1;i<=nbre;i++)
-		{
-			var numero = "L00";
-			i < 10 ? numero = "L0" + i : numero = "L" + i ;
-			//créer les nuls et leurs zéros
-			var calque = app.project.activeItem.layers.addNull() ;
-			calque.parent = zero;
-			if (i == camNbre) 
-			{
-				calque.name = numero + " cam";
-			}
-			else
-			{
-				calque.name = numero;
-				calque.locked = true;
-			}
-			delete calque;
-		}
-		
-		delete zero;
-
-		//ajouter les expressions et curseurs
-		for (i=1;i<=nbre;i++)
-		{
-			//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-			if (i != camNbre-nbre%2+1 )
-			{
-				var calque = app.project.activeItem.layer(i);
-				var curseur = calque.Effects.addProperty("ADBE Slider Control");
-				curseur.name = "influence echelle";
-				(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-				delete curseur;
-				calque.transform.scale.expression = "thisComp.layer(\"L0" + camNbre + " cam\").scale * effect(\"influence echelle\")(1) - [100,100]* effect(\"influence echelle\")(1) + [100,100]";
-			}
-		}
-	}
-
-	if (pos.value && sca.value)
-	{
-		//créer un zéro
-		var zero = app.project.activeItem.layers.addNull();
-		zero.name = "Zero_multiplan";
-		//verrouiller et masquer le zéro
-		zero.moveToEnd();
-		zero.guideLayer = true;
-		zero.locked = true;
-		zero.shy = true;
-		zero.enabled = false;
-
-		for (i=1;i<=nbre;i++)
-		{
-			var numero = "L00";
-			i < 10 ? numero = "L0" + i : numero = "L" + i ;
-			//créer les nuls et leurs zéros position
-			var calque = app.project.activeItem.layers.addNull() ;
-			calque.parent = zero;
-			if (i == camNbre) 
-			{
-				calque.name = numero + " cam position";
-			}
-			else
-			{
-				calque.name = numero;
-				calque.locked = true;
-			}
-			delete calque;
-		}
-
-		//ajouter les expressions et curseurs position
-		for (i=1;i<=nbre;i++)
-		{
-			//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-			if (i != camNbre-nbre%2+1 )
-			{
-				var calque = app.project.activeItem.layer(i);
-				var curseur = calque.Effects.addProperty("ADBE Slider Control");
-				curseur.name = "influence position";
-				(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-				delete curseur;
-				calque.transform.position.expression = "thisComp.layer(\"L0" + camNbre + " cam position\").position * effect(\"influence position\")(1)";
-			}
-		}
-		
-		for (i=1;i<=nbre;i++)
-		{
-			var numero = "L00";
-			i < 10 ? numero = "L0" + i : numero = "L" + i ;
-			//créer les nuls et leurs zéros scale
-			var calque = app.project.activeItem.layers.addNull() ;
-			calque.parent = zero;
-			if (i == camNbre) 
-			{
-				calque.name = numero + " cam scale";
-			}
-			else
-			{
-				calque.name = numero;
-				calque.locked = true;
-			}
-			delete calque;
-		}
-		
-		//ajouter les expressions et curseurs scale
-		for (i=1;i<=nbre;i++)
-		{
-			//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-			if (i != camNbre-nbre%2+1 )
-			{
-				var calque = app.project.activeItem.layer(i);
-				var curseur = calque.Effects.addProperty("ADBE Slider Control");
-				curseur.name = "influence echelle";
-				(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-				delete curseur;
-				calque.transform.scale.expression = "thisComp.layer(\"L0" + camNbre + " cam scale\").scale * effect(\"influence echelle\")(1) - [100,100]* effect(\"influence echelle\")(1) + [100,100]";
-			}
-		}
-
-		delete zero;
-
-		//relinker les positions aux échelles
-		for (i=1;i<=nbre;i++)
-		{
-			app.project.activeItem.layer(nbre + i).locked = false;
-			app.project.activeItem.layer(nbre + i).parent = app.project.activeItem.layer(i);
-			if (app.project.activeItem.layer(nbre + i).name.indexOf("cam") < 0) app.project.activeItem.layer(nbre + i).locked = true;
-		}
-
-	}
-	//fin du groupe d'annulation
-	app.endUndoGroup();
-    
-    fenetremultiplan.hide();
-
-}
-
 }
 //===========================================
 //UI
@@ -3965,19 +3757,7 @@ function createDialog(titre,hasokbutton,okfonction){
 			boutonStretch.value = true;	
 		}
 		
-		//la fenetre d'option de multiplan
-		{
-			var fenetremultiplan = createDialog(getMessage(188),true,multiplan);
-			fenetremultiplan.groupe.orientation = "column";
-			
-			var nombreGroupe = fenetremultiplan.groupe.add("group");
-			nombreGroupe.add("statictext",undefined,"Nombre de calques :");
-			var nombre = nombreGroupe.add("edittext",undefined,"03");
-			var pos = fenetremultiplan.groupe.add("checkbox",undefined,"Position");
-			pos.value = true;
-			var sca = fenetremultiplan.groupe.add("checkbox",undefined,"Scale");
-		}
-	
+
 		// la palette IK_Tools
 		{	
 		var palette = (thisObj instanceof Panel) ? thisObj : new Window("palette","Duik",undefined, {resizeable:true});
@@ -4337,10 +4117,7 @@ function createDialog(titre,hasokbutton,okfonction){
 			var boutontcamrelief = addIconButton(groupCameraG,dossierIcones + "btn_3d.png",getMessage(135));
 			boutontcamrelief.onClick = camrelief;
 			boutontcamrelief.helpTip = getMessage(103);
-			//bouton pour multiplan 2D
-			var boutontcam2d = addIconButton(groupCameraD,dossierIcones + "btn_controleur-cam.png",getMessage(188));
-			boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
-			boutontcam2d.helpTip = "HelpTip";
+
 			
 		}
 	
