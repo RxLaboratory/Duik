@@ -30,7 +30,7 @@ function DuIK(wnd)
 {
 
 	//================
-	var version = "15.alpha1";
+	var version = "15.alpha2";
 	//================
 
 //===============================================
@@ -1454,7 +1454,15 @@ function wiggle(){
 	var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
 	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
 	{
-		fenetrewiggle3D.show();
+		//if this is a position and the layer is not 3D, After uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
+		if (!prop.parentProperty.isEffect && prop.name.toLowerCase() == "position" && !app.project.activeItem.selectedLayers[0].threeDLayer)
+		{
+			fenetrewiggle2D.show();
+		}
+		else
+		{
+			fenetrewiggle3D.show();
+		}
 	}
 	else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
 	{
