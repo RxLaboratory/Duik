@@ -1,0 +1,72 @@
+/*
+Duik - Duduf IK Tools
+Copyright (c) 2008 - 2015 Nicolas Dufresne
+http://ik.duduf.fr
+http://ik.duduf.com
+
+Many thanks to :
+Kevin Schires - including the images needed by Duik directly in the Script
+Eric Epstein - making the IK's work with 3D Layers
+Zeg - designing the buttons
+
+This file is part of Duik.
+
+    Duik is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Duik is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Duik. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+// ================================== LibDuik =================
+if (typeof Duik !== 'object') {
+    Duik = {};
+}
+
+(function () {
+
+	//IK with one bone
+	if (typeof Duik.ikOne !== 'function') {
+		//bone: LayerItem which receives IK
+		//controller: LayerItem used to control IK
+		Duik.ikOne = function (bone,controller) {
+			//récupérer le bone
+			var bonename = bone.name;
+			//récupérer le controleur
+			var controleurname = controller.name;
+
+			//rotation d'origine
+			var orot = bone.transform.rotation.value;
+
+			//=========================================================
+			//EXPRESSION A INSERER
+			var expression = "C = thisComp.layer(\"" + controleurname + "\").toWorld(thisComp.layer(\"" + controleurname + "\").anchorPoint);\r\n" +
+			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\r\n" +
+			"angle = lookAt(C,O);\r\n" +
+			"var result;\r\n" +
+			"angle[0] > 0 ? result = angle[0]+angle[1]+value : result = angle[0]-angle[1]+value;\r\n" +
+			"var layer = thisLayer;\r\n" +
+			"while (layer.hasParent)\r\n" +
+			"{\r\n" +
+			"layer = layer.parent;\r\n" +
+			"result = result - layer.rotation;\r\n" +
+			"}\r\n" +
+			"result;";
+			//=========================================================
+
+			bone.transform.rotation.expression = expression;
+			
+			//nouvelle rotation
+			var nrot = bone.transform.rotation.value;
+
+			bone.transform.rotation.setValue(-nrot+2*orot);
+		}
+	}
+}());
