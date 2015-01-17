@@ -23,14 +23,14 @@ This file is part of Duik.
 
     You should have received a copy of the GNU General Public License
     along with Duik. If not, see <http://www.gnu.org/licenses/>.
-*/	
+*/
 
 
-function DuIK(wnd)
+function fnDuIK(wnd)
 {
 
 	//================
-	var version = "14.21";
+	var version = "14.22";
 	//================
 
 //===============================================
@@ -411,8 +411,9 @@ function startAutoRig() {
 	
 	if (tridi) { alert ("L'Auto-Rig ne fonctionne pas encore avec des calques 3D"); return ; }
 	
+	
 	//groupe d'annulation
-	app.beginUndoGroup("Duik Auto-Rig - Controllers");
+	app.beginUndoGroup("Duik - Autorig");
 	
 	//tout délinker au cas où...
 	if (mainG != undefined) mainG.parent = null;
@@ -485,11 +486,6 @@ function startAutoRig() {
 	//cou (si pas d'ik dedans)
 	if (!autorigIKcou.value && cou != undefined) Ccou = addController(cou);
 
-	//groupe d'annulation
-	app.endUndoGroup();
-	
-	//groupe d'annulation
-	app.beginUndoGroup("Duik Auto-Rig - Linking");
 	
 	//les liens de parentés
 	//bras G
@@ -566,11 +562,7 @@ function startAutoRig() {
 	if (Cdos != undefined) Cdos.parent = Ccorps2;
 	if (Ccou != undefined) { if (Cepaules != undefined) Ccou.parent = Cepaules; else if (Cdos != undefined) Ccou.parent = Cdos; else Ccou.parent = Ccorps2; }
 	
-	//groupe d'annulation
-	app.endUndoGroup();
-	
-	
-	
+
 	//les options d'ik
 	boutonStretch.value = autorigStretch.value;
 	boutonFK.value = autorigFK.value;
@@ -591,15 +583,11 @@ function startAutoRig() {
 		}
 		else if (brasG != undefined)
 		{
-			//groupe d'annulation
-			app.beginUndoGroup("Duik - IK");
 			onebone(brasG,CmainG);
 			addGoal(mainG,CmainG);
 		}
 		else
 		{
-			//groupe d'annulation
-			app.beginUndoGroup("Duik - IK");
 			addGoal(mainG,CmainG);
 		}
 	}
@@ -653,10 +641,7 @@ function startAutoRig() {
 	if (autorigIKcou.value && cou != undefined) {
 		onebone(cou,Ctete);
 	}
-	
-	
-	//groupe d'annulation
-	app.beginUndoGroup("Duik Auto-rig - FK");
+
 	
 	//les FK
 	//dos
@@ -680,10 +665,10 @@ function startAutoRig() {
 	if (tete != undefined) {
 		addGoal(tete,Ctete);
 	}
-	
+
+
 	//groupe d'annulation
 	app.endUndoGroup();
-
 }
 
 //FONCTION QUAND ON CLIQUE SUR CREER IK
@@ -697,7 +682,7 @@ function ik(){
 	} //if calques.length == 2 || calques.length == 3 || calques.length == 4
 	
 	verifNoms();
-	
+
 	var calquetridi = false;
 	var ncalquetridi = 0;
 	for (i=0;i<calques.length;i++){
@@ -720,37 +705,42 @@ function ik(){
 		}//else if ncalquetridi == calques.length
 		
 	if (calques.length == 2) {
+		//groupe d'annulation
+		app.beginUndoGroup("Duik - IK");
 		calquetridi ? alert(getMessage(5)) : onebone(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+		//groupe d'annulation
+		app.endUndoGroup();
 		}//if calques.length == 2
-	if (calques.length == 3) {
+	else if (calques.length == 3) {
 		boutonStretch.value = false;
 		boutonStretch.enabled = false;
 		fenetreik.show();
 	} //if calques.length == 3
-	if (calques.length == 4) {
+	else if (calques.length == 4) {
 		boutonStretch.enabled = true;
 		boutonStretch.value = eval(app.settings.getSetting("duik", "stretch"));
 		boutonFK.value = eval(app.settings.getSetting("duik", "ikfk"));
 		fenetreik.show();
 	} //if calques.length == 4
 
+
+	
 }
 
 //FONCTION QUI LANCE LA CREATION D'IK AVEC LES OPTIONS
 function goik(){
-
+	//groupe d'annulation
+	app.beginUndoGroup("Duik - IK");
 	var calques = app.project.activeItem.selectedLayers;
 	var calquetridi = calques[0].threeDLayer;
 	if (calques.length == 3) {twobones(calquetridi,boutonFront.value,app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[2]);}
 	if (calques.length == 4) {twoplusbones(calquetridi,boutonFront.value,app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[3]);}
-	
+	//groupe d'annulation
+	app.endUndoGroup();
 }
 
 //FONCTION QUI APPLIQUE UN IK SUR UN SEUL BONE (LOOKAT)
 function onebone(bone,controleur){
-
-	//groupe d'annulation
-	app.beginUndoGroup("Duik - IK");
 
 	//récupérer le bone
 	var bonename = bone.name;
@@ -782,18 +772,12 @@ function onebone(bone,controleur){
 	var nrot = bone.transform.rotation.value;
 
 	bone.transform.rotation.setValue(-nrot+2*orot);
-	
-	//groupe d'annulation
-	app.endUndoGroup();
-	
+
 
 }
 
 //FONCTION QUI APPLIQUE UN IK SUR DEUX BONES
 function twobones(tridi,front,bonebout,boneracine,controleur,zero){
-
-	//groupe d'annulation
-	app.beginUndoGroup("Duik - IK");
 	
 	//récupérer le bone du bout
 	var boneboutname = bonebout.name;
@@ -1035,8 +1019,6 @@ function twobones(tridi,front,bonebout,boneracine,controleur,zero){
 		zerobout.transform.position.expression = expressionstretchzero;
 	} //boutonStretch.value
 
-	//groupe d'annulation
-	app.endUndoGroup();
 	
 	return zerobout;
 } //function twobones
@@ -1055,13 +1037,9 @@ function twoplusbones(tridi,front,main,bonebout,boneracine,controleur){
 
 	//d'abord l'ik sur deux bones habituel
 	var zero = twobones(tridi,front,bonebout,boneracine,controleur,main);
-	
 		
 	//ajouter le goal
 	addGoal(main,controleur);
-	
-	//groupe d'annulation
-	app.beginUndoGroup("Duik - FK & Stretch");
 
 	//ajouter un controleur FK
 	if (boutonFK.value)
@@ -1075,8 +1053,6 @@ function twoplusbones(tridi,front,main,bonebout,boneracine,controleur){
 	//et si il y a du stretch
 	if (boutonStretch.value) main.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
 	
-	//groupe d'annulation
-	app.endUndoGroup();
 	
 
 }
@@ -1085,21 +1061,26 @@ function twoplusbones(tridi,front,main,bonebout,boneracine,controleur){
 function pregoal(){
 
 if (app.project.activeItem.selectedLayers.length == 1) {
+	//groupe d'annulation
+	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
 	addGoal(app.project.activeItem.selectedLayers[0],undefined);
+	//groupe d'annulation
+	app.endUndoGroup();
 }
 else if (app.project.activeItem.selectedLayers.length == 2) {
+	//groupe d'annulation
+	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
 	addGoal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+	//groupe d'annulation
+	app.endUndoGroup();
 }
 else{alert(getMessage(10),"Attention",true);}
 }
 
 //FONCTION QUI CREE UN GOAL SUR UN CALQUE
 function addGoal(layer,ctrl){
-
-	//groupe d'annulation
-	app.beginUndoGroup("Duik - Goal");
 
 	//pour ne pas bouger, il faut récupérer la rotation d'origine
 	var ancienneRot = 0;
@@ -1160,9 +1141,7 @@ function addGoal(layer,ctrl){
 
 	if (layer.threeDLayer) layer.transform.zRotation.setValue(2*ancienneRot-nouvelleRot);
 	else layer.transform.rotation.setValue(2*ancienneRot-nouvelleRot);
-	
-	//groupe d'annulation
-	app.endUndoGroup();
+
 }
 
 //FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
@@ -2182,7 +2161,7 @@ function choixLangue() {
 //FONCTION POUR VERIFIER QU'IL NYA PAS DEUX CALQUES PORTANT LE MEME NOM DANS LA COMP // changer pour utiliser des numéros (regarder le dernier caractère et incrémenter
 function verifNoms() {
 	
-	app.beginUndoGroup("Duik - Rename layers");
+
 	
 var calques = app.project.activeItem.layers;
 var nbrecalques = app.project.activeItem.numLayers;
@@ -2209,7 +2188,6 @@ var renamed = false;
 			//on enlève l'alerte, plus chiante qu'autre chose...
 			//if (renamed) alert(getMessage(41));
 			
-			app.endUndoGroup();
 			
 			return true;
 }
@@ -3385,7 +3363,10 @@ function createDialog(titre,hasokbutton,okfonction){
 		fcancel.alignment = ["left","bottom"];
 		var fok = addButton(fgroupeBoutons,"OK");
 		fok.alignment = ["right","bottom"];
-		if (okfonction != undefined) fok.onClick = function() {f.hide(); okfonction();}
+		if (okfonction != undefined) fok.onClick = function() {
+			f.hide();
+			okfonction();
+			}
 	}
 	else
 	{
@@ -4154,5 +4135,5 @@ if (laPalette != null && laPalette instanceof Window) {
 }
 
 
-DuIK(this);
+fnDuIK(this);
 
