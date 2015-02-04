@@ -1,13 +1,10 @@
 /*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2015 Nicolas Dufresne
-http://ik.duduf.fr
-http://ik.duduf.com
+http://www.duduf.net
 
 Many thanks to :
-Kevin Schires - including the images needed by Duik directly in the Script
 Eric Epstein - making the IK's work with 3D Layers
-Zeg - designing the buttons
 
 This file is part of Duik.
 
@@ -26,28 +23,170 @@ This file is part of Duik.
 */
 
 // ================================== LibDuik =================
-if (typeof Duik !== 'object') {
+
+/* This file should not be edited,
+
+	If you need to change some settings, you should change them inside your own script.
+	Example:
+	Changing controllers size (in pixels):
+		Duik.settings.controllerSize = 50;
+		
+	A complete list of settings is available in the developper's guide of libDuik on
+	http://www.duduf.net
+	
+	If you need to change UI strings (for localization) you can access them in Duik.uiStrings
+	Example:
+		Duik.uiStrings.ikFkBox = "IK / FK"
+		
+	A complete list of uiStrings is available in the developper's guide of libDuik on
+	http://www.duduf.net
+	
+	Anyway, if you're modifying this file, you may force reloading the class when restarting
+	the script in which you included it.
+		Duik.forceReload = true;
+	
+*/
+
+if (typeof Duik !== 'object')
+{
     Duik = {};
+	Duik.forceReload = false;
+	Duik.version = "15.alpha4";
+	Duik.versionNumber = 15.0004
 }
 
-(function () {
 
-	//IK with one bone
-	if (typeof Duik.ikOne !== 'function') {
-		//bone: LayerItem which receives IK
-		//controller: LayerItem used to control IK
-		Duik.ikOne = function (bone,controller) {
-			//récupérer le bone
-			var bonename = bone.name;
-			//récupérer le controleur
-			var controleurname = controller.name;
+#include duik_translations.jsxinc;
 
+(function ()
+{	
+	//============ UI Strings ====================
+	/* UI Strings
+		Localisation
+		for now, uses duik_translations.jsxinc
+		
+		TODO
+		class Duik.uiStrings
+		containing all needed uiString (localizable strings)
+		
+		Duik.setLanguage(lang)
+		lang | string, language code
+	*/
+	if (typeof Duik.uiStrings !== 'object' || Duik.forceReload)
+	{
+		Duik.uiStrings = {};
+		
+		Duik.uiStrings.ikFkBox = "IK / FK";
+		Duik.uiStrings.rootFkAngle = "Root FK";
+		Duik.uiStrings.endFkAngle = "End FK";
+		Duik.uiStrings.goalFkAngle = "Goal FK";
+	}
+
+	//============ SETTINGS =======================
+	/* Duik Settings
+	
+	*/
+	if (typeof Duik.settings !== 'object' || Duik.forceReload)
+	{
+		Duik.settings = {};
+		
+		//controller size in pixels
+		Duik.settings.controllerSize = 100;
+		//controller size automatically adapted to comp size
+		Duik.settings.controllerSizeAuto = true;
+		//when controllerSizeAuto is true, 0 = small, 1 = medium, 2 = big
+		Duik.settings.controllerSizeHint = 1;
+	}
+	
+	//============== METHODS ======================
+	/*	ADD IK - Duik.addIK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
+		adds a 2D IK to the layers controlled by controller
+		
+		parameters:
+		controller | AVLayer
+		layer1 | AVLayer
+		layer2 | AVLayer or undefined
+		layer3 | AVLayer or undefined
+		goal | AVLayer or undefined
+		clockWise | boolean, used only with two-layer and three-layer IK, default: false
+		threeD | boolean, works only with two-layer IK, default: false
+		frontFacing | boolean, default: false
+				
+		returns
+		true if successful, false if anything went wrong
+	*/
+	if (typeof Duik.addIK !== 'function' || Duik.forceReload)
+	{
+		Duik.addIK = function (ctrl,layer1,layer2,layer3,goal,cw,threeD,frontFacing)
+		{	
+			//if there's not at least one controller and one layer, abort creation
+			if (ctrl == undefined || layer1 == undefined) return false;
+			
+			if (cw == undefined) cw = false;
+			if (threeD == undefined) threeD = false;
+			if (frontFacing == undefined) frontFacing = false;
+			
+			var zero = null;
+			
+			if (layer2 == undefined && layer3 == undefined)
+			{
+				var ok = Duik.addOneLayerIK(ctrl,layer1);
+				if (!ok) return false;
+				if (goal != undefined)
+				{
+					var ok = Duik.addGoal(goal,ctrl);
+					return ok;
+				}
+			}
+			else if (layer3 == undefined)
+			{
+				zero = Duik.addTwoLayerIK(threeD,ctrl,layer1,layer2,cw);
+				if (zero == null) return false;
+			}
+			else
+			{
+				threeD = false;
+				var zero = Duik.addThreeLayerIK(ctrl,layer1,layer2,layer3,cw);
+				if (zero == null) return false;
+			}
+			
+			if (zero != null && goal != undefined)
+			{
+				var ok = Duik.addGoal(goal,ctrl);
+				if (!ok) return false;
+				
+				//ajouter un controleur FK
+				grot = ctrl.Effects.addProperty("ADBE Angle Control");
+				grot.name = Duik.uiStrings.goalFkAngle;
+				//et mettre à jour l'expression de la main
+				if (threeD) goal.transform.zRotation.expression = goal.transform.zRotation.expression + "\nresult + thisComp.layer('" + ctrl.name + "').effect('" + Duik.uiStrings.goalFkAngle + "')(1);";
+				else goal.transform.rotation.expression = goal.transform.rotation.expression + "\nresult + thisComp.layer('" + ctrl.name + "').effect('" + Duik.uiStrings.goalFkAngle + "')(1);";
+
+				//et si il y a du stretch
+				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
+				
+			}
+				
+			return true;
+		}
+	}
+	// ADD ONE-LAYER IK - Duik.addOneLayerIK(controller,layer)
+	if (typeof Duik.addOneLayerIK !== 'function' || Duik.forceReload)
+	{
+		Duik.addOneLayerIK = function (ctrl,layer1)
+		{
+			//if there's not at least one controller and one layer, abort creation
+			if (ctrl == undefined || layer1 == undefined) return false;
+					
+			var controllerName = ctrl.name;
+			
 			//rotation d'origine
-			var orot = bone.transform.rotation.value;
+			var orot = layer1.transform.rotation.value;
 
 			//=========================================================
-			//EXPRESSION A INSERER
-			var expression = "C = thisComp.layer(\"" + controleurname + "\").toWorld(thisComp.layer(\"" + controleurname + "\").anchorPoint);\r\n" +
+			//EXPRESSION TO INSERT
+			var expression = "//Duik.oneLayerIK\r\n" + 
+			"C = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\r\n" +
 			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\r\n" +
 			"angle = lookAt(C,O);\r\n" +
 			"var result;\r\n" +
@@ -61,12 +200,400 @@ if (typeof Duik !== 'object') {
 			"result;";
 			//=========================================================
 
-			bone.transform.rotation.expression = expression;
+			layer1.transform.rotation.expression = expression;
 			
 			//nouvelle rotation
-			var nrot = bone.transform.rotation.value;
+			var nrot = layer1.transform.rotation.value;
 
-			bone.transform.rotation.setValue(-nrot+2*orot);
+			layer1.transform.rotation.setValue(-nrot+2*orot);
+			
+			return true;
+		}
+	}
+	// ADD TWO-LAYER IK - Duik.addTwoLayerIK(threeD,controller,root,end,clockWise,frontFacing)
+	if (typeof Duik.addTwoLayerIK !== 'function' || Duik.forceReload)
+	{
+		Duik.addTwoLayerIK = function (threeD,controller,root,end,clockWise,frontFacing)
+		{
+			//if there's not at least one controller and two layers, abort creation
+			if (controller == undefined || root == undefined || end == undefined) return false;
+			
+			if (clockWise == undefined) clockWise = false;
+			if (frontFacing == undefined) frontFacing = false;
+			
+			//Names
+			var endName = end.name;
+			var rootName = root.name;
+			var controllerName = controller.name;
+
+			//Ajoutons une case a cocher sur le controleur pour choisir le sens de l'IK
+			ikOrientation = controller.Effects.addProperty("ADBE Checkbox Control");
+			ikOrientation.name = "IK Orientation";
+			if (clockWise) ikOrientation(1).setValue(1);
+
+			if (threeD) {
+				direction = controller.Effects.addProperty("ADBE Angle Control");
+				direction.name = "IK Direction " +  rootName.slice(-15);
+			}
+		
+			//controleurs FK
+			//une case a cocher pour l'IK/FK
+			ikfk = controller.Effects.addProperty("ADBE Checkbox Control");
+			ikfk.name = Duik.uiStrings.ikFkBox;
+			ikfk(1).setValue(1);
+			//un angle pour le haut
+			urot = controller.Effects.addProperty("ADBE Angle Control");
+			urot.name = Duik.uiStrings.rootFkAngle;
+			//un angle pour le bas
+			lrot = controller.Effects.addProperty("ADBE Angle Control");
+			lrot.name = Duik.uiStrings.endFkAngle;
+
+			//controleurs de stretch
+			//une case a cocher pour l'autostretch
+			autostretch = controller.Effects.addProperty("ADBE Checkbox Control");
+			autostretch.name = "Auto-Stretch";
+			autostretch(1).setValue(1);
+			//un slider pour le stretch
+			stretch = controller.Effects.addProperty("ADBE Slider Control");
+			stretch.name = "Stretch";
+			
+			//créer un zéro
+			endZero = app.project.activeItem.layers.addNull();
+			endZero.threeDLayer = true;
+			var controllerParent = controller.parent;
+			controller.parent = null;
+			endZero.position.setValue(controller.position.value);
+			endZero.name = "IK_zero " + endName.slice(-24);
+			controller.parent = controllerParent;
+	
+			//lier le zéro au bone du bout
+			endZero.parent = end;
+
+			//verrouiller et masquer le zéro
+			endZero.moveToEnd();
+			endZero.guideLayer = true;
+			endZero.locked = true;
+			endZero.enabled = false;
+			endZero.shy = true;
+
+			endZeroName = endZero.name;
+
+			//=========================================================
+			//EXPRESSION A INSERER SUR LE BONE BOUT
+			var endExpression = "//Duik.twoLayerIK\r\n" +
+				"boneracine = \"" + rootName + "\";\n" + 
+				"bonebout = \"" + endName + "\";\n" + 
+				"zero = \"" + endZeroName + "\";\n" + 
+				"controleur = \"" + controllerName + "\";\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.endFkAngle + "\")(1);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"function getWorldPos(theLayerName){\n" + 
+				"  L = thisComp.layer(theLayerName);\n" + 
+				"  return L.toWorld(L.anchorPoint);\n" + 
+				"}\n" + 
+				"function oriente(a, b, P) {\n" +
+				"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
+				"}\n" +
+				"A = getWorldPos(boneracine);\n" + 
+				"B = getWorldPos(bonebout);\n" + 
+				"C = getWorldPos(zero);\n" + 
+				"E = getWorldPos(controleur);\n" + 
+				"a = length(B,C);\n" + 
+				"b = length(E,A);\n" + 
+				"c = length(A,B);\n" + 
+				"x = (b*b + c*c - a*a )/(2*b);\n" + 
+				"alpha = Math.acos(clamp(x/c,-1,1));\n" + 
+				"y = b - x;\n" + 
+				"  gamma = Math.acos(clamp(y/a,-1,1));\n" + 
+				"result = (cw ? 1 : -1)*radiansToDegrees(gamma + alpha);" +
+				"  V1 = B - A;\n" + 
+				"  adj1 = radiansToDegrees(Math.atan2(V1[1],V1[0]));\n" + 
+				"  V2 = C - B;\n" + 
+				"  adj2 = radiansToDegrees(Math.atan2(V2[1],V2[0]));\n" + 
+				"  IK = result +  adj1 - adj2 + value;\n" + 
+				"IKFK ? IK : FK;";
+			//=========================================================
+
+			threeD ? end.transform.zRotation.expression = endExpression : end.transform.rotation.expression = endExpression;
+
+			//=========================================================
+			//EXPRESSION A INSERER SUR LE BONE RACINE
+			var rootExpression = "//Duik.twoLayerIK\r\n" +
+				"boneracine = \"" + rootName + "\";\n" + 
+				"bonebout = \"" + endName + "\";\n" + 
+				"zero = \"" + endZeroName + "\";\n" + 
+				"controleur = \"" + controllerName + "\";\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.rootFkAngle + "\")(1);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"function getWorldPos(theLayerName){\n" + 
+				"  L = thisComp.layer(theLayerName);\n" + 
+				"  return L.toWorld(L.anchorPoint);\n" + 
+				"}\n" + 
+				"function oriente(a, b, P) {\n" +
+				"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
+				"}\n" +
+				"A = getWorldPos(boneracine);\n" + 
+				"B = getWorldPos(bonebout);\n" + 
+				"C = getWorldPos(zero);\n" + 
+				"E = getWorldPos(controleur);\n" + 
+				"a = length(B,C);\n" + 
+				"b = length(E,A);\n" + 
+				"c = length(A,B);\n" + 
+				"x = (b*b + c*c - a*a )/(2*b);\n" + 
+				"alpha = Math.acos(clamp(x/c,-1,1));\n" + 
+				"D = E - A;\n" + 
+				"delta = Math.atan2(D[1],D[0]);\n" + 
+				"result = radiansToDegrees(delta - (cw ? 1 : -1)*alpha);\n" +
+				"V = B - A;\n" + 
+				"adj1 = radiansToDegrees(Math.atan2(V[1],V[0]));\n" + 
+				"IK = result - adj1 + value;\n" + 
+				"IKFK ? IK : FK;";
+			//=======================================================
+
+			threeD ? root.transform.zRotation.expression = rootExpression : root.transform.rotation.expression = rootExpression;
+
+			if (threeD) {
+				//si 3D : le zéro de la jambe pour l'orientation
+				//créer un zéro
+				var zero = app.project.activeItem.layers.addNull();
+				zero.threeDLayer = true;
+				var calqueparent = root.parent;
+				root.parent = null;
+				zero.position.setValue(root.position.value);
+				zero.name = "Zero_" + rootName.slice(-24);
+				//verrouiller et masquer le zéro
+				zero.moveToEnd();
+				zero.guideLayer = true;
+				zero.shy = true;
+
+				if (frontFacing) {
+					var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
+						"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" + 
+						"C = controleur.toWorld(controleur.anchorPoint);\n" +
+						"Cx = C[0];\n" +
+						"Cy = C[1];\n" +
+						"Cz = C[2];\n" +
+						"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+						"Lx = L[0];\n" +
+						"Ly = L[1];\n" +
+						"Lz = L[2];" +
+						"angle = lookAt([Cz,Cy,Cx],[Lz,Ly,Lx]);\n" +
+						"[-angle[1]+90,-angle[0],value[2]]\n"
+				} else { //front
+					var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
+						"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" + 
+						"C = controleur.toWorld(controleur.anchorPoint);\n" +
+						"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+						"angle = lookAt(C,L);\n" +
+						"[angle[0],angle[1],value[2]]\n"
+				} //else front
+				zero.transform.orientation.expression = zeroExpression;
+				zero.transform.xRotation.expression = "//Duik.twoLayerIK.threeD\r\n" + "thisComp.layer(\"" + controllerName + "\").effect(\"IK Direction " +  rootName.slice(-15) + "\")(1)";
+
+				root.parent = zero;
+				//lier le zéro au bone du bout
+				zero.parent = calqueparent;
+				zero.enabled = false;
+				zero.locked = true;
+			} //tridi
+
+			//les expressions de stretch
+			//les positions d'origine
+			var posbout = end.transform.position.value.toString();
+			var poszero = endZero.transform.position.value.toString();
+			var apracine = root.transform.anchorPoint.value.toString();
+			var apbout = end.transform.anchorPoint.value.toString();
+
+			var expressionstretchbout = "//Duik.twoLayerIK.stretch\r\n" +
+				"boneracine = \"" + rootName + "\";\n" + 
+				"controleur = \"" + controllerName + "\";\n" + 
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"function getWorldPos(theLayerName){\n" + 
+				"L = thisComp.layer(theLayerName);\n" + 
+				"return L.toWorld(L.anchorPoint);\n" + 
+				"}\n" + 
+				"dist1 = length([" + apracine + "],[" + posbout + "]);\n" + 
+				"dist2 = length([" + apbout + "],[" + poszero + "]);\n" + 
+				"proportion = dist1/(dist1+dist2);\n" + 
+				"posC = getWorldPos(controleur);\n" + 
+				"posR = getWorldPos(boneracine);\n" + 
+				"distC = length(posC,posR);\n" + 
+				"if (distC > dist1+dist2+stretch && auto ==1 && IKFK) stretch = (distC-dist1-dist2)*proportion;\n" + 
+				"else stretch = stretch*proportion;\n" + 
+				"coef = 1;\n" + 
+				"dist1 != 0 ? coef = (dist1+stretch)/dist1 : coef = 1;\n" +
+				"([" + posbout + "]-[" + apracine + "])*coef+[" + apracine + "];";
+
+			end.transform.position.expression = expressionstretchbout;
+
+			var expressionstretchzero = "//Duik.twoLayerIK.stretch\r\n" +
+				"boneracine = \"" + rootName + "\";\n" + 
+				"controleur = \"" + controllerName + "\";\n" + 
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"function getWorldPos(theLayerName){\n" + 
+				"L = thisComp.layer(theLayerName);\n" + 
+				"return L.toWorld(L.anchorPoint);\n" + 
+				"}\n" + 
+				"dist1 = length([" + apracine + "],[" + posbout + "]);\n" + 
+				"dist2 = length([" + apbout + "],[" + poszero + "]);\n" + 
+				"proportion = dist2/(dist1+dist2);\n" + 
+				"posC = getWorldPos(controleur);\n" + 
+				"posR = getWorldPos(boneracine);\n" + 
+				"distC = length(posC,posR);\n" + 
+				"if (distC > dist1+dist2+stretch && auto ==1 && IKFK) stretch = (distC-dist1-dist2)*proportion;\n" + 
+				"else stretch = stretch*proportion;\n" + 
+				"coef = 1;\n" + 
+				"dist2 != 0 ? coef = (dist2+stretch)/dist2 : coef = 1;\n" +
+				"([" + poszero + "]-[" + apbout + "])*coef+[" + apbout + "];";
+
+			endZero.transform.position.expression = expressionstretchzero;
+			
+			return endZero;
+		}
+	}
+	/* ADD GOAL - Duik.addGoal(layer,controller)
+		adds a goal to the layer which may be controlled by a controller
+		
+		parameters:
+		layer	| AVLayer
+		controller | AVLayer or undefined
+			
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.addGoal !== 'function' || Duik.forceReload)
+	{
+		Duik.addGoal = function (layer,controller)
+		{
+			//pour ne pas bouger, il faut récupérer la rotation d'origine
+			var ancienneRot = 0;
+			if (layer.threeDLayer) ancienneRot = layer.transform.zRotation.value;
+			else ancienneRot = layer.transform.rotation.value;
+
+			//si on a un controleur
+			if (controller != undefined)
+			{
+				//ajouter la case sur le controleur
+				var effetGoal = controller.Effects.addProperty("ADBE Checkbox Control");
+				effetGoal.name = "Goal" + " " + layer.name;
+				effetGoal(1).setValue(true);
+				//ajouter l'expression dans le calque
+				expr = "//Duik.goal\r\n" +
+					"var C = thisComp.layer('" + controller.name + "');\r\n" + 
+					"var goal = C.effect('" + effetGoal.name + "')(1);\r\n" + 
+					"var result = value + C.rotation;\r\n" + 
+					"if (goal == 1)\r\n" + 
+					"{\r\n" + 
+					"var layer = thisLayer;\r\n" + 
+					"while (layer.hasParent)\r\n" + 
+					"{\r\n" + 
+					"layer = layer.parent;\r\n" + 
+					"result = result - layer.rotation;\r\n" + 
+					"}\r\n" + 
+					"}\r\n" + 
+					"result;";
+		
+				if (layer.threeDLayer) layer.transform.zRotation.expression = expr;
+				else layer.transform.rotation.expression = expr;
+			}
+			else
+			{
+				//ajouter la case sur le calque
+				var effetGoal = layer.Effects.addProperty("ADBE Checkbox Control");
+				effetGoal.name = "Goal";
+				effetGoal(1).setValue(true);
+				//ajouter l'expression dans le calque
+				layer.transform.rotation.expression = "//Duik.goal\r\n" +
+					"var goal = thisLayer.effect('" + effetGoal.name + "')(1);\r\n" + 
+					"var result = value;\r\n" + 
+					"if (goal == 1)\r\n" + 
+					"{\r\n" + 
+					"var layer = thisLayer;\r\n" + 
+					"while (layer.hasParent)\r\n" + 
+					"{\r\n" + 
+					"layer = layer.parent;\r\n" + 
+					"result = result - layer.rotation;\r\n" + 
+					"}\r\n" + 
+					"}\r\n" + 
+					"result;";
+			}
+	
+			//et remettre la bonne rotation pour pas bouger
+			var nouvelleRot = 0;
+			if (layer.threeDLayer) nouvelleRot = layer.transform.zRotation.value;
+			else nouvelleRot = layer.transform.rotation.value;
+
+			if (layer.threeDLayer) layer.transform.zRotation.setValue(2*ancienneRot-nouvelleRot);
+			else layer.transform.rotation.setValue(2*ancienneRot-nouvelleRot);
+			
+			return true;
+		}
+	}
+	/* ADD CONTROLLER - Duik.addController(layer)
+	
+		parameters
+		layer | AVLayer
+		
+		returns
+		AVLayer controller
+	*/
+	if (typeof Duik.addController !== 'function' || Duik.forceReload)
+	{
+		Duik.addController = function (layer)
+		{
+			var layerParent = layer.parent;
+			layer.parent = null;
+			var layerPosition = layer.transform.position.value;
+			layer.parent = layerParent;
+
+			//le controleur
+			var controller = app.project.activeItem.layers.addNull();
+			var controllerSize = Duik.settings.controllerSize;
+			if (Duik.settings.controllerSizeAuto) {
+				controllerSize = app.project.activeItem.width/2 + app.project.activeItem.height/2;
+				if (Duik.settings.controllerSizeHint == 0) controllerSize = Math.floor(controllerSize/40);
+				if (Duik.settings.controllerSizeHint == 1) controllerSize = Math.floor(controllerSize/20);
+				if (Duik.settings.controllerSizeHint == 2) controllerSize = Math.floor(controllerSize);
+			}
+			controller.source.width = controllerSize;
+			controller.source.height = controllerSize;
+			controller.anchorPoint.setValue([controller.source.width/2,controller.source.height/2]);
+			controller.transform.position.setValue(layerPosition);
+			controller.name = "C_" + layer.name.slice(-28);
+
+			return controller;
+		}
+	}
+	/* ADD CONTROLLERS - Duik.addControllers(layers)
+
+		parameters
+		layers | Array of AVLayer
+		
+		returns
+		Array of AVLayer controllers
+	*/
+	if (typeof Duik.addControllers !== 'function' || Duik.forceReload)
+	{
+		Duik.addControllers = function (layers)
+		{
+			var controllers = [];
+			
+			for (i = 0 ; i < layers.length ; i++)
+			{
+				controllers.push(Duik.addController(layers[i]));
+			}
+
+			return controllers;
 		}
 	}
 }());
+
+
+

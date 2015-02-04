@@ -30,7 +30,7 @@ function fnDuIK(wnd)
 {
 
 	//================
-	var version = "15.alpha03";
+	var version = "15.alpha04";
 	//================
 
 //===============================================
@@ -146,6 +146,11 @@ for (var k in scriptMng.files)
 
 //=========================== IMAGES CHARGEES, debut du script ==================
 }
+
+//================================
+//CHARGEMENT DE libDuik
+//================================
+#include "libduik.jsxinc"
 
 //======= FONCTION PRINCIPALE
 function IKtools(thisObj){
@@ -443,18 +448,18 @@ function startAutoRig() {
 	
 	var CpiedG,CpiedD,Ccorps,Ccorps2,CmainG,CmainD,Ctete,Cepaules,Cdos,Ccou;
 	//mains
-	if (mainG != undefined) CmainG = addController(mainG);
-	if (mainD != undefined) CmainD = addController(mainD);
+	if (mainG != undefined) CmainG = Duik.addController(mainG);
+	if (mainD != undefined) CmainD = Duik.addController(mainD);
 	//corps
-	bassin != undefined ? Ccorps = addController(bassin) : Ccorps = addController(corps);
-	Ccorps2 = addController(Ccorps);
+	bassin != undefined ? Ccorps = Duik.addController(bassin) : Ccorps = Duik.addController(corps);
+	Ccorps2 = Duik.addController(Ccorps);
 	Ccorps2.source.width = eval(boutonCtrlSize.text)*0.8;
 	Ccorps2.source.height = eval(boutonCtrlSize.text)*0.8;
 	//pieds
-	if (piedD != undefined) CpiedD = addController(piedD);
-	if (piedG != undefined) CpiedG = addController(piedG);
+	if (piedD != undefined) CpiedD = Duik.addController(piedD);
+	if (piedG != undefined) CpiedG = Duik.addController(piedG);
 	//tete
-	if (tete != undefined) Ctete = addController(tete);
+	if (tete != undefined) Ctete = Duik.addController(tete);
 	//épaules
 	if (autorigIKdos.value) {
 		//les positions des épaules, pour placer le controleur à mi chemin entre les deux
@@ -481,9 +486,9 @@ function startAutoRig() {
 
 	}
 	//dos (si bassin et pas d'épaule)
-	if (bassin != undefined && !autorigIKdos.value) Cdos = addController(corps);
+	if (bassin != undefined && !autorigIKdos.value) Cdos = Duik.addController(corps);
 	//cou (si pas d'ik dedans)
-	if (!autorigIKcou.value && cou != undefined) Ccou = addController(cou);
+	if (!autorigIKcou.value && cou != undefined) Ccou = Duik.addController(cou);
 	
 	//les liens de parentés
 	//bras G
@@ -571,73 +576,73 @@ function startAutoRig() {
 	{
 		if (avantBrasG != undefined && brasG != undefined)
 		{
-			twoplusbones(tridi,false,mainG,avantBrasG,brasG,CmainG);	
+			Duik.addIK(CmainG,brasG,avantBrasG,undefined,mainG,false,tridi,false);
 		}
 		else if (avantBrasG != undefined)
 		{
 			
-			onebone(avantBrasG,CmainG);
-			addGoal(mainG,CmainG);
+			Duik.addIK(avantBrasG,CmainG);
+			Duik.addGoal(mainG,CmainG);
 		}
 		else if (brasG != undefined)
 		{
-			onebone(brasG,CmainG);
-			addGoal(mainG,CmainG);
+			Duik.addIK(brasG,CmainG);
+			Duik.addGoal(mainG,CmainG);
 		}
 		else
 		{
-			addGoal(mainG,CmainG);
+			Duik.addGoal(mainG,CmainG);
 		}
 	}
 	//bras D
 	if (mainD != undefined)
 	{
-		if (avantBrasD != undefined && brasD != undefined) twoplusbones(tridi,false,mainD,avantBrasD,brasD,CmainD);
+		if (avantBrasD != undefined && brasD != undefined) Duik.addIK(CmainD,brasD,avantBrasD,undefined,mainD,false,tridi,false);
 		else if (avantBrasD != undefined) {
-			onebone(avantBrasD,CmainD);
-			addGoal(mainD,CmainD);
+			Duik.addIK(avantBrasD,CmainD);
+			Duik.addGoal(mainD,CmainD);
 			}
 		else if (brasD != undefined) {
-			onebone(brasD,CmainD);
-			addGoal(mainD,CmainD);
+			Duik.addIK(brasD,CmainD);
+			Duik.addGoal(mainD,CmainD);
 			}
-		else addGoal(mainD,CmainD);
+		else Duik.addGoal(mainD,CmainD);
 	}
 	//jambe D
 	if (piedD != undefined)
 	{
-		if (molletD != undefined && cuisseD != undefined) twoplusbones(tridi,false,piedD,molletD,cuisseD,CpiedD);
+		if (molletD != undefined && cuisseD != undefined) Duik.addIK(CpiedD,cuisseD,molletD,undefined,piedD,false,tridi,false);
 		else if (molletD != undefined) {
-			onebone(molletD,CpiedD);
-			addGoal(piedD,CpiedD);
+			Duik.addIK(molletD,CpiedD);
+			Duik.addGoal(piedD,CpiedD);
 			}
 		else if (cuisseD != undefined) {
-			onebone(cuisseD,CpiedD);
-			addGoal(piedD,CpiedD);
+			Duik.addIK(cuisseD,CpiedD);
+			Duik.addGoal(piedD,CpiedD);
 			}
-		else addGoal(piedD,CpiedD);
+		else Duik.addGoal(piedD,CpiedD);
 	}
 	//jambe G
 	if (piedG != undefined)
 	{
-		if (molletG != undefined && cuisseG != undefined) twoplusbones(tridi,false,piedG,molletG,cuisseG,CpiedG);
+		if (molletG != undefined && cuisseG != undefined) Duik.addIK(CpiedG,cuisseG,molletG,undefined,piedG,false,tridi,false);
 		else if (molletG != undefined) {
-			onebone(molletG,CpiedG);
-			addGoal(piedG,CpiedG);
+			Duik.addIK(molletG,CpiedG);
+			Duik.addGoal(piedG,CpiedG);
 			}
 		else if (cuisseG != undefined) {
-			onebone(cuisseG,CpiedG);
-			addGoal(piedG,CpiedG);
+			Duik.addIK(cuisseG,CpiedG);
+			Duik.addGoal(piedG,CpiedG);
 			}
-		else addGoal(piedG,CpiedG);
+		else Duik.addGoal(piedG,CpiedG);
 	}
 	//dos
 	if (autorigIKdos.value) {
-		onebone(corps,Cepaules);
+		Duik.addIK(corps,Cepaules);
 	}
 	//cou
 	if (autorigIKcou.value && cou != undefined) {
-		onebone(cou,Ctete);
+		Duik.addIK(cou,Ctete);
 	}
 	
 	
@@ -661,7 +666,7 @@ function startAutoRig() {
 	//les goals
 	//tete
 	if (tete != undefined) {
-		addGoal(tete,Ctete);
+		Duik.addGoal(tete,Ctete);
 	}
 	
 	//groupe d'annulation
@@ -705,7 +710,7 @@ function ik(){
 	if (calques.length == 2) {
 		//groupe d'annulation
 		app.beginUndoGroup("Duik - IK");
-		calquetridi ? alert(getMessage(5)) : onebone(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+		calquetridi ? alert(getMessage(5)) : Duik.addIK(app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0]);
 		//groupe d'annulation
 		app.endUndoGroup();
 		}//if calques.length == 2
@@ -729,329 +734,16 @@ function goik(){
 	app.beginUndoGroup("Duik - IK");
 	var calques = app.project.activeItem.selectedLayers;
 	var calquetridi = calques[0].threeDLayer;
-	if (calques.length == 3) {twobones(calquetridi,boutonFront.value,app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[2]);}
-	else if (calques.length == 4) {twoplusbones(calquetridi,boutonFront.value,app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[3]);}
+	if (calques.length == 3)
+	{
+		Duik.addIK(app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0],undefined,undefined,boutonCW.value,calquetridi,boutonFront.value);
+	}
+	else if (calques.length == 4)
+	{
+		Duik.addIK(app.project.activeItem.selectedLayers[3],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],undefined,app.project.activeItem.selectedLayers[0],boutonCW.value,calquetridi,boutonFront.value,);
+	}
 	//groupe d'annulation
 	app.endUndoGroup();
-}
-
-//FONCTION QUI APPLIQUE UN IK SUR UN SEUL BONE (LOOKAT)
-function onebone(bone,controleur){
-
-	//récupérer le bone
-	var bonename = bone.name;
-	//récupérer le controleur
-	var controleurname = controleur.name;
-	
-	//rotation d'origine
-	var orot = bone.transform.rotation.value;
-
-	//=========================================================
-	//EXPRESSION A INSERER
-	var expression = "C = thisComp.layer(\"" + controleurname + "\").toWorld(thisComp.layer(\"" + controleurname + "\").anchorPoint);\r\n" +
-	"O =  thisLayer.toWorld(thisLayer.anchorPoint);\r\n" +
-	"angle = lookAt(C,O);\r\n" +
-	"var result;\r\n" +
-	"angle[0] > 0 ? result = angle[0]+angle[1]+value : result = angle[0]-angle[1]+value;\r\n" +
-	"var layer = thisLayer;\r\n" +
-	"while (layer.hasParent)\r\n" +
-	"{\r\n" +
-	"layer = layer.parent;\r\n" +
-	"result = result - layer.rotation;\r\n" +
-	"}\r\n" +
-	"result;";
-	//=========================================================
-
-	bone.transform.rotation.expression = expression;
-	
-	//nouvelle rotation
-	var nrot = bone.transform.rotation.value;
-
-	bone.transform.rotation.setValue(-nrot+2*orot);
-
-}
-
-//FONCTION QUI APPLIQUE UN IK SUR DEUX BONES
-function twobones(tridi,front,bonebout,boneracine,controleur,zero){
-
-	
-	//récupérer le bone du bout
-	var boneboutname = bonebout.name;
-	//récupérer le bone racine
-	var boneracinename = boneracine.name;
-	//récupérer le controleur
-	var controleurname = controleur.name;
-
-	//vérifions que les parentées sont bonnes
-	if (bonebout.parent != boneracine) { alert(getMessage(9),"Attention",true); return; }
-				
-	//Ajoutons une case a cocher sur le controleur pour choisir le sens de l'IK
-	coude = controleur.Effects.addProperty("ADBE Checkbox Control");
-	coude.name = "IK Orientation";
-	if (boutonCW.value) coude(1).setValue(1);
-
-	if (tridi) {
-		direction = controleur.Effects.addProperty("ADBE Angle Control");
-		direction.name = "IK Direction " +  boneracinename.slice(-15);
-	} //tridi
-		
-	//controleurs FK
-	if (boutonFK.value) {
-		//une case a cocher pour l'IK/FK
-		ikfk = controleur.Effects.addProperty("ADBE Checkbox Control");
-		ikfk.name = getMessage(137);
-		ikfk(1).setValue(1);
-		//un angle pour le haut
-		urot = controleur.Effects.addProperty("ADBE Angle Control");
-		urot.name = getMessage(138);
-		//un angle pour le bas
-		lrot = controleur.Effects.addProperty("ADBE Angle Control");
-		lrot.name = getMessage(139);
-	} //boutonFK.value
-
-	//controleurs de stretch
-	if (boutonStretch.value) 
-	{
-		//une case a cocher pour l'autostretch
-		autostretch = controleur.Effects.addProperty("ADBE Checkbox Control");
-		autostretch.name = "Auto-Stretch";
-		autostretch(1).setValue(1);
-		//un slider pour le stretch
-		stretch = controleur.Effects.addProperty("ADBE Slider Control");
-		stretch.name = "Stretch";
-	} //boutonStretch.value
-			
-	//créer un zéro
-	zerobout = app.project.activeItem.layers.addNull();
-	zerobout.threeDLayer = true;
-	var controleurparent = controleur.parent;
-	controleur.parent = null;
-	zerobout.position.setValue(controleur.position.value);
-	zerobout.name = "IK_zero " + boneboutname.slice(-24);
-	controleur.parent = controleurparent;
-	
-	//lier le zéro au bone du bout
-	zerobout.parent = bonebout;
-
-	//verrouiller et masquer le zéro
-	zerobout.moveToEnd();
-	zerobout.guideLayer = true;
-	zerobout.locked = true;
-	zerobout.enabled = false;
-	zerobout.shy = true;
-
-	zeroboutname = zerobout.name;
-
-	//=========================================================
-	//EXPRESSION A INSERER SUR LE BONE BOUT
-	var expressionbout = "boneracine = \"" + boneracinename + "\";\n" + 
-		"bonebout = \"" + boneboutname + "\";\n" + 
-		"zero = \"" + zeroboutname + "\";\n" + 
-		"controleur = \"" + controleurname + "\";\n";
-	boutonFK.value ? expressionbout += "FK = thisComp.layer(controleur).effect(\"" + getMessage(139) + "\")(1);\n" : expressionbout += "FK = 0;\n";
-	boutonFK.value ? expressionbout += "IKFK = thisComp.layer(controleur).effect(\"" + getMessage(137) + "\")(1) == 1;\n" : expressionbout += "IKFK = true;\n";
-	expressionbout += "if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
-		"function getWorldPos(theLayerName){\n" + 
-		"  L = thisComp.layer(theLayerName);\n" + 
-		"  return L.toWorld(L.anchorPoint);\n" + 
-		"}\n" + 
-		"function oriente(a, b, P) {\n" +
-		"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
-		"}\n" +
-		"A = getWorldPos(boneracine);\n" + 
-		"B = getWorldPos(bonebout);\n" + 
-		"C = getWorldPos(zero);\n" + 
-		"E = getWorldPos(controleur);\n" + 
-		"a = length(B,C);\n" + 
-		"b = length(E,A);\n" + 
-		"c = length(A,B);\n" + 
-		"x = (b*b + c*c - a*a )/(2*b);\n" + 
-		"alpha = Math.acos(clamp(x/c,-1,1));\n" + 
-		"y = b - x;\n" + 
-		"  gamma = Math.acos(clamp(y/a,-1,1));\n" + 
-		"result = (cw ? 1 : -1)*radiansToDegrees(gamma + alpha);" +
-		"  V1 = B - A;\n" + 
-		"  adj1 = radiansToDegrees(Math.atan2(V1[1],V1[0]));\n" + 
-		"  V2 = C - B;\n" + 
-		"  adj2 = radiansToDegrees(Math.atan2(V2[1],V2[0]));\n" + 
-		"  IK = result +  adj1 - adj2 + value;\n" + 
-		"IKFK ? IK : FK;";
-	//=========================================================
-
-	tridi ? bonebout.transform.zRotation.expression = expressionbout : bonebout.transform.rotation.expression = expressionbout;
-
-	//=========================================================
-	//EXPRESSION A INSERER SUR LE BONE RACINE
-	var expressionracine = "boneracine = \"" + boneracinename + "\";\n" + 
-		"bonebout = \"" + boneboutname + "\";\n" + 
-		"zero = \"" + zeroboutname + "\";\n" + 
-		"controleur = \"" + controleurname + "\";\n";
-	boutonFK.value ? expressionracine += "FK = thisComp.layer(controleur).effect(\"" + getMessage(138) + "\")(1);\n" : expressionracine += "FK = 0;\n";
-	boutonFK.value ? expressionracine += "IKFK = thisComp.layer(controleur).effect(\"" + getMessage(137) + "\")(1) == 1;\n" : expressionracine += "IKFK = true;\n";
-	expressionracine += "if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
-		"function getWorldPos(theLayerName){\n" + 
-		"  L = thisComp.layer(theLayerName);\n" + 
-		"  return L.toWorld(L.anchorPoint);\n" + 
-		"}\n" + 
-		"function oriente(a, b, P) {\n" +
-		"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
-		"}\n" +
-		"A = getWorldPos(boneracine);\n" + 
-		"B = getWorldPos(bonebout);\n" + 
-		"C = getWorldPos(zero);\n" + 
-		"E = getWorldPos(controleur);\n" + 
-		"a = length(B,C);\n" + 
-		"b = length(E,A);\n" + 
-		"c = length(A,B);\n" + 
-		"x = (b*b + c*c - a*a )/(2*b);\n" + 
-		"alpha = Math.acos(clamp(x/c,-1,1));\n" + 
-		"D = E - A;\n" + 
-		"delta = Math.atan2(D[1],D[0]);\n" + 
-		"result = radiansToDegrees(delta - (cw ? 1 : -1)*alpha);\n" +
-		"V = B - A;\n" + 
-		"adj1 = radiansToDegrees(Math.atan2(V[1],V[0]));\n" + 
-		"IK = result - adj1 + value;\n" + 
-		"IKFK ? IK : FK;";
-	//=======================================================
-
-	tridi ? boneracine.transform.zRotation.expression = expressionracine : boneracine.transform.rotation.expression = expressionracine;
-
-	if (tridi) {
-		//si 3D : le zéro de la jambe pour l'orientation
-		//créer un zéro
-		var zero = app.project.activeItem.layers.addNull();
-		zero.threeDLayer = true;
-		var calqueparent = boneracine.parent;
-		boneracine.parent = null;
-		zero.position.setValue(boneracine.position.value);
-		zero.name = "Zero_" + boneracine.name.slice(-24);
-		//verrouiller et masquer le zéro
-		zero.moveToEnd();
-		zero.guideLayer = true;
-		zero.shy = true;
-
-		if (front) {
-			var expressionzero = "controleur =thisComp.layer(\"" + controleurname + "\");\n\n" + 
-				"C = controleur.toWorld(controleur.anchorPoint);\n" +
-				"Cx = C[0];\n" +
-				"Cy = C[1];\n" +
-				"Cz = C[2];\n" +
-				"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-				"Lx = L[0];\n" +
-				"Ly = L[1];\n" +
-				"Lz = L[2];" +
-				"angle = lookAt([Cz,Cy,Cx],[Lz,Ly,Lx]);\n" +
-				"[-angle[1]+90,-angle[0],value[2]]\n"
-		} else { //front
-			var expressionzero = "controleur =thisComp.layer(\"" + controleurname + "\");\n\n" + 
-				"C = controleur.toWorld(controleur.anchorPoint);\n" +
-				"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-				"angle = lookAt(C,L);\n" +
-				"[angle[0],angle[1],value[2]]\n"
-		} //else front
-		zero.transform.orientation.expression = expressionzero;
-		zero.transform.xRotation.expression = "thisComp.layer(\"" + controleurname + "\").effect(\"IK Direction " +  boneracinename.slice(-15) + "\")(1)";
-
-		boneracine.parent = zero;
-		//lier le zéro au bone du bout
-		zero.parent = calqueparent;
-		zero.enabled = false;
-		zero.locked = true;
-	} //tridi
-
-	//les expressions de stretch
-	if (boutonStretch.value) 
-	{
-		//les positions d'origine
-		var posbout = bonebout.transform.position.value.toString();
-		var poszero = zerobout.transform.position.value.toString();
-		var apracine = boneracine.transform.anchorPoint.value.toString();
-		var apbout = bonebout.transform.anchorPoint.value.toString();
-
-		var expressionstretchbout = "boneracine = \"" + boneracinename + "\";\n" + 
-			"controleur = \"" + controleurname + "\";\n" + 
-			"stretch = thisComp.layer(\"" + controleurname + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
-			"auto = thisComp.layer(\"" + controleurname + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n";
-		boutonFK.value ? expressionstretchbout += "IKFK = thisComp.layer(controleur).effect(\"" + getMessage(137) + "\")(1) == 1;\n" : expressionstretchbout += "IKFK = true;\n";
-		expressionstretchbout += "function getWorldPos(theLayerName){\n" + 
-			"L = thisComp.layer(theLayerName);\n" + 
-			"return L.toWorld(L.anchorPoint);\n" + 
-			"}\n" + 
-			"dist1 = length([" + apracine + "],[" + posbout + "]);\n" + 
-			"dist2 = length([" + apbout + "],[" + poszero + "]);\n" + 
-			"proportion = dist1/(dist1+dist2);\n" + 
-			"posC = getWorldPos(controleur);\n" + 
-			"posR = getWorldPos(boneracine);\n" + 
-			"distC = length(posC,posR);\n" + 
-			"if (distC > dist1+dist2+stretch && auto ==1 && IKFK) stretch = (distC-dist1-dist2)*proportion;\n" + 
-			"else stretch = stretch*proportion;\n" + 
-			"coef = 1;\n" + 
-			"dist1 != 0 ? coef = (dist1+stretch)/dist1 : coef = 1;\n" +
-			"([" + posbout + "]-[" + apracine + "])*coef+[" + apracine + "];";
-
-		bonebout.transform.position.expression = expressionstretchbout;
-
-		var expressionstretchzero = "boneracine = \"" + boneracinename + "\";\n" + 
-			"controleur = \"" + controleurname + "\";\n" + 
-			"stretch = thisComp.layer(\"" + controleurname + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
-			"auto = thisComp.layer(\"" + controleurname + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n";
-		boutonFK.value ? expressionstretchzero += "IKFK = thisComp.layer(controleur).effect(\"" + getMessage(137) + "\")(1) == 1;\n" : expressionstretchzero += "IKFK = true;\n";
-		expressionstretchzero += "function getWorldPos(theLayerName){\n" + 
-			"L = thisComp.layer(theLayerName);\n" + 
-			"return L.toWorld(L.anchorPoint);\n" + 
-			"}\n" + 
-			"dist1 = length([" + apracine + "],[" + posbout + "]);\n" + 
-			"dist2 = length([" + apbout + "],[" + poszero + "]);\n" + 
-			"proportion = dist2/(dist1+dist2);\n" + 
-			"posC = getWorldPos(controleur);\n" + 
-			"posR = getWorldPos(boneracine);\n" + 
-			"distC = length(posC,posR);\n" + 
-			"if (distC > dist1+dist2+stretch && auto ==1 && IKFK) stretch = (distC-dist1-dist2)*proportion;\n" + 
-			"else stretch = stretch*proportion;\n" + 
-			"coef = 1;\n" + 
-			"dist2 != 0 ? coef = (dist2+stretch)/dist2 : coef = 1;\n" +
-			"([" + poszero + "]-[" + apbout + "])*coef+[" + apbout + "];";
-
-		zerobout.transform.position.expression = expressionstretchzero;
-	} //boutonStretch.value
-
-	
-	return zerobout;
-} //function twobones
-
-//FONCTION QUI APPLIQUE UN IK SUR DEUX + UN BONES
-function twoplusbones(tridi,front,main,bonebout,boneracine,controleur){
-	
-	//récupérer la main
-	var mainname = main.name;
-	//récupérer le bone du bout
-	var boneboutname = bonebout.name;
-	//récupérer le bone racine
-	var boneracinename = boneracine.name;
-	//récupérer le controleur
-	var controleurname = controleur.name;
-
-	//d'abord l'ik sur deux bones habituel
-	var zero = twobones(tridi,front,bonebout,boneracine,controleur,main);
-	
-		
-	//ajouter le goal
-	addGoal(main,controleur);
-	
-	//ajouter un controleur FK
-	if (boutonFK.value)
-	{
-		grot = controleur.Effects.addProperty("ADBE Angle Control");
-		grot.name = getMessage(140);
-		//et mettre à jour l'expression de la main
-		if (tridi) main.transform.zRotation.expression = main.transform.zRotation.expression + "\nresult + thisComp.layer('" + controleurname + "').effect('" + getMessage(140) + "')(1);";
-		else main.transform.rotation.expression = main.transform.rotation.expression + "\nresult + thisComp.layer('" + controleurname + "').effect('" + getMessage(140) + "')(1);";
-	}
-	//et si il y a du stretch
-	if (boutonStretch.value) main.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
-	
-	
-
 }
 
 //FONCTION QUAND ON CLIQUE SUR GOAL
@@ -1061,7 +753,7 @@ if (app.project.activeItem.selectedLayers.length == 1) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
-	addGoal(app.project.activeItem.selectedLayers[0],undefined);
+	Duik.addGoal(app.project.activeItem.selectedLayers[0],undefined);
 	//groupe d'annulation
 	app.endUndoGroup();
 }
@@ -1069,76 +761,11 @@ else if (app.project.activeItem.selectedLayers.length == 2) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
-	addGoal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+	Duik.addGoal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
 	//groupe d'annulation
 	app.endUndoGroup();
 }
 else{alert(getMessage(10),"Attention",true);}
-}
-
-//FONCTION QUI CREE UN GOAL SUR UN CALQUE
-function addGoal(layer,ctrl){
-
-	//pour ne pas bouger, il faut récupérer la rotation d'origine
-	var ancienneRot = 0;
-	if (layer.threeDLayer) ancienneRot = layer.transform.zRotation.value;
-	else ancienneRot = layer.transform.rotation.value;
-
-
-	//si on a un controleur
-	if (ctrl != undefined)
-	{
-		//ajouter la case sur le controleur
-		var effetGoal = ctrl.Effects.addProperty("ADBE Checkbox Control");
-		effetGoal.name = "Goal" + " " + layer.name;
-		effetGoal(1).setValue(true);
-		//ajouter l'expression dans le calque
-		expr = "var C = thisComp.layer('" + ctrl.name + "');\r\n" + 
-			"var goal = C.effect('" + effetGoal.name + "')(1);\r\n" + 
-			"var result = value + C.rotation;\r\n" + 
-			"if (goal == 1)\r\n" + 
-			"{\r\n" + 
-			"var layer = thisLayer;\r\n" + 
-			"while (layer.hasParent)\r\n" + 
-			"{\r\n" + 
-			"layer = layer.parent;\r\n" + 
-			"result = result - layer.rotation;\r\n" + 
-			"}\r\n" + 
-			"}\r\n" + 
-			"result;";
-		
-		if (layer.threeDLayer) layer.transform.zRotation.expression = expr;
-		else layer.transform.rotation.expression = expr;
-		
-	}
-	else {
-		//ajouter la case sur le calque
-		var effetGoal = layer.Effects.addProperty("ADBE Checkbox Control");
-		effetGoal.name = "Goal";
-		effetGoal(1).setValue(true);
-		//ajouter l'expression dans le calque
-		layer.transform.rotation.expression = "var goal = thisLayer.effect('" + effetGoal.name + "')(1);\r\n" + 
-			"var result = value;\r\n" + 
-			"if (goal == 1)\r\n" + 
-			"{\r\n" + 
-			"var layer = thisLayer;\r\n" + 
-			"while (layer.hasParent)\r\n" + 
-			"{\r\n" + 
-			"layer = layer.parent;\r\n" + 
-			"result = result - layer.rotation;\r\n" + 
-			"}\r\n" + 
-			"}\r\n" + 
-			"result;";
-	}
-	
-	//et remettre la bonne rotation pour pas bouger
-	var nouvelleRot = 0;
-	if (layer.threeDLayer) nouvelleRot = layer.transform.zRotation.value;
-	else nouvelleRot = layer.transform.rotation.value;
-
-	if (layer.threeDLayer) layer.transform.zRotation.setValue(2*ancienneRot-nouvelleRot);
-	else layer.transform.rotation.setValue(2*ancienneRot-nouvelleRot);
-
 }
 
 //FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
@@ -1149,42 +776,11 @@ function controleur(){
 			//  début de groupe d'annulation
 			app.beginUndoGroup("Duik - " + getMessage(116));
 			var layers = app.project.activeItem.selectedLayers;
-			for (i = 0 ; i < layers.length ; i++)
-			{
-				addController(layers[i]);
-			}
+			Duik.addControllers(layers);
 			//fin du groupe d'annulation
 			app.endUndoGroup();
 		} else { alert(getMessage(11)); }
 
-}
-
-//FONCTION POUR CREER UN CONTROLEUR SUR UN CALQUE
-function addController(bone){
-				
-		var boneparent = bone.parent;
-		bone.parent = null;
-		var boneposition = bone.transform.position.value;
-		bone.parent = boneparent;
-
-		//le controleur
-		var controleur = app.project.activeItem.layers.addNull();
-		var ctrlTaille = eval(boutonCtrlSize.text);
-		if (boutonCtrlSizeAuto.value) {
-			ctrlTaille = app.project.activeItem.width/2 + app.project.activeItem.height/2;
-			if (boutonCtrlSizeAutoValue.selection.index == 0) ctrlTaille = Math.floor(ctrlTaille/40);
-			if (boutonCtrlSizeAutoValue.selection.index == 1) ctrlTaille = Math.floor(ctrlTaille/20);
-			if (boutonCtrlSizeAutoValue.selection.index == 2) ctrlTaille = Math.floor(ctrlTaille/10);
-		}
-		controleur.source.width = ctrlTaille;
-		controleur.source.height = ctrlTaille;
-		controleur.anchorPoint.setValue([controleur.source.width/2,controleur.source.height/2]);
-		controleur.transform.position.setValue(boneposition);
-		controleur.name = "C_" + bone.name.slice(-28);
-		
-
-		
-		return controleur;
 }
 	 
 //FONCTION CONF WIGGLE POSITION
