@@ -41,22 +41,21 @@ This file is part of Duik.
 	A complete list of uiStrings is available in the developper's guide of libDuik on
 	http://www.duduf.net
 	
-	Anyway, if you're modifying this file, you may force reloading the class when restarting
-	the script in which you included it.
-		Duik.forceReload = true;
+	However, if you're modifying this file, you may want to force reload the class for testing purposes.
+	After the definition block of Duik,change
+		Duik.forceReload
+	to true.
 	
 */
 
 if (typeof Duik !== 'object')
 {
     Duik = {};
-	Duik.forceReload = false;
-	Duik.version = "15.alpha4";
-	Duik.versionNumber = 15.0004
 }
 
-
-#include duik_translations.jsxinc;
+Duik.version = "15.alpha4";
+Duik.versionNumber = 15.0004
+Duik.forceReload = true;
 
 (function ()
 {	
@@ -77,9 +76,20 @@ if (typeof Duik !== 'object')
 		Duik.uiStrings = {};
 		
 		Duik.uiStrings.ikFkBox = "IK / FK";
+		Duik.uiStrings.reverseBox = "Reverse";
+		Duik.uiStrings.fkAngle = "FK";
 		Duik.uiStrings.rootFkAngle = "Root FK";
 		Duik.uiStrings.endFkAngle = "End FK";
 		Duik.uiStrings.goalFkAngle = "Goal FK";
+		Duik.uiStrings.weightSlider = "LookAt Weight";
+		Duik.uiStrings.xAmp = "X Amp.";
+		Duik.uiStrings.xFreq = "X Freq.";
+		Duik.uiStrings.yAmp = "Y Amp.";
+		Duik.uiStrings.yFreq = "Y Freq.";
+		Duik.uiStrings.zAmp = "Z Amp.";
+		Duik.uiStrings.zFreq = "Z Freq.";
+		Duik.uiStrings.amp = "Amp.";
+		Duik.uiStrings.freq = "Freq.";
 	}
 
 	//============ SETTINGS =======================
@@ -96,6 +106,28 @@ if (typeof Duik !== 'object')
 		Duik.settings.controllerSizeAuto = true;
 		//when controllerSizeAuto is true, 0 = small, 1 = medium, 2 = big
 		Duik.settings.controllerSizeHint = 1;
+	}
+	
+	//============ UTILS ==========================
+	if (typeof Duik.utils !== 'object' || Duik.forceReload)
+	{
+		// PREPARE PROPERTY - Duik.utils.prepareProperty(prop,isFX,ind,prof,parentName)
+		if (typeof Duik.utils.prepareProperty !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.prepareProperty = function (prop,isFX,ind,prof,parentName)
+			{
+				if (!prop.canSetExpression) return false;
+				isFX = false;
+				if (prop.parentProperty.isEffect)
+				{
+					ind = prop.propertyIndex;
+					prof = prop.propertyDepth;
+					parentName = prop.parentProperty.name;
+					isFX = true;
+				}
+				return true;
+			}
+		}
 	}
 	
 	//============== METHODS ======================
@@ -180,17 +212,35 @@ if (typeof Duik !== 'object')
 					
 			var controllerName = ctrl.name;
 			
+			//weight slider
+			var weightSlider = ctrl.Effects.addProperty("ADBE Slider Control");
+			weightSlider.name = Duik.uiStrings.weightSlider;
+			weightSlider(1).setValue(100);
+			//reverse
+			var rev = ctrl.Effects.addProperty("ADBE Checkbox Control");
+			rev.name = Duik.uiStrings.reverseBox;
+			//FK
+			var fkAngle = ctrl.Effects.addProperty("ADBE Angle Control");
+			fkAngle.name = Duik.uiStrings.fkAngle;
+			
+			
 			//rotation d'origine
 			var orot = layer1.transform.rotation.value;
 
 			//=========================================================
 			//EXPRESSION TO INSERT
 			var expression = "//Duik.oneLayerIK\r\n" + 
-			"C = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\r\n" +
+			"CName = \"" + controllerName + "\";\r\n" +
+			"C = thisComp.layer(CName).toWorld(thisComp.layer(CName).anchorPoint);\r\n" +
 			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\r\n" +
+			"W = thisComp.layer(CName).effect(\"" + Duik.uiStrings.weightSlider + "\")(1)/100;\r\n" + 
+			"FK = thisComp.layer(CName).effect(\"" + Duik.uiStrings.fkAngle + "\")(1);\r\n" +
+			"R = thisComp.layer(CName).effect(\"" + Duik.uiStrings.reverseBox + "\")(1);\r\n" + 
 			"angle = lookAt(C,O);\r\n" +
+			"angle = angle*W;\r\n" +
+			"R == 1 ? angle = -angle : angle;\r\n" +
 			"var result;\r\n" +
-			"angle[0] > 0 ? result = angle[0]+angle[1]+value : result = angle[0]-angle[1]+value;\r\n" +
+			"angle[0] > 0 ? result = angle[0]+angle[1]+FK+value : result = angle[0]-angle[1]+FK+value;\r\n" +
 			"var layer = thisLayer;\r\n" +
 			"while (layer.hasParent)\r\n" +
 			"{\r\n" +
@@ -572,12 +622,12 @@ if (typeof Duik !== 'object')
 		}
 	}
 	/* ADD CONTROLLERS - Duik.addControllers(layers)
-
+		
 		parameters
 		layers | Array of AVLayer
 		
 		returns
-		Array of AVLayer controllers
+		true if successful, false if anything went wrong
 	*/
 	if (typeof Duik.addControllers !== 'function' || Duik.forceReload)
 	{
@@ -591,6 +641,233 @@ if (typeof Duik !== 'object')
 			}
 
 			return controllers;
+		}
+	}
+	/* ADD WIGGLE - Duik.addWiggle(layer,property,all,x,y,z)
+
+		Adds a wiggle effect on the property of the layer
+	
+		parameters
+		layer | AVLayer
+		property | Property
+		all | boolean, default: true
+		x | boolean, default: false
+		y | boolean, default: false
+		z | boolean, default: false
+		
+		returns
+		true if successful, false if anything went wrong
+	*/
+	if (typeof Duik.addWiggle !== 'function' || Duik.forceReload)
+	{
+		Duik.addWiggle = function (layer,prop,all,x,y,z)
+		{
+			if (!prop.canSetExpression) return false;
+			
+			if (all == undefined) all = true;
+			if (x == undefined) x = false;
+			if (y == undefined) y = false;
+			if (z == undefined) z = false;
+			
+			var dimensions = 1;
+			
+			//detect dimensions of the property
+			if (!all)
+			{
+				if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+				{
+					//if this is a position and the layer is not 3D, AFX uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
+					if (!prop.parentProperty.isEffect && prop.name.toLowerCase() == "position" && !app.project.activeItem.selectedLayers[0].threeDLayer)
+					{
+						dimensions = 2;
+					}
+					else
+					{
+						dimensions = 3;
+					}
+				}
+				else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
+				{
+					dimensions = 2;
+				}
+			}
+			
+			var ok = false;
+			
+			if (dimensions == 3) ok = Duik.add3DWiggle(layer,prop,x,y,z);
+			else if (dimensions == 2) ok = Duik.add2DWiggle(layer,prop,x,y);
+			else ok = Duik.add1DWiggle(layer,prop);
+			
+			return ok;
+		}
+	}
+	// ADD 3D WIGGLE - Duik.add3DWiggle(layer,property,x,y,z)
+	if (typeof Duik.add3DWiggle !== 'function' || Duik.forceReload)
+	{
+		Duik.add3DWiggle = function (layer,prop,x,y,z)
+		{
+			//checks if it's a 3D property
+			if (prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType != PropertyValueType.ThreeD)
+			{
+				return false;
+			}
+			if (x == undefined) x = true;
+			if (y == undefined) y = true;
+			if (z == undefined) z = true;
+			
+			//if prop is an effect, need a way to recover it
+			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			
+			if (x && y && z){
+				xamp = layer.Effects.addProperty("ADBE Slider Control");
+				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				yamp = layer.Effects.addProperty("ADBE Slider Control");
+				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				zamp = layer.Effects.addProperty("ADBE Slider Control");
+				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
+				xfreq = layer.Effects.addProperty("ADBE Slider Control");
+				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				yfreq = layer.Effects.addProperty("ADBE Slider Control");
+				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				zfreq = layer.Effects.addProperty("ADBE Slider Control");
+				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" +  "[X[0],Y[1],Z[2]]";
+			}
+			else if (x && y && !z){
+				xamp = layer.Effects.addProperty("ADBE Slider Control");
+				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				yamp = layer.Effects.addProperty("ADBE Slider Control");
+				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				xfreq = layer.Effects.addProperty("ADBE Slider Control");
+				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				yfreq = layer.Effects.addProperty("ADBE Slider Control");
+				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "[X[0],Y[1],value[2]]";
+			}
+			else if (x && !y && z){
+				xamp = layer.Effects.addProperty("ADBE Slider Control");
+				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				zamp = layer.Effects.addProperty("ADBE Slider Control");
+				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
+				xfreq = layer.Effects.addProperty("ADBE Slider Control");
+				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				zfreq = layer.Effects.addProperty("ADBE Slider Control");
+				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" + "[X[0],value[1],Z[2]]";
+			}
+			else if (!x && y && z) {
+				yamp = layer.Effects.addProperty("ADBE Slider Control");
+				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				zamp = layer.Effects.addProperty("ADBE Slider Control");
+				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
+				yfreq = layer.Effects.addProperty("ADBE Slider Control");
+				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				zfreq = layer.Effects.addProperty("ADBE Slider Control");
+				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" + "[value[0],Y[1],Z[2]]";
+			}
+			else if (x && !y && !z){
+				amp = layer.Effects.addProperty("ADBE Slider Control");
+				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				freq = layer.Effects.addProperty("ADBE Slider Control");
+				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[X[0],value[1],value[2]]";
+				}
+			else if (!x && y && !z){
+				amp = layer.Effects.addProperty("ADBE Slider Control");
+				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				freq = layer.Effects.addProperty("ADBE Slider Control");
+				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],Y[1],value[2]]";
+			}
+			else if (!x && !y && z){
+				amp = layer.Effects.addProperty("ADBE Slider Control");
+				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
+				freq = layer.Effects.addProperty("ADBE Slider Control");
+				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Z=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],value[1],Z[2]]";
+			}
+			
+			return true;
+		}
+	}
+	// ADD 2D WIGGLE - Duik.add2DWiggle(layer,property,x,y)
+	if (typeof Duik.add2DWiggle !== 'function' || Duik.forceReload)
+	{
+		Duik.add2DWiggle = function (layer,prop,x,y)
+		{
+			//checks if it's a 2D property
+			if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL || prop.propertyValueType != PropertyValueType.TwoD)
+			{
+				return false;
+			}
+			if (x == undefined) x = true;
+			if (y == undefined) y = true
+			
+			//if prop is an effect, need a way to recover it
+			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			
+			if (x && y){
+				xamp = layer.Effects.addProperty("ADBE Slider Control");
+				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				yamp = layer.Effects.addProperty("ADBE Slider Control");
+				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				xfreq = layer.Effects.addProperty("ADBE Slider Control");
+				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				yfreq = layer.Effects.addProperty("ADBE Slider Control");
+				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" +  "[X[0],Y[1]]";
+			}
+			else if (x && !y){
+				amp = layer.Effects.addProperty("ADBE Slider Control");
+				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
+				freq = layer.Effects.addProperty("ADBE Slider Control");
+				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "X=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[X[0],value[1]]";
+			}
+			else if (!x && y) {
+				amp = layer.Effects.addProperty("ADBE Slider Control");
+				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
+				freq = layer.Effects.addProperty("ADBE Slider Control");
+				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
+				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+				prop.expression = "Y=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],Y[1]]";
+			}
+			
+			return true;
+		}
+	}
+	// ADD 1D WIGGLE - Duik.add1DWiggle(layer,property)
+	if (typeof Duik.add1DWiggle !== 'function' || Duik.forceReload)
+	{
+		Duik.add1DWiggle = function (layer,prop)
+		{	
+			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			
+			amp = layer.Effects.addProperty("ADBE Slider Control");
+			amp.name = prop.parentProperty.name + " " + Duik.uiStrings.amp;
+			freq = layer.Effects.addProperty("ADBE Slider Control");
+			freq.name = prop.parentProperty.name + " " + Duik.uiStrings.freq;
+			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			prop.expression = "wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1))";
+			
+			return true;
+
 		}
 	}
 }());
