@@ -677,7 +677,6 @@ function startAutoRig() {
 
 //FONCTION QUAND ON CLIQUE SUR CREER IK
 function ik(){
-
 	var calques = app.project.activeItem.selectedLayers;
 	
 	if (calques.length != 2 && calques.length != 3 && calques.length != 4) {
@@ -685,8 +684,7 @@ function ik(){
 		return;
 	} //if calques.length == 2 || calques.length == 3 || calques.length == 4
 	
-	verifNoms();
-	
+	verifNoms();	
 	var calquetridi = false;
 	var ncalquetridi = 0;
 	for (i=0;i<calques.length;i++){
@@ -726,7 +724,6 @@ function ik(){
 		boutonFK.value = eval(app.settings.getSetting("duik", "ikfk"));
 		fenetreik.show();
 	} //if calques.length == 4
-
 }
 
 //FONCTION QUI LANCE LA CREATION D'IK AVEC LES OPTIONS
@@ -2087,9 +2084,30 @@ app.endUndoGroup();
 
 	}
 
+function exposure() {
+	fenetreexposure.show();
+}
+
+function detectExposurePrecision() {
+	var layer = app.project.activeItem.selectedLayers[0];
+	var prop = layer.selectedProperties[layer.selectedProperties.length-1];
+	var speed = Duik.utils.getAverageSpeed(layer,prop);
+	var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
+	precisionEdit.text = parseInt(1/(speed/10000)/exp);
+}
+
 //FONCTION EXPOSITION DE LANIM
 function nframes() {
-    	// Vérifions si il n'y a qu'un calque sélectionné
+	var layer = app.project.activeItem.selectedLayers[0];
+	var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+	
+	app.beginUndoGroup("Duik Auto-Exposure");
+	Duik.exposureControls(layer,prop,true,parseInt(precisionEdit.text),[parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text)]);
+	app.endUndoGroup();
+	
+	fenetreexposure.close();
+/*
+// Vérifions si il n'y a qu'un calque sélectionné
 if (app.project.activeItem.selectedLayers.length == 1){
 	
 var calque = app.project.activeItem.selectedLayers[0];
@@ -2146,7 +2164,7 @@ app.endUndoGroup();
 }else{alert(getMessage(38),getMessage(59));}
 }else{alert(getMessage(60),getMessage(48));}
 }else{alert(getMessage(60),getMessage(48));}
-
+*/
 
 	}
 
@@ -2988,6 +3006,25 @@ function createDialog(titre,hasokbutton,okfonction){
 	return f;
 }
 
+		//l'expo
+		{
+			var fenetreexposure = createDialog(getMessage(123),true,nframes);
+			fenetreexposure.groupe.orientation = "column";
+			var evenExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Even");
+			var adaptativeExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Adaptative");
+			adaptativeExposureButton.value = true;
+			var lowerExposureGroup = addHGroup(fenetreexposure.groupe);
+			lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
+			var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
+			var upperExposureGroup = addHGroup(fenetreexposure.groupe);
+			upperExposureGroup.add("statictext",undefined,"Upper exp. limit: ");
+			var upperExposureEdit = upperExposureGroup.add("edittext",undefined,"4");
+			var precisionGroup = addHGroup(fenetreexposure.groupe);
+			precisionGroup.add("statictext",undefined,"Precision: ");
+			var precisionEdit = precisionGroup.add("edittext",undefined,"1000");
+			var precisionButton = precisionGroup.add("button",undefined,"Detect");
+			precisionButton.onClick = detectExposurePrecision;
+		}
 		//les options de création de spring
 		{
 			var fenetrespring = createDialog(getMessage(126),true,springok);
@@ -3684,7 +3721,7 @@ function createDialog(titre,hasokbutton,okfonction){
 		boutonosc.helpTip = getMessage(93);
 		//bouton nframes
 		var boutonnframes = addIconButton(groupeAnimationG,dossierIcones + "btn_expo.png",getMessage(123));
-		boutonnframes.onClick = nframes;
+		boutonnframes.onClick = exposure;
 		boutonnframes.helpTip = getMessage(94);
 		//bouton path follow
 		var boutonpathfollow = addIconButton(groupeAnimationD,dossierIcones + "btn_pf.png",getMessage(124));

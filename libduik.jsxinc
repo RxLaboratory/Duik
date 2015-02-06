@@ -119,10 +119,11 @@ if (Duik.versionNumber < 15.004)
 	//============ UTILS ==========================
 	if (typeof Duik.utils !== 'object' || Duik.forceReload)
 	{
-		// PREPARE PROPERTY - Duik.utils.prepareProperty(prop,isFX,ind,prof,parentName)
+		Duik.utils = {};
+		// PREPARE PROPERTY - Duik.utils.prepareProperty(prop,isFX,ind,prof,parentName,dimensions)
 		if (typeof Duik.utils.prepareProperty !== 'function' || Duik.forceReload)
 		{
-			Duik.utils.prepareProperty = function (prop,isFX,ind,prof,parentName)
+			Duik.utils.prepareProperty = function (prop,isFX,ind,prof,parentName,dimensions)
 			{
 				if (!prop.canSetExpression) return false;
 				isFX = false;
@@ -132,8 +133,78 @@ if (Duik.versionNumber < 15.004)
 					prof = prop.propertyDepth;
 					parentName = prop.parentProperty.name;
 					isFX = true;
+					dimensions = Duik.utils.getPropertyDimensions(prop);
 				}
 				return true;
+			}
+		}
+		// GET DIMENSIONS - Duik.utils.getPropertyDimensions(property)
+		if (typeof Duik.utils.getPropertyDimensions !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.getPropertyDimensions = function (prop)
+			{
+				var dimensions = 1;
+				if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+				{
+					//if this is a position and the layer is not 3D, AFX uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
+					if (!prop.parentProperty.isEffect && prop.name.toLowerCase() == "position" && !app.project.activeItem.selectedLayers[0].threeDLayer)
+					{
+						dimensions = 2;
+					}
+					else
+					{
+						dimensions = 3;
+					}
+				}
+				else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
+				{
+					dimensions = 2;
+				}
+				return dimensions;
+			}
+		}
+		// GET LENGTH - Duik.utils.getLength(value1,value2)
+		if (typeof Duik.utils.getLength !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.getLength = function (value1,value2)
+			{
+				if (typeof value1 !== typeof value2)
+				{
+					return null;
+				}
+				if (value1.length > 0)
+				{
+					var result = 0;
+					for (dim = 0;dim<value1.length;dim++)
+					{
+						result += (value1[dim]-value2[dim])*(value1[dim]-value2[dim]);
+					}
+					result = Math.sqrt(result);
+					return result;
+				}
+				else return Math.abs(value1 - value2) ;
+			}
+		}
+		// GET AVERAGE SPEED - Duik.utils.getAverageSpeed(layer,property)
+		if (typeof Duik.utils.getAverageSpeed !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.getAverageSpeed = function (layer,prop)
+			{
+				//for each frame of the comp
+				var frames = layer.containingComp.duration / layer.containingComp.frameDuration ;
+				var lastTime = prop.keyTime(prop.numKeys);
+				var firstTime = prop.keyTime(1);
+				var lastFrame = lastTime/layer.containingComp.frameDuration ;
+				var firstFrame = firstTime/layer.containingComp.frameDuration ;
+				if (lastFrame > frames) lastFrames = frames;
+				if (firstFrame < 1) firstFrame = 1;
+				var sum = 0;
+				for ( frame = firstFrame ; frame < lastFrame ; frame++)
+				{
+					var time = frame*app.project.activeItem.frameDuration;
+					sum += Duik.utils.getLength(prop.valueAtTime(time,false),prop.valueAtTime(time-layer.containingComp.frameDuration,false));
+				}
+				return sum/(lastFrame-firstFrame);
 			}
 		}
 	}
@@ -677,28 +748,8 @@ if (Duik.versionNumber < 15.004)
 			if (y == undefined) y = false;
 			if (z == undefined) z = false;
 			
-			var dimensions = 1;
-			
-			//detect dimensions of the property
-			if (!all)
-			{
-				if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
-				{
-					//if this is a position and the layer is not 3D, AFX uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
-					if (!prop.parentProperty.isEffect && prop.name.toLowerCase() == "position" && !app.project.activeItem.selectedLayers[0].threeDLayer)
-					{
-						dimensions = 2;
-					}
-					else
-					{
-						dimensions = 3;
-					}
-				}
-				else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
-				{
-					dimensions = 2;
-				}
-			}
+			//dimensions
+			var dimensions = Duik.utils.getPropertyDimensions(prop);
 			
 			var ok = false;
 			
@@ -726,7 +777,7 @@ if (Duik.versionNumber < 15.004)
 			//if prop is an effect, need a way to recover it
 			//if prop is an effect, need a way to recover it
 			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
 			
 			if (x && y && z){
 				xamp = layer.Effects.addProperty("ADBE Slider Control");
@@ -824,7 +875,7 @@ if (Duik.versionNumber < 15.004)
 			//if prop is an effect, need a way to recover it
 			//if prop is an effect, need a way to recover it
 			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
 			
 			if (x && y){
 				xamp = layer.Effects.addProperty("ADBE Slider Control");
@@ -865,7 +916,7 @@ if (Duik.versionNumber < 15.004)
 		{	
 			//if prop is an effect, need a way to recover it
 			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName) return false;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
 			
 			amp = layer.Effects.addProperty("ADBE Slider Control");
 			amp.name = prop.parentProperty.name + " " + Duik.uiStrings.amp;
@@ -876,6 +927,77 @@ if (Duik.versionNumber < 15.004)
 			
 			return true;
 
+		}
+	}
+	/* EXPOSURE - Duik.exposureControls(layer,property,adaptative,limit,exposureLimits);
+	
+		Adds exposure controls to the animation of the property
+	
+		parameters
+		layer | AVLayer
+		property | Property
+		adaptative | boolean, default: true
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.exposureControls !== 'function' || Duik.forceReload)
+	{
+		Duik.exposureControls = function (layer,prop,adaptative,limit,exposureLimits)
+		{
+			if (adaptative) Duik.adaptativeExposureControls(layer,prop,limit,exposureLimits);
+			
+		}
+	}
+	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposureControls(layer,property,limit,exposureLimits);
+	if (typeof Duik.adaptativeExposureControls !== 'function' || Duik.forceReload)
+	{
+		Duik.adaptativeExposureControls = function (layer,prop,limit,exposureLimits)
+		{
+			if (exposureLimits == undefined) exposureLimits = [1,10];
+			if (exposureLimits.length != 2) exposureLimits = [1,10];
+			
+			if (exposureLimits[0] <= 0) exposureLimits[0] = 1;
+			if (exposureLimits[1] <= 0) exposureLimits[1] = 1;
+			
+			limit = 1/limit*10000;		
+			
+			//for each frame of the comp
+			var frames = layer.containingComp.duration / layer.containingComp.frameDuration ;
+			for ( frame = 0 ; frame < frames ; frame += exposureLimits[0])
+			{
+				var time = frame*app.project.activeItem.frameDuration;
+				var nearKey = prop.nearestKeyIndex(time);
+				var nearKeyTime = prop.keyTime(nearKey);
+					
+				if (time <= nearKeyTime && nearKey == 1) continue;
+				
+				//get the value of the previous key
+				var prevKey = 0;
+				if (time < nearKeyTime) prevKey = nearKey -1;
+				else prevKey = nearKey;
+				
+				if (prevKey == prop.numKeys) break;    
+				
+				var prevKeyValue = prop.keyValue(prevKey);
+				var prevKeyTime = prop.keyTime(prevKey);
+				
+				//set a new key
+				var speed = Duik.utils.getLength(prop.valueAtTime(time,false),prop.keyValue(prevKey));
+
+				var exposure = (time - prevKeyTime) / app.project.activeItem.frameDuration;
+				
+				if (speed >= limit || exposure >= exposureLimits[1]) prop.addKey(time);
+				
+			}
+
+			//all key interpolations to HOLD
+			for (keyIndex = 1;keyIndex <= prop.numKeys;keyIndex++)
+			{
+				prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+				
+			}
 		}
 	}
 }());
