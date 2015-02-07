@@ -22,7 +22,9 @@ This file is part of Duik.
     along with Duik. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// ================================== LibDuik =================
+// =====================================================================
+//                                   LibDuik 
+// =====================================================================
 
 /* This file should not be edited,
 
@@ -58,16 +60,25 @@ if (typeof Duik !== 'object')
 Duik.forceReload = true;
 
 //check if libDuik has been updated since first launch
-if (Duik.versionNumber < 15.004)
+if (Duik.versionNumber < 15.0004)
 {
 	Duik.version = "15.alpha4";
 	Duik.versionNumber = 15.0004;
 	Duik.forceReload = true;
+	//TODO Edit presetEffects.xml to add Duik Effects
+	//only if scripts are allowed to write files
+	(function ()
+	{
+		
+	}());
 }
 
 (function ()
 {	
-	//============ UI Strings ====================
+	//================================
+	//           UI Strings
+	//================================
+	
 	/* UI Strings
 		Localisation
 		for now, uses duik_translations.jsxinc
@@ -83,6 +94,7 @@ if (Duik.versionNumber < 15.004)
 	{
 		Duik.uiStrings = {};
 		
+		Duik.uiStrings.ik = "IK";
 		Duik.uiStrings.ikFkBox = "IK / FK";
 		Duik.uiStrings.reverseBox = "Reverse";
 		Duik.uiStrings.fkAngle = "FK";
@@ -100,7 +112,10 @@ if (Duik.versionNumber < 15.004)
 		Duik.uiStrings.freq = "Freq.";
 	}
 
-	//============ SETTINGS =======================
+	//================================
+	//           SETTINGS
+	//================================
+	
 	/* Duik Settings
 	
 	*/
@@ -116,7 +131,10 @@ if (Duik.versionNumber < 15.004)
 		Duik.settings.controllerSizeHint = 1;
 	}
 	
-	//============ UTILS ==========================
+	//================================
+	//           UTILS
+	//================================
+	
 	if (typeof Duik.utils !== 'object' || Duik.forceReload)
 	{
 		Duik.utils = {};
@@ -207,9 +225,31 @@ if (Duik.versionNumber < 15.004)
 				return sum/(lastFrame-firstFrame);
 			}
 		}
+		// ADD PSEUDO EFFECT - Duik.utils.addPseudoEffect(layer,pseudoEffectName)
+		if (typeof Duik.utils.addPseudoEffect !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.addPseudoEffect = function (layer,preset)
+			{
+				var presetFile = new File("Scripts/ScriptUI Panels/" + preset);
+				layer.applyPreset(presetFile);
+				for (fx = 1;fx <= layer("Effects").numProperties;fx++)
+				{
+					//alert(layer.effect(fx).name);
+					//alert(preset.substring(5,preset.lastIndexOf(".")));
+					if (layer.effect(fx).name == preset.substring(5,preset.lastIndexOf(".")) )
+					{
+						return layer.effect(fx);
+					}
+				}
+				return null;
+			}
+		}
 	}
 	
-	//============== METHODS ======================
+	//================================
+	//           METHODS
+	//================================
+	
 	/*	ADD IK - Duik.addIK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
 		adds a 2D IK to the layers controlled by controller
 		
@@ -265,15 +305,8 @@ if (Duik.versionNumber < 15.004)
 			{
 				var ok = Duik.addGoal(goal,ctrl);
 				if (!ok) return false;
-				
-				//ajouter un controleur FK
-				grot = ctrl.Effects.addProperty("ADBE Angle Control");
-				grot.name = Duik.uiStrings.goalFkAngle;
-				//et mettre à jour l'expression de la main
-				if (threeD) goal.transform.zRotation.expression = goal.transform.zRotation.expression + "\nresult + thisComp.layer('" + ctrl.name + "').effect('" + Duik.uiStrings.goalFkAngle + "')(1);";
-				else goal.transform.rotation.expression = goal.transform.rotation.expression + "\nresult + thisComp.layer('" + ctrl.name + "').effect('" + Duik.uiStrings.goalFkAngle + "')(1);";
 
-				//et si il y a du stretch
+				//link the position in case of stretch
 				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
 				
 			}
@@ -291,18 +324,10 @@ if (Duik.versionNumber < 15.004)
 					
 			var controllerName = ctrl.name;
 			
-			//weight slider
-			var weightSlider = ctrl.Effects.addProperty("ADBE Slider Control");
-			weightSlider.name = Duik.uiStrings.weightSlider;
-			weightSlider(1).setValue(100);
-			//reverse
-			var rev = ctrl.Effects.addProperty("ADBE Checkbox Control");
-			rev.name = Duik.uiStrings.reverseBox;
-			//FK
-			var fkAngle = ctrl.Effects.addProperty("ADBE Angle Control");
-			fkAngle.name = Duik.uiStrings.fkAngle;
-			
-			
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(ctrl,"Duik_1ik.ffx");
+			effect.name = Duik.uiStrings.ik + " "  + layer1.name;
+						
 			//rotation d'origine
 			var orot = layer1.transform.rotation.value;
 
@@ -312,9 +337,9 @@ if (Duik.versionNumber < 15.004)
 			"CName = \"" + controllerName + "\";\r\n" +
 			"C = thisComp.layer(CName).toWorld(thisComp.layer(CName).anchorPoint);\r\n" +
 			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\r\n" +
-			"W = thisComp.layer(CName).effect(\"" + Duik.uiStrings.weightSlider + "\")(1)/100;\r\n" + 
-			"FK = thisComp.layer(CName).effect(\"" + Duik.uiStrings.fkAngle + "\")(1);\r\n" +
-			"R = thisComp.layer(CName).effect(\"" + Duik.uiStrings.reverseBox + "\")(1);\r\n" + 
+			"W = thisComp.layer(CName).effect(\"" + effect.name + "\")(1)/100;\r\n" + 
+			"FK = thisComp.layer(CName).effect(\"" + effect.name + "\")(3);\r\n" +
+			"R = thisComp.layer(CName).effect(\"" + effect.name + "\")(2);\r\n" + 
 			"angle = lookAt(C,O);\r\n" +
 			"angle = angle*W;\r\n" +
 			"R == 1 ? angle = -angle : angle;\r\n" +
@@ -354,38 +379,17 @@ if (Duik.versionNumber < 15.004)
 			var endName = end.name;
 			var rootName = root.name;
 			var controllerName = controller.name;
-
-			//Ajoutons une case a cocher sur le controleur pour choisir le sens de l'IK
-			ikOrientation = controller.Effects.addProperty("ADBE Checkbox Control");
-			ikOrientation.name = "IK Orientation";
-			if (clockWise) ikOrientation(1).setValue(1);
+			
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(controller,"Duik_2ik.ffx");
+			effect.name = Duik.uiStrings.ik + " "  + endName;
+			if (clockWise) effect(1).setValue(1);
 
 			if (threeD) {
 				direction = controller.Effects.addProperty("ADBE Angle Control");
 				direction.name = "IK Direction " +  rootName.slice(-15);
 			}
-		
-			//controleurs FK
-			//une case a cocher pour l'IK/FK
-			ikfk = controller.Effects.addProperty("ADBE Checkbox Control");
-			ikfk.name = Duik.uiStrings.ikFkBox;
-			ikfk(1).setValue(1);
-			//un angle pour le haut
-			urot = controller.Effects.addProperty("ADBE Angle Control");
-			urot.name = Duik.uiStrings.rootFkAngle;
-			//un angle pour le bas
-			lrot = controller.Effects.addProperty("ADBE Angle Control");
-			lrot.name = Duik.uiStrings.endFkAngle;
-
-			//controleurs de stretch
-			//une case a cocher pour l'autostretch
-			autostretch = controller.Effects.addProperty("ADBE Checkbox Control");
-			autostretch.name = "Auto-Stretch";
-			autostretch(1).setValue(1);
-			//un slider pour le stretch
-			stretch = controller.Effects.addProperty("ADBE Slider Control");
-			stretch.name = "Stretch";
-			
+					
 			//créer un zéro
 			endZero = app.project.activeItem.layers.addNull();
 			endZero.threeDLayer = true;
@@ -414,9 +418,9 @@ if (Duik.versionNumber < 15.004)
 				"bonebout = \"" + endName + "\";\n" + 
 				"zero = \"" + endZeroName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" +
-				"FK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.endFkAngle + "\")(1);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
-				"if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(5);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + effect.name + "\")(1) == 1) {cw = true}else{cw=false}\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
@@ -453,9 +457,9 @@ if (Duik.versionNumber < 15.004)
 				"bonebout = \"" + endName + "\";\n" + 
 				"zero = \"" + endZeroName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" +
-				"FK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.rootFkAngle + "\")(1);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
-				"if (thisComp.layer(controleur).effect(\"" + "IK Orientation" + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(4);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + effect.name + "\")(1) == 1) {cw = true}else{cw=false}\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
@@ -538,9 +542,9 @@ if (Duik.versionNumber < 15.004)
 			var expressionstretchbout = "//Duik.twoLayerIK.stretch\r\n" +
 				"boneracine = \"" + rootName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" + 
-				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
-				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(9)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(8);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"L = thisComp.layer(theLayerName);\n" + 
 				"return L.toWorld(L.anchorPoint);\n" + 
@@ -562,9 +566,9 @@ if (Duik.versionNumber < 15.004)
 			var expressionstretchzero = "//Duik.twoLayerIK.stretch\r\n" +
 				"boneracine = \"" + rootName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" + 
-				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Stretch" + "\")(1)/2;\n" + 
-				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + "Auto-Stretch" + "\")(1);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + Duik.uiStrings.ikFkBox + "\")(1) == 1;\n" +
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(9)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(8);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"L = thisComp.layer(theLayerName);\n" + 
 				"return L.toWorld(L.anchorPoint);\n" + 
