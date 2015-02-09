@@ -2102,7 +2102,7 @@ function nframes() {
 	var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 	
 	app.beginUndoGroup("Duik Auto-Exposure");
-	Duik.exposureControls(layer,prop,true,parseInt(precisionEdit.text),[parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text)]);
+	Duik.exposureControls(layer,prop,true,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
 	app.endUndoGroup();
 	
 	fenetreexposure.close();

@@ -933,7 +933,7 @@ if (Duik.versionNumber < 15.0004)
 
 		}
 	}
-	/* EXPOSURE - Duik.exposureControls(layer,property,adaptative,limit,exposureLimits);
+	/* EXPOSURE - Duik.exposureControls(layer,property,adaptative,limit,minExp,maxExp);
 	
 		Adds exposure controls to the animation of the property
 	
@@ -948,28 +948,33 @@ if (Duik.versionNumber < 15.0004)
 	*/
 	if (typeof Duik.exposureControls !== 'function' || Duik.forceReload)
 	{
-		Duik.exposureControls = function (layer,prop,adaptative,limit,exposureLimits)
+		Duik.exposureControls = function (layer,prop,adaptative,limit,minExp,maxExp)
 		{
-			if (adaptative) Duik.adaptativeExposureControls(layer,prop,limit,exposureLimits);
+			if (adaptative == undefined) adaptative = true;
+			
+			if (adaptative) Duik.adaptativeExposureControls(layer,prop,limit,minExp,maxExp);
 			
 		}
 	}
-	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposureControls(layer,property,limit,exposureLimits);
+	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposureControls(layer,property,precision,minExp,maxExp);
 	if (typeof Duik.adaptativeExposureControls !== 'function' || Duik.forceReload)
 	{
-		Duik.adaptativeExposureControls = function (layer,prop,limit,exposureLimits)
+		Duik.adaptativeExposureControls = function (layer,prop,limit,minExp,maxExp)
 		{
-			if (exposureLimits == undefined) exposureLimits = [1,10];
-			if (exposureLimits.length != 2) exposureLimits = [1,10];
+			if (minExp == undefined) minExp = 1;
+			if (maxExp == undefined) maxExp = 4;
 			
-			if (exposureLimits[0] <= 0) exposureLimits[0] = 1;
-			if (exposureLimits[1] <= 0) exposureLimits[1] = 1;
+			if (minExp <= 0) minExp = 1;
+			if (maxExp <= 0) maxExp = 1;
+			
+			if (limit == undefined) limit = 100;
+			if (limit == 0) limit = 1;
 			
 			limit = 1/limit*10000;		
 			
 			//for each frame of the comp
 			var frames = layer.containingComp.duration / layer.containingComp.frameDuration ;
-			for ( frame = 0 ; frame < frames ; frame += exposureLimits[0])
+			for ( frame = 0 ; frame < frames ; frame += minExp)
 			{
 				var time = frame*app.project.activeItem.frameDuration;
 				var nearKey = prop.nearestKeyIndex(time);
@@ -992,7 +997,7 @@ if (Duik.versionNumber < 15.0004)
 
 				var exposure = (time - prevKeyTime) / app.project.activeItem.frameDuration;
 				
-				if (speed >= limit || exposure >= exposureLimits[1]) prop.addKey(time);
+				if (speed >= limit || exposure >= maxExp) prop.addKey(time);
 				
 			}
 
