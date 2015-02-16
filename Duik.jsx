@@ -31,7 +31,6 @@ This file is part of Duik.
 //================================
 #include "libduik.jsxinc"
 
-
 function fnDuIK(wnd)
 {
 
@@ -51,6 +50,7 @@ if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik",
 if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
 if (! app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
 Duik.settings.load();
+
 }
 
 
@@ -2150,13 +2150,13 @@ function copyAnim()
     var layersSaved = []; // tableau de résultats
     
     // 1 - voir si il y a des clefs sélectionnées //TODO : fait foirer ! (boucle infinie quelque part)
-    /*for (i = 0; i < layers.length ; i++)
-    {
-        selected = isKeySelected(layers[i]);
-        if (selected) break;
-        selected = isKeySelected(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
-        if (selected) break;
-    }*/
+    //for (i = 0; i < layers.length ; i++)
+    //{
+    //    selected = isKeySelected(layers[i]);
+     //   if (selected) break;
+    //    selected = isKeySelected(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+    //    if (selected) break;
+   // }
     
     // 2 - chercher l'instant de la première clef dans le temps, si ya des clefs sélectionnées
     if (selected)
@@ -2701,6 +2701,10 @@ function multiplan()
 }
 
 }
+
+
+
+
 //===========================================
 //UI
 //===========================================
@@ -3328,7 +3332,7 @@ function createDialog(titre,hasokbutton,okfonction){
 		var boutonBoneSizeAutoValue = groupeBoneSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
 		boutonBoneSizeAutoValue.selection = Duik.settings.boneSizeHint;
 		boutonBoneSizeAutoValue.onChange = function () {
-			Duik.settings.boneSizeHint = boutonBoneSizeAutoValue.selection;
+			Duik.settings.boneSizeHint = boutonBoneSizeAutoValue.selection.index;
 			Duik.settings.save();
 			};
 		boutonBoneSize.enabled = !boutonBoneSizeAuto.value ;
@@ -3372,7 +3376,7 @@ function createDialog(titre,hasokbutton,okfonction){
 		var boutonCtrlSizeAutoValue = groupeCtrlSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
 		boutonCtrlSizeAutoValue.selection = Duik.settings.controllerSizeHint;
 		boutonCtrlSizeAutoValue.onChange = function () {
-			Duik.settings.controllerSizeHint = boutonCtrlSizeAutoValue.selection;
+			Duik.settings.controllerSizeHint = boutonCtrlSizeAutoValue.selection.index;
 			Duik.settings.save();
 			};
 		boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value ;
