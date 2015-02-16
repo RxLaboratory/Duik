@@ -26,6 +26,12 @@ This file is part of Duik.
 */	
 
 
+//================================
+//CHARGEMENT DE libDuik
+//================================
+#include "libduik.jsxinc"
+
+
 function fnDuIK(wnd)
 {
 
@@ -44,14 +50,7 @@ if (! app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik"
 if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
 if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
 if (! app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
-if (! app.settings.haveSetting("duik", "boneType")){app.settings.saveSetting("duik","boneType","1");}
-if (! app.settings.haveSetting("duik", "boneSize")){app.settings.saveSetting("duik","boneSize","20");}
-if (! app.settings.haveSetting("duik", "ctrlSize")){app.settings.saveSetting("duik","ctrlSize","100");}
-if (! app.settings.haveSetting("duik", "ctrlSizeAuto")){app.settings.saveSetting("duik","ctrlSizeAuto","true");}
-if (! app.settings.haveSetting("duik", "boneSizeAuto")){app.settings.saveSetting("duik","boneSizeAuto","true");}
-if (! app.settings.haveSetting("duik", "boneSizeAutoValue")){app.settings.saveSetting("duik","boneSizeAutoValue","1");}
-if (! app.settings.haveSetting("duik", "ctrlSizeAutoValue")){app.settings.saveSetting("duik","ctrlSizeAutoValue","1");}
-if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
+Duik.settings.load();
 }
 
 
@@ -146,11 +145,6 @@ for (var k in scriptMng.files)
 
 //=========================== IMAGES CHARGEES, debut du script ==================
 }
-
-//================================
-//CHARGEMENT DE libDuik
-//================================
-#include "libduik.jsxinc"
 
 
 //======= FONCTION PRINCIPALE
@@ -577,73 +571,73 @@ function startAutoRig() {
 	{
 		if (avantBrasG != undefined && brasG != undefined)
 		{
-			Duik.addIK(CmainG,brasG,avantBrasG,undefined,mainG,false,tridi,false);
+			Duik.IK(CmainG,brasG,avantBrasG,undefined,mainG,false,tridi,false);
 		}
 		else if (avantBrasG != undefined)
 		{
 			
-			Duik.addIK(avantBrasG,CmainG);
-			Duik.addGoal(mainG,CmainG);
+			Duik.IK(avantBrasG,CmainG);
+			Duik.goal(mainG,CmainG);
 		}
 		else if (brasG != undefined)
 		{
-			Duik.addIK(brasG,CmainG);
-			Duik.addGoal(mainG,CmainG);
+			Duik.IK(brasG,CmainG);
+			Duik.goal(mainG,CmainG);
 		}
 		else
 		{
-			Duik.addGoal(mainG,CmainG);
+			Duik.goal(mainG,CmainG);
 		}
 	}
 	//bras D
 	if (mainD != undefined)
 	{
-		if (avantBrasD != undefined && brasD != undefined) Duik.addIK(CmainD,brasD,avantBrasD,undefined,mainD,false,tridi,false);
+		if (avantBrasD != undefined && brasD != undefined) Duik.IK(CmainD,brasD,avantBrasD,undefined,mainD,false,tridi,false);
 		else if (avantBrasD != undefined) {
-			Duik.addIK(avantBrasD,CmainD);
-			Duik.addGoal(mainD,CmainD);
+			Duik.IK(avantBrasD,CmainD);
+			Duik.goal(mainD,CmainD);
 			}
 		else if (brasD != undefined) {
-			Duik.addIK(brasD,CmainD);
-			Duik.addGoal(mainD,CmainD);
+			Duik.IK(brasD,CmainD);
+			Duik.goal(mainD,CmainD);
 			}
-		else Duik.addGoal(mainD,CmainD);
+		else Duik.goal(mainD,CmainD);
 	}
 	//jambe D
 	if (piedD != undefined)
 	{
-		if (molletD != undefined && cuisseD != undefined) Duik.addIK(CpiedD,cuisseD,molletD,undefined,piedD,false,tridi,false);
+		if (molletD != undefined && cuisseD != undefined) Duik.IK(CpiedD,cuisseD,molletD,undefined,piedD,false,tridi,false);
 		else if (molletD != undefined) {
-			Duik.addIK(molletD,CpiedD);
-			Duik.addGoal(piedD,CpiedD);
+			Duik.IK(molletD,CpiedD);
+			Duik.goal(piedD,CpiedD);
 			}
 		else if (cuisseD != undefined) {
-			Duik.addIK(cuisseD,CpiedD);
-			Duik.addGoal(piedD,CpiedD);
+			Duik.IK(cuisseD,CpiedD);
+			Duik.goal(piedD,CpiedD);
 			}
-		else Duik.addGoal(piedD,CpiedD);
+		else Duik.goal(piedD,CpiedD);
 	}
 	//jambe G
 	if (piedG != undefined)
 	{
-		if (molletG != undefined && cuisseG != undefined) Duik.addIK(CpiedG,cuisseG,molletG,undefined,piedG,false,tridi,false);
+		if (molletG != undefined && cuisseG != undefined) Duik.IK(CpiedG,cuisseG,molletG,undefined,piedG,false,tridi,false);
 		else if (molletG != undefined) {
-			Duik.addIK(molletG,CpiedG);
-			Duik.addGoal(piedG,CpiedG);
+			Duik.IK(molletG,CpiedG);
+			Duik.goal(piedG,CpiedG);
 			}
 		else if (cuisseG != undefined) {
-			Duik.addIK(cuisseG,CpiedG);
-			Duik.addGoal(piedG,CpiedG);
+			Duik.IK(cuisseG,CpiedG);
+			Duik.goal(piedG,CpiedG);
 			}
-		else Duik.addGoal(piedG,CpiedG);
+		else Duik.goal(piedG,CpiedG);
 	}
 	//dos
 	if (autorigIKdos.value) {
-		Duik.addIK(corps,Cepaules);
+		Duik.IK(corps,Cepaules);
 	}
 	//cou
 	if (autorigIKcou.value && cou != undefined) {
-		Duik.addIK(cou,Ctete);
+		Duik.IK(cou,Ctete);
 	}
 	
 	
@@ -667,7 +661,7 @@ function startAutoRig() {
 	//les goals
 	//tete
 	if (tete != undefined) {
-		Duik.addGoal(tete,Ctete);
+		Duik.goal(tete,Ctete);
 	}
 	
 	//groupe d'annulation
@@ -709,7 +703,7 @@ function ik(){
 	if (calques.length == 2) {
 		//groupe d'annulation
 		app.beginUndoGroup("Duik - IK");
-		calquetridi ? alert(getMessage(5)) : Duik.addIK(app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0]);
+		calquetridi ? alert(getMessage(5)) : Duik.IK(app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0]);
 		//groupe d'annulation
 		app.endUndoGroup();
 		}//if calques.length == 2
@@ -734,11 +728,11 @@ function goik(){
 	var calquetridi = calques[0].threeDLayer;
 	if (calques.length == 3)
 	{
-		Duik.addIK(app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0],undefined,undefined,boutonCW.value,calquetridi,boutonFront.value);
+		Duik.IK(app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0],undefined,undefined,boutonCW.value,calquetridi,boutonFront.value);
 	}
 	else if (calques.length == 4)
 	{
-		Duik.addIK(app.project.activeItem.selectedLayers[3],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],undefined,app.project.activeItem.selectedLayers[0],boutonCW.value,calquetridi,boutonFront.value,);
+		Duik.IK(app.project.activeItem.selectedLayers[3],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],undefined,app.project.activeItem.selectedLayers[0],boutonCW.value,calquetridi,boutonFront.value,);
 	}
 	//groupe d'annulation
 	app.endUndoGroup();
@@ -751,7 +745,7 @@ if (app.project.activeItem.selectedLayers.length == 1) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
-	Duik.addGoal(app.project.activeItem.selectedLayers[0],undefined);
+	Duik.goal(app.project.activeItem.selectedLayers[0],undefined);
 	//groupe d'annulation
 	app.endUndoGroup();
 }
@@ -759,7 +753,7 @@ else if (app.project.activeItem.selectedLayers.length == 2) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
 	verifNoms();
-	Duik.addGoal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+	Duik.goal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
 	//groupe d'annulation
 	app.endUndoGroup();
 }
@@ -781,18 +775,8 @@ function controleur(){
 
 }
 	 
-//FONCTION CONF WIGGLE POSITION
-function wiggleconf3D(){
-	if (wiggle3Dtous.value){wiggle3DX.enabled = false ; wiggle3DY.enabled = false ; wiggle3DZ.enabled = false;}
-	else{wiggle3DX.enabled = true ; wiggle3DY.enabled = true ; wiggle3DZ.enabled = true;}
-}
-function wiggleconf2D(){
-	if (wiggle2Dtous.value){wiggle2DX.enabled = false ; wiggle2DY.enabled = false;}
-	else{wiggle2DX.enabled = true ; wiggle2DY.enabled = true;}
-}
-
 //FONCTION WIGGLE OK
-function wiggle3D(){
+function wiggleDimensions(){
 
 	//vérifions qu'il n'y a qu'un calque sélectionné
 	if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0)
@@ -800,99 +784,36 @@ function wiggle3D(){
 		
 		//  début de groupe d'annulation
 		app.beginUndoGroup("Duik - Wiggle");
+		
 		//le calque
 		var calque = app.project.activeItem.selectedLayers[0];
 		//la prop
 		var prop = calque.selectedProperties.pop();
-		Duik.addWiggle(calque,prop,wiggle3Dtous.value,wiggle3DX.value,wiggle3DY.value,wiggle3DZ.value);
-		//fin du groupe d'annulation			
+		Duik.wiggle(calque,prop,wiggleSeparate.value);
+		
+		//fin du groupe d'annulation
 		app.endUndoGroup();
-
+		
 	} else { alert(getMessage(12)); }
 
-	fenetrewiggle3D.close();
-}
-function wiggle2D(){
-
-	//vérifions qu'il n'y a qu'un calque sélectionné
-	if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0)
-	{
-		//  début de groupe d'annulation
-		app.beginUndoGroup("Duik - Wiggle");
-		//le calque
-		var calque = app.project.activeItem.selectedLayers[0];
-		//la prop
-		var prop = calque.selectedProperties.pop();
-		Duik.addWiggle(calque,prop,wiggle2Dtous.value,wiggle2DX.value,wiggle2DY.value);
-		//fin du groupe d'annulation			
-		app.endUndoGroup();
-
-	} else { alert(getMessage(12)); }
-
-	fenetrewiggle2D.close();
+	fenetrewiggle.close();
 }
 
 //FONCTION WIGGLE
 function wiggle(){
 	//regarder le nombre d'axes dans la propriété sélectionnée
 	var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
-	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+	var dim = prop.propertyValueType ;
+	if (dim == PropertyValueType.ThreeD_SPATIAL || dim == PropertyValueType.ThreeD || dim == PropertyValueType.TwoD_SPATIAL || dim == PropertyValueType.TwoD)
 	{
-		//if this is a position and the layer is not 3D, AFX uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
-		if (!prop.parentProperty.isEffect && prop.name.toLowerCase() == "position" && !app.project.activeItem.selectedLayers[0].threeDLayer)
-		{
-			fenetrewiggle2D.show();
-		}
-		else
-		{
-			fenetrewiggle3D.show();
-		}
-	}
-	else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
-	{
-		fenetrewiggle2D.show();
+		fenetrewiggle.show();
 	}
 	else
 	{
-		Duik.addWiggle(app.project.activeItem.selectedLayers[0],prop);
+		Duik.wiggle(app.project.activeItem.selectedLayers[0],prop);
 	}
 }
 
-//FONCTION RECURSIVE QUI RECUPERE TOUS LES PUPPET PINS D'UN CALQUE
-function getPuppetPins(prop) {
-	var coins = [];
-	if (prop != null)
-	{
-		if (prop.matchName == "ADBE FreePin3 PosPin Atom")
-		{
-			coins.push(prop);
-		}
-		else if (prop.numProperties > 0)
-		{
-			//contournement de bug...
-			//d'abord recup les propriétés dans un tableau avant de les parcourir
-			//sinon l'incrément fonctionne pas dans la boucle, allez savoir pourquoi
-
-			var proprietes = [];
-			for (p=1;p<=prop.numProperties;p++)
-			{
-				proprietes.push(prop.property(p));
-			}
-
-			for (pi in proprietes)
-			{
-				var newCoins = getPuppetPins(proprietes[pi]);
-				if (newCoins.length > 0)
-				{
-					coins = coins.concat(newCoins);
-				}
-			}
-		}
-	}
-    
-    return coins;
-}	
-	
 //FONCTION POUR AJOUTER UN (DES) BONE(S)
 function bone(){
 	
@@ -905,82 +826,7 @@ function bone(){
 	var calques = app.project.activeItem.selectedLayers ;
 	if (calques.length ==0) { alert(getMessage(13),"Attention"); return; }
 	
-	for (i=0;i<calques.length;i++)
-	{
-		var calque = calques[i];
-		// les propriétés sélectionnées
-		var props = calque.selectedProperties;
-		var coins = [];
-		//lister les puppet pins
-		if (props.length > 0)
-		{
-			for (j=0;j<props.length;j++)
-			{
-				if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
-			}
-		}
-		//si il n'y a pas de coins sélectionnés, on les prend tous
-		if (coins.length == 0) coins = getPuppetPins(calque("Effects"));
-		if (coins.length == 0) { alert(getMessage(13),"Attention"); return; }
-		
-		for (j=0;j<coins.length;j++)
-		{
-			var coin = coins[j];
-			//la position du coin
-			var position = coin.position.value;
-			//créer le bone
-			var bone;
-			//sa taillevar
-			boneTaille = eval(boutonBoneSize.text);
-			if (boutonBoneSizeAuto.value) {
-				boneTaille = app.project.activeItem.width/2 + app.project.activeItem.height/2;
-				if (boutonBoneSizeAutoValue.selection.index == 0) boneTaille = Math.floor(boneTaille/60);
-				if (boutonBoneSizeAutoValue.selection.index == 1) boneTaille = Math.floor(boneTaille/40);
-				if (boutonBoneSizeAutoValue.selection.index == 2) boneTaille = Math.floor(boneTaille/20);
-			}
-			if (boutonBoneType.selection.index == 1)
-			{
-				bone = app.project.activeItem.layers.addNull();
-				bone.name = "B_" + coin.name;
-				bone.source.width = boneTaille;
-				bone.source.height = boneTaille;
-				bone.transform.anchorPoint.setValue([bone.source.width/2,bone.source.height/2]);
-			}
-			else
-			{
-				var colorString = app.settings.getSetting("duik","boneColor");
-				var red = parseInt(colorString.substr(0,2),16)/255.0;
-				var green = parseInt(colorString.substr(2,2),16)/255.0;
-				var blue = parseInt(colorString.substr(4,2),16)/255.0;
-				bone = app.project.activeItem.layers.addSolid([red,green,blue],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
-			}
-			//mettre le bone à la position du coin : utiliser une expression pour avoir la position en mode world du coin
-			var filet = coin.propertyGroup().propertyGroup();
-			var marionnette = filet.propertyGroup().propertyGroup().propertyGroup();
-			if (calque instanceof ShapeLayer)
-			{
-				bone.position.expression = "thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position";
-			}
-			else
-			{
-				bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position)";
-			}
-			bone.position.setValue(bone.position.value);
-			bone.position.expression = "";
-			//nom du bone
-			bone.name = "B_" + coin.name;
-			bone.guideLayer = true;
-			//mettre l'expression dans le coin
-			if (calque instanceof ShapeLayer)
-			{
-				coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
-			}
-			else
-			{
-				coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
-			}
-		}
-	}
+	Duik.addBones(calques);
 
 	//fin du groupe d'annulation
 	app.endUndoGroup();
@@ -2084,8 +1930,16 @@ app.endUndoGroup();
 
 	}
 
+//FONCTIONS EXPOSITION
 function exposure() {
 	fenetreexposure.show();
+}
+
+function exposureSelect() {
+	
+	lowerExposureGroup.enabled = adaptativeExposureButton.value;
+	upperExposureGroup.enabled = adaptativeExposureButton.value;
+	precisionGroup.enabled = adaptativeExposureButton.value;
 }
 
 function detectExposurePrecision() {
@@ -2096,75 +1950,15 @@ function detectExposurePrecision() {
 	precisionEdit.text = parseInt(1/(speed/10000)/exp);
 }
 
-//FONCTION EXPOSITION DE LANIM
 function nframes() {
 	var layer = app.project.activeItem.selectedLayers[0];
 	var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 	
 	app.beginUndoGroup("Duik Auto-Exposure");
-	Duik.exposureControls(layer,prop,true,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
+	Duik.exposure(layer,prop,adaptativeExposureButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
 	app.endUndoGroup();
 	
 	fenetreexposure.close();
-/*
-// Vérifions si il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1){
-	
-var calque = app.project.activeItem.selectedLayers[0];
-
-if (calque.selectedProperties.length != 0){
-	
-	//Prendre l'effet
-var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie sin on peut mettre une expression, sinon inutile de continuer
-if(effet.canSetExpression) {
-	
-//  début de groupe d'annulation
-app.beginUndoGroup(getMessage(57));
-
-if (effet.parentProperty.isEffect){
-	var effetIndex = effet.propertyIndex;
-	var effetProfondeur = effet.propertyDepth;
-	var effetParentName = effet.parentProperty.name;
-	var expo = calque.Effects.addProperty("ADBE Slider Control");
-	expo.name = getMessage(58);
-	expo(1).setValue(1);
-	
-	effet = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex);
-	//=============================================
-	//expression a insérer
-	var expressionexpo = "expo = effect(\"" + getMessage(58) + "\")(1);\n" +
-"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
-"timef = timeToFrames(time);\n" +
-"valueAtTime(framesToTime( timef - timef%expo ))";
-	//=============================================
-
-effet.expression = expressionexpo;
-
-} else {
-	
-	var expo = calque.Effects.addProperty("ADBE Slider Control");
-	expo.name = getMessage(58);
-	expo(1).setValue(1);
-	//=============================================
-	//expression a insérer
-	//expression a insérer
-	var expressionexpo = "expo = effect(\"" + getMessage(58) + "\")(1);\n" +
-"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
-"timef = timeToFrames(time);\n" +
-"valueAtTime(framesToTime( timef - timef%expo ))";
-	//=============================================
-
-effet.expression = expressionexpo;
-
-}
-//fin du groupe d'annulation
-app.endUndoGroup();	
-
-}else{alert(getMessage(38),getMessage(59));}
-}else{alert(getMessage(60),getMessage(48));}
-}else{alert(getMessage(60),getMessage(48));}
-*/
 
 	}
 
@@ -3011,8 +2805,10 @@ function createDialog(titre,hasokbutton,okfonction){
 			var fenetreexposure = createDialog(getMessage(123),true,nframes);
 			fenetreexposure.groupe.orientation = "column";
 			var evenExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Even");
+			evenExposureButton.onClick = exposureSelect;
 			var adaptativeExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Adaptative");
 			adaptativeExposureButton.value = true;
+			adaptativeExposureButton.onClick = exposureSelect;
 			var lowerExposureGroup = addHGroup(fenetreexposure.groupe);
 			lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
 			var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
@@ -3185,37 +2981,16 @@ function createDialog(titre,hasokbutton,okfonction){
 		var roueC = rayonGroupeType.add("radiobutton",undefined,getMessage(175));
 		roueH.value = true;
 		}
-
-		// la fenetre du wiggle 3D
-		{
-			var fenetrewiggle3D = createDialog("Wiggle",true,wiggle3D);
-			fenetrewiggle3D.groupe.orientation = "row";
-			//separer ou toutes
-			var wiggle3Dtous = fenetrewiggle3D.groupe.add("checkbox",undefined,getMessage(66));
-			wiggle3Dtous.value = true;
-			wiggle3Dtous.onClick = wiggleconf3D;
-			//x y z
-			var wiggle3DX = fenetrewiggle3D.groupe.add("checkbox",undefined,"X");
-			var wiggle3DY = fenetrewiggle3D.groupe.add("checkbox",undefined,"Y");
-			var wiggle3DZ = fenetrewiggle3D.groupe.add("checkbox",undefined,"Z");
-			wiggle3DX.enabled = false;
-			wiggle3DY.enabled = false;
-			wiggle3DZ.enabled = false;
-		}
 		
-		// la fenetre du wiggle 2D
+		// la fenetre du wiggle
 		{
-			var fenetrewiggle2D = createDialog("Wiggle",true,wiggle2D);
-			fenetrewiggle2D.groupe.orientation = "row";
+			var fenetrewiggle = createDialog("Wiggle",true,wiggleDimensions);
+			fenetrewiggle.groupe.orientation = "row";
 			//separer ou toutes
-			var wiggle2Dtous = fenetrewiggle2D.groupe.add("checkbox",undefined,getMessage(66));
-			wiggle2Dtous.value = true;
-			wiggle2Dtous.onClick = wiggleconf2D;
-			//x y z
-			var wiggle2DX = fenetrewiggle2D.groupe.add("checkbox",undefined,"X");
-			var wiggle2DY = fenetrewiggle2D.groupe.add("checkbox",undefined,"Y");
-			wiggle2DX.enabled = false;
-			wiggle2DY.enabled = false;
+			var wiggleSeparate = fenetrewiggle.groupe.add("radiobutton",undefined,"Separate Dimensions");
+			var wiggleTous = fenetrewiggle.groupe.add("radiobutton",undefined,"All Dimensions");
+			wiggleTous.value = true;
+
 		}
 		
 		// la fenetre de la calculatrice
@@ -3523,38 +3298,52 @@ function createDialog(titre,hasokbutton,okfonction){
 		var groupeBoneType = addHGroup(panosettings);
 		groupeBoneType.add("statictext",undefined,getMessage(165));
 		var boutonBoneType = groupeBoneType.add("dropdownlist",undefined,[getMessage(166),getMessage(167)]);
-		boutonBoneType.selection = eval(app.settings.getSetting("duik", "boneType"));
+		boutonBoneType.selection = Duik.settings.boneType;
 		boutonBoneType.onChange = function() {
-			app.settings.saveSetting("duik", "boneType",boutonBoneType.selection.index);
 			boutonBoneColor.enabled = boutonBoneType.selection == 0;
+			Duik.settings.boneType = boutonBoneType.selection.index;
+			Duik.settings.save();
 			};
 		//taille des bones
 		var groupeBoneSize = addHGroup(panosettings);
 		var groupeBoneSizeAuto = addHGroup(panosettings);
 		groupeBoneSize.add("statictext",undefined,getMessage(168));
 		var boutonBoneSize = groupeBoneSize.add("edittext",undefined,app.settings.getSetting("duik", "boneSize"));
-		boutonBoneSize.onChange = function() { app.settings.saveSetting("duik", "boneSize",boutonBoneSize.text); };
-		boutonBoneSize.text = app.settings.getSetting("duik","boneSize");
+		boutonBoneSize.onChange = function() {
+			Duik.settings.boneSize = parseInt(boutonBoneSize.text);
+			Duik.settings.save();
+			};
+		boutonBoneSize.text = Duik.settings.boneSize
+		//taille auto des bones
 		var boutonBoneSizeAuto = groupeBoneSizeAuto.add("checkbox",undefined,getMessage(170));
 		boutonBoneSizeAuto.onClick = function() {
-			app.settings.saveSetting("duik", "boneSizeAuto",boutonBoneSizeAuto.value);
 			boutonBoneSize.enabled = !boutonBoneSizeAuto.value;
 			boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value;
+			Duik.settings.boneSizeAuto = boutonBoneSizeAuto.value;
+			Duik.settings.save();
 			};
-		boutonBoneSizeAuto.value = eval(app.settings.getSetting("duik", "boneSizeAuto"));
+		boutonBoneSizeAuto.value = Duik.settings.boneSizeAuto;
 		boutonBoneSizeAuto.alignment = ["fill","bottom"];
+		//size hint des bones
 		var boutonBoneSizeAutoValue = groupeBoneSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
-		boutonBoneSizeAutoValue.selection = eval(app.settings.getSetting("duik", "boneSizeAutoValue"));
-		boutonBoneSizeAutoValue.onChange = function () {app.settings.saveSetting("duik", "boneSizeAutoValue",boutonBoneSizeAutoValue.selection.index)};
+		boutonBoneSizeAutoValue.selection = Duik.settings.boneSizeHint;
+		boutonBoneSizeAutoValue.onChange = function () {
+			Duik.settings.boneSizeHint = boutonBoneSizeAutoValue.selection;
+			Duik.settings.save();
+			};
 		boutonBoneSize.enabled = !boutonBoneSizeAuto.value ;
 		boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value ;
+		//bone color
 		var groupeBoneColor = addHGroup(panosettings);
 		groupeBoneColor.add("statictext",undefined,getMessage(187));
 		var boutonBoneColorSharp = groupeBoneColor.add("statictext",undefined,"#");
 		boutonBoneColorSharp.alignment = ["right","fill"];
 		var boutonBoneColor = groupeBoneColor.add("edittext",undefined,"FF0000");
-		boutonBoneColor.onChange = function() { app.settings.saveSetting("duik", "boneColor",boutonBoneColor.text); };
-		boutonBoneColor.text = app.settings.getSetting("duik","boneColor");
+		boutonBoneColor.onChange = function() {
+			Duik.settings.boneColor = boutonBoneColor.text;
+			Duik.settings.save();
+			};
+		boutonBoneColor.text = Duik.settings.boneColor;
 		boutonBoneColor.enabled = boutonBoneType.selection == 0;
 		
 		addSeparator(panosettings,getMessage(116));
@@ -3564,15 +3353,28 @@ function createDialog(titre,hasokbutton,okfonction){
 		var groupeCtrlSizeAuto = addHGroup(panosettings);
 		groupeCtrlSize.add("statictext",undefined,getMessage(169));
 		var boutonCtrlSize = groupeCtrlSize.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
-		boutonCtrlSize.onChange = function() { app.settings.saveSetting("duik", "ctrlSize",boutonCtrlSize.text); };
-		boutonCtrlSize.text = app.settings.getSetting("duik","ctrlSize");
+		boutonCtrlSize.onChange = function() {
+			Duik.settings.controllerSize = parseInt(boutonCtrlSize.text);
+			Duik.settings.save();
+			};
+		boutonCtrlSize.text = Duik.settings.controllerSize;
+		//taille auto controleurs
 		var boutonCtrlSizeAuto = groupeCtrlSizeAuto.add("checkbox",undefined,getMessage(170));
-		boutonCtrlSizeAuto.onClick = function() { app.settings.saveSetting("duik", "ctrlSizeAuto",boutonCtrlSizeAuto.value); boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value; boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value;};
-		boutonCtrlSizeAuto.value = eval(app.settings.getSetting("duik", "ctrlSizeAuto"));
+		boutonCtrlSizeAuto.onClick = function() {
+			boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value;
+			boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value;
+			Duik.settings.controllerSizeAuto = boutonCtrlSizeAuto.value;
+			Duik.settings.save();
+			};
+		boutonCtrlSizeAuto.value = Duik.settings.controllerSizeAuto;
 		boutonCtrlSizeAuto.alignment = ["fill","bottom"];
+		//size hint controllers
 		var boutonCtrlSizeAutoValue = groupeCtrlSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
-		boutonCtrlSizeAutoValue.selection = eval(app.settings.getSetting("duik", "ctrlSizeAutoValue"));
-		boutonCtrlSizeAutoValue.onChange = function () {app.settings.saveSetting("duik", "ctrlSizeAutoValue",boutonBoneSizeAutoValue.selection.index)};
+		boutonCtrlSizeAutoValue.selection = Duik.settings.controllerSizeHint;
+		boutonCtrlSizeAutoValue.onChange = function () {
+			Duik.settings.controllerSizeHint = boutonCtrlSizeAutoValue.selection;
+			Duik.settings.save();
+			};
 		boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value ;
 		boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value ;
 		}

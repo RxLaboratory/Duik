@@ -81,7 +81,6 @@ if (Duik.versionNumber < 15.0004)
 	
 	/* UI Strings
 		Localisation
-		for now, uses duik_translations.jsxinc
 		
 		TODO
 		class Duik.uiStrings
@@ -95,21 +94,8 @@ if (Duik.versionNumber < 15.0004)
 		Duik.uiStrings = {};
 		
 		Duik.uiStrings.ik = "IK";
-		Duik.uiStrings.ikFkBox = "IK / FK";
-		Duik.uiStrings.reverseBox = "Reverse";
-		Duik.uiStrings.fkAngle = "FK";
-		Duik.uiStrings.rootFkAngle = "Root FK";
-		Duik.uiStrings.endFkAngle = "End FK";
-		Duik.uiStrings.goalFkAngle = "Goal FK";
-		Duik.uiStrings.weightSlider = "LookAt Weight";
-		Duik.uiStrings.xAmp = "X Amp.";
-		Duik.uiStrings.xFreq = "X Freq.";
-		Duik.uiStrings.yAmp = "Y Amp.";
-		Duik.uiStrings.yFreq = "Y Freq.";
-		Duik.uiStrings.zAmp = "Z Amp.";
-		Duik.uiStrings.zFreq = "Z Freq.";
-		Duik.uiStrings.amp = "Amp.";
-		Duik.uiStrings.freq = "Freq.";
+		Duik.uiStrings.wiggle = "Wiggle";
+		Duik.uiStrings.exposure = "Exposure";
 	}
 
 	//================================
@@ -123,12 +109,63 @@ if (Duik.versionNumber < 15.0004)
 	{
 		Duik.settings = {};
 		
-		//controller size in pixels
-		Duik.settings.controllerSize = 100;
-		//controller size automatically adapted to comp size
-		Duik.settings.controllerSizeAuto = true;
-		//when controllerSizeAuto is true, 0 = small, 1 = medium, 2 = big
-		Duik.settings.controllerSizeHint = 1;
+		Duik.sizes = {};
+		Duik.sizes.SMALL = 0;
+		Duik.sizes.MEDIUM = 1;
+		Duik.sizes.BIG = 2;
+		
+		Duik.layerTypes = {};
+		Duik.layerTypes.NULL = 1;
+		Duik.layerTypes.SOLID = 0;
+				
+		if (! app.settings.haveSetting("duik", "boneType")){app.settings.saveSetting("duik","boneType",Duik.layerTypes.SOLID);}
+		if (! app.settings.haveSetting("duik", "boneSize")){app.settings.saveSetting("duik","boneSize",20);}
+		if (! app.settings.haveSetting("duik", "ctrlSize")){app.settings.saveSetting("duik","ctrlSize",100);}
+		if (! app.settings.haveSetting("duik", "ctrlSizeAuto")){app.settings.saveSetting("duik","ctrlSizeAuto",true);}
+		if (! app.settings.haveSetting("duik", "boneSizeAuto")){app.settings.saveSetting("duik","boneSizeAuto",true);}
+		if (! app.settings.haveSetting("duik", "boneSizeAutoValue")){app.settings.saveSetting("duik","boneSizeAutoValue",Duik.sizes.MEDIUM);}
+		if (! app.settings.haveSetting("duik", "ctrlSizeAutoValue")){app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.sizes.MEDIUM);}
+		if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
+		
+		Duik.settings.save = function ()
+		{
+			app.settings.saveSetting("duik","boneType",Duik.settings.boneType);
+			app.settings.saveSetting("duik","boneSize",Duik.settings.boneSize);
+			app.settings.saveSetting("duik","ctrlSize",Duik.settings.controllerSize);
+			app.settings.saveSetting("duik","ctrlSizeAuto",Duik.settings.controllerSizeAuto);
+			app.settings.saveSetting("duik","boneSizeAuto",Duik.settings.boneSizeAuto);
+			app.settings.saveSetting("duik","boneSizeAutoValue",Duik.settings.boneSizeHint);
+			app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.settings.controllerSizeHint);
+			app.settings.saveSetting("duik","boneColor",Duik.settings.boneColor);
+		}
+		
+		Duik.settings.load = function ()
+		{
+			Duik.settings.controllerSize = eval(app.settings.getSetting("duik","ctrlSize"));
+			Duik.settings.controllerSizeAuto = eval(app.settings.getSetting("duik","ctrlSizeAuto"));
+			Duik.settings.controllerSizeHint = eval(app.settings.getSetting("duik","ctrlSizeAutoValue"));
+			Duik.settings.boneType = eval(app.settings.getSetting("duik","boneType"));
+			Duik.settings.boneSize = eval(app.settings.getSetting("duik","boneSize"));
+			Duik.settings.boneSizeAuto = eval(app.settings.getSetting("duik","boneSizeAuto"));
+			Duik.settings.boneSizeHint = eval(app.settings.getSetting("duik","boneSizeAutoValue"));
+			Duik.settings.boneColor = app.settings.getSetting("duik","boneColor");
+		}
+		
+		Duik.settings.restoreDefaults = function ()
+		{
+			Duik.settings.controllerSize = 100;
+			Duik.settings.controllerSizeAuto = true;
+			Duik.settings.controllerSizeHint = Duik.sizes.MEDIUM;
+			Duik.settings.boneType = Duik.layerTypes.SOLID;
+			Duik.settings.boneSize = 20;
+			Duik.settings.boneSizeAuto = true;
+			Duik.settings.boneSizeHint = Duik.sizes.MEDIUM;
+			Duik.settings.boneColor = "FF0000";
+			
+			Duik.settings.save();
+		}
+		
+		Duik.settings.load();
 	}
 	
 	//================================
@@ -244,13 +281,50 @@ if (Duik.versionNumber < 15.0004)
 				return null;
 			}
 		}
+		// GET ALL PUPPET PINS FROM A LAYER - Duik.utils.getPuppetPins(prop)
+		if (typeof Duik.utils.getPuppetPins !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.getPuppetPins = function (prop) {
+				var coins = [];
+				if (prop != null)
+				{
+					if (prop.matchName == "ADBE FreePin3 PosPin Atom")
+					{
+						coins.push(prop);
+					}
+					else if (prop.numProperties > 0)
+					{
+						//contournement de bug...
+						//d'abord recup les propriétés dans un tableau avant de les parcourir
+						//sinon l'incrément fonctionne pas dans la boucle, allez savoir pourquoi
+
+						var proprietes = [];
+						for (p=1;p<=prop.numProperties;p++)
+						{
+							proprietes.push(prop.property(p));
+						}
+
+						for (pi in proprietes)
+						{
+							var newCoins = Duik.utils.getPuppetPins(proprietes[pi]);
+							if (newCoins.length > 0)
+							{
+								coins = coins.concat(newCoins);
+							}
+						}
+					}
+				}
+				
+				return coins;
+			}
+		}
 	}
 	
 	//================================
 	//           METHODS
 	//================================
 	
-	/*	ADD IK - Duik.addIK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
+	/*	ADD IK - Duik.IK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
 		adds a 2D IK to the layers controlled by controller
 		
 		parameters:
@@ -266,9 +340,9 @@ if (Duik.versionNumber < 15.0004)
 		returns
 		true if successful, false if anything went wrong
 	*/
-	if (typeof Duik.addIK !== 'function' || Duik.forceReload)
+	if (typeof Duik.IK !== 'function' || Duik.forceReload)
 	{
-		Duik.addIK = function (ctrl,layer1,layer2,layer3,goal,cw,threeD,frontFacing)
+		Duik.IK = function (ctrl,layer1,layer2,layer3,goal,cw,threeD,frontFacing)
 		{	
 			//if there's not at least one controller and one layer, abort creation
 			if (ctrl == undefined || layer1 == undefined) return false;
@@ -314,10 +388,10 @@ if (Duik.versionNumber < 15.0004)
 			return true;
 		}
 	}
-	// ADD ONE-LAYER IK - Duik.addOneLayerIK(controller,layer)
-	if (typeof Duik.addOneLayerIK !== 'function' || Duik.forceReload)
+	// ADD ONE-LAYER IK - Duik.oneLayerIK(controller,layer)
+	if (typeof Duik.oneLayerIK !== 'function' || Duik.forceReload)
 	{
-		Duik.addOneLayerIK = function (ctrl,layer1)
+		Duik.oneLayerIK = function (ctrl,layer1)
 		{
 			//if there's not at least one controller and one layer, abort creation
 			if (ctrl == undefined || layer1 == undefined) return false;
@@ -364,10 +438,10 @@ if (Duik.versionNumber < 15.0004)
 			return true;
 		}
 	}
-	// ADD TWO-LAYER IK - Duik.addTwoLayerIK(threeD,controller,root,end,clockWise,frontFacing)
-	if (typeof Duik.addTwoLayerIK !== 'function' || Duik.forceReload)
+	// ADD TWO-LAYER IK - Duik.twoLayerIK(threeD,controller,root,end,clockWise,frontFacing)
+	if (typeof Duik.twoLayerIK !== 'function' || Duik.forceReload)
 	{
-		Duik.addTwoLayerIK = function (threeD,controller,root,end,clockWise,frontFacing)
+		Duik.twoLayerIK = function (threeD,controller,root,end,clockWise,frontFacing)
 		{
 			//if there's not at least one controller and two layers, abort creation
 			if (controller == undefined || root == undefined || end == undefined) return false;
@@ -590,7 +664,7 @@ if (Duik.versionNumber < 15.0004)
 			return endZero;
 		}
 	}
-	/* ADD GOAL - Duik.addGoal(layer,controller)
+	/* ADD GOAL - Duik.goal(layer,controller)
 		adds a goal to the layer which may be controlled by a controller
 		
 		parameters:
@@ -601,9 +675,9 @@ if (Duik.versionNumber < 15.0004)
 		true if successful, false if anything went wrong
 	
 	*/
-	if (typeof Duik.addGoal !== 'function' || Duik.forceReload)
+	if (typeof Duik.goal !== 'function' || Duik.forceReload)
 	{
-		Duik.addGoal = function (layer,controller)
+		Duik.goal = function (layer,controller)
 		{
 			//pour ne pas bouger, il faut récupérer la rotation d'origine
 			var ancienneRot = 0;
@@ -691,9 +765,9 @@ if (Duik.versionNumber < 15.0004)
 			var controllerSize = Duik.settings.controllerSize;
 			if (Duik.settings.controllerSizeAuto) {
 				controllerSize = app.project.activeItem.width/2 + app.project.activeItem.height/2;
-				if (Duik.settings.controllerSizeHint == 0) controllerSize = Math.floor(controllerSize/40);
-				if (Duik.settings.controllerSizeHint == 1) controllerSize = Math.floor(controllerSize/20);
-				if (Duik.settings.controllerSizeHint == 2) controllerSize = Math.floor(controllerSize);
+				if (Duik.settings.controllerSizeHint == Duik.sizes.SMALL) controllerSize = Math.floor(controllerSize/40);
+				else if (Duik.settings.controllerSizeHint == Duik.sizes.MEDIUM) controllerSize = Math.floor(controllerSize/20);
+				else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10);
 			}
 			controller.source.width = controllerSize;
 			controller.source.height = controllerSize;
@@ -726,214 +800,100 @@ if (Duik.versionNumber < 15.0004)
 			return controllers;
 		}
 	}
-	/* ADD WIGGLE - Duik.addWiggle(layer,property,all,x,y,z)
+	/* ADD WIGGLE - Duik.wiggle(layer,property,separateDimensions)
 
 		Adds a wiggle effect on the property of the layer
 	
 		parameters
 		layer | AVLayer
 		property | Property
-		all | boolean, default: true
-		x | boolean, default: false
-		y | boolean, default: false
-		z | boolean, default: false
+		separateDimensions | boolean, default: false
 		
 		returns
 		true if successful, false if anything went wrong
 	*/
-	if (typeof Duik.addWiggle !== 'function' || Duik.forceReload)
+	if (typeof Duik.wiggle !== 'function' || Duik.forceReload)
 	{
-		Duik.addWiggle = function (layer,prop,all,x,y,z)
+		Duik.wiggle = function (layer,prop,separateDimensions)
 		{
 			if (!prop.canSetExpression) return false;
 			
-			if (all == undefined) all = true;
-			if (x == undefined) x = false;
-			if (y == undefined) y = false;
-			if (z == undefined) z = false;
+			if (separateDimensions == undefined) separateDimensions = false;
 			
 			//dimensions
 			var dimensions = Duik.utils.getPropertyDimensions(prop);
+			if (!separateDimensions) dimensions = 1;
 			
 			var ok = false;
 			
-			if (dimensions == 3) ok = Duik.add3DWiggle(layer,prop,x,y,z);
-			else if (dimensions == 2) ok = Duik.add2DWiggle(layer,prop,x,y);
-			else ok = Duik.add1DWiggle(layer,prop);
+			if (dimensions == 3) ok = Duik.threeDWiggle(layer,prop);
+			else if (dimensions == 2) ok = Duik.twoDWiggle(layer,prop);
+			else ok = Duik.oneDWiggle(layer,prop);
 			
 			return ok;
 		}
 	}
-	// ADD 3D WIGGLE - Duik.add3DWiggle(layer,property,x,y,z)
-	if (typeof Duik.add3DWiggle !== 'function' || Duik.forceReload)
+	// ADD 3D WIGGLE - Duik.threeDWiggle(layer,property,x,y,z)
+	if (typeof Duik.threeDWiggle !== 'function' || Duik.forceReload)
 	{
-		Duik.add3DWiggle = function (layer,prop,x,y,z)
+		Duik.threeDWiggle = function (layer,prop)
 		{
-			//checks if it's a 3D property
-			if (prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType != PropertyValueType.ThreeD)
-			{
-				return false;
-			}
-			if (x == undefined) x = true;
-			if (y == undefined) y = true;
-			if (z == undefined) z = true;
-			
 			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
+
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(layer,"Duik_3dwiggle.ffx");
+			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
+			
+			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			
+			prop.expression = "//Duik.3DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(8),effect(\"" + effect.name + "\")(3));\n" + "Z=wiggle(effect(\"" + effect.name + "\")(9),effect(\"" + effect.name + "\")(4));\n" +  "[X[0],Y[1],Z[2]]";
+		
+			return true;
+		}
+	}
+	// ADD 2D WIGGLE - Duik.twoDWiggle(layer,property)
+	if (typeof Duik.twoDWiggle !== 'function' || Duik.forceReload)
+	{
+		Duik.twoDWiggle = function (layer,prop)
+		{
 			//if prop is an effect, need a way to recover it
 			var isEffect,effetIndex,effetProfondeur,effetParentName;
 			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
 			
-			if (x && y && z){
-				xamp = layer.Effects.addProperty("ADBE Slider Control");
-				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				yamp = layer.Effects.addProperty("ADBE Slider Control");
-				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				zamp = layer.Effects.addProperty("ADBE Slider Control");
-				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
-				xfreq = layer.Effects.addProperty("ADBE Slider Control");
-				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				yfreq = layer.Effects.addProperty("ADBE Slider Control");
-				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				zfreq = layer.Effects.addProperty("ADBE Slider Control");
-				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" +  "[X[0],Y[1],Z[2]]";
-			}
-			else if (x && y && !z){
-				xamp = layer.Effects.addProperty("ADBE Slider Control");
-				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				yamp = layer.Effects.addProperty("ADBE Slider Control");
-				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				xfreq = layer.Effects.addProperty("ADBE Slider Control");
-				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				yfreq = layer.Effects.addProperty("ADBE Slider Control");
-				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "[X[0],Y[1],value[2]]";
-			}
-			else if (x && !y && z){
-				xamp = layer.Effects.addProperty("ADBE Slider Control");
-				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				zamp = layer.Effects.addProperty("ADBE Slider Control");
-				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
-				xfreq = layer.Effects.addProperty("ADBE Slider Control");
-				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				zfreq = layer.Effects.addProperty("ADBE Slider Control");
-				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" + "[X[0],value[1],Z[2]]";
-			}
-			else if (!x && y && z) {
-				yamp = layer.Effects.addProperty("ADBE Slider Control");
-				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				zamp = layer.Effects.addProperty("ADBE Slider Control");
-				zamp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
-				yfreq = layer.Effects.addProperty("ADBE Slider Control");
-				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				zfreq = layer.Effects.addProperty("ADBE Slider Control");
-				zfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" + "Z=wiggle(effect(\"" + zfreq.name + "\")(1),effect(\"" + zamp.name + "\")(1));\n" + "[value[0],Y[1],Z[2]]";
-			}
-			else if (x && !y && !z){
-				amp = layer.Effects.addProperty("ADBE Slider Control");
-				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				freq = layer.Effects.addProperty("ADBE Slider Control");
-				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[X[0],value[1],value[2]]";
-				}
-			else if (!x && y && !z){
-				amp = layer.Effects.addProperty("ADBE Slider Control");
-				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				freq = layer.Effects.addProperty("ADBE Slider Control");
-				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "Y=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],Y[1],value[2]]";
-			}
-			else if (!x && !y && z){
-				amp = layer.Effects.addProperty("ADBE Slider Control");
-				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.zAmp;
-				freq = layer.Effects.addProperty("ADBE Slider Control");
-				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.zFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "Z=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],value[1],Z[2]]";
-			}
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(layer,"Duik_2dwiggle.ffx");
+			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
+			
+			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			prop.expression = "//Duik.2DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(6),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(3));\n" +  "[X[0],Y[1]]";
 			
 			return true;
 		}
 	}
-	// ADD 2D WIGGLE - Duik.add2DWiggle(layer,property,x,y)
-	if (typeof Duik.add2DWiggle !== 'function' || Duik.forceReload)
+	// ADD 1D WIGGLE - Duik.1DWiggle(layer,property)
+	if (typeof Duik.oneDWiggle !== 'function' || Duik.forceReload)
 	{
-		Duik.add2DWiggle = function (layer,prop,x,y)
-		{
-			//checks if it's a 2D property
-			if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL || prop.propertyValueType != PropertyValueType.TwoD)
-			{
-				return false;
-			}
-			if (x == undefined) x = true;
-			if (y == undefined) y = true
-			
-			//if prop is an effect, need a way to recover it
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
-			
-			if (x && y){
-				xamp = layer.Effects.addProperty("ADBE Slider Control");
-				xamp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				yamp = layer.Effects.addProperty("ADBE Slider Control");
-				yamp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				xfreq = layer.Effects.addProperty("ADBE Slider Control");
-				xfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				yfreq = layer.Effects.addProperty("ADBE Slider Control");
-				yfreq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + xfreq.name + "\")(1),effect(\"" + xamp.name + "\")(1));\n" + "Y=wiggle(effect(\"" + yfreq.name + "\")(1),effect(\"" + yamp.name + "\")(1));\n" +  "[X[0],Y[1]]";
-			}
-			else if (x && !y){
-				amp = layer.Effects.addProperty("ADBE Slider Control");
-				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.xAmp;
-				freq = layer.Effects.addProperty("ADBE Slider Control");
-				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.xFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "X=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[X[0],value[1]]";
-			}
-			else if (!x && y) {
-				amp = layer.Effects.addProperty("ADBE Slider Control");
-				amp.name = prop.parentProperty.name + " " + Duik.uiStrings.yAmp;
-				freq = layer.Effects.addProperty("ADBE Slider Control");
-				freq.name = prop.parentProperty.name + " " + Duik.uiStrings.yFreq;
-				if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-				prop.expression = "Y=wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1));\n" + "[value[0],Y[1]]";
-			}
-			
-			return true;
-		}
-	}
-	// ADD 1D WIGGLE - Duik.add1DWiggle(layer,property)
-	if (typeof Duik.add1DWiggle !== 'function' || Duik.forceReload)
-	{
-		Duik.add1DWiggle = function (layer,prop)
+		Duik.oneDWiggle = function (layer,prop)
 		{	
 			//if prop is an effect, need a way to recover it
 			var isEffect,effetIndex,effetProfondeur,effetParentName;
 			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
 			
-			amp = layer.Effects.addProperty("ADBE Slider Control");
-			amp.name = prop.parentProperty.name + " " + Duik.uiStrings.amp;
-			freq = layer.Effects.addProperty("ADBE Slider Control");
-			freq.name = prop.parentProperty.name + " " + Duik.uiStrings.freq;
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(layer,"Duik_1dwiggle.ffx");
+			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
+			
 			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-			prop.expression = "wiggle(effect(\"" + freq.name + "\")(1),effect(\"" + amp.name + "\")(1))";
+			
+			prop.expression = "//Duik.1DWiggle\r\nwiggle(effect(\"" + effect.name + "\")(2),effect(\"" + effect.name + "\")(1))";
 			
 			return true;
 
 		}
 	}
-	/* EXPOSURE - Duik.exposureControls(layer,property,adaptative,limit,minExp,maxExp);
+	/* EXPOSURE - Duik.exposure(layer,property,adaptative,limit,minExp,maxExp);
 	
 		Adds exposure controls to the animation of the property
 	
@@ -946,21 +906,27 @@ if (Duik.versionNumber < 15.0004)
 		true if successful, false if anything went wrong
 	
 	*/
-	if (typeof Duik.exposureControls !== 'function' || Duik.forceReload)
+	if (typeof Duik.exposure !== 'function' || Duik.forceReload)
 	{
-		Duik.exposureControls = function (layer,prop,adaptative,limit,minExp,maxExp)
+		Duik.exposure = function (layer,prop,adaptative,limit,minExp,maxExp)
 		{
 			if (adaptative == undefined) adaptative = true;
 			
-			if (adaptative) Duik.adaptativeExposureControls(layer,prop,limit,minExp,maxExp);
+			var ok = false;
 			
+			if (adaptative) ok = Duik.adaptativeExposure(layer,prop,limit,minExp,maxExp);
+			else ok = Duik.fixedExposure(layer,prop);
+			
+			return ok;
 		}
 	}
-	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposureControls(layer,property,precision,minExp,maxExp);
-	if (typeof Duik.adaptativeExposureControls !== 'function' || Duik.forceReload)
+	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposure(layer,property,precision,minExp,maxExp);
+	if (typeof Duik.adaptativeExposure !== 'function' || Duik.forceReload)
 	{
-		Duik.adaptativeExposureControls = function (layer,prop,limit,minExp,maxExp)
+		Duik.adaptativeExposure = function (layer,prop,limit,minExp,maxExp)
 		{
+			if (!prop.canSetExpression) return false;
+			
 			if (minExp == undefined) minExp = 1;
 			if (maxExp == undefined) maxExp = 4;
 			
@@ -1007,6 +973,133 @@ if (Duik.versionNumber < 15.0004)
 				prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
 				
 			}
+			
+			return true;
+		}
+	}
+	// ADAPTATIVE EXPOSURE - Duik.fixedExposure(layer,property);
+	if (typeof Duik.fixedExposure !== 'function' || Duik.forceReload)
+	{
+		Duik.fixedExposure = function (layer,prop)
+		{
+			if (!prop.canSetExpression) return false;	
+
+			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
+			
+			//effect
+			var expo = Duik.utils.addPseudoEffect(layer,"Duik_exposure.ffx");
+			expo.name = prop.name + " "  + Duik.uiStrings.exposure;
+			expo(1).setValue(1);
+			
+			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			
+			var expressionexpo = "expo = effect(\"" + expo.name + "\")(1);\n" +
+			"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
+			"timef = timeToFrames(time);\n" +
+			"valueAtTime(framesToTime( timef - timef%expo ))";
+			
+			prop.expression = expressionexpo;
+		}
+	}
+	/* ADD BONES - Duik.addBones(layers);
+	
+		Adds bones to the layers, only on selected pins if any, or else on all puppet pins found on those layers.
+	
+		parameters
+		layers | Array of AVLayer
+		
+		returns
+		Array of AVLayers, the bones created
+	
+	*/
+	if (typeof Duik.addBones !== 'function' || Duik.forceReload)
+	{
+		Duik.addBones = function (layers)
+		{
+			var createdBones = [];
+			if (layers.length == 0) { return createdBones; }
+			
+			for (i=0;i<layers.length;i++)
+			{
+				var calque = layers[i];
+				// les propriétés sélectionnées
+				var props = calque.selectedProperties;
+				var coins = [];
+				//lister les puppet pins
+				if (props.length > 0)
+				{
+					for (j=0;j<props.length;j++)
+					{
+						if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
+					}
+				}
+				//si il n'y a pas de coins sélectionnés, on les prend tous
+				if (coins.length == 0) coins = Duik.utils.getPuppetPins(calque("Effects"));
+				if (coins.length == 0) { return createdBones; }
+				
+				for (j=0;j<coins.length;j++)
+				{
+					var coin = coins[j];
+					//la position du coin
+					var position = coin.position.value;
+					//créer le bone
+					var bone;
+					//sa taille
+					boneTaille = Duik.settings.boneSize;
+					if (Duik.settings.boneSizeAuto) {
+						boneTaille = app.project.activeItem.width/2 + app.project.activeItem.height/2;
+						if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) boneTaille = Math.floor(boneTaille/60);
+						else if (Duik.settings.boneSizeHint == Duik.sizes.MEDIUM) boneTaille = Math.floor(boneTaille/40);
+						else if (Duik.settings.boneSizeHint == Duik.sizes.BIG) boneTaille = Math.floor(boneTaille/20);
+					}
+					if (Duik.settings.boneType == Duik.layerTypes.NULL)
+					{
+						bone = app.project.activeItem.layers.addNull();
+						bone.name = "B_" + coin.name;
+						bone.source.width = boneTaille;
+						bone.source.height = boneTaille;
+						bone.transform.anchorPoint.setValue([bone.source.width/2,bone.source.height/2]);
+					}
+					else
+					{
+						var colorString = Duik.settings.boneColor;
+						var red = parseInt(colorString.substr(0,2),16)/255.0;
+						var green = parseInt(colorString.substr(2,2),16)/255.0;
+						var blue = parseInt(colorString.substr(4,2),16)/255.0;
+						bone = app.project.activeItem.layers.addSolid([red,green,blue],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
+					}
+					createdBones.push(bone);
+					//mettre le bone à la position du coin : utiliser une expression pour avoir la position en mode world du coin
+					var filet = coin.propertyGroup().propertyGroup();
+					var marionnette = filet.propertyGroup().propertyGroup().propertyGroup();
+					if (calque instanceof ShapeLayer)
+					{
+						bone.position.expression = "thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position";
+					}
+					else
+					{
+						bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position)";
+					}
+					bone.position.setValue(bone.position.value);
+					bone.position.expression = "";
+					//nom du bone
+					bone.name = "B_" + coin.name;
+					bone.guideLayer = true;
+					//mettre l'expression dans le coin
+					if (calque instanceof ShapeLayer)
+					{
+						coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
+					}
+					else
+					{
+						coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
+					}
+				}//for coins
+			}//for layers
+			
+			return createdBones;
 		}
 	}
 }());
