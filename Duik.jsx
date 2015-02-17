@@ -1630,30 +1630,9 @@ if (app.project.activeItem.selectedLayers.length > 0) {
 			//  début de groupe d'annulation
 			app.beginUndoGroup("Duik - Zero");	
 	
-	var calques = app.project.activeItem.selectedLayers;
+			Duik.addZeros(app.project.activeItem.selectedLayers);
 
-	for (i = 0 ; i < calques.length ; i++)
-	{
-		var calque = calques[i];
-		//créer un zéro
-		var zero = app.project.activeItem.layers.addNull();
-		var calqueparent = calque.parent;
-		calque.parent = null;
-		zero.position.setValue(calque.position.value);
-		zero.rotation.setValue(calque.rotation.value);
-		zero.name = "Zero_" + calque.name.slice(-24);
-		calque.parent = zero;
 
-		//lier le zéro au bone du bout
-		zero.parent = calqueparent;
-
-		//verrouiller et masquer le zéro
-		zero.moveToEnd();
-		zero.guideLayer = true;
-		zero.locked = true;
-		zero.shy = true;
-		zero.enabled = false;
-	}
 	
 			//  fin de groupe d'annulation
 			app.endUndoGroup();
