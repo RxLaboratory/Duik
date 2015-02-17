@@ -1825,69 +1825,9 @@ if(effet.canSetExpression) {
 //  début de groupe d'annulation
 app.beginUndoGroup(getMessage(52));
 	
-//TODO vérifier le nombre de dimensions
-
-if (effet.parentProperty.isEffect){
-	var effetIndex = effet.propertyIndex;
-	var effetProfondeur = effet.propertyDepth;
-	var effetParentName = effet.parentProperty.name;
-	var amplitude = calque.Effects.addProperty("ADBE Slider Control");
-	amplitude.name = getMessage(53);
-	amplitude(1).setValue(1);
-	var frequence = calque.Effects.addProperty("ADBE Slider Control");
-	frequence.name = getMessage(54);
-	frequence(1).setValue(1);
-    var decalage = calque.Effects.addProperty("ADBE Slider Control");
-	decalage.name = getMessage(55);
-	var amorti = calque.Effects.addProperty("ADBE Slider Control");
-	amorti.name = getMessage(56);
-	
-	effet = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex);
-	//=============================================
-	//expression a insérer
-	var expressionosc = "amp = effect('" + getMessage(53) + "')(1);\n" +
-"freq = effect('" + getMessage(54) + "')(1)*2*Math.PI;\n" +
-"decalage = framesToTime(effect('" + getMessage(55) + "')(1));\n" +
-"amorti = Math.abs(effect('" + getMessage(56) + "')(1));\n\n" +
-"sin = Math.sin(time*freq+decalage);\n\n" +
-"for(i=0;i<amorti;i++) {\n" +
-"sin = Math.sin(sin);\n" +
-"}\n" +
-"sin*amp+value;";
-	//=============================================
-
-effet.expression = expressionosc;
-
-} else {
-	
-	var amplitude = calque.Effects.addProperty("ADBE Slider Control");
-	amplitude.name = getMessage(53);
-	amplitude(1).setValue(1);
-	var frequence = calque.Effects.addProperty("ADBE Slider Control");
-	frequence.name = getMessage(54);
-	frequence(1).setValue(1);
-    var decalage = calque.Effects.addProperty("ADBE Slider Control");
-	decalage.name = getMessage(55);
-	var amorti = calque.Effects.addProperty("ADBE Slider Control");
-	amorti.name = getMessage(56);
-	//=============================================
-	//expression a insérer
-	var expressionosc = "amp = effect('" + getMessage(53) + "')(1);\n" +
-"freq = effect('" + getMessage(54) + "')(1)*2*Math.PI;\n" +
-"decalage = framesToTime(effect('" + getMessage(55) + "')(1));\n" +
-"amorti = Math.abs(effect('" + getMessage(56) + "')(1));\n\n" +
-"sin = Math.sin(time*freq+decalage);\n\n" +
-"for(i=0;i<amorti;i++) {\n" +
-"sin = Math.sin(sin);\n" +
-"}\n" +
-"sin*amp+value;";
-	//=============================================
-
-effet.expression = expressionosc;
-
-}
+Duik.swing(calque,effet);
 //fin du groupe d'annulation
-app.endUndoGroup();	
+app.endUndoGroup();
 
 }else{alert(getMessage(38),getMessage(46));}
 }else{alert(getMessage(47),getMessage(48));}

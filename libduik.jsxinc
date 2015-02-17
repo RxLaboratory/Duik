@@ -105,6 +105,7 @@ if (Duik.versionNumber < 15.0004)
 		Duik.uiStrings.wiggle = "Wiggle";
 		Duik.uiStrings.exposure = "Exposure";
 		Duik.uiStrings.rotMorph = "Rotation Morph";
+		Duik.uiStrings.swing = "Swing";
 	}
 
 	//================================
@@ -184,6 +185,22 @@ if (Duik.versionNumber < 15.0004)
 	if (typeof Duik.utils !== 'object' || Duik.forceReload)
 	{
 		Duik.utils = {};
+		// RIG PROPERTY - Duik.utils.rigProperty(layer,prop,pseudoEffect)
+		if (typeof Duik.utils.rigProperty !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.rigProperty = function (layer,prop,pseudoEffect)
+			{
+				//if prop is an effect, need a way to recover it
+				var isEffect,effetIndex,effetProfondeur,effetParentName;
+				if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return null;
+				
+				//pseudo effect
+				var effect = Duik.utils.addPseudoEffect(layer,pseudoEffect);
+				if (isEffect){ prop = layer.effect(effetParentName)(effetIndex); }
+				
+				return effect;
+			}
+		}
 		// PREPARE PROPERTY - Duik.utils.prepareProperty(prop,isFX,ind,prof,parentName,dimensions)
 		if (typeof Duik.utils.prepareProperty !== 'function' || Duik.forceReload)
 		{
@@ -868,15 +885,9 @@ if (Duik.versionNumber < 15.0004)
 	{
 		Duik.threeDWiggle = function (layer,prop)
 		{
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
-
-			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(layer,"Duik_3dwiggle.ffx");
-			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
-			
-			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_3dwiggle.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
 			prop.expression = "//Duik.3DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(8),effect(\"" + effect.name + "\")(3));\n" + "Z=wiggle(effect(\"" + effect.name + "\")(9),effect(\"" + effect.name + "\")(4));\n" +  "[X[0],Y[1],Z[2]]";
 		
@@ -888,15 +899,9 @@ if (Duik.versionNumber < 15.0004)
 	{
 		Duik.twoDWiggle = function (layer,prop)
 		{
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
-			
-			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(layer,"Duik_2dwiggle.ffx");
-			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
-			
-			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_2dwiggle.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			prop.expression = "//Duik.2DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(6),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(3));\n" +  "[X[0],Y[1]]";
 			
 			return true;
@@ -906,16 +911,10 @@ if (Duik.versionNumber < 15.0004)
 	if (typeof Duik.oneDWiggle !== 'function' || Duik.forceReload)
 	{
 		Duik.oneDWiggle = function (layer,prop)
-		{	
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
-			
-			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(layer,"Duik_1dwiggle.ffx");
-			effect.name = prop.name + " "  + Duik.uiStrings.wiggle;
-			
-			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+		{
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_1dwiggle.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
 			prop.expression = "//Duik.1DWiggle\r\nwiggle(effect(\"" + effect.name + "\")(2),effect(\"" + effect.name + "\")(1))";
 			
@@ -1012,25 +1011,15 @@ if (Duik.versionNumber < 15.0004)
 	{
 		Duik.fixedExposure = function (layer,prop)
 		{
-			if (!prop.canSetExpression) return false;	
-
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_exposure.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.exposure;
+			effect(1).setValue(1);
 			
-			//effect
-			var expo = Duik.utils.addPseudoEffect(layer,"Duik_exposure.ffx");
-			expo.name = prop.name + " "  + Duik.uiStrings.exposure;
-			expo(1).setValue(1);
-			
-			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
-			
-			var expressionexpo = "expo = effect(\"" + expo.name + "\")(1);\n" +
+			prop.expression = "expo = effect(\"" + effect.name + "\")(1);\n" +
 			"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
 			"timef = timeToFrames(time);\n" +
 			"valueAtTime(framesToTime( timef - timef%expo ))";
-			
-			prop.expression = expressionexpo;
 		}
 	}
 	/* ADD BONES - Duik.addBones(layers);
@@ -1177,7 +1166,7 @@ if (Duik.versionNumber < 15.0004)
 			return zeros;
 		}
 	}
-		/* ADD ZEROS - Duik.rotationMorph(layer,prop);
+	/* ROTATION MORPH - Duik.rotationMorph(layer,prop);
 	
 		Creates a rotation morph on the given property
 	
@@ -1193,15 +1182,9 @@ if (Duik.versionNumber < 15.0004)
 	{
 		Duik.rotationMorph = function (layer,prop)
 		{
-			//if prop is an effect, need a way to recover it
-			var isEffect,effetIndex,effetProfondeur,effetParentName;
-			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
-			
-			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(layer,"Duik_rotmorph.ffx");
-			effect.name = prop.name + " "  + Duik.uiStrings.rotMorph;
-			
-			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_rotmorph.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.rotMorph;
 			
 			prop.expression = "//Duik.rotationMorph\r\n" + 
 								"if (numKeys > 1)\r\n" + 
@@ -1215,6 +1198,42 @@ if (Duik.versionNumber < 15.0004)
 								"if (div != 0) val = r/div - (Min/div);\r\n" + 
 								"valueAtTime(framesToTime(val));\r\n" + 
 								"} else value;";
+			
+			return true;
+		}
+	}
+	/* SWING - Duik.swing(layer,prop);
+	
+		Creates a swing on the given property
+	
+		parameters
+		layer | AVLayer
+		prop | Property
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.swing !== 'function' || Duik.forceReload)
+	{
+		Duik.swing = function (layer,prop)
+		{
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_swing.ffx");
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.swing;
+			effect(1).setValue(10);
+			effect(2).setValue(1);
+			
+			prop.expression = "//Duik.swing\r\n" + 
+								"amp = effect('" + effect.name + "')(1);\n" +
+								"freq = effect('" + effect.name + "')(2)*2*Math.PI;\n" +
+								"decalage = framesToTime(effect('" + effect.name + "')(3));\n" +
+								"amorti = Math.abs(effect('" + effect.name + "')(4));\n\n" +
+								"sin = Math.sin(time*freq+decalage);\n\n" +
+								"for(i=0;i<amorti;i++) {\n" +
+								"sin = Math.sin(sin);\n" +
+								"}\n" +
+								"sin*amp+value;";
 			
 			return true;
 		}
