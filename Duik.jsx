@@ -2390,66 +2390,7 @@ if (app.project.activeItem.selectedLayers.length == 1)
 		app.beginUndoGroup("Duik - Rotation Morph");
 		
 
-		if (effet.parentProperty.isEffect)
-		{
-			var effetIndex = effet.propertyIndex;
-			var effetParentName = effet.parentProperty.name;
-			var layerSelection = calque.Effects.addProperty("ADBE Layer Control");
-			layerSelection.name = "RM " + effetParentName + " Ref";
-			var min = calque.Effects.addProperty("ADBE Angle Control");
-			min.name = "RM " + effetParentName + " Min";
-			min(1).setValue(0);
-			var max = calque.Effects.addProperty("ADBE Angle Control");
-			max.name = "RM " + effetParentName + " Max";
-			max(1).setValue(90);
-
-			effet = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex);
-			//=============================================
-			//expression a insérer
-			var expressionrm = "if (numKeys > 1)\r\n" + 
-								"{\r\n" + 
-								"r = thisLayer.effect('" + "RM " + effetParentName + " Ref" + "')(1).transform.rotation;\r\n" + 
-								"n = timeToFrames(key(numKeys).time);\r\n" + 
-								"Min =  thisLayer.effect('" + "RM " + effetParentName + " Min" + "')(1);\r\n" + 
-								"Max = thisLayer.effect('" + "RM " + effetParentName + " Max" + "')(1);\r\n" + 
-								"div =  (Max - Min) / n;\r\n" + 
-								"val = 0;\r\n" + 
-								"if (div != 0) val = r/div - (Min/div);\r\n" + 
-								"valueAtTime(framesToTime(val));\r\n" + 
-								"} else value;";
-			//=============================================
-			effet.expression = expressionrm;
-
-		}
-		else 
-		{
-			var effetParentName = effet.parentProperty.name;
-			var layerSelection = calque.Effects.addProperty("ADBE Layer Control");
-			layerSelection.name = "RM " + effetParentName + " Ref";
-			var min = calque.Effects.addProperty("ADBE Angle Control");
-			min.name = "RM " + effetParentName + " Min";
-			min(1).setValue(0);
-			var max = calque.Effects.addProperty("ADBE Angle Control");
-			max.name = "RM " + effetParentName + " Max";
-			max(1).setValue(90);
-			//=============================================
-			//expression a insérer
-			var expressionrm = "if (numKeys > 1)\r\n" + 
-								"{\r\n" + 
-								"r = thisLayer.effect('" + "RM " + effetParentName + " Ref" + "')(1).transform.rotation;\r\n" + 
-								"n = timeToFrames(key(numKeys).time);\r\n" + 
-								"Min =  thisLayer.effect('" + "RM " + effetParentName + " Min" + "')(1);\r\n" + 
-								"Max = thisLayer.effect('" + "RM " + effetParentName + " Max" + "')(1);\r\n" + 
-								"div =  (Max - Min) / n;\r\n" + 
-								"val = 0;\r\n" + 
-								"if (div != 0) val = r/div - (Min/div);\r\n" + 
-								"valueAtTime(framesToTime(val));\r\n" + 
-								"} else value;";
-			//=============================================
-
-			effet.expression = expressionrm;
-			
-		}
+		Duik.rotationMorph(app.project.activeItem.selectedLayers[0],effet);
 
 		app.endUndoGroup();
 

@@ -104,6 +104,7 @@ if (Duik.versionNumber < 15.0004)
 		Duik.uiStrings.ik = "IK";
 		Duik.uiStrings.wiggle = "Wiggle";
 		Duik.uiStrings.exposure = "Exposure";
+		Duik.uiStrings.rotMorph = "Rotation Morph";
 	}
 
 	//================================
@@ -1131,7 +1132,7 @@ if (Duik.versionNumber < 15.0004)
 			return createdBones;
 		}
 	}
-	/* ADD BONES - Duik.addZeros(layers);
+	/* ADD ZEROS - Duik.addZeros(layers);
 	
 		Adds a null object for each layer, at the same place and orientation,
 		and then parents the layer to it, parenting the null object (the zero) to the former
@@ -1174,6 +1175,48 @@ if (Duik.versionNumber < 15.0004)
 				zeros.push(zeros);
 			}
 			return zeros;
+		}
+	}
+		/* ADD ZEROS - Duik.rotationMorph(layer,prop);
+	
+		Creates a rotation morph on the given property
+	
+		parameters
+		layer | AVLayer
+		prop | Property
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.rotationMorph !== 'function' || Duik.forceReload)
+	{
+		Duik.rotationMorph = function (layer,prop)
+		{
+			//if prop is an effect, need a way to recover it
+			var isEffect,effetIndex,effetProfondeur,effetParentName;
+			if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return false;
+			
+			//pseudo effect
+			var effect = Duik.utils.addPseudoEffect(layer,"Duik_rotmorph.ffx");
+			effect.name = prop.name + " "  + Duik.uiStrings.rotMorph;
+			
+			if (isEffect){ prop = app.project.activeItem.selectedLayers[0].effect(effetParentName)(effetIndex); }
+			
+			prop.expression = "//Duik.rotationMorph\r\n" + 
+								"if (numKeys > 1)\r\n" + 
+								"{\r\n" + 
+								"r = thisLayer.effect('" + effect.name + "')(1).transform.rotation;\r\n" + 
+								"n = timeToFrames(key(numKeys).time);\r\n" + 
+								"Min =  thisLayer.effect('" + effect.name + "')(2);\r\n" + 
+								"Max = thisLayer.effect('" + effect.name + "')(3);\r\n" + 
+								"div =  (Max - Min) / n;\r\n" + 
+								"val = 0;\r\n" + 
+								"if (div != 0) val = r/div - (Min/div);\r\n" + 
+								"valueAtTime(framesToTime(val));\r\n" + 
+								"} else value;";
+			
+			return true;
 		}
 	}
 }());
