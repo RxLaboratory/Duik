@@ -858,23 +858,9 @@ function mesurer() {
 //vérifions qu'il y a deux calques sélectionnés
 	if (app.project.activeItem.selectedLayers.length == 2){
 
-
-	var calqueroue = app.project.activeItem.selectedLayers[0];
-	var calquemesure = app.project.activeItem.selectedLayers[1];
-	//récupérer les parents
-	var parentroue = calqueroue.parent;
-	var parentmesure = calquemesure.parent;	
-	//défaire les parents pour mesurer les positions
-	calqueroue.parent = null;
-	calquemesure.parent = null;
-	var O = calqueroue.transform.position.value;
-	var A = calquemesure.transform.position.value;
-	OA = Math.sqrt( carre(O[0]-A[0]) + carre(O[1]-A[1]) );
-	rayonbouton.text = Math.round(OA);
-	return Math.round(OA);
-	//refaire les parents
-	calqueroue.parent = parentroue;
-	calquemesure.parent = parentmesure;
+	var dist = Duik.utils.getDistance(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+	rayonbouton.text = dist;
+	return dist;
 
 } else { alert(getMessage(15),"Attention",true); }
 
@@ -884,14 +870,15 @@ function mesurer() {
 function mesure() {
 		
 		resultat = mesurer();
-		if (resultat/resultat == 1) {
-		resultattexte.text = getMessage(17) + resultat + " pixels.";
-		mesurefenetre.show();
-		}
-		if (resultat == 0) {
+				if (resultat == 0) {
 		resultattexte.text = getMessage(16);
 		mesurefenetre.show();
 		}
+		else if (resultat/resultat == 1) {
+		resultattexte.text = getMessage(17) + resultat + " pixels.";
+		mesurefenetre.show();
+		}
+
 		}
 		
 //FONCTION QUI RECUPERE LE RAYON ENTRE PAR L'UTILISATEUR
