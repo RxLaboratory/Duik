@@ -60,10 +60,10 @@ if (typeof Duik !== 'object')
 Duik.forceReload = true;
 
 //check if libDuik has been updated since first launch
-if (Duik.versionNumber < 15.0004)
+if (Duik.versionNumber < 15.0005)
 {
-	Duik.version = "15.alpha4";
-	Duik.versionNumber = 15.0004;
+	Duik.version = "15.alpha5";
+	Duik.versionNumber = 15.0005;
 	Duik.forceReload = true;
 	
 	//--------- only if scripts are allowed to write files ------------
@@ -106,6 +106,8 @@ if (Duik.versionNumber < 15.0004)
 		Duik.uiStrings.exposure = "Exposure";
 		Duik.uiStrings.rotMorph = "Rotation Morph";
 		Duik.uiStrings.swing = "Swing";
+		Duik.uiStrings.wheel = "Wheel";
+		Duik.uiStrings.lensFlare = "Lens Flare";
 	}
 
 	//================================
@@ -136,6 +138,7 @@ if (Duik.versionNumber < 15.0004)
 		if (! app.settings.haveSetting("duik", "boneSizeAutoValue")){app.settings.saveSetting("duik","boneSizeAutoValue",Duik.sizes.MEDIUM);}
 		if (! app.settings.haveSetting("duik", "ctrlSizeAutoValue")){app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.sizes.MEDIUM);}
 		if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
+		if (! app.settings.haveSetting("duik", "morpherKeyframes")){app.settings.saveSetting("duik","morpherKeyframes",true);}
 		
 		Duik.settings.save = function ()
 		{
@@ -147,6 +150,7 @@ if (Duik.versionNumber < 15.0004)
 			app.settings.saveSetting("duik","boneSizeAutoValue",Duik.settings.boneSizeHint);
 			app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.settings.controllerSizeHint);
 			app.settings.saveSetting("duik","boneColor",Duik.settings.boneColor);
+			app.settings.saveSetting("duik","morpherKey",Duik.settings.morpherCreatesKeyframes);
 		}
 		
 		Duik.settings.load = function ()
@@ -159,6 +163,7 @@ if (Duik.versionNumber < 15.0004)
 			Duik.settings.boneSizeAuto = eval(app.settings.getSetting("duik","boneSizeAuto"));
 			Duik.settings.boneSizeHint = eval(app.settings.getSetting("duik","boneSizeAutoValue"));
 			Duik.settings.boneColor = app.settings.getSetting("duik","boneColor");
+			Duik.settings.morpherCreatesKeyframes = eval(app.settings.getSetting("duik","morpherKeyframes"));
 		}
 		
 		Duik.settings.restoreDefaults = function ()
@@ -171,6 +176,7 @@ if (Duik.versionNumber < 15.0004)
 			Duik.settings.boneSizeAuto = true;
 			Duik.settings.boneSizeHint = Duik.sizes.MEDIUM;
 			Duik.settings.boneColor = "FF0000";
+			Duik.settings.morpherCreatesKeyframes = true;
 			
 			Duik.settings.save();
 		}
@@ -293,19 +299,36 @@ if (Duik.versionNumber < 15.0004)
 		{
 			Duik.utils.addPseudoEffect = function (layer,preset)
 			{
+				//applyPreset is bugged and always applies presets on selected layers instead of the given one,
+				//first deselect everything and select the wanted layer
+				var selection = app.project.activeItem.selectedLayers;
+				Duik.utils.deselectLayers();
+				layer.selected = true;
+				
+				
 				var thisFile = $.fileName;
 				var presetFile = new File(thisFile.substring(0,thisFile.lastIndexOf("/")) + "/" + preset);
 				layer.applyPreset(presetFile);
+				
+				var newEffect = null;
+				
 				for (fx = 1;fx <= layer("Effects").numProperties;fx++)
 				{
-					//alert(layer.effect(fx).name);
-					//alert(preset.substring(5,preset.lastIndexOf(".")));
 					if (layer.effect(fx).name == preset.substring(5,preset.lastIndexOf(".")) )
 					{
-						return layer.effect(fx);
+						newEffect = layer.effect(fx);
+						break;
 					}
 				}
-				return null;
+				
+				//restore selection...
+				layer.selected = false;
+				for (selectedLayerIndex=0;selectedLayerIndex<selection.length;selectedLayerIndex++)
+				{
+					selection[selectedLayerIndex].selected = true;
+				}
+				
+				return newEffect;
 			}
 		}
 		// GET ALL PUPPET PINS FROM A LAYER - Duik.utils.getPuppetPins(prop)
@@ -365,11 +388,25 @@ if (Duik.versionNumber < 15.0004)
 				return Math.round(OA);
 			}
 		}
+		// DESELECT ALL LAYERS - Duik.utils.deselectLayers()
+		if (typeof Duik.utils.deselectLayers !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.deselectLayers = function ()
+			{
+				var sel = app.project.activeItem.selectedLayers;
+				for (selectedLayerIndex=0;selectedLayerIndex<sel.length;selectedLayerIndex++)
+				{
+					sel[selectedLayerIndex].selected = false;
+				}
+			}
+		}
 	}
 	
 	//================================
 	//           METHODS
 	//================================
+	
+	//TODO, instead of returning true or false, functions should return the effect created
 	
 	/*	ADD IK - Duik.IK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
 		adds a 2D IK to the layers controlled by controller
@@ -481,6 +518,10 @@ if (Duik.versionNumber < 15.0004)
 			var nrot = layer1.transform.rotation.value;
 
 			layer1.transform.rotation.setValue(-nrot+2*orot);
+			
+			//select controller
+			Duik.utils.deselectLayers();
+			ctrl.selected = true;
 			
 			return true;
 		}
@@ -708,6 +749,10 @@ if (Duik.versionNumber < 15.0004)
 
 			endZero.transform.position.expression = expressionstretchzero;
 			
+			//select controller
+			Duik.utils.deselectLayers();
+			controller.selected = true;
+			
 			return endZero;
 		}
 	}
@@ -787,6 +832,13 @@ if (Duik.versionNumber < 15.0004)
 			if (layer.threeDLayer) layer.transform.zRotation.setValue(2*ancienneRot-nouvelleRot);
 			else layer.transform.rotation.setValue(2*ancienneRot-nouvelleRot);
 			
+			//select controller
+			if (controller != undefined)
+			{
+				Duik.utils.deselectLayers();
+				controller.selected = true;
+			}
+			
 			return true;
 		}
 	}
@@ -821,6 +873,10 @@ if (Duik.versionNumber < 15.0004)
 			controller.anchorPoint.setValue([controller.source.width/2,controller.source.height/2]);
 			controller.transform.position.setValue(layerPosition);
 			controller.name = "C_" + layer.name.slice(-28);
+			
+			//select controller
+			Duik.utils.deselectLayers();
+			controller.selected = true;
 
 			return controller;
 		}
@@ -844,6 +900,13 @@ if (Duik.versionNumber < 15.0004)
 				controllers.push(Duik.addController(layers[i]));
 			}
 
+			//select controllers
+			Duik.utils.deselectLayers();
+			for (controllerI = 0; controllerI < controllers.length;controllerI++)
+			{
+				controllers[controllerI].selected = true;
+			}
+			
 			return controllers;
 		}
 	}
@@ -1118,6 +1181,8 @@ if (Duik.versionNumber < 15.0004)
 				}//for coins
 			}//for layers
 			
+			
+			
 			return createdBones;
 		}
 	}
@@ -1236,6 +1301,236 @@ if (Duik.versionNumber < 15.0004)
 								"sin*amp+value;";
 			
 			return true;
+		}
+	}
+	/* WHEEL - Duik.wheel(layer,radius,curved);
+	
+		Automates the rotation of the given layer using its position.
+		If curved, works even if the trajectory is not horizontal, but is heavier to compute.
+	
+		parameters
+		layer | AVLayer
+		radius | float, default 100.0
+		curved | boolean, default false
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.wheel !== 'function' || Duik.forceReload)
+	{
+		Duik.wheel = function (layer,radius,curved)
+		{
+			if (radius == undefined) radius = 100;
+			else if (! (radius > 0)) radius = 100;
+			if (curved == undefined) curved = false;
+			var effect = Duik.utils.rigProperty(layer,layer.transform.rotation,"Duik_wheel.ffx");
+			if (effect == null) return false;
+			effect.name = Duik.uiStrings.wheel;
+			effect(1).setValue(radius);
+			
+			if (!curved) layer.transform.rotation.expression = "//Duik.Wheel\r\n" + 
+																"O = thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
+																"R = thisLayer.effect('" + effect.name + "')(1);\n" + 
+																"Rev = thisLayer.effect('" + effect.name + "')(2);\n" + 
+																"result = 0;\n" +
+																"R > 0 ? result = radiansToDegrees(O[0]/R) : result = 0 ;" +
+																"Rev == 1 ? value - result : value + result;";
+			else layer.transform.rotation.expression = "//Duik.Wheel\r\n" + 
+															"R = thisLayer.effect('" + effect.name + "')(1);\n" + 
+															"Rev = thisLayer.effect('" + effect.name + "')(2);\n" + 
+															"var precision = 1;\n" + 
+															"function pos(frame)\n" + 
+															"{\n" + 
+															"return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n" + 
+															"}\n" + 
+															"function roue()\n" + 
+															"{\n" + 
+															"if (R<=0) return value;\n" + 
+															"var distance = 0;\n" + 
+															"var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n" + 
+															"var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n" + 
+															"for(i=start;i<end;i+=precision)\n" + 
+															"{\n" + 
+															"if (pos(i+precision)[0] - pos(i)[0] > 0) distance += length(pos(i+precision),pos(i));\n" + 
+															"else distance -= length(pos(i+precision),pos(i));\n" + 
+															"}\n" + 
+															"return radiansToDegrees(distance/R) ;\n" + 
+															"}\n" + 
+															"Rev == 1 ? value - roue() : value + roue();";
+			
+			return true;
+		}
+	}
+	/* MORPHER - Duik.morpher(layers);
+	
+		Adds a "morpher", a slider to easily control interpolations of selected properties of the given layers.
+	
+		parameters
+		layers | Array of AVLayer
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.morpher !== 'function' || Duik.forceReload)
+	{
+		Duik.morpher = function (layers)
+		{
+			//récupérer la sélection d'effets du premier calque, puisqu'elle sera perdue à la création de la glissière..... (voir avec adobe si vous trouvez ca pas pratique)
+			var selection = [];
+			effets =  layers[0].selectedProperties;
+			for (j=0;j<effets.length;j++) {
+			if (effets[j].canSetExpression && effets[j].parentProperty.isEffect) {
+				 var layerIndex = app.project.activeItem.selectedLayers[0].index;
+				 var effetIndex =  effets[j].propertyIndex;
+				 var effetParentName = effets[j].parentProperty.name;
+				selection.push([layerIndex,effetParentName,effetIndex]);
+				delete effetIndex;
+				delete effetParentName;
+				}
+			}
+
+			//créer le curseur
+			var morpher = layers[0].Effects.addProperty("ADBE Slider Control");
+			morpher.name = "Morpher";
+
+			//boucle pour appliquer le morpher sur la sélection perdue
+			for (i=0;i<selection.length;i++)
+			{
+				var effet = layers[0].effect(selection[i][1])(selection[i][2]);
+				effet.expression = "//Duik.Morpher\r\nvalueAtTime((thisComp.layer(\"" +  layers[0].name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
+				//la boucle pour créer automatiquement des clefs sur le morpher :
+				if (Duik.settings.morpherCreatesKeyframes)
+				{
+					//nombre de clefs
+					var nbreClefs = effet.numKeys;
+					//durée d'image de la compo
+					var ips = app.project.activeItem.frameDuration;
+					var temps = 0;
+					var prop = effet;
+					for (k=1;k<=nbreClefs;k++)
+					{                 
+						//récupère l'instant de la clef
+						temps = prop.keyTime(k);
+						//crée une image clef sur le morpher
+						morpher(1).setValueAtTime(temps,temps/ips);
+					}
+					delete temps;
+					delete prop;
+					delete ips;
+					delete nbreClefs;   
+				}
+			}
+
+			//boucle pour appliquer le morpher partout
+			for (i=0;i<layers.length;i++)
+			{
+				for (j=0;j<layers[i].selectedProperties.length;j++)
+				{
+					var effet = layers[i].selectedProperties[j];
+					if (effet.canSetExpression && effet.parentProperty.name != "Morpher")
+					{
+						effet.expression = "valueAtTime((thisComp.layer(\"" + layers[0].name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
+						//la boucle pour créer automatiquement des clefs sur le morpher :
+						if (Duik.settings.morpherCreatesKeyframes)
+						{
+							//nombre de clefs
+							var nbreClefs = effet.numKeys;
+							//durée d'image de la compo
+							var ips = app.project.activeItem.frameDuration;
+							var temps = 0;
+							var prop = effet;
+							for (k=1;k<=nbreClefs;k++)
+							{                 
+								//récupère l'instant de la clef
+								temps = prop.keyTime(k);
+								//crée une image clef sur le morpher
+								morpher(1).setValueAtTime(temps,temps/ips);
+							}
+							delete temps;
+							delete prop;
+							delete ips;
+							delete nbreClefs;   
+						}
+					}
+				}
+			}
+
+			return true;
+		}
+	}
+	/* LENS FLARE - Duik.lensFlare(layers);
+	
+		Rigs the layers to move like a lens flare.
+	
+		parameters
+		layers | Array of AVLayer
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.lensFlare !== 'function' || Duik.forceReload)
+	{
+		Duik.lensFlare = function (layers)
+		{
+			//sortir le premier calque, le centre, et ajouter les contrôleurs
+			var centre = layers.shift();
+			var nomcentre = centre.name;
+			var centerEffect = Duik.utils.addPseudoEffect(centre,"Duik_lensflare.ffx");
+			centerEffect.name = Duik.uiStrings.lensFlare;
+			centerEffect(1).setValue(100);
+			centerEffect(2).setValue(100);
+
+			//l'expression de position
+			var positionexpression = "//Duik.LensFlare\r\n" + 
+			"calqueCentre = thisComp.layer(\"" + nomcentre + "\");\n\n" +
+			"function positionAbs(calque) {\n" +
+			"return calque.toWorld(calque.anchorPoint)\n" +
+			"}\n\n" +
+			"n=effect(\"" + centerEffect.name + "\")(1);\n\n" +
+			"X = thisComp.width - positionAbs(calqueCentre)[0];\n" +
+			"Y = thisComp.height - positionAbs(calqueCentre)[1];\n\n" +
+			"if ( n<100 ) {\n\n" +
+			"i=n/100;\n" +
+			"j=1-i;\n\n" +
+			"value + ( (  [X,Y]*(i/j) + positionAbs(calqueCentre) )*j\n\n )" +
+			"}\n\n" +
+			"else {value + [X,Y] }";
+
+			//l'expression d'opacité
+			var opaciteexpression = "//Duik.LensFlare\r\n" + "n=thisComp.layer(\"" + centre.name  + "\").effect(\"" + centerEffect.name + "\")(1);\n" + "value*n/100";
+			
+			//l'expression d'échelle
+			var tailleexpression = "//Duik.LensFlare\r\n" + "n=thisComp.layer(\"" + nomcentre  + "\").effect(\"" + centerEffect.name + "\")(2);\n" + "value*n/100";
+			
+			//appliquer les expressions sur le centre
+			centre.transform.opacity.expression = opaciteexpression;
+			centre.transform.scale.expression = tailleexpression;
+
+			//la boucle d'application des expressions et contrôleurs
+			var nombrecalques = layers.length;
+			for (layerI = 0; layerI < nombrecalques; layerI++)
+			{
+				calque = layers[layerI];
+				calque.position.setValue([0,0]);
+				//le controleur de la distance
+				var distanceEffect = Duik.utils.addPseudoEffect(calque,"Duik_lensflaredistance.ffx");
+				distanceEffect.name = Duik.uiStrings.lensFlare;
+				distanceEffect(1).setValue(100/nombrecalques*(layerI+1));
+				
+				//appliquer les expressions
+				calque.transform.position.expression = positionexpression;
+				calque.transform.opacity.expression = opaciteexpression;
+				calque.transform.scale.expression = tailleexpression;
+				
+				//fin de la boucle
+			}
+			
+			//sélectionner le centre (controleur)
+			Duik.utils.deselectLayers();
+			centre.selected = true;
 		}
 	}
 }());

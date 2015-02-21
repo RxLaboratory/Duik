@@ -35,7 +35,7 @@ function fnDuIK(wnd)
 {
 
 	//================
-	var version = "15.alpha04";
+	var version = "15.alpha05";
 	//================
 
 //===============================================
@@ -44,7 +44,6 @@ function fnDuIK(wnd)
 {
 if (! app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
 if (! app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
-if (! app.settings.haveSetting("duik", "morpherKey")){app.settings.saveSetting("duik","morpherKey","oui");}
 if (! app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
 if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
 if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
@@ -155,26 +154,10 @@ function IKtools(thisObj){
 //LES FONCTIONS
 //===============================================
 {
-
-//FONCTION POUR CHERCHER UNE MISE A JOUR
-function MAJ(version){
-var reply = "";
-//socket
-conn = new Socket;
-// se connecter à duduf.com
-if (conn.open ("www.duduf.com:80")) {
-// récupérer la version actuelle
-if(conn.writeln ("GET /downloads/duik/version.txt  HTTP/1.0\nHost: duduf.com\n"))
-reply = conn.read(1000);
-conn.close();
-//chercher la version dans la réponse du serveur :
-var reponse = reply.lastIndexOf("version",reply.length);
-if(reponse != -1){
-newVersion = reply.slice(reponse+8,reply.length+1);
-if (version == newVersion) {return true} else {alert(getMessage(2));}
-}
-}
-}
+	
+	//TODO renommer les fonctions (onButtonBonesClick() par exemple), et clarifier le code
+	
+//=================== UTILS =========================
 
 //UTILE : TROUVE L'INDEX D'UNE STRING DANS UN ARRAY DE STRINGS
 function arrayIndexOf(array,string) {
@@ -195,7 +178,14 @@ function arrayIsDuplicates(array) {
 	return false;
 }
 
-//FONCTION QUAND ON CLIQUE SUR AUTORIG
+//FONCTION CARRE
+function carre(nombre) {
+	return Math.pow(nombre,2);
+	}
+
+//====================== AUTORIG ======================
+
+//FONCTION QUAND ON CLIQUE SUR AUTORIG --- TODO à mettre dans libduik
 function autorig() {
 
 	verifNoms();
@@ -315,7 +305,7 @@ function autorig() {
 	fenetreAutorig.show();
 }
 
-//FONCTION LANCE L'AUTORIG
+//FONCTION LANCE L'AUTORIG --- TODO à mettre dans libduik
 function startAutoRig() {
 
 	var compo = app.project.activeItem;
@@ -669,11 +659,15 @@ function startAutoRig() {
 
 }
 
-//FONCTION QUAND ON CLIQUE SUR CREER IK
+
+//========== RIGGING ================================
+
+//FONCTION QUAND ON CLIQUE SUR CREER IK --- TODO vérif auto parentage/calques sélectionnés (à mettre dans libDuik)
 function ik(){
 	var calques = app.project.activeItem.selectedLayers;
 	
-	if (calques.length != 2 && calques.length != 3 && calques.length != 4) {
+	//if num layers selected is not correct
+	if (calques.length < 2 || calques.length > 4) {
 		alert(getMessage(7));
 		return;
 	} //if calques.length == 2 || calques.length == 3 || calques.length == 4
@@ -767,14 +761,50 @@ function controleur(){
 	 if (app.project.activeItem.selectedLayers.length > 0) {
 			//  début de groupe d'annulation
 			app.beginUndoGroup("Duik - " + getMessage(116));
-			var layers = app.project.activeItem.selectedLayers;
-			Duik.addControllers(layers);
+			Duik.addControllers(app.project.activeItem.selectedLayers);
 			//fin du groupe d'annulation
 			app.endUndoGroup();
 		} else { alert(getMessage(11)); }
 
 }
-	 
+ 
+//FONCTION POUR AJOUTER UN (DES) BONE(S)
+function bone(){
+	
+	verifNoms();
+	
+	//  début de groupe d'annulation
+	app.beginUndoGroup("Duik - Bone");
+
+	//le(s) calque(s) sélectionné(s)
+	var calques = app.project.activeItem.selectedLayers ;
+	if (calques.length ==0) { alert(getMessage(13),"Attention"); return; }
+	
+	Duik.addBones(calques);
+
+	//fin du groupe d'annulation
+	app.endUndoGroup();
+
+
+}
+ 
+//FONCTION DU BOUTON POUR MESURER
+function mesure() {
+		
+		resultat = mesurer();
+				if (resultat == 0) {
+		resultattexte.text = getMessage(16);
+		mesurefenetre.show();
+		}
+		else if (resultat/resultat == 1) {
+		resultattexte.text = getMessage(17) + resultat + " pixels.";
+		mesurefenetre.show();
+		}
+
+	}
+
+//=============== ANIMATION =========================
+
 //FONCTION WIGGLE OK
 function wiggleDimensions(){
 
@@ -814,42 +844,9 @@ function wiggle(){
 	}
 }
 
-//FONCTION POUR AJOUTER UN (DES) BONE(S)
-function bone(){
-	
-	verifNoms();
-	
-	//  début de groupe d'annulation
-	app.beginUndoGroup("Duik - Bone");
-
-	//le(s) calque(s) sélectionné(s)
-	var calques = app.project.activeItem.selectedLayers ;
-	if (calques.length ==0) { alert(getMessage(13),"Attention"); return; }
-	
-	Duik.addBones(calques);
-
-	//fin du groupe d'annulation
-	app.endUndoGroup();
-
-
-}
-
-//FONCTION POUR AFFICHER DE L'AIDE
-function help(){
-alert(getMessage(14));
-//alert(traduction(["This is a beta version, if you encounter any problem,\nplease notify it by email to duduf@duduf.com","Ceci est une version béta, si vous rencontrez le moindre problème,\nenvoyez un message à duduf@duduf.com"]));
-}
-
 //FONCTION ROUE
 function creroue(){
-
 	rayonfenetre.show();
-	
-	}
-
-//FONCTION CARRE
-function carre(nombre) {
-	return Math.pow(nombre,2);
 	}
 
 //FONCTION QUI MESURE LE RAYON D'UNE ROUE
@@ -866,78 +863,70 @@ function mesurer() {
 
 	}
 
-//FONCTION DU BOUTON POUR MESURER
-function mesure() {
-		
-		resultat = mesurer();
-				if (resultat == 0) {
-		resultattexte.text = getMessage(16);
-		mesurefenetre.show();
-		}
-		else if (resultat/resultat == 1) {
-		resultattexte.text = getMessage(17) + resultat + " pixels.";
-		mesurefenetre.show();
-		}
-
-		}
-		
-//FONCTION QUI RECUPERE LE RAYON ENTRE PAR L'UTILISATEUR
-function rayon(){
-	OA = rayonbouton.text;
-	}
-
 //FONCTION QUI CREE UNE ROUE
 function roue() {
+			OA = parseFloat(rayonbouton.text);	
 
+			if (OA != 0 && OA != NaN) {
+				
 			//  début de groupe d'annulation
 			app.beginUndoGroup(getMessage(18));
-
-			var isnumber = OA/OA;
-
-			if (isnumber == 1) {
 				
-			var calqueroue = app.project.activeItem.selectedLayers[0];
-			var curseur = calqueroue.Effects.addProperty("ADBE Slider Control");
-			curseur.name = getMessage(105);
-			curseur(1).setValue(OA);
-			var curseurReverse = calqueroue.Effects.addProperty("ADBE Checkbox Control");
-			curseurReverse.name = getMessage(186);
-
-			if (roueH.value) calqueroue.transform.rotation.expression = "O = thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
-																		"R = thisLayer.effect('" + getMessage(105) + "')(1);\n" + 
-																		"Rev = thisLayer.effect('" + getMessage(186) + "')(1);\n" + 
-																		"result = 0;\n" +
-																		"R > 0 ? result = radiansToDegrees(O[0]/R) : result = 0 ;" +
-																		"Rev == 1 ? value - result : value + result;";
-			else calqueroue.transform.rotation.expression = "R = thisLayer.effect('" + getMessage(105) + "')(1);\n" + 
-															"Rev = thisLayer.effect('" + getMessage(186) + "')(1);\n" + 
-															"var precision = 1;\n" + 
-															"function pos(frame)\n" + 
-															"{\n" + 
-															"return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n" + 
-															"}\n" + 
-															"function roue()\n" + 
-															"{\n" + 
-															"if (R<=0) return value;\n" + 
-															"var distance = 0;\n" + 
-															"var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n" + 
-															"var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n" + 
-															"for(i=start;i<end;i+=precision)\n" + 
-															"{\n" + 
-															"if (pos(i+precision)[0] - pos(i)[0] > 0) distance += length(pos(i+precision),pos(i));\n" + 
-															"else distance -= length(pos(i+precision),pos(i));\n" + 
-															"}\n" + 
-															"return radiansToDegrees(distance/R) ;\n" + 
-															"}\n" + 
-															"Rev == 1 ? value - roue() : value + roue();";
+			Duik.wheel(app.project.activeItem.selectedLayers[0],OA,roueC.value);
 			
 			//  fin de groupe d'annulation
 			app.endUndoGroup();
 
+			} else { alert (getMessage(19),getMessage(20),true); }
+			
 			rayonfenetre.hide();
-
-				} else { alert (getMessage(19),getMessage(20),true); }
 	}
+	
+//FONCTION LENTILLE
+function lentille() {
+
+//les calques sélectionnés :
+var calques = app.project.activeItem.selectedLayers;
+			
+			//vérifions qu'il y a plusieurs calques sélectionnés
+			if (calques.length > 1){
+			verifNoms();
+
+			//  début de groupe d'annulation
+			app.beginUndoGroup(getMessage(29));
+	
+			Duik.lensFlare(calques);
+			
+			
+			//fin du groupe d'annulation			
+			app.endUndoGroup();
+
+			} else {
+				alert(getMessage(33));
+				}
+			
+			
+}
+	
+//=============== INTERPOLATION =====================
+
+//FONCTION MORPHER
+function morpher() {
+
+verifNoms();
+
+//  début de groupe d'annulation
+app.beginUndoGroup(getMessage(28));
+
+Duik.morpher(app.project.activeItem.selectedLayers);
+
+//fin du groupe d'annulation
+app.endUndoGroup();
+
+
+}
+
+//=============== CAMERAS ===========================
 
 //FONCTION TARGET CAM
 function controlcam() {
@@ -997,259 +986,37 @@ else { alert (getMessage(22),getMessage(24),true); }
 	
 	}
 
-//FONCTION CAM RELIEF
-function camrelief() {
-	//vérifier qu'il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1){
-	//vérifier que c'est une caméra
-	if (app.project.activeItem.selectedLayers[0] instanceof CameraLayer) {
 
-//début du groupe d'annulation
-app.beginUndoGroup(getMessage(25));
+//============= SETTINGS ============================
 
-
-//récupérer la caméra
-var camera = app.project.activeItem.selectedLayers[0];
-
-//créer le target
-var target = app.project.activeItem.layers.addNull();
-target.name = camera.name + " target";
-target.threeDLayer = true;
-target.position.setValue(camera.transform.pointOfInterest.value);
-//ajouter le controleur convergence caméras
-var convergence = target.Effects.addProperty("ADBE Angle Control");
-convergence.name = getMessage(26);
-
-//créer la cam
-var cam = app.project.activeItem.layers.addNull();
-cam.name = camera.name + " position";
-cam.threeDLayer = true;
-cam.position.setValue(camera.transform.position.value);
-//ajouter le controleur écartement caméras
-var ecart = cam.Effects.addProperty("ADBE Slider Control");
-ecart.name = getMessage(27);
-
-
-//créer les cam droite et gauche
-var camdroite = camera.duplicate();
-var camgauche = camera.duplicate();
-camdroite.name = camera.name + " droite";
-camgauche.name = camera.name + " gauche";
-
-//définir les expressions
-camera.position.expression = "thisComp.layer(\"" + cam.name + "\").toWorld(thisComp.layer(\"" + cam.name + "\").transform.anchorPoint)";
-camera.pointOfInterest.expression = "thisComp.layer(\"" + target.name + "\").toWorld(thisComp.layer(\"" + target.name + "\").transform.anchorPoint)";
-camera.orientation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.orientation";
-camera.xRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.xRotation";
-camera.yRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.yRotation";
-camera.rotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.rotation";
-
-camdroite.position.expression = "[thisComp.layer(\"" + camera.name + "\").transform.position[0]+thisComp.layer(\"" + cam.name + "\").effect(\"" + ecart.name + "\")(1),thisComp.layer(\"" + camera.name + "\").transform.position[1],thisComp.layer(\"" + camera.name + "\").transform.position[2]]";
-camdroite.pointOfInterest.expression = "thisComp.layer(\"" + target.name + "\").toWorld(thisComp.layer(\"" + target.name + "\").transform.anchorPoint)";
-camdroite.orientation.expression = "thisComp.layer(\"" + camera.name + "\").transform.orientation";
-camdroite.xRotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.xRotation";
-camdroite.yRotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.yRotation-thisComp.layer(\"" + target.name + "\").effect(\"" + convergence.name + "\")(1)";
-camdroite.rotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.rotation";
-camdroite.zoom.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.zoom";
-camdroite.focusDistance.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.focusDistance";
-camdroite.aperture.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.aperture";
-camdroite.blurLevel.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.blurLevel";
-
-camgauche.position.expression = "[thisComp.layer(\"" + camera.name + "\").transform.position[0]-thisComp.layer(\"" + cam.name + "\").effect(\"" + ecart.name + "\")(1),thisComp.layer(\"" + camera.name + "\").transform.position[1],thisComp.layer(\"" + camera.name + "\").transform.position[2]]";
-camgauche.pointOfInterest.expression = "thisComp.layer(\"" + target.name + "\").toWorld(thisComp.layer(\"" + target.name + "\").transform.anchorPoint)";
-camgauche.orientation.expression = "thisComp.layer(\"" + camera.name + "\").transform.orientation";
-camgauche.xRotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.xRotation";
-camgauche.yRotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.yRotation+thisComp.layer(\"" + target.name + "\").effect(\"" + convergence.name + "\")(1)";
-camgauche.rotation.expression = "thisComp.layer(\"" + camera.name + "\").transform.rotation";
-camgauche.zoom.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.zoom";
-camgauche.focusDistance.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.focusDistance";
-camgauche.aperture.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.aperture";
-camgauche.blurLevel.expression = "thisComp.layer(\"" + camera.name + "\").cameraOption.blurLevel";
-
-
-//bloquer la camera
-camera.locked = true;
-
-//fin du groupe d'annulation
-app.endUndoGroup();
-
+//FONCTION POUR CHERCHER UNE MISE A JOUR
+function MAJ(version){
+var reply = "";
+//socket
+conn = new Socket;
+// se connecter à duduf.com
+if (conn.open ("www.duduf.com:80")) {
+// récupérer la version actuelle
+if(conn.writeln ("GET /downloads/duik/version.txt  HTTP/1.0\nHost: duduf.com\n"))
+reply = conn.read(1000);
+conn.close();
+//chercher la version dans la réponse du serveur :
+var reponse = reply.lastIndexOf("version",reply.length);
+if(reponse != -1){
+newVersion = reply.slice(reponse+8,reply.length+1);
+if (version == newVersion) {return true} else {alert(getMessage(2));}
 }
-else { alert (getMessage(22),getMessage(23),true); }
+}
 }
 
-else { alert (getMessage(22),getMessage(24),true); }
-	
-	
-	
-	}
-
-//FONCTION MORPHER
-function morpher() {
-
-verifNoms();
-
-//  début de groupe d'annulation
-app.beginUndoGroup(getMessage(28));
-
-
-	//récupérer la sélection d'effets du premier calque, puisqu'elle sera perdue à la création de la glissière..... (voir avec adobe si vous trouvez ca pas pratique)
-	var selection = [];
-    effets =  app.project.activeItem.selectedLayers[0].selectedProperties;
-    for (j=0;j<effets.length;j++) {
-         if (effets[j].canSetExpression && effets[j].parentProperty.isEffect) {
-                 var layerIndex = app.project.activeItem.selectedLayers[0].index;
-                 var effetIndex =  effets[j].propertyIndex;
-                 var effetParentName = effets[j].parentProperty.name;
-                selection.push([layerIndex,effetParentName,effetIndex]);
-                delete effetIndex;
-                delete effetParentName;
-                } 
-            }
-
-
-
-//créer le curseur
-var morpher = app.project.activeItem.selectedLayers[0].Effects.addProperty("ADBE Slider Control");
-morpher.name = "Morpher";
-
-//boucle pour appliquer le morpher sur la sélection perdue
-for (i=0;i<selection.length;i++) {
-    var effet = app.project.activeItem.layer(selection[i][0]).effect(selection[i][1])(selection[i][2]);
-    effet.expression = "valueAtTime((thisComp.layer(\"" +  app.project.activeItem.selectedLayers[0].name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
-    //la boucle pour créer automatiquement des clefs sur le morpher :
-            if (boutonMKey.value) {
-                //nombre de clefs
-                var nbreClefs = effet.numKeys;
-                //durée d'image de la compo
-                var ips = app.project.activeItem.frameDuration;
-                var temps = 0;
-                var prop = effet;
-               for (k=1;k<=nbreClefs;k++){                 
-                    //récupère l'instant de la clef
-                    temps = prop.keyTime(k);
-                    //crée une image clef sur le morpher
-                    morpher(1).setValueAtTime(temps,temps/ips);
-                    }
-                delete temps;
-                delete prop;
-                delete ips;
-                delete nbreClefs;   
-         }
-    }
-
-//boucle pour appliquer le morpher partout
-for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-    for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
-        var effet = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-         if (effet.canSetExpression && effet.parentProperty.name != "Morpher") {
-              effet.expression = "valueAtTime((thisComp.layer(\"" + app.project.activeItem.selectedLayers[0].name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
-              //la boucle pour créer automatiquement des clefs sur le morpher :
-            if (boutonMKey.value) {
-                //nombre de clefs
-                var nbreClefs = effet.numKeys;
-                //durée d'image de la compo
-                var ips = app.project.activeItem.frameDuration;
-                var temps = 0;
-                var prop = effet;
-               for (k=1;k<=nbreClefs;k++){                 
-                    //récupère l'instant de la clef
-                    temps = prop.keyTime(k);
-                    //crée une image clef sur le morpher
-                    morpher(1).setValueAtTime(temps,temps/ips);
-                    }
-                delete temps;
-                delete prop;
-                delete ips;
-                delete nbreClefs;   
-         }
-     }
-    }
+//FONCTION POUR AFFICHER DE L'AIDE
+function help(){
+//alert(getMessage(14));
+alert("This is a test version, if you encounter any problem,\nplease notify it by email to duduf@duduf.com");
 }
 
-delete morpher;
-//fin du groupe d'annulation
-app.endUndoGroup();
 
 
-}
-
-//FONCTION LENTILLE
-function lentille() {
-
-//les calques sélectionnés :
-var calques = app.project.activeItem.selectedLayers
-			
-			//vérifions qu'il y a plusieurs calques sélectionnés
-			if (calques.length > 1){
-			verifNoms();
-
-			//  début de groupe d'annulation
-			app.beginUndoGroup(getMessage(29));
-	
-			//sortir le premier calque, le centre, et ajouter les contrôleurs
-			var centre = calques.shift();
-			var nomcentre = centre.name;
-			var controleurintensite = centre.Effects.addProperty("ADBE Slider Control");
-			controleurintensite.name  = getMessage(30);
-			controleurintensite(1).setValue(100);
-			var controleurtaille = centre.Effects.addProperty("ADBE Slider Control");
-			controleurtaille.name  = getMessage(31);
-			controleurtaille(1).setValue(100);
-
-			//l'expression de position
-			var positionexpression = "calqueCentre = thisComp.layer(\"" + nomcentre + "\");\n\n" +
-"function positionAbs(calque) {\n" +
-"return calque.toWorld(calque.anchorPoint)\n" +
-"}\n\n" +
-"n=effect(\"" + getMessage(32) + "\")(1);\n\n" +
-"X = thisComp.width - positionAbs(calqueCentre)[0];\n" +
-"Y = thisComp.height - positionAbs(calqueCentre)[1];\n\n" +
-"if ( n<100 ) {\n\n" +
-"i=n/100;\n" +
-"j=1-i;\n\n" +
-"value + ( (  [X,Y]*(i/j) + positionAbs(calqueCentre) )*j\n\n )" +
-"}\n\n" +
-"else {value + [X,Y] }";
-
-		//l'expression d'opacité
-		var opaciteexpression = "n=thisComp.layer(\"" + centre.name  + "\").effect(\"" + getMessage(30) + "\")(1);\n" + "value*n/100";
-			
-		//l'expression d'échelle
-		var tailleexpression = "n=thisComp.layer(\"" + nomcentre  + "\").effect(\"" + controleurtaille.name + "\")(1);\n" + "value*n/100";
-			
-		//appliquer les expressions sur le centre
-		centre.transform.opacity.expression = opaciteexpression;
-		centre.transform.scale.expression = tailleexpression;
-
-			//la boucle d'application des expressions et contrôleurs
-			var nombrecalques = calques.length;
-			for (i = 0; i < nombrecalques; i++){
-			calque = calques[i];
-			calque.position.setValue([0,0]);
-			//le controleur de la distance
-			controleurposition = calque.Effects.addProperty("ADBE Slider Control");
-			controleurposition.name = getMessage(32);
-			controleurposition(1).setValue(100/nombrecalques*(i+1));
-			
-			//appliquer les expressions
-			calque.transform.position.expression = positionexpression;
-			calque.transform.opacity.expression = opaciteexpression;
-			calque.transform.scale.expression = tailleexpression;
-			
-			//fin de la boucle
-			}
-			
-			
-			
-			//fin du groupe d'annulation			
-			app.endUndoGroup();
-
-			} else {
-				alert(getMessage(33));
-				}
-			
-			
-}
 
 //FONCTION LIEN DE DISTANCE
 function distanceLink() {
@@ -2556,6 +2323,8 @@ function multiplan()
 //UI
 //===========================================
 {
+	//TODO renommer les éléments d'UI
+	
 var dossierIcones = Folder.userData.absoluteURI  + "/DuIK/";
 //dossierIcones = "C:/Users/perso/Documents/03_DEVELOPPEMENT/AE Scripts/DuDuF IK Tools/Duik Icons/";
 var animationSaved = [];
@@ -2818,7 +2587,6 @@ function createDialog(titre,hasokbutton,okfonction){
 		//champ de saisie
 		var rayonbouton = rayonGroupeRayon.add ("edittext", undefined);
 		rayonbouton.size = ["100","20"];
-		rayonbouton.onChange = rayon;
 		rayonbouton.helpTip = getMessage(64);
 		rayonfenetre.groupe.add("statictext",undefined,getMessage(176));
 		//bouton mesurer
@@ -3415,12 +3183,8 @@ function createDialog(titre,hasokbutton,okfonction){
 			var boutontcam = addIconButton(groupCameraG,dossierIcones + "btn_controleur-cam.png",getMessage(134));
 			boutontcam.onClick = controlcam;
 			boutontcam.helpTip = getMessage(102);
-			//bouton pour créer une cam relief
-			var boutontcamrelief = addIconButton(groupCameraG,dossierIcones + "btn_3d.png",getMessage(135));
-			boutontcamrelief.onClick = camrelief;
-			boutontcamrelief.helpTip = getMessage(103);
 			//bouton pour multiplan 2D
-			var boutontcam2d = addIconButton(groupCameraD,dossierIcones + "btn_controleur-cam.png",getMessage(188));
+			var boutontcam2d = addIconButton(groupCameraG,dossierIcones + "btn_controleur-cam.png",getMessage(188));
 			boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
 			boutontcam2d.helpTip = "HelpTip";
 			
