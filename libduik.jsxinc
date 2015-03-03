@@ -109,6 +109,7 @@ if (Duik.versionNumber < 15.0005)
 		Duik.uiStrings.wheel = "Wheel";
 		Duik.uiStrings.lensFlare = "Lens Flare";
 		Duik.uiStrings.distanceLink = "Distance Link";
+		Duik.uiStrings.spring = "Spring";
 	}
 
 	//================================
@@ -401,6 +402,47 @@ if (Duik.versionNumber < 15.0005)
 				}
 			}
 		}
+		// CHECK NAMES - Duik.utils.checkNames(comp)
+		if (typeof Duik.utils.checkNames !== 'function' || Duik.forceReload)
+		{
+			Duik.utils.checkNames = function (comp)
+			{
+				if (comp == undefined) comp = app.project.activeItem;
+				if (comp == undefined) return false;
+				
+				var layers = comp.layers;
+				var numLayers = comp.numLayers;
+				var renamed = false;
+				
+				var counts = {};
+				// first pass, assign the counts
+				for (layerI; layerI <= numLayers; layerI++)
+				{
+					var layer = layers[layerI];
+					var name = layer.name;
+
+					if (counts[name] == undefined)
+					{
+						counts[name] = 1;
+					}
+					else
+					{
+						counts[name]++;
+					}
+
+					if (counts[name] > 1)
+					{
+						var l = layer.locked;
+						layer.locked = false;
+						layer.name = name + " " + counts[name];
+						layer.locked = l;
+						renamed = true;
+					}
+				}
+				
+				return renamed;
+			}
+		}
 	}
 	
 	//================================
@@ -480,6 +522,9 @@ if (Duik.versionNumber < 15.0005)
 		{
 			//if there's not at least one controller and one layer, abort creation
 			if (ctrl == undefined || layer1 == undefined) return false;
+			
+			//check names
+			Duik.utils.checkNames(ctrl.containingComp);
 					
 			var controllerName = ctrl.name;
 			
@@ -537,6 +582,9 @@ if (Duik.versionNumber < 15.0005)
 			
 			if (clockWise == undefined) clockWise = false;
 			if (frontFacing == undefined) frontFacing = false;
+			
+			//check names
+			Duik.utils.checkNames(controller.containingComp);
 			
 			//Names
 			var endName = end.name;
@@ -776,6 +824,9 @@ if (Duik.versionNumber < 15.0005)
 			var ancienneRot = 0;
 			if (layer.threeDLayer) ancienneRot = layer.transform.zRotation.value;
 			else ancienneRot = layer.transform.rotation.value;
+			
+			//check names
+			Duik.utils.checkNames(layer.containingComp);
 
 			//si on a un controleur
 			if (controller != undefined)
@@ -1103,6 +1154,9 @@ if (Duik.versionNumber < 15.0005)
 		{
 			var createdBones = [];
 			if (layers.length == 0) { return createdBones; }
+			
+			//check names
+			Duik.utils.checkNames(layers[0].containingComp);
 			
 			for (i=0;i<layers.length;i++)
 			{
@@ -1483,6 +1537,9 @@ if (Duik.versionNumber < 15.0005)
 			centerEffect.name = Duik.uiStrings.lensFlare;
 			centerEffect(1).setValue(100);
 			centerEffect(2).setValue(100);
+			
+			//check names
+			Duik.utils.checkNames(centre.containingComp);
 
 			//l'expression de position
 			var positionexpression = "//Duik.LensFlare\r\n" + 
@@ -1534,9 +1591,9 @@ if (Duik.versionNumber < 15.0005)
 			centre.selected = true;
 		}
 	}
-		/* DISTANCE LINK - Duik.distanceLink(layer,property,parentLayer);
+	/* DISTANCE LINK - Duik.distanceLink(layer,property,parentLayer);
 	
-		Link the property to the distance of parentLayer
+		Links the property to the distance of parentLayer
 	
 		parameters
 		layer | AVLayer containing the property
@@ -1554,11 +1611,14 @@ if (Duik.versionNumber < 15.0005)
 			//add effect
 			var effect = Duik.utils.rigProperty(layer,prop,"Duik_distancelink.ffx");
 			if (effect == null) return false;
-			effect.name = Duik.uiStrings.distanceLink;
+			effect.name = prop.name + " " + Duik.uiStrings.distanceLink;
 			//get the distance between the two layers
 			var distance = Duik.utils.getDistance(layer,parentLayer);
 			effect(2).setValue(distance - distance/4.0);
 			effect(3).setValue(distance + distance/4.0);
+			
+			//check names
+			Duik.utils.checkNames(layer.containingComp);
 			
 			if (parentLayer instanceof CameraLayer)
 			{
@@ -1599,9 +1659,143 @@ if (Duik.versionNumber < 15.0005)
 					"}else {value}";
 			}
 			
+			return true;
+			
+		}
+	}
+	/* SPRING - Duik.spring(property, layer, simulated);
+	
+		Adds a spring effect on the property
+	
+		parameters
+		property | Array of property
+		layer | AVLayer containing the property
+		simulated | if true, applies the simulated version of the spring, default: false
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.spring !== 'function' || Duik.forceReload)
+	{
+		Duik.spring = function (prop, layer, simulated)
+		{
+			//search for one dimension effects, to know if we need a "bounce" checkbox
+			var bounce = false;
+			if (prop.propertyValueType == PropertyValueType.OneD) bounce = true;
+			
+			//if it's not a position, light version
+			if (prop.matchName != "ADBE Position") simulated = false;
+			if (simulated == undefined) simulated = false;
+
+			var effect;
+			if (bounce)
+			{
+				effect = Duik.utils.rigProperty(layer,prop,"Duik_springbounce.ffx");
+			}
+			else
+			{
+				effect = Duik.utils.rigProperty(layer,prop,"Duik_spring.ffx");
+			}
+			if (effect == null) return false;
+			effect.name = prop.name + " " + Duik.uiStrings.spring;
+			
+			if (bounce)
+			{
+				prop.expression = "//Duik.Spring\r\n" + 
+							"amorti = effect(\"" + effect.name + "\")(2);\n" + 
+							"freq = effect(\"" + effect.name + "\")(1);\n\n" + 
+							"rebond = effect(\"" + effect.name + "\")(3);\n\n" + 
+							"if (numKeys > 1 && freq != 0 ){\n" + 
+							"if (nearestKey(time).index == 1) { value }\n" + 
+							"else {\n\n" + 
+							"if (length(velocity) == 0) {\n\n" + 
+							"tempsClefProx = nearestKey(time).time;\n\n" + 
+							"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
+							"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
+							"temps = time - tempsDebut;\n\n" + 
+							"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
+							"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
+							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
+							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
+							"}\n" + 
+							"else { value }\n" + 
+							"}\n" + 
+							"}\n" + 
+							"else { value }";
+			}
+			else if (!simulated)
+			{
+				prop.expression = "//Duik.Spring\r\n" + 
+								"amorti = effect(\"" + effect.name + "\")(2);\n" + 
+								"freq = effect(\"" + effect.name + "\")(1);\n\n" + 
+								"rebond = 0;\n\n" + 
+								"if (numKeys > 1 && freq != 0 ){\n" + 
+								"if (nearestKey(time).index == 1) { value }\n" + 
+								"else {\n\n" + 
+								"if (length(velocity) == 0) {\n\n" + 
+								"tempsClefProx = nearestKey(time).time;\n\n" + 
+								"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
+								"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
+								"temps = time - tempsDebut;\n\n" + 
+								"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
+								"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
+								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
+								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
+								"}\n" + 
+								"else { value }\n" + 
+								"}\n" + 
+								"}\n" + 
+								"else { value }";
+			}
+			else
+			{
+				prop.expression = "//Duik.spring\r\n" +
+							"amorti = effect(\"" + effect.name + "\")(2);\n" + 
+							"freq = effect(\"" + effect.name + "\")(1);\n" + 
+							"if (amorti == 0) amorti = 0.1;\n" + 
+							"if (freq == 0) freq = 0.1;\n" + 
+							"retard = freq/amorti;\n" + 
+							"poids = 1/amorti/10;\n" + 
+							"precision = thisComp.frameDuration;\n" + 
+							"function worldVelocity(temps) {\n" + 
+							"worldVelocityX = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[0]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[0])*100;\n" + 
+							"worldVelocityY = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[1]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[1])*100;\n" + 
+							"return [worldVelocityX,worldVelocityY];\n" + 
+							"}\n" + 
+							"function worldSpeed(temps) {\n" + 
+							"return length(worldVelocity(temps));\n" + 
+							"}\n" + 
+							"tempsDebut = 0;\n" + 
+							"tempsRedemarrage = 0;\n" + 
+							"stop = false;\n" + 
+							"arrete = false;\n" + 
+							"for (i=timeToFrames(time);i>=0;i--) {\n" + 
+							"var instant = framesToTime(i);\n" + 
+							"var instantSuivant = instant-precision;\n" + 
+							"if (worldSpeed(instant) == 0 ) {\n" + 
+							"if (tempsRedemarrage == 0) tempsRedemarrage = instant;\n" + 
+							"if (worldSpeed(instantSuivant) !=0 ) {\n" + 
+							"tempsDebut = instantSuivant;\n" + 
+							"break;\n" + 
+							"}\n" + 
+							"}\n" + 
+							"}\n" + 
+							"temps = time-tempsDebut;\n" + 
+							"frameRedemarre = timeToFrames( time-tempsRedemarrage);\n" + 
+							"valeur = value\n" + 
+							"if ( frameRedemarre <= retard)\n" + 
+							"valeur = value - worldVelocity(time)*poids*(frameRedemarre/retard);\n" + 
+							"else\n" + 
+							"valeur = value - worldVelocity(time)*poids;\n" + 
+							"if (worldSpeed(time) == 0) {\n" + 
+							"spring = worldVelocity(tempsDebut) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n" + 
+							"valeur + spring;\n" + 
+							"}else{ valeur; }\n";
+			}
+				
+			return true;
 		}
 	}
 }());
-
-
 

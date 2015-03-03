@@ -188,7 +188,7 @@ function carre(nombre) {
 //FONCTION QUAND ON CLIQUE SUR AUTORIG --- TODO à mettre dans libduik
 function autorig() {
 
-	verifNoms();
+	Duik.utils.checkNames();
 
 	var compo = app.project.activeItem;
 
@@ -659,7 +659,6 @@ function startAutoRig() {
 
 }
 
-
 //========== RIGGING ================================
 
 //FONCTION QUAND ON CLIQUE SUR CREER IK --- TODO vérif auto parentage/calques sélectionnés (à mettre dans libDuik)
@@ -672,7 +671,6 @@ function ik(){
 		return;
 	} //if calques.length == 2 || calques.length == 3 || calques.length == 4
 	
-	verifNoms();	
 	var calquetridi = false;
 	var ncalquetridi = 0;
 	for (i=0;i<calques.length;i++){
@@ -738,7 +736,6 @@ function pregoal(){
 if (app.project.activeItem.selectedLayers.length == 1) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
-	verifNoms();
 	Duik.goal(app.project.activeItem.selectedLayers[0],undefined);
 	//groupe d'annulation
 	app.endUndoGroup();
@@ -746,7 +743,6 @@ if (app.project.activeItem.selectedLayers.length == 1) {
 else if (app.project.activeItem.selectedLayers.length == 2) {
 	//groupe d'annulation
 	app.beginUndoGroup("Duik - Goal");
-	verifNoms();
 	Duik.goal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
 	//groupe d'annulation
 	app.endUndoGroup();
@@ -770,9 +766,7 @@ function controleur(){
  
 //FONCTION POUR AJOUTER UN (DES) BONE(S)
 function bone(){
-	
-	verifNoms();
-	
+		
 	//  début de groupe d'annulation
 	app.beginUndoGroup("Duik - Bone");
 
@@ -801,6 +795,59 @@ function mesure() {
 		mesurefenetre.show();
 		}
 
+	}
+
+//FONCTION ZERO
+function zero(){
+	
+//vérifions qu'il y a 1 layer sélectionnés
+if (app.project.activeItem.selectedLayers.length > 0) {	
+	
+			//  début de groupe d'annulation
+			app.beginUndoGroup("Duik - Zero");	
+	
+			Duik.addZeros(app.project.activeItem.selectedLayers);
+
+
+	
+			//  fin de groupe d'annulation
+			app.endUndoGroup();
+	
+	
+	
+} else { alert(getMessage(50),"Attention",true); }
+
+	}
+
+//FONCTION RENOMMER
+function rename() {
+
+if (app.project.activeItem.selectedLayers.length > 0) {
+	
+		var prefixe = "";
+		prefixtexte.value ? prefixe = prefix.text : prefixe = "";
+		var nom = "";
+		nametexte.value ? nom = name.text : nom = "";
+		var suffixe = "";
+		suffixtexte.value ? suffixe = suffix.text : suffixe = "";
+		
+		if (!(!suffixtexte.value && !nametexte.value && !prefixtexte.value && !numerotexte.value)) {
+			
+			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+			nametexte.value ? nom = nom : nom = app.project.activeItem.selectedLayers[i].name;
+			if (!numerotexte.value)
+			app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe;
+			else {
+				var numbering = eval(numero.text) + i;
+				app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe + numbering;
+				}
+			}
+			
+		}
+	
+	} else { alert(getMessage(51),"Attention",true); }
+	
+	
 	}
 
 //=============== ANIMATION =========================
@@ -890,7 +937,6 @@ var calques = app.project.activeItem.selectedLayers;
 			
 			//vérifions qu'il y a plusieurs calques sélectionnés
 			if (calques.length > 1){
-			verifNoms();
 
 			//  début de groupe d'annulation
 			app.beginUndoGroup(getMessage(29));
@@ -914,7 +960,6 @@ function distanceLink() {
 //vérifions qu'il n'y a bien que deux calques de sélectionnés
 if (app.project.activeItem.selectedLayers.length == 2) {
 	
-verifNoms();
 			
 //récupérer le nom du calque de référence
 var calqueRef = app.project.activeItem.selectedLayers[1];
@@ -935,13 +980,112 @@ var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 	
 	}
 }
+
+//FONCTION SPRING
+function spring() {
+	// Vérifions si il y a des calques sélectionnés
+	if (app.project.activeItem.selectedLayers.length < 1){ alert(getMessage(47),getMessage(49)); return;}
+		
+	var calque = app.project.activeItem.selectedLayers[0];
+
+	//vérifier si il y a des propriétés sélectionnées
+	if (calque.selectedProperties.length == 0){ alert(getMessage(47),getMessage(48)); return;}
+
+	//regarder si on a des trucs en position
+	var pos = false;
+	for (i = 0;i < calque.selectedProperties.length ; i++)
+	{
+		if (calque.selectedProperties[i].matchName == "ADBE Position")
+		{
+			pos = true;
+			break;
+		}
+	}
+	if (pos) fenetrespring.show();
+	else
+	{
+		boutonLightSpring.value = true;
+		springok();
+	}
+}
+
+function springok() {
 	
+//  début de groupe d'annulation
+app.beginUndoGroup(getMessage(42));
+
+var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+Duik.spring(ef,ef = app.project.activeItem.selectedLayers[0],!boutonLightSpring.value);
+
+//fin du groupe d'annulation
+app.endUndoGroup();
+
+}
+
+//FONCTION OSCILLATION
+function oscillation() {
+		// Vérifions si il n'y a qu'un calque sélectionné
+if (app.project.activeItem.selectedLayers.length == 1){
+	
+var calque = app.project.activeItem.selectedLayers[0];
+
+if (calque.selectedProperties.length != 0){
+	
+	//Prendre l'effet
+var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+//on vérifie sin on peut mettre une expression, sinon inutile de continuer
+if(effet.canSetExpression) {
+	
+//  début de groupe d'annulation
+app.beginUndoGroup(getMessage(52));
+	
+Duik.swing(calque,effet);
+//fin du groupe d'annulation
+app.endUndoGroup();
+
+}else{alert(getMessage(38),getMessage(46));}
+}else{alert(getMessage(47),getMessage(48));}
+}else{alert(getMessage(47),getMessage(49));}
+
+
+	}
+
+//FONCTIONS EXPOSITION
+function exposure() {
+	fenetreexposure.show();
+}
+
+function exposureSelect() {
+	
+	lowerExposureGroup.enabled = adaptativeExposureButton.value;
+	upperExposureGroup.enabled = adaptativeExposureButton.value;
+	precisionGroup.enabled = adaptativeExposureButton.value;
+}
+
+function detectExposurePrecision() {
+	var layer = app.project.activeItem.selectedLayers[0];
+	var prop = layer.selectedProperties[layer.selectedProperties.length-1];
+	var speed = Duik.utils.getAverageSpeed(layer,prop);
+	var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
+	precisionEdit.text = parseInt(1/(speed/10000)/exp);
+}
+
+function nframes() {
+	var layer = app.project.activeItem.selectedLayers[0];
+	var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+	
+	app.beginUndoGroup("Duik Auto-Exposure");
+	Duik.exposure(layer,prop,adaptativeExposureButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
+	app.endUndoGroup();
+	
+	fenetreexposure.close();
+
+	}
+
 //=============== INTERPOLATION =====================
 
 //FONCTION MORPHER
 function morpher() {
-
-verifNoms();
 
 //  début de groupe d'annulation
 app.beginUndoGroup(getMessage(28));
@@ -1042,9 +1186,6 @@ function help(){
 alert("This is a test version, if you encounter any problem,\nplease notify it by email to duduf@duduf.com");
 }
 
-
-
-
 //FONCTION POUR CHOISIR LA LANGUE
 function choixLangue() {
 	if (boutonlangue.selection == 0) app.settings.saveSetting("duik","lang","FRENCH");
@@ -1053,272 +1194,6 @@ function choixLangue() {
 	if (boutonlangue.selection == 3) app.settings.saveSetting("duik","lang","GERMAN");
 	if (boutonlangue.selection == 4) app.settings.saveSetting("duik","lang","BAHASA");
 	if (boutonlangue.selection == 5) app.settings.saveSetting("duik","lang","PORTUGUESE");
-	}
-
-//FONCTION POUR VERIFIER QU'IL NYA PAS DEUX CALQUES PORTANT LE MEME NOM DANS LA COMP // changer pour utiliser des numéros (regarder le dernier caractère et incrémenter
-function verifNoms() {
-		
-var calques = app.project.activeItem.layers;
-var nbrecalques = app.project.activeItem.numLayers;
-var renamed = false;
-
-	if (nbrecalques > 1){
-	
-		for (i = 1;i<=nbrecalques;i++)
-		{
-			for (j=1;j<=nbrecalques;j++)
-			{
-				if(i!=j && calques[i].name == calques[j].name)
-				{
-					var l = calques[j].locked;
-					if (l) calques[j].locked = false;
-					calques[j].name = calques[j].name + "_" ;
-					if (l) calques[j].locked = true;
-					renamed = true;
-				}
-			}
-		}
-
-	}
-			//on enlève l'alerte, plus chiante qu'autre chose...
-			//if (renamed) alert(getMessage(41));
-			
-			
-			return true;
-}
-
-//FONCTION SPRING
-function spring()
-{
-	// Vérifions si il y a des calques sélectionnés
-	if (app.project.activeItem.selectedLayers.length < 1){ alert(getMessage(47),getMessage(49)); return;}
-		
-	var calque = app.project.activeItem.selectedLayers[0];
-
-	//vérifier si il y a des propriétés sélectionnées
-	if (calque.selectedProperties.length == 0){ alert(getMessage(47),getMessage(48)); return;}
-
-	//regarder si on a des trucs en position
-	var pos = false;
-	for (i = 0;i < calque.selectedProperties.length ; i++)
-	{
-		if (calque.selectedProperties[i].matchName == "ADBE Position")
-		{
-			pos = true;
-			break;
-		}
-	}
-	if (pos) fenetrespring.show();
-	else
-	{
-		boutonLightSpring.value = true;
-		springok();
-	}
-}
-
-function springok() {
-	
-	var calque = app.project.activeItem.selectedLayers[0];
-//chercher si on a des effests à une seule dimension pour savoir si on doit créer la case rebond
-//faire un tableau des effets à récup aussi parce qu'on perd la sélection en ajoutant les curseurs
-//et meme si on la garde dans un tableau ca foire...
-var rebond = false;
-var effets = [];
-for (i = 0;i < calque.selectedProperties.length ; i++)
-{
-	var ef = app.project.activeItem.selectedLayers[0].selectedProperties[i];
-	if (ef.canSetExpression && ef.propertyValueType == PropertyValueType.OneD)
-	{
-		rebond = true;
-	}
-	if (ef.canSetExpression && ef.parentProperty.isEffect)
-	{
-		var effetIndex = ef.propertyIndex;
-		var effetParentName = ef.parentProperty.name;
-		effets.push([effetParentName,effetIndex]);
-	}
-}
-
-//  début de groupe d'annulation
-app.beginUndoGroup(getMessage(42));
-
-//ajouter les curseurs et cases
-var elasticite = calque.Effects.addProperty("ADBE Slider Control");
-elasticite.name = getMessage(43);
-elasticite(1).setValue(5);
-var attenuation = calque.Effects.addProperty("ADBE Slider Control");
-attenuation.name = getMessage(44);
-attenuation(1).setValue(5);
-if (rebond)
-{
-	var rebond = calque.Effects.addProperty("ADBE Checkbox Control");
-	rebond.name = getMessage(45);
-}
-
-//=============================================
-//expressions a insérer
-var expressionspringOneD = 	"amorti = effect(\"" + getMessage(44) + "\")(1);\n" + 
-							"freq = effect(\"" + getMessage(43) + "\")(1);\n\n" + 
-							"rebond = effect(\"" + getMessage(45) + "\")(1);\n\n" + 
-							"if (numKeys > 1 && freq != 0 ){\n" + 
-							"if (nearestKey(time).index == 1) { value }\n" + 
-							"else {\n\n" + 
-							"if (length(velocity) == 0) {\n\n" + 
-							"tempsClefProx = nearestKey(time).time;\n\n" + 
-							"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
-							"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
-							"temps = time - tempsDebut;\n\n" + 
-							"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
-							"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
-							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
-							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
-							"}\n" + 
-							"else { value }\n" + 
-							"}\n" + 
-							"}\n" + 
-							"else { value }";
-
-var expressionspringMutiD = 	"amorti = effect(\"" + getMessage(44) + "\")(1);\n" + 
-								"freq = effect(\"" + getMessage(43) + "\")(1);\n\n" + 
-								"rebond = 0;\n\n" + 
-								"if (numKeys > 1 && freq != 0 ){\n" + 
-								"if (nearestKey(time).index == 1) { value }\n" + 
-								"else {\n\n" + 
-								"if (length(velocity) == 0) {\n\n" + 
-								"tempsClefProx = nearestKey(time).time;\n\n" + 
-								"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
-								"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
-								"temps = time - tempsDebut;\n\n" + 
-								"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
-								"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
-								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
-								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
-								"}\n" + 
-								"else { value }\n" + 
-								"}\n" + 
-								"}\n" + 
-								"else { value }";
-var expressionspringPos = 	"amorti = effect(\"" + getMessage(44) + "\")(1);\n" + 
-							"freq = effect(\"" + getMessage(43) + "\")(1);\n" + 
-							"if (amorti == 0) amorti = 0.1;\n" + 
-							"if (freq == 0) freq = 0.1;\n" + 
-							"retard = freq/amorti;\n" + 
-							"poids = 1/amorti/10;\n" + 
-							"precision = thisComp.frameDuration;\n" + 
-							"function worldVelocity(temps) {\n" + 
-							"worldVelocityX = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[0]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[0])*100;\n" + 
-							"worldVelocityY = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[1]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[1])*100;\n" + 
-							"return [worldVelocityX,worldVelocityY];\n" + 
-							"}\n" + 
-							"function worldSpeed(temps) {\n" + 
-							"return length(worldVelocity(temps));\n" + 
-							"}\n" + 
-							"tempsDebut = 0;\n" + 
-							"tempsRedemarrage = 0;\n" + 
-							"stop = false;\n" + 
-							"arrete = false;\n" + 
-							"for (i=timeToFrames(time);i>=0;i--) {\n" + 
-							"var instant = framesToTime(i);\n" + 
-							"var instantSuivant = instant-precision;\n" + 
-							"if (worldSpeed(instant) == 0 ) {\n" + 
-							"if (tempsRedemarrage == 0) tempsRedemarrage = instant;\n" + 
-							"if (worldSpeed(instantSuivant) !=0 ) {\n" + 
-							"tempsDebut = instantSuivant;\n" + 
-							"break;\n" + 
-							"}\n" + 
-							"}\n" + 
-							"}\n" + 
-							"temps = time-tempsDebut;\n" + 
-							"frameRedemarre = timeToFrames( time-tempsRedemarrage);\n" + 
-							"valeur = value\n" + 
-							"if ( frameRedemarre <= retard)\n" + 
-							"valeur = value - worldVelocity(time)*poids*(frameRedemarre/retard);\n" + 
-							"else\n" + 
-							"valeur = value - worldVelocity(time)*poids;\n" + 
-							"if (worldSpeed(time) == 0) {\n" + 
-							"spring = worldVelocity(tempsDebut) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n" + 
-							"valeur + spring;\n" + 
-							"}else{ valeur; }\n";
-//=============================================
-
-//boucle sur ce qui reste de sélectionné
-for (i = 0;i < calque.selectedProperties.length ; i++)
-{
-	var effet = calque.selectedProperties[i];
-	//on vérifie si on peut mettre une expression, sinon inutile de continuer
-	if(!effet.canSetExpression) { continue; }
-	if (effet.matchName == "ADBE Position" && boutonSimulatedSpring.value)	effet.expression = expressionspringPos;
-	else if (effet.propertyValueType == PropertyValueType.OneD) effet.expression = expressionspringOneD;
-	else effet.expression = expressionspringMutiD;
-}
-//boucle sur les effets
-for (i = 0;i < effets.length ; i++)
-{
-	var effet = app.project.activeItem.selectedLayers[0].effect(effets[i][0])(effets[i][1]);;
-	//on vérifie si on peut mettre une expression, sinon inutile de continuer
-	if(!effet.canSetExpression) { continue; }
-	if (effet.propertyValueType == PropertyValueType.OneD) effet.expression = expressionspringOneD;
-	else effet.expression = expressionspringMutiD;
-}
-
-//fin du groupe d'annulation
-app.endUndoGroup();
-
-}
-
-//FONCTION ZERO
-function zero(){
-	
-//vérifions qu'il y a 1 layer sélectionnés
-if (app.project.activeItem.selectedLayers.length > 0) {	
-	
-	verifNoms();
-			//  début de groupe d'annulation
-			app.beginUndoGroup("Duik - Zero");	
-	
-			Duik.addZeros(app.project.activeItem.selectedLayers);
-
-
-	
-			//  fin de groupe d'annulation
-			app.endUndoGroup();
-	
-	
-	
-} else { alert(getMessage(50),"Attention",true); }
-
-
-	}
-
-//FONCTION RENOMMER
-function rename() {
-
-if (app.project.activeItem.selectedLayers.length > 0) {
-	
-		var prefixe = "";
-		prefixtexte.value ? prefixe = prefix.text : prefixe = "";
-		var nom = "";
-		nametexte.value ? nom = name.text : nom = "";
-		var suffixe = "";
-		suffixtexte.value ? suffixe = suffix.text : suffixe = "";
-		
-		if (!(!suffixtexte.value && !nametexte.value && !prefixtexte.value && !numerotexte.value)) {
-			
-			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-			nametexte.value ? nom = nom : nom = app.project.activeItem.selectedLayers[i].name;
-			if (!numerotexte.value)
-			app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe;
-			else {
-				var numbering = eval(numero.text) + i;
-				app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe + numbering;
-				}
-			}
-			
-		}
-	
-	} else { alert(getMessage(51),"Attention",true); }
-	
-	
 	}
 
 //FONCTIONS CALC
@@ -1334,6 +1209,13 @@ function calc() {
 	else 
 		resultatcalc2.text ="error";
 }
+	
+	
+
+
+
+
+
 
 //FONCTIONS INTERPOLATIONS
 {
@@ -1467,65 +1349,7 @@ for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
 }
 }
 
-//FONCTION OSCILLATION
-function oscillation() {
-		// Vérifions si il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1){
-	
-var calque = app.project.activeItem.selectedLayers[0];
 
-if (calque.selectedProperties.length != 0){
-	
-	//Prendre l'effet
-var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie sin on peut mettre une expression, sinon inutile de continuer
-if(effet.canSetExpression) {
-	
-//  début de groupe d'annulation
-app.beginUndoGroup(getMessage(52));
-	
-Duik.swing(calque,effet);
-//fin du groupe d'annulation
-app.endUndoGroup();
-
-}else{alert(getMessage(38),getMessage(46));}
-}else{alert(getMessage(47),getMessage(48));}
-}else{alert(getMessage(47),getMessage(49));}
-
-
-	}
-
-//FONCTIONS EXPOSITION
-function exposure() {
-	fenetreexposure.show();
-}
-
-function exposureSelect() {
-	
-	lowerExposureGroup.enabled = adaptativeExposureButton.value;
-	upperExposureGroup.enabled = adaptativeExposureButton.value;
-	precisionGroup.enabled = adaptativeExposureButton.value;
-}
-
-function detectExposurePrecision() {
-	var layer = app.project.activeItem.selectedLayers[0];
-	var prop = layer.selectedProperties[layer.selectedProperties.length-1];
-	var speed = Duik.utils.getAverageSpeed(layer,prop);
-	var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
-	precisionEdit.text = parseInt(1/(speed/10000)/exp);
-}
-
-function nframes() {
-	var layer = app.project.activeItem.selectedLayers[0];
-	var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-	
-	app.beginUndoGroup("Duik Auto-Exposure");
-	Duik.exposure(layer,prop,adaptativeExposureButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
-	app.endUndoGroup();
-	
-	fenetreexposure.close();
-
-	}
 
 //FONCTION PATH FOLLOW
 function pathFollow() {
@@ -1979,7 +1803,6 @@ if (app.project.activeItem.selectedLayers.length == 1)
 
 	if (calque.selectedProperties.length != 0)
 	{
-		verifNoms();
 		//Prendre l'effet
 		var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 		//on vérifie si on peut mettre une expression, sinon inutile de continuer
