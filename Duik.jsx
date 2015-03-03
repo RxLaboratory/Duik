@@ -907,6 +907,34 @@ var calques = app.project.activeItem.selectedLayers;
 			
 			
 }
+
+//FONCTION LIEN DE DISTANCE
+function distanceLink() {
+				
+//vérifions qu'il n'y a bien que deux calques de sélectionnés
+if (app.project.activeItem.selectedLayers.length == 2) {
+	
+verifNoms();
+			
+//récupérer le nom du calque de référence
+var calqueRef = app.project.activeItem.selectedLayers[1];
+	
+//récupérer le calque de destination
+var calque = app.project.activeItem.selectedLayers[0];
+
+//Prendre l'effet
+var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+
+	//  début de groupe d'annulation
+	app.beginUndoGroup(getMessage(34));
+
+	Duik.distanceLink(calque,effet,calqueRef);
+	
+	//fin du groupe d'annulation
+	app.endUndoGroup();
+	
+	}
+}
 	
 //=============== INTERPOLATION =====================
 
@@ -986,7 +1014,6 @@ else { alert (getMessage(22),getMessage(24),true); }
 	
 	}
 
-
 //============= SETTINGS ============================
 
 //FONCTION POUR CHERCHER UNE MISE A JOUR
@@ -1017,141 +1044,6 @@ alert("This is a test version, if you encounter any problem,\nplease notify it b
 
 
 
-
-//FONCTION LIEN DE DISTANCE
-function distanceLink() {
-				
-//vérifions qu'il n'y a bien que deux calques de sélectionnés
-if (app.project.activeItem.selectedLayers.length == 2) {
-	
-verifNoms();
-			
-//récupérer le nom du calque de référence
-var calqueRef = app.project.activeItem.selectedLayers[0];
-
-	
-//récupérer le calque de destination
-var calque = app.project.activeItem.selectedLayers[1];
-
-//récupérer l'effet
-//la sélection est perdue lors de la création de la glissière, il faut donc contourner le problème en récupérant tout le chemin de l'effet pour pouvoir le récupérer après...
-//Prendre l'effet
-var effet = app.project.activeItem.selectedLayers[1].selectedProperties.pop();
-//on vérifie sin on peut mettre une expression, sinon inutile de continuer
-if(effet.canSetExpression) {
-//  début de groupe d'annulation
-app.beginUndoGroup(getMessage(34));
-
-
-//Le problème ne se pose que si on est sur un effet
-if (effet.parentProperty.isEffect){
-//index de l'effet
-var effetIndex = effet.propertyIndex;
-//regarder la profondeur
-var effetProfondeur = effet.propertyDepth;
-//Récupérer le nom de l'effet
-var effetParentName = effet.parentProperty.name;
-//les curseurs
-var distMinCurseur = calque.Effects.addProperty("ADBE Slider Control");
-distMinCurseur.name = getMessage(35);
-var distMaxCurseur = calque.Effects.addProperty("ADBE Slider Control");
-distMaxCurseur.name = getMessage(36);
-var falloffCurseur = calque.Effects.addProperty("ADBE Slider Control");
-falloffCurseur.name = getMessage(37);
-falloffCurseur(1).setValue(10);
-	//l'expression à insérer si la ref est pas une cam
-var distanceExpression = "calqueRef = thisComp.layer(\"" + calqueRef.name + "\");\n\n" + 
-"function positionAbs(calque) {\n" + 
-"return calque.toWorld(calque.anchorPoint);\n" + 
-"}\n\n" + 
-"distance = length(positionAbs(calqueRef),positionAbs(thisLayer));\n\n" + 
-"distMin=Math.abs(effect(\"" + getMessage(35) + "\")(1));\n" + 
-"distMax=Math.abs(effect(\"" + getMessage(36) + "\")(1));\n" + 
-"falloff=effect(\"" + getMessage(37) + "\")(1);\n\n" + 
-"if (distMax>=distMin && falloff!=0){\n" + 
-"if (distance <= distMax && distance >=distMin) {value}\n" + 
-"if (distance > distMax && distMax!=0) {value + distance/falloff-distMax/falloff}\n" + 
-"if (distance < distMin){value + distMin/falloff-distance/falloff}\n" + 
-"if (distMax==0){value + distance/falloff}\n" + 
-"}else {value}";
-
-	//l'expression à insérer si la ref est une cam
-var distanceExpressionCam = "calqueRef = thisComp.layer(\"" + calqueRef.name + "\");\n\n" + 
-"function positionAbs(calque) {\n" + 
-"return calque.toWorld(calque.anchorPoint);\n" + 
-"}\n\n" + 
-"distance = length(calqueRef.position,positionAbs(thisLayer));\n\n" + 
-"distMin=Math.abs(effect(\"" + getMessage(35) + "\")(1));\n" + 
-"distMax=Math.abs(effect(\"" + getMessage(36) + "\")(1));\n" + 
-"falloff=effect(\"" + getMessage(37) + "\")(1);\n\n" + 
-"if (distMax>=distMin && falloff!=0){\n" + 
-"if (distance <= distMax && distance >=distMin) {value}\n" + 
-"if (distance > distMax && distMax!=0) {value + distance/falloff-distMax/falloff}\n" + 
-"if (distance < distMin){value + distMin/falloff-distance/falloff}\n" + 
-"if (distMax==0){value + distance/falloff}\n" + 
-"}else {value}";
-
-effet = app.project.activeItem.selectedLayers[1].effect(effetParentName)(effetIndex);
-
-if (calqueRef instanceof CameraLayer) {effet.expression = distanceExpressionCam;}
-else {effet.expression = distanceExpression;}
-//sinon on le fait à l'ancienne
-}else{
-//les curseurs
-var distMinCurseur = calque.Effects.addProperty("ADBE Slider Control");
-var minname = effet.name + getMessage(35);
-distMinCurseur.name = minname;
-var distMaxCurseur = calque.Effects.addProperty("ADBE Slider Control");
-var maxname = effet.name + getMessage(36);
-distMaxCurseur.name = maxname;
-var falloffCurseur = calque.Effects.addProperty("ADBE Slider Control");
-var falloffname = effet.name + getMessage(37);
-falloffCurseur.name = falloffname;
-falloffCurseur(1).setValue(10);
-	//l'expression à insérer si la ref est pas une cam
-var distanceExpression = "calqueRef = thisComp.layer(\"" + calqueRef.name + "\");\n\n" + 
-"function positionAbs(calque) {\n" + 
-"return calque.toWorld(calque.anchorPoint);\n" + 
-"}\n\n" + 
-"distance = length(positionAbs(calqueRef),positionAbs(thisLayer));\n\n" + 
-"distMin=Math.abs(effect(\"" + minname + "\")(1));\n" +
-"distMax=Math.abs(effect(\"" + maxname + "\")(1));\n" + 
-"falloff=effect(\"" + falloffname + "\")(1);\n\n" + 
-"if (distMax>=distMin && falloff!=0){\n" + 
-"if (distance <= distMax && distance >=distMin) {value}\n" + 
-"if (distance > distMax && distMax!=0) {value + distance/falloff-distMax/falloff}\n" + 
-"if (distance < distMin){value + distMin/falloff-distance/falloff}\n" + 
-"if (distMax==0){value + distance/falloff}\n" + 
-"}else {value}";
-
-	//l'expression à insérer si la ref est une cam
-var distanceExpressionCam = "calqueRef = thisComp.layer(\"" + calqueRef.name + "\");\n\n" + 
-"function positionAbs(calque) {\n" + 
-"return calque.toWorld(calque.anchorPoint);\n" + 
-"}\n\n" + 
-"distance = length(calqueRef.position,positionAbs(thisLayer));\n\n" + 
-"distMin=Math.abs(effect(\"" + minname + "\")(1));\n" + 
-"distMax=Math.abs(effect(\"" + maxname + "\")(1));\n" + 
-"falloff=effect(\"" + falloffname + "\")(1);\n\n" + 
-"if (distMax>=distMin && falloff!=0){\n" + 
-"if (distance <= distMax && distance >=distMin) {value}\n" + 
-"if (distance > distMax && distMax!=0) {value + distance/falloff-distMax/falloff}\n" + 
-"if (distance < distMin){value + distMin/falloff-distance/falloff}\n" + 
-"if (distMax==0){value + distance/falloff}\n" + 
-"}else {value}";
-
-if (calqueRef instanceof CameraLayer) {effet.expression = distanceExpressionCam;}
-else {effet.expression = distanceExpression;}
-}
-	
-	//fin du groupe d'annulation
-	app.endUndoGroup();
-	
-	
-	
-	}else{alert(getMessage(38),getMessage(39));}
-	} else {alert (getMessage(40),"Attention",true);}
-	}
 
 //FONCTION POUR CHOISIR LA LANGUE
 function choixLangue() {

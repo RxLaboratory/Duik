@@ -108,6 +108,7 @@ if (Duik.versionNumber < 15.0005)
 		Duik.uiStrings.swing = "Swing";
 		Duik.uiStrings.wheel = "Wheel";
 		Duik.uiStrings.lensFlare = "Lens Flare";
+		Duik.uiStrings.distanceLink = "Distance Link";
 	}
 
 	//================================
@@ -1531,6 +1532,73 @@ if (Duik.versionNumber < 15.0005)
 			//sélectionner le centre (controleur)
 			Duik.utils.deselectLayers();
 			centre.selected = true;
+		}
+	}
+		/* DISTANCE LINK - Duik.distanceLink(layer,property,parentLayer);
+	
+		Link the property to the distance of parentLayer
+	
+		parameters
+		layer | AVLayer containing the property
+		property | Property to rig
+		parentLayer | AVLayer which distance from layer is used to rig
+		
+		returns
+		true if successful, false if anything went wrong
+	
+	*/
+	if (typeof Duik.distanceLink !== 'function' || Duik.forceReload)
+	{
+		Duik.distanceLink = function (layer,prop,parentLayer)
+		{
+			//add effect
+			var effect = Duik.utils.rigProperty(layer,prop,"Duik_distancelink.ffx");
+			if (effect == null) return false;
+			effect.name = Duik.uiStrings.distanceLink;
+			//get the distance between the two layers
+			var distance = Duik.utils.getDistance(layer,parentLayer);
+			effect(2).setValue(distance - distance/4.0);
+			effect(3).setValue(distance + distance/4.0);
+			
+			if (parentLayer instanceof CameraLayer)
+			{
+				prop.expression = "//Duik.DistanceLink\r\n" + 
+					"calqueRef = thisComp.layer(\"" + parentLayer.name + "\");\n" + 
+					"distMin=Math.abs(effect(\"" + effect.name + "\")(2));\n" + 
+					"distMax=Math.abs(effect(\"" + effect.name + "\")(3));\n" + 
+					"reverse = effect(\"" + effect.name + "\")(5) == 1 ? -1 : 1 ;\n" + 
+					"falloff=effect(\"" + effect.name + "\")(6);\n" + 
+					"function positionAbs(calque) {\n" + 
+					"return calque.toWorld(calque.anchorPoint);\n" + 
+					"}\n\n" + 
+					"distance = length(calqueRef.position,positionAbs(thisLayer));\n" + 
+					"if (distMax>=distMin && falloff!=0){\n" + 
+					"if (distance <= distMax && distance >=distMin) {value}\n" + 
+					"if (distance > distMax && distMax!=0) {value + (distance/falloff-distMax/falloff)*reverse}\n" + 
+					"if (distance < distMin){value + (distMin/falloff-distance/falloff)*reverse}\n" + 
+					"if (distMax==0){value + distance/falloff}\n" + 
+					"}else {value}";
+			}
+			else
+			{
+				prop.expression = "//Duik.DistanceLink\r\n" + 
+					"calqueRef = thisComp.layer(\"" + parentLayer.name + "\");\n" + 
+					"distMin=Math.abs(effect(\"" + effect.name + "\")(2));\n" + 
+					"distMax=Math.abs(effect(\"" + effect.name + "\")(3));\n" + 
+					"reverse = effect(\"" + effect.name + "\")(5) == 1 ? -1 : 1 ;\n" + 
+					"falloff=effect(\"" + effect.name + "\")(6);\n" + 
+					"function positionAbs(calque) {\n" + 
+					"return calque.toWorld(calque.anchorPoint);\n" + 
+					"}\n\n" + 
+					"distance = length(positionAbs(calqueRef),positionAbs(thisLayer));\n" + 
+					"if (distMax>=distMin && falloff!=0){\n" + 
+					"if (distance <= distMax && distance >=distMin) {value}\n" + 
+					"if (distance > distMax && distMax!=0) {value + (distance/falloff-distMax/falloff)*reverse}\n" + 
+					"if (distance < distMin){value + (distMin/falloff-distance/falloff)*reverse}\n" + 
+					"if (distMax==0){value + distance/falloff}\n" + 
+					"}else {value}";
+			}
+			
 		}
 	}
 }());
