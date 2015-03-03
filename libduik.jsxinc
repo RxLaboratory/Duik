@@ -60,25 +60,45 @@ if (typeof Duik !== 'object')
 Duik.forceReload = true;
 
 //check if libDuik has been updated since first launch
-if (Duik.versionNumber < 15.0005)
+//intialize
+if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 {
 	Duik.version = "15.alpha5";
 	Duik.versionNumber = 15.0005;
 	Duik.forceReload = true;
 	
 	//--------- only if scripts are allowed to write files ------------
-	//TODO Edit presetEffects.xml to add Duik Effects
-	(function ()
+	if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1)
 	{
-		
-	}());
-	//include presets (ffx) here
-	//extract them to user folder (cf duik_images)
-	(function ()
+		//TODO Edit presetEffects.xml to add Duik Effects
+		//if correctly written, use effects instead of ffx presets
+		(function ()
+		{
+			
+		}());
+		//include presets (ffx) here
+		//extract them to user folder (cf duik_images)
+		//only if presetEffects.xml is not up-to-date
+		(function ()
+		{
+			//temp
+			var thisFile = $.fileName;
+			Duik.usePresets = true;
+			Duik.presetPath = thisFile.substring(0,thisFile.lastIndexOf("/")) + "/";
+		}());
+	}
+	else
 	{
-		
-	}());
-	//----------------------------------------------------------
+		//----------------------------------------------------------
+		//if scripts aren't allowed to write files, use ffx which should be found next to this file
+		(function ()
+		{
+			var thisFile = $.fileName;
+			Duik.usePresets = true;
+			Duik.presetPath = thisFile.substring(0,thisFile.lastIndexOf("/")) + "/";
+		}());
+	}
+
 }
 
 (function ()
@@ -306,10 +326,8 @@ if (Duik.versionNumber < 15.0005)
 				var selection = app.project.activeItem.selectedLayers;
 				Duik.utils.deselectLayers();
 				layer.selected = true;
-				
-				
-				var thisFile = $.fileName;
-				var presetFile = new File(thisFile.substring(0,thisFile.lastIndexOf("/")) + "/" + preset);
+
+				var presetFile = new File(Duik.presetPath + preset);
 				layer.applyPreset(presetFile);
 				
 				var newEffect = null;

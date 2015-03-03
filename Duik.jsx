@@ -26,11 +26,6 @@ This file is part of Duik.
 */	
 
 
-//================================
-//CHARGEMENT DE libDuik
-//================================
-#include "libduik.jsxinc"
-
 function fnDuIK(wnd)
 {
 
@@ -38,6 +33,43 @@ function fnDuIK(wnd)
 	var version = "15.alpha05";
 	//================
 
+//===============================================
+//TRANSLATIONS
+//===============================================
+#include "Duik_translations.jsxinc"
+
+//================================
+//DUIK NEEDS TO WRITE FILES
+//================================
+{
+	//	>> Utils
+	function dialog_preferences_general()
+	{
+		//	Valide au moins depuis CS4,
+		app.executeCommand(2359);
+	}
+
+	//	On va devoir écrire les fichiers d'image, donc ça ne sert à rien de continuer si on ne peux pas:
+	if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") != 1)
+	{
+		alert(getMessage(1), "DuIK");
+		//	Ouvre les préférences générales pour laisser l'utilisateur autoriser les scripts
+		dialog_preferences_general();
+		//	Seconds chance ...
+		if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") != 1)
+		{
+			//	rien à faire ...
+			return;
+		}
+	}
+}
+
+//================================
+//LOADING libDuik
+//================================
+#include "libduik.jsxinc"
+	
+	
 //===============================================
 //PREFERENCES
 //===============================================
@@ -54,20 +86,9 @@ Duik.settings.load();
 
 
 //===============================================
-//TRADUCTIONS
-//===============================================
-#include "Duik_translations.jsxinc"
-
-//===============================================
 //CHARGEMENT DES IMAGES
 //===============================================
 {
-//	>> Utils
-function dialog_preferences_general()
-{
-	//	Valide au moins depuis CS4,
-	app.executeCommand(2359);
-}
 
 function checkFile(name, content)
 {
@@ -110,22 +131,6 @@ function checkFile(name, content)
 	return success;
 }
 //	<< Utils
-
-//	On va devoir écrire les fichiers d'image, donc ça ne sert à rien de continuer si on ne peux pas:
-if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") != 1)
-{
-	alert(getMessage(1), "DuIK");
-
-	//	Ouvre les préférences générales pour laisser l'utilisateur autoriser les scripts
-	dialog_preferences_general();
-
-	//	Seconds chance ...
-	if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") != 1)
-	{
-		//	rien à faire ...
-		return;
-	}
-}
 
 #include "Duik_images.jsxinc"
 
