@@ -4,7 +4,9 @@ Copyright (c) 2008 - 2015 Nicolas Dufresne
 http://www.duduf.net
 
 Many thanks to :
+Dan Ebberts - Writing the first IK Expressions
 Eric Epstein - making the IK's work with 3D Layers
+All 258 indiegogo crowdfunders for making this libDuik possible!
 
 This file is part of Duik.
 
@@ -50,61 +52,214 @@ This file is part of Duik.
 	
 */
 
+////////////////////////////
+// DEFINITION
+////////////////////////////
 if (typeof Duik !== 'object')
 {
     Duik = {};
 	Duik.version = "";
-	Duik.versionNumber = 0;
+	Duik.versionNumber = 0.0;
 }
 
-Duik.forceReload = true;
+/////////////////////////////
+// FORCE RELOAD
+/////////////////////////////
+Duik.forceReload = false;
 
-//check if libDuik has been updated since first launch
-//intialize
-if (Duik.versionNumber < 15.0005 || Duik.forceReload)
+/////////////////////////////
+// INITIALIZATION
+/////////////////////////////
+(function ()
 {
-	Duik.version = "15.alpha5";
-	Duik.versionNumber = 15.0005;
-	Duik.forceReload = true;
+	if (Duik.versionNumber < 15.0005 || Duik.forceReload)
+	{
+		Duik.version = "15.alpha5";
+		Duik.versionNumber = 15.0005;
+		Duik.forceReload = true;
+		Duik.usePresets = true;
+		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
+		Duik.presetEffectsInstalledVersion = 0;
+		//presetEffects String
+		{
+			Duik.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0005 -->\r\n" + 
+				"<Effect matchname='DUIK_One_Layer_IK' name='$$$/AE/Preset/1ik=DUIK_One_Layer_IK'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Weight=Weight' default='100' valid_min='-1000' valid_max='1000' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/Reverse=Reverse' default='true'/>\r\n" + 
+				"    <Angle name='$$$/AE/Preset/FK=FK' default='0'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Two_Layer_IK' name='$$$/AE/Preset/2ik=DUIK_Two_Layer_IK'>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/Clockwise=Clockwise' default='false'/>\r\n" + 
+				"    <Group name='$$$/AE/Preset/FK=FK'>\r\n" + 
+				"        <Checkbox name='$$$/AE/Preset/DisableIK=Disable IK' default='false'/>\r\n" + 
+				"        <Angle name='$$$/AE/Preset/UpperFK=Upper FK' default='0'/>\r\n" + 
+				"        <Angle name='$$$/AE/Preset/LowerFK=Lower FK' default='0'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Stretch=Stretch'>\r\n" + 
+				"        <Checkbox name='$$$/AE/Preset/Auto-Stretch=Auto-Stretch' default='true'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/Stretch=Stretch' default='0' valid_min='-1000' valid_max='1000' slider_min='-100' slider_max='100' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_3D_Wiggle' name='$$$/AE/Preset/3dwiggle=DUIK_3D_Wiggle'>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Amplitudes=Amplitudes'>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/XAmp=X Amp.' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/YAmp=Y Amp.' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/ZAmp=Z Amp.' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Frequencies=Frequencies'>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/XFrequ=X Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/YFreq=Y Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/ZFreq=Z Freq' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_2D_Wiggle' name='$$$/AE/Preset/2dwiggle=DUIK_2D_Wiggle'>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Amplitudes=Amplitudes'>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/XAmp=X Amp.' default='0' valid_min='0' valid_max='10000' slider_min='-1000' slider_max='1000' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/YAmp=Y Amp.' default='0' valid_min='0' valid_max='10000' slider_min='-1000' slider_max='1000' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Frequencies=Frequencies'>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/XFreq=X Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/YFreq=Y Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_1D_Wiggle' name='$$$/AE/Preset/1dwiggle=DUIK_1D_Wiggle'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Amplitude=Amplitude' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Frequency=Frequency' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Exposure' name='$$$/AE/Preset/exposure=DUIK_Exposure'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Exposure=Exposure (frames)' default='1' valid_min='1' valid_max='1000' slider_min='1' slider_max='30' precision='1'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_RotMorph' name='$$$/AE/Preset/rotmorph=DUIK_RotMorph'>\r\n" + 
+				"    <Layer name='$$$/AE/Preset/ReferenceLayer=Reference Layer' default_self='true'/>\r\n" + 
+				"    <Angle name='$$$/AE/Preset/Min.Angle=Min. Angle' default='0'/>\r\n" + 
+				"    <Angle name='$$$/AE/Preset/Max.Angle=Max. Angle' default='0'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Swing' name='$$$/AE/Preset/swing=DUIK_Swing'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Amplitude=Amplitude' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Frequency=Frequency' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='50' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Offset=Offset' default='0' valid_min='-100' valid_max='100' slider_min='-10' slider_max='10' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Damping=Damping' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Wheel' name='$$$/AE/Preset/wheel=DUIK_Wheel'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Radius=Radius' default='100' valid_min='1' valid_max='10000' slider_min='1' slider_max='1000' precision='1'/>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/Reverse=Reverse' default='false'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_LensFlare' name='$$$/AE/Preset/lensflare=DUIK_LensFlare'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Intensity=Intensity' default='100' valid_min='0' valid_max='1000' slider_min='0' slider_max='200' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Scale=Scale' default='100' valid_min='0' valid_max='1000' slider_min='0' slider_max='200' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_LensFlareDistance' name='$$$/AE/Preset/lensflaredistance=DUIK_LensFlareDistance'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Distance=Distance' default='0' valid_min='-1000' valid_max='1000' slider_min='-100' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_DistanceLink' name='$$$/AE/Preset/distancelink=DUIK_DistanceLink'>\r\n" + 
+				"    <Group name='$$$/AE/Preset/Range=Range'>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/MinimumDistance=Minimum Distance' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/MaximumDistance=Maximum Distance' default='500' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
+				"    </Group>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/Reverse=Reverse' default='false'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Falloff=Falloff' default='10' valid_min='0' valid_max='1000' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Spring' name='$$$/AE/Preset/spring=DUIK_Spring'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Elasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Damping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Spring_Bounce' name='$$$/AE/Preset/springbounce=DUIK_Spring_Bounce'>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Elasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
+				"    <Slider name='$$$/AE/Preset/Damping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/Bounce=Bounce' default='false'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<!-- END DUIK PSEUDO EFFECTS -->\r\n";
+		}
+	}
+}());
+
+/////////////////////////////
+// INSTALLATION CHECKS
+/////////////////////////////
+(function ()
+{
+	//-----------------------------------------------------------------
+	//--------- Check if presetEffects.xml is up-to-date --------------
+	//-----------------------------------------------------------------
+	if (Duik.forceReload)
+	{
+		Duik.checkPresetEffectsVersion = function ()
+		{
+			var presetEffectsFile = new File(Folder.startup.fullName + "/PresetEffects.xml");
+			presetEffectsFile.open("r");
+			var presetEffectsString = presetEffectsFile.read();
+			presetEffectsFile.close();
+			//find version
+			var startIndex = presetEffectsString.indexOf("<!-- BEGIN DUIK PSEUDO EFFECTS v");
+			if (startIndex >= 0)
+			{
+				startIndex += 32 ;
+				Duik.presetEffectsInstalledVersion = parseFloat(presetEffectsString.substr(startIndex,7));
+			}
+			else
+			{
+				Duik.presetEffectsInstalledVersion = 0;
+			}
+		}
+		Duik.checkPresetEffectsVersion();
+		if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+		{
+			Duik.usePresets = false;
+		}
+	}
+	//-----------------------------------------------------------------
+	//--------- Check if scripts are allowed to write files -----------
+	//-----------------------------------------------------------------
+	Duik.allowedToWriteFiles = app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1;
 	
-	//--------- only if scripts are allowed to write files ------------
-	if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1)
+	//-----------------------------------------------------------------
+	//--- INSTALL, only if scripts are allowed to write files ---------
+	//-----------------------------------------------------------------
+	if (Duik.allowedToWriteFiles && Duik.usePresets)
 	{
-		//TODO Edit presetEffects.xml to add Duik Effects
-		//if correctly written, use effects instead of ffx presets
-		(function ()
+		//-------------------------------------------------------------
+		//------ Edit presetEffects.xml to add Duik Effects -----------
+		//-------------------------------------------------------------
+		if (Duik.presetEffectsInstalledVersion < Duik.versionNumber)
 		{
-			
-		}());
-		//include presets (ffx) here
-		//extract them to user folder (cf duik_images)
-		//only if presetEffects.xml is not up-to-date
-		(function ()
-		{
-			//temp
-			var thisFile = $.fileName;
-			Duik.usePresets = true;
-			Duik.presetPath = thisFile.substring(0,thisFile.lastIndexOf("/")) + "/";
-		}());
+			var presetEffectsFile = new File(Folder.startup.fullName + "/PresetEffects.xml");
+			presetEffectsFile.open("r");
+			var presetEffectsString = presetEffectsFile.read();
+			presetEffectsFile.close();
+			//update
+			var startIndex = presetEffectsString.indexOf("<!-- BEGIN DUIK PSEUDO EFFECTS v");
+			var endIndex = presetEffectsString.indexOf("<!-- END DUIK PSEUDO EFFECTS -->") + 32;
+			if (startIndex >= 0)
+			{
+				var stringToRemove = presetEffectsString.substring(startIndex,endIndex);
+				presetEffectsString = presetEffectsString.replace(stringToRemove,Duik.presetEffects);
+			}
+			else
+			{
+				presetEffectsString = presetEffectsString.replace("</Effects>",Duik.presetEffects + "\r\n</Effects>");
+			}
+			//backup file
+			presetEffectsFile.copy(presetEffectsFile.fullName + ".bak");
+			//write the new file
+			var isReadOnly = presetEffectsFile.readonly;
+			presetEffectsFile.readonly = false;
+			presetEffectsFile.open("w");
+			presetEffectsFile.write(presetEffectsString);
+			presetEffectsFile.close();
+			presetEffectsFile.readonly = isReadOnly;
+			Duik.checkPresetEffectsVersion();
+		}
 	}
-	else
-	{
-		//----------------------------------------------------------
-		//if scripts aren't allowed to write files, use ffx which should be found next to this file
-		(function ()
-		{
-			var thisFile = $.fileName;
-			Duik.usePresets = true;
-			Duik.presetPath = thisFile.substring(0,thisFile.lastIndexOf("/")) + "/";
-		}());
-	}
+	
+}());
 
-}
-
+/////////////////////////////
+// MAIN
+/////////////////////////////
 (function ()
 {	
 	//================================
-	//           UI Strings
+	//========= UI Strings ===========
 	//================================
 	
 	/* UI Strings
@@ -133,7 +288,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	}
 
 	//================================
-	//           SETTINGS
+	//========= SETTINGS =============
 	//================================
 	
 	/* Duik Settings
@@ -207,23 +362,25 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	}
 	
 	//================================
-	//           UTILS
+	//========== UTILS ===============
 	//================================
 	
 	if (typeof Duik.utils !== 'object' || Duik.forceReload)
 	{
 		Duik.utils = {};
-		// RIG PROPERTY - Duik.utils.rigProperty(layer,prop,pseudoEffect)
+		// RIG PROPERTY - Duik.utils.rigProperty(layer,prop,effectMatchName)
 		if (typeof Duik.utils.rigProperty !== 'function' || Duik.forceReload)
 		{
-			Duik.utils.rigProperty = function (layer,prop,pseudoEffect)
+			Duik.utils.rigProperty = function (layer,prop,effectMatchName)
 			{
 				//if prop is an effect, need a way to recover it
 				var isEffect,effetIndex,effetProfondeur,effetParentName;
 				if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return null;
 				
 				//pseudo effect
-				var effect = Duik.utils.addPseudoEffect(layer,pseudoEffect);
+				var effect = null;
+				if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,effectMatchName);
+				else effect = layer.effect.addProperty(effectMatchName);
 				if (isEffect){ prop = layer.effect(effetParentName)(effetIndex); }
 				
 				return effect;
@@ -299,6 +456,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 		{
 			Duik.utils.getAverageSpeed = function (layer,prop)
 			{
+				if (prop.numKeys < 1) return 0;
 				//for each frame of the comp
 				var frames = layer.containingComp.duration / layer.containingComp.frameDuration ;
 				var lastTime = prop.keyTime(prop.numKeys);
@@ -327,14 +485,14 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 				Duik.utils.deselectLayers();
 				layer.selected = true;
 
-				var presetFile = new File(Duik.presetPath + preset);
+				var presetFile = new File(Duik.presetPath + preset + ".ffx");
 				layer.applyPreset(presetFile);
 				
 				var newEffect = null;
 				
 				for (fx = 1;fx <= layer("Effects").numProperties;fx++)
 				{
-					if (layer.effect(fx).name == preset.substring(5,preset.lastIndexOf(".")) )
+					if (layer.effect(fx).name == preset )
 					{
 						newEffect = layer.effect(fx);
 						break;
@@ -434,7 +592,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 				
 				var counts = {};
 				// first pass, assign the counts
-				for (layerI; layerI <= numLayers; layerI++)
+				for (layerI = 1; layerI <= numLayers; layerI++)
 				{
 					var layer = layers[layerI];
 					var name = layer.name;
@@ -464,7 +622,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	}
 	
 	//================================
-	//           METHODS
+	//========= METHODS ==============
 	//================================
 	
 	//TODO, instead of returning true or false, functions should return the effect created
@@ -547,7 +705,9 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 			var controllerName = ctrl.name;
 			
 			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(ctrl,"Duik_1ik.ffx");
+			var effect;
+			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(ctrl,"DUIK_One_Layer_IK");
+			else effect = ctrl.effect.addProperty("DUIK_One_Layer_IK");
 			effect.name = Duik.uiStrings.ik + " "  + layer1.name;
 						
 			//rotation d'origine
@@ -610,7 +770,9 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 			var controllerName = controller.name;
 			
 			//pseudo effect
-			var effect = Duik.utils.addPseudoEffect(controller,"Duik_2ik.ffx");
+			var effect;
+			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(controller,"DUIK_Two_Layer_IK");
+			else effect = controller.effect.addProperty("DUIK_Two_Layer_IK");
 			effect.name = Duik.uiStrings.ik + " "  + endName;
 			if (clockWise) effect(1).setValue(1);
 
@@ -1018,7 +1180,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.threeDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_3dwiggle.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_3D_Wiggle");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
@@ -1032,7 +1194,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.twoDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_2dwiggle.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_2D_Wiggle");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			prop.expression = "//Duik.2DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(6),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(3));\n" +  "[X[0],Y[1]]";
@@ -1045,7 +1207,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.oneDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_1dwiggle.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_1D_Wiggle");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
@@ -1088,6 +1250,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 		Duik.adaptativeExposure = function (layer,prop,limit,minExp,maxExp)
 		{
 			if (!prop.canSetExpression) return false;
+			if (prop.numKeys < 1) return false;
 			
 			if (minExp == undefined) minExp = 1;
 			if (maxExp == undefined) maxExp = 4;
@@ -1144,7 +1307,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.fixedExposure = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_exposure.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_Exposure");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.exposure;
 			effect(1).setValue(1);
@@ -1320,7 +1483,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.rotationMorph = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_rotmorph.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_RotMorph");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.rotMorph;
 			
@@ -1356,7 +1519,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 	{
 		Duik.swing = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_swing.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_Swing");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.swing;
 			effect(1).setValue(10);
@@ -1397,7 +1560,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 			if (radius == undefined) radius = 100;
 			else if (! (radius > 0)) radius = 100;
 			if (curved == undefined) curved = false;
-			var effect = Duik.utils.rigProperty(layer,layer.transform.rotation,"Duik_wheel.ffx");
+			var effect = Duik.utils.rigProperty(layer,layer.transform.rotation,"DUIK_Wheel");
 			if (effect == null) return false;
 			effect.name = Duik.uiStrings.wheel;
 			effect(1).setValue(radius);
@@ -1550,15 +1713,18 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 		{
 			//sortir le premier calque, le centre, et ajouter les contrôleurs
 			var centre = layers.shift();
+			
+			//check names
+			Duik.utils.checkNames(centre.containingComp);
+			
 			var nomcentre = centre.name;
-			var centerEffect = Duik.utils.addPseudoEffect(centre,"Duik_lensflare.ffx");
+			var centerEffect;
+			if (Duik.usePresets) centerEffect = Duik.utils.addPseudoEffect(centre,"DUIK_LensFlare");
+			else centerEffect = centre.effect.addProperty("DUIK_LensFlare");
 			centerEffect.name = Duik.uiStrings.lensFlare;
 			centerEffect(1).setValue(100);
 			centerEffect(2).setValue(100);
 			
-			//check names
-			Duik.utils.checkNames(centre.containingComp);
-
 			//l'expression de position
 			var positionexpression = "//Duik.LensFlare\r\n" + 
 			"calqueCentre = thisComp.layer(\"" + nomcentre + "\");\n\n" +
@@ -1568,12 +1734,10 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 			"n=effect(\"" + centerEffect.name + "\")(1);\n\n" +
 			"X = thisComp.width - positionAbs(calqueCentre)[0];\n" +
 			"Y = thisComp.height - positionAbs(calqueCentre)[1];\n\n" +
-			"if ( n<100 ) {\n\n" +
 			"i=n/100;\n" +
 			"j=1-i;\n\n" +
-			"value + ( (  [X,Y]*(i/j) + positionAbs(calqueCentre) )*j\n\n )" +
-			"}\n\n" +
-			"else {value + [X,Y] }";
+			"if (n!=100) value + ( (  [X,Y]*(i/j) + positionAbs(calqueCentre) )*j)\n" + 
+			"else value + [X,Y];";
 
 			//l'expression d'opacité
 			var opaciteexpression = "//Duik.LensFlare\r\n" + "n=thisComp.layer(\"" + centre.name  + "\").effect(\"" + centerEffect.name + "\")(1);\n" + "value*n/100";
@@ -1592,7 +1756,9 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 				calque = layers[layerI];
 				calque.position.setValue([0,0]);
 				//le controleur de la distance
-				var distanceEffect = Duik.utils.addPseudoEffect(calque,"Duik_lensflaredistance.ffx");
+				var distanceEffect;
+				if (Duik.usePresets) distanceEffect = Duik.utils.addPseudoEffect(calque,"DUIK_LensFlareDistance");
+				else distanceEffect = calque.effect.addProperty("DUIK_LensFlareDistance");
 				distanceEffect.name = Duik.uiStrings.lensFlare;
 				distanceEffect(1).setValue(100/nombrecalques*(layerI+1));
 				
@@ -1627,7 +1793,7 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 		Duik.distanceLink = function (layer,prop,parentLayer)
 		{
 			//add effect
-			var effect = Duik.utils.rigProperty(layer,prop,"Duik_distancelink.ffx");
+			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_DistanceLink");
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.distanceLink;
 			//get the distance between the two layers
@@ -1709,11 +1875,11 @@ if (Duik.versionNumber < 15.0005 || Duik.forceReload)
 			var effect;
 			if (bounce)
 			{
-				effect = Duik.utils.rigProperty(layer,prop,"Duik_springbounce.ffx");
+				effect = Duik.utils.rigProperty(layer,prop,"DUIK_Spring_Bounce");
 			}
 			else
 			{
-				effect = Duik.utils.rigProperty(layer,prop,"Duik_spring.ffx");
+				effect = Duik.utils.rigProperty(layer,prop,"DUIK_Spring");
 			}
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.spring;
