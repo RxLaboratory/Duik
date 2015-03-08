@@ -30,7 +30,7 @@ function fnDuIK(thisObj)
 {
 
 	//=========================
-	var version = "15.alpha06";
+	var version = "15.alpha07";
 	//=========================
 
 	//=================================
@@ -111,7 +111,7 @@ function fnDuIK(thisObj)
 				var icText = icGroup.add("statictext",undefined,"",{multiline:true});
 				icText.minimumSize = [150,60];
 				icText.alignment = ["center","top"];
-				icText.text = "-- INSTALLATION COMPLETE --\n\nAfter Effects must be restarted\r\nto complete the installation of Duik\n\n-----------------------------";
+				icText.text = "-- INSTALLATION COMPLETE --\n\nAfter Effects must be restarted\r\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n-----------------------------";
 				icGroup.visible = false;
 				//MAC SET PERMISSIONS GROUP
 				var mspGroup = paletteContent.add("group",undefined);
