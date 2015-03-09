@@ -30,7 +30,7 @@ function fnDuIK(thisObj)
 {
 
 	//=========================
-	var version = "15.alpha07";
+	var version = "15.alpha08";
 	//=========================
 
 	//=================================
@@ -1162,6 +1162,38 @@ function fnDuIK(thisObj)
 
 					}
 
+				}
+			}
+			
+			//REPLACE IN EXPRESSIONS UI
+			function onRieButtonClicked()
+			{
+				rieWindow.show();
+			}
+			
+			//REPLACE IN EXPRESSIONS
+			function replaceInExpr()
+			{
+				if (rieOldEdit.text == rieNewEdit.text) return;
+				
+				if (rieCurrentCompButton.value)
+				{
+					if (rieAllLayersButton.value)
+					{
+						app.beginUndoGroup("Duik - Replace in Expressions");
+						Duik.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
+						app.endUndoGroup();
+					}
+					else if (app.project.activeItem.selectedLayers.length > 0)
+					{
+						app.beginUndoGroup("Duik - Replace in Expressions");
+						Duik.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
+						app.endUndoGroup();
+					}
+				}
+				else
+				{
+					//TODO on all comps
 				}
 			}
 			
@@ -2415,6 +2447,45 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
+				//replace in expressions
+				{
+					var rieWindow = new Window ("palette","Replace in expressions",undefined,{closeButton:false,resizeable:true});
+					rieWindow.spacing = 2;
+					rieWindow.margins = 5;
+					rieWindow.alignChildren = ["fill","top"];
+					rieWindow.minimumSize = [300,100];
+					var rieOldGroup = addHGroup(rieWindow);
+					var rieOldText = rieOldGroup.add("statictext",undefined,"Old:");
+					rieOldText.alignment = ["left","top"];
+					var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
+					var rieNewGroup = addHGroup(rieWindow);
+					var rieNewText = rieNewGroup.add("statictext",undefined,"New:");
+					rieNewText.alignment = ["left","top"];
+					var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
+					var rieCompGroup = addHGroup(rieWindow);
+					rieCompGroup.alignment = ["center","top"];
+					var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,"Active comp");
+					var rieAllCompsButton = rieCompGroup.add("radiobutton",undefined,"All comps");
+					rieCurrentCompButton.onClick = function () {
+						rieLayerGroup.enabled = rieCurrentCompButton.value;
+					}
+					rieAllCompsButton.onClick = function () {
+						rieLayerGroup.enabled = rieCurrentCompButton.value;
+					}
+					rieCurrentCompButton.value = true;
+					var rieLayerGroup = addHGroup(rieWindow);
+					rieLayerGroup.alignment = ["center","top"];
+					var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,"Selected layers");
+					var rieAllLayersButton = rieLayerGroup.add("radiobutton",undefined,"All layers");
+					rieAllLayersButton.value = true;
+					var rieOKButton = rieWindow.add("button",undefined,"Replace in expressions");
+					rieOKButton.onClick = replaceInExpr;
+					var rieCancelButton = rieWindow.add("button",undefined,"Close");
+					rieCancelButton.onClick = function () { rieWindow.hide();};
+					rieWindow.layout.layout(true);
+					rieWindow.layout.resize();
+					rieWindow.onResizing = rieWindow.onResize = function () { rieWindow.layout.resize(); }
+				}
 				//l'expo
 				{
 					var fenetreexposure = createDialog(getMessage(123),true,nframes);
@@ -3038,6 +3109,10 @@ function fnDuIK(thisObj)
 				var boutonmesurer = addIconButton(groupeikD,dossierIcones + "btn_mesurer.png",getMessage(106));
 				boutonmesurer.onClick = mesure;
 				boutonmesurer.helpTip = getMessage(100);
+				//replace in expressions button
+				var rieButton = addButton(groupeikG,"Replace in Expr.");
+				rieButton.onClick = onRieButtonClicked;
+				rieButton.helpTip = "Search and replace text in expressions";
 				}
 				
 				// PANNEAU INTERPOLATION -----------------------------------------------------------
@@ -3189,7 +3264,7 @@ function fnDuIK(thisObj)
 				// On définit le layout et on redessine la fenètre quand elle est resizée
 				palette.layout.layout(true);
 				palette.layout.resize();
-				palette.onResizing = palette.onResize = function () {this.layout.resize();}
+				palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 				
 				
 				}
