@@ -28,7 +28,6 @@ This file is part of Duik.
 
 function fnDuIK(thisObj)
 {
-
 	//=========================
 	var version = "15.alpha08";
 	//=========================
@@ -44,7 +43,6 @@ function fnDuIK(thisObj)
 	var palette = (thisObj instanceof Panel) ? thisObj : new Window("palette","Duik",undefined, {resizeable:true});
 	palette.orientation = "stack";
 	palette.alignChildren = ["fill","fill"];
-	
 	
 	//=================================
 	//== DUIK NEEDS TO WRITE FILES ====
@@ -74,10 +72,79 @@ function fnDuIK(thisObj)
 				if (app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1)
 				{
 					wfGroup.hide();
-					loadDuik();
+					preloadDuik();
 				}
 			}
 			prefButton.alignment =  ["center","top"];
+		}
+		else
+		{
+			preloadDuik();
+		}
+	}
+	
+	//=================================
+	//======== APP.SETTINGS ===========
+	//=================================
+	{
+		if (! app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
+		if (! app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
+		if (! app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
+		if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
+		if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
+		if (! app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
+	}
+	
+	//=================================
+	//====== CHECK FOR UPDATES ========
+	//=================================
+	function checkForUpdate(version,showAlert)
+	{
+		var reply = "";
+		//socket
+		conn = new Socket;
+		// se connecter à duduf.com
+		if (conn.open ("www.duduf.com:80"))
+		{
+			// récupérer la version actuelle
+			if (conn.writeln ("GET /downloads/duik/version.txt  HTTP/1.0\nHost: duduf.com\n"))
+				reply = conn.read(1000);
+			conn.close();
+			//chercher la version dans la réponse du serveur :
+			var reponse = reply.lastIndexOf("version",reply.length);
+			if(reponse != -1)
+			{
+				newVersion = reply.slice(reponse+8,reply.length+1);
+				if (showAlert && version != newVersion) alert(getMessage(2));
+				return newVersion;
+			}
+		}
+	}
+	
+	function preloadDuik ()
+	{
+		if (app.settings.getSetting("duik", "version") == "oui")
+		{
+			var newV = checkForUpdate(version,false);
+			if ( version == newV )
+			{
+				loadDuik();
+			}
+			else
+			{
+				var updGroup = palette.add("group");
+				updGroup.orientation = "column";
+				updGroup.alignChildren = ["center","top"];
+				var updVersionBox = updGroup.add("statictext",undefined,"Duik current version: " + version);
+				var updNewVersionBox = updGroup.add("statictext",undefined,"temp",{multiline:true});
+				updNewVersionBox.text = "- UPDATE AVAILABLE -\n\nA new version of Duik is available!\nVersion: " + newV + "\n\nGo to http://duik.duduf.net to download it.";
+				var updButton = updGroup.add("button",undefined,"Launch Duik");
+				updButton.onClick = function ()
+				{
+					updGroup.hide();
+					loadDuik();
+				}
+			}
 		}
 		else
 		{
@@ -90,298 +157,287 @@ function fnDuIK(thisObj)
 		//=================================
 		//========== LOAD libDuik =========
 		//=================================
-		#include "libduik.jsxinc"
-		//if pseudo effects are not installed
-		if (Duik.usePresets)
 		{
-			//PALETTE
+			#include "libduik.jsxinc"
+			//if pseudo effects are not installed
+			if (Duik.usePresets)
 			{
-				var installGroup = palette.add("group");
-				installGroup.orientation = "column";
-				installGroup.alignChildren = ["fill","fill"];
-				var versionBox = installGroup.add("statictext",undefined,"Duik v" + version);
-				versionBox.alignment = ["center","top"];
-				var paletteContent = installGroup.add("group");
-				paletteContent.orientation = "stack";
-				paletteContent.alignChildren = ["fill","fill"];
-				//INSTALL COMPLETE GROUP
-				var icGroup = paletteContent.add("group",undefined);
-				icGroup.orientation = "column";
-				icGroup.alignChildren = ["fill","fill"];
-				var icText = icGroup.add("statictext",undefined,"",{multiline:true});
-				icText.minimumSize = [150,60];
-				icText.alignment = ["center","top"];
-				icText.text = "-- INSTALLATION COMPLETE --\n\nAfter Effects must be restarted\r\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n-----------------------------";
-				icGroup.visible = false;
-				//MAC SET PERMISSIONS GROUP
-				var mspGroup = paletteContent.add("group",undefined);
-				mspGroup.orientation = "column";
-				mspGroup.alignment = ["fill","fill"];
-				mspGroup.alignChildren = ["fill","fill"];
-				mspTitle = mspGroup.add("statictext",undefined,"temp",{multiline:true});
-				mspTitle.alignment = ["center","top"];
-				mspTitle.text = "You have to set permissions to presetEffects.xml to complete the installation of Duik";
-				var mspTexts = mspGroup.add("group");
-				mspTexts.orientation = "stack";
-				mspTexts.alignment = ["center","top"];
-				var mspText = mspTexts.add("statictext",undefined,"temp",{multiline:true});
-				mspText.text = "• 1 - Right click on\n/Applications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents'.";
-				mspText.alignment = ["center","top"];
-				var mspText2 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
-				mspText2.text = "• 2 - Right Click on\nContents/Resources/PresetEffects.xml,\nSelect 'Get Info'.";
-				mspText2.alignment = ["center","top"];
-				mspText2.visible = false;
-				var mspText3 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
-				mspText3.text = "• 3 - At the bottom right of the window, unlock the access by clicking on the locker and entering your admin password.";
-				mspText3.alignment = ["center","top"];
-				mspText3.visible = false;
-				var mspText4 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
-				mspText4.text = "• 4 - Finally, set 'Read & Write' access for 'Admin' and 'Everyone'.";
-				mspText4.alignment = ["center","top"];
-				mspText4.visible = false;
-				var mspNavButtons = mspGroup.add("group");
-				mspNavButtons.orientation = "row";
-				mspNavButtons.alignment = ["center","top"];
-				var mspPrevButton = mspNavButtons.add("button",undefined,"Previous");
-				mspPrevButton.alignment = ["left","top"];
-				mspPrevButton.enabled = false;
-				var mspNextButton = mspNavButtons.add("button",undefined,"Next");
-				mspNextButton.alignment = ["right","top"];
-				mspContinueButton = mspGroup.add("button",undefined,"Continue installation...");
-				mspContinueButton.alignment = ["center","top"];
-				mspContinueButton.enabled = false;
-				var mspTut = mspGroup.add("statictext",undefined,"",{multiline:true});
-				mspTut.text = "• You can also watch this short tutorial by LLoyd Alvarez about how to set permissions to presetEffects.xml:\nhttp://youtu.be/HAkkmDYSVmg";		
-				mspTut.alignment = ["center","top"];
-				mspGroup.visible = false;
-				//MANUAL INSTALL
-				var mmGroup = paletteContent.add("group",undefined);
-				mmGroup.orientation = "column";
-				mmGroup.alignChildren = ["fill","fill"];
-				var mmTexts = mmGroup.add("group");
-				mmTexts.orientation = "stack";
-				mmTexts.alignment = ["center","top"];
-				var mmText = mmTexts.add("statictext",undefined,"",{multiline:true});
-				mmText.alignment = ["center","top"];
-				mmText.text = "It seems Duik can not automatically install the pseudo effects it needs.\n\nYou will have to manually install the pseudo effects needed by Duik.";
-				var mmText2 = mmTexts.add("statictext",undefined,"",{multiline:true});
-				mmText2.alignment = ["center","top"];
-				mmText2.text = "• 1 - Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adope After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.";
-				if ($.os.toLowerCase().indexOf("win") >= 0) mmText2.text = "• 1 - Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.";
-				mmText2.visible = false;
-				var mmText3 = mmTexts.add("statictext",undefined,"",{multiline:true});
-				mmText3.alignment = ["center","top"];
-				mmText3.text = "• 2 - Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.";
-				if ($.os.toLowerCase().indexOf("win") >= 0) mmText3.text = "• 2 - Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.";
-				mmText3.visible = false;
-				var mmText4 = mmTexts.add("statictext",undefined,"",{multiline:true});
-				mmText4.alignment = ["center","top"];
-				mmText4.text = "• 3 - Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.";
-				mmText4.visible = false;
-				var mmNavButtons = mmGroup.add("group");
-				mmNavButtons.orientation = "row";
-				mmNavButtons.alignment = ["center","top"];
-				var mmPrevButton = mmNavButtons.add("button",undefined,"Previous");
-				mmPrevButton.alignment = ["left","top"];
-				mmPrevButton.enabled = false;
-				var mmNextButton = mmNavButtons.add("button",undefined,"Next");
-				mmNextButton.alignment = ["right","top"];
-				mmContinueButton = mmGroup.add("button",undefined,"Finish installation now!");
-				mmContinueButton.alignment = ["center","bottom"];
-				var mmXmlBox = mmGroup.add("edittext",undefined,"test",{multiline:true});
-				mmXmlBox.text = Duik.setup.presetEffects;
-				mmGroup.visible = false;
-				//CANNOT INSTALL
-				var ciGroup = paletteContent.add("group",undefined);
-				ciGroup.orientation = "column";
-				ciGroup.alignChildren = ["fill","fill"];
-				var ciText = ciGroup.add("statictext",undefined,"",{multiline:true});
-				ciText.minimumSize = [150,60];
-				ciText.alignment = ["center","top"];
-				ciText.text = "---- ERROR ----\n\nOops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://www.duduf.net to get help.\n\n-----------------------------";
-				ciGroup.visible = false;
-			}
-			
-			mspNextButton.onClick = function ()
-			{
-				if (mspText.visible)
+				//PALETTE
 				{
-					mspText.visible = false;
-					mspText2.visible = true;
-					mspText3.visible = false;
-					mspText4.visible = false;
-					mspPrevButton.enabled = true;
-				}
-				else if (mspText2.visible)
-				{
-					mspText.visible = false;
+					var installGroup = palette.add("group");
+					installGroup.orientation = "column";
+					installGroup.alignChildren = ["fill","fill"];
+					var versionBox = installGroup.add("statictext",undefined,"Duik v" + version);
+					versionBox.alignment = ["center","top"];
+					var paletteContent = installGroup.add("group");
+					paletteContent.orientation = "stack";
+					paletteContent.alignChildren = ["fill","fill"];
+					//INSTALL COMPLETE GROUP
+					var icGroup = paletteContent.add("group",undefined);
+					icGroup.orientation = "column";
+					icGroup.alignChildren = ["fill","fill"];
+					var icText = icGroup.add("statictext",undefined,"",{multiline:true});
+					icText.minimumSize = [150,60];
+					icText.alignment = ["center","top"];
+					icText.text = "-- INSTALLATION COMPLETE --\n\nAfter Effects must be restarted\r\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n-----------------------------";
+					icGroup.visible = false;
+					//MAC SET PERMISSIONS GROUP
+					var mspGroup = paletteContent.add("group",undefined);
+					mspGroup.orientation = "column";
+					mspGroup.alignment = ["fill","fill"];
+					mspGroup.alignChildren = ["fill","fill"];
+					mspTitle = mspGroup.add("statictext",undefined,"temp",{multiline:true});
+					mspTitle.alignment = ["center","top"];
+					mspTitle.text = "You have to set permissions to presetEffects.xml to complete the installation of Duik";
+					var mspTexts = mspGroup.add("group");
+					mspTexts.orientation = "stack";
+					mspTexts.alignment = ["center","top"];
+					var mspText = mspTexts.add("statictext",undefined,"temp",{multiline:true});
+					mspText.text = "• 1 - Right click on\n/Applications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents'.";
+					mspText.alignment = ["center","top"];
+					var mspText2 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
+					mspText2.text = "• 2 - Right Click on\nContents/Resources/PresetEffects.xml,\nSelect 'Get Info'.";
+					mspText2.alignment = ["center","top"];
 					mspText2.visible = false;
-					mspText3.visible = true;
-					mspText4.visible = false;
-				}
-				else if (mspText3.visible)
-				{
-					mspText.visible = false;
-					mspText2.visible = false;
+					var mspText3 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
+					mspText3.text = "• 3 - At the bottom right of the window, unlock the access by clicking on the locker and entering your admin password.";
+					mspText3.alignment = ["center","top"];
 					mspText3.visible = false;
-					mspText4.visible = true;
-					mspContinueButton.enabled = true;
-					mspNextButton.enabled = false;
-				}
-			}
-			
-			mspPrevButton.onClick = function ()
-			{
-				if (mspText2.visible)
-				{
-					mspText.visible = true;
-					mspText2.visible = false;
-					mspText3.visible = false;
+					var mspText4 = mspTexts.add("statictext",undefined,"temp",{multiline:true});
+					mspText4.text = "• 4 - Finally, set 'Read & Write' access for 'Admin' and 'Everyone'.";
+					mspText4.alignment = ["center","top"];
 					mspText4.visible = false;
+					var mspNavButtons = mspGroup.add("group");
+					mspNavButtons.orientation = "row";
+					mspNavButtons.alignment = ["center","top"];
+					var mspPrevButton = mspNavButtons.add("button",undefined,"Previous");
+					mspPrevButton.alignment = ["left","top"];
 					mspPrevButton.enabled = false;
-				}
-				else if (mspText3.visible)
-				{
-					mspText.visible = false;
-					mspText2.visible = true;
-					mspText3.visible = false;
-					mspText4.visible = false;
-				}
-				else if (mspText4.visible)
-				{
-					mspText.visible = false;
-					mspText2.visible = false;
-					mspText3.visible = true;
-					mspText4.visible = false;
+					var mspNextButton = mspNavButtons.add("button",undefined,"Next");
+					mspNextButton.alignment = ["right","top"];
+					mspContinueButton = mspGroup.add("button",undefined,"Continue installation...");
+					mspContinueButton.alignment = ["center","top"];
 					mspContinueButton.enabled = false;
-					mspNextButton.enabled = true;
-				}
-			}
-			
-			mmNextButton.onClick = function ()
-			{
-				if (mmText.visible)
-				{
-					mmText.visible = false;
-					mmText2.visible = true;
-					mmText3.visible = false;
-					mmText4.visible = false;
-					mmPrevButton.enabled = true;
-				}
-				else if (mmText2.visible)
-				{
-					mmText.visible = false;
+					var mspTut = mspGroup.add("statictext",undefined,"",{multiline:true});
+					mspTut.text = "• You can also watch this short tutorial by LLoyd Alvarez about how to set permissions to presetEffects.xml:\nhttp://youtu.be/HAkkmDYSVmg";		
+					mspTut.alignment = ["center","top"];
+					mspGroup.visible = false;
+					//MANUAL INSTALL
+					var mmGroup = paletteContent.add("group",undefined);
+					mmGroup.orientation = "column";
+					mmGroup.alignChildren = ["fill","fill"];
+					var mmTexts = mmGroup.add("group");
+					mmTexts.orientation = "stack";
+					mmTexts.alignment = ["center","top"];
+					var mmText = mmTexts.add("statictext",undefined,"",{multiline:true});
+					mmText.alignment = ["center","top"];
+					mmText.text = "It seems Duik can not automatically install the pseudo effects it needs.\n\nYou will have to manually install the pseudo effects needed by Duik.";
+					var mmText2 = mmTexts.add("statictext",undefined,"",{multiline:true});
+					mmText2.alignment = ["center","top"];
+					mmText2.text = "• 1 - Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adope After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.";
+					if ($.os.toLowerCase().indexOf("win") >= 0) mmText2.text = "• 1 - Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.";
 					mmText2.visible = false;
-					mmText3.visible = true;
-					mmText4.visible = false;
-				}
-				else if (mmText3.visible)
-				{
-					mmText.visible = false;
-					mmText2.visible = false;
+					var mmText3 = mmTexts.add("statictext",undefined,"",{multiline:true});
+					mmText3.alignment = ["center","top"];
+					mmText3.text = "• 2 - Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.";
+					if ($.os.toLowerCase().indexOf("win") >= 0) mmText3.text = "• 2 - Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.";
 					mmText3.visible = false;
-					mmText4.visible = true;
-					mmContinueButton.enabled = true;
-					mmNextButton.enabled = false;
-				}
-			}
-			
-			mmPrevButton.onClick = function ()
-			{
-				if (mmText2.visible)
-				{
-					mmText.visible = true;
-					mmText2.visible = false;
-					mmText3.visible = false;
+					var mmText4 = mmTexts.add("statictext",undefined,"",{multiline:true});
+					mmText4.alignment = ["center","top"];
+					mmText4.text = "• 3 - Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.";
 					mmText4.visible = false;
+					var mmNavButtons = mmGroup.add("group");
+					mmNavButtons.orientation = "row";
+					mmNavButtons.alignment = ["center","top"];
+					var mmPrevButton = mmNavButtons.add("button",undefined,"Previous");
+					mmPrevButton.alignment = ["left","top"];
 					mmPrevButton.enabled = false;
+					var mmNextButton = mmNavButtons.add("button",undefined,"Next");
+					mmNextButton.alignment = ["right","top"];
+					mmContinueButton = mmGroup.add("button",undefined,"Finish installation now!");
+					mmContinueButton.alignment = ["center","bottom"];
+					var mmXmlBox = mmGroup.add("edittext",undefined,"test",{multiline:true});
+					mmXmlBox.text = Duik.setup.presetEffects;
+					mmGroup.visible = false;
+					//CANNOT INSTALL
+					var ciGroup = paletteContent.add("group",undefined);
+					ciGroup.orientation = "column";
+					ciGroup.alignChildren = ["fill","fill"];
+					var ciText = ciGroup.add("statictext",undefined,"",{multiline:true});
+					ciText.minimumSize = [150,60];
+					ciText.alignment = ["center","top"];
+					ciText.text = "---- ERROR ----\n\nOops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://www.duduf.net to get help.\n\n-----------------------------";
+					ciGroup.visible = false;
 				}
-				else if (mmText3.visible)
+				
+				mspNextButton.onClick = function ()
 				{
-					mmText.visible = false;
-					mmText2.visible = true;
-					mmText3.visible = false;
-					mmText4.visible = false;
+					if (mspText.visible)
+					{
+						mspText.visible = false;
+						mspText2.visible = true;
+						mspText3.visible = false;
+						mspText4.visible = false;
+						mspPrevButton.enabled = true;
+					}
+					else if (mspText2.visible)
+					{
+						mspText.visible = false;
+						mspText2.visible = false;
+						mspText3.visible = true;
+						mspText4.visible = false;
+					}
+					else if (mspText3.visible)
+					{
+						mspText.visible = false;
+						mspText2.visible = false;
+						mspText3.visible = false;
+						mspText4.visible = true;
+						mspContinueButton.enabled = true;
+						mspNextButton.enabled = false;
+					}
 				}
-				else if (mmText4.visible)
+				
+				mspPrevButton.onClick = function ()
 				{
-					mmText.visible = false;
-					mmText2.visible = false;
-					mmText3.visible = true;
-					mmText4.visible = false;
-					mmContinueButton.enabled = false;
-					mmNextButton.enabled = true;
+					if (mspText2.visible)
+					{
+						mspText.visible = true;
+						mspText2.visible = false;
+						mspText3.visible = false;
+						mspText4.visible = false;
+						mspPrevButton.enabled = false;
+					}
+					else if (mspText3.visible)
+					{
+						mspText.visible = false;
+						mspText2.visible = true;
+						mspText3.visible = false;
+						mspText4.visible = false;
+					}
+					else if (mspText4.visible)
+					{
+						mspText.visible = false;
+						mspText2.visible = false;
+						mspText3.visible = true;
+						mspText4.visible = false;
+						mspContinueButton.enabled = false;
+						mspNextButton.enabled = true;
+					}
 				}
-			}
-			
-			mspContinueButton.onClick = function ()
-			{
-				mspGroup.hide();
-				Duik.setup.installPseudoEffects();
-				//if the version is ok, After Effects just need to be restarted
-				if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+				
+				mmNextButton.onClick = function ()
 				{
-					icGroup.show();
+					if (mmText.visible)
+					{
+						mmText.visible = false;
+						mmText2.visible = true;
+						mmText3.visible = false;
+						mmText4.visible = false;
+						mmPrevButton.enabled = true;
+					}
+					else if (mmText2.visible)
+					{
+						mmText.visible = false;
+						mmText2.visible = false;
+						mmText3.visible = true;
+						mmText4.visible = false;
+					}
+					else if (mmText3.visible)
+					{
+						mmText.visible = false;
+						mmText2.visible = false;
+						mmText3.visible = false;
+						mmText4.visible = true;
+						mmContinueButton.enabled = true;
+						mmNextButton.enabled = false;
+					}
 				}
-				else
+				
+				mmPrevButton.onClick = function ()
 				{
-					mmGroup.show();
+					if (mmText2.visible)
+					{
+						mmText.visible = true;
+						mmText2.visible = false;
+						mmText3.visible = false;
+						mmText4.visible = false;
+						mmPrevButton.enabled = false;
+					}
+					else if (mmText3.visible)
+					{
+						mmText.visible = false;
+						mmText2.visible = true;
+						mmText3.visible = false;
+						mmText4.visible = false;
+					}
+					else if (mmText4.visible)
+					{
+						mmText.visible = false;
+						mmText2.visible = false;
+						mmText3.visible = true;
+						mmText4.visible = false;
+						mmContinueButton.enabled = false;
+						mmNextButton.enabled = true;
+					}
 				}
-			};
-			
-			mmContinueButton.onClick = function ()
-			{
-				mmGroup.hide();
+				
+				mspContinueButton.onClick = function ()
+				{
+					mspGroup.hide();
+					Duik.setup.installPseudoEffects();
+					//if the version is ok, After Effects just need to be restarted
+					if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+					{
+						icGroup.show();
+					}
+					else
+					{
+						mmGroup.show();
+					}
+				};
+				
+				mmContinueButton.onClick = function ()
+				{
+					mmGroup.hide();
+					Duik.setup.checkPresetEffectsVersion();
+					if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+					{
+						icGroup.show();
+					}
+					else
+					{
+						ciGroup.show();
+					}
+				};
+				
+				//if the version is ok, After Effects just needs to be restarted
 				Duik.setup.checkPresetEffectsVersion();
 				if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
 				{
-					icGroup.show();
+					icGroup.visible = true;
 				}
+				//if mac os
+				else if ($.os.toLowerCase().indexOf("mac") >= 0) 
+				{
+					mspGroup.visible = true;
+				}
+				//if win
 				else
 				{
-					ciGroup.show();
+					mmGroup.visible = true;
 				}
-			};
-			
-			//if the version is ok, After Effects just need to be restarted
-			Duik.setup.checkPresetEffectsVersion();
-			if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
-			{
-				icGroup.visible = true;
+				
+				// On définit le layout et on redessine la fenètre quand elle est resizée
+				palette.layout.layout(true);
+				palette.layout.resize();
+				palette.onResizing = palette.onResize = function () { this.layout.resize(); };
+				return palette;
+				
 			}
-			//if mac os
-			else if ($.os.toLowerCase().indexOf("mac") >= 0) 
-			{
-				mspGroup.visible = true;
-			}
-			//if win
-			else
-			{
-				mmGroup.visible = true;
-			}
-			
-			// On définit le layout et on redessine la fenètre quand elle est resizée
-			palette.layout.layout(true);
-			palette.layout.resize();
-			palette.onResizing = palette.onResize = function () { this.layout.resize(); };
-			return palette;
-			
+			Duik.settings.load();
 		}
-			
-		//=================================
-		//======== MANAGE PREFERENCES =====
-		//=================================
-		{
-		if (! app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
-		if (! app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
-		if (! app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
-		if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
-		if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
-		if (! app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
-		Duik.settings.load();
-
-		}
-
+	
 		//=================================
 		//======== LOAD ICONS =============
 		//=================================
@@ -1507,26 +1563,6 @@ function fnDuIK(thisObj)
 				}
 
 			//============= SETTINGS ============================
-
-			//FONCTION POUR CHERCHER UNE MISE A JOUR
-			function MAJ(version){
-			var reply = "";
-			//socket
-			conn = new Socket;
-			// se connecter à duduf.com
-			if (conn.open ("www.duduf.com:80")) {
-			// récupérer la version actuelle
-			if(conn.writeln ("GET /downloads/duik/version.txt  HTTP/1.0\nHost: duduf.com\n"))
-			reply = conn.read(1000);
-			conn.close();
-			//chercher la version dans la réponse du serveur :
-			var reponse = reply.lastIndexOf("version",reply.length);
-			if(reponse != -1){
-			newVersion = reply.slice(reponse+8,reply.length+1);
-			if (version == newVersion) {return true} else {alert(getMessage(2));}
-			}
-			}
-			}
 
 			//FONCTION POUR AFFICHER DE L'AIDE
 			function help(){
@@ -2974,7 +3010,7 @@ function fnDuIK(thisObj)
 					}
 				var boutonMAJ = panosettings.add("button",undefined,getMessage(113));
 				boutonMAJ.onClick = function() {
-					if (MAJ(version)) { alert(getMessage(78)); };
+					if (version == checkForUpdate(version,true)) { alert(getMessage(78)); };
 					}
 				
 				addSeparator(panosettings,getMessage(117));
@@ -3268,8 +3304,6 @@ function fnDuIK(thisObj)
 				
 				
 				}
-
-				if (app.settings.getSetting("duik", "version") == "oui" && app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1) MAJ(version);
 		}
 	}
 	
