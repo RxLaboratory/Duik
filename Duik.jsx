@@ -1486,6 +1486,22 @@ function fnDuIK(thisObj)
 
 				}
 
+			//FONCTION PATH FOLLOW
+			function pathFollow() {
+				// Vérifions si il n'y a qu'un calque sélectionné
+				if (app.project.activeItem.selectedLayers.length == 1)
+				{
+					//  début de groupe d'annulation
+					app.beginUndoGroup(getMessage(61));
+					Duik.pathFollow(app.project.activeItem.selectedLayers[0]);
+					app.endUndoGroup();	
+				}
+				else
+				{
+					alert(getMessage(49));
+				}
+			}	
+				
 			//=============== INTERPOLATION =====================
 
 			//FONCTION MORPHER
@@ -1592,13 +1608,9 @@ function fnDuIK(thisObj)
 				}
 				else 
 					resultatcalc2.text ="error";
-			}
-				
-			
-			//TODO A ENVOYER DANS LIBDUIK:
+			}	
 
-			//FONCTIONS INTERPOLATIONS
-			{
+			//============= INTERPOLATIONS ======================
 			function lineaire() {
 
 			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
@@ -1727,47 +1739,10 @@ function fnDuIK(thisObj)
 					}
 				}     
 			}
-			}
-
-			//FONCTION PATH FOLLOW
-			function pathFollow() {
-				
-						// Vérifions si il n'y a qu'un calque sélectionné
-			if (app.project.activeItem.selectedLayers.length == 1){
-				
-			var calque = app.project.activeItem.selectedLayers[0];
-				
-			//  début de groupe d'annulation
-			app.beginUndoGroup(getMessage(61));
-				
-				//expression a insérer
-				var expressionpf = "ff = framesToTime(1);\r\n" + 
-			"pos = thisLayer.position;\r\n" + 
-			"if (pos.numKeys > 1){\n" + 
-			"A = pos.valueAtTime(time-ff);\r\n" + 
-			"B =  pos.valueAtTime(time+ff);\r\n\r\n" + 
-			"if (pos.key(1).time > time){\r\n" + 
-			"A = pos.key(1).value;\r\n" + 
-			"B =pos.valueAtTime(pos.key(1).time+ff);\r\n" + 
-			"}\r\n\r\n" + 
-			"if (thisLayer.position.key(thisLayer.position.numKeys).time < time){\r\n" + 
-			"A = pos.valueAtTime(pos.key(pos.numKeys).time-ff);\r\n" + 
-			"B = pos.key(pos.numKeys).value;\r\n" + 
-			"}\r\n\r\n" + 
-			"angle = lookAt(A,B);\r\n" + 
-			"angle[0] > 0 ? angle[0]+angle[1]+value : angle[0]-angle[1]+value;\r\n" +
-			"} else value;";
-				//=============================================
-
-			calque.transform.rotation.expression = expressionpf;
-
-			app.endUndoGroup();	
-
-			}else{alert(getMessage(49));}
 
 
-				}
 
+			
 			//FONCTIONS COPY ANIM
 			{
 				//renvoie un tableau descriptif de clef pour la clef à l'index "index" de la propriété "prop". startTime applique un offset sur l'instant de la clef
@@ -3149,6 +3124,8 @@ function fnDuIK(thisObj)
 				var rieButton = addButton(groupeikG,"Replace in Expr.");
 				rieButton.onClick = onRieButtonClicked;
 				rieButton.helpTip = "Search and replace text in expressions";
+				//placeholder
+				addButton(groupeikD,"");
 				}
 				
 				// PANNEAU INTERPOLATION -----------------------------------------------------------
