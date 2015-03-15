@@ -1518,9 +1518,9 @@ function fnDuIK(thisObj)
 				//if there are selected keys
 				for (var i = 0; i < layers.length ; i++)
 				{
-					selected = Duik.utils.areThereSelectedKeys(layers[i]);
+					selected = Duik.utils.hasSelectedKeys(layers[i]);
 					if (selected) break;
-					selected = Duik.utils.areThereSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+					selected = Duik.utils.hasSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
 					if (selected) break;
 				}
 
