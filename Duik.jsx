@@ -126,7 +126,7 @@ function fnDuIK(thisObj)
 		if (app.settings.getSetting("duik", "version") == "oui")
 		{
 			var newV = checkForUpdate(version,false);
-			if ( version == newV )
+			if ( version == newV || newV == undefined)
 			{
 				loadDuik();
 			}
@@ -1501,7 +1501,55 @@ function fnDuIK(thisObj)
 					alert(getMessage(49));
 				}
 			}	
+			
+			//COPY AND PASTE ANIM
+			function copyAnim() {
+				var layers = app.project.activeItem.selectedLayers;
+				if (layers.length == 0)
+				{
+					alert("Please select the layers from which you want to save animation");
+					return;
+				}
 				
+				var selected = false; // est ce qu'il y a des clefs sélectionnées (ou est ce qu'on fait sur toute l'anim)
+				var startTime = 86339; // instant de début de l'anim à sauvegarder
+				var endTime = app.project.activeItem.workAreaDuration + app.project.activeItem.workAreaStart;
+				
+				//if there are selected keys
+				for (var i = 0; i < layers.length ; i++)
+				{
+					selected = Duik.utils.areThereSelectedKeys(layers[i]);
+					if (selected) break;
+					selected = Duik.utils.areThereSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+					if (selected) break;
+				}
+
+				
+				// 2 - chercher l'instant de la première clef dans le temps, si ya des clefs sélectionnées
+				if (selected)
+				{
+					for (var i = 0; i < layers.length ; i++)
+					{
+						var testTime = Duik.utils.getFirstKeyTime(layers[i]);
+						if (testTime < startTime) startTime = testTime;
+						testTime = Duik.utils.getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+						if (testTime < startTime) startTime = testTime;
+					}
+				}
+				else
+				{
+					startTime = app.project.activeItem.workAreaStart;
+				}
+				
+				Duik.copyAnim(layers,selected,startTime,endTime);
+			}
+			
+			function pasteAnim(animation) {
+				app.beginUndoGroup("Duik - Paste Anim");
+				var totalPasted = Duik.pasteAnim(app.project.activeItem.layers,Duik.copiedAnim,app.project.activeItem.time);
+				app.endUndoGroup();
+				if (totalPasted != Duik.copiedAnim.length) alert("Pasted animation on " + totalPasted + " layers.\n\n" + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
+			}
 			//=============== INTERPOLATION =====================
 
 			//FONCTION MORPHER
@@ -1750,414 +1798,7 @@ function fnDuIK(thisObj)
 					}
 				}     
 			}
-
-
-
 			
-			//FONCTIONS COPY ANIM
-			{
-				//renvoie un tableau descriptif de clef pour la clef à l'index "index" de la propriété "prop". startTime applique un offset sur l'instant de la clef
-				function getKey(prop, index,startTime)
-				{
-								var clef = [];
-								var time = prop.keyTime(index) - startTime;
-								var value = prop.keyValue(index);
-								var inInterpolationType = prop.keyInInterpolationType(index);
-								var outInterpolationType = prop.keyOutInterpolationType(index);
-								var spatial = [];
-								if ( prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL )
-								{
-									spatial.push(true);
-									spatial.push(prop.keyInSpatialTangent(index));
-									spatial.push(prop.keyOutSpatialTangent(index));
-									spatial.push(prop.keySpatialContinuous(index));
-									spatial.push(prop.keySpatialAutoBezier(index));
-									spatial.push(prop.keyRoving(index));
-								}
-								else spatial.push(false);
-								var keyInTemporalEase = prop.keyInTemporalEase(index);
-								var keyOutTemporalEase = prop.keyOutTemporalEase(index);
-								var keyTemporalContinuous = prop.keyTemporalContinuous(index);
-								var keyTemporalAutoBezier = prop.keyTemporalAutoBezier(index);
-								clef.push(time, value, inInterpolationType, outInterpolationType, spatial, keyInTemporalEase, keyOutTemporalEase, keyTemporalContinuous, keyTemporalAutoBezier);
-					
-								return clef;
-				}
-
-				// récupère toutes les anims d'un propertyGroup (recursif)
-				function getPropertyAnims(prop,startTime,selected,endTime)
-				{
-					var valeurs = [];
-					if (prop.propertyType == PropertyType.PROPERTY)
-					{
-						var cles = getPropertyBaseAnim(prop,startTime,selected,endTime);
-						if (cles.length > 1) valeurs.push(cles);
-					}
-					else if (prop.numProperties > 0)
-					{
-						for (pi = 1;pi <= prop.numProperties;pi++)
-						{
-							var newValeurs = getPropertyAnims(prop.property(pi),startTime,selected,endTime);
-							if (newValeurs.length > 0)
-							{
-								valeurs = valeurs.concat(newValeurs);
-							}
-						}
-					}
-					return valeurs;
-				}
-
-				// renvoie l'anim d'une propriété sous forme de tableau de clefs (avec le nom de la prop d'abord, et uniquement ce nom si on doit prendre les clefs selectionnées mais qu'il n'y en a pas de selectionnées)
-				function getPropertyBaseAnim(prop,startTime,selected,endTime)
-				{
-					var cles = [prop.name];
-					
-					if (prop.elided) return cles;
-					
-					if (prop.isTimeVarying)
-					{
-						if (selected)
-						{
-							for (j = 0; j < prop.selectedKeys ; j++)
-							{
-								cles.push(getKey(prop,prop.selectedKeys[j],startTime));
-							}
-						}
-						else if (prop.numKeys > 0) //!selected
-						{
-							for (j = 0; j < prop.numKeys ; j++)
-							{
-								var index = j+1;
-								var time = prop.keyTime(index);
-								if (time >= startTime && time <= endTime) cles.push(getKey(prop,index,startTime));
-							}
-						} 
-					}
-					else if (!selected) //pas d'anim, prendre juste la valeur
-					{
-						cles.push([0,prop.valueAtTime(startTime,true)]);
-					}
-					return cles;
-				}
-
-				// renvoie l'instant de la clef la plus tot dans toutes les propriétés (parmi les clefs sélectionnées)
-				function getFirstKeyTime(prop)
-				{
-					var firstKeyTime = 86339;
-					
-					if (prop.propertyType == PropertyType.PROPERTY)
-					{
-						if (prop.selectedKeys.length > 0)
-						{
-							firstKeyTime = prop.keyTime(prop.selectedKeys[0]);
-						}
-					}
-					else if (prop.numProperties > 0)
-					{
-						for (pi = 1;pi <= prop.numProperties;pi++)
-						{
-							testKeyTime = getFirstKeyTime(prop.property(pi));
-							if (testKeyTime < firstKeyTime) firstKeyTime = testKeyTime;
-						}
-					}
-
-					return firstKeyTime;
-				}
-
-				// regarde si ya des clefs sélectionnées dans les calques sélectionnés
-				function isKeySelected(prop)
-				{
-					var selected = false;
-					
-					if (prop.propertyType == PropertyType.PROPERTY)
-					{
-						if (prop.selectedKeys.length >0)
-						{
-							selected = true;
-						}
-					}
-					else if (prop.numProperties > 0)
-					{
-						for (pi = 1;pi <= prop.numProperties;pi++)
-						{
-							selected = isKeySelected(prop.property(pi));
-							if (selected) break;
-						}
-					}
-					
-					return selected;
-				}
-
-				// sauvegarde l'anim, soit des clefs sélectionnées si il y en a, sinon toute l'anim dans la zone de travail, renvoie sous forme de tableau
-				//TODO : uniquement les clefs sélectionnées foire, à corriger, mis en stand by ici
-				function copyAnim()
-				{
-					var layers = app.project.activeItem.selectedLayers;
-					if (layers.length == 0)
-					{
-						alert("Please select the layers from which you want to save animation");
-						return;
-					}
-					
-					var selected = false; // est ce qu'il y a des clefs sélectionnées (ou est ce qu'on fait sur toute l'anim)
-					var startTime = 86339; // instant de début de l'anim à sauvegarder
-					var endTime = app.project.activeItem.workAreaDuration + app.project.activeItem.workAreaStart;
-					var layersSaved = []; // tableau de résultats
-					
-					// 1 - voir si il y a des clefs sélectionnées //TODO : fait foirer ! (boucle infinie quelque part)
-					//for (i = 0; i < layers.length ; i++)
-					//
-					//    selected = isKeySelected(layers[i]);
-					 //   if (selected) break;
-					//    selected = isKeySelected(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
-					//    if (selected) break;
-				   // 
-				   
-					// 2 - chercher l'instant de la première clef dans le temps, si ya des clefs sélectionnées
-					if (selected)
-					{
-						for (i = 0; i < layers.length ; i++)
-						{
-							var testTime = getFirstKeyTime(layers[i]);
-							if (testTime < startTime) startTime = testTime;
-							testTime = getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
-							if (testTime < startTime) startTime = testTime;
-						}
-					}
-					else
-					{
-						startTime = app.project.activeItem.workAreaStart;
-					}
-				  
-					//parcourir tous les calques sélectionnés à la recherche des anims à sauvegarder
-					for (i = 0; i < layers.length ; i++)
-					{
-						var layer = [];
-						var l = layers[i];
-						layer.push(l.name);
-						
-
-						// 1 - sauver l'anim des transformations
-						var transform = [];
-						transform.push("transform");
-						transform = transform.concat(getPropertyAnims(l.transform,startTime,selected,endTime));
-						if (transform.length >1) layer.push(transform);
-
-						// 2 - les masques //TODO coince si plusieurs masques ?
-						for (j=1;j<=l("Masks").numProperties;j++)
-						{
-							var masque = ["masks",l("Masks")(j).name];
-							masque = masque.concat(getPropertyAnims(l("Masks")(j),startTime,selected,endTime));
-							if (masque.length >1) layer.push(masque);
-						}
-
-						// 3 - les effets
-						for (j=1;j<=l("Effects").numProperties;j++)
-						{
-							var effet = ["effects",l("Effects")(j).name];
-							effet = effet.concat(getPropertyAnims(l("Effects")(j),startTime,selected,endTime));
-							if (effet.length >1) layer.push(effet);
-						}
-						
-						if (layer.length > 1) layersSaved.push(layer);
-						
-					}
-					
-					alert("Animation copied !\n\nNumber of layers : " + layersSaved.length);
-					return layersSaved;
-				}
-
-			}
-
-			//FONCTIONS PASTE ANIM
-			{
-				// applique le tableau d'anim
-				function pasteAnim(animation)
-				{
-					app.beginUndoGroup("Duik - Paste Anim");
-					var totalPasted = 0;
-					for (li = 1;li <= app.project.activeItem.numLayers;li++)
-					{
-						var l = app.project.activeItem.layer(li);
-						var load = [];
-						//parcourir les animations sauvées pour trouver celle qui matche le calque
-						for (si = 0; si < animation.length ; si++)
-						{
-							if (animation[si][0] == l.name)
-							{
-								load = animation[si];
-								break;
-							}
-						}
-						
-						//obligés de faire trois fois la boucle, sinon ne fait pas toutes les itérations... //TODO trouver où est le bug
-						if (load.length > 1) //transform
-						{
-							totalPasted++;
-							
-							for (i = 1;i < load.length;i) //i est itéré manuellement à la fin, sinon des fois ça bloque....... BUG ADOBE ?
-							{
-								var prop = load[i];
-								var type = prop[0];
-
-								if (type == "transform" && prop.length > 1)
-								{
-									for (j = 1;j< prop.length; j++)
-									{
-										loadClefs(l.transform,prop[j]);
-									}
-									break;
-								}
-								i++;
-							}
-						}
-						if (load.length > 1) //masks
-						{
-							for (i = 1;i < load.length;i) //i est itéré manuellement à la fin, sinon des fois ça bloque....... BUG ADOBE ?
-							{
-								var prop = load[i];
-								var type = prop[0];
-								
-								if (type == "masks" && prop.length > 2)
-								{
-									for (j = 2;j< prop.length; j++)
-									{
-										if (l("Masks").numProperties > 0 )
-										{
-											var exists = false;
-											for (k = 1;k<=l("Masks").numProperties;k++)
-											{
-												if (l("Masks")(k).name == prop[1])
-												{
-													exists = true;
-													break;
-												}
-											}
-											if (exists)
-											{
-												loadClefs(l("Masks")(prop[1]),prop[j]);
-											}
-										}
-									}
-								}
-								i++;
-							}
-						}
-						if (load.length > 1) //effects
-						{
-							for (i = 1;i < load.length;i) //i est itéré manuellement à la fin, sinon des fois ça bloque....... BUG ADOBE ?
-							{
-							
-								var prop = load[i];
-								var type = prop[0];
-								
-								if (type == "effects" && prop.length > 2)
-								{
-									for (j = 2;j< prop.length; j++)
-									{
-										//vérifier que l'effet existe
-										if (l("Effects").numProperties > 0 )
-										{
-											var exists = false;
-											for (k = 1;k<=l("Effects").numProperties;k++)
-											{
-												if (l("Effects")(k).name == prop[1])
-												{
-													exists = true;
-													break;
-												}
-											}
-											if (exists)
-											{
-												loadClefs(l("Effects")(prop[1]),prop[j]);
-											}
-										}
-										
-									}
-								}
-								i++;
-							}
-							
-						}
-					}
-					app.endUndoGroup();
-					
-					if (totalPasted != animation.length) alert("Pasted animation on " + totalPasted + " layers.\n\n" + (animation.length-totalPasted) + " layers not found.");
-					else alert("Pasted animation on " + totalPasted + " layers.");
-				}
-
-				//charge les clefs
-				function loadClefs(prop,clefs)
-				{
-					if (clefs.length < 1) return true;
-					
-					var name = clefs[0];
-						
-					//trouver la propriété portant ce nom dans la prop demandée
-					if (prop.propertyType == PropertyType.PROPERTY && prop.name == name)
-					{
-						for (iclef = 1; iclef < clefs.length;iclef++)
-						{
-							loadClef(prop,clefs [iclef]);
-						}
-						return true;
-					}
-					else if (prop.numProperties != undefined)
-						if (prop.numProperties > 0)
-						{
-							for (pi = 1;pi <= prop.numProperties;pi++)
-							{
-								if (loadClefs(prop.property(pi),clefs)) return true;
-							}
-						}
-					return false;
-				}
-
-				//charge une clef sur la prop
-				function loadClef(prop,clef)
-				{
-					 //     0        1                        2                                  3                          4                   5                                      6                                              7                                        8
-					 //  time, value, inInterpolationType, outInterpolationType, spatial, keyInTemporalEase, keyOutTemporalEase, keyTemporalContinuous, keyTemporalAutoBezier
-					 
-					 //spatial.push(true);
-					 //spatial.push(prop.keyInSpatialTangent(index));
-					 //spatial.push(prop.keyOutSpatialTangent(index));
-					 //spatial.push(prop.keySpatialContinuous(index));
-					//spatial.push(prop.keySpatialAutoBezier(index));
-					//spatial.push(prop.keyRoving(index));
-					
-					if (clef.length < 2 || prop.elided) return;
-					
-					var time = app.project.activeItem.workAreaStart+clef[0];
-					try //au cas où on est sur du XPosition alors que le calque est 2D, par exemple
-					{
-						if (clef.length == 2 )
-						{
-							prop.setValue(clef[1]);
-							return;
-						}
-						else prop.setValueAtTime(time,clef[1]); 
-				 
-						var index = prop.nearestKeyIndex(time);
-						if (clef[4][0] && (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL))
-						{
-							prop.setSpatialContinuousAtKey(index,clef[4][3]);
-							prop.setSpatialAutoBezierAtKey(index,clef[4][4]);
-							prop.setRovingAtKey(index,clef[4][5]);
-							prop.setSpatialTangentsAtKey(index,clef[4][1],clef[4][2]);
-						}
-						prop.setTemporalEaseAtKey(index,clef[5],clef[6]);
-						prop.setTemporalContinuousAtKey(index,clef[7]);
-						prop.setTemporalAutoBezierAtKey(index,clef[8]);
-						prop.setInterpolationTypeAtKey(index,clef[2],clef[3]);
-						
-					}
-					catch (err)
-					{}
-				}
-			}
-
-
 		}
 
 
@@ -2731,46 +2372,83 @@ function fnDuIK(thisObj)
 						panosettings.visible = false;
 						app.settings.saveSetting("duik","pano","0");
 						}
-								if (selecteur.selection == 1){
-						panoik.visible = false;
-						panoanimation.visible = true;
-						panointerpo.visible = false;
-						panocam.visible = false;
-						panosettings.visible = false;
-						app.settings.saveSetting("duik","pano","1");
-						}
-								if (selecteur.selection == 2){
-						panoik.visible = false;
-						panoanimation.visible = false;
-						panointerpo.visible = true;
-						panocam.visible = false;
-						panosettings.visible = false;
-						app.settings.saveSetting("duik","pano","2");
-						}
-								if (selecteur.selection == 3){
-						panoik.visible = false;
-						panoanimation.visible = false;
-						panointerpo.visible = false;
-						panocam.visible = true;
-						panosettings.visible = false;
-						app.settings.saveSetting("duik","pano","3");
-						}
-								if (selecteur.selection == 4){
-						panoik.visible = false;
-						panoanimation.visible = false;
-						panointerpo.visible = false;
-						panocam.visible = false;
-						panosettings.visible = true;
-						  app.settings.saveSetting("duik","pano","4");
-						}
-
+					else if (selecteur.selection == 1){
+					panoik.visible = false;
+					panoanimation.visible = true;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = false;
+					app.settings.saveSetting("duik","pano","1");
 					}
+					else if (selecteur.selection == 2){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = true;
+					panocam.visible = false;
+					panosettings.visible = false;
+					app.settings.saveSetting("duik","pano","2");
+					}
+					else if (selecteur.selection == 3){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = true;
+					panosettings.visible = false;
+					app.settings.saveSetting("duik","pano","3");
+					}
+					else if (selecteur.selection == 4){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = true;
+					  app.settings.saveSetting("duik","pano","4");
+					}
+				}
 				selecteur.selection = eval(app.settings.getSetting("duik","pano"));
 				
 				// PANNEAU SETTINGS -----------------------------------------------------------
 				{
+				var settingsDropdown = panosettings.add("dropdownlist",undefined,["General","Bones","Controllers","Copy/Paste Animation"]);
+				var settingsGroup = panosettings.add("group");
+				settingsGroup.orientation = "stack";
+				
+				var generalGroup = addVGroup(settingsGroup);
+				var bonesGroup = addVGroup(settingsGroup);
+				var controllersGroup = addVGroup(settingsGroup);
+				var copyPasteAnimGroup = addVGroup(settingsGroup);
+				
+				settingsDropdown.onChange = function() {
+					if (settingsDropdown.selection == 0) {
+						generalGroup.visible = true;
+						bonesGroup.visible = false;
+						controllersGroup.visible = false;
+						copyPasteAnimGroup.visible = false;
+					}
+					else if (settingsDropdown.selection == 1) {
+						generalGroup.visible = false;
+						bonesGroup.visible = true;
+						controllersGroup.visible = false;
+						copyPasteAnimGroup.visible = false;
+					}
+					else if (settingsDropdown.selection == 2) {
+						generalGroup.visible = false;
+						bonesGroup.visible = false;
+						controllersGroup.visible = true;
+						copyPasteAnimGroup.visible = false;
+					}
+					else if (settingsDropdown.selection == 3) {
+						generalGroup.visible = false;
+						bonesGroup.visible = false;
+						controllersGroup.visible = false;
+						copyPasteAnimGroup.visible = true;
+					}
+				}
+				settingsDropdown.selection = 0;
+				
+				
 				//boutons francais anglais
-				var groupeLangues = panosettings.add("group");
+				var groupeLangues = generalGroup.add("group");
 				groupeLangues.alignment = ["left","center"];
 				groupeLangues.add("statictext",undefined,getMessage(76));
 				var boutonlangue = groupeLangues.add("dropdownlist",undefined,["Français","English","Español","Deutsch","Bahasa","Português"]);
@@ -2782,21 +2460,21 @@ function fnDuIK(thisObj)
 				if (app.settings.getSetting("duik", "lang") == "PORTUGUESE") boutonlangue.selection = 5;
 				boutonlangue.onChange = choixLangue;
 				//mises a jour
-				var boutonVMAJ = panosettings.add("checkbox",undefined,getMessage(77));
+				var boutonVMAJ = generalGroup.add("checkbox",undefined,getMessage(77));
 				if (app.settings.getSetting("duik", "version") == "oui") {boutonVMAJ.value = true; }
 				boutonVMAJ.onClick = function() {
 					if (boutonVMAJ.value) {app.settings.saveSetting("duik","version","oui");} else {app.settings.saveSetting("duik","version","non");}
 					}
-				var boutonMAJ = panosettings.add("button",undefined,getMessage(113));
+				var boutonMAJ = generalGroup.add("button",undefined,getMessage(113));
 				boutonMAJ.onClick = function() {
 					if (version == checkForUpdate(version,true)) { alert(getMessage(78)); };
 					}
 				
-				addSeparator(panosettings,getMessage(117));
+				
 				
 				//boutons options bones et controleurs
 				//type de bones
-				var groupeBoneType = addHGroup(panosettings);
+				var groupeBoneType = addHGroup(bonesGroup);
 				groupeBoneType.add("statictext",undefined,getMessage(165));
 				var boutonBoneType = groupeBoneType.add("dropdownlist",undefined,[getMessage(166),getMessage(167)]);
 				boutonBoneType.selection = Duik.settings.boneType;
@@ -2806,8 +2484,8 @@ function fnDuIK(thisObj)
 					Duik.settings.save();
 					};
 				//taille des bones
-				var groupeBoneSize = addHGroup(panosettings);
-				var groupeBoneSizeAuto = addHGroup(panosettings);
+				var groupeBoneSize = addHGroup(bonesGroup);
+				var groupeBoneSizeAuto = addHGroup(bonesGroup);
 				groupeBoneSize.add("statictext",undefined,getMessage(168));
 				var boutonBoneSize = groupeBoneSize.add("edittext",undefined,app.settings.getSetting("duik", "boneSize"));
 				boutonBoneSize.onChange = function() {
@@ -2835,7 +2513,7 @@ function fnDuIK(thisObj)
 				boutonBoneSize.enabled = !boutonBoneSizeAuto.value ;
 				boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value ;
 				//bone color
-				var groupeBoneColor = addHGroup(panosettings);
+				var groupeBoneColor = addHGroup(bonesGroup);
 				groupeBoneColor.add("statictext",undefined,getMessage(187));
 				var boutonBoneColorSharp = groupeBoneColor.add("statictext",undefined,"#");
 				boutonBoneColorSharp.alignment = ["right","fill"];
@@ -2847,11 +2525,11 @@ function fnDuIK(thisObj)
 				boutonBoneColor.text = Duik.settings.boneColor;
 				boutonBoneColor.enabled = boutonBoneType.selection == 0;
 				
-				addSeparator(panosettings,getMessage(116));
+
 				
 				//taille des controleurs
-				var groupeCtrlSize = addHGroup(panosettings);
-				var groupeCtrlSizeAuto = addHGroup(panosettings);
+				var groupeCtrlSize = addHGroup(controllersGroup);
+				var groupeCtrlSizeAuto = addHGroup(controllersGroup);
 				groupeCtrlSize.add("statictext",undefined,getMessage(169));
 				var boutonCtrlSize = groupeCtrlSize.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
 				boutonCtrlSize.onChange = function() {
@@ -2878,6 +2556,25 @@ function fnDuIK(thisObj)
 					};
 				boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value ;
 				boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value ;
+				
+				
+				
+				var pauiNamesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer names");
+				var pauiIndexesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer indexes");
+				pauiIndexesButton.value = Duik.settings.pasteAnimUseIndexes;
+				pauiNamesButton.value = !Duik.settings.pasteAnimUseIndexes;
+				pauiIndexesButton.onClick = function () {
+					Duik.settings.pasteAnimUseIndexes = pauiIndexesButton.value;
+					Duik.settings.save();
+				};
+				pauiNamesButton.onClick = function () {
+					Duik.settings.pasteAnimUseIndexes = pauiIndexesButton.value;
+					Duik.settings.save();
+				};
+				
+				
+				
+				
 				}
 				
 				// PANNEAU RIGGING -----------------------------------------------------------
