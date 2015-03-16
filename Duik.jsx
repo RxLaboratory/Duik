@@ -29,7 +29,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15.alpha08";
+	var version = "15.alpha09";
 	//=========================
 
 	//=================================
@@ -1249,7 +1249,16 @@ function fnDuIK(thisObj)
 				}
 				else
 				{
-					//TODO on all comps
+					for(var i = 1; i<=app.project.items.length ; i++)
+					{
+						app.beginUndoGroup("Duik - Replace in Expressions");
+						var item = app.project.item(i);
+						if (item instanceof CompItem)
+						{
+							Duik.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
+						}
+						app.endUndoGroup();
+					}
 				}
 			}
 			
@@ -2609,10 +2618,6 @@ function fnDuIK(thisObj)
 				var boutonrotmorph = addIconButton(groupeikD,dossierIcones + "btn_rotmorph.png",getMessage(119));
 				boutonrotmorph.onClick = rotmorph;
 				boutonrotmorph.helpTip = getMessage(120);
-				//bouton liens
-				//var boutonliens = addIconButton(groupeG,dossierIcones + "btn_liens.png",getMessage(133));
-				//boutonliens.onClick = liens; //TODO nouvel outil liens
-				//boutonliens.helpTip = traduction(["Show parent links in a simple tree view","Voir les liens de parentés dans une arborescence simple","Show parent links in a simple tree view"]);
 				//bouton renommer
 				var boutonrename2 = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",getMessage(111));
 				boutonrename2.onClick = function() {fenetrerename.show();}
