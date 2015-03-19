@@ -87,12 +87,12 @@ function fnDuIK(thisObj)
 	//======== APP.SETTINGS ===========
 	//=================================
 	{
-		if (! app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
-		if (! app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
-		if (! app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
-		if (! app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
-		if (! app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
-		if (! app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
+		if (!app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
+		if (!app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
+		if (!app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
+		if (!app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
+		if (!app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
+		if (!app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
 	}
 	
 	//=================================
@@ -181,7 +181,7 @@ function fnDuIK(thisObj)
 					icText.alignment = ["center","top"];
 					icText.text = "-- INSTALLATION COMPLETE --\n\nAfter Effects must be restarted\r\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n-----------------------------";
 					icGroup.visible = false;
-					//MAC SET PERMISSIONS GROUP
+					/*//MAC SET PERMISSIONS GROUP
 					var mspGroup = paletteContent.add("group",undefined);
 					mspGroup.orientation = "column";
 					mspGroup.alignment = ["fill","fill"];
@@ -221,7 +221,7 @@ function fnDuIK(thisObj)
 					var mspTut = mspGroup.add("statictext",undefined,"",{multiline:true});
 					mspTut.text = "• You can also watch this short tutorial by LLoyd Alvarez about how to set permissions to presetEffects.xml:\nhttp://youtu.be/HAkkmDYSVmg";		
 					mspTut.alignment = ["center","top"];
-					mspGroup.visible = false;
+					mspGroup.visible = false;*/
 					//MANUAL INSTALL
 					var mmGroup = paletteContent.add("group",undefined);
 					mmGroup.orientation = "column";
@@ -231,10 +231,10 @@ function fnDuIK(thisObj)
 					mmTexts.alignment = ["center","top"];
 					var mmText = mmTexts.add("statictext",undefined,"",{multiline:true});
 					mmText.alignment = ["center","top"];
-					mmText.text = "It seems Duik can not automatically install the pseudo effects it needs.\n\nYou will have to manually install the pseudo effects needed by Duik.";
+					mmText.text = "It seems Duik can not automatically install the pseudo effects it needs.\n\nThe easiest way to fix this is by restarting After Effects with administrator privileges,\n\nor you can manually install the pseudo effects needed by Duik: click on the 'Next' button below.";
 					var mmText2 = mmTexts.add("statictext",undefined,"",{multiline:true});
 					mmText2.alignment = ["center","top"];
-					mmText2.text = "• 1 - Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adope After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.";
+					mmText2.text = "• 1 - Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.";
 					if ($.os.toLowerCase().indexOf("win") >= 0) mmText2.text = "• 1 - Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.";
 					mmText2.visible = false;
 					var mmText3 = mmTexts.add("statictext",undefined,"",{multiline:true});
@@ -270,7 +270,7 @@ function fnDuIK(thisObj)
 					ciGroup.visible = false;
 				}
 				
-				mspNextButton.onClick = function ()
+				/*mspNextButton.onClick = function ()
 				{
 					if (mspText.visible)
 					{
@@ -296,9 +296,9 @@ function fnDuIK(thisObj)
 						mspContinueButton.enabled = true;
 						mspNextButton.enabled = false;
 					}
-				}
+				}*/
 				
-				mspPrevButton.onClick = function ()
+				/*mspPrevButton.onClick = function ()
 				{
 					if (mspText2.visible)
 					{
@@ -324,7 +324,7 @@ function fnDuIK(thisObj)
 						mspContinueButton.enabled = false;
 						mspNextButton.enabled = true;
 					}
-				}
+				}*/
 				
 				mmNextButton.onClick = function ()
 				{
@@ -382,7 +382,7 @@ function fnDuIK(thisObj)
 					}
 				}
 				
-				mspContinueButton.onClick = function ()
+				/*mspContinueButton.onClick = function ()
 				{
 					mspGroup.hide();
 					Duik.setup.installPseudoEffects();
@@ -395,7 +395,7 @@ function fnDuIK(thisObj)
 					{
 						mmGroup.show();
 					}
-				};
+				};*/
 				
 				mmContinueButton.onClick = function ()
 				{
@@ -420,7 +420,8 @@ function fnDuIK(thisObj)
 				//if mac os
 				else if ($.os.toLowerCase().indexOf("mac") >= 0) 
 				{
-					mspGroup.visible = true;
+					//mspGroup.visible = true;
+					mmGroup.visible = true;
 				}
 				//if win
 				else
