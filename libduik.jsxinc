@@ -59,65 +59,123 @@ if (typeof Duik === 'object') delete Duik;
 ////////////////////////////
 // DEFINITIONS
 ////////////////////////////
-if (typeof Duik !== 'object')
 {
-    Duik = {};
-	Duik.versionNumber = 0.0;
-}
-function KeySpatialProperties ()
-{
-	this.inTangent = null;
-	this.outTangent = null;
-	this.continuous = true;
-	this.autoBezier = false;
-	this.roving = false;
-}
-function KeyFrame()
-{
-	this.time = 0;
-	this.value = null;
-	this.inInterpolationType = KeyframeInterpolationType.LINEAR;
-	this.outInterpolationType = KeyframeInterpolationType.LINEAR;
-	this.spatial = false;
-	this.spatialProperties = new KeySpatialProperties();
-	this.inEase = 0;
-	this.outEase = 0;
-	this.continuous = false;
-	this.autoBezier = false;
-}
-function PropertyAnim()
-{
-	this.name = "";
-	this.keys = [];
-	this.startValue = null;
-}
-function MaskAnim()
-{
-	this.name = "";
-	this.anims = [];
-}
-function EffectAnim()
-{
-	this.name = "";
-	this.matchName = "";
-	this.anims = [];
-}
-function LayerAnim()
-{
-	this.name = "";
-	this.index = 0;
-	this.transformAnims = [];
-	this.masksAnims = [];
-	this.effectsAnims = [];
-}
-function IKRig()
-{
-	this.type = 0;
-	this.layer1 = null; //root
-	this.layer2 = null; //middle
-	this.layer3 = null; //end
-	this.goal = null;
-	this.controller = null;
+	if (typeof Duik !== 'object')
+	{
+		Duik = {};
+		Duik.versionNumber = 0.0;
+	}
+	function KeySpatialProperties ()
+	{
+		this.inTangent = null;
+		this.outTangent = null;
+		this.continuous = true;
+		this.autoBezier = false;
+		this.roving = false;
+	}
+	function KeyFrame()
+	{
+		this.time = 0;
+		this.value = null;
+		this.inInterpolationType = KeyframeInterpolationType.LINEAR;
+		this.outInterpolationType = KeyframeInterpolationType.LINEAR;
+		this.spatial = false;
+		this.spatialProperties = new KeySpatialProperties();
+		this.inEase = 0;
+		this.outEase = 0;
+		this.continuous = false;
+		this.autoBezier = false;
+	}
+	function PropertyAnim()
+	{
+		this.name = "";
+		this.keys = [];
+		this.startValue = null;
+	}
+	function MaskAnim()
+	{
+		this.name = "";
+		this.anims = [];
+	}
+	function EffectAnim()
+	{
+		this.name = "";
+		this.matchName = "";
+		this.anims = [];
+	}
+	function LayerAnim()
+	{
+		this.name = "";
+		this.index = 0;
+		this.transformAnims = [];
+		this.masksAnims = [];
+		this.effectsAnims = [];
+	}
+	function IKRig()
+	{
+		this.type = 0;
+		this.layer1 = null; //root
+		this.layer2 = null; //middle
+		this.layer3 = null; //end
+		this.goal = null;
+		this.controller = null;
+		this.threeD = false;
+		this.frontFacing = false;
+		this.clockWise = false;
+		this.created = false;
+	}
+	IKRig.prototype.create = function ()
+	{
+		if (this.type == 1 && this.layer1 != null && this.controller != null)
+		{
+			this.created = Duik.oneLayerIK(this.controller,this.layer1);
+			if (!this.created) return;
+			if (this.goal != null)
+			{
+				Duik.addGoal(this.goal,this.controller);
+			}
+			return null;
+		}
+		else if (this.type == 2 && this.layer1 != null && this.layer2 != null && this.controller != null)
+		{
+			this.layer2.parent = this.layer1;
+			this.threeD = this.controller.threeDLayer && this.layer1.threeDLayer && this.layer2.threeDLayer;
+			var zero = Duik.twoLayerIK(this.controller,this.layer1,this.layer2,this.clockWise,this.frontFacing);
+			if (zero == null)
+			{
+				this.created = false;
+				return zero;
+			}
+			this.created = true;
+			if (this.goal != null)
+			{
+				this.goal.parent = this.layer2;
+				Duik.goal(this.goal,this.controller);
+				//link the position in case of stretch
+				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
+			}
+			return zero;
+		}
+		else if (this.type == 3 && this.layer1 != null && this.layer2 != null && this.layer3 != null && this.controller != null)
+		{
+			this.layer3.parent = this.layer2;
+			this.layer2.parent = this.layer1;
+			var zero = Duik.threeLayerIK(this.controller,this.layer1,this.layer2,this.layer3,this.clockWise);
+			if (zero == null) {
+				this.created = false;
+				return zero;
+			}
+			this.created = true;		
+			if (this.goal != null)
+			{
+				this.goal.parent = this.layer3;
+				Duik.goal(this.goal,this.controller);
+				//link the position in case of stretch
+				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
+			}
+			return zero;
+		}
+	}
 }
 
 /////////////////////////////
@@ -1196,7 +1254,7 @@ function IKRig()
 	
 	//TODO, instead of returning true or false, functions should return the effect created
 	
-	/*	ADD IK - Duik.IK(controller,layer1,layer2,layer3,goal,clockWise,threeD,frontFacing)
+	/*	ADD IK - Duik.IK(controller,layer1,layer2,layer3,goal,clockWise,frontFacing)
 		adds a 2D IK to the layers controlled by controller
 		
 		parameters:
@@ -1214,13 +1272,12 @@ function IKRig()
 	*/
 	if (typeof Duik.IK !== 'function')
 	{
-		Duik.IK = function (ctrl,layer1,layer2,layer3,goal,cw,threeD,frontFacing)
+		Duik.IK = function (ctrl,layer1,layer2,layer3,goal,cw,frontFacing)
 		{	
 			//if there's not at least one controller and one layer, abort creation
 			if (ctrl == undefined || layer1 == undefined) return false;
 			
 			if (cw == undefined) cw = false;
-			if (threeD == undefined) threeD = false;
 			if (frontFacing == undefined) frontFacing = false;
 			
 			var zero = null;
@@ -1237,12 +1294,11 @@ function IKRig()
 			}
 			else if (layer3 == undefined)
 			{
-				zero = Duik.twoLayerIK(threeD,ctrl,layer1,layer2,cw);
+				zero = Duik.twoLayerIK(ctrl,layer1,layer2,cw);
 				if (zero == null) return false;
 			}
 			else
 			{
-				threeD = false;
 				var zero = Duik.threeLayerIK(ctrl,layer1,layer2,layer3,cw);
 				if (zero == null) return false;
 			}
@@ -1317,16 +1373,15 @@ function IKRig()
 			return true;
 		}
 	}
-	// ADD TWO-LAYER IK - Duik.twoLayerIK(threeD,controller,root,end,clockWise,frontFacing)
+	// ADD TWO-LAYER IK - Duik.twoLayerIK(controller,root,end,clockWise,frontFacing)
 	if (typeof Duik.twoLayerIK !== 'function')
 	{
-		Duik.twoLayerIK = function (threeD,controller,root,end,clockWise,frontFacing)
+		Duik.twoLayerIK = function (controller,root,end,clockWise,frontFacing)
 		{
 			//if there's not at least one controller and two layers, abort creation
 			if (controller == undefined || root == undefined || end == undefined) return false;
-			
-			if (clockWise == undefined) clockWise = false;
 			if (frontFacing == undefined) frontFacing = false;
+			threeD = controller.threeDLayer && root.threeDLayer && end.threeDLayer;
 			
 			//check names
 			Duik.utils.checkNames(controller.containingComp);
@@ -1550,6 +1605,14 @@ function IKRig()
 			controller.selected = true;
 			
 			return endZero;
+		}
+	}
+	// ADD THREE-LAYER IK - Duik.threeLayerIK(controller,root,middle,end,clockWise)
+	if (typeof Duik.threeLayerIK !== 'function')
+	{
+		Duik.threeLayerIK = function (controller,root,middle,end,clockWise)
+		{
+			//TODO
 		}
 	}
 	/* ADD GOAL - Duik.goal(layer,controller)
