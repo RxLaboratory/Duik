@@ -176,6 +176,15 @@ if (typeof Duik === 'object') delete Duik;
 			return zero;
 		}
 	}
+	function PropertyDescription()
+	{
+		this.isEffect = false;
+		this.index = 0;
+		this.depth = 0;
+		this.parentName = "";
+		this.dimensions = 0;
+		this.canSetExpression = false;
+	}
 }
 
 /////////////////////////////
@@ -520,34 +529,29 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.utils.rigProperty = function (layer,prop,effectMatchName)
 			{
 				//if prop is an effect, need a way to recover it
-				var isEffect,effetIndex,effetProfondeur,effetParentName;
-				if (!Duik.utils.prepareProperty(prop,isEffect,effetIndex,effetProfondeur,effetParentName)) return null;
-				
+				var propDescription = Duik.utils.prepareProperty(prop);
+				if (!propDescription.canSetExpression) return null;
 				//pseudo effect
 				var effect = null;
 				if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,effectMatchName);
 				else effect = layer.effect.addProperty(effectMatchName);
-				if (isEffect){ prop = layer.effect(effetParentName)(effetIndex); }
-				
-				return effect;
+				if (propDescription.isEffect){ prop = layer.effect(propDescription.parentName)(propDescription.index); }
+				return [effect,prop];
 			}
 		}
 		// PREPARE PROPERTY - Duik.utils.prepareProperty(prop,isFX,ind,prof,parentName,dimensions)
 		if (typeof Duik.utils.prepareProperty !== 'function')
 		{
-			Duik.utils.prepareProperty = function (prop,isFX,ind,prof,parentName,dimensions)
+			Duik.utils.prepareProperty = function (prop)
 			{
-				if (!prop.canSetExpression) return false;
-				isFX = false;
-				if (prop.parentProperty.isEffect)
-				{
-					ind = prop.propertyIndex;
-					prof = prop.propertyDepth;
-					parentName = prop.parentProperty.name;
-					isFX = true;
-					dimensions = Duik.utils.getPropertyDimensions(prop);
-				}
-				return true;
+				var propDescr = new PropertyDescription();
+				propDescr.canSetExpression = prop.canSetExpression;
+				propDescr.isEffect = prop.parentProperty.isEffect;
+				propDescr.index = prop.propertyIndex;
+				propDescr.depth = prop.propertyDepth;
+				propDescr.parentName = prop.parentProperty.name;
+				propDescr.dimensions = Duik.utils.getPropertyDimensions(prop);
+				return propDescr;
 			}
 		}
 		// GET DIMENSIONS - Duik.utils.getPropertyDimensions(property)
@@ -1810,7 +1814,9 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.threeDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_3D_Wiggle");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_3D_Wiggle");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
@@ -1824,7 +1830,9 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.twoDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_2D_Wiggle");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_2D_Wiggle");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			prop.expression = "//Duik.2DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(6),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(3));\n" +  "[X[0],Y[1]]";
@@ -1837,7 +1845,9 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.oneDWiggle = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_1D_Wiggle");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_1D_Wiggle");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
 			
@@ -1937,7 +1947,9 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.fixedExposure = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_Exposure");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_Exposure");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.exposure;
 			effect(1).setValue(1);
@@ -2122,7 +2134,9 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.rotationMorph = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_RotMorph");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_RotMorph");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.rotMorph;
 			
@@ -2158,8 +2172,12 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.swing = function (layer,prop)
 		{
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_Swing");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_Swing");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
+			alert(effect.name);
+			alert(prop.name);
 			effect.name = prop.name + " " + Duik.uiStrings.swing;
 			effect(1).setValue(10);
 			effect(2).setValue(1);
@@ -2199,7 +2217,8 @@ if (typeof Duik === 'object') delete Duik;
 			if (radius == undefined) radius = 100;
 			else if (! (radius > 0)) radius = 100;
 			if (curved == undefined) curved = false;
-			var effect = Duik.utils.rigProperty(layer,layer.transform.rotation,"DUIK_Wheel");
+			var prep = Duik.utils.rigProperty(layer,layer.transform.rotation,"DUIK_Wheel");
+			var effect = prep[0];
 			if (effect == null) return false;
 			effect.name = Duik.uiStrings.wheel;
 			effect(1).setValue(radius);
@@ -2433,7 +2452,9 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.distanceLink = function (layer,prop,parentLayer)
 		{
 			//add effect
-			var effect = Duik.utils.rigProperty(layer,prop,"DUIK_DistanceLink");
+			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_DistanceLink");
+			var effect = prep[0];
+			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.distanceLink;
 			//get the distance between the two layers
@@ -2515,11 +2536,15 @@ if (typeof Duik === 'object') delete Duik;
 			var effect;
 			if (bounce)
 			{
-				effect = Duik.utils.rigProperty(layer,prop,"DUIK_Spring_Bounce");
+				var prep = Duik.utils.rigProperty(layer,prop,"DUIK_Spring_Bounce");
+				var effect = prep[0];
+				prop = prep[1];
 			}
 			else
 			{
-				effect = Duik.utils.rigProperty(layer,prop,"DUIK_Spring");
+				var prep = Duik.utils.rigProperty(layer,prop,"DUIK_Spring");
+				var effect = prep[0];
+				prop = prep[1];
 			}
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.spring;
