@@ -126,20 +126,25 @@ if (typeof Duik === 'object') delete Duik;
 	}
 	IKRig.prototype.create = function ()
 	{
+		if (this.created) return null;
 		if (this.type == 1 && this.layer1 != null && this.controller != null)
 		{
 			this.created = Duik.oneLayerIK(this.controller,this.layer1);
 			if (!this.created) return;
 			if (this.goal != null)
 			{
-				Duik.addGoal(this.goal,this.controller);
+				Duik.goal(this.goal,this.controller);
 			}
 			return null;
 		}
 		else if (this.type == 2 && this.layer1 != null && this.layer2 != null && this.controller != null)
 		{
+			//parents
+			if (this.layer1.parent == this.layer2) this.layer1.parent = null;
 			this.layer2.parent = this.layer1;
+			//3d
 			this.threeD = this.controller.threeDLayer && this.layer1.threeDLayer && this.layer2.threeDLayer;
+			//create
 			var zero = Duik.twoLayerIK(this.controller,this.layer1,this.layer2,this.clockWise,this.frontFacing);
 			if (zero == null)
 			{
@@ -147,31 +152,37 @@ if (typeof Duik === 'object') delete Duik;
 				return zero;
 			}
 			this.created = true;
+			//goal
 			if (this.goal != null)
 			{
 				this.goal.parent = this.layer2;
 				Duik.goal(this.goal,this.controller);
 				//link the position in case of stretch
-				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
+				this.goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
 			}
 			return zero;
 		}
 		else if (this.type == 3 && this.layer1 != null && this.layer2 != null && this.layer3 != null && this.controller != null)
 		{
+			//parents
+			if (this.layer2.parent == this.layer3) this.layer2.parent = null;
+			if (this.layer1.parent == this.layer2) this.layer1.parent = null;
 			this.layer3.parent = this.layer2;
 			this.layer2.parent = this.layer1;
+			//create
 			var zero = Duik.threeLayerIK(this.controller,this.layer1,this.layer2,this.layer3,this.clockWise);
 			if (zero == null) {
 				this.created = false;
 				return zero;
 			}
-			this.created = true;		
+			this.created = true;
+			//goal			
 			if (this.goal != null)
 			{
 				this.goal.parent = this.layer3;
 				Duik.goal(this.goal,this.controller);
 				//link the position in case of stretch
-				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
+				this.goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
 			}
 			return zero;
 		}
@@ -1069,7 +1080,7 @@ if (typeof Duik === 'object') delete Duik;
 							var ll = layers[j];
 							if (l.parent != null)
 							{
-								if (l.parent.index == ll.index)
+								if (l.parent == ll)
 								{
 									ok = false;
 									break;
@@ -1077,7 +1088,7 @@ if (typeof Duik === 'object') delete Duik;
 							}
 							if (ll.parent != null)
 							{
-								if (ll.parent.index == l.index)
+								if (ll.parent == l)
 								{
 									ok = false;
 									break;
@@ -1102,34 +1113,36 @@ if (typeof Duik === 'object') delete Duik;
 					if (valid)
 					{
 						//sort layers
-						//find the one which has no parents
+						//find the one which has no parents, will be the root (first)
 						var first = null;
 						for (var i = 0;i<layers.length;i++)
 						{
 							var l = layers[i];
-							if (l.index == ctrl.index) continue;
+							if (l == ctrl) continue;
 							var ok = true;
+							//search if l has a parent
 							for (var j = 0;j<layers.length;j++)
 							{
-								if (l.parent != null)
+								if (l.parent == layers[j])
 								{
-									if (l.parent.index == layers[j].index)
-									{
-										ok = false;
-										break;
-									}
+									ok = false;
+									break;
 								}
 							}
-							if (ok && first == null)
+							//if a parent is found, skip
+							if (!ok) continue;
+							//if we haven't found it already
+							if (first == null)
 							{
 								first = l;
 							}
-							else if (first != null)
+							//else break
+							else
 							{
 								first = null;
 								break;
 							}
-						}	
+						}
 						
 						if (first != null)
 						{
@@ -1142,10 +1155,10 @@ if (typeof Duik === 'object') delete Duik;
 								for (var i = 0;i<layers.length;i++)
 								{
 									var l = layers[i];
-									if (l.index == ctrl.index) continue;
+									if (l == ctrl) continue;
 									if (l.parent != null)
 									{
-										if (l.parent.index == sortedLayers[sortedLayers.length-1].index)
+										if (l.parent == sortedLayers[sortedLayers.length-1])
 										{
 											if (found)
 											{
@@ -1247,6 +1260,11 @@ if (typeof Duik === 'object') delete Duik;
 						}
 					}
 				}
+				
+				//TODO detect 3d
+				
+				//TODO Detect frontFacing if 3D
+				
 				return rig;
 			}
 		}
@@ -1258,64 +1276,30 @@ if (typeof Duik === 'object') delete Duik;
 	
 	//TODO, instead of returning true or false, functions should return the effect created
 	
-	/*	ADD IK - Duik.IK(controller,layer1,layer2,layer3,goal,clockWise,frontFacing)
-		adds a 2D IK to the layers controlled by controller
+	/*	ADD IK - Duik.autoIK(layers,clockWise,frontFacing)
+		adds an IK to the layers
 		
 		parameters:
-		controller | AVLayer
-		layer1 | AVLayer
-		layer2 | AVLayer or undefined
-		layer3 | AVLayer or undefined
-		goal | AVLayer or undefined
+		layers | Array of AVLayers or LayerCollection
 		clockWise | boolean, used only with two-layer and three-layer IK, default: false
-		threeD | boolean, works only with two-layer IK, default: false
 		frontFacing | boolean, default: false
-				
+		
 		returns
-		true if successful, false if anything went wrong
+		IKRig object
 	*/
-	if (typeof Duik.IK !== 'function')
+	if (typeof Duik.autoIK !== 'function')
 	{
-		Duik.IK = function (ctrl,layer1,layer2,layer3,goal,cw,frontFacing)
-		{	
-			//if there's not at least one controller and one layer, abort creation
-			if (ctrl == undefined || layer1 == undefined) return false;
-			
+		Duik.autoIK = function (layers,cw,frontFacing)
+		{				
 			if (cw == undefined) cw = false;
 			if (frontFacing == undefined) frontFacing = false;
-			
-			var zero = null;
-			
-			if (layer2 == undefined && layer3 == undefined)
-			{
-				var ok = Duik.oneLayerIK(ctrl,layer1);
-				if (!ok) return false;
-				if (goal != undefined)
-				{
-					var ok = Duik.addGoal(goal,ctrl);
-					return ok;
-				}
-			}
-			else if (layer3 == undefined)
-			{
-				zero = Duik.twoLayerIK(ctrl,layer1,layer2,cw);
-				if (zero == null) return false;
-			}
-			else
-			{
-				var zero = Duik.threeLayerIK(ctrl,layer1,layer2,layer3,cw);
-				if (zero == null) return false;
-			}
-			if (zero != null && goal != undefined)
-			{
-				var ok = Duik.goal(goal,ctrl);
-				if (!ok) return false;
 
-				//link the position in case of stretch
-				goal.transform.position.expression = "thisComp.layer(\"" + zero.name + "\").transform.position;";
-				
-			}	
-			return true;
+			var ik = Duik.utils.prepIK(layers);
+			ik.frontFacing = frontFacing;
+			ik.clockWise = cw;
+			ik.create();
+
+			return ik;
 		}
 	}
 	// ADD ONE-LAYER IK - Duik.oneLayerIK(controller,layer)

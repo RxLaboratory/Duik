@@ -904,17 +904,17 @@ function fnDuIK(thisObj)
 				{
 					if (avantBrasG != undefined && brasG != undefined)
 					{
-						Duik.IK(CmainG,brasG,avantBrasG,undefined,mainG,false,tridi,false);
+						Duik.autoIK([mainG,avantBrasG,brasG,CmainG],false,false);
 					}
 					else if (avantBrasG != undefined)
 					{
 						
-						Duik.IK(avantBrasG,CmainG);
+						Duik.autoIK([avantBrasG,CmainG]);
 						Duik.goal(mainG,CmainG);
 					}
 					else if (brasG != undefined)
 					{
-						Duik.IK(brasG,CmainG);
+						Duik.autoIK([brasG,CmainG]);
 						Duik.goal(mainG,CmainG);
 					}
 					else
@@ -925,13 +925,16 @@ function fnDuIK(thisObj)
 				//bras D
 				if (mainD != undefined)
 				{
-					if (avantBrasD != undefined && brasD != undefined) Duik.IK(CmainD,brasD,avantBrasD,undefined,mainD,false,tridi,false);
+					if (avantBrasD != undefined && brasD != undefined)
+					{
+						Duik.autoIK([mainD,avantBrasD,brasD,CmainD],false,false);
+					}
 					else if (avantBrasD != undefined) {
-						Duik.IK(avantBrasD,CmainD);
+						Duik.autoIK([avantBrasD,CmainD]);
 						Duik.goal(mainD,CmainD);
 						}
 					else if (brasD != undefined) {
-						Duik.IK(brasD,CmainD);
+						Duik.autoIK([brasD,CmainD]);
 						Duik.goal(mainD,CmainD);
 						}
 					else Duik.goal(mainD,CmainD);
@@ -939,13 +942,16 @@ function fnDuIK(thisObj)
 				//jambe D
 				if (piedD != undefined)
 				{
-					if (molletD != undefined && cuisseD != undefined) Duik.IK(CpiedD,cuisseD,molletD,undefined,piedD,false,tridi,false);
+					if (molletD != undefined && cuisseD != undefined)
+					{
+						Duik.autoIK([piedD,molletD,cuisseD,CpiedD],false,false);
+					}
 					else if (molletD != undefined) {
-						Duik.IK(molletD,CpiedD);
+						Duik.autoIK([molletD,CpiedD]);
 						Duik.goal(piedD,CpiedD);
 						}
 					else if (cuisseD != undefined) {
-						Duik.IK(cuisseD,CpiedD);
+						Duik.autoIK([cuisseD,CpiedD]);
 						Duik.goal(piedD,CpiedD);
 						}
 					else Duik.goal(piedD,CpiedD);
@@ -953,24 +959,27 @@ function fnDuIK(thisObj)
 				//jambe G
 				if (piedG != undefined)
 				{
-					if (molletG != undefined && cuisseG != undefined) Duik.IK(CpiedG,cuisseG,molletG,undefined,piedG,false,tridi,false);
+					if (molletG != undefined && cuisseG != undefined)
+					{
+						Duik.autoIK([piedG,molletG,cuisseG,CpiedG],false,false);
+					}
 					else if (molletG != undefined) {
-						Duik.IK(molletG,CpiedG);
+						Duik.autoIK([molletG,CpiedG]);
 						Duik.goal(piedG,CpiedG);
 						}
 					else if (cuisseG != undefined) {
-						Duik.IK(cuisseG,CpiedG);
+						Duik.autoIK([cuisseG,CpiedG]);
 						Duik.goal(piedG,CpiedG);
 						}
 					else Duik.goal(piedG,CpiedG);
 				}
 				//dos
 				if (autorigIKdos.value) {
-					Duik.IK(corps,Cepaules);
+					Duik.autoIK([corps,Cepaules]);
 				}
 				//cou
 				if (autorigIKcou.value && cou != undefined) {
-					Duik.IK(cou,Ctete);
+					Duik.autoIK([cou,Ctete]);
 				}
 				
 				
@@ -1038,7 +1047,7 @@ function fnDuIK(thisObj)
 				if (calques.length == 2) {
 					//groupe d'annulation
 					app.beginUndoGroup("Duik - IK");
-					calquetridi ? alert(getMessage(5)) : Duik.IK(app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0]);
+					calquetridi ? alert(getMessage(5)) : Duik.autoIK(app.project.activeItem.selectedLayers);
 					//groupe d'annulation
 					app.endUndoGroup();
 					}//if calques.length == 2
@@ -1059,16 +1068,7 @@ function fnDuIK(thisObj)
 			function goik(){
 				//groupe d'annulation
 				app.beginUndoGroup("Duik - IK");
-				var calques = app.project.activeItem.selectedLayers;
-				var calquetridi = calques[0].threeDLayer;
-				if (calques.length == 3)
-				{
-					Duik.IK(app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],app.project.activeItem.selectedLayers[0],undefined,undefined,boutonCW.value,calquetridi,boutonFront.value);
-				}
-				else if (calques.length == 4)
-				{
-					Duik.IK(app.project.activeItem.selectedLayers[3],app.project.activeItem.selectedLayers[2],app.project.activeItem.selectedLayers[1],undefined,app.project.activeItem.selectedLayers[0],boutonCW.value,calquetridi,boutonFront.value,);
-				}
+				Duik.autoIK(app.project.activeItem.selectedLayers,boutonCW.value,boutonFront.value,);
 				//groupe d'annulation
 				app.endUndoGroup();
 			}
