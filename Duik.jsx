@@ -1094,16 +1094,39 @@ function fnDuIK(thisObj)
 			}
 
 			//FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
+			function onControllerButtonClicked(){
+				if (Duik.settings.controllerType == Duik.layerTypes.VECTOR)
+				{
+					ctrlWindow.show();
+				}
+				else
+				{
+					//  début de groupe d'annulation
+					app.beginUndoGroup("Duik - " + getMessage(116));
+					Duik.addControllers(app.project.activeItem.selectedLayers);
+					app.endUndoGroup();
+				}
+			}
 			function controleur(){
 
 				//vérifions qu'il n'y a qu'un calque sélectionné 
-				 if (app.project.activeItem.selectedLayers.length > 0) {
-						//  début de groupe d'annulation
-						app.beginUndoGroup("Duik - " + getMessage(116));
-						Duik.addControllers(app.project.activeItem.selectedLayers);
-						//fin du groupe d'annulation
-						app.endUndoGroup();
-					} else { alert(getMessage(11)); }
+				//  début de groupe d'annulation
+				app.beginUndoGroup("Duik - " + getMessage(116));
+				var color;
+				if (ctrlColorList.selection == 0) color = [1,0,0,1];
+				else if (ctrlColorList.selection == 1) color = [0,1,0,1];
+				else if (ctrlColorList.selection == 2) color = [0,0,1,1];
+				else if (ctrlColorList.selection == 3) color = [0,1,1,1];
+				else if (ctrlColorList.selection == 4) color = [1,0,1,1];
+				else if (ctrlColorList.selection == 5) color = [1,1,0,1];
+				else if (ctrlColorList.selection == 6) color = [1,1,1,1];
+				else if (ctrlColorList.selection == 7) color = [0.75,0.75,0.75,1];
+				else if (ctrlColorList.selection == 8) color = [0.25,0.25,0.25,1];
+				else if (ctrlColorList.selection == 9) color = [0,0,0,1];
+				else color = [1,1,1,1];
+				Duik.addControllers(app.project.activeItem.selectedLayers,color,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value,ctrlArcButton.value);
+				//fin du groupe d'annulation
+				app.endUndoGroup();
 
 			}
 			 
@@ -1913,6 +1936,69 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
+		
+				//controllers
+				{
+					var ctrlWindow = new Window("palette","Controllers",undefined,{closeButton:false});
+					ctrlWindow.spacing = 15;
+					ctrlWindow.margins = 10;
+					ctrlWindow.alignChildren = ["fill","fill"];
+					ctrlWindow.orientation = "row";
+					var ctrlShapeGroup = addVGroup(ctrlWindow);
+					var ctrlRotationButton = ctrlShapeGroup.add("checkbox",undefined,"Rotation");
+					ctrlRotationButton.value = true;
+					var ctrlXPositionButton = ctrlShapeGroup.add("checkbox",undefined,"X Position");
+					ctrlXPositionButton.value = true;
+					var ctrlYPositionButton = ctrlShapeGroup.add("checkbox",undefined,"Y Position");
+					ctrlYPositionButton.value = true;
+					var ctrlScaleButton = ctrlShapeGroup.add("checkbox",undefined,"Scale");
+					var ctrlArcButton = ctrlShapeGroup.add("checkbox",undefined,"Arc");
+					ctrlArcButton.onClick = function () {
+						ctrlRotationButton.enabled = !ctrlArcButton.value;
+						ctrlXPositionButton.enabled = !ctrlArcButton.value;
+						ctrlYPositionButton.enabled = !ctrlArcButton.value;
+						ctrlScaleButton.enabled = !ctrlArcButton.value;
+					}
+					var ctrlSettingsGroup = addVGroup(ctrlWindow);
+					//taille des controleurs
+					var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
+					var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
+					ctrlSizeGroup.add("statictext",undefined,getMessage(169));
+					var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
+					ctrlSizeEdit.onChange = function() {
+						Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
+						Duik.settings.save();
+						};
+					ctrlSizeEdit.text = Duik.settings.controllerSize;
+					//taille auto controleurs
+					var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,getMessage(170));
+					ctrlSizeAutoButton.onClick = function() {
+						ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
+						boutonCtrlSizeAutoValue.enabled = ctrlSizeAutoButton.value;
+						Duik.settings.controllerSizeAuto = ctrlSizeAutoButton.value;
+						Duik.settings.save();
+						};
+					ctrlSizeAutoButton.value = Duik.settings.controllerSizeAuto;
+					//size hint controllers
+					var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
+					ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
+					ctrlSizeAutoList.onChange = function () {
+						Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
+						Duik.settings.save();
+						};
+					ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value ;
+					ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
+					//color
+					var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
+					ctrlColorGroup.add("statictext",undefined,"Color:");
+					var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
+					ctrlColorList.selection = 6;
+					//buttons
+					var ctrlCloseButton = ctrlSettingsGroup.add("button",undefined,"Close");
+					ctrlCloseButton.onClick = function () { ctrlWindow.hide() ; };
+					var ctrlCreateButton = ctrlSettingsGroup.add("button",undefined,"Create");
+					ctrlCreateButton.onClick = controleur;
+				}
 				//replace in expressions
 				{
 					var rieWindow = new Window ("palette","Replace in expressions",undefined,{closeButton:false,resizeable:true});
@@ -2536,7 +2622,15 @@ function fnDuIK(thisObj)
 				boutonBoneColor.enabled = boutonBoneType.selection == 0;
 				
 
-				
+				//controller types
+				var groupeCtrlType = addHGroup(controllersGroup);
+				groupeCtrlType.add("statictext",undefined,"Controllers type");
+				var boutonCtrlType = groupeCtrlType.add("dropdownlist",undefined,["Null","Icon"]);
+				boutonCtrlType.selection = Duik.settings.controllerType-1;
+				boutonCtrlType.onChange = function() {
+					Duik.settings.controllerType = boutonCtrlType.selection.index+1;
+					Duik.settings.save();
+					};
 				//taille des controleurs
 				var groupeCtrlSize = addHGroup(controllersGroup);
 				var groupeCtrlSizeAuto = addHGroup(controllersGroup);
@@ -2604,9 +2698,9 @@ function fnDuIK(thisObj)
 				boutongoal.onClick = pregoal;
 				boutongoal.helpTip = getMessage(79);
 				//bouton controleur
-				var boutoncontroleur2 = addIconButton(groupeikG,dossierIcones + "btn_controleur.png",getMessage(116));
-				boutoncontroleur2.onClick = controleur;
-				boutoncontroleur2.helpTip = getMessage(82);
+				var controllerButton = addIconButton(groupeikG,dossierIcones + "btn_controleur.png",getMessage(116));
+				controllerButton.onClick = onControllerButtonClicked;
+				controllerButton.helpTip = getMessage(82);
 				//bouton bone
 				var boutonbone2 = addIconButton(groupeikD,dossierIcones + "btn_bones.png",getMessage(117));
 				boutonbone2.onClick = bone;

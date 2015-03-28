@@ -213,6 +213,14 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 		Duik.presetEffectsInstalledVersion = 0.0;
 		Duik.copiedAnim = [];
+		Duik.sizes = {};
+		Duik.sizes.SMALL = 0;
+		Duik.sizes.MEDIUM = 1;
+		Duik.sizes.BIG = 2;
+		Duik.layerTypes = {};
+		Duik.layerTypes.VECTOR = 2;
+		Duik.layerTypes.NULL = 1;
+		Duik.layerTypes.SOLID = 0;
 	}
 }());
 
@@ -459,17 +467,8 @@ if (typeof Duik === 'object') delete Duik;
 	if (typeof Duik.settings !== 'object')
 	{
 		Duik.settings = {};
-		
-		Duik.sizes = {};
-		Duik.sizes.SMALL = 0;
-		Duik.sizes.MEDIUM = 1;
-		Duik.sizes.BIG = 2;
-		
-		Duik.layerTypes = {};
-		Duik.layerTypes.NULL = 1;
-		Duik.layerTypes.SOLID = 0;
-				
 		if (! app.settings.haveSetting("duik", "boneType")){app.settings.saveSetting("duik","boneType",Duik.layerTypes.SOLID);}
+		if (! app.settings.haveSetting("duik", "controllerType")){app.settings.saveSetting("duik","controllerType",Duik.layerTypes.VECTOR);}
 		if (! app.settings.haveSetting("duik", "boneSize")){app.settings.saveSetting("duik","boneSize",20);}
 		if (! app.settings.haveSetting("duik", "ctrlSize")){app.settings.saveSetting("duik","ctrlSize",100);}
 		if (! app.settings.haveSetting("duik", "ctrlSizeAuto")){app.settings.saveSetting("duik","ctrlSizeAuto",true);}
@@ -483,6 +482,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.settings.save = function ()
 		{
 			app.settings.saveSetting("duik","boneType",Duik.settings.boneType);
+			app.settings.saveSetting("duik","controllerType",Duik.settings.controllerType);
 			app.settings.saveSetting("duik","boneSize",Duik.settings.boneSize);
 			app.settings.saveSetting("duik","ctrlSize",Duik.settings.controllerSize);
 			app.settings.saveSetting("duik","ctrlSizeAuto",Duik.settings.controllerSizeAuto);
@@ -497,6 +497,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.settings.load = function ()
 		{
 			Duik.settings.controllerSize = eval(app.settings.getSetting("duik","ctrlSize"));
+			Duik.settings.controllerType = eval(app.settings.getSetting("duik","controllerType"));
 			Duik.settings.controllerSizeAuto = eval(app.settings.getSetting("duik","ctrlSizeAuto"));
 			Duik.settings.controllerSizeHint = eval(app.settings.getSetting("duik","ctrlSizeAutoValue"));
 			Duik.settings.boneType = eval(app.settings.getSetting("duik","boneType"));
@@ -511,6 +512,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.settings.restoreDefaults = function ()
 		{
 			Duik.settings.controllerSize = 100;
+			Duik.settings.controllerType = Duik.layerTypes.VECTOR;
 			Duik.settings.controllerSizeAuto = true;
 			Duik.settings.controllerSizeHint = Duik.sizes.MEDIUM;
 			Duik.settings.boneType = Duik.layerTypes.SOLID;
@@ -1692,37 +1694,203 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	/* ADD CONTROLLER - Duik.addController(layer)
+	/* ADD CONTROLLER - Duik.addController(layer,color,rotation,xPosition,yPosition,scale,arc)
 	
 		parameters
 		layer | AVLayer
+		rotation | boolean
+		position | boolean
+		scale | boolean
+		arc | boolean
 		
 		returns
 		AVLayer controller
 	*/
 	if (typeof Duik.addController !== 'function')
 	{
-		Duik.addController = function (layer)
+		Duik.addController = function (layer,color,rotation,xPosition,yPosition,scale,arc)
 		{
-			var layerParent = layer.parent;
-			layer.parent = null;
-			var layerPosition = layer.transform.position.value;
-			layer.parent = layerParent;
-
-			//le controleur
-			var controller = app.project.activeItem.layers.addNull();
+			if (rotation == undefined) rotation = true;
+			if (xPosition == undefined) xPosition = true;
+			if (yPosition == undefined) yPosition = true;
+			if (scale == undefined) scale = false;
+			if (arc == undefined) arc = false;
+			if (color == undefined) color = [1,1,1,1];
+			
+			if (arc)
+			{
+				rotation = false;
+				xPosition = false;
+				yPosition = false;
+				scale = false;
+			}
+				
+			if (layer != null)
+			{
+				var layerParent = layer.parent;
+				layer.parent = null;
+				var layerPosition = layer.transform.position.value;
+				layer.parent = layerParent;
+			}
+			
+			//controller size
 			var controllerSize = Duik.settings.controllerSize;
-			if (Duik.settings.controllerSizeAuto) {
+			if (Duik.settings.controllerSizeAuto)
+			{
 				controllerSize = app.project.activeItem.width/2 + app.project.activeItem.height/2;
 				if (Duik.settings.controllerSizeHint == Duik.sizes.SMALL) controllerSize = Math.floor(controllerSize/40);
 				else if (Duik.settings.controllerSizeHint == Duik.sizes.MEDIUM) controllerSize = Math.floor(controllerSize/20);
 				else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10);
 			}
-			controller.source.width = controllerSize;
-			controller.source.height = controllerSize;
-			controller.anchorPoint.setValue([controller.source.width/2,controller.source.height/2]);
-			controller.transform.position.setValue(layerPosition);
-			controller.name = "C_" + layer.name.slice(-28);
+
+			//le controleur
+			var controller;
+			if (Duik.settings.controllerType == Duik.layerTypes.NULL)
+			{
+				controller = app.project.activeItem.layers.addNull();
+				var controllerSize = Duik.settings.controllerSize;
+				controller.source.width = controllerSize;
+				controller.source.height = controllerSize;
+				controller.anchorPoint.setValue([controller.source.width/2,controller.source.height/2]);
+			}
+			else
+			{
+				controller = app.project.activeItem.layers.addShape();
+				controller.guideLayer = true;
+				var iconGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+				iconGroup.name = "Icon";
+				controllerSizeFactor = controllerSize*100/30;
+				iconGroup("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([controllerSizeFactor,controllerSizeFactor]);
+				if (rotation)
+				{
+					//draw
+					var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+					group.name = "Rotation";
+					var groupContent = group.property("ADBE Vectors Group");
+					var ellipse = groupContent.addProperty("ADBE Vector Shape - Ellipse");
+					ellipse("ADBE Vector Ellipse Size").setValue([30,30]);
+					var trim = groupContent.addProperty("ADBE Vector Filter - Trim");
+					 trim("ADBE Vector Trim End").setValue(85);
+					var arrowShape = new Shape();
+					arrowShape.vertices = [[0,-15], [10,-20]];
+					arrowShape.closed = false;
+					var arrow = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow("ADBE Vector Shape").setValue(arrowShape);
+					var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+					stroke("ADBE Vector Stroke Color").setValue(color);
+					stroke("ADBE Vector Stroke Width").setValue(4);
+					group("ADBE Vector Transform Group")("ADBE Vector Rotation").setValue(-20);
+				}
+				if (xPosition)
+				{
+					var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+					group.name = "xPosition";
+					var groupContent = group.property("ADBE Vectors Group");
+					var horizontalShape = new Shape();
+					horizontalShape.vertices = [[15,0], [-15,0]];
+					horizontalShape.closed = false;
+					var horizontal = groupContent.addProperty("ADBE Vector Shape - Group");
+					horizontal("ADBE Vector Shape").setValue(horizontalShape);
+					var arrowShape1 = new Shape();
+					arrowShape1.vertices = [[10,-7],[15,0], [10,7]];
+					arrowShape1.closed = false;
+					 var arrow1 = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow1("ADBE Vector Shape").setValue(arrowShape1);
+					var arrowShape2 = new Shape();
+					arrowShape2.vertices = [[-10,7],[-15,0], [-10,-7]];
+					arrowShape2.closed = false;
+					 var arrow2 = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow2("ADBE Vector Shape").setValue(arrowShape2);
+					var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+					stroke("ADBE Vector Stroke Color").setValue(color);
+					if (rotation) stroke("ADBE Vector Stroke Width").setValue(3);
+					else stroke("ADBE Vector Stroke Width").setValue(4);
+					if (rotation) group("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([80,80]);
+				}
+				if (yPosition)
+				{
+					var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+					group.name = "yPosition";
+					var groupContent = group.property("ADBE Vectors Group");
+					var verticalShape = new Shape();
+					verticalShape.vertices = [[0,-15], [0,15]];
+					verticalShape.closed = false;
+					var vertical = groupContent.addProperty("ADBE Vector Shape - Group");
+					vertical("ADBE Vector Shape").setValue(verticalShape);
+					var arrowShape3 = new Shape();
+					arrowShape3.vertices = [[-7,10],[0,15], [7,10]];
+					arrowShape3.closed = false;
+					var arrow3 = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow3("ADBE Vector Shape").setValue(arrowShape3);
+					var arrowShape4 = new Shape();
+					arrowShape4.vertices = [[-7,-10],[0,-15], [7,-10]];
+					arrowShape4.closed = false;
+					 var arrow4 = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow4("ADBE Vector Shape").setValue(arrowShape4);
+					var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+					stroke("ADBE Vector Stroke Color").setValue(color);
+					if (rotation) stroke("ADBE Vector Stroke Width").setValue(3);
+					else stroke("ADBE Vector Stroke Width").setValue(4);
+					if (rotation) group("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([75,75]);
+				}
+				if (scale)
+				{
+					var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+					group.name = "Scale";
+					var groupContent = group.property("ADBE Vectors Group");
+					var cornerShape1 = new Shape();
+					cornerShape1.vertices = [[-10,-20],[-20,-20], [-20,-10]];
+					cornerShape1.closed = false;
+					var corner1 = groupContent.addProperty("ADBE Vector Shape - Group");
+					corner1("ADBE Vector Shape").setValue(cornerShape1);
+					var cornerShape2 = new Shape();
+					cornerShape2.vertices = [[10,-20],[20,-20], [20,-10]];
+					cornerShape2.closed = false;
+					var corner2 = groupContent.addProperty("ADBE Vector Shape - Group");
+					corner2("ADBE Vector Shape").setValue(cornerShape2);
+					var cornerShape3 = new Shape();
+					cornerShape3.vertices = [[10,20],[20,20], [20,10]];
+					cornerShape3.closed = false;
+					var corner3 = groupContent.addProperty("ADBE Vector Shape - Group");
+					corner3("ADBE Vector Shape").setValue(cornerShape3);
+					var cornerShape4 = new Shape();
+					cornerShape4.vertices = [[-10,20],[-20,20], [-20,10]];
+					cornerShape4.closed = false;
+					var corner4 = groupContent.addProperty("ADBE Vector Shape - Group");
+					corner4("ADBE Vector Shape").setValue(cornerShape4);
+					var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+					stroke("ADBE Vector Stroke Color").setValue(color);
+					stroke("ADBE Vector Stroke Width").setValue(3);
+				}
+				if (arc)
+				{
+					var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+					group.name = "Arc";
+					var groupContent = group.property("ADBE Vectors Group");
+					var ellipse = groupContent.addProperty("ADBE Vector Shape - Ellipse");
+					ellipse("ADBE Vector Ellipse Size").setValue([30,30]);
+					var trim = groupContent.addProperty("ADBE Vector Filter - Trim");
+					 trim("ADBE Vector Trim End").setValue(35);
+					var arrowShape = new Shape();
+					arrowShape.vertices = [[0,-15], [10,-20]];
+					arrowShape.closed = false;
+					var arrow = groupContent.addProperty("ADBE Vector Shape - Group");
+					arrow("ADBE Vector Shape").setValue(arrowShape);
+					var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+					stroke("ADBE Vector Stroke Color").setValue(color);
+					stroke("ADBE Vector Stroke Width").setValue(4);
+					group("ADBE Vector Transform Group")("ADBE Vector Rotation").setValue(-60);
+				}
+			}
+			if (layer != null)
+			{
+				controller.transform.position.setValue(layerPosition);
+				controller.name = "C_" + layer.name.slice(-28);
+			}
+			else
+			{
+				controller.name = "C_";
+			}
 			
 			//select controller
 			Duik.utils.deselectLayers();
@@ -1741,13 +1909,20 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.addControllers !== 'function')
 	{
-		Duik.addControllers = function (layers)
+		Duik.addControllers = function (layers,color,rotation,xPosition,yPosition,scale,arc)
 		{
 			var controllers = [];
 			
-			for (var i = 0 ; i < layers.length ; i++)
+			if (layers.length > 0)
 			{
-				controllers.push ( Duik.addController( Duik.utils.getItem(layers,i) ) );
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					controllers.push ( Duik.addController( Duik.utils.getItem(layers,i),color,rotation,xPosition,yPosition,scale,arc ) );
+				}
+			}
+			else
+			{
+				controllers.push(Duik.addController(null,color,rotation,xPosition,yPosition,scale,arc));
 			}
 
 			//select controllers
