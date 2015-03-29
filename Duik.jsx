@@ -1094,10 +1094,11 @@ function fnDuIK(thisObj)
 			}
 
 			//FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
-			function onControllerButtonClicked(){
+			function controllerButtonClicked(){
 				if (Duik.settings.controllerType == Duik.layerTypes.VECTOR)
 				{
-					ctrlWindow.show();
+					ctrlPanel.show();
+					panoik.hide();
 				}
 				else
 				{
@@ -1124,12 +1125,66 @@ function fnDuIK(thisObj)
 				else if (ctrlColorList.selection == 8) color = [0.25,0.25,0.25,1];
 				else if (ctrlColorList.selection == 9) color = [0,0,0,1];
 				else color = [1,1,1,1];
-				Duik.addControllers(app.project.activeItem.selectedLayers,color,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value,ctrlArcButton.value);
+				Duik.addControllers(app.project.activeItem.selectedLayers,color,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value,ctrlArcButton.value);
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 
 			}
-			 
+			function ctrlUnlockButtonClicked() {
+				var controllers = Duik.utils.getControllers(app.project.activeItem.selectedLayers);
+				app.beginUndoGroup("Duik - Unlock Controllers");
+				for (var i = 0 ; i < controllers.length ; i++)
+				{
+					controllers[i].unlock();
+				}
+				app.endUndoGroup();
+			}
+			function ctrlLockButtonClicked() {
+				var controllers = Duik.utils.getControllers(app.project.activeItem.selectedLayers);
+				app.beginUndoGroup("Duik - Lock Controllers");
+				for (var i = 0 ; i < controllers.length ; i++)
+				{
+					controllers[i].lock();
+				}
+				app.endUndoGroup();
+			}
+			function ctrlUpdateButtonClicked() {
+				var controllers = Duik.utils.getControllers(app.project.activeItem.selectedLayers);
+				app.beginUndoGroup("Duik - Update Controllers");
+				for (var i = 0 ; i < controllers.length ; i++)
+				{
+					controllers[i].type = Duik.layerTypes.VECTOR;
+					
+					if (ctrlColorList.selection == 0) controllers[i].color = [1,0,0,1];
+					else if (ctrlColorList.selection == 1) controllers[i].color = [0,1,0,1];
+					else if (ctrlColorList.selection == 2) controllers[i].color = [0,0,1,1];
+					else if (ctrlColorList.selection == 3) controllers[i].color = [0,1,1,1];
+					else if (ctrlColorList.selection == 4) controllers[i].color = [1,0,1,1];
+					else if (ctrlColorList.selection == 5) controllers[i].color = [1,1,0,1];
+					else if (ctrlColorList.selection == 6) controllers[i].color = [1,1,1,1];
+					else if (ctrlColorList.selection == 7) controllers[i].color = [0.75,0.75,0.75,1];
+					else if (ctrlColorList.selection == 8) controllers[i].color = [0.25,0.25,0.25,1];
+					else if (ctrlColorList.selection == 9) controllers[i].color = [0,0,0,1];
+					else controllers[i].color = [1,1,1,1];
+					
+					controllers[i].xPosition = ctrlXPositionButton.value;
+					controllers[i].yPosition = ctrlYPositionButton.value;
+					controllers[i].rotation = ctrlRotationButton.value;
+					controllers[i].scale = ctrlScaleButton.value;
+					controllers[i].arc = ctrlArcButton.value;
+
+					controllers[i].update();
+					
+					controllers[i].unlock();
+					
+					if (ctrlAutoLockButton.value)
+					{
+						controllers[i].lock();
+					}
+				}
+				app.endUndoGroup();
+			}
+			
 			//FONCTION POUR AJOUTER UN (DES) BONE(S)
 			function bone(){
 					
@@ -1939,65 +1994,7 @@ function fnDuIK(thisObj)
 		
 				//controllers
 				{
-					var ctrlWindow = new Window("palette","Controllers",undefined,{closeButton:false});
-					ctrlWindow.spacing = 15;
-					ctrlWindow.margins = 10;
-					ctrlWindow.alignChildren = ["fill","fill"];
-					ctrlWindow.orientation = "row";
-					var ctrlShapeGroup = addVGroup(ctrlWindow);
-					var ctrlRotationButton = ctrlShapeGroup.add("checkbox",undefined,"Rotation");
-					ctrlRotationButton.value = true;
-					var ctrlXPositionButton = ctrlShapeGroup.add("checkbox",undefined,"X Position");
-					ctrlXPositionButton.value = true;
-					var ctrlYPositionButton = ctrlShapeGroup.add("checkbox",undefined,"Y Position");
-					ctrlYPositionButton.value = true;
-					var ctrlScaleButton = ctrlShapeGroup.add("checkbox",undefined,"Scale");
-					var ctrlArcButton = ctrlShapeGroup.add("checkbox",undefined,"Arc");
-					ctrlArcButton.onClick = function () {
-						ctrlRotationButton.enabled = !ctrlArcButton.value;
-						ctrlXPositionButton.enabled = !ctrlArcButton.value;
-						ctrlYPositionButton.enabled = !ctrlArcButton.value;
-						ctrlScaleButton.enabled = !ctrlArcButton.value;
-					}
-					var ctrlSettingsGroup = addVGroup(ctrlWindow);
-					//taille des controleurs
-					var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
-					var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
-					ctrlSizeGroup.add("statictext",undefined,getMessage(169));
-					var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
-					ctrlSizeEdit.onChange = function() {
-						Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
-						Duik.settings.save();
-						};
-					ctrlSizeEdit.text = Duik.settings.controllerSize;
-					//taille auto controleurs
-					var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,getMessage(170));
-					ctrlSizeAutoButton.onClick = function() {
-						ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
-						boutonCtrlSizeAutoValue.enabled = ctrlSizeAutoButton.value;
-						Duik.settings.controllerSizeAuto = ctrlSizeAutoButton.value;
-						Duik.settings.save();
-						};
-					ctrlSizeAutoButton.value = Duik.settings.controllerSizeAuto;
-					//size hint controllers
-					var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
-					ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
-					ctrlSizeAutoList.onChange = function () {
-						Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
-						Duik.settings.save();
-						};
-					ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value ;
-					ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
-					//color
-					var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
-					ctrlColorGroup.add("statictext",undefined,"Color:");
-					var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
-					ctrlColorList.selection = 6;
-					//buttons
-					var ctrlCloseButton = ctrlSettingsGroup.add("button",undefined,"Close");
-					ctrlCloseButton.onClick = function () { ctrlWindow.hide() ; };
-					var ctrlCreateButton = ctrlSettingsGroup.add("button",undefined,"Create");
-					ctrlCreateButton.onClick = controleur;
+					
 				}
 				//replace in expressions
 				{
@@ -2458,8 +2455,11 @@ function fnDuIK(thisObj)
 				panocam.visible = false;
 				var panosettings = addVPanel(panos);
 				panosettings.visible = false;
+				var ctrlPanel = addVPanel(panos);
+				ctrlPanel.visible = false;
 
 				selecteur.onChange = function() {
+					ctrlPanel.hide();
 					if (selecteur.selection == 0){
 						panoik.visible = true;
 						panoanimation.visible = false;
@@ -2680,7 +2680,6 @@ function fnDuIK(thisObj)
 				
 				
 				}
-				
 				// PANNEAU RIGGING -----------------------------------------------------------
 				{
 				//bouton autorig
@@ -2699,7 +2698,7 @@ function fnDuIK(thisObj)
 				boutongoal.helpTip = getMessage(79);
 				//bouton controleur
 				var controllerButton = addIconButton(groupeikG,dossierIcones + "btn_controleur.png",getMessage(116));
-				controllerButton.onClick = onControllerButtonClicked;
+				controllerButton.onClick = controllerButtonClicked;
 				controllerButton.helpTip = getMessage(82);
 				//bouton bone
 				var boutonbone2 = addIconButton(groupeikD,dossierIcones + "btn_bones.png",getMessage(117));
@@ -2728,7 +2727,6 @@ function fnDuIK(thisObj)
 				//placeholder
 				addButton(groupeikD,"");
 				}
-				
 				// PANNEAU INTERPOLATION -----------------------------------------------------------
 				{
 				var groupeInterpoClefs = addHGroup(panointerpo);
@@ -2812,7 +2810,6 @@ function fnDuIK(thisObj)
 				boutonMKey.value = true;
 				boutonMKey.alignment = ["fill","bottom"];
 				}
-				
 				// PANNEAU ANIMATION -----------------------------------------------
 				{
 				var groupeAnimationG = addVGroup(panoanimation);
@@ -2858,7 +2855,6 @@ function fnDuIK(thisObj)
 				boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
 				boutonPasteAnim.helpTip = getMessage(132);
 				}
-			
 				//PANNEAU CAMERAS -------------------------------------------
 				{
 					panocam.orientation = "row";
@@ -2874,12 +2870,93 @@ function fnDuIK(thisObj)
 					boutontcam2d.helpTip = "HelpTip";
 					
 				}
-			
+				//CONTROLLERS PANEL
+				{
+					var ctrlMainGroup = addHGroup(ctrlPanel);
+					ctrlMainGroup.spacing = 15;
+					ctrlMainGroup.alignChildren = ["fill","top"];
+					var ctrlShapeGroup = addVGroup(ctrlMainGroup);
+					ctrlShapeGroup.alignChildren = ["fill","top"];
+					var ctrlRotationButton = ctrlShapeGroup.add("checkbox",undefined,"Rotation");
+					ctrlRotationButton.value = true;
+					var ctrlXPositionButton = ctrlShapeGroup.add("checkbox",undefined,"X Position");
+					ctrlXPositionButton.value = true;
+					var ctrlYPositionButton = ctrlShapeGroup.add("checkbox",undefined,"Y Position");
+					ctrlYPositionButton.value = true;
+					var ctrlScaleButton = ctrlShapeGroup.add("checkbox",undefined,"Scale");
+					var ctrlArcButton = ctrlShapeGroup.add("checkbox",undefined,"Arc");
+					ctrlArcButton.onClick = function () {
+						ctrlRotationButton.enabled = !ctrlArcButton.value;
+						ctrlXPositionButton.enabled = !ctrlArcButton.value;
+						ctrlYPositionButton.enabled = !ctrlArcButton.value;
+						ctrlScaleButton.enabled = !ctrlArcButton.value;
+					}
+					
+					var ctrlSettingsGroup = addVGroup(ctrlMainGroup);
+					ctrlSettingsGroup.alignChildren = ["fill","top"];
+					//taille des controleurs
+					var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
+					var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
+					ctrlSizeGroup.add("statictext",undefined,getMessage(169));
+					var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
+					ctrlSizeEdit.onChange = function() {
+						Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
+						Duik.settings.save();
+						};
+					ctrlSizeEdit.text = Duik.settings.controllerSize;
+					//taille auto controleurs
+					var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,getMessage(170));
+					ctrlSizeAutoButton.alignment = ["fill","bottom"];
+					ctrlSizeAutoButton.onClick = function() {
+						ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
+						ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value;
+						Duik.settings.controllerSizeAuto = ctrlSizeAutoButton.value;
+						Duik.settings.save();
+						};
+					ctrlSizeAutoButton.value = Duik.settings.controllerSizeAuto;
+					//size hint controllers
+					var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
+					ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
+					ctrlSizeAutoList.onChange = function () {
+						Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
+						Duik.settings.save();
+						};
+					ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value ;
+					ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
+					//color
+					var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
+					ctrlColorGroup.add("statictext",undefined,"Color:");
+					var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
+					ctrlColorList.selection = 6;
+					//autolock
+					var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
+					ctrlAutoLockButton.alignment = ["fill","bottom"];
+					var ctrlAutoLockText = ctrlSettingsGroup.add("statictext",undefined,"Warning! When controllers are locked,\nthey should be unlocked before parenting.",{multiline:true});
+					ctrlAutoLockText.visible = false;
+					ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
+					//lock buttons
+					var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
+					var ctrlUnlockButton = ctrlLockButtonsGroup.add("button",undefined,"Unlock Selected");
+					ctrlUnlockButton.onClick = ctrlUnlockButtonClicked;
+					var ctrlLockButton = ctrlLockButtonsGroup.add("button",undefined,"Lock Selected");
+					ctrlLockButton.onClick = ctrlLockButtonClicked;
+					//buttons
+					var ctrlButtonsGroup = addHGroup(ctrlPanel);
+					var ctrlCloseButton = ctrlButtonsGroup.add("button",undefined,"<< Back");
+					ctrlCloseButton.alignment = ["left","top"];
+					ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; panoik.show(); };
+					var ctrlUpdateButton = ctrlButtonsGroup.add("button",undefined,"Update");
+					ctrlUpdateButton.alignment = ["right","top"];
+					ctrlUpdateButton.onClick = ctrlUpdateButtonClicked;
+					var ctrlCreateButton = ctrlButtonsGroup.add("button",undefined,"Create");
+					ctrlCreateButton.alignment = ["right","top"];
+					ctrlCreateButton.onClick = controleur;
+				}
+				
 				// On définit le layout et on redessine la fenètre quand elle est resizée
 				palette.layout.layout(true);
 				palette.layout.resize();
 				palette.onResizing = palette.onResize = function () { this.layout.resize(); }
-				
 				
 				}
 		}
