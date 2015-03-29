@@ -1018,59 +1018,177 @@ function fnDuIK(thisObj)
 				var calques = app.project.activeItem.selectedLayers;
 				
 				//if num layers selected is not correct
-				if (calques.length < 2 || calques.length > 4) {
+				if (calques.length < 2 || calques.length > 5) {
 					alert(getMessage(7));
 					return;
 				} //if calques.length == 2 || calques.length == 3 || calques.length == 4
+				
+				
+				panoik.hide();
+				ikPanel.show();
+				
 				
 				var calquetridi = false;
 				var ncalquetridi = 0;
 				for (i=0;i<calques.length;i++){
 					if (calques[i].threeDLayer) {ncalquetridi = i+1;}
 					}
-					
-				if (ncalquetridi != 0 && ncalquetridi != calques.length) {
-					alert(getMessage(6));
-					return;
-				}//if ncalquetridi == 0 || ncalquetridi == calques.length
-				
+									
 				if (ncalquetridi == calques.length) {
-					boutonFront.enabled = true;
-					boutonRight.enabled = true;
 					calquetridi = true;
 					}//if ncalquetridi == calques.length
-				else {
-					boutonFront.enabled = false;
-					boutonRight.enabled = false;
-					}//else if ncalquetridi == calques.length
-					
-				if (calques.length == 2) {
-					//groupe d'annulation
-					app.beginUndoGroup("Duik - IK");
-					calquetridi ? alert(getMessage(5)) : Duik.autoIK(app.project.activeItem.selectedLayers);
-					//groupe d'annulation
-					app.endUndoGroup();
-					}//if calques.length == 2
-				else if (calques.length == 3) {
-					boutonStretch.value = false;
-					boutonStretch.enabled = false;
-					fenetreik.show();
-				} //if calques.length == 3
-				else if (calques.length == 4) {
-					boutonStretch.enabled = true;
-					boutonStretch.value = eval(app.settings.getSetting("duik", "stretch"));
-					boutonFK.value = eval(app.settings.getSetting("duik", "ikfk"));
-					fenetreik.show();
-				} //if calques.length == 4
-			}
 
-			//FONCTION QUI LANCE LA CREATION D'IK AVEC LES OPTIONS
-			function goik(){
-				//groupe d'annulation
-				app.beginUndoGroup("Duik - IK");
-				Duik.autoIK(app.project.activeItem.selectedLayers,boutonCW.value,boutonFront.value,);
-				//groupe d'annulation
-				app.endUndoGroup();
+				//prepIK
+				var ikRig = Duik.utils.prepIK(calques);
+				if (ikRig.type == 0) return;
+				
+				if (ikRig.type == 1 && ikRig.goal == null)
+				{
+					ikType1Group.show();
+					ikType2Group.hide();
+					ikType3Group.hide();
+					ikType4Group.hide();
+					ik3DGroup.hide();
+					ikCWButton.hide();
+				}
+				else if (ikRig.type == 1 && ikRig.goal != null)
+				{
+					ikType1Group.hide();
+					ikType2Group.show();
+					ikType3Group.hide();
+					ikType4Group.hide();
+					ik1GoalButton.value = true;
+					ik2LayerButton.value = false;
+					ik3DGroup.enabled = false;
+					if (calquetridi)
+					{
+						ik3DGroup.show();
+						ikFrontFacingButton.value = ikRig.frontFacing;
+						ikRightFacingButton.value = !ikRig.frontFacing;
+					}
+					else
+					{
+						ik3DGroup.hide();
+					}
+					ikCWButton.show();
+					ikCWButton.enabled = false;
+				}
+				else if (ikRig.type == 2 && ikRig.goal == null)
+				{
+					ikType1Group.hide();
+					ikType2Group.show();
+					ikType3Group.hide();
+					ikType4Group.hide();
+					ik1GoalButton.value = false;
+					ik2LayerButton.value = true;
+					ik3DGroup.enabled = true;
+					if (calquetridi)
+					{
+						ik3DGroup.show();
+						ikFrontFacingButton.value = ikRig.frontFacing;
+						ikRightFacingButton.value = !ikRig.frontFacing;
+					}
+					else
+					{
+						ik3DGroup.hide();
+					}
+					ikCWButton.show();
+					ikCWButton.enabled = true;
+				}
+				else if (ikRig.type == 2 && ikRig.goal != null)
+				{
+					ikType1Group.hide();
+					ikType2Group.hide();
+					ikType3Group.show();
+					ikType4Group.hide();
+					ik3LayerButton.value = false;
+					ik2GoalButton.value = true;
+					ik3DGroup.enabled = true;
+					if (calquetridi)
+					{
+						ik3DGroup.show();
+						ikFrontFacingButton.value = ikRig.frontFacing;
+						ikRightFacingButton.value = !ikRig.frontFacing;
+					}
+					else
+					{
+						ik3DGroup.hide();
+					}
+					ikCWButton.show();
+					ikCWButton.enabled = true;
+				}
+				else if (ikRig.type == 3 && ikRig.goal == null)
+				{
+					ikType1Group.hide();
+					ikType2Group.hide();
+					ikType3Group.show();
+					ikType4Group.hide();
+					ik3LayerButton.value = true;
+					ik2GoalButton.value = false;
+					ik3DGroup.enabled = false;
+					if (calquetridi)
+					{
+						ik3DGroup.show();
+						ikFrontFacingButton.value = ikRig.frontFacing;
+						ikRightFacingButton.value = !ikRig.frontFacing;
+					}
+					else
+					{
+						ik3DGroup.hide();
+					}
+					ikCWButton.show();
+					ikCWButton.enabled = true;
+				}
+				else if (ikRig.type == 3 && ikRig.goal != null)
+				{
+					ikType1Group.hide();
+					ikType2Group.hide();
+					ikType3Group.hide();
+					ikType4Group.show();
+					ik3DGroup.hide();
+					ikCWButton.show();
+					ikCWButton.enabled = true;
+				}
+			
+				ikCreateButton.onClick = function() {
+					ikRig.clockWise = ikCWButton.value;
+					ikRig.frontFacing = ikFrontFacingButton.value;
+					if (ikType2Group.visible)
+					{
+						if (ik2LayerButton.value && ikRig.type == 1)
+						{
+							ikRig.layer2 = ikRig.goal;
+							ikRig.goal = null;
+							ikRig.type = 2;
+						}
+						else if (ik1GoalButton.value && ikRig.type == 2)
+						{
+							ikRig.goal = ikRig.layer2;
+							ikRig.layer2 = null;
+							ikRig.type = 1;
+						}
+					}
+					if (ikType3Group.visible)
+					{
+						if (ik3LayerButton.value && ikRig.type == 2)
+						{
+							ikRig.layer3 = ikRig.goal;
+							ikRig.goal = null;
+							ikRig.type = 3;
+						}
+						else if (ik2GoalButton.value && ikRig.type == 3)
+						{
+							ikRig.goal = ikRig.layer3;
+							ikRig.layer3 = null;
+							ikRig.type = 2;
+						}
+					}
+					app.beginUndoGroup("Duik - IK");
+					ikRig.create(); 
+					app.endUndoGroup();
+					ikPanel.hide();
+					panoik.show();
+				}
 			}
 
 			//FONCTION QUAND ON CLIQUE SUR GOAL
@@ -1992,10 +2110,6 @@ function fnDuIK(thisObj)
 		}
 
 		
-				//controllers
-				{
-					
-				}
 				//replace in expressions
 				{
 					var rieWindow = new Window ("palette","Replace in expressions",undefined,{closeButton:false,resizeable:true});
@@ -2377,32 +2491,6 @@ function fnDuIK(thisObj)
 				
 				}
 				
-				//la fenetre d'option de création d'IK
-				{
-					var fenetreik = createDialog("Options d'IK",true,goik);
-					fenetreik.groupe.orientation = "column";
-					//boutons front et right view
-					var groupeik3d = fenetreik.groupe.add("panel",undefined,"3D");
-					groupeik3d.orientation = "row";
-					groupeik3d.alignChildren = ["fill","center"];
-					var boutonFront = groupeik3d.add("radiobutton",undefined,getMessage(80));
-					var boutonRight = groupeik3d.add("radiobutton",undefined,getMessage(81));
-					boutonFront.value = true;
-					//boutons orientation
-					var groupeikorient = fenetreik.groupe.add("panel",undefined,"Orientation");
-					groupeikorient.orientation = "row";
-					groupeikorient.alignChildren = ["fill","center"];
-					var boutonCW = groupeikorient.add("radiobutton",undefined,">");
-					var boutonCCW = groupeikorient.add("radiobutton",undefined,"<");
-					boutonCW.value = true;
-					//bouton FK
-					var boutonFK = fenetreik.groupe.add("checkbox",undefined,"Controleur FK sur IK");
-					boutonFK.value = true;
-					//bouton Stretch
-					var boutonStretch = fenetreik.groupe.add("checkbox",undefined,"Controleurs de Stretch");
-					boutonStretch.value = true;	
-				}
-				
 				//la fenetre d'option de multiplan
 				{
 					var fenetremultiplan = createDialog(getMessage(188),true,multiplan);
@@ -2457,9 +2545,12 @@ function fnDuIK(thisObj)
 				panosettings.visible = false;
 				var ctrlPanel = addVPanel(panos);
 				ctrlPanel.visible = false;
+				var ikPanel = addVPanel(panos);
+				ikPanel.visible = false;
 
 				selecteur.onChange = function() {
 					ctrlPanel.hide();
+					ikPanel.hide();
 					if (selecteur.selection == 0){
 						panoik.visible = true;
 						panoanimation.visible = false;
@@ -2721,7 +2812,7 @@ function fnDuIK(thisObj)
 				boutonmesurer.onClick = mesure;
 				boutonmesurer.helpTip = getMessage(100);
 				//replace in expressions button
-				var rieButton = addButton(groupeikG,"Replace in Expr.");
+				var rieButton = addIconButton(groupeikG,dossierIcones + "btn_replaceinexpr.png","Replace in expr.");
 				rieButton.onClick = onRieButtonClicked;
 				rieButton.helpTip = "Search and replace text in expressions";
 				//placeholder
@@ -2877,20 +2968,35 @@ function fnDuIK(thisObj)
 					ctrlMainGroup.alignChildren = ["fill","top"];
 					var ctrlShapeGroup = addVGroup(ctrlMainGroup);
 					ctrlShapeGroup.alignChildren = ["fill","top"];
-					var ctrlRotationButton = ctrlShapeGroup.add("checkbox",undefined,"Rotation");
+					var ctrlRotationGroup = addHGroup(ctrlShapeGroup);
+					var ctrlRotationButton = ctrlRotationGroup.add("checkbox",undefined,"");
 					ctrlRotationButton.value = true;
-					var ctrlXPositionButton = ctrlShapeGroup.add("checkbox",undefined,"X Position");
+					ctrlRotationButton.alignment = ["left","bottom"];
+					ctrlRotationGroup.add("image",undefined,dossierIcones + "ctrl_rot.png");
+					var ctrlXPositionGroup = addHGroup(ctrlShapeGroup);
+					var ctrlXPositionButton = ctrlXPositionGroup.add("checkbox",undefined,"");
 					ctrlXPositionButton.value = true;
-					var ctrlYPositionButton = ctrlShapeGroup.add("checkbox",undefined,"Y Position");
+					ctrlXPositionButton.alignment = ["left","bottom"];
+					ctrlXPositionGroup.add("image",undefined,dossierIcones + "ctrl_xpos.png");
+					var ctrlYPositionGroup = addHGroup(ctrlShapeGroup);
+					var ctrlYPositionButton = ctrlYPositionGroup.add("checkbox",undefined,"");
 					ctrlYPositionButton.value = true;
-					var ctrlScaleButton = ctrlShapeGroup.add("checkbox",undefined,"Scale");
-					var ctrlArcButton = ctrlShapeGroup.add("checkbox",undefined,"Arc");
+					ctrlYPositionButton.alignment = ["left","bottom"];
+					ctrlYPositionGroup.add("image",undefined,dossierIcones + "ctrl_ypos.png");
+					var ctrlScaleGroup = addHGroup(ctrlShapeGroup);
+					var ctrlScaleButton = ctrlScaleGroup.add("checkbox",undefined,"");
+					ctrlScaleButton.alignment = ["left","bottom"];
+					ctrlScaleGroup.add("image",undefined,dossierIcones + "ctrl_sca.png");
+					var ctrlArcGroup = addHGroup(ctrlShapeGroup);
+					var ctrlArcButton = ctrlArcGroup.add("checkbox",undefined,"");
 					ctrlArcButton.onClick = function () {
 						ctrlRotationButton.enabled = !ctrlArcButton.value;
 						ctrlXPositionButton.enabled = !ctrlArcButton.value;
 						ctrlYPositionButton.enabled = !ctrlArcButton.value;
 						ctrlScaleButton.enabled = !ctrlArcButton.value;
 					}
+					ctrlArcButton.alignment = ["left","bottom"];
+					ctrlArcGroup.add("image",undefined,dossierIcones + "ctrl_arc.png");
 					
 					var ctrlSettingsGroup = addVGroup(ctrlMainGroup);
 					ctrlSettingsGroup.alignChildren = ["fill","top"];
@@ -2906,7 +3012,7 @@ function fnDuIK(thisObj)
 					ctrlSizeEdit.text = Duik.settings.controllerSize;
 					//taille auto controleurs
 					var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,getMessage(170));
-					ctrlSizeAutoButton.alignment = ["fill","bottom"];
+					ctrlSizeAutoButton.alignment = ["left","bottom"];
 					ctrlSizeAutoButton.onClick = function() {
 						ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
 						ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value;
@@ -2925,34 +3031,102 @@ function fnDuIK(thisObj)
 					ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
 					//color
 					var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
-					ctrlColorGroup.add("statictext",undefined,"Color:");
+					ctrlColorGroup.add("statictext",undefined,"Color");
 					var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
 					ctrlColorList.selection = 6;
 					//autolock
 					var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
 					ctrlAutoLockButton.alignment = ["fill","bottom"];
-					var ctrlAutoLockText = ctrlSettingsGroup.add("statictext",undefined,"Warning! When controllers are locked,\nthey should be unlocked before parenting.",{multiline:true});
+					var ctrlAutoLockText = ctrlPanel.add("statictext",undefined,"Warning! When controllers are locked,\nthey should be unlocked before parenting.",{multiline:true});
 					ctrlAutoLockText.visible = false;
 					ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
 					//lock buttons
 					var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
-					var ctrlUnlockButton = ctrlLockButtonsGroup.add("button",undefined,"Unlock Selected");
+					var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unlock.png","Unlock Sel.");
 					ctrlUnlockButton.onClick = ctrlUnlockButtonClicked;
-					var ctrlLockButton = ctrlLockButtonsGroup.add("button",undefined,"Lock Selected");
+					var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_lock.png","Lock Sel.");
 					ctrlLockButton.onClick = ctrlLockButtonClicked;
 					//buttons
 					var ctrlButtonsGroup = addHGroup(ctrlPanel);
 					var ctrlCloseButton = ctrlButtonsGroup.add("button",undefined,"<< Back");
 					ctrlCloseButton.alignment = ["left","top"];
 					ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; panoik.show(); };
-					var ctrlUpdateButton = ctrlButtonsGroup.add("button",undefined,"Update");
+					var ctrlUpdateButton = ctrlButtonsGroup.add("button",undefined,"Update Sel.");
 					ctrlUpdateButton.alignment = ["right","top"];
-					ctrlUpdateButton.onClick = ctrlUpdateButtonClicked;
+					ctrlUpdateButton.onClick = function () { ctrlUpdateButtonClicked(); ctrlPanel.hide() ; panoik.show(); };
 					var ctrlCreateButton = ctrlButtonsGroup.add("button",undefined,"Create");
 					ctrlCreateButton.alignment = ["right","top"];
-					ctrlCreateButton.onClick = controleur;
+					ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; panoik.show(); };
 				}
-				
+				//IK PANEL
+				{					
+					var ikTypeGroup = ikPanel.add("group");
+					ikTypeGroup.orientation = "stack";
+					var ikType4Group = addHGroup(ikTypeGroup);
+					ikType4Group.visible = false;
+					var ikType3Group = addHGroup(ikTypeGroup);
+					ikType3Group.visible = false;
+					var ikType2Group = addHGroup(ikTypeGroup);
+					ikType2Group.visible = false;
+					var ikType1Group = addHGroup(ikTypeGroup);
+					ikType1Group.visible = false;
+					
+					var ik3GoalGroup = addVGroup(ikType4Group);
+					ik3GoalGroup.enabled = false;
+					ik3GoalGroup.alignChildren = ["center","top"];
+					ik3GoalGroup.add("image",undefined,dossierIcones + "btn_3layerikgoal.png");
+					ik3GoalGroup.add("statictext",undefined,"3-Layer IK & Goal");
+					
+					var ik3LayerGroup = addVGroup(ikType3Group);
+					ik3LayerGroup.enabled = false;
+					ik3LayerGroup.alignChildren = ["center","top"];
+					ik3LayerGroup.add("image",undefined,dossierIcones + "btn_3layerik.png");
+					var ik3LayerButton = ik3LayerGroup.add("radiobutton",undefined,"3-Layer IK");
+					var ik2GoalGroup = addVGroup(ikType3Group);
+					ik2GoalGroup.alignChildren = ["center","top"];
+					ik2GoalGroup.add("image",undefined,dossierIcones + "btn_2layerikgoal.png");
+					var ik2GoalButton = ik2GoalGroup.add("radiobutton",undefined,"2-Layer IK & Goal");
+
+
+					var ik1GoalGroup = addVGroup(ikType2Group);
+					ik1GoalGroup.alignChildren = ["center","top"];
+					ik1GoalGroup.add("image",undefined,dossierIcones + "btn_1layerikgoal.png");
+					var ik1GoalButton = ik1GoalGroup.add("radiobutton",undefined,"1-Layer IK & Goal");
+					var ik2LayerGroup = addVGroup(ikType2Group);
+					ik2LayerGroup.alignChildren = ["center","top"];
+					ik2LayerGroup.add("image",undefined,dossierIcones + "btn_2layerik.png");
+					var ik2LayerButton = ik2LayerGroup.add("radiobutton",undefined,"2-Layer IK");
+					
+					var ik1LayerGroup = addVGroup(ikType1Group);
+					ik1LayerGroup.alignChildren = ["center","top"];
+					ik1LayerGroup.add("image",undefined,dossierIcones + "btn_1layerik.png");
+					ik1LayerGroup.add("statictext",undefined,"1-Layer IK (LookAt)");
+					
+					addSeparator(ikPanel,"");
+					
+					var ikSettingsGroup = addHGroup(ikPanel);
+					
+					var ikCWButton = ikSettingsGroup.add("checkbox",undefined,"Clockwise");
+					ikCWButton.visible = false;
+										
+					var ik3DGroup = addVGroup(ikSettingsGroup);
+					ik3DGroup.visible = false;
+					var ikFrontFacingButton = ik3DGroup.add("radiobutton",undefined,"Front/Back view");
+					var ikRightFacingButton = ik3DGroup.add("radiobutton",undefined,"Left/Right view");
+					
+					ik3LayerButton.onClick = function () { ik2GoalButton.value = false; ik3DGroup.enabled = false;  ikCWButton.enabled = true;};
+					ik2GoalButton.onClick = function () { ik3LayerButton.value = false; ik3DGroup.enabled = true; ikCWButton.enabled = true;};
+					
+					ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true; ikCWButton.enabled = true;};
+					ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false; ikCWButton.enabled = false; };
+					
+					var ikButtonsGroup = addHGroup(ikPanel);
+					var ikCancelButton = ikButtonsGroup.add("button",undefined,"<< Cancel");
+					ikCancelButton.onClick = function () { ikPanel.hide();panoik.show(); };
+					var ikCreateButton = ikButtonsGroup.add("button",undefined,"Create");
+					
+					
+				}
 				// On définit le layout et on redessine la fenètre quand elle est resizée
 				palette.layout.layout(true);
 				palette.layout.resize();
