@@ -29,7 +29,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15.alpha09";
+	var version = "15.alpha10";
 	//=========================
 
 	//=================================
@@ -3072,13 +3072,11 @@ function fnDuIK(thisObj)
 					ikType1Group.visible = false;
 					
 					var ik3GoalGroup = addVGroup(ikType4Group);
-					ik3GoalGroup.enabled = false;
 					ik3GoalGroup.alignChildren = ["center","top"];
 					ik3GoalGroup.add("image",undefined,dossierIcones + "btn_3layerikgoal.png");
 					ik3GoalGroup.add("statictext",undefined,"3-Layer IK & Goal");
 					
 					var ik3LayerGroup = addVGroup(ikType3Group);
-					ik3LayerGroup.enabled = false;
 					ik3LayerGroup.alignChildren = ["center","top"];
 					ik3LayerGroup.add("image",undefined,dossierIcones + "btn_3layerik.png");
 					var ik3LayerButton = ik3LayerGroup.add("radiobutton",undefined,"3-Layer IK");
