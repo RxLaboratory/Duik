@@ -1302,6 +1302,24 @@ function fnDuIK(thisObj)
 				}
 				app.endUndoGroup();
 			}
+			function ctrlUnhideButtonClicked(){
+				var controllers = Duik.utils.getControllers(app.project.activeItem.selectedLayers);
+				app.beginUndoGroup("Duik - Unhide Controllers");
+				for (var i = 0 ; i < controllers.length ; i++)
+				{
+					controllers[i].layer.enabled = true;
+				}
+				app.endUndoGroup();
+			}
+			function ctrlHideButtonClicked(){
+				var controllers = Duik.utils.getControllers(app.project.activeItem.selectedLayers);
+				app.beginUndoGroup("Duik - Unhide Controllers");
+				for (var i = 0 ; i < controllers.length ; i++)
+				{
+					controllers[i].layer.enabled = false;
+				}
+				app.endUndoGroup();
+			}
 			
 			//FONCTION POUR AJOUTER UN (DES) BONE(S)
 			function bone(){
@@ -3042,10 +3060,19 @@ function fnDuIK(thisObj)
 					ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
 					//lock buttons
 					var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
-					var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unlock.png","Unlock Sel.");
+					var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unlock.png","");
+					ctrlUnlockButton.helpTip =  "Unlock selected controllers\n(all controllers if none selected)";
 					ctrlUnlockButton.onClick = ctrlUnlockButtonClicked;
-					var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_lock.png","Lock Sel.");
+					var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_lock.png","");
+					ctrlLockButton.helpTip =  "Lock selected controllers\n(all controllers if none selected)";
 					ctrlLockButton.onClick = ctrlLockButtonClicked;
+					//hide buttons
+					var ctrlUnhideButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unhide.png","");
+					ctrlUnhideButton.helpTip =  "Unhide selected controllers\n(all controllers if none selected)";
+					ctrlUnhideButton.onClick = ctrlUnhideButtonClicked;
+					var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_hide.png","");
+					ctrlHideButton.helpTip =  "Hide selected controllers\n(all controllers if none selected)";
+					ctrlHideButton.onClick = ctrlHideButtonClicked;
 					//buttons
 					var ctrlButtonsGroup = addHGroup(ctrlPanel);
 					var ctrlCloseButton = ctrlButtonsGroup.add("button",undefined,"<< Back");
