@@ -1015,33 +1015,34 @@ function fnDuIK(thisObj)
 
 			//FONCTION QUAND ON CLIQUE SUR CREER IK --- TODO vérif auto parentage/calques sélectionnés (à mettre dans libDuik)
 			function ik(){
-				var calques = app.project.activeItem.selectedLayers;
 				
-				//if num layers selected is not correct
-				if (calques.length < 2 || calques.length > 5) {
+				var okToGo = app.project.activeItem != null;
+				var calques;
+				
+				if (okToGo)
+				{
+					calques = app.project.activeItem.selectedLayers;
+					//if num layers selected is not correct
+					if (calques.length < 2 || calques.length > 5) {
+						okToGo = false;
+					}
+				}
+				if (!okToGo)
+				{
 					alert(getMessage(7));
 					return;
-				} //if calques.length == 2 || calques.length == 3 || calques.length == 4
+				}
 				
 				
 				panoik.hide();
 				ikPanel.show();
 				
-				
-				var calquetridi = false;
-				var ncalquetridi = 0;
-				for (i=0;i<calques.length;i++){
-					if (calques[i].threeDLayer) {ncalquetridi = i+1;}
-					}
-									
-				if (ncalquetridi == calques.length) {
-					calquetridi = true;
-					}//if ncalquetridi == calques.length
-
 				//prepIK
+				app.beginUndoGroup("Duik - prepare IK");
 				var ikRig = Duik.utils.prepIK(calques);
+				app.endUndoGroup();
 				if (ikRig.type == 0) return;
-				
+			
 				if (ikRig.type == 1 && ikRig.goal == null)
 				{
 					ikType1Group.show();
@@ -1060,7 +1061,7 @@ function fnDuIK(thisObj)
 					ik1GoalButton.value = true;
 					ik2LayerButton.value = false;
 					ik3DGroup.enabled = false;
-					if (calquetridi)
+					if (ikRig.threeD)
 					{
 						ik3DGroup.show();
 						ikFrontFacingButton.value = ikRig.frontFacing;
@@ -1082,7 +1083,7 @@ function fnDuIK(thisObj)
 					ik1GoalButton.value = false;
 					ik2LayerButton.value = true;
 					ik3DGroup.enabled = true;
-					if (calquetridi)
+					if (ikRig.threeD)
 					{
 						ik3DGroup.show();
 						ikFrontFacingButton.value = ikRig.frontFacing;
@@ -1104,7 +1105,7 @@ function fnDuIK(thisObj)
 					ik3LayerButton.value = false;
 					ik2GoalButton.value = true;
 					ik3DGroup.enabled = true;
-					if (calquetridi)
+					if (ikRig.threeD)
 					{
 						ik3DGroup.show();
 						ikFrontFacingButton.value = ikRig.frontFacing;
@@ -1126,7 +1127,7 @@ function fnDuIK(thisObj)
 					ik3LayerButton.value = true;
 					ik2GoalButton.value = false;
 					ik3DGroup.enabled = false;
-					if (calquetridi)
+					if (ikRig.threeD)
 					{
 						ik3DGroup.show();
 						ikFrontFacingButton.value = ikRig.frontFacing;
@@ -1193,22 +1194,21 @@ function fnDuIK(thisObj)
 
 			//FONCTION QUAND ON CLIQUE SUR GOAL
 			function pregoal(){
-
-			if (app.project.activeItem.selectedLayers.length == 1) {
-				//groupe d'annulation
-				app.beginUndoGroup("Duik - Goal");
-				Duik.goal(app.project.activeItem.selectedLayers[0],undefined);
-				//groupe d'annulation
-				app.endUndoGroup();
-			}
-			else if (app.project.activeItem.selectedLayers.length == 2) {
-				//groupe d'annulation
-				app.beginUndoGroup("Duik - Goal");
-				Duik.goal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
-				//groupe d'annulation
-				app.endUndoGroup();
-			}
-			else{alert(getMessage(10),"Attention",true);}
+				if (app.project.activeItem.selectedLayers.length == 1) {
+					//groupe d'annulation
+					app.beginUndoGroup("Duik - Goal");
+					Duik.goal(app.project.activeItem.selectedLayers[0],undefined);
+					//groupe d'annulation
+					app.endUndoGroup();
+				}
+				else if (app.project.activeItem.selectedLayers.length == 2) {
+					//groupe d'annulation
+					app.beginUndoGroup("Duik - Goal");
+					Duik.goal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
+					//groupe d'annulation
+					app.endUndoGroup();
+				}
+				else{alert(getMessage(10),"Attention",true);}
 			}
 
 			//FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR

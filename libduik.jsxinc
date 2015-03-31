@@ -659,14 +659,8 @@ if (typeof Duik === 'object') delete Duik;
 	//================================
 	
 	/* UI Strings
-		Localisation
-		
-		TODO
 		class Duik.uiStrings
 		containing all needed uiString (localizable strings)
-		
-		Duik.setLanguage(lang)
-		lang | string, language code
 	*/
 	if (typeof Duik.uiStrings !== 'object')
 	{
@@ -1291,7 +1285,6 @@ if (typeof Duik === 'object') delete Duik;
 					rig.type = 1;
 					rig.layer1 = layers[0];
 					rig.controller = layers[1];
-					return rig;
 				}
 				else
 				{
@@ -1426,12 +1419,10 @@ if (typeof Duik === 'object') delete Duik;
 							rig.goal = rig.layer2;
 							rig.layer2 = null;
 							rig.type = 1;
-							return rig;
 						}
 						else
 						{
 							rig.type = 2;
-							return rig;
 						}
 					}
 					else if (layers.length == 4)
@@ -1456,12 +1447,10 @@ if (typeof Duik === 'object') delete Duik;
 							rig.goal = rig.layer3;
 							rig.layer3 = null;
 							rig.type = 2;
-							return rig;
 						}
 						else
 						{
 							rig.type = 3;
-							return rig;
 						}
 					}
 					else if (layers.length == 5)
@@ -1474,7 +1463,6 @@ if (typeof Duik === 'object') delete Duik;
 							rig.goal = sortedLayers[3];
 							rig.controller = ctrl;
 							rig.type = 3;
-							return rig;
 						}
 						else
 						{
@@ -1484,14 +1472,51 @@ if (typeof Duik === 'object') delete Duik;
 							rig.goal = layers[0];
 							rig.controller = layers[4];
 							rig.type = 3;
-							return rig;
 						}
 					}
 				}
 				
-				//TODO detect 3d
+				//detect 3d
+				var threeD = true;
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					if (!layers[i].threeDLayer)
+					{
+						threeD = false;
+						break;
+					}
+				}
+				rig.threeD = threeD;
 				
-				//TODO Detect frontFacing if 3D
+				//Detect frontFacing if 3D
+				//add a point effect on the layer to get values with expressions
+				if (threeD)
+				{
+					var tempEffect = rig.layer1.effect.addProperty("ADBE Point3D Control");
+					tempEffect(1).expression = "C = thisComp.layer(\"" + rig.layer1.name + "\");\n" + 
+							"u = C.toWorldVec([1,0,0]);\n" + 
+							"v = C.toWorldVec([0,1,0]);\n" + 
+							"w = C.toWorldVec([0,0,1]);\n" + 
+							"sinb = clamp(w[0],-1,1);\n" + 
+							"b = Math.asin(sinb);\n" + 
+							"cosb = Math.cos(b);\n" + 
+							"if (Math.abs(cosb) > .0005){\n" + 
+							"c = -Math.atan2(v[0],u[0]);\n" + 
+							"a = -Math.atan2(w[1],w[2]);\n" + 
+							"}else{\n" + 
+							"a = Math.atan2(u[1],v[1]);\n" + 
+							"c = 0;\n" + 
+							"}\n" + 
+							"xValue=Math.round(radiansToDegrees(a));\n" + 
+							"yValue=Math.round(radiansToDegrees(b));\n" + 
+							"zValue=Math.round(radiansToDegrees(c));\n" + 
+							"[(xValue),(yValue),(zValue)]\n";
+					var orientation = tempEffect(1).value;
+					rig.frontFacing = false;
+					if (orientation[0]%180 > 10 || orientation[1]%90 >10) rig.threeD = false;
+					else if (orientation[1]%180 < 10) rig.frontFacing = true;
+					tempEffect.remove();
+				}
 				
 				return rig;
 			}
@@ -1667,7 +1692,8 @@ if (typeof Duik === 'object') delete Duik;
 			var effect;
 			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(controller,"DUIK_Two_Layer_IK");
 			else effect = controller.effect.addProperty("DUIK_Two_Layer_IK");
-			effect.name = Duik.uiStrings.ik + " "  + endName;
+			effectName = Duik.uiStrings.ik + " "  + endName;
+			effect.name = effectName;
 			if (clockWise) effect(1).setValue(1);
 
 			if (threeD) {
@@ -1703,9 +1729,9 @@ if (typeof Duik === 'object') delete Duik;
 				"bonebout = \"" + endName + "\";\n" + 
 				"zero = \"" + endZeroName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" +
-				"FK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(5);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
-				"if (thisComp.layer(controleur).effect(\"" + effect.name + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + effectName + "\")(5);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effectName + "\")(3) == 0;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + effectName + "\")(1) == 1) {cw = true}else{cw=false}\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
@@ -1742,9 +1768,9 @@ if (typeof Duik === 'object') delete Duik;
 				"bonebout = \"" + endName + "\";\n" + 
 				"zero = \"" + endZeroName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" +
-				"FK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(4);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
-				"if (thisComp.layer(controleur).effect(\"" + effect.name + "\")(1) == 1) {cw = true}else{cw=false}\n" +
+				"FK = thisComp.layer(controleur).effect(\"" + effectName + "\")(4);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effectName + "\")(3) == 0;\n" +
+				"if (thisComp.layer(controleur).effect(\"" + effectName + "\")(1) == 1) {cw = true}else{cw=false}\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
@@ -1827,9 +1853,9 @@ if (typeof Duik === 'object') delete Duik;
 			var expressionstretchbout = "//Duik.twoLayerIK.stretch\r\n" +
 				"boneracine = \"" + rootName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" + 
-				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(9)/2;\n" + 
-				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(8);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effectName + "\")(9)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effectName + "\")(8);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effectName + "\")(3) == 0;\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"L = thisComp.layer(theLayerName);\n" + 
 				"return L.toWorld(L.anchorPoint);\n" + 
@@ -1851,9 +1877,9 @@ if (typeof Duik === 'object') delete Duik;
 			var expressionstretchzero = "//Duik.twoLayerIK.stretch\r\n" +
 				"boneracine = \"" + rootName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" + 
-				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(9)/2;\n" + 
-				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effect.name + "\")(8);\n" +
-				"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" +
+				"stretch = thisComp.layer(\"" + controllerName + "\").effect(\"" + effectName + "\")(9)/2;\n" + 
+				"auto = thisComp.layer(\"" + controllerName + "\").effect(\"" + effectName + "\")(8);\n" +
+				"IKFK = thisComp.layer(controleur).effect(\"" + effectName + "\")(3) == 0;\n" +
 				"function getWorldPos(theLayerName){\n" + 
 				"L = thisComp.layer(theLayerName);\n" + 
 				"return L.toWorld(L.anchorPoint);\n" + 
