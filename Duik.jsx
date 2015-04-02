@@ -1469,13 +1469,7 @@ function fnDuIK(thisObj)
 
 				}
 			}
-			
-			//REPLACE IN EXPRESSIONS UI
-			function onRieButtonClicked()
-			{
-				rieWindow.show();
-			}
-			
+					
 			//REPLACE IN EXPRESSIONS
 			function replaceInExpr()
 			{
@@ -2162,45 +2156,6 @@ function fnDuIK(thisObj)
 		}
 
 		
-				//replace in expressions
-				{
-					var rieWindow = new Window ("palette","Replace in expressions",undefined,{closeButton:false,resizeable:true});
-					rieWindow.spacing = 2;
-					rieWindow.margins = 5;
-					rieWindow.alignChildren = ["fill","top"];
-					rieWindow.minimumSize = [300,100];
-					var rieOldGroup = addHGroup(rieWindow);
-					var rieOldText = rieOldGroup.add("statictext",undefined,"Old:");
-					rieOldText.alignment = ["left","top"];
-					var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
-					var rieNewGroup = addHGroup(rieWindow);
-					var rieNewText = rieNewGroup.add("statictext",undefined,"New:");
-					rieNewText.alignment = ["left","top"];
-					var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
-					var rieCompGroup = addHGroup(rieWindow);
-					rieCompGroup.alignment = ["center","top"];
-					var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,"Active comp");
-					var rieAllCompsButton = rieCompGroup.add("radiobutton",undefined,"All comps");
-					rieCurrentCompButton.onClick = function () {
-						rieLayerGroup.enabled = rieCurrentCompButton.value;
-					}
-					rieAllCompsButton.onClick = function () {
-						rieLayerGroup.enabled = rieCurrentCompButton.value;
-					}
-					rieCurrentCompButton.value = true;
-					var rieLayerGroup = addHGroup(rieWindow);
-					rieLayerGroup.alignment = ["center","top"];
-					var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,"Selected layers");
-					var rieAllLayersButton = rieLayerGroup.add("radiobutton",undefined,"All layers");
-					rieAllLayersButton.value = true;
-					var rieOKButton = rieWindow.add("button",undefined,"Replace in expressions");
-					rieOKButton.onClick = replaceInExpr;
-					var rieCancelButton = rieWindow.add("button",undefined,"Close");
-					rieCancelButton.onClick = function () { rieWindow.hide();};
-					rieWindow.layout.layout(true);
-					rieWindow.layout.resize();
-					rieWindow.onResizing = rieWindow.onResize = function () { rieWindow.layout.resize(); }
-				}
 				//l'expo
 				{
 					var fenetreexposure = createDialog(getMessage(123),true,nframes);
@@ -2552,6 +2507,8 @@ function fnDuIK(thisObj)
 				ikPanel.visible = false;
 				var renamePanel = addVPanel(panos);
 				renamePanel.visible = false;
+				var riePanel = addVPanel(panos);
+				riePanel.visible = false;
 
 				selecteur.onChange = function() {
 					ctrlPanel.hide();
@@ -2779,50 +2736,50 @@ function fnDuIK(thisObj)
 				}
 				// PANNEAU RIGGING -----------------------------------------------------------
 				{
-				//bouton autorig
-				var boutonautorig = addIconButton(panoik,dossierIcones + "btn_autorig.png",getMessage(142));
-				boutonautorig.onClick = autorig;
-				//boutonautorig.helpTip = "tip à écrire";
-				var groupeik = addHGroup(panoik);
-				var groupeikG = addVGroup(groupeik);
-				var groupeikD = addVGroup(groupeik);
-				//bouton pour créer l'IK
-				var boutonik = addIconButton(groupeikG,dossierIcones + "btn_creer.png",getMessage(114));
-				boutonik.onClick = ik;
-				//bouton pour créer un goal
-				var boutongoal = addIconButton(groupeikD,dossierIcones + "btn_goal.png",getMessage(115));
-				boutongoal.onClick = pregoal;
-				boutongoal.helpTip = getMessage(79);
-				//bouton controleur
-				var controllerButton = addIconButton(groupeikG,dossierIcones + "btn_controleur.png",getMessage(116));
-				controllerButton.onClick = controllerButtonClicked;
-				controllerButton.helpTip = getMessage(82);
-				//bouton bone
-				var boutonbone2 = addIconButton(groupeikD,dossierIcones + "btn_bones.png",getMessage(117));
-				boutonbone2.onClick = bone;
-				boutonbone2.helpTip = getMessage(83);
-				//bouton zero
-				var boutonzero2 = addIconButton(groupeikG,dossierIcones + "btn_zero.png",getMessage(118));
-				boutonzero2.onClick = zero;
-				boutonzero2.helpTip = getMessage(84);
-				//bouton rotmorph
-				var boutonrotmorph = addIconButton(groupeikD,dossierIcones + "btn_rotmorph.png",getMessage(119));
-				boutonrotmorph.onClick = rotmorph;
-				boutonrotmorph.helpTip = getMessage(120);
-				//bouton renommer
-				var boutonrename = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",getMessage(111));
-				boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
-				boutonrename.helpTip = getMessage(85);
-				//bouton mesurer
-				var boutonmesurer = addIconButton(groupeikD,dossierIcones + "btn_mesurer.png",getMessage(106));
-				boutonmesurer.onClick = mesure;
-				boutonmesurer.helpTip = getMessage(100);
-				//replace in expressions button
-				var rieButton = addIconButton(groupeikG,dossierIcones + "btn_replaceinexpr.png","Replace in expr.");
-				rieButton.onClick = onRieButtonClicked;
-				rieButton.helpTip = "Search and replace text in expressions";
-				//placeholder
-				addButton(groupeikD,"");
+					//bouton autorig
+					var boutonautorig = addIconButton(panoik,dossierIcones + "btn_autorig.png",getMessage(142));
+					boutonautorig.onClick = autorig;
+					//boutonautorig.helpTip = "tip à écrire";
+					var groupeik = addHGroup(panoik);
+					var groupeikG = addVGroup(groupeik);
+					var groupeikD = addVGroup(groupeik);
+					//bouton pour créer l'IK
+					var boutonik = addIconButton(groupeikG,dossierIcones + "btn_creer.png",getMessage(114));
+					boutonik.onClick = ik;
+					//bouton pour créer un goal
+					var boutongoal = addIconButton(groupeikD,dossierIcones + "btn_goal.png",getMessage(115));
+					boutongoal.onClick = pregoal;
+					boutongoal.helpTip = getMessage(79);
+					//bouton controleur
+					var controllerButton = addIconButton(groupeikG,dossierIcones + "btn_controleur.png",getMessage(116));
+					controllerButton.onClick = controllerButtonClicked;
+					controllerButton.helpTip = getMessage(82);
+					//bouton bone
+					var boutonbone2 = addIconButton(groupeikD,dossierIcones + "btn_bones.png",getMessage(117));
+					boutonbone2.onClick = bone;
+					boutonbone2.helpTip = getMessage(83);
+					//bouton zero
+					var boutonzero2 = addIconButton(groupeikG,dossierIcones + "btn_zero.png",getMessage(118));
+					boutonzero2.onClick = zero;
+					boutonzero2.helpTip = getMessage(84);
+					//bouton rotmorph
+					var boutonrotmorph = addIconButton(groupeikD,dossierIcones + "btn_rotmorph.png",getMessage(119));
+					boutonrotmorph.onClick = rotmorph;
+					boutonrotmorph.helpTip = getMessage(120);
+					//bouton renommer
+					var boutonrename = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",getMessage(111));
+					boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
+					boutonrename.helpTip = getMessage(85);
+					//bouton mesurer
+					var boutonmesurer = addIconButton(groupeikD,dossierIcones + "btn_mesurer.png",getMessage(106));
+					boutonmesurer.onClick = mesure;
+					boutonmesurer.helpTip = getMessage(100);
+					//replace in expressions button
+					var rieButton = addIconButton(groupeikG,dossierIcones + "btn_replaceinexpr.png","Replace in expr.");
+					rieButton.onClick = function () { panoik.hide(); riePanel.show();}
+					rieButton.helpTip = "Search and replace text in expressions";
+					//placeholder
+					addButton(groupeikD,"");
 				}
 				// PANNEAU INTERPOLATION -----------------------------------------------------------
 				{
@@ -3205,7 +3162,38 @@ function fnDuIK(thisObj)
 					renameCreateButton.alignment = ["right","top"];
 					renameCreateButton.onClick = rename;
 				}
-				
+				//REPLACE IN EXPRESSIONS PANEL
+				{
+					var rieOldGroup = addHGroup(riePanel);
+					var rieOldText = rieOldGroup.add("statictext",undefined,"Old:");
+					rieOldText.alignment = ["left","top"];
+					var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
+					var rieNewGroup = addHGroup(riePanel);
+					var rieNewText = rieNewGroup.add("statictext",undefined,"New:");
+					rieNewText.alignment = ["left","top"];
+					var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
+					var rieCompGroup = addHGroup(riePanel);
+					rieCompGroup.alignment = ["center","top"];
+					var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,"Active comp");
+					var rieAllCompsButton = rieCompGroup.add("radiobutton",undefined,"All comps");
+					rieCurrentCompButton.onClick = function () {
+						rieLayerGroup.enabled = rieCurrentCompButton.value;
+					}
+					rieAllCompsButton.onClick = function () {
+						rieLayerGroup.enabled = rieCurrentCompButton.value;
+					}
+					rieCurrentCompButton.value = true;
+					var rieLayerGroup = addHGroup(riePanel);
+					rieLayerGroup.alignment = ["center","top"];
+					var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,"Selected layers");
+					var rieAllLayersButton = rieLayerGroup.add("radiobutton",undefined,"All layers");
+					rieAllLayersButton.value = true;
+					var rieButtonsGroup = addHGroup(riePanel);
+					var rieCancelButton = rieButtonsGroup.add("button",undefined,"<< Back");
+					rieCancelButton.onClick = function () { riePanel.hide();panoik.show();};
+					var rieOKButton = rieButtonsGroup.add("button",undefined,"Replace in expressions");
+					rieOKButton.onClick = replaceInExpr;
+				}
 				
 				// On définit le layout et on redessine la fenètre quand elle est resizée
 				palette.layout.layout(true);
