@@ -29,7 +29,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15.alpha10";
+	var version = "15.alpha11";
 	//=========================
 
 	//=================================
@@ -1752,6 +1752,23 @@ function fnDuIK(thisObj)
 				}
 			}	
 			
+			//PAINT RIGGING
+			function paintRigButtonClicked() {
+				var layers;
+				if (app.project.activeItem.selectedLayers.length == 0)
+				{
+					layers = app.project.activeItem.layers;
+				}
+				else
+				{
+					layers = app.project.activeItem.selectedLayers;
+				}
+				app.beginUndoGroup("Duik - Paint Rigging");
+				Duik.rigPaint(layers);
+				app.endUndoGroup();
+			}
+			
+			
 			//COPY AND PASTE ANIM
 			function copyAnim() {
 				var layers = app.project.activeItem.selectedLayers;
@@ -2895,6 +2912,12 @@ function fnDuIK(thisObj)
 					var boutonlentille = addIconButton(groupeAnimationD,dossierIcones + "/btn_lentille.png",getMessage(128));
 					boutonlentille.onClick = lentille;
 					boutonlentille.helpTip = getMessage(99);
+					//Paint Rig button
+					var paintRigButton = addIconButton(groupeAnimationG,dossierIcones + "/btn_paint.png","Paint rigging");
+					paintRigButton.onClick = paintRigButtonClicked;
+					paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
+					//PlaceHolder
+					addButton(groupeAnimationD,"");
 					//bouton Copy ANIM
 					var boutonCopyAnim = addIconButton(groupeAnimationG,dossierIcones + "/btn_copy.png",getMessage(129));
 					boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };

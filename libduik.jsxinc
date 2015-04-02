@@ -416,12 +416,12 @@ if (typeof Duik === 'object') delete Duik;
 /////////////////////////////
 (function ()
 {
-	if (Duik.versionNumber != 15.0010)
+	if (Duik.versionNumber != 15.0011)
 	{
 		delete Duik;
 		Duik = {};
 		Duik.version = "15.alpha10";
-		Duik.versionNumber = 15.0010;
+		Duik.versionNumber = 15.0011;
 		Duik.usePresets = true;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 		Duik.presetEffectsInstalledVersion = 0.0;
@@ -450,7 +450,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.setup = {};
 		//Duik.setup.presetEffects String
 		{
-			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0010 -->\r\n" + 
+			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0011 -->\r\n" + 
 				"<Effect matchname='DUIK_One_Layer_IK' name='$$$/AE/Preset/1ik=DUIK_One_Layer_IK'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikWeight=Weight' default='100' valid_min='-1000' valid_max='1000' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
 				"    <Checkbox name='$$$/AE/Preset/DuikReverse=Reverse' default='true'/>\r\n" + 
@@ -548,6 +548,11 @@ if (typeof Duik === 'object') delete Duik;
 				"    <Slider name='$$$/AE/Preset/DuikElasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikDamping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
 				"    <Checkbox name='$$$/AE/Preset/DuikBounce=Bounce' default='false'/>\r\n" + 
+				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Paint_Rig' name='$$$/AE/Preset/DUIK_Paint_Rig=DUIK_Paint_Rig'>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Start=Start' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/End=End' default='100' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Diameter=Diameter' default='0' valid_min='-1000' valid_max='10000' slider_min='-100' slider_max='100' precision='0'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<!-- END DUIK PSEUDO EFFECTS -->\r\n";
 		}
@@ -675,6 +680,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.lensFlare = "Lens Flare";
 		Duik.uiStrings.distanceLink = "Distance Link";
 		Duik.uiStrings.spring = "Spring";
+		Duik.uiStrings.paintRig = "Paint Rig";
 	}
 
 	//================================
@@ -3398,7 +3404,8 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.pathFollow = function (layer)
 		{
 			//expression a insérer
-			layer.transform.rotation.expression  = "ff = framesToTime(1);\r\n" + 
+			layer.transform.rotation.expression  = "//Duik.PathFollow\n" + 
+			"ff = framesToTime(1);\r\n" + 
 			"pos = thisLayer.position;\r\n" + 
 			"if (pos.numKeys > 1){\n" + 
 			"A = pos.valueAtTime(time-ff);\r\n" + 
@@ -3803,6 +3810,71 @@ if (typeof Duik === 'object') delete Duik;
 				}
 			}
 			return totalPasted;
+		}
+	}
+	/* RIG PAINT - Duik.rigPaint(layers);
+
+	Rigs the paint effects to be able to animate all strokes as if there was only one.
+
+	parameters
+	layers | Array of Layers or LayerCollection which have a paint effect
+		
+	returns
+	void
+	
+	*/
+	if (typeof Duik.rigPaint !== 'function')
+	{
+		Duik.rigPaint = function (layrs)
+		{
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				
+				//if there's no paint effect
+				var paintEffect = layer("Effects")("ADBE Paint");
+				if (paintEffect == null) continue;
+				
+				//add effect
+				var effect;
+				if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,"DUIK_Paint_Rig");
+				else effect = layer.effect.addProperty("DUIK_Paint_Rig");
+				
+				effectName = Duik.uiStrings.paintRig;
+				effect.name = effectName;
+				
+				//need to get the paint effect again after addProperty, After Effects bug.......
+				var paintEffect = layer("Effects")("ADBE Paint");
+
+				//for each stroke
+				var nbre = paintEffect.property(2).numProperties;
+				for (var j=1;j<=nbre;j++)
+				{
+					var propStart = paintEffect.property(2).property(j).property(4).property(1);
+					var propEnd = paintEffect.property(2).property(j).property(4).property(2);
+					var propDiam = paintEffect.property(2).property(j).property(4).property(4);
+					
+					propStart.expression = "//Duik.PaintRig\n" + 
+							"var ctrl = effect(\"" + effectName + "\")(1);\n" + 
+							"var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n" + 
+							"var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n" + 
+							"result = ctrl - ((100/total)*(ind-1));\n" + 
+							"result = result * total;\n" + 
+							"result;";
+							
+					propEnd.expression = "//Duik.PaintRig\n" + 
+							"var ctrl = effect(\"" + effectName + "\")(2);\n" + 
+							"var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n" + 
+							"var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n" + 
+							"result = ctrl - ((100/total)*(ind-1));\n" + 
+							"result = result * total;\n" + 
+							"result;";
+							
+					propDiam.expression = "//Duik.PaintRig\n" + 
+							"value+effect(\"" + effectName + "\")(3);";
+				}
+			}
 		}
 	}
 }());
