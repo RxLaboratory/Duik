@@ -528,7 +528,7 @@ function fnDuIK(thisObj)
 
 			//====================== AUTORIG ======================
 
-			//FONCTION QUAND ON CLIQUE SUR AUTORIG --- TODO à mettre dans libduik
+			//FONCTION QUAND ON CLIQUE SUR AUTORIG
 			function autorig() {
 
 				Duik.utils.checkNames();
@@ -648,7 +648,7 @@ function fnDuIK(thisObj)
 				fenetreAutorig.show();
 			}
 
-			//FONCTION LANCE L'AUTORIG --- TODO à mettre dans libduik
+			//FONCTION LANCE L'AUTORIG
 			function startAutoRig() {
 
 				var compo = app.project.activeItem;
@@ -1013,7 +1013,7 @@ function fnDuIK(thisObj)
 
 			//========== RIGGING ================================
 
-			//FONCTION QUAND ON CLIQUE SUR CREER IK --- TODO vérif auto parentage/calques sélectionnés (à mettre dans libDuik)
+			//FONCTION QUAND ON CLIQUE SUR CREER IK
 			function ik(){
 				
 				var okToGo = app.project.activeItem != null;
@@ -1383,24 +1383,58 @@ function fnDuIK(thisObj)
 				
 					var prefixe = "";
 					prefixtexte.value ? prefixe = prefix.text : prefixe = "";
-					var nom = "";
-					nametexte.value ? nom = name.text : nom = "";
 					var suffixe = "";
 					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
 					
-					if (!(!suffixtexte.value && !nametexte.value && !prefixtexte.value && !numerotexte.value)) {
-						
-						for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-						nametexte.value ? nom = nom : nom = app.project.activeItem.selectedLayers[i].name;
-						if (!numerotexte.value)
-						app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe;
-						else {
-							var numbering = eval(numero.text) + i;
-							app.project.activeItem.selectedLayers[i].name = prefixe + nom + suffixe + numbering;
+					app.beginUndoGroup("Duik - Rename");
+										
+					for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+						//keeping old name
+						var oldName = app.project.activeItem.selectedLayers[i].name;
+						var newName = "";
+						//rename
+						if (nametexte.value)
+						{
+							newName = name.text;
+						}
+						else
+						{
+							newName = oldName;
+							var removeFirst = parseInt(renameRemFirstDValue.text);
+							var removeLast = parseInt(renameRemLastDValue.text);
+							if (removeFirst > 0)
+							{
+								newName = newName.substr(removeFirst);
+							}
+							if (removeLast > 0)
+							{
+								newName = newName.substring(0,newName.length-removeLast);
 							}
 						}
-						
+						var newName = prefixe + newName + suffixe;
+						if (numerotexte.value)
+						{
+							newName += parseInt(numero.text) + i;
+						}
+						app.project.activeItem.selectedLayers[i].name =  newName;
+						//update expressions
+						if (renameInExpressionsButton.value)
+						{
+							//double quotes
+							var old = "\"" + oldName + "\"";
+							var newExpr = "\"" + newName + "\"";
+							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
+							//single quotes
+							var old = "'" + oldName + "'";
+							var newExpr = "'" + newName + "'";
+							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
+						}
 					}
+						
+					renameRemFirstDValue.text = "0";
+					renameRemLastDValue.text = "0";
+					
+					app.endUndoGroup();
 				
 				} else { alert(getMessage(51),"Attention",true); }
 				
@@ -2459,56 +2493,7 @@ function fnDuIK(thisObj)
 					fenetrenotes.size = [300,300];
 					
 				}
-				
-				// la fenetre du rename
-				{
-				var fenetrerename = createDialog("Rename layers",true,rename);
-				fenetrerename.size = [300,200];
-				fenetrerename.groupe.orientation = "column";
-				//prefix
-				var groupePrefix = addHGroup(fenetrerename.groupe);
-				groupePrefix.alignChildren = ["fill","center"];
-				var prefixtexte = groupePrefix.add("checkbox",undefined,getMessage(107));
-				prefixtexte.alignment = ["left","center"];
-				var prefix = groupePrefix.add("edittext",undefined);
-				prefix.enabled = false;
-				prefixtexte.onClick = function() {
-					prefix.enabled = prefixtexte.value;
-					}
-				//nom
-				var groupeNom = addHGroup(fenetrerename.groupe);
-				groupeNom.alignChildren = ["fill","center"];
-				var nametexte = groupeNom.add("checkbox",undefined,getMessage(108));
-				nametexte.alignment = ["left","center"];
-				var name = groupeNom.add("edittext",undefined);
-				name.enabled = false;
-					nametexte.onClick = function() {
-					name.enabled = nametexte.value;
-					}
-				//suffix
-				var groupeSuffix = addHGroup(fenetrerename.groupe);
-				groupeSuffix.alignChildren = ["fill","center"];
-				var suffixtexte = groupeSuffix.add("checkbox",undefined,getMessage(109));
-				suffixtexte.alignment = ["left","center"];
-				var suffix = groupeSuffix.add("edittext",undefined);
-				suffix.enabled = false;
-				suffixtexte.onClick = function() {
-					suffix.enabled = suffixtexte.value;
-					}
-				//numéros
-				var groupeNumeros = addHGroup(fenetrerename.groupe);
-				groupeNumeros.alignChildren = ["fill","center"];
-				var numerotexte = groupeNumeros.add("checkbox",undefined,getMessage(110));
-				numerotexte.alignment = ["left","center"];
-				var numero = groupeNumeros.add("edittext",undefined);
-				numero.enabled = false;
-				numerotexte.onClick = function() {
-					numerotexte.value ? numero.enabled = true : numero.enabled = false ;
-					}
-				
-				
-				}
-				
+					
 				//la fenetre d'option de multiplan
 				{
 					var fenetremultiplan = createDialog(getMessage(188),true,multiplan);
@@ -2565,10 +2550,13 @@ function fnDuIK(thisObj)
 				ctrlPanel.visible = false;
 				var ikPanel = addVPanel(panos);
 				ikPanel.visible = false;
+				var renamePanel = addVPanel(panos);
+				renamePanel.visible = false;
 
 				selecteur.onChange = function() {
 					ctrlPanel.hide();
 					ikPanel.hide();
+					renamePanel.hide();
 					if (selecteur.selection == 0){
 						panoik.visible = true;
 						panoanimation.visible = false;
@@ -2822,9 +2810,9 @@ function fnDuIK(thisObj)
 				boutonrotmorph.onClick = rotmorph;
 				boutonrotmorph.helpTip = getMessage(120);
 				//bouton renommer
-				var boutonrename2 = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",getMessage(111));
-				boutonrename2.onClick = function() {fenetrerename.show();}
-				boutonrename2.helpTip = getMessage(85);
+				var boutonrename = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",getMessage(111));
+				boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
+				boutonrename.helpTip = getMessage(85);
 				//bouton mesurer
 				var boutonmesurer = addIconButton(groupeikD,dossierIcones + "btn_mesurer.png",getMessage(106));
 				boutonmesurer.onClick = mesure;
@@ -3152,6 +3140,73 @@ function fnDuIK(thisObj)
 					
 					
 				}
+				//RENAME PANEL
+				{
+					//nom
+					var groupeNom = addHGroup(renamePanel);
+					groupeNom.alignChildren = ["fill","center"];
+					var nametexte = groupeNom.add("checkbox",undefined,getMessage(108));
+					nametexte.alignment = ["left","center"];
+					var name = groupeNom.add("edittext",undefined);
+					name.enabled = false;
+						nametexte.onClick = function() {
+						name.enabled = nametexte.value;
+						}
+					//prefix
+					renamePanel.alignChildren = ["fill","top"];
+					var groupePrefix = addHGroup(renamePanel);
+					groupePrefix.alignChildren = ["fill","center"];
+					var prefixtexte = groupePrefix.add("checkbox",undefined,getMessage(107));
+					prefixtexte.alignment = ["left","center"];
+					var prefix = groupePrefix.add("edittext",undefined);
+					prefix.enabled = false;
+					prefixtexte.onClick = function() {
+						prefix.enabled = prefixtexte.value;
+						}
+					//suffix
+					var groupeSuffix = addHGroup(renamePanel);
+					groupeSuffix.alignChildren = ["fill","center"];
+					var suffixtexte = groupeSuffix.add("checkbox",undefined,getMessage(109));
+					suffixtexte.alignment = ["left","center"];
+					var suffix = groupeSuffix.add("edittext",undefined);
+					suffix.enabled = false;
+					suffixtexte.onClick = function() {
+						suffix.enabled = suffixtexte.value;
+						}
+					//remove first digits
+					var renameRemFirstDGroup = addHGroup(renamePanel);
+					renameRemFirstDGroup.add("statictext",undefined,"Remove first");
+					var renameRemFirstDValue = renameRemFirstDGroup.add("edittext",undefined,"0");
+					renameRemFirstDGroup.add("statictext",undefined,"digits.");
+					//remove last digits
+					var renameRemLastDGroup = addHGroup(renamePanel);
+					renameRemLastDGroup.add("statictext",undefined,"Remove last");
+					var renameRemLastDValue = renameRemLastDGroup.add("edittext",undefined,"0");
+					renameRemLastDGroup.add("statictext",undefined,"digits.");
+					//numéros
+					var groupeNumeros = addHGroup(renamePanel);
+					groupeNumeros.alignChildren = ["fill","center"];
+					var numerotexte = groupeNumeros.add("checkbox",undefined,getMessage(110));
+					numerotexte.alignment = ["left","center"];
+					var numero = groupeNumeros.add("edittext",undefined,"1");
+					numero.enabled = false;
+					numerotexte.onClick = function() {
+						numerotexte.value ? numero.enabled = true : numero.enabled = false ;
+						}
+					//in expressions too
+					var renameInExpressionsButton = renamePanel.add("checkbox",undefined,"Update expressions");
+					renameInExpressionsButton.value = true;
+					//buttons
+					var renameButtonsGroup = addHGroup(renamePanel);
+					var renameCloseButton = renameButtonsGroup.add("button",undefined,"<< Back");
+					renameCloseButton.alignment = ["left","top"];
+					renameCloseButton.onClick = function () { renamePanel.hide() ; panoik.show(); };
+					var renameCreateButton = renameButtonsGroup.add("button",undefined,"Rename");
+					renameCreateButton.alignment = ["right","top"];
+					renameCreateButton.onClick = rename;
+				}
+				
+				
 				// On définit le layout et on redessine la fenètre quand elle est resizée
 				palette.layout.layout(true);
 				palette.layout.resize();
