@@ -1503,6 +1503,25 @@ function fnDuIK(thisObj)
 				}
 			}
 			
+			function lockButtonClicked() {
+				// Vérifions si il n'y a qu'un calque sélectionné
+				if (app.project.activeItem.selectedLayers.length == 1)
+				{
+					//Prendre l'effet
+					var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+					//on vérifie si on peut mettre une expression, sinon inutile de continuer
+					if(!effet.canSetExpression) { return; }
+					
+					//  début de groupe d'annulation
+					app.beginUndoGroup("Duik - Lock");
+					
+
+					Duik.lockProperty(effet);
+
+					app.endUndoGroup();
+				}
+			}
+			
 			//=============== ANIMATION =========================
 
 			//FONCTION WIGGLE OK
@@ -2814,8 +2833,10 @@ function fnDuIK(thisObj)
 						var rieButton = addIconButton(groupeikG,dossierIcones + "btn_replaceinexpr.png","Replace in expr.");
 						rieButton.onClick = function () { panoik.hide(); riePanel.show();}
 						rieButton.helpTip = "Search and replace text in expressions";
-						//placeholder
-						addButton(groupeikD,"");
+						//lock button
+						var lockButton = addIconButton(groupeikD,dossierIcones + "ctrl_lock.png","Lock property");
+						lockButton.onClick = lockButtonClicked;
+						lockButton.helpTip = "Locks the selected property";
 					}
 					// PANNEAU INTERPOLATION -----------------------------------------------------------
 					{
