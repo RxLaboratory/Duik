@@ -29,7 +29,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15.alpha11";
+	var version = "15.alpha12";
 	//=========================
 
 	//=================================
@@ -88,7 +88,7 @@ function fnDuIK(thisObj)
 	//=================================
 	{
 		if (!app.settings.haveSetting("duik", "lang")){app.settings.saveSetting("duik","lang","ENGLISH");}
-		if (!app.settings.haveSetting("duik", "version")){app.settings.saveSetting("duik","version","oui");}
+		if (!app.settings.haveSetting("duik","version")){app.settings.saveSetting("duik","version","oui");}
 		if (!app.settings.haveSetting("duik", "notes")){app.settings.saveSetting("duik","notes","");}
 		if (!app.settings.haveSetting("duik", "pano")){app.settings.saveSetting("duik","pano","0");}
 		if (!app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
@@ -123,7 +123,7 @@ function fnDuIK(thisObj)
 	
 	function preloadDuik ()
 	{
-		if (app.settings.getSetting("duik", "version") == "oui")
+		if (app.settings.getSetting("duik","version") == "oui")
 		{
 			var newV = checkForUpdate(version,false);
 			if ( version == newV || newV == undefined)
@@ -1677,28 +1677,28 @@ function fnDuIK(thisObj)
 
 			//FONCTION OSCILLATION
 			function oscillation() {
-					// Vérifions si il n'y a qu'un calque sélectionné
-			if (app.project.activeItem.selectedLayers.length == 1){
-				
-			var calque = app.project.activeItem.selectedLayers[0];
+				// Vérifions si il n'y a qu'un calque sélectionné
+				if (app.project.activeItem.selectedLayers.length == 1){
+					
+				var calque = app.project.activeItem.selectedLayers[0];
 
-			if (calque.selectedProperties.length != 0){
-				
-				//Prendre l'effet
-			var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-			//on vérifie sin on peut mettre une expression, sinon inutile de continuer
-			if(effet.canSetExpression) {
-				
-			//  début de groupe d'annulation
-			app.beginUndoGroup(getMessage(52));
-				
-			Duik.swing(calque,effet);
-			//fin du groupe d'annulation
-			app.endUndoGroup();
+				if (calque.selectedProperties.length != 0){
+					
+					//Prendre l'effet
+				var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+				//on vérifie sin on peut mettre une expression, sinon inutile de continuer
+				if(effet.canSetExpression) {
+					
+				//  début de groupe d'annulation
+				app.beginUndoGroup(getMessage(52));
+					
+				Duik.swing(calque,effet);
+				//fin du groupe d'annulation
+				app.endUndoGroup();
 
-			}else{alert(getMessage(38),getMessage(46));}
-			}else{alert(getMessage(47),getMessage(48));}
-			}else{alert(getMessage(47),getMessage(49));}
+				}else{alert(getMessage(38),getMessage(46));}
+				}else{alert(getMessage(47),getMessage(48));}
+				}else{alert(getMessage(47),getMessage(49));}
 
 
 				}
@@ -1768,6 +1768,30 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 			}
 			
+			function blinkButtonClicked() {
+				// Vérifions si il n'y a qu'un calque sélectionné
+				if (app.project.activeItem.selectedLayers.length == 1){
+					
+				var calque = app.project.activeItem.selectedLayers[0];
+
+				if (calque.selectedProperties.length != 0){
+					
+				//Prendre l'effet
+				var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+				//on vérifie sin on peut mettre une expression, sinon inutile de continuer
+				if(effet.canSetExpression) {
+					
+				//  début de groupe d'annulation
+				app.beginUndoGroup("Duik - Blink");
+					
+				Duik.blink(calque,effet);
+				//fin du groupe d'annulation
+				app.endUndoGroup();
+
+				}else{alert(getMessage(38),getMessage(46));}
+				}else{alert(getMessage(47),getMessage(48));}
+				}else{alert(getMessage(47),getMessage(49));}
+			}
 			
 			//COPY AND PASTE ANIM
 			function copyAnim() {
@@ -2797,30 +2821,30 @@ function fnDuIK(thisObj)
 					{
 					var groupeInterpoClefs = addHGroup(panointerpo);
 					groupeInterpoClefs.alignChildren = ["right","top"];
-					var interpoClefsTexte = groupeInterpoClefs.add("statictext",undefined,"Type de clefs :");
+					var interpoClefsTexte = groupeInterpoClefs.add("statictext",undefined,"Keyframes type:");
 					interpoClefsTexte.alignment = ["left","top"];
 					var boutonLineaire = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_lineaire.png");
-					boutonLineaire.size = [13,12];
+					boutonLineaire.size = [20,20];
 					boutonLineaire.onClick = lineaire;
 					boutonLineaire.helpTip = "Interpolation Linéaire";
 					var boutonLissageA = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_lissagea.png");
-					boutonLissageA.size = [13,12];
+					boutonLissageA.size = [20,20];
 					boutonLissageA.onClick = lissageA;
 					boutonLissageA.helpTip = "Lissage à l'approche";
 					var boutonLissageE = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_lissagee.png");
-					boutonLissageE.size = [13,12];
+					boutonLissageE.size = [20,20];
 					boutonLissageE.onClick = lissageE;
 					boutonLissageE.helpTip = "Lissage à l'éloignement";
 					var boutonLissage = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_bezier.png");
-					boutonLissage.size = [13,12];
+					boutonLissage.size = [20,20];
 					boutonLissage.onClick = lissage;
 					boutonLissage.helpTip = "Amorti";
 					var boutonContinu = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_continu.png");
-					boutonContinu.size = [13,12];
+					boutonContinu.size = [20,20];
 					boutonContinu.onClick = continu;
 					boutonContinu.helpTip = "Vitesse continue (Bézier Auto)";
 					var boutonMaintien = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_maintien.png");
-					boutonMaintien.size = [13,12];
+					boutonMaintien.size = [20,20];
 					boutonMaintien.onClick = maintien;
 					boutonMaintien.helpTip = "Maintien";
 					
@@ -2878,54 +2902,56 @@ function fnDuIK(thisObj)
 					}
 					// PANNEAU ANIMATION -----------------------------------------------
 					{
-					var groupeAnimationG = addVGroup(panoanimation);
-					var groupeAnimationD = addVGroup(panoanimation);
-					//bouton wiggle
-					var boutonwiggle = addIconButton(groupeAnimationG,dossierIcones + "btn_wiggle.png",getMessage(121));
-					boutonwiggle.onClick = wiggle;
-					boutonwiggle.helpTip = getMessage(92);
-					//bouton oscillation
-					var boutonosc = addIconButton(groupeAnimationD,dossierIcones + "btn_osc.png",getMessage(122));
-					boutonosc.onClick = oscillation;
-					boutonosc.helpTip = getMessage(93);
-					//bouton nframes
-					var boutonnframes = addIconButton(groupeAnimationG,dossierIcones + "btn_expo.png",getMessage(123));
-					boutonnframes.onClick = exposure;
-					boutonnframes.helpTip = getMessage(94);
-					//bouton path follow
-					var boutonpathfollow = addIconButton(groupeAnimationD,dossierIcones + "btn_pf.png",getMessage(124));
-					boutonpathfollow.onClick = pathFollow;
-					boutonpathfollow.helpTip = getMessage(95);
-					 //bouton roue
-					var boutonroue = addIconButton(groupeAnimationG,dossierIcones + "btn_roue.png",getMessage(125));
-					boutonroue.onClick = creroue;
-					boutonroue.helpTip = getMessage(96);
-					//bouton spring
-					var boutonspring = addIconButton(groupeAnimationD,dossierIcones + "btn_rebond.png",getMessage(126));
-					boutonspring.onClick = spring;
-					boutonspring.helpTip = getMessage(97);
-					//bouton lien de distance
-					var boutondistance = addIconButton(groupeAnimationG,dossierIcones + "btn_lien-de-distance.png",getMessage(127));
-					boutondistance.onClick = distanceLink;
-					boutondistance.helpTip = getMessage(98);
-					//bouton lentille
-					var boutonlentille = addIconButton(groupeAnimationD,dossierIcones + "/btn_lentille.png",getMessage(128));
-					boutonlentille.onClick = lentille;
-					boutonlentille.helpTip = getMessage(99);
-					//Paint Rig button
-					var paintRigButton = addIconButton(groupeAnimationG,dossierIcones + "/btn_paint.png","Paint rigging");
-					paintRigButton.onClick = paintRigButtonClicked;
-					paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
-					//PlaceHolder
-					addButton(groupeAnimationD,"");
-					//bouton Copy ANIM
-					var boutonCopyAnim = addIconButton(groupeAnimationG,dossierIcones + "/btn_copy.png",getMessage(129));
-					boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
-					boutonCopyAnim.helpTip = getMessage(131);
-					//bouton Paste ANIM
-					var boutonPasteAnim = addIconButton(groupeAnimationD,dossierIcones + "/btn_paste.png",getMessage(130));
-					boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
-					boutonPasteAnim.helpTip = getMessage(132);
+						var groupeAnimationG = addVGroup(panoanimation);
+						var groupeAnimationD = addVGroup(panoanimation);
+						//bouton wiggle
+						var boutonwiggle = addIconButton(groupeAnimationG,dossierIcones + "btn_wiggle.png",getMessage(121));
+						boutonwiggle.onClick = wiggle;
+						boutonwiggle.helpTip = getMessage(92);
+						//bouton oscillation
+						var boutonosc = addIconButton(groupeAnimationD,dossierIcones + "btn_osc.png","Swing");
+						boutonosc.onClick = oscillation;
+						boutonosc.helpTip = getMessage(93);
+						//bouton nframes
+						var boutonnframes = addIconButton(groupeAnimationG,dossierIcones + "btn_expo.png","Exposure");
+						boutonnframes.onClick = exposure;
+						boutonnframes.helpTip = getMessage(94);
+						//bouton path follow
+						var boutonpathfollow = addIconButton(groupeAnimationD,dossierIcones + "btn_pf.png",getMessage(124));
+						boutonpathfollow.onClick = pathFollow;
+						boutonpathfollow.helpTip = getMessage(95);
+						 //bouton roue
+						var boutonroue = addIconButton(groupeAnimationG,dossierIcones + "btn_roue.png",getMessage(125));
+						boutonroue.onClick = creroue;
+						boutonroue.helpTip = getMessage(96);
+						//bouton spring
+						var boutonspring = addIconButton(groupeAnimationD,dossierIcones + "btn_rebond.png",getMessage(126));
+						boutonspring.onClick = spring;
+						boutonspring.helpTip = getMessage(97);
+						//bouton lien de distance
+						var boutondistance = addIconButton(groupeAnimationG,dossierIcones + "btn_lien-de-distance.png",getMessage(127));
+						boutondistance.onClick = distanceLink;
+						boutondistance.helpTip = getMessage(98);
+						//bouton lentille
+						var boutonlentille = addIconButton(groupeAnimationD,dossierIcones + "/btn_lentille.png",getMessage(128));
+						boutonlentille.onClick = lentille;
+						boutonlentille.helpTip = getMessage(99);
+						//Paint Rig button
+						var paintRigButton = addIconButton(groupeAnimationG,dossierIcones + "/btn_paint.png","Paint rigging");
+						paintRigButton.onClick = paintRigButtonClicked;
+						paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
+						//PlaceHolder
+						var blinkButton = addIconButton(groupeAnimationD,dossierIcones + "/btn_blink.png","Blink");
+						blinkButton.onClick = blinkButtonClicked;
+						blinkButton.helpTip = "Makes the property blink.";
+						//bouton Copy ANIM
+						var boutonCopyAnim = addIconButton(groupeAnimationG,dossierIcones + "/btn_copy.png",getMessage(129));
+						boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
+						boutonCopyAnim.helpTip = getMessage(131);
+						//bouton Paste ANIM
+						var boutonPasteAnim = addIconButton(groupeAnimationD,dossierIcones + "/btn_paste.png",getMessage(130));
+						boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
+						boutonPasteAnim.helpTip = getMessage(132);
 					}
 					//PANNEAU CAMERAS -------------------------------------------
 					{
