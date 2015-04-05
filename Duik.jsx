@@ -1947,6 +1947,14 @@ function fnDuIK(thisObj)
 				fenetremultiplan.hide();
 			}	
 			
+			function scaleZLinkButtonClicked()
+			{
+				if (app.project.activeItem == null) return;
+				app.beginUndoGroup("Duik - Scale Z-Link");
+				Duik.scaleZLink(app.project.activeItem.selectedLayers);
+				app.endUndoGroup();
+			}
+			
 			//============= SETTINGS ============================
 
 			//FONCTION POUR AFFICHER DE L'AIDE
@@ -2984,9 +2992,13 @@ function fnDuIK(thisObj)
 						boutontcam.onClick = controlcam;
 						boutontcam.helpTip = getMessage(102);
 						//bouton pour multiplan 2D
-						var boutontcam2d = addIconButton(groupCameraG,dossierIcones + "btn_controleur-cam.png",getMessage(188));
+						var boutontcam2d = addIconButton(groupCameraG,dossierIcones + "btn_2dmultiplane.png",getMessage(188));
 						boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
 						boutontcam2d.helpTip = "HelpTip";
+						//scale Z-link button
+						var scaleZLinkButton = addIconButton(groupCameraG,dossierIcones + "btn_scalezlink.png","Scale Z-Link");
+						scaleZLinkButton.onClick = scaleZLinkButtonClicked;
+						scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
 						
 					}
 					//CONTROLLERS PANEL

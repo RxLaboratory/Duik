@@ -704,6 +704,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.spring = "Spring";
 		Duik.uiStrings.paintRig = "Paint Rig";
 		Duik.uiStrings.blink = "Blink";
+		Duik.uiStrings.scale = "Scale";
 	}
 
 	//================================
@@ -4012,6 +4013,83 @@ if (typeof Duik === 'object') delete Duik;
 			if (prop.canSetExpression)
 			{
 				prop.expression = uneval(prop.value);
+			}
+		}
+	}
+	/* SCALE Z-LINK - Duik.scaleZLink(layers);
+
+	Links the distance of the layer from the camera to its scale so its apparent size won't change.
+	If multiple cameras, include the camera used in the array
+
+	parameters
+		layers | Array of Layer or LayerCollection
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.scaleZLink !== 'function')
+	{
+		Duik.scaleZLink = function (layrs)
+		{
+			if (layrs == undefined) return;
+			if (layrs.length == 0) return;
+
+			var camera = null;
+			//find camera
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			for (i = 0 ; i <layers.length;i++)
+			{
+				var l = layers[i];
+				if (l instanceof CameraLayer)
+				{
+					camera = l;
+					break;
+				}
+			}
+			if (camera == null)
+			{
+				var comp = layers[0].containingComp;
+				for (var i = 1;i<=comp.layers.length;i++)
+				{
+					var l = comp.layers[i];
+					if (l instanceof CameraLayer)
+					{
+						camera = l;
+						break;
+					}
+				}
+			}
+			if (camera == null) return;
+			
+			//go!
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			for (i = 0 ; i <layers.length;i++)
+			{
+				var layer = layers[i];
+				if (!layer.threeDLayer) continue;
+				var currentDistance = Duik.utils.getDistance(layer,camera);
+				if (currentDistance == 0) currentDistance = 1;
+				var currentScale = layer.transform.scale.value;
+				
+				var effect = layer.Effects.addProperty("ADBE Slider Control");
+				effect.name = Duik.uiStrings.scale;
+				
+				effect(1).setValue(currentScale[0]);
+				
+				layer.transform.scale.expression = "//Duik.scaleZLink\n" + 
+													"var sca = effect(\"" + effect.name + "\")(1);\n" + 
+													"var C = thisComp.layer(\"" + camera.name + "\").position;\n" + 
+													"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
+													"var oDist = " + currentDistance + ";\n" + 
+													"if (sca != 0) {\n" + 
+													"var factor = oDist / sca;\n" + 
+													"var dist = length(C,O);\n" + 
+													"var result = dist/factor;\n" + 
+													"result = [result,result,result];\n" + 
+													"result = result ;\n" + 
+													"result;\n" + 
+													"} else [0,0,0];";
 			}
 		}
 	}
