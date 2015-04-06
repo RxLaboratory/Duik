@@ -1346,10 +1346,10 @@ function fnDuIK(thisObj)
 					
 					resultat = mesurer();
 							if (resultat == 0) {
-					resultattexte.text = getMessage(16);
+							resultattexte.text = "The layers are at the same place.";
 					}
 					else if (resultat/resultat == 1) {
-					resultattexte.text = getMessage(17) + resultat + " pixels.";
+							resultattexte.text = "Distance = \n" + resultat + " pixels.";
 					}
 
 				}
@@ -2136,9 +2136,9 @@ function fnDuIK(thisObj)
 
 		//une fonction pour ajouter les boutons plus rapidement :
 		function addIconButton(conteneur,image,text){
-			var bouton = conteneur.add("iconbutton",undefined,image);
+			var bouton = conteneur.add("iconbutton",undefined,dossierIcones + image);
 			//bouton.size = [108,22];
-			bouton.text = text;
+			if (!expertMode) bouton.text = text;
 			return bouton;
 		}
 		function addButton(conteneur,texte){
@@ -2151,9 +2151,9 @@ function fnDuIK(thisObj)
 			var groupe = conteneur.add("group");
 			groupe.orientation = "column";
 			groupe.alignChildren = ["fill","fill"];
-			groupe.alignment = ["fill","top"];
 			groupe.spacing = 2;
 			groupe.margins = 1;
+			//expertMode ? groupe.alignment = ["left","top"] : groupe.alignment = ["center","top"];
 			groupe.alignment = ["center","top"];
 			return groupe;
 		}
@@ -2161,14 +2161,15 @@ function fnDuIK(thisObj)
 			var groupe = conteneur.add("group");
 			groupe.orientation = "row";
 			groupe.alignChildren = ["fill","fill"];
-			groupe.alignment = ["fill","top"];
 			groupe.spacing = 2;
 			groupe.margins = 1;
+			//expertMode ? groupe.alignment = ["left","top"] : groupe.alignment = ["center","top"];
 			groupe.alignment = ["center","top"];
 			return groupe;
 		}
 		function addHGroup(conteneur){
 			var groupe = conteneur.add("group");
+			//expertMode ? groupe.alignChildren = ["left","fill"] : groupe.alignChildren = ["fill","fill"];
 			groupe.alignChildren = ["fill","fill"];
 			groupe.orientation = "row";
 			groupe.spacing = 2;
@@ -2177,6 +2178,7 @@ function fnDuIK(thisObj)
 		}
 		function addVGroup(conteneur){
 			var groupe = conteneur.add("group");
+			//expertMode ? groupe.alignChildren = ["left","fill"] : groupe.alignChildren = ["fill","fill"];
 			groupe.alignChildren = ["fill","fill"];
 			groupe.orientation = "column";
 			groupe.spacing = 2;
@@ -2568,18 +2570,13 @@ function fnDuIK(thisObj)
 					panos.alignChildren = ["fill","fill"];
 					// ----- Les différents panneaux
 					var panoik = addVPanel(panos);
-					if(expertMode) panoik.alignment = ["left","top"];
 					var panoanimation = addHPanel(panos);
-					if(expertMode) panoanimation.alignment = ["left","top"];
 					panoanimation.visible = false;
 					var panointerpo =  addVPanel(panos);
-					if(expertMode) panointerpo.alignment = ["left","top"];
 					panointerpo.visible = false;
 					var panocam = addVPanel(panos);
-					if(expertMode) panocam.alignment = ["left","top"];
 					panocam.visible = false;
 					var panosettings = addVPanel(panos);
-					if(expertMode) panosettings.alignment = ["left","top"];
 					panosettings.visible = false;
 					var ctrlPanel = addVPanel(panos);
 					ctrlPanel.visible = false;
@@ -2821,49 +2818,49 @@ function fnDuIK(thisObj)
 					// PANNEAU RIGGING -----------------------------------------------------------
 					{
 						//bouton autorig
-						var boutonautorig = addIconButton(panoik,dossierIcones + "btn_autorig.png",expertMode ? "" : getMessage(142)) ;
+						var boutonautorig = addIconButton(panoik,"btn_autorig.png",getMessage(142)) ;
 						boutonautorig.onClick = autorig;
 						//boutonautorig.helpTip = "tip à écrire";
 						var groupeik = addHGroup(panoik);
 						var groupeikG = addVGroup(groupeik);
 						var groupeikD = addVGroup(groupeik);
 						//bouton pour créer l'IK
-						var boutonik = addIconButton(groupeikG,dossierIcones + "btn_creer.png",expertMode ? "" : getMessage(114));
+						var boutonik = addIconButton(groupeikG,"btn_creer.png",getMessage(114));
 						boutonik.onClick = ik;
 						//bouton pour créer un goal
-						var boutongoal = addIconButton(groupeikD,dossierIcones + "btn_goal.png",expertMode ? "" : getMessage(115));
+						var boutongoal = addIconButton(groupeikD,"btn_goal.png",getMessage(115));
 						boutongoal.onClick = pregoal;
 						boutongoal.helpTip = getMessage(79);
 						//bouton controleur
-						var controllerButton =  addIconButton(groupeikG,dossierIcones + "btn_controleur.png",expertMode ? "" : getMessage(116));
+						var controllerButton =  addIconButton(groupeikG,"btn_controleur.png",getMessage(116));
 						controllerButton.onClick = controllerButtonClicked;
 						controllerButton.helpTip = getMessage(82);
 						//bouton bone
-						var boutonbone2 = addIconButton(groupeikD,dossierIcones + "btn_bones.png",expertMode ? "" : getMessage(117));
+						var boutonbone2 = addIconButton(groupeikD,"btn_bones.png",getMessage(117));
 						boutonbone2.onClick = bone;
 						boutonbone2.helpTip = getMessage(83);
 						//bouton zero
-						var boutonzero2 = addIconButton(groupeikG,dossierIcones + "btn_zero.png",expertMode ? "" : getMessage(118));
+						var boutonzero2 = addIconButton(groupeikG,"btn_zero.png",getMessage(118));
 						boutonzero2.onClick = zero;
 						boutonzero2.helpTip = getMessage(84);
 						//bouton rotmorph
-						var boutonrotmorph = addIconButton(groupeikD,dossierIcones + "btn_rotmorph.png",expertMode ? "" : getMessage(119));
+						var boutonrotmorph = addIconButton(groupeikD,"btn_rotmorph.png",getMessage(119));
 						boutonrotmorph.onClick = rotmorph;
 						boutonrotmorph.helpTip = getMessage(120);
 						//bouton renommer
-						var boutonrename = addIconButton(groupeikG,dossierIcones + "btn_renommer.png",expertMode ? "" : getMessage(111));
+						var boutonrename = addIconButton(groupeikG,"btn_renommer.png",getMessage(111));
 						boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
 						boutonrename.helpTip = getMessage(85);
 						//bouton mesurer
-						var boutonmesurer = addIconButton(groupeikD,dossierIcones + "btn_mesurer.png",expertMode ? "" : getMessage(106));
+						var boutonmesurer = addIconButton(groupeikD,"btn_mesurer.png",getMessage(106));
 						boutonmesurer.onClick = function () {mesure();panoik.hide();measurePanel.show();};
 						boutonmesurer.helpTip = getMessage(100);
 						//replace in expressions button
-						var rieButton = addIconButton(groupeikG,dossierIcones + "btn_replaceinexpr.png",expertMode ? "" : "Replace in expr.");
+						var rieButton = addIconButton(groupeikG,"btn_replaceinexpr.png","Replace in expr.");
 						rieButton.onClick = function () { panoik.hide(); riePanel.show();}
 						rieButton.helpTip = "Search and replace text in expressions";
 						//lock button
-						var lockButton = addIconButton(groupeikD,dossierIcones + "ctrl_lock.png",expertMode ? "" : "Lock property");
+						var lockButton = addIconButton(groupeikD,"ctrl_lock.png","Lock property");
 						lockButton.onClick = lockButtonClicked;
 						lockButton.helpTip = "Locks the selected property";
 					}
@@ -2935,7 +2932,7 @@ function fnDuIK(thisObj)
 						var texteInfluence = groupeInterpo3.add("edittext",undefined,"-");
 						texteInfluence.size = [40,22];
 						texteInfluence.onChange = function() {infl(parseFloat(texteInfluence.text));};
-						var boutonInfluence = addIconButton(groupeInterpo3,dossierIcones + "btn_valid.png","");
+						var boutonInfluence = addIconButton(groupeInterpo3,"btn_valid.png","");
 						boutonInfluence.size = [30,22];
 						boutonInfluence.onClick = function() {infl(parseFloat(texteInfluence.text));};
 
@@ -2949,7 +2946,7 @@ function fnDuIK(thisObj)
 						boutonApproche.onClick = function() { if (boutonApproche.value == false) boutonEloignement.value = true; };
 						boutonEloignement.onClick = function() { if (boutonEloignement.value == false) boutonApproche.value = true; };
 						
-						var boutonMoprher = addIconButton(panointerpo,dossierIcones + "btn_morph.png","Morpher");
+						var boutonMoprher = addIconButton(panointerpo,"btn_morph.png","Morpher");
 						boutonMoprher.onClick = morpher;
 						boutonMoprher.helpTip = getMessage(90);
 						var boutonMKey = panointerpo.add("checkbox",undefined,getMessage(91));
@@ -2961,51 +2958,51 @@ function fnDuIK(thisObj)
 						var groupeAnimationG = addVGroup(panoanimation);
 						var groupeAnimationD = addVGroup(panoanimation);
 						//bouton wiggle
-						var boutonwiggle = addIconButton(groupeAnimationG,dossierIcones + "btn_wiggle.png",expertMode ? "" : getMessage(121));
+						var boutonwiggle = addIconButton(groupeAnimationG,"btn_wiggle.png",getMessage(121));
 						boutonwiggle.onClick = wiggle;
 						boutonwiggle.helpTip = getMessage(92);
 						//bouton oscillation
-						var boutonosc = addIconButton(groupeAnimationD,dossierIcones + "btn_osc.png",expertMode ? "" : "Swing");
+						var boutonosc = addIconButton(groupeAnimationD,"btn_osc.png","Swing");
 						boutonosc.onClick = oscillation;
 						boutonosc.helpTip = getMessage(93);
 						//bouton nframes
-						var boutonnframes = addIconButton(groupeAnimationG,dossierIcones + "btn_expo.png",expertMode ? "" : "Exposure");
+						var boutonnframes = addIconButton(groupeAnimationG,"btn_expo.png","Exposure");
 						boutonnframes.onClick = exposure;
 						boutonnframes.helpTip = getMessage(94);
 						//bouton path follow
-						var boutonpathfollow = addIconButton(groupeAnimationD,dossierIcones + "btn_pf.png",expertMode ? "" : getMessage(124));
+						var boutonpathfollow = addIconButton(groupeAnimationD,"btn_pf.png",getMessage(124));
 						boutonpathfollow.onClick = pathFollow;
 						boutonpathfollow.helpTip = getMessage(95);
 						 //bouton roue
-						var boutonroue = addIconButton(groupeAnimationG,dossierIcones + "btn_roue.png",expertMode ? "" : getMessage(125));
+						var boutonroue = addIconButton(groupeAnimationG,"btn_roue.png",getMessage(125));
 						boutonroue.onClick = creroue;
 						boutonroue.helpTip = getMessage(96);
 						//bouton spring
-						var boutonspring = addIconButton(groupeAnimationD,dossierIcones + "btn_rebond.png",expertMode ? "" : getMessage(126));
+						var boutonspring = addIconButton(groupeAnimationD,"btn_rebond.png",getMessage(126));
 						boutonspring.onClick = spring;
 						boutonspring.helpTip = getMessage(97);
 						//bouton lien de distance
-						var boutondistance = addIconButton(groupeAnimationG,dossierIcones + "btn_lien-de-distance.png",expertMode ? "" : getMessage(127));
+						var boutondistance = addIconButton(groupeAnimationG,"btn_lien-de-distance.png",getMessage(127));
 						boutondistance.onClick = distanceLink;
 						boutondistance.helpTip = getMessage(98);
 						//bouton lentille
-						var boutonlentille = addIconButton(groupeAnimationD,dossierIcones + "/btn_lentille.png",expertMode ? "" : getMessage(128));
+						var boutonlentille = addIconButton(groupeAnimationD,"/btn_lentille.png",getMessage(128));
 						boutonlentille.onClick = lentille;
 						boutonlentille.helpTip = getMessage(99);
 						//Paint Rig button
-						var paintRigButton = addIconButton(groupeAnimationG,dossierIcones + "/btn_paint.png",expertMode ? "" : "Paint rigging");
+						var paintRigButton = addIconButton(groupeAnimationG,"/btn_paint.png","Paint rigging");
 						paintRigButton.onClick = paintRigButtonClicked;
 						paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
 						//PlaceHolder
-						var blinkButton = addIconButton(groupeAnimationD,dossierIcones + "/btn_blink.png",expertMode ? "" : "Blink");
+						var blinkButton = addIconButton(groupeAnimationD,"/btn_blink.png","Blink");
 						blinkButton.onClick = blinkButtonClicked;
 						blinkButton.helpTip = "Makes the property blink.";
 						//bouton Copy ANIM
-						var boutonCopyAnim = addIconButton(groupeAnimationG,dossierIcones + "/btn_copy.png",expertMode ? "" : getMessage(129));
+						var boutonCopyAnim = addIconButton(groupeAnimationG,"/btn_copy.png",getMessage(129));
 						boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
 						boutonCopyAnim.helpTip = getMessage(131);
 						//bouton Paste ANIM
-						var boutonPasteAnim = addIconButton(groupeAnimationD,dossierIcones + "/btn_paste.png",expertMode ? "" : getMessage(130));
+						var boutonPasteAnim = addIconButton(groupeAnimationD,"/btn_paste.png",getMessage(130));
 						boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
 						boutonPasteAnim.helpTip = getMessage(132);
 					}
@@ -3015,15 +3012,15 @@ function fnDuIK(thisObj)
 						var groupCameraG = addVGroup(panocam);
 						var groupCameraD = addVGroup(panocam);
 						//bouton pour créer une target cam
-						var boutontcam = addIconButton(groupCameraG,dossierIcones + "btn_controleur-cam.png",expertMode ? "" : getMessage(134));
+						var boutontcam = addIconButton(groupCameraG,"btn_controleur-cam.png",getMessage(134));
 						boutontcam.onClick = controlcam;
 						boutontcam.helpTip = getMessage(102);
 						//bouton pour multiplan 2D
-						var boutontcam2d = addIconButton(groupCameraG,dossierIcones + "btn_2dmultiplane.png",expertMode ? "" : getMessage(188));
+						var boutontcam2d = addIconButton(groupCameraG,"btn_2dmultiplane.png",getMessage(188));
 						boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
 						boutontcam2d.helpTip = "HelpTip";
 						//scale Z-link button
-						var scaleZLinkButton = addIconButton(groupCameraG,dossierIcones + "btn_scalezlink.png",expertMode ? "" : "Scale Z-Link");
+						var scaleZLinkButton = addIconButton(groupCameraG,"btn_scalezlink.png","Scale Z-Link");
 						scaleZLinkButton.onClick = scaleZLinkButtonClicked;
 						scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
 						
@@ -3070,7 +3067,7 @@ function fnDuIK(thisObj)
 						//taille des controleurs
 						var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
 						var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
-						ctrlSizeGroup.add("statictext",undefined,getMessage(169));
+						if (!expertMode) ctrlSizeGroup.add("statictext",undefined,getMessage(169));
 						var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
 						ctrlSizeEdit.onChange = function() {
 							Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
@@ -3078,7 +3075,7 @@ function fnDuIK(thisObj)
 							};
 						ctrlSizeEdit.text = Duik.settings.controllerSize;
 						//taille auto controleurs
-						var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,getMessage(170));
+						var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,expertMode ? "" : getMessage(170));
 						ctrlSizeAutoButton.alignment = ["left","bottom"];
 						ctrlSizeAutoButton.onClick = function() {
 							ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
@@ -3098,39 +3095,43 @@ function fnDuIK(thisObj)
 						ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
 						//color
 						var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
-						ctrlColorGroup.add("statictext",undefined,"Color");
+						if (!expertMode) ctrlColorGroup.add("statictext",undefined,"Color");
 						var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
 						ctrlColorList.selection = 6;
 						//autolock
 						var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
 						ctrlAutoLockButton.alignment = ["fill","bottom"];
-						var ctrlAutoLockText = ctrlPanel.add("statictext",undefined,"Warning! When controllers are locked,\nthey should be unlocked before parenting.",{multiline:true});
-						ctrlAutoLockText.visible = false;
-						ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
+						ctrlAutoLockButton.helpTip = "Warning! When controllers are locked,\nthey should be unlocked before parenting.";
+						if (!expertMode)
+						{
+							var ctrlAutoLockText = ctrlPanel.add("statictext",undefined,"Warning! When controllers are locked,\nthey should be unlocked before parenting.",{multiline:true});
+							ctrlAutoLockText.visible = false;
+							ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
+						}
 						//lock buttons
 						var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
-						var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unlock.png","");
+						var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,"ctrl_unlock.png","");
 						ctrlUnlockButton.helpTip =  "Unlock selected controllers\n(all controllers if none selected)";
 						ctrlUnlockButton.onClick = ctrlUnlockButtonClicked;
-						var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_lock.png","");
+						var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,"ctrl_lock.png","");
 						ctrlLockButton.helpTip =  "Lock selected controllers\n(all controllers if none selected)";
 						ctrlLockButton.onClick = ctrlLockButtonClicked;
 						//hide buttons
-						var ctrlUnhideButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_unhide.png","");
+						var ctrlUnhideButton = addIconButton(ctrlLockButtonsGroup,"ctrl_unhide.png","");
 						ctrlUnhideButton.helpTip =  "Unhide selected controllers\n(all controllers if none selected)";
 						ctrlUnhideButton.onClick = ctrlUnhideButtonClicked;
-						var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,dossierIcones + "ctrl_hide.png","");
+						var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,"ctrl_hide.png","");
 						ctrlHideButton.helpTip =  "Hide selected controllers\n(all controllers if none selected)";
 						ctrlHideButton.onClick = ctrlHideButtonClicked;
 						//buttons
 						var ctrlButtonsGroup = addHGroup(ctrlPanel);
-						var ctrlCloseButton = ctrlButtonsGroup.add("button",undefined,"<< Back");
+						var ctrlCloseButton = addIconButton(ctrlButtonsGroup,"btn_cancel.png","Back");
 						ctrlCloseButton.alignment = ["left","top"];
 						ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; panoik.show(); };
-						var ctrlUpdateButton = ctrlButtonsGroup.add("button",undefined,"Update Sel.");
+						var ctrlUpdateButton = addIconButton(ctrlButtonsGroup,"btn_update.png","Update");
 						ctrlUpdateButton.alignment = ["right","top"];
 						ctrlUpdateButton.onClick = function () { ctrlUpdateButtonClicked(); ctrlPanel.hide() ; panoik.show(); };
-						var ctrlCreateButton = ctrlButtonsGroup.add("button",undefined,"Create");
+						var ctrlCreateButton = addIconButton(ctrlButtonsGroup,"btn_valid.png","Create");
 						ctrlCreateButton.alignment = ["right","top"];
 						ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; panoik.show(); };
 					}
@@ -3147,34 +3148,51 @@ function fnDuIK(thisObj)
 						var ikType1Group = addHGroup(ikTypeGroup);
 						ikType1Group.visible = false;
 						
-						var ik3GoalGroup = addVGroup(ikType4Group);
-						ik3GoalGroup.alignChildren = ["center","top"];
-						ik3GoalGroup.add("image",undefined,dossierIcones + "btn_3layerikgoal.png");
-						ik3GoalGroup.add("statictext",undefined,"3-Layer IK & Goal");
+						if (!expertMode)
+						{
+							var ik3GoalGroup = addVGroup(ikType4Group);
+							ik3GoalGroup.alignChildren = ["center","top"];
+							ik3GoalGroup.add("image",undefined,dossierIcones + "btn_3layerikgoal.png");
+						}
+						expertMode ? ikType4Group.add("statictext",undefined,"3+1") : ik3GoalGroup.add("statictext",undefined,"3-Layer IK & Goal");
 						
-						var ik3LayerGroup = addVGroup(ikType3Group);
-						ik3LayerGroup.alignChildren = ["center","top"];
-						ik3LayerGroup.add("image",undefined,dossierIcones + "btn_3layerik.png");
-						var ik3LayerButton = ik3LayerGroup.add("radiobutton",undefined,"3-Layer IK");
-						var ik2GoalGroup = addVGroup(ikType3Group);
-						ik2GoalGroup.alignChildren = ["center","top"];
-						ik2GoalGroup.add("image",undefined,dossierIcones + "btn_2layerikgoal.png");
-						var ik2GoalButton = ik2GoalGroup.add("radiobutton",undefined,"2-Layer IK & Goal");
+						if (!expertMode)
+						{
+							var ik3LayerGroup = addVGroup(ikType3Group);
+							ik3LayerGroup.alignChildren = ["center","top"];
+							ik3LayerGroup.add("image",undefined,dossierIcones + "btn_3layerik.png");
+						}
+						var ik3LayerButton = expertMode ? ikType3Group.add("radiobutton",undefined,"3") : ik3LayerGroup.add("radiobutton",undefined,"3-Layer IK");
+						if (!expertMode)
+						{
+							var ik2GoalGroup = addVGroup(ikType3Group);
+							ik2GoalGroup.alignChildren = ["center","top"];
+							ik2GoalGroup.add("image",undefined,dossierIcones + "btn_2layerikgoal.png");
+						}
+						var ik2GoalButton = expertMode ? ikType3Group.add("radiobutton",undefined,"2+1") : ik2GoalGroup.add("radiobutton",undefined,"2-Layer IK & Goal");
 
-
-						var ik1GoalGroup = addVGroup(ikType2Group);
-						ik1GoalGroup.alignChildren = ["center","top"];
-						ik1GoalGroup.add("image",undefined,dossierIcones + "btn_1layerikgoal.png");
-						var ik1GoalButton = ik1GoalGroup.add("radiobutton",undefined,"1-Layer IK & Goal");
-						var ik2LayerGroup = addVGroup(ikType2Group);
-						ik2LayerGroup.alignChildren = ["center","top"];
-						ik2LayerGroup.add("image",undefined,dossierIcones + "btn_2layerik.png");
-						var ik2LayerButton = ik2LayerGroup.add("radiobutton",undefined,"2-Layer IK");
+						if (!expertMode)
+						{
+							var ik1GoalGroup = addVGroup(ikType2Group);
+							ik1GoalGroup.alignChildren = ["center","top"];
+							ik1GoalGroup.add("image",undefined,dossierIcones + "btn_1layerikgoal.png");
+						}
+						var ik1GoalButton = expertMode ? ikType2Group.add("radiobutton",undefined,"1+1") : ik1GoalGroup.add("radiobutton",undefined,"1-Layer IK & Goal");
+						if (!expertMode)
+						{
+							var ik2LayerGroup = addVGroup(ikType2Group);
+							ik2LayerGroup.alignChildren = ["center","top"];
+							ik2LayerGroup.add("image",undefined,dossierIcones + "btn_2layerik.png");
+						}
+						var ik2LayerButton = expertMode ?  ikType2Group.add("radiobutton",undefined,"2") : ik2LayerGroup.add("radiobutton",undefined,"2-Layer IK");
 						
-						var ik1LayerGroup = addVGroup(ikType1Group);
-						ik1LayerGroup.alignChildren = ["center","top"];
-						ik1LayerGroup.add("image",undefined,dossierIcones + "btn_1layerik.png");
-						ik1LayerGroup.add("statictext",undefined,"1-Layer IK (LookAt)");
+						if (!expertMode)
+						{
+							var ik1LayerGroup = addVGroup(ikType1Group);
+							ik1LayerGroup.alignChildren = ["center","top"];
+							ik1LayerGroup.add("image",undefined,dossierIcones + "btn_1layerik.png");
+						}
+						expertMode ? ikType1Group.add("statictext",undefined,"1") : ik1LayerGroup.add("statictext",undefined,"1-Layer IK (LookAt)");
 						
 						addSeparator(ikPanel,"");
 						
@@ -3195,9 +3213,9 @@ function fnDuIK(thisObj)
 						ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false; ikCWButton.enabled = false; };
 						
 						var ikButtonsGroup = addHGroup(ikPanel);
-						var ikCancelButton = ikButtonsGroup.add("button",undefined,"<< Cancel");
+						var ikCancelButton = addIconButton(ikButtonsGroup,"btn_cancel.png","Cancel");
 						ikCancelButton.onClick = function () { ikPanel.hide();panoik.show(); };
-						var ikCreateButton = ikButtonsGroup.add("button",undefined,"Create");
+						var ikCreateButton = addIconButton(ikButtonsGroup,"btn_valid.png","Create");
 						
 						
 					}
@@ -3259,10 +3277,10 @@ function fnDuIK(thisObj)
 						renameInExpressionsButton.value = true;
 						//buttons
 						var renameButtonsGroup = addHGroup(renamePanel);
-						var renameCloseButton = renameButtonsGroup.add("button",undefined,"<< Back");
+						var renameCloseButton = addIconButton(renameButtonsGroup,"btn_cancel.png","Back");
 						renameCloseButton.alignment = ["left","top"];
 						renameCloseButton.onClick = function () { renamePanel.hide() ; panoik.show(); };
-						var renameCreateButton = renameButtonsGroup.add("button",undefined,"Rename");
+						var renameCreateButton = addIconButton(renameButtonsGroup,"btn_valid.png","Rename");
 						renameCreateButton.alignment = ["right","top"];
 						renameCreateButton.onClick = rename;
 					}
@@ -3272,13 +3290,15 @@ function fnDuIK(thisObj)
 						var rieOldText = rieOldGroup.add("statictext",undefined,"Old:");
 						rieOldText.alignment = ["left","top"];
 						var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
+						rieOldEdit.alignment = ["fill","fill"];
 						var rieNewGroup = addHGroup(riePanel);
 						var rieNewText = rieNewGroup.add("statictext",undefined,"New:");
 						rieNewText.alignment = ["left","top"];
 						var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
+						rieNewEdit.alignment = ["fill","fill"];
 						var rieCompGroup = addHGroup(riePanel);
 						rieCompGroup.alignment = ["center","top"];
-						var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,"Active comp");
+						var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,expertMode ? "Active" : "Active comp");
 						var rieAllCompsButton = rieCompGroup.add("radiobutton",undefined,"All comps");
 						rieCurrentCompButton.onClick = function () {
 							rieLayerGroup.enabled = rieCurrentCompButton.value;
@@ -3289,19 +3309,20 @@ function fnDuIK(thisObj)
 						rieCurrentCompButton.value = true;
 						var rieLayerGroup = addHGroup(riePanel);
 						rieLayerGroup.alignment = ["center","top"];
-						var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,"Selected layers");
+						var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,expertMode ? "Selected" : "Selected layers");
 						var rieAllLayersButton = rieLayerGroup.add("radiobutton",undefined,"All layers");
 						rieAllLayersButton.value = true;
 						var rieButtonsGroup = addHGroup(riePanel);
-						var rieCancelButton = rieButtonsGroup.add("button",undefined,"<< Back");
+						var rieCancelButton = addIconButton(rieButtonsGroup,"btn_cancel.png","Back");
 						rieCancelButton.onClick = function () { riePanel.hide();panoik.show();};
-						var rieOKButton = rieButtonsGroup.add("button",undefined,"Replace in expressions");
+						var rieOKButton = addIconButton(rieButtonsGroup,"btn_valid.png","Replace in Expressions");
 						rieOKButton.onClick = replaceInExpr;
 					}
 					//MEASUREMENT RESULT
 					{
-						var resultattexte = measurePanel.add("statictext",undefined,"Distance = " + "                                 " + " pixels");
-						var measureCancelButton = measurePanel.add("button",undefined,"<< Back");
+						var resultattexte = measurePanel.add("statictext",undefined,"Distance = \n" + "      " + " pixels",{multiline:true});
+						resultattexte.size = [100,50];
+						var measureCancelButton = addIconButton(measurePanel,"btn_cancel.png","Back");
 						measureCancelButton.onClick = function () { measurePanel.hide();panoik.show();};
 					}
 					
