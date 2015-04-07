@@ -1725,36 +1725,40 @@ function fnDuIK(thisObj)
 				}
 
 			//FONCTIONS EXPOSITION
-			function exposure() {
-				fenetreexposure.show();
-			}
-
-			function exposureSelect() {
-				
-				lowerExposureGroup.enabled = adaptativeExposureButton.value;
-				upperExposureGroup.enabled = adaptativeExposureButton.value;
-				precisionGroup.enabled = adaptativeExposureButton.value;
-			}
-
 			function detectExposurePrecision() {
-				var layer = app.project.activeItem.selectedLayers[0];
-				var prop = layer.selectedProperties[layer.selectedProperties.length-1];
-				var speed = Duik.utils.getAverageSpeed(layer,prop);
+				var layers = app.project.activeItem.selectedLayers;
+				var speed = Duik.utils.getAverageSpeeds(layers);
 				var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
-				if (speed > 0) precisionEdit.text = parseInt(1/(speed/10000)/exp);
-				else precisionEdit.text = 0;
+				if (speed > 0)
+				{
+					var p = parseInt(1/(speed/10000)/exp);
+					precisionEdit.text = p;
+					exposurePrecisionSlider.value = p;
+				}
+				else
+				{
+					precisionEdit.text = 0;
+					exposurePrecisionSlider.value = 0;
+				}
 			}
 
-			function nframes() {
-				var layer = app.project.activeItem.selectedLayers[0];
-				var prop = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+			function exposureOKButtonClicked() {
+				if (app.project.activeItem == null) return;
+				if (app.project.activeItem.selectedLayers.length == 0) return;
 				
 				app.beginUndoGroup("Duik Auto-Exposure");
-				Duik.exposure(layer,prop,adaptativeExposureButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text));
+				if (adaptativeExposureButton.value)
+				{
+					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
+				}
+				else
+				{
+					var layer = app.project.activeItem.selectedLayers[0];
+					var effet = layer.selectedProperties.pop();
+					Duik.fixedExposure(layer,effet);
+				}
 				app.endUndoGroup();
 				
-				fenetreexposure.close();
-
 				}
 
 			//FONCTION PATH FOLLOW
@@ -1812,6 +1816,17 @@ function fnDuIK(thisObj)
 				}else{alert(getMessage(38),getMessage(46));}
 				}else{alert(getMessage(47),getMessage(48));}
 				}else{alert(getMessage(47),getMessage(49));}
+			}
+			
+			function timeRemapButtonClicked() {
+				if (app.project.activeItem == null) return;
+				var layers = app.project.activeItem.selectedLayers;
+				app.beginUndoGroup("Duik - Time remap");
+				var loop = "none";
+				if (timeRemapLoopInButton.value && timeRemapLoopButton.value) loop = "in";
+				else if (timeRemapLoopOutButton.value && timeRemapLoopButton.value) loop = "out";
+				Duik.timeRemap(layers,loop);
+				app.endUndoGroup();
 			}
 			
 			//COPY AND PASTE ANIM
@@ -2129,7 +2144,6 @@ function fnDuIK(thisObj)
 		//TODO renommer les éléments d'UI
 			
 		var dossierIcones = Folder.userData.absoluteURI  + "/DuIK/";
-		//dossierIcones = "C:/Users/perso/Documents/03_DEVELOPPEMENT/AE Scripts/DuDuF IK Tools/Duik Icons/";
 		var animationSaved = [];
 		
 		var expertMode = eval(app.settings.getSetting("duik","expertMode"));
@@ -2228,27 +2242,6 @@ function fnDuIK(thisObj)
 		}
 
 		
-				//l'expo
-				{
-					var fenetreexposure = createDialog(getMessage(123),true,nframes);
-					fenetreexposure.groupe.orientation = "column";
-					var evenExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Fixed");
-					evenExposureButton.onClick = exposureSelect;
-					var adaptativeExposureButton = fenetreexposure.groupe.add("radiobutton",undefined,"Adaptative");
-					adaptativeExposureButton.value = true;
-					adaptativeExposureButton.onClick = exposureSelect;
-					var lowerExposureGroup = addHGroup(fenetreexposure.groupe);
-					lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
-					var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
-					var upperExposureGroup = addHGroup(fenetreexposure.groupe);
-					upperExposureGroup.add("statictext",undefined,"Upper exp. limit: ");
-					var upperExposureEdit = upperExposureGroup.add("edittext",undefined,"4");
-					var precisionGroup = addHGroup(fenetreexposure.groupe);
-					precisionGroup.add("statictext",undefined,"Precision: ");
-					var precisionEdit = precisionGroup.add("edittext",undefined,"1000");
-					var precisionButton = precisionGroup.add("button",undefined,"Detect");
-					precisionButton.onClick = detectExposurePrecision;
-				}
 				//les options de création de spring
 				{
 					var fenetrespring = createDialog(getMessage(126),true,springok);
@@ -2547,13 +2540,16 @@ function fnDuIK(thisObj)
 					var boutonNotes = entete.add("iconbutton",undefined,dossierIcones + "btn_notes.png");
 					boutonNotes.size = [22,22];
 					boutonNotes.alignment = ["right","center"];
+					boutonNotes.helpTip = "Simple notepad, with auto-save.";
 					boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
 					var boutonCalc = entete.add("iconbutton",undefined,dossierIcones + "btn_calc.png");
 					boutonCalc.size = [22,22];
 					boutonCalc.alignment = ["right","center"];
+					boutonCalc.helpTip = "Calculator";
 					boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
 					var selecteur = entete.add("dropdownlist",undefined,[getMessage(136),getMessage(69),getMessage(70),getMessage(72),getMessage(75)]);
 					selecteur.alignment = ["right","center"];
+					selecteur.helpTip = "Panels";
 					selecteur.items[0].image = ScriptUI.newImage(dossierIcones + "sel_rigging.png");
 					if (expertMode) selecteur.items[0].text = "";
 					selecteur.items[1].image = ScriptUI.newImage(dossierIcones + "sel_animation.png");
@@ -2588,11 +2584,19 @@ function fnDuIK(thisObj)
 					riePanel.visible = false;
 					var measurePanel = addVPanel(panos);
 					measurePanel.visible = false;
+					var timeRemapPanel = addVPanel(panos);
+					timeRemapPanel.visible = false;
+					var exposurePanel = addVPanel(panos);
+					exposurePanel.visible = false;
 
 					selecteur.onChange = function() {
 						ctrlPanel.hide();
 						ikPanel.hide();
 						renamePanel.hide();
+						riePanel.hide();
+						measurePanel.hide();
+						timeRemapPanel.hide();
+						exposurePanel.hide();
 						if (selecteur.selection == 0){
 							panoik.visible = true;
 							panoanimation.visible = false;
@@ -2820,6 +2824,7 @@ function fnDuIK(thisObj)
 						//bouton autorig
 						var boutonautorig = addIconButton(panoik,"btn_autorig.png",getMessage(142)) ;
 						boutonautorig.onClick = autorig;
+						boutonautorig.helpTip = "Autorig";
 						//boutonautorig.helpTip = "tip à écrire";
 						var groupeik = addHGroup(panoik);
 						var groupeikG = addVGroup(groupeik);
@@ -2827,6 +2832,7 @@ function fnDuIK(thisObj)
 						//bouton pour créer l'IK
 						var boutonik = addIconButton(groupeikG,"btn_creer.png",getMessage(114));
 						boutonik.onClick = ik;
+						boutonik.helpTip = "IK";
 						//bouton pour créer un goal
 						var boutongoal = addIconButton(groupeikD,"btn_goal.png",getMessage(115));
 						boutongoal.onClick = pregoal;
@@ -2834,7 +2840,7 @@ function fnDuIK(thisObj)
 						//bouton controleur
 						var controllerButton =  addIconButton(groupeikG,"btn_controleur.png",getMessage(116));
 						controllerButton.onClick = controllerButtonClicked;
-						controllerButton.helpTip = getMessage(82);
+						controllerButton.helpTip = "Controller";
 						//bouton bone
 						var boutonbone2 = addIconButton(groupeikD,"btn_bones.png",getMessage(117));
 						boutonbone2.onClick = bone;
@@ -2967,7 +2973,7 @@ function fnDuIK(thisObj)
 						boutonosc.helpTip = getMessage(93);
 						//bouton nframes
 						var boutonnframes = addIconButton(groupeAnimationG,"btn_expo.png","Exposure");
-						boutonnframes.onClick = exposure;
+						boutonnframes.onClick = function () { panoanimation.hide(); exposurePanel.show(); } ;
 						boutonnframes.helpTip = getMessage(94);
 						//bouton path follow
 						var boutonpathfollow = addIconButton(groupeAnimationD,"btn_pf.png",getMessage(124));
@@ -2993,10 +2999,18 @@ function fnDuIK(thisObj)
 						var paintRigButton = addIconButton(groupeAnimationG,"/btn_paint.png","Paint rigging");
 						paintRigButton.onClick = paintRigButtonClicked;
 						paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
-						//PlaceHolder
+						//Blink
 						var blinkButton = addIconButton(groupeAnimationD,"/btn_blink.png","Blink");
 						blinkButton.onClick = blinkButtonClicked;
 						blinkButton.helpTip = "Makes the property blink.";
+						//Timeremap
+						var timeRemapButton = addIconButton(groupeAnimationG,"btn_timeremap.png","Time remap");
+						timeRemapButton.helpTip = "Time remap tools";
+						timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
+						//timeRemapButton.onClick = paintRigButtonClicked;
+						timeRemapButton.helpTip = "Time remapping tools.";
+						//Placeholder
+						addButton(groupeAnimationD,"");
 						//bouton Copy ANIM
 						var boutonCopyAnim = addIconButton(groupeAnimationG,"/btn_copy.png",getMessage(129));
 						boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
@@ -3035,24 +3049,29 @@ function fnDuIK(thisObj)
 						var ctrlRotationGroup = addHGroup(ctrlShapeGroup);
 						var ctrlRotationButton = ctrlRotationGroup.add("checkbox",undefined,"");
 						ctrlRotationButton.value = true;
+						ctrlRotationButton.helpTip = "Rotation";
 						ctrlRotationButton.alignment = ["left","bottom"];
 						ctrlRotationGroup.add("image",undefined,dossierIcones + "ctrl_rot.png");
 						var ctrlXPositionGroup = addHGroup(ctrlShapeGroup);
 						var ctrlXPositionButton = ctrlXPositionGroup.add("checkbox",undefined,"");
 						ctrlXPositionButton.value = true;
+						ctrlXPositionButton.helpTip = "X position";
 						ctrlXPositionButton.alignment = ["left","bottom"];
 						ctrlXPositionGroup.add("image",undefined,dossierIcones + "ctrl_xpos.png");
 						var ctrlYPositionGroup = addHGroup(ctrlShapeGroup);
 						var ctrlYPositionButton = ctrlYPositionGroup.add("checkbox",undefined,"");
 						ctrlYPositionButton.value = true;
+						ctrlYPositionButton.helpTip = "Y position";
 						ctrlYPositionButton.alignment = ["left","bottom"];
 						ctrlYPositionGroup.add("image",undefined,dossierIcones + "ctrl_ypos.png");
 						var ctrlScaleGroup = addHGroup(ctrlShapeGroup);
 						var ctrlScaleButton = ctrlScaleGroup.add("checkbox",undefined,"");
 						ctrlScaleButton.alignment = ["left","bottom"];
+						ctrlScaleButton.helpTip = "Scale";
 						ctrlScaleGroup.add("image",undefined,dossierIcones + "ctrl_sca.png");
 						var ctrlArcGroup = addHGroup(ctrlShapeGroup);
 						var ctrlArcButton = ctrlArcGroup.add("checkbox",undefined,"");
+						ctrlArcButton.helpTip = "Arc";
 						ctrlArcButton.onClick = function () {
 							ctrlRotationButton.enabled = !ctrlArcButton.value;
 							ctrlXPositionButton.enabled = !ctrlArcButton.value;
@@ -3069,6 +3088,7 @@ function fnDuIK(thisObj)
 						var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
 						if (!expertMode) ctrlSizeGroup.add("statictext",undefined,getMessage(169));
 						var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
+						ctrlSizeEdit.helpTip = "Size";
 						ctrlSizeEdit.onChange = function() {
 							Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
 							Duik.settings.save();
@@ -3076,6 +3096,7 @@ function fnDuIK(thisObj)
 						ctrlSizeEdit.text = Duik.settings.controllerSize;
 						//taille auto controleurs
 						var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,expertMode ? "" : getMessage(170));
+						ctrlSizeAutoButton.helpTip = "Auto-size";
 						ctrlSizeAutoButton.alignment = ["left","bottom"];
 						ctrlSizeAutoButton.onClick = function() {
 							ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
@@ -3087,6 +3108,7 @@ function fnDuIK(thisObj)
 						//size hint controllers
 						var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
 						ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
+						ctrlSizeAutoList.helpTip = "Auto-size";
 						ctrlSizeAutoList.onChange = function () {
 							Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
 							Duik.settings.save();
@@ -3098,6 +3120,7 @@ function fnDuIK(thisObj)
 						if (!expertMode) ctrlColorGroup.add("statictext",undefined,"Color");
 						var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
 						ctrlColorList.selection = 6;
+						ctrlColorList.helpTip = "Color";
 						//autolock
 						var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
 						ctrlAutoLockButton.alignment = ["fill","bottom"];
@@ -3127,12 +3150,15 @@ function fnDuIK(thisObj)
 						var ctrlButtonsGroup = addHGroup(ctrlPanel);
 						var ctrlCloseButton = addIconButton(ctrlButtonsGroup,"btn_cancel.png","Back");
 						ctrlCloseButton.alignment = ["left","top"];
+						ctrlCloseButton.helpTip = "Back";
 						ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; panoik.show(); };
 						var ctrlUpdateButton = addIconButton(ctrlButtonsGroup,"btn_update.png","Update");
 						ctrlUpdateButton.alignment = ["right","top"];
+						ctrlUpdateButton.helpTip = "Update";
 						ctrlUpdateButton.onClick = function () { ctrlUpdateButtonClicked(); ctrlPanel.hide() ; panoik.show(); };
 						var ctrlCreateButton = addIconButton(ctrlButtonsGroup,"btn_valid.png","Create");
 						ctrlCreateButton.alignment = ["right","top"];
+						ctrlCreateButton.helpTip = "Create";
 						ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; panoik.show(); };
 					}
 					//IK PANEL
@@ -3325,6 +3351,74 @@ function fnDuIK(thisObj)
 						var measureCancelButton = addIconButton(measurePanel,"btn_cancel.png","Back");
 						measureCancelButton.onClick = function () { measurePanel.hide();panoik.show();};
 					}
+					//TIME REMAP PANEL
+					{
+						var timeRemapLoopButton = timeRemapPanel.add("checkbox",undefined,"Loop");
+						var timeRemapLoopOutButton = timeRemapPanel.add("radiobutton",undefined,"Loop out");
+						timeRemapLoopOutButton.enabled = false;
+						timeRemapLoopOutButton.helpTip = "Time remap with loopOut()";
+						timeRemapLoopOutButton.value = true;
+						var timeRemapLoopInButton = timeRemapPanel.add("radiobutton",undefined,"Loop in");
+						timeRemapLoopInButton.enabled = false;
+						timeRemapLoopInButton.helpTip = "Time remap with loopIn()";
+						timeRemapLoopButton.onClick = function() {
+							timeRemapLoopOutButton.enabled = timeRemapLoopButton.value;
+							timeRemapLoopInButton.enabled = timeRemapLoopButton.value;
+							};
+						var timeRemapButtonsGroup = addHGroup(timeRemapPanel);
+						var timeRemapCancelButton = addIconButton(timeRemapButtonsGroup,"btn_cancel.png","Back");
+						timeRemapCancelButton.onClick = function () { timeRemapPanel.hide();panoanimation.show();};
+						var timeRemapButton = addIconButton(timeRemapButtonsGroup,"btn_valid.png","Time Remap");
+						timeRemapButton.onClick = function () { timeRemapButtonClicked();timeRemapPanel.hide();panoanimation.show();};
+						timeRemapButton.helpTip = "Smart time remap";
+						
+					}
+					//EXPOSURE PANEL
+					{
+						function exposureSelect() {
+							lowerExposureGroup.enabled = adaptativeExposureButton.value;
+							upperExposureGroup.enabled = adaptativeExposureButton.value;
+							precisionGroup.enabled = adaptativeExposureButton.value;
+							exposureSyncGroup.enabled = adaptativeExposureButton.value;
+						}
+						var evenExposureButton = exposurePanel.add("radiobutton",undefined,"Fixed");
+						evenExposureButton.onClick = exposureSelect;
+						var adaptativeExposureButton = exposurePanel.add("radiobutton",undefined,"Adaptative");
+						adaptativeExposureButton.value = true;
+						adaptativeExposureButton.onClick = exposureSelect;
+						var lowerExposureGroup = addHGroup(exposurePanel);
+						lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
+						var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
+						var upperExposureGroup = addHGroup(exposurePanel);
+						upperExposureGroup.add("statictext",undefined,"Upper exp. limit: ");
+						var upperExposureEdit = upperExposureGroup.add("edittext",undefined,"4");
+						var precisionGroup = addHGroup(exposurePanel);
+						precisionGroup.add("statictext",undefined,"Precision: ");
+						var precisionEdit = precisionGroup.add("edittext",undefined,"500");
+						precisionEdit.onChange = function () { exposurePrecisionSlider.value = precisionEdit.text };
+						var precisionButton = precisionGroup.add("button",undefined,"Detect");
+						precisionButton.onClick = detectExposurePrecision;
+						var exposurePrecisionSlider = exposurePanel.add("slider",undefined,500,0,1000);
+						exposurePrecisionSlider.onChanging = function () {precisionEdit.text = Math.floor(exposurePrecisionSlider.value);};
+						var exposureSyncGroup = addHGroup(exposurePanel);
+						var exposureSyncButton = exposureSyncGroup.add("checkbox",undefined,"Sync");
+						exposureSyncButton.value = true;
+						var exposureSyncLayerButton = exposureSyncGroup.add("radiobutton",undefined,"By layer");
+						var exposureSyncAllButton = exposureSyncGroup.add("radiobutton",undefined,"All");
+						exposureSyncAllButton.value = true;
+						exposureSyncButton.onClick = function () {
+							exposureSyncLayerButton.enabled = exposureSyncButton.value;
+							exposureSyncAllButton.enabled = exposureSyncButton.value;
+						}
+						var exposureButtonsGroup = addHGroup(exposurePanel);
+						var exposureCancelButton = addIconButton(exposureButtonsGroup,"btn_cancel.png","Back");
+						exposureCancelButton.onClick = function () { exposurePanel.hide();panoanimation.show();};
+						exposureCancelButton.helpTip = "Cancel";
+						var exposureOKButton = addIconButton(exposureButtonsGroup,"btn_valid.png","Exposure");
+						exposureOKButton.onClick = function () { exposureOKButtonClicked();exposurePanel.hide();panoanimation.show();};
+						exposureOKButton.helpTip = "Set animation exposure";
+					}
+					
 					
 					// On définit le layout et on redessine la fenètre quand elle est resizée
 					palette.layout.layout(true);

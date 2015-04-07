@@ -887,6 +887,33 @@ if (typeof Duik === 'object') delete Duik;
 				return sum/(lastFrame-firstFrame);
 			}
 		}
+		// GET AVERAGE SPEEDS - Duik.utils.getAverageSpeeds(layers)
+		if (typeof Duik.utils.getAverageSpeeds !== 'function')
+		{
+			Duik.utils.getAverageSpeeds = function (layers)
+			{
+				var averageSpeed = 0;
+				var count = 0;
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					var layer = Duik.utils.getItem(layers,i);
+					for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+					{
+						var prop = layer.selectedProperties[j];
+						if (prop.propertyType != PropertyType.PROPERTY) continue;
+						if (prop.numKeys < 1) continue;
+						var newSpeed = Duik.utils.getAverageSpeed(layer,prop);
+						if (newSpeed > 0)
+						{
+							averageSpeed += newSpeed;
+							count++;
+						}
+					}
+				}
+				averageSpeed = averageSpeed/count;
+				return averageSpeed;
+			}
+		}
 		// ADD PSEUDO EFFECT - Duik.utils.addPseudoEffect(layer,pseudoEffectName)
 		if (typeof Duik.utils.addPseudoEffect !== 'function')
 		{
@@ -2574,43 +2601,62 @@ if (typeof Duik === 'object') delete Duik;
 
 		}
 	}
-	/* EXPOSURE - Duik.exposure(layer,property,adaptative,limit,minExp,maxExp);
+	/* ADAPTATIVE EXPOSURE - Duik.adaptativeExposure(layers,precision,minExp,maxExp,sync,layerSync);
 	
-		Adds exposure controls to the animation of the property
-	
+		Adds exposure controls to the animation of the property.
+		The exposure adapts automatically to the speed, according to the given precision,
+		of the properties between a minimum and a maximum exposure (in frames).
+		
 		parameters
-		layer | AVLayer
-		property | Property
-		adaptative | boolean, default: true
+		layers | Array of AVLayer or LayerCollection
+		precision | integer, default: 100
+		minExp | integer, default: 1
+		maxExp | integer, default: 4
 		
 		returns
-		true if successful, false if anything went wrong
-	
+		Array of AVLayers, the bones created
+		
 	*/
-	if (typeof Duik.exposure !== 'function')
-	{
-		Duik.exposure = function (layer,prop,adaptative,limit,minExp,maxExp)
-		{
-			if (adaptative == undefined) adaptative = true;
-			
-			var ok = false;
-			
-			if (adaptative) ok = Duik.adaptativeExposure(layer,prop,limit,minExp,maxExp);
-			else ok = Duik.fixedExposure(layer,prop);
-			
-			return ok;
-		}
-	}
-	// ADAPTATIVE EXPOSURE - Duik.adaptativeExposure(layer,property,precision,minExp,maxExp);
 	if (typeof Duik.adaptativeExposure !== 'function')
 	{
-		Duik.adaptativeExposure = function (layer,prop,limit,minExp,maxExp)
+		Duik.adaptativeExposure = function (layrs,limit,minExp,maxExp,sync,layerSync)
 		{
-			if (!prop.canSetExpression) return false;
-			if (prop.numKeys < 1) return false;
+			//functions
+			function getSpeed(p,t)
+			{
+				if (p.propertyType != PropertyType.PROPERTY) return 0;
+				if (p.numKeys == 0) return 0;
+				
+				//get the nearest key
+				var nearKey = p.nearestKeyIndex(t);
+				var nearKeyTime = p.keyTime(nearKey);
+				
+				//if we're still before the first key
+				if (t <= nearKeyTime && nearKey == 1) return 0;
+
+				//get the previous key
+				var prevKey = 0;
+				if (t < nearKeyTime) prevKey = nearKey -1;
+				else prevKey = nearKey;
+				
+				//if the last key is in the past
+				if (prevKey == p.numKeys) return 0;    
+							
+				//get speed & num frames from prevKey
+				var difference = Duik.utils.getLength(p.valueAtTime(t,false),p.keyValue(prevKey));
+				return difference;
+			}
+		
+			//exposure
+			if (layrs == undefined) return false;
+			if (layrs.length == 0) return false;
 			
 			if (minExp == undefined) minExp = 1;
 			if (maxExp == undefined) maxExp = 4;
+			if (sync == undefined) sync = true;
+			if (layerSync == undefined) layerSync = false;
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
 			
 			if (minExp <= 0) minExp = 1;
 			if (maxExp <= 0) maxExp = 1;
@@ -2621,56 +2667,157 @@ if (typeof Duik === 'object') delete Duik;
 			limit = 1/limit*10000;		
 			
 			//for each frame of the comp
-			var frames = layer.containingComp.duration / layer.containingComp.frameDuration ;
-			for (var frame = 0 ; frame < frames ; frame += minExp)
+			var comp = layers[0].containingComp;
+			var frames = comp.duration / comp.frameDuration ;
+			var exposure = 0;
+			if (sync && !layerSync)
 			{
-				var time = frame*app.project.activeItem.frameDuration;
-				var nearKey = prop.nearestKeyIndex(time);
-				var nearKeyTime = prop.keyTime(nearKey);
+				for (var frame = 0 ; frame < frames ; frame += minExp)
+				{
+					exposure++;
+					var speed = 0;
+					var time = frame*comp.frameDuration;
+					//BOUCLE SUR LES CALQUES POUR VERIFIER SI LIMITE DEPASSEE
+					for (var i = 0 ; i < layers.length ; i++)
+					{
+						var layer = layers[i];
+						if (layer.selectedProperties.length == 0) continue;
+						for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+						{
+							var prop = layer.selectedProperties[j];
+							var speedTest = getSpeed(prop,time);
+							if (speedTest > speed) speed = speedTest;
+						}
+					}
 					
-				if (time <= nearKeyTime && nearKey == 1) continue;
-				
-				//get the value of the previous key
-				var prevKey = 0;
-				if (time < nearKeyTime) prevKey = nearKey -1;
-				else prevKey = nearKey;
-				
-				if (prevKey == prop.numKeys) break;    
-				
-				var prevKeyValue = prop.keyValue(prevKey);
-				var prevKeyTime = prop.keyTime(prevKey);
-				
-				//set a new key
-				var speed = Duik.utils.getLength(prop.valueAtTime(time,false),prop.keyValue(prevKey));
-
-				var exposure = (time - prevKeyTime) / app.project.activeItem.frameDuration;
-				
-				if (speed >= limit || exposure >= maxExp) prop.addKey(time);
-				
+					//BOUCLE SUR LES CALQUES POUR METTRE UNE CLEF SI LIMITE DEPASSEE
+					if ((speed >= limit || exposure >= maxExp) && speed > 0)
+					{
+						exposure = 0;
+						for (var i = 0 ; i < layers.length ; i++)
+						{
+							var layer = layers[i];
+							if (layer.selectedProperties.length == 0) continue;
+							for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+							{
+								var prop = layer.selectedProperties[j];
+								if (prop.propertyType != PropertyType.PROPERTY) continue;
+								if (prop.numKeys == 0) continue;
+								prop.addKey(time);
+							}
+						}
+					}
+					if (speed == 0) exposure = 0;
+				}
 			}
-
-			//all key interpolations to HOLD
-			for (var keyIndex = 1;keyIndex <= prop.numKeys;keyIndex++)
+			else if (sync)
 			{
-				prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
-				
+				//POUR CHAQUE CALQUE
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					var layer = layers[i];
+					if (layer.selectedProperties.length == 0) continue;
+					//pour chaque frame
+					for (var frame = 0 ; frame < frames ; frame += minExp)
+					{
+						exposure++;
+						var speed = 0;
+						var time = frame*comp.frameDuration;
+						//POUR CHAQUE PROP
+						for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+						{
+							var prop = layer.selectedProperties[j];
+							var speedTest = getSpeed(prop,time);
+							if (speedTest > speed) speed = speedTest;
+						}
+						if ((speed >= limit || exposure >= maxExp) && speed > 0)
+						{
+							exposure = 0;
+							for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+							{
+								var prop = layer.selectedProperties[j];
+								if (prop.propertyType != PropertyType.PROPERTY) continue;
+								if (prop.numKeys == 0) continue;
+								prop.addKey(time);
+							}
+						}
+						if (speed == 0) exposure = 0;
+					}
+				}
 			}
-			
+			else
+			{
+				//POUR CHAQUE CALQUE
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					var layer = layers[i];
+					if (layer.selectedProperties.length == 0) continue;
+					//POUR CHAQUE PROP
+					for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+					{
+						for (var frame = 0 ; frame < frames ; frame += minExp)
+						{
+							exposure++;
+							var speed = 0;
+							var time = frame*comp.frameDuration;
+							var prop = layer.selectedProperties[j];
+							var speed = getSpeed(prop,time);
+							if ((speed >= limit || exposure >= maxExp) && speed > 0)
+							{
+								exposure = 0;
+								prop.addKey(time);
+							}
+							if (speed == 0) exposure = 0;
+						}
+					}
+				}
+			}
+			//all key interpolations to HOLD
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				if (layer.selectedProperties.length == 0) continue;
+				for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+				{
+					var prop = layer.selectedProperties[j];
+					if (prop.propertyType != PropertyType.PROPERTY) continue;
+					if (prop.numKeys == 0) continue;
+					for (var keyIndex = 1;keyIndex <= prop.numKeys;keyIndex++)
+					{
+						prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+					}
+				}
+			}
 			return true;
 		}
 	}
-	// ADAPTATIVE EXPOSURE - Duik.fixedExposure(layer,property);
+	/* FIXED EXPOSURE - Duik.fixedExposure(layer,prop);
+	
+		Adds exposure controls to the animation of the property.
+		
+		parameters
+		layer | AVLayer
+		prop | Property
+		
+		returns
+		Array of AVLayers, the bones created
+		
+	*/
 	if (typeof Duik.fixedExposure !== 'function')
 	{
 		Duik.fixedExposure = function (layer,prop)
 		{
+			if (layer == undefined) return false;
+			if (prop == undefined) return false;
+			
+			//créer l'effet
 			var prep = Duik.utils.rigProperty(layer,prop,"DUIK_Exposure");
 			var effect = prep[0];
-			prop = prep[1];
+			var prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.exposure;
 			effect(1).setValue(1);
-			
+					
 			prop.expression = "expo = effect(\"" + effect.name + "\")(1);\n" +
 			"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
 			"timef = timeToFrames(time);\n" +
@@ -4090,6 +4237,52 @@ if (typeof Duik === 'object') delete Duik;
 													"result = result ;\n" + 
 													"result;\n" + 
 													"} else [0,0,0];";
+			}
+		}
+	}
+	/* SMART TIME REMAP - Duik.timeRemap(layers);
+
+	Activates the time remapping of the layers, extending them to the length of the comp and
+	adjusting the last keyframe.
+
+	parameters
+		layers | Array of Layer or LayerCollection
+		loopType | String, "in" or "out" or "none", default: "none"
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.timeRemap !== 'function')
+	{
+		Duik.timeRemap = function (layrs,loopType)
+		{
+			if (layrs == undefined) return;
+			if (layrs.length == 0 ) return;
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				if (!layer.canSetTimeRemapEnabled) continue;
+				
+				var comp = layer.containingComp;
+				var lastValueTime = layer.outPoint - comp.frameDuration;
+				
+				if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
+
+				layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+				layer.timeRemap.removeKey(3);
+				if (loopType == "out")
+				{
+					layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+					layer.timeRemap.expression = "loopOut();";
+				}
+				if (loopType == "in")
+				{
+					layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+					layer.timeRemap.expression = "loopIn();";
+					layer.inPoint = 0;
+				}
 			}
 		}
 	}
