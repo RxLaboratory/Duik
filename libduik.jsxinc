@@ -4286,5 +4286,86 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 	}
+	/* ONION SKIN - Duik.onionSkin(layer,activate,duration);
+
+	Activates or deactivates an onion skin on paint effects on the layer.
+
+	parameters
+		layer | AVLayer
+		activate | boolean, default: true
+		duration | integer, onion skin duration in frames, default: 5
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.onionSkin !== 'function')
+	{
+		Duik.onionSkin = function (layer,activate,onionDuration)
+		{
+			if (layer == undefined) return;
+			if (activate == undefined) activate = true;
+			if (onionDuration == undefined) onionDuration = 5;
+			
+			var comp = layer.containingComp;
+			for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+			{
+				var paint = layer.effect(i);
+				if (paint.matchName != "ADBE Paint") continue;
+				for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+				{
+					var stroke = paint.property("ADBE Paint Group")(j);
+					if (stroke.matchName != "ADBE Paint Atom") continue;
+					if (activate)
+					{
+						//stroke.property("ADBE Paint Transfer Mode") : blending mode
+						var inPoint = stroke.property("ADBE Paint Duration").value[0];
+						var duration = stroke.property("ADBE Paint Duration").value[1] ;
+						var outPoint = duration + inPoint;
+						var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+						//if keyframes (already activated)
+						if (opacity.numKeys > 0)
+						{
+							outPoint = opacity.keyTime(1);
+							//remove keys
+							while (opacity.numKeys>0)
+							{
+								opacity.removeKey(1);
+							}
+							opacity.setValue(100);
+						}
+						duration = (outPoint-inPoint) + onionDuration*comp.frameDuration;
+						
+						//set duration
+						stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+						//add keyframes
+						opacity.setValueAtTime(outPoint,100);
+						opacity.setValueAtTime(inPoint +duration,0);
+					}
+					else
+					{
+						var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+						if (opacity.numKeys > 0)
+						{
+							var inPoint = stroke.property("ADBE Paint Duration").value[0];
+							 outPoint = opacity.keyTime(1);
+							 while (opacity.numKeys>0)
+							{
+								opacity.removeKey(1);
+							}
+							opacity.setValue(100);
+							 //set duration
+							stroke.property("ADBE Paint Duration").setValue([inPoint,outPoint-inPoint]);
+						}
+					}
+				}
+			}
+			//deselect
+			while(layer.selectedProperties.length > 0)
+			{
+				layer.selectedProperties[0].selected = false;
+			}
+		}
+	}
 }());
 

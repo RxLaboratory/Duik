@@ -1829,6 +1829,103 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 			}
 			
+			//CEL Animation
+			function celCreateCelButtonClicked() {
+				var comp = app.project.activeItem;
+				if (comp == null) return;
+				if (!(comp instanceof CompItem)) return;
+				
+				var layer = null;
+				if (comp.selectedLayers.length == 0)
+				{
+					for (var i = 1 ; i <= comp.layers.length ; i++)
+					{
+						if (comp.layer(i).name.indexOf("Cel") >= 0)
+						{
+							layer = comp.layer(i);
+							break;
+						}
+					}
+				}
+				else
+				{
+					layer = comp.selectedLayers[0];
+				}
+				
+				app.beginUndoGroup("Duik - New celluloid");
+				
+				var singleLayer = celSingleLayerButton.value;
+				
+				if (singleLayer == undefined) singleLayer = true;
+				if (layer == undefined) layer = getLayer(comp,"Cel");
+				
+				if (!singleLayer || layer == null)
+				{
+					//create solid
+					layer = comp.layers.addSolid([0,0,0], "Cel 1", comp.width, comp.height, comp.pixelAspect , comp.duration);
+				}
+
+				var first = true;
+				for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+				{
+					if (layer.effect(i).matchName == "ADBE Paint")
+					{
+						first = false;
+						break;
+					}
+				}
+
+				var paint = layer.Effects.addProperty("ADBE Paint");
+				
+				if (first) paint.property("ADBE Paint On Transparent").setValue(true);
+				
+				app.endUndoGroup();
+			}
+			
+			function celOnionUpdateButtonClicked() {
+				var comp = app.project.activeItem;
+				if (comp == null) return;
+				if (!(comp instanceof CompItem)) return;
+				
+				var layer = null;
+				if (comp.selectedLayers.length == 0)
+				{
+					for (var i = 1 ; i <= comp.layers.length ; i++)
+					{
+						if (comp.layer(i).name.indexOf("Cel") >= 0)
+						{
+							layer = comp.layer(i);
+							break;
+						}
+					}
+				}
+				else
+				{
+					layer = comp.selectedLayers[0];
+				}
+				
+				
+				app.beginUndoGroup("Duik - Update Onion Skin");
+				Duik.onionSkin(layer,celOnionButton.value,parseInt(celOnionDurationEdit.text));
+				app.endUndoGroup();
+			}
+			
+			function celPreviousButtonClicked() {
+				var comp = app.project.activeItem;
+				if (comp == null) return;
+				if (!(comp instanceof CompItem)) return;
+				comp.time = comp.time - comp.frameDuration*parseInt(celExposureEdit.text);
+				celOnionUpdateButtonClicked();
+			}
+			
+			function celNextButtonClicked() {
+				var comp = app.project.activeItem;
+				if (comp == null) return;
+				if (!(comp instanceof CompItem)) return;
+				comp.time = comp.time + comp.frameDuration*parseInt(celExposureEdit.text);
+				celOnionUpdateButtonClicked();
+			}
+			
 			//COPY AND PASTE ANIM
 			function copyAnim() {
 				var layers = app.project.activeItem.selectedLayers;
@@ -2588,6 +2685,8 @@ function fnDuIK(thisObj)
 					timeRemapPanel.visible = false;
 					var exposurePanel = addVPanel(panos);
 					exposurePanel.visible = false;
+					var celPanel = addVPanel(panos);
+					celPanel.visible = false;
 
 					selecteur.onChange = function() {
 						ctrlPanel.hide();
@@ -2597,6 +2696,7 @@ function fnDuIK(thisObj)
 						measurePanel.hide();
 						timeRemapPanel.hide();
 						exposurePanel.hide();
+						celPanel.hide();
 						if (selecteur.selection == 0){
 							panoik.visible = true;
 							panoanimation.visible = false;
@@ -3005,12 +3105,13 @@ function fnDuIK(thisObj)
 						blinkButton.helpTip = "Makes the property blink.";
 						//Timeremap
 						var timeRemapButton = addIconButton(groupeAnimationG,"btn_timeremap.png","Time remap");
-						timeRemapButton.helpTip = "Time remap tools";
 						timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
 						//timeRemapButton.onClick = paintRigButtonClicked;
 						timeRemapButton.helpTip = "Time remapping tools.";
-						//Placeholder
-						addButton(groupeAnimationD,"");
+						//Cel
+						var celButton = addIconButton(groupeAnimationD,"btn_cel.png","Cel animation");
+						celButton.helpTip = "Cel animation tools";
+						celButton.onClick = function () { panoanimation.hide(); celPanel.show(); } ;
 						//bouton Copy ANIM
 						var boutonCopyAnim = addIconButton(groupeAnimationG,"/btn_copy.png",getMessage(129));
 						boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
@@ -3381,11 +3482,13 @@ function fnDuIK(thisObj)
 							precisionGroup.enabled = adaptativeExposureButton.value;
 							exposureSyncGroup.enabled = adaptativeExposureButton.value;
 						}
-						var evenExposureButton = exposurePanel.add("radiobutton",undefined,"Fixed");
+						var exposureTypeGroup = addHGroup(exposurePanel);
+						var evenExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Fixed");
 						evenExposureButton.onClick = exposureSelect;
-						var adaptativeExposureButton = exposurePanel.add("radiobutton",undefined,"Adaptative");
+						var adaptativeExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Adaptative");
 						adaptativeExposureButton.value = true;
 						adaptativeExposureButton.onClick = exposureSelect;
+						addSeparator(exposurePanel,"");
 						var lowerExposureGroup = addHGroup(exposurePanel);
 						lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
 						var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
@@ -3400,6 +3503,7 @@ function fnDuIK(thisObj)
 						precisionButton.onClick = detectExposurePrecision;
 						var exposurePrecisionSlider = exposurePanel.add("slider",undefined,500,0,1000);
 						exposurePrecisionSlider.onChanging = function () {precisionEdit.text = Math.floor(exposurePrecisionSlider.value);};
+						addSeparator(exposurePanel,"");
 						var exposureSyncGroup = addHGroup(exposurePanel);
 						var exposureSyncButton = exposureSyncGroup.add("checkbox",undefined,"Sync");
 						exposureSyncButton.value = true;
@@ -3413,12 +3517,43 @@ function fnDuIK(thisObj)
 						var exposureButtonsGroup = addHGroup(exposurePanel);
 						var exposureCancelButton = addIconButton(exposureButtonsGroup,"btn_cancel.png","Back");
 						exposureCancelButton.onClick = function () { exposurePanel.hide();panoanimation.show();};
-						exposureCancelButton.helpTip = "Cancel";
+						exposureCancelButton.helpTip = "Back";
 						var exposureOKButton = addIconButton(exposureButtonsGroup,"btn_valid.png","Exposure");
 						exposureOKButton.onClick = function () { exposureOKButtonClicked();exposurePanel.hide();panoanimation.show();};
 						exposureOKButton.helpTip = "Set animation exposure";
 					}
-					
+					// CEL PANEL
+					{
+						var celCreateCelGroup = addHGroup(celPanel);
+						var celSingleLayerButton = celCreateCelGroup.add("checkbox",undefined,"Single Layer");
+						celSingleLayerButton.helpTip = "If enabled, creates cels as new paint effects on a single layer";
+						celSingleLayerButton.alignment = ["left","bottom"];
+						var celCreateCelButton = addButton(celCreateCelGroup,"New Cel.");
+						celCreateCelButton.helpTip = "Creates a new animation cel.";
+						celCreateCelButton.onClick = celCreateCelButtonClicked;
+						var celOnionGroup = addHGroup(celPanel);
+						var celOnionButton = celOnionGroup.add("checkbox",undefined,"Onion skin");
+						celOnionButton.helpTip = "Activates onion skin";
+						celOnionButton.alignment = ["left","bottom"];
+						celOnionButton.onClick = celOnionUpdateButtonClicked;
+						var celOnionDurationEdit = celOnionGroup.add("edittext",undefined,"5");
+						celOnionDurationEdit.helpTip = "Onion skin duration (frames)";
+						celOnionDurationEdit.onChange = celOnionUpdateButtonClicked;
+						var celOnionUpdateButton = addButton(celPanel,"Update Onion Skin");
+						celOnionUpdateButton.onClick = celOnionUpdateButtonClicked;
+						var celNavButtonsGroup = addHGroup(celPanel);
+						var celPreviousButton = addIconButton(celNavButtonsGroup,"btn_prev.png","");
+						celPreviousButton.helpTip = "Previous frame";
+						celPreviousButton.onClick = celPreviousButtonClicked;
+						var celExposureEdit = celNavButtonsGroup.add("edittext",undefined,"02");
+						celExposureEdit.helpTip = "Exposure";
+						var celNextButton = addIconButton(celNavButtonsGroup,"btn_next.png","");
+						celNextButton.helpTip = "Next frame";
+						celNextButton.onClick = celNextButtonClicked;
+						var celCancelButton = addIconButton(celPanel,"btn_cancel.png","Back");
+						celCancelButton.onClick = function () { celPanel.hide();panoanimation.show();};
+						celCancelButton.helpTip = "Back";
+					}
 					
 					// On définit le layout et on redessine la fenètre quand elle est resizée
 					palette.layout.layout(true);
