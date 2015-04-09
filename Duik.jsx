@@ -1857,7 +1857,6 @@ function fnDuIK(thisObj)
 				var singleLayer = celSingleLayerButton.value;
 				
 				if (singleLayer == undefined) singleLayer = true;
-				if (layer == undefined) layer = getLayer(comp,"Cel");
 				
 				if (!singleLayer || layer == null)
 				{
