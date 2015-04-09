@@ -2230,6 +2230,22 @@ function fnDuIK(thisObj)
 				}     
 			}
 			
+			function roving () {
+				for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+						if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
+							for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+								if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+								{
+									prop.setRovingAtKey(prop.selectedKeys[k],true);
+								}
+							}
+						}
+					}
+				}
+			}
+			
 		}
 
 
@@ -2972,9 +2988,11 @@ function fnDuIK(thisObj)
 					// PANNEAU INTERPOLATION -----------------------------------------------------------
 					{
 						var groupeInterpoClefs = addHGroup(panointerpo);
-						groupeInterpoClefs.alignChildren = ["right","top"];
-						var interpoClefsTexte = groupeInterpoClefs.add("statictext",undefined,"Type:");
-						interpoClefsTexte.alignment = ["left","top"];
+						//groupeInterpoClefs.alignChildren = ["right","top"];
+						var rovingButton = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_roving.png");
+						rovingButton.size = [20,20];
+						rovingButton.onClick = roving;
+						rovingButton.helpTip = "Roving key";
 						var boutonLineaire = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_lineaire.png");
 						boutonLineaire.size = [20,20];
 						boutonLineaire.onClick = lineaire;
