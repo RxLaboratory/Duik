@@ -492,6 +492,7 @@ if (typeof Duik === 'object') delete Duik;
 				"        <Slider name='$$$/AE/Preset/DuikYFreq=Y Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
 				"        <Slider name='$$$/AE/Preset/DuikZFreq=Z Freq' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
 				"    </Group>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/DuikLoopDuration=Loop Duration (s)' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='10' precision='2'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<Effect matchname='DUIK_2D_Wiggle' name='$$$/AE/Preset/2dwiggle=DUIK_2D_Wiggle'>\r\n" + 
 				"    <Group name='$$$/AE/Preset/DuikAmplitudes=Amplitudes'>\r\n" + 
@@ -502,10 +503,12 @@ if (typeof Duik === 'object') delete Duik;
 				"        <Slider name='$$$/AE/Preset/DuikXFreq=X Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
 				"        <Slider name='$$$/AE/Preset/DuikYFreq=Y Freq.' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
 				"    </Group>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/DuikLoopDuration=Loop Duration (s)' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='10' precision='2'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<Effect matchname='DUIK_1D_Wiggle' name='$$$/AE/Preset/1dwiggle=DUIK_1D_Wiggle'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikAmplitude=Amplitude' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='1000' precision='1'/>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikFrequency=Frequency' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
+				"        <Slider name='$$$/AE/Preset/DuikLoopDuration=Loop Duration (s)' default='0' valid_min='0' valid_max='10000' slider_min='0' slider_max='10' precision='2'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<Effect matchname='DUIK_Exposure' name='$$$/AE/Preset/exposure=DUIK_Exposure'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikExposure=Exposure (frames)' default='1' valid_min='1' valid_max='1000' slider_min='1' slider_max='30' precision='1'/>\r\n" + 
@@ -2564,8 +2567,26 @@ if (typeof Duik === 'object') delete Duik;
 			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
+			effect(11).setValue(layer.containingComp.duration);
 			
-			prop.expression = "//Duik.3DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(8),effect(\"" + effect.name + "\")(3));\n" + "Z=wiggle(effect(\"" + effect.name + "\")(9),effect(\"" + effect.name + "\")(4));\n" +  "[X[0],Y[1],Z[2]]";
+			prop.expression = "//Duik.3DWiggle\r\n" + 
+						"Xfreq = effect(\"" + effect.name + "\")(7);\n" + 
+						"Yfreq = effect(\"" + effect.name + "\")(8);\n" + 
+						"Zfreq = effect(\"" + effect.name + "\")(9);\n" + 
+						"Xamp = effect(\"" + effect.name + "\")(2);\n" + 
+						"Yamp = effect(\"" + effect.name + "\")(3);\n" + 
+						"Zamp = effect(\"" + effect.name + "\")(7);\n" + 
+						"loop = effect(\"" + effect.name + "\")(11);\n" + 
+						"t = time % loop;\n" + 
+						"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" + 
+						"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" + 
+						"Z1 = wiggle(Zfreq,Zamp, 1, 0.5, t);\n" +  
+						"w1 = [X1[0],Y1[1],Z1[2]];\n" + 
+						"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" + 
+						"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" + 
+						"Z2 = wiggle(Zfreq,Zamp, 1, 0.5, t - loop);\n" +  
+						"w2 = [X2[0],Y2[1],Z2[2]];\n" + 
+						"ease(t, 0,  loop, w1, w2);";
 		
 			return true;
 		}
@@ -2580,8 +2601,22 @@ if (typeof Duik === 'object') delete Duik;
 			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
-			prop.expression = "//Duik.2DWiggle\r\nX=wiggle(effect(\"" + effect.name + "\")(6),effect(\"" + effect.name + "\")(2));\n" + "Y=wiggle(effect(\"" + effect.name + "\")(7),effect(\"" + effect.name + "\")(3));\n" +  "[X[0],Y[1]]";
+			effect(9).setValue(layer.containingComp.duration);
 			
+			prop.expression = "//Duik.2DWiggle\n" + 
+						"Xfreq = effect(\"" + effect.name + "\")(6);\n" + 
+						"Yfreq = effect(\"" + effect.name + "\")(7);\n" + 
+						"Xamp = effect(\"" + effect.name + "\")(2);\n" + 
+						"Yamp = effect(\"" + effect.name + "\")(3);\n" + 
+						"loop = effect(\"" + effect.name + "\")(9);\n" + 
+						"t = time % loop;\n" + 
+						"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" + 
+						"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" + 
+						"w1 = [X1[0],Y1[1]];\n" + 
+						"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" + 
+						"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" + 
+						"w2 = [X2[0],Y2[1]];\n" + 
+						"ease(t, 0,  loop, w1, w2);";			
 			return true;
 		}
 	}
@@ -2595,9 +2630,16 @@ if (typeof Duik === 'object') delete Duik;
 			prop = prep[1];
 			if (effect == null) return false;
 			effect.name = prop.name + " " + Duik.uiStrings.wiggle;
+			effect(3).setValue(layer.containingComp.duration);
 			
-			prop.expression = "//Duik.1DWiggle\r\nwiggle(effect(\"" + effect.name + "\")(2),effect(\"" + effect.name + "\")(1))";
-			
+			prop.expression = "//Duik.1DWiggle\n" + 
+						"freq = effect(\"" + effect.name + "\")(2);\n" + 
+						"amp = effect(\"" + effect.name + "\")(1);\n" + 
+						"loop = effect(\"" + effect.name + "\")(3);\n" + 
+						"t = time % loop;\n" + 
+						"w1 = wiggle(freq,amp, 1, 0.5, t);\n" + 
+						"w2 = wiggle(freq,amp, 1, 0.5, t - loop);\n" + 
+						"ease(t, 0,  loop, w1, w2);";
 			return true;
 
 		}

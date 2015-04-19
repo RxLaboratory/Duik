@@ -1527,7 +1527,7 @@ function fnDuIK(thisObj)
 			//=============== ANIMATION =========================
 
 			//FONCTION WIGGLE OK
-			function wiggleDimensions(){
+			function wiggleOKButtonClicked(){
 
 				//vérifions qu'il n'y a qu'un calque sélectionné
 				if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0)
@@ -1546,8 +1546,6 @@ function fnDuIK(thisObj)
 					app.endUndoGroup();
 					
 				} else { alert(getMessage(12)); }
-
-				fenetrewiggle.close();
 			}
 
 			//FONCTION WIGGLE
@@ -1557,7 +1555,8 @@ function fnDuIK(thisObj)
 				var dim = prop.propertyValueType ;
 				if (dim == PropertyValueType.ThreeD_SPATIAL || dim == PropertyValueType.ThreeD || dim == PropertyValueType.TwoD_SPATIAL || dim == PropertyValueType.TwoD)
 				{
-					fenetrewiggle.show();
+					panoanimation.hide();
+					wigglePanel.show();
 				}
 				else
 				{
@@ -2508,17 +2507,6 @@ function fnDuIK(thisObj)
 				roueH.value = true;
 				}
 				
-				// la fenetre du wiggle
-				{
-					var fenetrewiggle = createDialog("Wiggle",true,wiggleDimensions);
-					fenetrewiggle.groupe.orientation = "row";
-					//separer ou toutes
-					var wiggleSeparate = fenetrewiggle.groupe.add("radiobutton",undefined,"Separate Dimensions");
-					var wiggleTous = fenetrewiggle.groupe.add("radiobutton",undefined,"All Dimensions");
-					wiggleTous.value = true;
-
-				}
-				
 				// la fenetre de la calculatrice
 				{
 					 
@@ -2702,6 +2690,8 @@ function fnDuIK(thisObj)
 					exposurePanel.visible = false;
 					var celPanel = addVPanel(panos);
 					celPanel.visible = false;
+					var wigglePanel = addVPanel(panos);
+					wigglePanel.visible = false;
 
 					selecteur.onChange = function() {
 						ctrlPanel.hide();
@@ -2712,6 +2702,7 @@ function fnDuIK(thisObj)
 						timeRemapPanel.hide();
 						exposurePanel.hide();
 						celPanel.hide();
+						wigglePanel.hide();
 						if (selecteur.selection == 0){
 							panoik.visible = true;
 							panoanimation.visible = false;
@@ -3571,7 +3562,22 @@ function fnDuIK(thisObj)
 						celCancelButton.onClick = function () { celPanel.hide();panoanimation.show();};
 						celCancelButton.helpTip = "Back";
 					}
-					
+					//WIGGLE PANEL
+					{
+						var wiggleSeparateGroup = addHGroup(wigglePanel);
+						//separer ou toutes
+						var wiggleSeparate = wiggleSeparateGroup.add("radiobutton",undefined,"Separate Dimensions");
+						var wiggleTous = wiggleSeparateGroup.add("radiobutton",undefined,"All Dimensions");
+						wiggleTous.value = true;
+						var wiggleButtonsGroup = addHGroup(wigglePanel);
+						var wiggleCancelButton = addIconButton(wiggleButtonsGroup,"btn_cancel.png","Cancel");
+						wiggleCancelButton.onClick = function () { wigglePanel.hide();panoanimation.show();};
+						wiggleCancelButton.helpTip = "Back";
+						var wiggleOKButton = addIconButton(wiggleButtonsGroup,"btn_valid.png","Wiggle");
+						wiggleOKButton.onClick = function () { wiggleOKButtonClicked();wigglePanel.hide();panoanimation.show();};
+						wiggleOKButton.helpTip = "Set animation exposure";
+						
+					}
 					// On définit le layout et on redessine la fenètre quand elle est resizée
 					palette.layout.layout(true);
 					palette.layout.resize();
