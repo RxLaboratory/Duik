@@ -3113,7 +3113,7 @@ function fnDuIK(thisObj)
 					}
 					// PANNEAU ANIMATION -----------------------------------------------
 					{
-						var importRigButton = addIconButton(panoanimation,"/btn_copy.png","Import rig in current comp.");
+						var importRigButton = addIconButton(panoanimation,"/btn_importrig.png","Import rig in current comp.");
 						importRigButton.onClick = function () { panoanimation.hide();irRigRefreshButtonClicked(); irPanel.show(); };
 						importRigButton.helpTip = "Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates.";
 						
@@ -3643,11 +3643,11 @@ function fnDuIK(thisObj)
 					}
 					//IMPORT RIG PANEL
 					{
-						irPanel.add("statictext",undefined,"Rig composition to import:");
+						irPanel.add("statictext",undefined,"Rigged composition to import:");
 						var irRigGroup = addHGroup(irPanel);
 						var irRigButton = irRigGroup.add("dropdownlist",undefined);
 						irRigButton.alignment = ["fill","fill"];
-						var irRigRefreshButton = addIconButton(irRigGroup,"btn_valid.png","");
+						var irRigRefreshButton = addIconButton(irRigGroup,"btn_refresh.png","");
 						irRigRefreshButton.alignment = ["right","fill"];
 						irRigRefreshButton.onClick = irRigRefreshButtonClicked;
 						irPanel.add("statictext",undefined,"Name of this instance:");
