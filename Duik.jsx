@@ -1245,7 +1245,24 @@ function fnDuIK(thisObj)
 				else if (ctrlColorList.selection == 8) color = [0.25,0.25,0.25,1];
 				else if (ctrlColorList.selection == 9) color = [0,0,0,1];
 				else color = [1,1,1,1];
-				Duik.addControllers(app.project.activeItem.selectedLayers,color,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value,ctrlArcButton.value);
+				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,undefined,color,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
+				if (ctrlArcButton.value)
+				{
+					for (var i in newControllers)
+					{
+						newControllers[i].arc = true;
+						newControllers[i].update();
+					}
+				}
+				if (ctrlEyeButton.value)
+				{
+					for (var i in newControllers)
+					{
+						newControllers[i].eye = true;
+						newControllers[i].update();
+					}
+				}
+				
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 
@@ -1292,6 +1309,7 @@ function fnDuIK(thisObj)
 					controllers[i].rotation = ctrlRotationButton.value;
 					controllers[i].scale = ctrlScaleButton.value;
 					controllers[i].arc = ctrlArcButton.value;
+					controllers[i].eye = ctrlEyeButton.value;
 
 					controllers[i].update();
 					
@@ -3218,9 +3236,22 @@ function fnDuIK(thisObj)
 							ctrlXPositionButton.enabled = !ctrlArcButton.value;
 							ctrlYPositionButton.enabled = !ctrlArcButton.value;
 							ctrlScaleButton.enabled = !ctrlArcButton.value;
+							ctrlEyeButton.enabled = !ctrlArcButton.value;
 						}
 						ctrlArcButton.alignment = ["left","bottom"];
 						ctrlArcGroup.add("image",undefined,dossierIcones + "ctrl_arc.png");
+						var ctrlEyeGroup = addHGroup(ctrlShapeGroup);
+						var ctrlEyeButton = ctrlEyeGroup.add("checkbox",undefined,"");
+						ctrlEyeButton.helpTip = "Eye";
+						ctrlEyeButton.onClick = function () {
+							ctrlRotationButton.enabled = !ctrlEyeButton.value;
+							ctrlXPositionButton.enabled = !ctrlEyeButton.value;
+							ctrlYPositionButton.enabled = !ctrlEyeButton.value;
+							ctrlScaleButton.enabled = !ctrlEyeButton.value;
+							ctrlArcButton.enabled = !ctrlEyeButton.value;
+						}
+						ctrlEyeButton.alignment = ["left","bottom"];
+						ctrlEyeGroup.add("image",undefined,dossierIcones + "ctrl_eye.png");
 						
 						var ctrlSettingsGroup = addVGroup(ctrlMainGroup);
 						ctrlSettingsGroup.alignChildren = ["fill","top"];
