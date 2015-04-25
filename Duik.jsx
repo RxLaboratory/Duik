@@ -1526,6 +1526,29 @@ function fnDuIK(thisObj)
 			
 			//=============== ANIMATION =========================
 
+			//IMPORT RIG
+			function irRigRefreshButtonClicked(){
+				//list all comps of the project
+				irRigButton.removeAll();
+				for (var i = 1 ; i < app.project.numItems;i++)
+				{
+					if (app.project.item(i) instanceof CompItem)
+					{
+						irRigButton.add("item",i + " " + app.project.item(i).name);
+					}
+				}
+			}
+			function irOKButtonClicked(){
+				if (irRigButton.selection == null) return;
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				if (irNameText.text == "") alert("You must specify a (unique) name for this instance of the rig");
+				//gets the rig comp
+				var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(" ")));
+				app.beginUndoGroup("Import rig: " + irNameText.text);
+				Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text);
+				app.endUndoGroup();
+			}
+			
 			//FONCTION WIGGLE OK
 			function wiggleOKButtonClicked(){
 
@@ -2666,7 +2689,7 @@ function fnDuIK(thisObj)
 					panos.alignChildren = ["fill","fill"];
 					// ----- Les différents panneaux
 					var panoik = addVPanel(panos);
-					var panoanimation = addHPanel(panos);
+					var panoanimation = addVPanel(panos);
 					panoanimation.visible = false;
 					var panointerpo =  addVPanel(panos);
 					panointerpo.visible = false;
@@ -2692,6 +2715,8 @@ function fnDuIK(thisObj)
 					celPanel.visible = false;
 					var wigglePanel = addVPanel(panos);
 					wigglePanel.visible = false;
+					var irPanel = addVPanel(panos);
+					irPanel.visible = false;
 
 					selecteur.onChange = function() {
 						ctrlPanel.hide();
@@ -2703,6 +2728,7 @@ function fnDuIK(thisObj)
 						exposurePanel.hide();
 						celPanel.hide();
 						wigglePanel.hide();
+						irPanel.hide();
 						if (selecteur.selection == 0){
 							panoik.visible = true;
 							panoanimation.visible = false;
@@ -3069,8 +3095,14 @@ function fnDuIK(thisObj)
 					}
 					// PANNEAU ANIMATION -----------------------------------------------
 					{
-						var groupeAnimationG = addVGroup(panoanimation);
-						var groupeAnimationD = addVGroup(panoanimation);
+						var importRigButton = addIconButton(panoanimation,"/btn_copy.png","Import rig in current comp.");
+						importRigButton.onClick = function () { panoanimation.hide();irRigRefreshButtonClicked(); irPanel.show(); };
+						importRigButton.helpTip = "Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates.";
+						
+						animationMainGroup = addHGroup(panoanimation);
+						
+						var groupeAnimationG = addVGroup(animationMainGroup);
+						var groupeAnimationD = addVGroup(animationMainGroup);
 						//bouton wiggle
 						var boutonwiggle = addIconButton(groupeAnimationG,"btn_wiggle.png",getMessage(121));
 						boutonwiggle.onClick = wiggle;
@@ -3578,6 +3610,27 @@ function fnDuIK(thisObj)
 						wiggleOKButton.helpTip = "Set animation exposure";
 						
 					}
+					//IMPORT RIG PANEL
+					{
+						irPanel.add("statictext",undefined,"Rig composition to import:");
+						var irRigGroup = addHGroup(irPanel);
+						var irRigButton = irRigGroup.add("dropdownlist",undefined);
+						irRigButton.alignment = ["fill","fill"];
+						var irRigRefreshButton = addIconButton(irRigGroup,"btn_valid.png","");
+						irRigRefreshButton.alignment = ["right","fill"];
+						irRigRefreshButton.onClick = irRigRefreshButtonClicked;
+						irPanel.add("statictext",undefined,"Name of this instance:");
+						irNameText = irPanel.add("edittext",undefined,"Must be unique!");
+						var irButtonsGroup = addHGroup(irPanel);
+						var irCancelButton = addIconButton(irButtonsGroup,"btn_cancel.png","Cancel");
+						irCancelButton.onClick = function () { irPanel.hide();panoanimation.show();};
+						irCancelButton.helpTip = "Cancel";
+						var irOKButton = addIconButton(irButtonsGroup,"btn_valid.png","Import");
+						irOKButton.onClick = function () { irOKButtonClicked();irPanel.hide();panoanimation.show();};
+						irOKButton.helpTip = "Import selected rig";
+					}
+					
+					
 					// On définit le layout et on redessine la fenètre quand elle est resizée
 					palette.layout.layout(true);
 					palette.layout.resize();
