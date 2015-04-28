@@ -203,6 +203,7 @@ if (typeof Duik === 'object') delete Duik;
 		this.scale = false;
 		this.arc = false;
 		this.eye = false;
+		this.size = 0;
 		this.color = [1,1,1,1];
 		this.layer = null;
 		this.type = Duik.layerTypes.VECTOR;
@@ -267,13 +268,13 @@ if (typeof Duik === 'object') delete Duik;
 		if (iconGroup != null) iconGroup.remove();
 
 		//controller size
-		var controllerSize = Duik.settings.controllerSize;
-		if (Duik.settings.controllerSizeAuto)
+		var controllerSize = this.size;
+		if (controllerSize == 0)
 		{
 			controllerSize = this.layer.containingComp.width/2 + this.layer.containingComp.height/2;
-			if (Duik.settings.controllerSizeHint == Duik.sizes.SMALL) controllerSize = Math.floor(controllerSize/40);
-			else if (Duik.settings.controllerSizeHint == Duik.sizes.MEDIUM) controllerSize = Math.floor(controllerSize/20);
-			else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10);
+			if (Duik.settings.controllerSizeHint == Duik.sizes.SMALL) controllerSize = Math.floor(controllerSize/40)*100/30;
+			else if (Duik.settings.controllerSizeHint == Duik.sizes.MEDIUM) controllerSize = Math.floor(controllerSize/20)*100/30;
+			else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10)*100/30;
 		}
 
 		if (this.arc)
@@ -295,7 +296,7 @@ if (typeof Duik === 'object') delete Duik;
 		
 		iconGroup = this.layer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		iconGroup.name = "Icon";
-		controllerSizeFactor = controllerSize*100/30;
+		controllerSizeFactor = controllerSize;
 		iconGroup("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([controllerSizeFactor,controllerSizeFactor]);
 		if (this.rotation)
 		{
@@ -482,12 +483,12 @@ if (typeof Duik === 'object') delete Duik;
 /////////////////////////////
 (function ()
 {
-	if (Duik.versionNumber != 15.0012)
+	if (Duik.versionNumber != 15.0013)
 	{
 		delete Duik;
 		Duik = {};
-		Duik.version = "15.alpha10";
-		Duik.versionNumber = 15.0012;
+		Duik.version = "15.alpha13";
+		Duik.versionNumber = 15.0013;
 		Duik.usePresets = true;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 		Duik.presetEffectsInstalledVersion = 0.0;
@@ -516,7 +517,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.setup = {};
 		//Duik.setup.presetEffects String
 		{
-			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0012 -->\r\n" + 
+			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0013 -->\r\n" + 
 				"<Effect matchname='DUIK_One_Layer_IK' name='$$$/AE/Preset/1ik=DUIK_One_Layer_IK'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikWeight=Weight' default='100' valid_min='-1000' valid_max='1000' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
 				"    <Checkbox name='$$$/AE/Preset/DuikReverse=Reverse' default='true'/>\r\n" + 
@@ -774,6 +775,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.paintRig = "Paint Rig";
 		Duik.uiStrings.blink = "Blink";
 		Duik.uiStrings.scale = "Scale";
+		Duik.uiStrings.flip = "Flip";
 	}
 
 	//================================
@@ -1183,9 +1185,15 @@ if (typeof Duik === 'object') delete Duik;
 				var anims = [];
 				if (prop.propertyType == PropertyType.PROPERTY)
 				{
-					var anim = Duik.utils.getPropertyAnim(prop,selectedKeysOnly,startTime,endTime);
-					if (selectedKeysOnly && anim.keys.length >= 1) anims.push(anim);
-					else if (!selectedKeysOnly) anims.push(anim);
+					if (prop.PropertyValueType != PropertyValueType.NO_VALUE)
+					{
+						var anim = Duik.utils.getPropertyAnim(prop,selectedKeysOnly,startTime,endTime);
+						if (anim != null)
+						{
+							if (selectedKeysOnly && anim.keys.length >= 1) anims.push(anim);
+							else if (!selectedKeysOnly) anims.push(anim);
+						}
+					}
 				}
 				else if (prop.numProperties > 0)
 				{
@@ -1207,8 +1215,11 @@ if (typeof Duik === 'object') delete Duik;
 		{
 			Duik.utils.getPropertyAnim = function (prop,selectedKeysOnly,startTime,endTime)
 			{
+				if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
+				
 				var anim = new PropertyAnim();
 				anim.name = prop.name;
+				
 				anim.startValue = prop.valueAtTime(startTime,true);
 				
 				if (prop.elided) return anim;
@@ -1264,8 +1275,11 @@ if (typeof Duik === 'object') delete Duik;
 					}
 					else //set the start value
 					{
-						try { prop.setValue(propAnim.startValue); }
-						catch(err){}
+                            if (!prop.elided)
+                            {
+                                try { prop.setValue(propAnim.startValue); }
+                                catch(err){}
+                            }
 					}
 					return true;
 				}
@@ -1303,10 +1317,13 @@ if (typeof Duik === 'object') delete Duik;
 						prop.setRovingAtKey(index,key.spatialProperties.roving);
 						prop.setSpatialTangentsAtKey(index,key.spatialProperties.inTangent,key.spatialProperties.outTangent);
 					}
-					prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
-					prop.setTemporalContinuousAtKey(index,key.continuous);
-					prop.setTemporalAutoBezierAtKey(index,key.autoBezier);
-					prop.setInterpolationTypeAtKey(index,key.inInterpolationType,key.outInterpolationType);
+                       try {
+                            prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
+                            prop.setTemporalContinuousAtKey(index,key.continuous);
+                            prop.setTemporalAutoBezierAtKey(index,key.autoBezier);
+                            prop.setInterpolationTypeAtKey(index,key.inInterpolationType,key.outInterpolationType);
+                       }
+                   catch(err){}
 					
 				}
 				catch (err)
@@ -1669,6 +1686,7 @@ if (typeof Duik === 'object') delete Duik;
 						var controller = new Controller();
 						controller.type = Duik.layerTypes.VECTOR;
 						controller.layer = l;
+						controller.size = iconGroup("ADBE Vector Transform Group")("ADBE Vector Scale").value[0];
 						//check properties
 						for (var j = 1 ; j <= iconGroup("ADBE Vectors Group").numProperties ; j++)
 						{
@@ -1754,7 +1772,7 @@ if (typeof Duik === 'object') delete Duik;
 					{
 						//copy paste the animation / value
 						var anim = Duik.utils.getPropertyAnim(childProp(p),false,0,23000);
-						Duik.utils.setPropertyAnim(parentProp(p),anim,0);
+						if (anim != null) Duik.utils.setPropertyAnim(parentProp(p),anim,0);
 						//get the expression
 						if (parentProp(p).canSetExpression && childProp(p).expression != "")
 						{ 
@@ -2627,7 +2645,7 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	/* ADD CONTROLLER - Duik.addController(layer,color,autoLock,rotation,xPosition,yPosition,scale)
+	/* ADD CONTROLLER - Duik.addController(layer,type,color,autoLock,rotation,xPosition,yPosition,scale,size)
 	
 		parameters
 		layer | AVLayer
@@ -2669,6 +2687,7 @@ if (typeof Duik === 'object') delete Duik;
 			controllerObj.arc = false;
 			controllerObj.eye = false;
 			controllerObj.color = color;
+			controllerObj.size = 0;
 
 			//le controleur
 			var controller;
@@ -2690,9 +2709,12 @@ if (typeof Duik === 'object') delete Duik;
 				controller.anchorPoint.setValue([controller.source.width/2,controller.source.height/2]);
 				controllerObj.layer = controller;
 				controllerObj.type = Duik.layerTypes.NULL;
+				controllerObj.size = controllerSize;
 			}
 			else
 			{
+				if (Duik.settings.controllerSizeAuto) controllerObj.size = 0;
+				else controllerObj.size = Duik.settings.controllerSize/30*100;
 				if (layer != null) controller = layer.containingComp.layers.addShape();
 				else controller = app.project.activeItem.layers.addShape();
 				controller.guideLayer = true;
@@ -3175,7 +3197,7 @@ if (typeof Duik === 'object') delete Duik;
 							calque.parent = null;
 							var calqueEchelle = calque.transform.scale.value;
 							calque.parent = calqueParent;
-							boneTaille = calque.source.width*Math.abs(calqueEchelle[0])/100 + calque.source.height*Math.abs(calqueEchelle[1])/100;
+							boneTaille = calque.source.width*Math.abs(calqueEchelle[0])/130 + calque.source.height*Math.abs(calqueEchelle[1])/130;
 						}
 						
 						if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) boneTaille = Math.floor(boneTaille/60);
@@ -3851,8 +3873,9 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.replaceInLayersExpressions !== 'function')
 	{
-		Duik.replaceInLayersExpressions = function (layers,oldString,newString)
+		Duik.replaceInLayersExpressions = function (layrs,oldString,newString)
 		{
+			var layers = Duik.utils.convertCollectionToArray(layrs);
 			for (var layerIndex = 0 ; layerIndex<layers.length ; layerIndex++)
 			{
 				var l = Duik.utils.getItem(layers,layerIndex);
@@ -3863,7 +3886,7 @@ if (typeof Duik === 'object') delete Duik;
 				//masks
 				if (l("ADBE Mask Parade") != null) Duik.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString);
 				//effects
-				if (l("effects") != null) Duik.replaceInExpressions(l("effects"),oldString,newString);
+				if (l("ADBE Effect Parade") != null) Duik.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString);
 				l.locked = locked;
 				delete l;
 				delete locked;
@@ -4725,6 +4748,7 @@ if (typeof Duik === 'object') delete Duik;
 				
 				var oldController = characterControllers[i];
 				var newController = Duik.addController(newZero,oldController.type,oldController.color,false,oldController.rotation,oldController.xPosition,oldController.yPosition,oldController.scale);
+				newController.size = oldController.size;
 				newController.arc = oldController.arc;
 				newController.eye = oldController.eye;
 				newController.update();
@@ -4787,9 +4811,15 @@ if (typeof Duik === 'object') delete Duik;
 			}
                 
 			//And finally, a master ctrl to control them all!
-			var masterC = Duik.addController(characterLayer,[1,1,1],false,true,true,true,true,false);
+			var masterC = Duik.addController(characterLayer,Duik.settings.controllerType,[1,1,1],false,true,true,true,true,false);
 			masterC.layer.transform.position.setValue([masterC.layer.transform.position.value[0],comp.height-20]);
 			masterC.layer.name = "MASTER_" + characterName;
+			var flip = masterC.layer.effect.addProperty("ADBE Checkbox Control");
+			flip.name = Duik.uiStrings.flip;
+			masterC.layer.transform.scale.expression = "//Duik.importRig\n" + 
+									"var flip = thisLayer.effect(\"" + flip.name + "\")(1).value\n" + 
+									"if (flip) [-value[0],value[1]]\n" + 
+									"else value";
 			characterLayer.parent = masterC.layer;
 			characterLayer.locked = true;
 			

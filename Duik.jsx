@@ -1595,6 +1595,7 @@ function fnDuIK(thisObj)
 			function wiggle(){
 				//regarder le nombre d'axes dans la propriété sélectionnée
 				var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
+                    if (prop == undefined) return;
 				var dim = prop.propertyValueType ;
 				if (dim == PropertyValueType.ThreeD_SPATIAL || dim == PropertyValueType.ThreeD || dim == PropertyValueType.TwoD_SPATIAL || dim == PropertyValueType.TwoD)
 				{
