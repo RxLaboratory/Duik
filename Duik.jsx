@@ -501,7 +501,6 @@ function fnDuIK(thisObj)
 		//============ FUNCTIONS ========================
 		//===============================================
 		{
-			
 			//TODO renommer les fonctions (onButtonBonesClick() par exemple), et clarifier le code	
 			//=================== UTILS =========================
 
@@ -1399,18 +1398,22 @@ function fnDuIK(thisObj)
 			//FONCTION RENOMMER
 			function rename() {
 
-			if (app.project.activeItem.selectedLayers.length > 0) {
-				
+				if (renameLayersButton.value)
+				{
 					var prefixe = "";
 					prefixtexte.value ? prefixe = prefix.text : prefixe = "";
 					var suffixe = "";
 					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
 					
 					app.beginUndoGroup("Duik - Rename");
-										
-					for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					app.beginSuppressDialogs();
+					
+					var layers = app.project.activeItem.selectedLayers;
+					if (layers.length == 0) return;
+					
+					for (var i=0;i<layers.length;i++) {
 						//keeping old name
-						var oldName = app.project.activeItem.selectedLayers[i].name;
+						var oldName = layers[i].name;
 						var newName = "";
 						//rename
 						if (nametexte.value)
@@ -1436,18 +1439,36 @@ function fnDuIK(thisObj)
 						{
 							newName += parseInt(numero.text) + i;
 						}
-						app.project.activeItem.selectedLayers[i].name =  newName;
+						layers[i].name = newName;
+						var compName = app.project.activeItem.name;
 						//update expressions
 						if (renameInExpressionsButton.value)
 						{
+							//activeItem
 							//double quotes
-							var old = "\"" + oldName + "\"";
-							var newExpr = "\"" + newName + "\"";
+							var old = "layer(\"" + oldName + "\"";
+							var newExpr = "layer(\"" + newName + "\"";
 							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
 							//single quotes
-							var old = "'" + oldName + "'";
-							var newExpr = "'" + newName + "'";
+							var old = "layer('" + oldName + "'";
+							var newExpr = "layer('" + newName + "'";
 							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
+							//other items
+							for (var j = 1;j<=app.project.items.length;j++)
+							{
+								var comp = app.project.item(j);
+								if (comp instanceof CompItem)
+								{
+									//double quotes
+									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
+									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									//single quotes
+									var old = "comp('" + compName + "').layer('" + oldName + "'";
+									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+								}
+							}
 						}
 					}
 						
@@ -1455,11 +1476,149 @@ function fnDuIK(thisObj)
 					renameRemLastDValue.text = "0";
 					
 					app.endUndoGroup();
-				
-				} else { alert(getMessage(51),"Attention",true); }
-				
-				
+					app.endSuppressDialogs(false);
+
 				}
+				else if (renamePinsButton.value)
+				{
+					var prefixe = "";
+					prefixtexte.value ? prefixe = prefix.text : prefixe = "";
+					var suffixe = "";
+					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
+					
+					app.beginUndoGroup("Duik - Rename");
+					
+					var layers = app.project.activeItem.selectedLayers;
+					if (layers.length == 0) return;
+					
+					var num = parseInt(numero.text);
+					
+					for (var i=0;i<layers.length;i++) {
+						//chercher les puppet pins
+						// les propriétés sélectionnées
+						var props = layers[i].selectedProperties;
+						var coins = [];
+						//lister les puppet pins
+						if (props.length > 0)
+						{
+							for (var j=0;j<props.length;j++)
+							{
+								if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
+							}
+						}
+						if (coins.length == 0) coins = Duik.utils.getPuppetPins(layers[i]("Effects"));
+						if (coins.length == 0) continue;
+						//rename
+						for (var j = 0;j<coins.length;j++)
+						{
+							//keeping old name
+							var oldName = coins[j].name;
+							var newName = "";
+							//rename
+							if (nametexte.value)
+							{
+								newName = name.text;
+							}
+							else
+							{
+								newName = oldName;
+								var removeFirst = parseInt(renameRemFirstDValue.text);
+								var removeLast = parseInt(renameRemLastDValue.text);
+								if (removeFirst > 0)
+								{
+									newName = newName.substr(removeFirst);
+								}
+								if (removeLast > 0)
+								{
+									newName = newName.substring(0,newName.length-removeLast);
+								}
+							}
+							var newName = prefixe + newName + suffixe;
+							if (numerotexte.value)
+							{
+								newName += num;
+								num++;
+							}
+							coins[j].name = newName;
+						}
+					}
+						
+					renameRemFirstDValue.text = "0";
+					renameRemLastDValue.text = "0";
+					
+					app.endUndoGroup();
+					app.endSuppressDialogs(false);
+				}
+				else if (renameItemsButton.value)
+				{
+					var prefixe = "";
+					prefixtexte.value ? prefixe = prefix.text : prefixe = "";
+					var suffixe = "";
+					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
+					
+					app.beginUndoGroup("Duik - Rename");
+					app.beginSuppressDialogs();
+					
+					var items = app.project.selection;
+					if (items.length == 0) return;
+					
+					for (var i=0;i<items.length;i++) {
+						//keeping old name
+						var oldName = items[i].name;
+						var newName = "";
+						//rename
+						if (nametexte.value)
+						{
+							newName = name.text;
+						}
+						else
+						{
+							newName = oldName;
+							var removeFirst = parseInt(renameRemFirstDValue.text);
+							var removeLast = parseInt(renameRemLastDValue.text);
+							if (removeFirst > 0)
+							{
+								newName = newName.substr(removeFirst);
+							}
+							if (removeLast > 0)
+							{
+								newName = newName.substring(0,newName.length-removeLast);
+							}
+						}
+						var newName = prefixe + newName + suffixe;
+						if (numerotexte.value)
+						{
+							newName += parseInt(numero.text) + i;
+						}
+						items[i].name = newName;
+						//update expressions
+						if (renameInExpressionsButton.value && items[i] instanceof CompItem)
+						{
+							for (var j = 1;j<=app.project.items.length;j++)
+							{
+								var comp = app.project.item(j);
+								if (comp instanceof CompItem)
+								{
+									//double quotes
+									var old = "comp(\"" + oldName + "\"";
+									var newExpr = "comp(\"" + newName + "\"";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									//single quotes
+									var old = "comp('" + oldName + "'";
+									var newExpr = "comp('" + newName + "'";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+								}
+							}
+						}
+					}
+					
+					renameRemFirstDValue.text = "0";
+					renameRemLastDValue.text = "0";
+					
+					app.endUndoGroup();
+					app.endSuppressDialogs(false);
+				}
+			}
 
 			//FONCTION ROT MORPH
 			function rotmorph()
@@ -1490,38 +1649,172 @@ function fnDuIK(thisObj)
 				}
 			}
 					
-			//REPLACE IN EXPRESSIONS
+			//SEARCH AND REPLACE
 			function replaceInExpr()
 			{
+				if (rieNewEdit.text.indexOf(rieOldEdit.text) >= 0)
+				{
+					alert("Sorry, Search text cannot be contained in new text.\nThis may be fixed in a future update of Duik.");
+					return;
+				}
+				
 				if (rieOldEdit.text == rieNewEdit.text) return;
 				
-				if (rieCurrentCompButton.value)
+				if (rieExpressionsButton.value)
 				{
-					if (rieAllLayersButton.value)
+					if (rieCurrentCompButton.value)
 					{
-						app.beginUndoGroup("Duik - Replace in Expressions");
-						Duik.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
-						app.endUndoGroup();
+						if (rieAllLayersButton.value)
+						{
+							app.beginUndoGroup("Duik - Replace in Expressions");
+							Duik.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
+							app.endUndoGroup();
+						}
+						else if (app.project.activeItem.selectedLayers.length > 0)
+						{
+							app.beginUndoGroup("Duik - Replace in Expressions");
+							Duik.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
+							app.endUndoGroup();
+						}
 					}
-					else if (app.project.activeItem.selectedLayers.length > 0)
+					else
 					{
-						app.beginUndoGroup("Duik - Replace in Expressions");
-						Duik.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
-						app.endUndoGroup();
+						for(var i = 1; i<=app.project.items.length ; i++)
+						{
+							app.beginUndoGroup("Duik - Replace in Expressions");
+							var item = app.project.item(i);
+							if (item instanceof CompItem)
+							{
+								Duik.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
+							}
+							app.endUndoGroup();
+						}
 					}
 				}
-				else
+				else if (rieLayersButton.value)
 				{
-					for(var i = 1; i<=app.project.items.length ; i++)
+					//get layers
+					var layers = [];
+					if (rieCurrentCompButton.value)
 					{
-						app.beginUndoGroup("Duik - Replace in Expressions");
-						var item = app.project.item(i);
-						if (item instanceof CompItem)
+						if (rieAllLayersButton.value)
 						{
-							Duik.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
+							layers = Duik.utils.convertCollectionToArray(app.project.activeItem.layers);
 						}
-						app.endUndoGroup();
+						else
+						{
+							layers = app.project.activeItem.selectedLayers;
+						}
 					}
+					else
+					{
+						for(var i = 1; i<=app.project.items.length ; i++)
+						{
+							if (app.project.item(i) instanceof CompItem)
+							{
+								var ls = Duik.utils.convertCollectionToArray(app.project.item(i).layers);
+								layers = layers.concat(ls);
+							}
+						}
+					}
+					if (layers.length == 0) return;
+					
+					//go!
+					app.beginUndoGroup("Duik - Search and replace");
+					for(var i in layers)
+					{
+						var l = layers[i];
+						var oldName = l.name;
+						while (l.name.indexOf(rieOldEdit.text) > 0)
+						{
+							l.name = l.name.replace(rieOldEdit.text,rieNewEdit.text);
+						}
+						var newName = l.name;
+						//update expressions
+						var compName = l.containingComp.name;
+						if (rieUpdateExpressionsButton.value)
+						{
+							app.beginSuppressDialogs();
+							//layer comp
+							//double quotes
+							var old = "layer(\"" + oldName + "\"";
+							var newExpr = "layer(\"" + newName + "\"";
+							Duik.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
+							//single quotes
+							var old = "layer('" + oldName + "'";
+							var newExpr = "layer('" + newName + "'";
+							Duik.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
+							//other items
+							for (var j = 1;j<=app.project.items.length;j++)
+							{
+								var comp = app.project.item(j);
+								if (comp instanceof CompItem)
+								{
+									//double quotes
+									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
+									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									//single quotes
+									var old = "comp('" + compName + "').layer('" + oldName + "'";
+									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
+									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+								}
+							}
+							app.endSuppressDialogs(false);
+						}
+					}
+					app.endUndoGroup();
+				}
+				else if (rieItemsButton.value)
+				{
+					var items = [];
+					if (rieItemSelectedButton.value)
+					{
+						items = app.project.selection;
+					}
+					else
+					{
+						items = Duik.utils.convertCollectionToArray(app.project.items);
+					}
+					if (items.length == 0 ) return;
+					
+					app.beginUndoGroup("Duik - Search and Replace");
+					for (var i = 0 ; i < items.length ; i++)
+					{
+						var item = items[i];
+						var oldName = item.name;
+						var newName = oldName;
+						if ((item instanceof CompItem && rieCompItemButton.value) || (item instanceof FootageItem && rieFootageItemButton.value) || (item instanceof FolderItem && rieFolderItemButton.value))
+						{
+							while (newName.indexOf(rieOldEdit.text) >= 0)
+							{
+								newName = newName.replace(rieOldEdit.text,rieNewEdit.text);
+							}
+							item.name = newName;
+							if (rieUpdateExpressionsButton.value && item instanceof CompItem)
+							{
+								app.beginSuppressDialogs();
+								//other items
+								for (var j = 1;j<=app.project.items.length;j++)
+								{
+									var comp = app.project.item(j);
+									if (comp instanceof CompItem)
+									{
+										//double quotes
+										var old = "comp(\"" + oldName + "\"";
+										var newExpr = "comp(\"" + newName + "\"";
+										Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+										//single quotes
+										var old = "comp('" + oldName + "'";
+										var newExpr = "comp('" + newName + "'";
+										Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									}
+								}
+								app.endSuppressDialogs(false);
+							}
+						}
+					}
+					app.endUndoGroup();
 				}
 			}
 			
@@ -3120,7 +3413,7 @@ function fnDuIK(thisObj)
 			boutonmesurer.onClick = function () {mesure();panoik.hide();measurePanel.show();};
 			boutonmesurer.helpTip = getMessage(100);
 			//replace in expressions button
-			var rieButton = addIconButton(groupeikG,"btn_replaceinexpr.png","Replace in expr.");
+			var rieButton = addIconButton(groupeikG,"btn_replaceinexpr.png","Search and Replace");
 			rieButton.onClick = function () { panoik.hide(); riePanel.show();}
 			rieButton.helpTip = "Search and replace text in expressions";
 			//lock button
@@ -3559,6 +3852,26 @@ function fnDuIK(thisObj)
 		}
 		//RENAME PANEL
 		{
+			var renameTypeGroup = addHGroup(renamePanel);
+			function renameTypeSelect() {
+				if (renameLayersButton.value || renameItemsButton.value)
+				{
+					renameInExpressionsButton.enabled = true;
+				}
+				else
+				{
+					renameInExpressionsButton.enabled = false;
+				}
+			}
+			var renameLayersButton = renameTypeGroup.add("radiobutton",undefined,"Layers");
+			renameLayersButton.value = true;
+			renameLayersButton.onClick = renameTypeSelect;
+			var renamePinsButton = renameTypeGroup.add("radiobutton",undefined,"Pins");
+			renamePinsButton.onClick = renameTypeSelect;
+			var renameItemsButton = renameTypeGroup.add("radiobutton",undefined,"Project Items");
+			renameItemsButton.onClick = renameTypeSelect;
+
+			addSeparator(renamePanel,"");
 			//nom
 			var groupeNom = addHGroup(renamePanel);
 			groupeNom.alignChildren = ["fill","center"];
@@ -3610,6 +3923,7 @@ function fnDuIK(thisObj)
 			numerotexte.onClick = function() {
 				numerotexte.value ? numero.enabled = true : numero.enabled = false ;
 				}
+			addSeparator(renamePanel,"");
 			//in expressions too
 			var renameInExpressionsButton = renamePanel.add("checkbox",undefined,"Update expressions");
 			renameInExpressionsButton.value = true;
@@ -3622,20 +3936,56 @@ function fnDuIK(thisObj)
 			renameCreateButton.alignment = ["right","top"];
 			renameCreateButton.onClick = rename;
 		}
-		//REPLACE IN EXPRESSIONS PANEL
+		//SEARCH AND REPLACE PANEL
 		{
-			var rieOldGroup = addHGroup(riePanel);
-			var rieOldText = rieOldGroup.add("statictext",undefined,"Old:");
-			rieOldText.alignment = ["left","top"];
-			var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
-			rieOldEdit.alignment = ["fill","fill"];
-			var rieNewGroup = addHGroup(riePanel);
-			var rieNewText = rieNewGroup.add("statictext",undefined,"New:");
-			rieNewText.alignment = ["left","top"];
-			var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
-			rieNewEdit.alignment = ["fill","fill"];
-			var rieCompGroup = addHGroup(riePanel);
-			rieCompGroup.alignment = ["center","top"];
+			var rieTypeGroup = addHGroup(riePanel);
+			var rieExpressionsButton = rieTypeGroup.add("radiobutton",undefined,"Expressions");
+			rieExpressionsButton.value = true;
+			function rieTypeSelect() {
+				if (rieExpressionsButton.value)
+				{
+					rieOptionsGroup.show();
+					rieItemGroup.hide();
+					rieUpdateExpressionsButton.enabled = false;
+				}
+				else if (rieLayersButton.value)
+				{
+					rieOptionsGroup.show();
+					rieItemGroup.hide();
+					rieUpdateExpressionsButton.enabled = true;
+				}
+				else
+				{
+					rieOptionsGroup.hide();
+					rieItemGroup.show();
+					rieUpdateExpressionsButton.enabled = rieCompItemButton.value;
+				}
+			}
+			rieExpressionsButton.onClick = rieTypeSelect;
+			var rieLayersButton = rieTypeGroup.add("radiobutton",undefined,"Layers");
+			rieLayersButton.onClick = rieTypeSelect;
+			var rieItemsButton = rieTypeGroup.add("radiobutton",undefined,expertMode ? "Items" : "Project Items");
+			rieItemsButton.onClick = rieTypeSelect;
+			//options
+			var rieMainOptionsGroup = addHGroup(riePanel);
+			rieMainOptionsGroup.orientation = "stack";
+			var rieItemGroup = addVGroup(rieMainOptionsGroup);
+			var rieItemTypeGroup = addHGroup(rieItemGroup);
+			var rieCompItemButton = rieItemTypeGroup.add("checkbox",undefined,"Comps");
+			rieCompItemButton.value = true;
+			rieCompItemButton.onClick = function() { rieUpdateExpressionsButton.enabled = rieCompItemButton.value; } ;
+			var rieFootageItemButton = rieItemTypeGroup.add("checkbox",undefined,"Footage");
+			rieFootageItemButton.value = true;
+			var rieFolderItemButton = rieItemTypeGroup.add("checkbox",undefined,"Folders");
+			rieFolderItemButton.value = true;
+			var rieItemSelectionGroup = addHGroup(rieItemGroup);
+			var rieItemSelectedButton = rieItemSelectionGroup.add("radiobutton",undefined,"Selected Items");
+			var rieItemAllButton = rieItemSelectionGroup.add("radiobutton",undefined,"All Items");
+			rieItemAllButton.value = true;
+			rieItemGroup.hide();
+			
+			var rieOptionsGroup = addVGroup(rieMainOptionsGroup);
+			var rieCompGroup = addHGroup(rieOptionsGroup);
 			var rieCurrentCompButton = rieCompGroup.add("radiobutton",undefined,expertMode ? "Active" : "Active comp");
 			var rieAllCompsButton = rieCompGroup.add("radiobutton",undefined,"All comps");
 			rieCurrentCompButton.onClick = function () {
@@ -3645,15 +3995,31 @@ function fnDuIK(thisObj)
 				rieLayerGroup.enabled = rieCurrentCompButton.value;
 			}
 			rieCurrentCompButton.value = true;
-			var rieLayerGroup = addHGroup(riePanel);
-			rieLayerGroup.alignment = ["center","top"];
+			var rieLayerGroup = addHGroup(rieOptionsGroup);
 			var rieSelectedLayersButton = rieLayerGroup.add("radiobutton",undefined,expertMode ? "Selected" : "Selected layers");
 			var rieAllLayersButton = rieLayerGroup.add("radiobutton",undefined,"All layers");
 			rieAllLayersButton.value = true;
+			
+			addSeparator(riePanel,"");
+			var rieOldGroup = addHGroup(riePanel);
+			var rieOldText = rieOldGroup.add("statictext",undefined,"Search");
+			rieOldText.alignment = ["left","top"];
+			var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
+			rieOldEdit.alignment = ["fill","fill"];
+			var rieNewGroup = addHGroup(riePanel);
+			var rieNewText = rieNewGroup.add("statictext",undefined,"Replace");
+			rieNewText.alignment = ["left","top"];
+			var rieNewEdit = rieNewGroup.add("edittext",undefined,"");
+			rieNewEdit.alignment = ["fill","fill"];	
+			
+			addSeparator(riePanel,"");
+			var rieUpdateExpressionsButton = riePanel.add("checkbox",undefined,"Update expressions");
+			rieUpdateExpressionsButton.enabled = false;
+			rieUpdateExpressionsButton.value = true;
 			var rieButtonsGroup = addHGroup(riePanel);
 			var rieCancelButton = addIconButton(rieButtonsGroup,"btn_cancel.png","Back");
 			rieCancelButton.onClick = function () { riePanel.hide();panoik.show();};
-			var rieOKButton = addIconButton(rieButtonsGroup,"btn_valid.png","Replace in Expressions");
+			var rieOKButton = addIconButton(rieButtonsGroup,"btn_valid.png","Replace");
 			rieOKButton.onClick = replaceInExpr;
 		}
 		//MEASUREMENT RESULT
