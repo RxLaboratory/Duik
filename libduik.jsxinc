@@ -1,4 +1,4 @@
-﻿/*
+/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2015 Nicolas Dufresne
 http://www.duduf.net
@@ -501,6 +501,10 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.layerTypes.VECTOR = 2;
 		Duik.layerTypes.NULL = 1;
 		Duik.layerTypes.SOLID = 0;
+		Duik.getLayers = {};
+		Duik.getLayers.INDEX = 0;
+		Duik.getLayers.NAME = 1;
+		Duik.getLayers.SELECTION_INDEX = 2;
 	}
 }());
 
@@ -798,7 +802,7 @@ if (typeof Duik === 'object') delete Duik;
 		if (! app.settings.haveSetting("duik", "ctrlSizeAutoValue")){app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.sizes.MEDIUM);}
 		if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
 		if (! app.settings.haveSetting("duik", "morpherKeyframes")){app.settings.saveSetting("duik","morpherKeyframes",true);}
-		if (! app.settings.haveSetting("duik", "pasteAnimUseIndexes")){app.settings.saveSetting("duik","pasteAnimUseIndexes",false);}
+		if (! app.settings.haveSetting("duik", "getLayersMethod")){app.settings.saveSetting("duik","getLayersMethod",Duik.getLayers.NAME);}
 		
 		Duik.settings.save = function ()
 		{
@@ -812,7 +816,7 @@ if (typeof Duik === 'object') delete Duik;
 			app.settings.saveSetting("duik","ctrlSizeAutoValue",Duik.settings.controllerSizeHint);
 			app.settings.saveSetting("duik","boneColor",Duik.settings.boneColor);
 			app.settings.saveSetting("duik","morpherKey",Duik.settings.morpherCreatesKeyframes);
-			app.settings.saveSetting("duik","pasteAnimUseIndexes",Duik.settings.pasteAnimUseIndexes);
+			app.settings.saveSetting("duik","getLayersMethod",Duik.settings.getLayersMethod);
 		}
 		
 		Duik.settings.load = function ()
@@ -827,7 +831,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.boneSizeHint = eval(app.settings.getSetting("duik","boneSizeAutoValue"));
 			Duik.settings.boneColor = app.settings.getSetting("duik","boneColor");
 			Duik.settings.morpherCreatesKeyframes = eval(app.settings.getSetting("duik","morpherKeyframes"));
-			Duik.settings.pasteAnimUseIndexes = eval(app.settings.getSetting("duik","pasteAnimUseIndexes"));
+			Duik.settings.getLayersMethod = eval(app.settings.getSetting("duik","getLayersMethod"));
 		}
 		
 		Duik.settings.restoreDefaults = function ()
@@ -842,7 +846,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.boneSizeHint = Duik.sizes.MEDIUM;
 			Duik.settings.boneColor = "FF0000";
 			Duik.settings.morpherCreatesKeyframes = true;
-			Duik.settings.pasteAnimUseIndexes = false;
+			Duik.settings.getLayersMethod = Duik.getLayers.NAME;
 			
 			Duik.settings.save();
 		}
@@ -4328,10 +4332,12 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.pasteAnim !== 'function')
 	{
-		Duik.pasteAnim = function (layers,layerAnims,startTime,useIndexes)
+		Duik.pasteAnim = function (layers,layerAnims,startTime,getLayerMethod)
 		{
+			if (layers == undefined) return 0;
+			if (layers.length == 0) return 0;
 			if (layerAnims == undefined) layerAnims = Duik.copiedAnim;
-			if (useIndexes == undefined) useIndexes = Duik.settings.pasteAnimUseIndexes;
+			if (getLayerMethod == undefined) getLayerMethod = Duik.getLayers.NAME;
 			var comp = Duik.utils.getItem(layers,0).containingComp;
 			if (startTime == undefined) startTime = comp.time;
 			
@@ -4342,7 +4348,7 @@ if (typeof Duik === 'object') delete Duik;
 				var l = Duik.utils.getItem(layers,li);
 				var layerAnim = null;
 				//parcourir les animations sauvées pour trouver celle qui matche le calque
-				if (useIndexes)
+				if (getLayerMethod == Duik.getLayers.INDEX)
 				{
 					for (var ai = 0;ai < layerAnims.length;ai++)
 					{
@@ -4353,7 +4359,7 @@ if (typeof Duik === 'object') delete Duik;
 						}
 					}
 				}
-				else
+				else if (getLayerMethod == Duik.getLayers.NAME)
 				{
 					for (var ai = 0; ai < layerAnims.length ; ai++)
 					{
@@ -4363,6 +4369,10 @@ if (typeof Duik === 'object') delete Duik;
 							break;
 						}
 					}
+				}
+				else if (getLayerMethod == Duik.getLayers.SELECTION_INDEX)
+				{
+					if (li < layerAnims.length) layerAnim = layerAnims[li];
 				}
 				
 				if (layerAnim == null) continue;
