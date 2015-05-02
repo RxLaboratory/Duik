@@ -1,4 +1,4 @@
-﻿/*
+/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2014 Nicolas Dufresne
 http://ik.duduf.fr
@@ -2306,7 +2306,15 @@ function fnDuIK(thisObj)
 			
 			function pasteAnim(animation) {
 				app.beginUndoGroup("Duik - Paste Anim");
-				var totalPasted = Duik.pasteAnim(app.project.activeItem.layers,Duik.copiedAnim,app.project.activeItem.time);
+				var totalPasted = 0;
+				if (Duik.settings.getLayersMethod == Duik.getLayers.SELECTION_INDEX)
+				{
+					totalPasted = Duik.pasteAnim(app.project.activeItem.selectedLayers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+				}
+				else
+				{
+					totalPasted = Duik.pasteAnim(app.project.activeItem.layers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+				}
 				app.endUndoGroup();
 				if (totalPasted != Duik.copiedAnim.length) alert("Pasted animation on " + totalPasted + " layers.\n\n" + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
 			}
@@ -3362,18 +3370,49 @@ function fnDuIK(thisObj)
 		
 		var pauiNamesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer names");
 		var pauiIndexesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer indexes");
-		pauiIndexesButton.value = Duik.settings.pasteAnimUseIndexes;
-		pauiNamesButton.value = !Duik.settings.pasteAnimUseIndexes;
-		pauiIndexesButton.onClick = function () {
-			Duik.settings.pasteAnimUseIndexes = pauiIndexesButton.value;
-			Duik.settings.save();
-		};
-		pauiNamesButton.onClick = function () {
-			Duik.settings.pasteAnimUseIndexes = pauiIndexesButton.value;
-			Duik.settings.save();
-		};
-			
+		var pauiSelectionButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use selection order");
+		if (Duik.settings.getLayersMethod == Duik.getLayers.INDEX)
+		{
+			pauiIndexesButton.value = true;
+			pauiNamesButton.value = false;
+			pauiSelectionButton.value = false;
 		}
+		else if (Duik.settings.getLayersMethod == Duik.getLayers.SELECTION_INDEX)
+		{
+			pauiIndexesButton.value = false;
+			pauiNamesButton.value = false;
+			pauiSelectionButton.value = true;
+		}
+		else
+		{
+			pauiIndexesButton.value = false;
+			pauiNamesButton.value = true;
+			pauiSelectionButton.value = false;
+		}
+
+		function pauiClicked ()
+		{
+			if (pauiIndexesButton.value)
+			{
+				Duik.settings.getLayersMethod = Duik.getLayers.INDEX;
+			}
+			else if (pauiNamesButton.value)
+			{
+				Duik.settings.getLayersMethod = Duik.getLayers.NAME;
+			}
+			else if (pauiSelectionButton.value)
+			{
+				Duik.settings.getLayersMethod = Duik.getLayers.SELECTION_INDEX;
+			}
+			Duik.settings.save();
+		}
+		
+		pauiIndexesButton.onClick = pauiClicked;
+		pauiNamesButton.onClick = pauiClicked;
+		pauiSelectionButton.onClick = pauiClicked;
+			Duik.settings.pasteAnimUseIndexes = pauiIndexesButton.value;
+			Duik.settings.save();
+		};
 		
 		// RIGGING
 		{
