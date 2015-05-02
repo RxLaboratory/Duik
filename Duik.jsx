@@ -1400,18 +1400,20 @@ function fnDuIK(thisObj)
 
 				if (renameLayersButton.value)
 				{
+					if (!(app.project.activeItem instanceof CompItem)) return;
+					
 					var prefixe = "";
 					prefixtexte.value ? prefixe = prefix.text : prefixe = "";
 					var suffixe = "";
 					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
 					
 					app.beginUndoGroup("Duik - Rename");
-					app.beginSuppressDialogs();
 					
 					var layers = app.project.activeItem.selectedLayers;
 					if (layers.length == 0) return;
 					
-					for (var i=0;i<layers.length;i++) {
+					for (var i=0;i<layers.length;i++)
+					{
 						//keeping old name
 						var oldName = layers[i].name;
 						var newName = "";
@@ -1439,44 +1441,14 @@ function fnDuIK(thisObj)
 						{
 							newName += parseInt(numero.text) + i;
 						}
-						layers[i].name = newName;
-						var compName = app.project.activeItem.name;
-						//update expressions
-						if (renameInExpressionsButton.value)
-						{
-							//activeItem
-							//double quotes
-							var old = "layer(\"" + oldName + "\"";
-							var newExpr = "layer(\"" + newName + "\"";
-							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
-							//single quotes
-							var old = "layer('" + oldName + "'";
-							var newExpr = "layer('" + newName + "'";
-							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
-							//other items
-							for (var j = 1;j<=app.project.items.length;j++)
-							{
-								var comp = app.project.item(j);
-								if (comp instanceof CompItem)
-								{
-									//double quotes
-									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
-									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
-									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
-									//single quotes
-									var old = "comp('" + compName + "').layer('" + oldName + "'";
-									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
-									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
-								}
-							}
-						}
+						
+						Duik.utils.renameLayer(layers[i],newName,renameInExpressionsButton.value);
 					}
 						
 					renameRemFirstDValue.text = "0";
 					renameRemLastDValue.text = "0";
 					
 					app.endUndoGroup();
-					app.endSuppressDialogs(false);
 
 				}
 				else if (renamePinsButton.value)
@@ -1557,7 +1529,6 @@ function fnDuIK(thisObj)
 					suffixtexte.value ? suffixe = suffix.text : suffixe = "";
 					
 					app.beginUndoGroup("Duik - Rename");
-					app.beginSuppressDialogs();
 					
 					var items = app.project.selection;
 					if (items.length == 0) return;
@@ -1590,33 +1561,14 @@ function fnDuIK(thisObj)
 						{
 							newName += parseInt(numero.text) + i;
 						}
-						items[i].name = newName;
-						//update expressions
-						if (renameInExpressionsButton.value && items[i] instanceof CompItem)
-						{
-							for (var j = 1;j<=app.project.items.length;j++)
-							{
-								var comp = app.project.item(j);
-								if (comp instanceof CompItem)
-								{
-									//double quotes
-									var old = "comp(\"" + oldName + "\"";
-									var newExpr = "comp(\"" + newName + "\"";
-									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
-									//single quotes
-									var old = "comp('" + oldName + "'";
-									var newExpr = "comp('" + newName + "'";
-									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
-								}
-							}
-						}
+						
+						Duik.utils.renameItem(items[i],newName,renameInExpressionsButton.value);
 					}
 					
 					renameRemFirstDValue.text = "0";
 					renameRemLastDValue.text = "0";
 					
 					app.endUndoGroup();
-					app.endSuppressDialogs(false);
 				}
 			}
 
