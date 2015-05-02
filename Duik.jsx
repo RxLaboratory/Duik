@@ -3681,7 +3681,7 @@ function fnDuIK(thisObj)
 			//bouton pour multiplan 2D
 			var boutontcam2d = addIconButton(groupCameraG,"btn_2dmultiplane.png",getMessage(188));
 			boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
-			boutontcam2d.helpTip = "HelpTip";
+			boutontcam2d.helpTip = "Creates multiplane controllers to use as a 2D camera";
 			//scale Z-link button
 			var scaleZLinkButton = addIconButton(groupCameraG,"btn_scalezlink.png","Scale Z-Link");
 			scaleZLinkButton.onClick = scaleZLinkButtonClicked;
