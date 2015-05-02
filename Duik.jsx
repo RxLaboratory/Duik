@@ -1,4 +1,4 @@
-/*
+﻿/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2014 Nicolas Dufresne
 http://ik.duduf.fr
@@ -1273,8 +1273,7 @@ function fnDuIK(thisObj)
 				}
 			}
 			function controleur(){
-
-				//vérifions qu'il n'y a qu'un calque sélectionné 
+				if (!(app.project.activeItem instanceof CompItem)) return;
 				//  début de groupe d'annulation
 				app.beginUndoGroup("Duik - " + getMessage(116));
 				var color;
@@ -1384,7 +1383,26 @@ function fnDuIK(thisObj)
 				}
 				app.endUndoGroup();
 			}
-			
+			function ctrlResetButtonClicked(){
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				var ctrls = app.project.activeItem.selectedLayers;
+				if (ctrls.length == 0) ctrls = Duik.utils.getControllers(app.project.activeItem.layers);
+				else ctrls = Duik.utils.getControllers(ctrls);
+				
+				app.beginUndoGroup("Reset Ctrl. Transform.");
+				
+				for (var i in ctrls)
+				{
+					var c = ctrls[i].layer;
+					if (c.parent == null) c.transform.position.setValue([c.containingComp.width/2,c.containingComp.height/2,0]);
+					else c.transform.position.setValue([0,0,0]);
+					c.transform.scale.setValue([100,100,100]);
+					c.transform.rotation.setValue(0);
+					c.transform.opacity.setValue(100);
+				}
+				
+				app.endUndoGroup();
+			}
 			//FONCTION POUR AJOUTER UN (DES) BONE(S)
 			function bone(){
 					
@@ -3795,6 +3813,10 @@ function fnDuIK(thisObj)
 			var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,"ctrl_hide.png","");
 			ctrlHideButton.helpTip =  "Hide selected controllers\n(all controllers if none selected)";
 			ctrlHideButton.onClick = ctrlHideButtonClicked;
+			//reset button
+			var ctrlResetButton = addIconButton(ctrlLockButtonsGroup,"ctrl_zero.png","");
+			ctrlResetButton.helpTip =  "Reset selected controllers transformations";
+			ctrlResetButton.onClick = ctrlResetButtonClicked;
 			//buttons
 			var ctrlButtonsGroup = addHGroup(ctrlPanel);
 			var ctrlCloseButton = addIconButton(ctrlButtonsGroup,"btn_cancel.png","Back");
