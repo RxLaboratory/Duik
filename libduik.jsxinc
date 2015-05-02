@@ -1962,6 +1962,8 @@ if (typeof Duik === 'object') delete Duik;
 					if (l("ADBE Mask Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString);
 					//effects
 					if (l("ADBE Effect Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString);
+					//time remapping
+					if (l("ADBE Time Remapping") != null) Duik.utils.replaceInExpressions(l("ADBE Time Remapping"),oldString,newString);
 					l.locked = locked;
 					delete l;
 					delete locked;
@@ -4798,16 +4800,35 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.importRigInComp !== 'function')
 	{
-		Duik.importRigInComp = function (comp, characterComp, characterName)
-		{
+		Duik.importRigInComp = function (comp, characterComp, characterName, progressBar, progressText,containingWindow)
+		{	
+			var useProgressBar = false;
+			if (progressBar != undefined && progressText != undefined && containingWindow != undefined)
+			{
+				useProgressBar = true;
+			}
+			if (useProgressBar)
+			{
+				containingWindow.show();
+				progressBar.maxValue = 1000;
+				progressBar.value = 0;
+				progressText.text = "Importing " + characterName + "_" + characterComp.name;
+				containingWindow.update();
+			}
 			
 			app.beginSuppressDialogs();
-			
+						
 			//duplicate character comp
 			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
 
 			//add character comp in the comp
 			var characterLayer = comp.layers.add(characterComp);
+			
+			if (useProgressBar)
+			{
+				progressText.text = "Getting existing controllers";
+				containingWindow.update();
+			}
 			
 			//Create a null object to get world coordinates of the zeros in the character comp
 			var tempNull = characterComp.layers.addNull();
@@ -4816,8 +4837,23 @@ if (typeof Duik === 'object') delete Duik;
 			var zerosPos = [];
 			var characterZeros = [];
 			var characterControllers = Duik.utils.getControllers(characterComp.layers);
+			
+			if (useProgressBar)
+			{
+				progressBar.maxValue = characterControllers.length*4;
+				progressText.text = "Preparing controllers and zeros";
+				containingWindow.update();
+				var progressValue = 0;
+			}
+			
 			for (var i in characterControllers)
 			{
+				if (useProgressBar)
+				{
+					progressValue++;
+					progressBar.value = progressValue;
+					containingWindow.update();
+				}
 				var zero = characterControllers[i].layer.parent;
 				if (zero == null || zero.name.indexOf("Zero") != 0)
 				{
@@ -4830,11 +4866,23 @@ if (typeof Duik === 'object') delete Duik;
 			}
 			tempNull.remove();
 			
+			if (useProgressBar)
+			{
+				progressText.text = "Creating new controllers";
+				containingWindow.update();
+			}
+			
 			//create the new zeros and controllers in the comp
 			var newZeros = [];
 			var newControllerLayers = [];
 			for (var i = characterControllers.length -1; i>=0 ; i--)
 			{
+				if (useProgressBar)
+				{
+					progressValue++;
+					progressBar.value = progressValue;
+					containingWindow.update();
+				}
 				var oldZero = characterZeros[i];
 				var newZero = comp.layers.addNull();
 				newZero.parent = characterLayer;
@@ -4869,10 +4917,23 @@ if (typeof Duik === 'object') delete Duik;
 				Duik.utils.linkProperties(oldController.layer.transform,newController.layer.transform);
 			}
 
+			if (useProgressBar)
+			{
+				progressText.text = "Updating expressions";
+				containingWindow.update();
+			}
+			
 			//update expressions (controller names have changed)
 			
 			for (var i in characterControllers)
 			{
+				if (useProgressBar)
+				{
+					progressValue++;
+					progressBar.value = progressValue;
+					containingWindow.update();
+				}
+				
 				try {
 					//check names
 					var oldName = characterControllers[i].layer.name;
@@ -4890,10 +4951,21 @@ if (typeof Duik === 'object') delete Duik;
 				catch (err2) {}
 			}
 			
+			if (useProgressBar)
+			{
+				progressText.text = "Linking and locking zeros";
+				containingWindow.update();
+			}
 
 			//link and lock the zeros in the comp
 			for  (var i in characterZeros)
 			{
+				if (useProgressBar)
+				{
+					progressValue++;
+					progressBar.value = progressValue;
+					containingWindow.update();
+				}
 				var newZero = newZeros[i];
 				//Link zero
 				if (characterZeros[i].parent != null)
@@ -4909,7 +4981,13 @@ if (typeof Duik === 'object') delete Duik;
 				}
 				newZero.locked = true;
 			}
-                
+              
+			if (useProgressBar)
+			{			  
+				progressText.text = "Setting up master controller";
+				containingWindow.update();
+			}
+				
 			//And finally, a master ctrl to control them all!
 			var masterC = Duik.addController(characterLayer,Duik.settings.controllerType,[1,1,1],false,true,true,true,true,false);
 			masterC.layer.transform.position.setValue([masterC.layer.transform.position.value[0],comp.height-20]);
@@ -4922,6 +5000,8 @@ if (typeof Duik === 'object') delete Duik;
 									"else value";
 			characterLayer.parent = masterC.layer;
 			characterLayer.locked = true;
+			
+			containingWindow.hide();
 			
 			app.endSuppressDialogs(false);
 		}

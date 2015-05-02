@@ -44,6 +44,26 @@ function fnDuIK(thisObj)
 	palette.orientation = "stack";
 	palette.alignChildren = ["fill","fill"];
 	
+	// PROGRESS BAR
+	{
+		var progressPanel = new Window("window","Progress",undefined,{borderless:true});
+		progressPanel.size=[300,50];
+		progressPanel.alignChildren = ["fill","top"];
+		var progressGroup = progressPanel.add("group");
+		progressGroup.alignChildren = ["fill","fill"];
+		progressGroup.orientation = "column";
+		progressGroup.spacing = 2;
+		progressGroup.margins = 0;
+		var progressBar = progressGroup.add("progressbar",undefined);
+		var progressStatus = progressGroup.add("statictext",undefined,"-----------idle----------");
+	}
+	
+	progressPanel.show();
+	progressBar.maxValue = 5;
+	progressBar.value = 0;
+	progressStatus.text = "Loading Duik";
+	progressPanel.update();
+	
 	//=================================
 	//======== APP.SETTINGS ===========
 	//=================================
@@ -70,6 +90,8 @@ function fnDuIK(thisObj)
 				//	Valide au moins depuis CS4,
 				app.executeCommand(2359);
 			}
+			
+			progressPanel.hide();
 
 			var wfGroup = palette.add("group");
 			wfGroup.orientation = "column";
@@ -126,6 +148,11 @@ function fnDuIK(thisObj)
 	
 	function preloadDuik ()
 	{
+		progressPanel.show();
+		progressBar.value = 1;
+		progressStatus.text = "Duik - checking for new Updates";
+		progressPanel.update();
+		
 		if (app.settings.getSetting("duik","version") == "oui")
 		{
 			var newV = checkForUpdate(version,false);
@@ -135,6 +162,7 @@ function fnDuIK(thisObj)
 			}
 			else
 			{
+				progressPanel.hide();
 				var updGroup = palette.add("group");
 				updGroup.orientation = "column";
 				updGroup.alignChildren = ["center","top"];
@@ -157,6 +185,11 @@ function fnDuIK(thisObj)
 	
 	function loadDuik()
 	{
+		progressPanel.show();
+		progressBar.value = 2;
+		progressStatus.text = "Duik - Waking up libDuik";
+		progressPanel.update();
+		
 		//=================================
 		//========== LOAD libDuik =========
 		//=================================
@@ -442,6 +475,11 @@ function fnDuIK(thisObj)
 			Duik.settings.load();
 		}
 	
+		progressPanel.show();
+		progressBar.value = 3;
+		progressStatus.text = "Duik - Loading icons";
+		progressPanel.update();
+	
 		//=================================
 		//======== LOAD ICONS =============
 		//=================================
@@ -497,6 +535,11 @@ function fnDuIK(thisObj)
 			}
 		}
 
+		progressPanel.show();
+		progressBar.value = 4;
+		progressStatus.text = "Duik - Loading functions";
+		progressPanel.update();
+		
 		//===============================================
 		//============ FUNCTIONS ========================
 		//===============================================
@@ -1807,11 +1850,17 @@ function fnDuIK(thisObj)
 				if (irRigButton.selection == null) return;
 				if (!(app.project.activeItem instanceof CompItem)) return;
 				if (irNameText.text == "") alert("You must specify a (unique) name for this instance of the rig");
+				
+				irPanel.hide();
+				panointerpo.show();
+				
 				//gets the rig comp
 				var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(" ")));
+				
 				app.beginUndoGroup("Import rig: " + irNameText.text);
-				Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text);
+				Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text,progressBar,progressStatus,progressPanel);
 				app.endUndoGroup();
+								
 			}
 			
 			//FONCTION WIGGLE OK
@@ -2596,7 +2645,6 @@ function fnDuIK(thisObj)
 		}
 		function addVGroup(conteneur){
 			var groupe = conteneur.add("group");
-			//expertMode ? groupe.alignChildren = ["left","fill"] : groupe.alignChildren = ["fill","fill"];
 			groupe.alignChildren = ["fill","fill"];
 			groupe.orientation = "column";
 			groupe.spacing = 2;
@@ -2645,6 +2693,11 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
+		
+		progressPanel.show();
+		progressBar.value = 5;
+		progressStatus.text = "Duik - Creating UI";
+		progressPanel.update();
 		
 				//TODO update to new UI
 		
@@ -2915,7 +2968,7 @@ function fnDuIK(thisObj)
 					pos.value = true;
 					var sca = fenetremultiplan.groupe.add("checkbox",undefined,"Scale");
 				}
-		
+	
 		//------------
 		// MAIN PANEL
 		//------------
@@ -4115,28 +4168,34 @@ function fnDuIK(thisObj)
 			irCancelButton.onClick = function () { irPanel.hide();panointerpo.show();};
 			irCancelButton.helpTip = "Cancel";
 			var irOKButton = addIconButton(irButtonsGroup,"btn_valid.png","Import");
-			irOKButton.onClick = function () { irOKButtonClicked();irPanel.hide();panointerpo.show();};
+			irOKButton.onClick = function () { irOKButtonClicked();};
 			irOKButton.helpTip = "Import selected rig";
 		}
+		
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée
 		palette.layout.layout(true);
 		palette.layout.resize();
 		palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 		
+		progressPanel.hide();
 		
 		}
 	}
 	
-	
 	// On définit le layout et on redessine la fenètre quand elle est resizée
 	palette.layout.layout(true);
 	palette.layout.resize();
-	palette.onResizing = palette.onResize = function () { this.layout.resize(); };
+	palette.onResizing = palette.onResize = function () { this.layout.resize(); }
+	
+	progressPanel.hide();
+	
 	return palette;
+	
 
 }
 
 
 fnDuIK(this);
+
 
