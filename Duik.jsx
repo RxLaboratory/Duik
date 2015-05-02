@@ -1448,11 +1448,11 @@ function fnDuIK(thisObj)
 							//double quotes
 							var old = "layer(\"" + oldName + "\"";
 							var newExpr = "layer(\"" + newName + "\"";
-							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
 							//single quotes
 							var old = "layer('" + oldName + "'";
 							var newExpr = "layer('" + newName + "'";
-							Duik.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,old,newExpr);
 							//other items
 							for (var j = 1;j<=app.project.items.length;j++)
 							{
@@ -1462,11 +1462,11 @@ function fnDuIK(thisObj)
 									//double quotes
 									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
 									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 									//single quotes
 									var old = "comp('" + compName + "').layer('" + oldName + "'";
 									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 								}
 							}
 						}
@@ -1602,11 +1602,11 @@ function fnDuIK(thisObj)
 									//double quotes
 									var old = "comp(\"" + oldName + "\"";
 									var newExpr = "comp(\"" + newName + "\"";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 									//single quotes
 									var old = "comp('" + oldName + "'";
 									var newExpr = "comp('" + newName + "'";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 								}
 							}
 						}
@@ -1667,13 +1667,13 @@ function fnDuIK(thisObj)
 						if (rieAllLayersButton.value)
 						{
 							app.beginUndoGroup("Duik - Replace in Expressions");
-							Duik.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
 							app.endUndoGroup();
 						}
 						else if (app.project.activeItem.selectedLayers.length > 0)
 						{
 							app.beginUndoGroup("Duik - Replace in Expressions");
-							Duik.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
 							app.endUndoGroup();
 						}
 					}
@@ -1685,7 +1685,7 @@ function fnDuIK(thisObj)
 							var item = app.project.item(i);
 							if (item instanceof CompItem)
 							{
-								Duik.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
+								Duik.utils.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
 							}
 							app.endUndoGroup();
 						}
@@ -1739,11 +1739,11 @@ function fnDuIK(thisObj)
 							//double quotes
 							var old = "layer(\"" + oldName + "\"";
 							var newExpr = "layer(\"" + newName + "\"";
-							Duik.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
+							Duik.utils.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
 							//single quotes
 							var old = "layer('" + oldName + "'";
 							var newExpr = "layer('" + newName + "'";
-							Duik.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
+							Duik.utils.replaceInLayersExpressions(l.containingComp.layers,old,newExpr);
 							//other items
 							for (var j = 1;j<=app.project.items.length;j++)
 							{
@@ -1753,11 +1753,11 @@ function fnDuIK(thisObj)
 									//double quotes
 									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
 									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 									//single quotes
 									var old = "comp('" + compName + "').layer('" + oldName + "'";
 									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
-									Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 								}
 							}
 							app.endSuppressDialogs(false);
@@ -1803,11 +1803,11 @@ function fnDuIK(thisObj)
 										//double quotes
 										var old = "comp(\"" + oldName + "\"";
 										var newExpr = "comp(\"" + newName + "\"";
-										Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+										Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 										//single quotes
 										var old = "comp('" + oldName + "'";
 										var newExpr = "comp('" + newName + "'";
-										Duik.replaceInLayersExpressions(comp.layers,old,newExpr);
+										Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
 									}
 								}
 								app.endSuppressDialogs(false);

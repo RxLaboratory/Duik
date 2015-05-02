@@ -1898,17 +1898,77 @@ if (typeof Duik === 'object') delete Duik;
 						//double quotes
 						var old = "comp(\"" + oldName + "\"";
 						var newExpr = "comp(\"" + newName + "\"";
-						Duik.replaceInLayersExpressions(newComp2.layers,old,newExpr);
+						Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
 						//single quotes
 						var old = "comp('" + oldName + "'";
 						var newExpr = "comp('" + newName + "'";
-						Duik.replaceInLayersExpressions(newComp2.layers,old,newExpr);
+						Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
 					}
 				}
 				return newMainComp;
 			}
 		}
-	}
+		// REPLACE IN EXPRESSIONS - Duik.utils.replaceInExpressions(prop,oldString,newString)
+		if (typeof Duik.utils.replaceInExpressions !== 'function')
+		{
+			Duik.utils.replaceInExpressions = function (prop,oldString,newString)
+			{
+				if (prop.propertyType == PropertyType.PROPERTY)
+				{
+					if (prop.canSetExpression)
+					{
+						var expr = prop.expression;
+						while (expr.indexOf(oldString) >= 0) expr = expr.replace(oldString,newString);
+						prop.expression = expr;
+						delete expr;
+					}
+				}
+				else if (prop.numProperties > 0)
+				{
+					for (var propertyIndex = 1;propertyIndex <= prop.numProperties;propertyIndex++)
+					{
+						Duik.utils.replaceInExpressions(prop.property(propertyIndex),oldString,newString);
+					}
+				}
+			}			
+		}
+		/* REPLACE IN LAYERS EXPRESSIONS - Duik.utils.replaceInLayersExpressions(layers,oldString,newString);
+		
+			Replaces all occurences of oldString by newString in all the expressions of all the layers.
+		
+			parameters
+			layers | Array of AVLayers or LayerCollection
+			oldString | string
+			newString | string
+			
+			returns
+			void
+		
+		*/
+		if (typeof Duik.utils.replaceInLayersExpressions !== 'function')
+		{
+			Duik.utils.replaceInLayersExpressions = function (layrs,oldString,newString)
+			{
+				if (newString.indexOf(oldString) >=0) return;
+				var layers = Duik.utils.convertCollectionToArray(layrs);
+				for (var layerIndex = 0 ; layerIndex<layers.length ; layerIndex++)
+				{
+					var l = Duik.utils.getItem(layers,layerIndex);
+					var locked = l.locked;
+					l.locked = false;
+					//transform
+					Duik.utils.replaceInExpressions(l.transform,oldString,newString);
+					//masks
+					if (l("ADBE Mask Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString);
+					//effects
+					if (l("ADBE Effect Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString);
+					l.locked = locked;
+					delete l;
+					delete locked;
+				}
+			}
+		}
+		}
 	
 	//================================
 	//========= METHODS ==============
@@ -3831,66 +3891,6 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	// REPLACE IN EXPRESSIONS - Duik.utils.replaceInExpressions(prop,oldString,newString)
-	if (typeof Duik.replaceInExpressions !== 'function')
-	{
-		Duik.replaceInExpressions = function (prop,oldString,newString)
-		{
-			if (prop.propertyType == PropertyType.PROPERTY)
-			{
-				if (prop.canSetExpression)
-				{
-					var expr = prop.expression;
-					while (expr.indexOf(oldString) >= 0) expr = expr.replace(oldString,newString);
-					prop.expression = expr;
-					delete expr;
-				}
-			}
-			else if (prop.numProperties > 0)
-			{
-				for (var propertyIndex = 1;propertyIndex <= prop.numProperties;propertyIndex++)
-				{
-					Duik.replaceInExpressions(prop.property(propertyIndex),oldString,newString);
-				}
-			}
-		}			
-	}
-	/* REPLACE IN LAYERS EXPRESSIONS - Duik.replaceInLayersExpressions(layers,oldString,newString);
-	
-		Replaces all occurences of oldString by newString in all the expressions of all the layers.
-	
-		parameters
-		layers | Array of AVLayers or LayerCollection
-		oldString | string
-		newString | string
-		
-		returns
-		void
-	
-	*/
-	if (typeof Duik.replaceInLayersExpressions !== 'function')
-	{
-		Duik.replaceInLayersExpressions = function (layrs,oldString,newString)
-		{
-			if (newString.indexOf(oldString) >=0) return;
-			var layers = Duik.utils.convertCollectionToArray(layrs);
-			for (var layerIndex = 0 ; layerIndex<layers.length ; layerIndex++)
-			{
-				var l = Duik.utils.getItem(layers,layerIndex);
-				var locked = l.locked;
-				l.locked = false;
-				//transform
-				Duik.replaceInExpressions(l.transform,oldString,newString);
-				//masks
-				if (l("ADBE Mask Parade") != null) Duik.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString);
-				//effects
-				if (l("ADBE Effect Parade") != null) Duik.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString);
-				l.locked = locked;
-				delete l;
-				delete locked;
-			}
-		}
-	}
 	/* PATH FOLLOW - Duik.pathFollow(layer);
 	
 		Automates the rotation of the layer so it follows its path.
@@ -4779,11 +4779,11 @@ if (typeof Duik === 'object') delete Duik;
 					//double quotes
 					var old = "layer(\"" + oldName + "\"";
 					var newExpr = "layer(\"" + newName + "\"";
-					Duik.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+					Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
 					//single quotes
 					var old = "layer('" + oldName + "'";
 					var newExpr = "layer('" + newName + "'";
-					Duik.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+					Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
 				}
 				catch (err2) {}
 			}
