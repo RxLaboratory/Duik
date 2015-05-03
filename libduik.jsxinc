@@ -924,6 +924,7 @@ if (typeof Duik === 'object') delete Duik;
 				propDescr.depth = prop.propertyDepth;
 				propDescr.parentName = prop.parentProperty.name;
 				propDescr.dimensions = Duik.utils.getPropertyDimensions(prop);
+				
 				return propDescr;
 			}
 		}
@@ -3377,13 +3378,37 @@ if (typeof Duik === 'object') delete Duik;
 				}
 				//si il n'y a pas de coins sélectionnés, on les prend tous
 				if (coins.length == 0) coins = Duik.utils.getPuppetPins(calque("Effects"));
-				if (coins.length == 0) { return createdBones; }
+				//if no pins were found, use every selected spatial properties
+				if (coins.length == 0 && props.length > 0)
+				{
+					for (var j=0;j<props.length;j++)
+					{
+						if (props[j].propertyType == PropertyType.PROPERTY)
+						{
+							if (props[j].propertyValueType == PropertyValueType.TwoD_SPATIAL || props[j].propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+							{
+								if (props[j].canSetExpression) coins.push(props[j]);
+							}
+						}
+					}
+				}
+				if (coins.length == 0) return;
 				
 				for (var j=0;j<coins.length;j++)
 				{
 					var coin = coins[j];
-					//la position du coin
-					var position = coin.position.value;
+					
+					var position;
+					
+					if (coin.matchName == "ADBE FreePin3 PosPin Atom")
+					{
+						position = coin.position;
+					}
+					else
+					{
+						position = coin;
+					}
+					
 					//créer le bone
 					var bone;
 					//sa taille
@@ -3423,30 +3448,35 @@ if (typeof Duik === 'object') delete Duik;
 						bone = app.project.activeItem.layers.addSolid([red,green,blue],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
 					}
 					createdBones.push(bone);
+					
 					//mettre le bone à la position du coin : utiliser une expression pour avoir la position en mode world du coin
-					var filet = coin.propertyGroup().propertyGroup();
-					var marionnette = filet.propertyGroup().propertyGroup().propertyGroup();
-					if (calque instanceof ShapeLayer)
+					Duik.utils.pickWhip(bone.position,position);
+					if (!(calque instanceof ShapeLayer))
 					{
-						bone.position.expression = "thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position";
+						bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(" + bone.position.expression + ")";
 					}
-					else
-					{
-						bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(thisComp.layer(\"" + calque.name + "\").effect(\"" + marionnette.name + "\").arap.mesh(\"" + filet.name + "\").deform(\"" + coin.name + "\").position)";
-					}
+
 					bone.position.setValue(bone.position.value);
 					bone.position.expression = "";
 					//nom du bone
-					bone.name = "B_" + coin.name;
+					if (coin.matchName == "ADBE FreePin3 PosPin Atom")
+					{
+						bone.name = "B_" + coin.name;
+					}
+					else
+					{
+						bone.name = "B_" + coin.parentProperty.name;
+					}
+					
 					bone.guideLayer = true;
 					//mettre l'expression dans le coin
 					if (calque instanceof ShapeLayer)
 					{
-						coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
+						position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
 					}
 					else
 					{
-						coin.position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
+						position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
 					}
 				}//for coins
 			}//for layers
