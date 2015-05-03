@@ -1665,14 +1665,8 @@ function fnDuIK(thisObj)
 			//SEARCH AND REPLACE
 			function replaceInExpr()
 			{
-				if (rieNewEdit.text.indexOf(rieOldEdit.text) >= 0)
-				{
-					alert("Sorry, Search text cannot be contained in new text.\nThis may be fixed in a future update of Duik.");
-					return;
-				}
-				
 				if (rieOldEdit.text == rieNewEdit.text) return;
-				
+								
 				if (rieExpressionsButton.value)
 				{
 					if (rieCurrentCompButton.value)
@@ -1680,13 +1674,13 @@ function fnDuIK(thisObj)
 						if (rieAllLayersButton.value)
 						{
 							app.beginUndoGroup("Duik - Replace in Expressions");
-							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 							app.endUndoGroup();
 						}
 						else if (app.project.activeItem.selectedLayers.length > 0)
 						{
 							app.beginUndoGroup("Duik - Replace in Expressions");
-							Duik.utils.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text);
+							Duik.utils.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 							app.endUndoGroup();
 						}
 					}
@@ -1738,10 +1732,7 @@ function fnDuIK(thisObj)
 					{
 						var l = layers[i];
 						var oldName = l.name;
-						while (l.name.indexOf(rieOldEdit.text) > 0)
-						{
-							l.name = l.name.replace(rieOldEdit.text,rieNewEdit.text);
-						}
+						l.name = Duik.javascript.replaceAll(l.name,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 						var newName = l.name;
 						//update expressions
 						var compName = l.containingComp.name;
@@ -1799,10 +1790,7 @@ function fnDuIK(thisObj)
 						var newName = oldName;
 						if ((item instanceof CompItem && rieCompItemButton.value) || (item instanceof FootageItem && rieFootageItemButton.value) || (item instanceof FolderItem && rieFolderItemButton.value))
 						{
-							while (newName.indexOf(rieOldEdit.text) >= 0)
-							{
-								newName = newName.replace(rieOldEdit.text,rieNewEdit.text);
-							}
+							newName = Duik.javascript.replaceAll(newName,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 							item.name = newName;
 							if (rieUpdateExpressionsButton.value && item instanceof CompItem)
 							{
@@ -3438,6 +3426,7 @@ function fnDuIK(thisObj)
 			var boutonautorig = addIconButton(panoik,"btn_autorig.png",getMessage(142)) ;
 			boutonautorig.onClick = autorig;
 			boutonautorig.helpTip = "Autorig";
+			boutonautorig.enabled = false;
 			//boutonautorig.helpTip = "tip à écrire";
 			var groupeik = addHGroup(panoik);
 			var groupeikG = addVGroup(groupeik);
@@ -4072,6 +4061,8 @@ function fnDuIK(thisObj)
 			rieOldText.alignment = ["left","top"];
 			var rieOldEdit = rieOldGroup.add("edittext",undefined,"");
 			rieOldEdit.alignment = ["fill","fill"];
+			var rieCaseSensitive = riePanel.add("checkbox",undefined,"Case sensitive");
+			rieCaseSensitive.value = true;
 			var rieNewGroup = addHGroup(riePanel);
 			var rieNewText = rieNewGroup.add("statictext",undefined,"Replace");
 			rieNewText.alignment = ["left","top"];
