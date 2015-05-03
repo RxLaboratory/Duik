@@ -2070,7 +2070,7 @@ function fnDuIK(thisObj)
 			//FONCTIONS EXPOSITION
 			function detectExposurePrecision() {
 				var layers = app.project.activeItem.selectedLayers;
-				var speed = Duik.utils.getAverageSpeeds(layers);
+				var speed = Duik.utils.getAverageSpeeds(layers,exposurePreExpressionButton.value);
 				var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
 				if (speed > 0)
 				{
@@ -2092,7 +2092,7 @@ function fnDuIK(thisObj)
 				app.beginUndoGroup("Duik Auto-Exposure");
 				if (adaptativeExposureButton.value)
 				{
-					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
+					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,exposurePreExpressionButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
 				}
 				else
 				{
@@ -2169,6 +2169,21 @@ function fnDuIK(thisObj)
 				if (timeRemapLoopInButton.value && timeRemapLoopButton.value) loop = "in";
 				else if (timeRemapLoopOutButton.value && timeRemapLoopButton.value) loop = "out";
 				Duik.timeRemap(layers,loop);
+				app.endUndoGroup();
+			}
+			
+			//MOVE AWAY
+			function moveAwayButtonClicked()
+			{
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				
+				app.beginUndoGroup("Duik - Move away");
+				
+				for (var i =0; i < app.project.activeItem.selectedLayers.length ; i++)
+				{
+					Duik.moveAway( app.project.activeItem.selectedLayers[i]);
+				}
+				
 				app.endUndoGroup();
 			}
 			
@@ -3613,49 +3628,55 @@ function fnDuIK(thisObj)
 			var boutonwiggle = addIconButton(groupeAnimationG,"btn_wiggle.png",getMessage(121));
 			boutonwiggle.onClick = wiggle;
 			boutonwiggle.helpTip = getMessage(92);
-			//bouton oscillation
+			//bouton swing
 			var boutonosc = addIconButton(groupeAnimationD,"btn_osc.png","Swing");
 			boutonosc.onClick = oscillation;
 			boutonosc.helpTip = getMessage(93);
-			//bouton nframes
-			var boutonnframes = addIconButton(groupeAnimationG,"btn_expo.png","Exposure");
-			boutonnframes.onClick = function () { panoanimation.hide(); exposurePanel.show(); } ;
-			boutonnframes.helpTip = getMessage(94);
-			//bouton path follow
-			var boutonpathfollow = addIconButton(groupeAnimationD,"btn_pf.png",getMessage(124));
-			boutonpathfollow.onClick = pathFollow;
-			boutonpathfollow.helpTip = getMessage(95);
-			 //bouton roue
-			var boutonroue = addIconButton(groupeAnimationG,"btn_roue.png",getMessage(125));
-			boutonroue.onClick = creroue;
-			boutonroue.helpTip = getMessage(96);
 			//bouton spring
-			var boutonspring = addIconButton(groupeAnimationD,"btn_rebond.png",getMessage(126));
+			var boutonspring = addIconButton(groupeAnimationG,"btn_rebond.png",getMessage(126));
 			boutonspring.onClick = spring;
 			boutonspring.helpTip = getMessage(97);
-			//bouton lien de distance
-			var boutondistance = addIconButton(groupeAnimationG,"btn_lien-de-distance.png",getMessage(127));
-			boutondistance.onClick = distanceLink;
-			boutondistance.helpTip = getMessage(98);
-			//bouton lentille
-			var boutonlentille = addIconButton(groupeAnimationD,"/btn_lentille.png",getMessage(128));
-			boutonlentille.onClick = lentille;
-			boutonlentille.helpTip = getMessage(99);
-			//Paint Rig button
-			var paintRigButton = addIconButton(groupeAnimationG,"/btn_paint.png","Paint rigging");
-			paintRigButton.onClick = paintRigButtonClicked;
-			paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
 			//Blink
 			var blinkButton = addIconButton(groupeAnimationD,"/btn_blink.png","Blink");
 			blinkButton.onClick = blinkButtonClicked;
 			blinkButton.helpTip = "Makes the property blink.";
+			
+			//bouton path follow
+			var boutonpathfollow = addIconButton(groupeAnimationG,"btn_pf.png",getMessage(124));
+			boutonpathfollow.onClick = pathFollow;
+			boutonpathfollow.helpTip = getMessage(95);
+			//bouton roue
+			var boutonroue = addIconButton(groupeAnimationD,"btn_roue.png",getMessage(125));
+			boutonroue.onClick = creroue;
+			boutonroue.helpTip = getMessage(96);
+			//bouton lentille
+			var boutonlentille = addIconButton(groupeAnimationG,"/btn_lentille.png",getMessage(128));
+			boutonlentille.onClick = lentille;
+			boutonlentille.helpTip = getMessage(99);
+			//MoveAway
+			var moveAwayButton = addIconButton(groupeAnimationD,"btn_timeremap.png","Move away");
+			moveAwayButton.onClick = moveAwayButtonClicked ;
+			moveAwayButton.helpTip = "A simple controller to move away a layer from another.";
+			//bouton lien de distance
+			var boutondistance = addIconButton(groupeAnimationG,"btn_lien-de-distance.png",getMessage(127));
+			boutondistance.onClick = distanceLink;
+			boutondistance.helpTip = getMessage(98);
+			
+			//bouton exposure
+			var boutonnframes = addIconButton(groupeAnimationD,"btn_expo.png","Exposure");
+			boutonnframes.onClick = function () { panoanimation.hide(); exposurePanel.show(); } ;
+			boutonnframes.helpTip = getMessage(94);
+			
+			//Paint Rig button
+			var paintRigButton = addIconButton(groupeAnimationG,"/btn_paint.png","Paint rigging");
+			paintRigButton.onClick = paintRigButtonClicked;
+			paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
+			
 			//Timeremap
-			var timeRemapButton = addIconButton(groupeAnimationG,"btn_timeremap.png","Time remap");
+			var timeRemapButton = addIconButton(groupeAnimationD,"btn_timeremap.png","Time remap");
 			timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
-			//timeRemapButton.onClick = paintRigButtonClicked;
 			timeRemapButton.helpTip = "Time remapping tools.";
-			//Placeholder
-			addButton(groupeAnimationD,"");
+			
 		}
 		
 		// CAMERAS
@@ -4115,6 +4136,8 @@ function fnDuIK(thisObj)
 				upperExposureGroup.enabled = adaptativeExposureButton.value;
 				precisionGroup.enabled = adaptativeExposureButton.value;
 				exposureSyncGroup.enabled = adaptativeExposureButton.value;
+				exposurePreExpressionButton.enabled = adaptativeExposureButton.value;
+				exposurePostExpressionButton.enabled = adaptativeExposureButton.value;
 			}
 			var exposureTypeGroup = addHGroup(exposurePanel);
 			var evenExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Fixed");
@@ -4122,6 +4145,10 @@ function fnDuIK(thisObj)
 			var adaptativeExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Adaptative");
 			adaptativeExposureButton.value = true;
 			adaptativeExposureButton.onClick = exposureSelect;
+			addSeparator(exposurePanel,"");
+			var exposurePreExpressionButton = exposurePanel.add("radiobutton",undefined,"Pre-expression");
+			var exposurePostExpressionButton = exposurePanel.add("radiobutton",undefined,"Post-expression");
+			exposurePostExpressionButton.value = true;
 			addSeparator(exposurePanel,"");
 			var lowerExposureGroup = addHGroup(exposurePanel);
 			lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
