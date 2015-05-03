@@ -3654,9 +3654,9 @@ function fnDuIK(thisObj)
 			boutonlentille.onClick = lentille;
 			boutonlentille.helpTip = getMessage(99);
 			//MoveAway
-			var moveAwayButton = addIconButton(groupeAnimationD,"btn_timeremap.png","Move away");
+			var moveAwayButton = addIconButton(groupeAnimationD,"btn_moveaway.png","Move away");
 			moveAwayButton.onClick = moveAwayButtonClicked ;
-			moveAwayButton.helpTip = "A simple controller to move away a layer from another.";
+			moveAwayButton.helpTip = "A simple controller to move away a layer from its parent";
 			//bouton lien de distance
 			var boutondistance = addIconButton(groupeAnimationG,"btn_lien-de-distance.png",getMessage(127));
 			boutondistance.onClick = distanceLink;
