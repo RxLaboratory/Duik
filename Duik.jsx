@@ -58,11 +58,14 @@ function fnDuIK(thisObj)
 		var progressStatus = progressGroup.add("statictext",undefined,"-----------idle----------");
 	}
 	
-	progressPanel.show();
-	progressBar.maxValue = 5;
-	progressBar.value = 0;
-	progressStatus.text = "Loading Duik";
-	progressPanel.update();
+	//-------------progressBar
+	{
+		progressPanel.show();
+		progressBar.maxValue = 5;
+		progressBar.value = 0;
+		progressStatus.text = "Loading Duik";
+		progressPanel.update();
+	}
 	
 	//=================================
 	//======== APP.SETTINGS ===========
@@ -185,10 +188,13 @@ function fnDuIK(thisObj)
 	
 	function loadDuik()
 	{
-		progressPanel.show();
-		progressBar.value = 2;
-		progressStatus.text = "Duik - Waking up libDuik";
-		progressPanel.update();
+		//-------------progressBar
+		{
+			progressPanel.show();
+			progressBar.value = 2;
+			progressStatus.text = "Duik - Waking up libDuik";
+			progressPanel.update();
+		}
 		
 		//=================================
 		//========== LOAD libDuik =========
@@ -475,10 +481,13 @@ function fnDuIK(thisObj)
 			Duik.settings.load();
 		}
 	
-		progressPanel.show();
-		progressBar.value = 3;
-		progressStatus.text = "Duik - Loading icons";
-		progressPanel.update();
+		//-------------progressBar
+		{
+			progressPanel.show();
+			progressBar.value = 3;
+			progressStatus.text = "Duik - Loading icons";
+			progressPanel.update();
+		}
 	
 		//=================================
 		//======== LOAD ICONS =============
@@ -535,10 +544,13 @@ function fnDuIK(thisObj)
 			}
 		}
 
-		progressPanel.show();
-		progressBar.value = 4;
-		progressStatus.text = "Duik - Loading functions";
-		progressPanel.update();
+		//-------------progressBar
+		{
+			progressPanel.show();
+			progressBar.value = 4;
+			progressStatus.text = "Duik - Loading functions";
+			progressPanel.update();
+		}
 		
 		//===============================================
 		//============ FUNCTIONS ========================
@@ -2475,7 +2487,7 @@ function fnDuIK(thisObj)
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
-
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
@@ -2490,7 +2502,7 @@ function fnDuIK(thisObj)
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
-
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
@@ -2505,7 +2517,7 @@ function fnDuIK(thisObj)
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
-
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
@@ -2525,6 +2537,7 @@ function fnDuIK(thisObj)
 							if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn]); }
 							else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn]); }
 							else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn]); }
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
@@ -2541,6 +2554,7 @@ function fnDuIK(thisObj)
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
 							prop.setTemporalContinuousAtKey(prop.selectedKeys[k], true);
 							prop.setTemporalAutoBezierAtKey(prop.selectedKeys[k], true);
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
@@ -2555,41 +2569,47 @@ function fnDuIK(thisObj)
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.HOLD);
-
+							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
 					}
 				}
 			}
 
-			function infl(valeur) {
+			function infl() {
 			
 			if (! (app.project.activeItem instanceof CompItem)) return;
 			
-			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-				for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+			var inVal = parseInt(interpoInEdit.text);
+			var outVal = parseInt(interpoOutEdit.text);
+			
+			if (boutonEloignement.value && !outVal) return;
+			if (boutonApproche.value && !inVal) return;
+			
+			for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+				for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
 					if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
-						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+						for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j]; 
 							if (!prop.isSpatial && prop.value.length == 3) {
-								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeIn3 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
-								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeOut3 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
+								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+								var easeIn3 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
+								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+								var easeOut3 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
 								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
 								}
 							else if (!prop.isSpatial && prop.value.length == 2) {
-								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
 								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
 								}
 							else {
-								var easeIn =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? valeur : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? valeur : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeIn =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+								var easeOut = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
 								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
 								}
 							}
@@ -2599,14 +2619,61 @@ function fnDuIK(thisObj)
 			}
 			
 			function roving () {
-				for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-					for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				
+				for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
 						if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
-							for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+							for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 								if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
 								{
 									prop.setRovingAtKey(prop.selectedKeys[k],true);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			function interpoSpatialLBezButtonClicked() {
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				
+				for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+						if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
+							for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+								if (prop.isSpatial)
+								{
+									prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			function interpoSpatialLinButtonClicked() {
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				
+				for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+						if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
+							for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+								if (prop.isSpatial)
+								{
+									prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
+									prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+									if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+									{
+										prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0,0],[0,0,0]);
+									}
+									else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+									{
+										prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
+									}
 								}
 							}
 						}
@@ -2722,11 +2789,13 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
-		
-		progressPanel.show();
-		progressBar.value = 5;
-		progressStatus.text = "Duik - Creating UI";
-		progressPanel.update();
+		//---------------progressbar
+		{
+			progressPanel.show();
+			progressBar.value = 5;
+			progressStatus.text = "Duik - Creating UI";
+			progressPanel.update();
+		}
 		
 				//TODO update to new UI
 		
@@ -3078,7 +3147,7 @@ function fnDuIK(thisObj)
 			var panos = mainGroup.add("group");
 			panos.orientation = "stack";
 			panos.alignChildren = ["fill","fill"];
-			panos.maximumSize = [300,500];
+			panos.maximumSize = [500,500];
 			if (!expertMode) panos.minimumSize = [250,250];
 			else panos.minimumSize = [100,100];
 			
@@ -3098,26 +3167,37 @@ function fnDuIK(thisObj)
 		panocam.visible = false;
 		var panosettings = addVPanel(panos);
 		panosettings.visible = false;
+		
 		var ctrlPanel = addVPanel(panos);
 		ctrlPanel.visible = false;
+		ctrlPanel.alignChildren = ["fill","top"];
 		var ikPanel = addVPanel(panos);
 		ikPanel.visible = false;
+		ikPanel.alignChildren = ["fill","top"];
 		var renamePanel = addVPanel(panos);
 		renamePanel.visible = false;
+		renamePanel.alignChildren = ["fill","top"];
 		var riePanel = addVPanel(panos);
 		riePanel.visible = false;
+		riePanel.alignChildren = ["fill","top"];
 		var measurePanel = addVPanel(panos);
 		measurePanel.visible = false;
+		measurePanel.alignChildren = ["fill","top"];
 		var timeRemapPanel = addVPanel(panos);
 		timeRemapPanel.visible = false;
+		timeRemapPanel.alignChildren = ["fill","top"];
 		var exposurePanel = addVPanel(panos);
 		exposurePanel.visible = false;
+		exposurePanel.alignChildren = ["fill","top"];
 		var celPanel = addVPanel(panos);
 		celPanel.visible = false;
+		celPanel.alignChildren = ["fill","top"];
 		var wigglePanel = addVPanel(panos);
 		wigglePanel.visible = false;
+		wigglePanel.alignChildren = ["fill","top"];
 		var irPanel = addVPanel(panos);
 		irPanel.visible = false;
+		irPanel.alignChildren = ["fill","top"];
 		
 		function displayPanel() {
 			ctrlPanel.hide();
@@ -3492,7 +3572,7 @@ function fnDuIK(thisObj)
 			boutonmesurer.onClick = function () {mesure();panoik.hide();measurePanel.show();};
 			boutonmesurer.helpTip = getMessage(100);
 			//replace in expressions button
-			var rieButton = addIconButton(groupeikG,"btn_replaceinexpr.png","Search and Replace");
+			var rieButton = addIconButton(groupeikG,"btn_replaceinexpr.png","Replace");
 			rieButton.onClick = function () { panoik.hide(); riePanel.show();}
 			rieButton.helpTip = "Search and replace text in expressions";
 			//lock button
@@ -3503,16 +3583,15 @@ function fnDuIK(thisObj)
 		
 		// ANIMATION
 		{
-			addSeparator(panointerpo,"Interpolation");
-			
 			// INTERPOLATIONS
 			{
+				addSeparator(panointerpo,"Interpolation type");
+				//Interpolation types
 				var groupeInterpoClefs = addHGroup(panointerpo);
-				//groupeInterpoClefs.alignChildren = ["right","top"];
 				var rovingButton = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_roving.png");
 				rovingButton.size = [20,20];
 				rovingButton.onClick = roving;
-				rovingButton.helpTip = "Roving key";
+				rovingButton.helpTip = "Roving";
 				var boutonLineaire = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_lineaire.png");
 				boutonLineaire.size = [20,20];
 				boutonLineaire.onClick = lineaire;
@@ -3538,78 +3617,130 @@ function fnDuIK(thisObj)
 				boutonMaintien.onClick = maintien;
 				boutonMaintien.helpTip = "Maintien";
 				
-				var groupeInterpo1 = addHGroup(panointerpo);
-				groupeInterpo1.spacing = 2;
-				var groupeInterpo2 = addHGroup(panointerpo);
-				groupeInterpo2.spacing = 2;
-				var groupeInterpo3 = addHGroup(panointerpo);
-				groupeInterpo3.spacing = 2;
-				var bouton0 = groupeInterpo1.add("button",undefined,"0");
-				bouton0.onClick = function() {texteInfluence.text = 1;infl(1);};
-				bouton0.helpTip = "Influence à 1%";
-				bouton0.size = [30,22];
-				var bouton10 = groupeInterpo1.add("button",undefined,"10");
-				bouton10.onClick = function() {texteInfluence.text = 10;infl(10);};
-				bouton10.helpTip = "Influence à 10%";
-				bouton10.size = [30,22];
-				var bouton25 = groupeInterpo1.add("button",undefined,"25");
-				bouton25.onClick = function() {texteInfluence.text = 25;infl(25);};
-				bouton25.helpTip = "Influence à 25%";
-				bouton25.size = [30,22];
-				var bouton50 = groupeInterpo2.add("button",undefined,"50");
-				bouton50.onClick = function() {texteInfluence.text = 50;infl(50);};
-				bouton50.helpTip = "Influence à 50%";
-				bouton50.size = [30,22];
-				var bouton75 = groupeInterpo2.add("button",undefined,"75");
-				bouton75.onClick = function() {texteInfluence.text = 75;infl(75);};
-				bouton75.helpTip = "Influence à 75%";
-				bouton75.size = [30,22];
-				var bouton90 = groupeInterpo2.add("button",undefined,"90");
-				bouton90.onClick = function() {texteInfluence.text = 90;infl(90);};
-				bouton90.helpTip = "Influence à 90%";
-				bouton90.size = [30,22];
-				var bouton100 = groupeInterpo3.add("button",undefined,"100");
-				bouton100.onClick = function() {texteInfluence.text = 100;infl(100);};
-				bouton100.helpTip = "Influence à 100%";
-				bouton100.size = [30,22];
-				var texteInfluence = groupeInterpo3.add("edittext",undefined,"-");
-				texteInfluence.size = [40,22];
-				texteInfluence.onChange = function() {infl(parseFloat(texteInfluence.text));};
-				var boutonInfluence = addIconButton(groupeInterpo3,"btn_valid.png","");
-				boutonInfluence.size = [30,22];
-				boutonInfluence.onClick = function() {infl(parseFloat(texteInfluence.text));};
-
-				var groupeInterpoInOut = addHGroup(panointerpo);
-				var boutonApproche = groupeInterpoInOut.add("checkbox",undefined,getMessage(86));
-				var boutonEloignement = groupeInterpoInOut.add("checkbox",undefined,getMessage(87));
-				boutonApproche.value = true;
-				boutonEloignement.value = true;
+				//interpolation influences
+				addSeparator(panointerpo,"Interpolation influence");
+							
+				var interpoInGroup = addHGroup(panointerpo);
+				var boutonApproche = interpoInGroup.add("checkbox",undefined,getMessage(86));
 				boutonApproche.helpTip = getMessage(88);
-				boutonEloignement.helpTip = getMessage(89);
-				boutonApproche.onClick = function() { if (boutonApproche.value == false) boutonEloignement.value = true; };
-				boutonEloignement.onClick = function() { if (boutonEloignement.value == false) boutonApproche.value = true; };
+				boutonApproche.alignment = ["left","center"];
+				boutonApproche.minimumSize = [40,10];
+				boutonApproche.value = true;
+				boutonApproche.enabled = false;
+				boutonApproche.onClick = function ()
+				{
+					interpoInSlider.enabled = boutonApproche.value;
+					interpoInEdit.enabled = boutonApproche.value;
+				}
+				var interpoInSlider = interpoInGroup.add("slider",undefined,33,1,100);
+				interpoInSlider.alignment = ["fill","center"];
+				interpoInSlider.onChanging = function ()
+				{
+					var val = Math.round(interpoInSlider.value);
+					interpoInEdit.text = val;
+					if (interpoLockInfluencesButton.value)
+					{
+						interpoOutSlider.value = val;
+						interpoOutEdit.text = val;
+					}
+					infl();
+				}
+				var interpoInEdit = interpoInGroup.add("edittext",undefined,"33");
+				interpoInEdit.minimumSize = [30,10];
+				interpoInEdit.alignment = ["right","fill"];
+				interpoInEdit.onChanging = function () {
+					var val = parseInt(interpoInEdit.text);
+					if (!val) return;
+					interpoInSlider.value = val;
+					infl();
+				}
 				
-				var morpherGroup = addHGroup(panointerpo);
-				var boutonMoprher = addIconButton(morpherGroup,"btn_morph.png","Morpher");
-				boutonMoprher.onClick = morpher;
-				boutonMoprher.helpTip = getMessage(90);
-				var boutonMKey = morpherGroup.add("checkbox",undefined,"Keyframes");
-				boutonMKey.value = true;
-				boutonMKey.alignment = ["fill","bottom"];
+				var groupeInterpoOut = addHGroup(panointerpo);
+				groupeInterpoOut.enabled = false;
+				var boutonEloignement = groupeInterpoOut.add("checkbox",undefined,getMessage(87));
+				boutonEloignement.helpTip = getMessage(89);
+				boutonEloignement.alignment = ["left","center"];
+				boutonEloignement.minimumSize = [40,10];
+				boutonEloignement.value = true;
+				boutonEloignement.onClick = function ()
+				{
+					interpoOutSlider.enabled = boutonEloignement.value;
+					interpoOutEdit.enabled = boutonEloignement.value;
+				}
+				var interpoOutSlider = groupeInterpoOut.add("slider",undefined,33,1,100);
+				interpoOutSlider.alignment = ["fill","center"];
+				interpoOutSlider.onChanging = function()
+				{
+					var val = Math.round(interpoOutSlider.value);
+					interpoOutEdit.text = val;
+					infl();
+				}
+				var interpoOutEdit = groupeInterpoOut.add("edittext",undefined,"33");
+				interpoOutEdit.alignment = ["right","fill"];
+				interpoOutEdit.minimumSize = [30,10];
+				interpoOutEdit.onChanging = function () {
+					var val = parseInt(interpoOutEdit.text);
+					if (!val) return;
+					interpoOutSlider.value = val;
+					infl();
+				}
+				var interoInfluTopGroup = addHGroup(panointerpo);
+				var interpoLockInfluencesButton = interoInfluTopGroup.add("checkbox",undefined,"Lock In and Out");
+				interpoLockInfluencesButton.alignment = ["left","bottom"];
+				interpoLockInfluencesButton.value = true;
+				interpoLockInfluencesButton.onClick = function ()
+				{
+					if (interpoLockInfluencesButton.value)
+					{
+						boutonApproche.value = true;
+						boutonApproche.enabled = false;
+						groupeInterpoOut.enabled = false;
+						boutonEloignement.value = true;
+						interpoInSlider.enabled = true;
+						interpoInEdit.enabled = true;
+						interpoOutSlider.enabled = true;
+						interpoOutEdit.enabled = true;
+						interpoOutSlider.value = parseInt(interpoInEdit.text);
+						interpoOutEdit.text = parseInt(interpoInEdit.text);
+					}
+					else
+					{
+						boutonApproche.enabled = true;
+						groupeInterpoOut.enabled = true;
+					}
+				}
+				var boutonInfluence = addIconButton(interoInfluTopGroup,"btn_valid.png","");
+				boutonInfluence.size = [30,22];
+				boutonInfluence.onClick = infl;
+					
+				//spatial interpolation
+				addSeparator(panointerpo,"Spatial interpolation");
+				var interpoSpatialGroup = addHGroup(panointerpo);
+				var interpoSpatialLinButton = addIconButton(interpoSpatialGroup,"btn_spatiallin.png","Linear");
+				interpoSpatialLinButton.onClick = interpoSpatialLinButtonClicked;
+				var interpoSpatialLBezButton = addIconButton(interpoSpatialGroup,"btn_spatialbez.png","Bezier");
+				interpoSpatialLBezButton.onClick = interpoSpatialLBezButtonClicked;
+
 			}
 			
 			addSeparator(panointerpo,"Tools");
 			
 			// TOOLS
 			{
-				var importRigButton = addIconButton(panointerpo,"/btn_importrig.png","Import rig in comp");
-				importRigButton.onClick = function () { panointerpo.hide(); irRigRefreshButtonClicked(); irPanel.show(); };
-				importRigButton.helpTip = "Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates.";
-				
+
+				var morpherGroup = addHGroup(panointerpo);
+				var boutonMoprher = addIconButton(morpherGroup,"btn_morph.png","Morpher");
+				boutonMoprher.onClick = morpher;
+				boutonMoprher.helpTip = getMessage(90);
+				var boutonMKey = morpherGroup.add("checkbox",undefined,"Keyframes");
+				boutonMKey.value = true;
+				boutonMKey.alignment = ["fill","center"];
+
 				animationToolsGroup = addHGroup(panointerpo);
 			
 				var animationToolsGroupL = addVGroup(animationToolsGroup);
 				var animationToolsGroupR = addVGroup(animationToolsGroup);
+				
 				
 				//bouton Copy ANIM
 				var boutonCopyAnim = addIconButton(animationToolsGroupL,"/btn_copy.png",getMessage(129));
@@ -3627,6 +3758,11 @@ function fnDuIK(thisObj)
 				var controllerButton2 =  addIconButton(animationToolsGroupR,"btn_controleur.png",getMessage(116));
 				controllerButton2.onClick = function () { controllersFromRiggingPanel = false; controllerButtonClicked(); };
 				controllerButton2.helpTip = "Controllers";
+								
+				var importRigButton = addIconButton(panointerpo,"/btn_importrig.png","Import rig in comp");
+				importRigButton.onClick = function () { panointerpo.hide(); irRigRefreshButtonClicked(); irPanel.show(); };
+				importRigButton.helpTip = "Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates.";
+				
 			}
 			
 		}
@@ -3720,7 +3856,6 @@ function fnDuIK(thisObj)
 		{
 			var ctrlMainGroup = addHGroup(ctrlPanel);
 			ctrlMainGroup.spacing = 15;
-			ctrlMainGroup.alignChildren = ["fill","top"];
 			var ctrlShapeGroup = addVGroup(ctrlMainGroup);
 			ctrlShapeGroup.alignChildren = ["fill","top"];
 			var ctrlRotationGroup = addHGroup(ctrlShapeGroup);
@@ -3821,6 +3956,7 @@ function fnDuIK(thisObj)
 				ctrlAutoLockText.visible = false;
 				ctrlAutoLockButton.onClick = function () { ctrlAutoLockText.visible = ctrlAutoLockButton.value ; } ;
 			}
+			
 			//lock buttons
 			var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
 			var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,"ctrl_unlock.png","");
@@ -3843,15 +3979,15 @@ function fnDuIK(thisObj)
 			//buttons
 			var ctrlButtonsGroup = addHGroup(ctrlPanel);
 			var ctrlCloseButton = addIconButton(ctrlButtonsGroup,"btn_cancel.png","Back");
-			ctrlCloseButton.alignment = ["left","top"];
+			ctrlCloseButton.alignment = ["fill","top"];
 			ctrlCloseButton.helpTip = "Back";
 			ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
 			var ctrlUpdateButton = addIconButton(ctrlButtonsGroup,"btn_update.png","Update");
-			ctrlUpdateButton.alignment = ["right","top"];
+			ctrlUpdateButton.alignment = ["fill","top"];
 			ctrlUpdateButton.helpTip = "Update";
 			ctrlUpdateButton.onClick = function () { ctrlUpdateButtonClicked(); ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
 			var ctrlCreateButton = addIconButton(ctrlButtonsGroup,"btn_valid.png","Create");
-			ctrlCreateButton.alignment = ["right","top"];
+			ctrlCreateButton.alignment = ["fill","top"];
 			ctrlCreateButton.helpTip = "Create";
 			ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
 		}
