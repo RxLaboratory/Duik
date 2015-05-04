@@ -29,7 +29,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15.alpha13";
+	var version = "15 Beta 1";
 	//=========================
 
 	//=================================
@@ -2650,7 +2650,7 @@ function fnDuIK(thisObj)
 			groupe.spacing = 2;
 			groupe.margins = 1;
 			//expertMode ? groupe.alignment = ["left","top"] : groupe.alignment = ["center","top"];
-			groupe.alignment = ["center","top"];
+			groupe.alignment = ["fill","fill"];
 			return groupe;
 		}
 		function addHPanel(conteneur){
@@ -2660,7 +2660,7 @@ function fnDuIK(thisObj)
 			groupe.spacing = 2;
 			groupe.margins = 1;
 			//expertMode ? groupe.alignment = ["left","top"] : groupe.alignment = ["center","top"];
-			groupe.alignment = ["center","top"];
+			groupe.alignment = ["fill","fill"];
 			return groupe;
 		}
 		function addHGroup(conteneur){
@@ -3043,14 +3043,19 @@ function fnDuIK(thisObj)
 			selectorButtons.alignChildren = ["fill","center"];
 			var riggingPanelButton = addIconButton(selectorButtons,"sel_rigging.png","");
 			riggingPanelButton.size = [22,22];
+			riggingPanelButton.helpTip = "Rigging";
 			var automationPanelButton = addIconButton(selectorButtons,"sel_animation.png","");
 			automationPanelButton.size = [22,22];
+			automationPanelButton.helpTip = "Automation";
 			var animationPanelButton = addIconButton(selectorButtons,"sel_interpo.png","");
 			animationPanelButton.size = [22,22];
+			animationPanelButton.helpTip = "Animation";
 			var camerasPanelButton = addIconButton(selectorButtons,"sel_camera.png","");
 			camerasPanelButton.size = [22,22];
+			camerasPanelButton.helpTip = "Cameras";
 			var settingsPanelButton = addIconButton(selectorButtons,"sel_settings.png","");
 			settingsPanelButton.size = [22,22];
+			settingsPanelButton.helpTip = "Settings";
 			//LIST
 			var selecteur = selectorGroup.add("dropdownlist",undefined,[getMessage(136),"Automation","Animation",getMessage(72),getMessage(75)]);
 			selecteur.alignment = ["right","center"];
@@ -3067,10 +3072,15 @@ function fnDuIK(thisObj)
 			if (expertMode) selecteur.items[4].text = "";
 			if (!eval(app.settings.getSetting("duik", "dropDownSelector"))) selecteur.hide();
 			else selectorButtons.hide();
+			
+			
 			//les panneaux
 			var panos = mainGroup.add("group");
 			panos.orientation = "stack";
 			panos.alignChildren = ["fill","fill"];
+			panos.maximumSize = [300,500];
+			if (!expertMode) panos.minimumSize = [250,250];
+			else panos.minimumSize = [100,100];
 			
 			var duikText = mainGroup.add ("statictext",undefined,"www.duduf.net - Duik " + version);
 			duikText.alignment = ["right","bottom"];
@@ -3182,10 +3192,13 @@ function fnDuIK(thisObj)
 		
 		// SETTINGS
 		{
+		panosettings.alignment = ["fill","top"];
+		panosettings.alignChildren = ["fill","top"];
 		var settingsDropdown = panosettings.add("dropdownlist",undefined,["User Interface","Updates","Bones","Controllers","Copy/Paste Animation"]);
 		addSeparator(panosettings,"");
-		var settingsGroup = panosettings.add("group");
+		var settingsGroup = addVPanel(panosettings);
 		settingsGroup.orientation = "stack";
+		settingsGroup.alignChildren = ["center","top"];
 		
 		var uiGroup = addVGroup(settingsGroup);
 		var updatesGroup = addVGroup(settingsGroup);
@@ -3683,7 +3696,7 @@ function fnDuIK(thisObj)
 		{
 			panocam.orientation = "row";
 			var groupCameraG = addVGroup(panocam);
-			var groupCameraD = addVGroup(panocam);
+			//var groupCameraD = addVGroup(panocam);
 			//bouton pour créer une target cam
 			var boutontcam = addIconButton(groupCameraG,"btn_controleur-cam.png",getMessage(134));
 			boutontcam.onClick = controlcam;
