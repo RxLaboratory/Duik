@@ -57,16 +57,7 @@ function fnDuIK(thisObj)
 		var progressBar = progressGroup.add("progressbar",undefined);
 		var progressStatus = progressGroup.add("statictext",undefined,"-----------idle----------");
 	}
-	
-	//-------------progressBar
-	{
-		progressPanel.show();
-		progressBar.maxValue = 5;
-		progressBar.value = 0;
-		progressStatus.text = "Loading Duik";
-		progressPanel.update();
-	}
-	
+		
 	//=================================
 	//======== APP.SETTINGS ===========
 	//=================================
@@ -3439,8 +3430,15 @@ function fnDuIK(thisObj)
 			};
 		boutonBoneColor.text = Duik.settings.boneColor;
 		boutonBoneColor.enabled = boutonBoneType.selection == 0;
+		var groupeBoneLocation = addHGroup(bonesGroup);
+		groupeBoneLocation.add("statictext",undefined,"Bone placement")
+		var boutonBonePlacement = groupeBoneLocation.add("dropdownlist",undefined,["Top","Bottom","Over layer","Under layer"]);
+		boutonBonePlacement.selection = Duik.settings.bonePlacement;
+		boutonBonePlacement.onChange = function() {
+			Duik.settings.bonePlacement = boutonBonePlacement.selection.index;
+			Duik.settings.save();
+			};
 		
-
 		//controller types
 		var groupeCtrlType = addHGroup(controllersGroup);
 		groupeCtrlType.add("statictext",undefined,"Controllers type");
@@ -3479,7 +3477,14 @@ function fnDuIK(thisObj)
 			};
 		boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value ;
 		boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value ;
-		
+		var groupeCtrlLocation = addHGroup(controllersGroup);
+		groupeCtrlLocation.add("statictext",undefined,"Controller placement")
+		var boutonCtrlPlacement = groupeCtrlLocation.add("dropdownlist",undefined,["Top","Bottom","Over layer","Under layer"]);
+		boutonCtrlPlacement.selection = Duik.settings.ctrlPlacement;
+		boutonCtrlPlacement.onChange = function() {
+			Duik.settings.ctrlPlacement = boutonCtrlPlacement.selection.index;
+			Duik.settings.save();
+			};
 		
 		
 		var pauiNamesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer names");

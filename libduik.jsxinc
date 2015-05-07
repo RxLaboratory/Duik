@@ -513,6 +513,11 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.getLayers.INDEX = 0;
 		Duik.getLayers.NAME = 1;
 		Duik.getLayers.SELECTION_INDEX = 2;
+		Duik.placement = {};
+		Duik.placement.TOP = 0;
+		Duik.placement.BOTTOM = 1;
+		Duik.placement.OVER_LAYER = 2;
+		Duik.placement.UNDER_LAYER = 3;
 	}
 }());
 
@@ -812,7 +817,8 @@ if (typeof Duik === 'object') delete Duik;
 		if (! app.settings.haveSetting("duik", "boneColor")){app.settings.saveSetting("duik","boneColor","FF0000");}
 		if (! app.settings.haveSetting("duik", "morpherKeyframes")){app.settings.saveSetting("duik","morpherKeyframes",true);}
 		if (! app.settings.haveSetting("duik", "getLayersMethod")){app.settings.saveSetting("duik","getLayersMethod",Duik.getLayers.NAME);}
-		if (! app.settings.haveSetting("duik", "boneOnTopOfLayer")){app.settings.saveSetting("duik","boneOnTopOfLayer",true);}
+		if (! app.settings.haveSetting("duik", "bonePlacement")){app.settings.saveSetting("duik","bonePlacement",Duik.placement.OVER_LAYER);}
+		if (! app.settings.haveSetting("duik", "ctrlPlacement")){app.settings.saveSetting("duik","ctrlPlacement",Duik.placement.TOP);}
 		
 		Duik.settings.save = function ()
 		{
@@ -827,7 +833,8 @@ if (typeof Duik === 'object') delete Duik;
 			app.settings.saveSetting("duik","boneColor",Duik.settings.boneColor);
 			app.settings.saveSetting("duik","morpherKey",Duik.settings.morpherCreatesKeyframes);
 			app.settings.saveSetting("duik","getLayersMethod",Duik.settings.getLayersMethod);
-			app.settings.saveSetting("duik","boneOnTopOfLayer",Duik.settings.boneOnTopOfLayer);
+			app.settings.saveSetting("duik","bonePlacement",Duik.settings.bonePlacement);
+			app.settings.saveSetting("duik","ctrlPlacement",Duik.settings.ctrlPlacement);
 		}
 		
 		Duik.settings.load = function ()
@@ -843,7 +850,8 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.boneColor = app.settings.getSetting("duik","boneColor");
 			Duik.settings.morpherCreatesKeyframes = eval(app.settings.getSetting("duik","morpherKeyframes"));
 			Duik.settings.getLayersMethod = eval(app.settings.getSetting("duik","getLayersMethod"));
-			Duik.settings.boneOnTopOfLayer = eval(app.settings.getSetting("duik","boneOnTopOfLayer"));
+			Duik.settings.bonePlacement = eval(app.settings.getSetting("duik","bonePlacement"));
+			Duik.settings.ctrlPlacement = eval(app.settings.getSetting("duik","ctrlPlacement"));
 		}
 		
 		Duik.settings.restoreDefaults = function ()
@@ -859,7 +867,8 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.boneColor = "FF0000";
 			Duik.settings.morpherCreatesKeyframes = true;
 			Duik.settings.getLayersMethod = Duik.getLayers.NAME;
-			Duik.settings.boneOnTopOfLayer = true;
+			Duik.settings.bonePlacement = Duik.placement.OVER_LAYER;
+			Duik.settings.ctrlPlacement = Duik.placement.TOP;
 			
 			Duik.settings.save();
 		}
@@ -2892,24 +2901,28 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	/* ADD CONTROLLER - Duik.addController(layer,type,color,autoLock,rotation,xPosition,yPosition,scale,size)
+	/* ADD CONTROLLER - Duik.addController(layer,type,color,autoLock,rotation,xPosition,yPosition,scale,placement)
 	
 		parameters
-		layer | AVLayer
+		layer | AVLayer, default: null
+		type | Duik.layerTypes.NULL or Duik.layerTypes.VECTOR, default: Duik.settings.controllerType
 		color | Array of 4 floats R,V,B,A
 		autoLock | boolean
 		rotation | boolean
 		position | boolean
 		scale | boolean
-		arc | boolean
+		placement | Duik.placement.OVER_LAYER or Duik.placement.UNDER_LAYER or Duik.placement.TOP or Duik.placement.BOTTOM, default: Duik.settings.ctrlPlacement
 		
 		returns
 		Controller Object
 	*/
 	if (typeof Duik.addController !== 'function')
 	{
-		Duik.addController = function (layer,type,color,autoLock,rotation,xPosition,yPosition,scale)
+		Duik.addController = function (layer,type,color,autoLock,rotation,xPosition,yPosition,scale,placement)
 		{
+			if (placement == undefined) placement = Duik.settings.ctrlPlacement;
+			
+			if (layer == undefined) layer = null;
 			if (rotation == undefined) rotation = true;
 			if (xPosition == undefined) xPosition = true;
 			if (yPosition == undefined) yPosition = true;
@@ -2990,6 +3003,13 @@ if (typeof Duik === 'object') delete Duik;
 			
 			if (autoLock) controllerObj.lock();
 			
+			if (layer != null)
+			{
+				if (placement == Duik.placement.OVER_LAYER) controller.moveBefore(layer);
+				else if (placement == Duik.placement.UNDER_LAYER) controller.moveAfter(layer);
+			}
+			if (placement == Duik.placement.BOTTOM) controller.moveToEnd();
+			
 			//select controller
 			Duik.utils.deselectLayers();
 			controller.selected = true;
@@ -2997,7 +3017,7 @@ if (typeof Duik === 'object') delete Duik;
 			return controllerObj;
 		}
 	}
-	/* ADD CONTROLLERS - Duik.addControllers(layers,color,autoLock,rotation,xPosition,yPosition,scale)
+	/* ADD CONTROLLERS - Duik.addControllers(layers,color,autoLock,rotation,xPosition,yPosition,scale,placement)
 		
 		parameters
 		layers | Array of AVLayer or LayerCollection
@@ -3006,14 +3026,14 @@ if (typeof Duik === 'object') delete Duik;
 		rotation | boolean
 		position | boolean
 		scale | boolean
-		arc | boolean
+		placement | Duik.placement.OVER_LAYER or Duik.placement.UNDER_LAYER or Duik.placement.TOP or Duik.placement.BOTTOM, default: Duik.settings.ctrlPlacement
 		
 		returns
 		Array of Controller Objects
 	*/
 	if (typeof Duik.addControllers !== 'function')
 	{
-		Duik.addControllers = function (layers,type,color,autoLock,rotation,xPosition,yPosition,scale,arc)
+		Duik.addControllers = function (layers,type,color,autoLock,rotation,xPosition,yPosition,scale,placement)
 		{
 			var controllers = [];
 			
@@ -3021,12 +3041,12 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				for (var i = 0 ; i < layers.length ; i++)
 				{
-					controllers.push ( Duik.addController( Duik.utils.getItem(layers,i),type,color,autoLock,rotation,xPosition,yPosition,scale ) );
+					controllers.push ( Duik.addController( Duik.utils.getItem(layers,i),type,color,autoLock,rotation,xPosition,yPosition,scale,placement) );
 				}
 			}
 			else
 			{
-				controllers.push(Duik.addController(null,type,color,autoLock,rotation,xPosition,yPosition,scale,arc));
+				controllers.push(Duik.addController(null,type,color,autoLock,rotation,xPosition,yPosition,scale,placement));
 			}
 
 			//select controllers
@@ -3388,12 +3408,13 @@ if (typeof Duik === 'object') delete Duik;
 			"valueAtTime(framesToTime( timef - timef%expo ))";
 		}
 	}
-	/* ADD BONES - Duik.addBones(layers);
+	/* ADD BONES - Duik.addBones(layers,placement);
 	
 		Adds bones to the layers, only on selected pins if any, or else on all puppet pins found on those layers.
 	
 		parameters
 		layers | Array of AVLayer
+		placement | Duik.placement.OVER_LAYER or Duik.placement.UNDER_LAYER or Duik.placement.TOP or Duik.placement.BOTTOM, default: Duik.settings.bonePlacement
 		
 		returns
 		Array of AVLayers, the bones created
@@ -3401,8 +3422,9 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.addBones !== 'function')
 	{
-		Duik.addBones = function (layers)
+		Duik.addBones = function (layers,placement)
 		{
+			if (placement == undefined) placement = Duik.settings.bonePlacement;
 			var createdBones = [];
 			if (layers.length == 0) { return createdBones; }
 			
@@ -3423,8 +3445,6 @@ if (typeof Duik === 'object') delete Duik;
 						if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
 					}
 				}
-				//si il n'y a pas de coins sélectionnés, on les prend tous
-				if (coins.length == 0) coins = Duik.utils.getPuppetPins(calque("Effects"));
 				//if no pins were found, use every selected spatial properties
 				if (coins.length == 0 && props.length > 0)
 				{
@@ -3439,6 +3459,9 @@ if (typeof Duik === 'object') delete Duik;
 						}
 					}
 				}
+				//si il n'y a pas de coins sélectionnés, on les prend tous
+				if (coins.length == 0) coins = Duik.utils.getPuppetPins(calque("Effects"));
+				//si on a vraiment rien trouvé, on laisse tomber
 				if (coins.length == 0) return;
 				
 				for (var j=0;j<coins.length;j++)
@@ -3494,6 +3517,9 @@ if (typeof Duik === 'object') delete Duik;
 						var blue = parseInt(colorString.substr(4,2),16)/255.0;
 						bone = app.project.activeItem.layers.addSolid([red,green,blue],"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
 					}
+					if (placement == Duik.placement.OVER_LAYER) bone.moveBefore(calque);
+					else if (placement == Duik.placement.UNDER_LAYER) bone.moveAfter(calque);
+					else if (placement == Duik.placement.BOTTOM) bone.moveToEnd();
 					createdBones.push(bone);
 					
 					//mettre le bone à la position du coin : utiliser une expression pour avoir la position en mode world du coin
