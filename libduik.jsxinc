@@ -1768,6 +1768,7 @@ if (typeof Duik === 'object') delete Duik;
 					{
 						var controller = new Controller();
 						controller.type = Duik.layerTypes.NULL;
+						controller.layer = l;
 						controllers.push(controller);
 					}
 				}
@@ -1834,8 +1835,23 @@ if (typeof Duik === 'object') delete Duik;
 		//returns void
 		if (typeof Duik.utils.duplicateComp !== 'function')
 		{
-			Duik.utils.duplicateComp = function (comp,prefix)
+			Duik.utils.duplicateComp = function (comp,prefix, progressBar, progressText, containingWindow)
 			{
+				var useProgressBar = false;
+				if (progressBar != undefined && progressText != undefined && containingWindow != undefined)
+				{
+					useProgressBar = true;
+				}
+				if (useProgressBar)
+				{
+					containingWindow.show();
+					progressBar.maxValue = 100;
+					progressBar.value = 0;
+					progressText.text = "Duplicating comp " + comp.name;
+					containingWindow.update();
+				}
+				
+				
 				var previousComps = [];
 				 
 				//NEEDED FUNCTIONS
@@ -1843,7 +1859,7 @@ if (typeof Duik === 'object') delete Duik;
 				//gets an item with its ID
 				function getItemWithID(id)
 				{
-					for (x=1; x<=app.project.numItems; x++) 
+					for (var x=1; x<=app.project.numItems; x++) 
 					{
 						if (app.project.item(x).id == id)
 						{
@@ -1914,12 +1930,26 @@ if (typeof Duik === 'object') delete Duik;
 				{
 					parentFolder.parentFolder = comp.parentFolder;
 				}
-				  
+				 
+				if (useProgressBar)
+				{
+					progressBar.value = 1;
+					progressText.text = "Duplicating precomps";
+					containingWindow.update();
+				}
+				 
 				//go
 				var newMainComp = duplicateStructure(comp, parentFolder,prefix);
 				
 				//add the main comp to the comps duplicated
 				previousComps[comp.id] = newMainComp.id;
+				
+				if (useProgressBar)
+				{
+					progressBar.value = 2;
+					progressText.text = "Updating expressions";
+					containingWindow.update();
+				}
 				
 				//update expressions
 				for (var i in previousComps)
@@ -1930,6 +1960,12 @@ if (typeof Duik === 'object') delete Duik;
 					var newComp = getItemWithID(previousComps[i]);
 					var oldName = oldComp.name;
 					var newName = newComp.name;
+					if (useProgressBar)
+					{
+						progressBar.value = progressBar.value+1;
+						progressText.text = "Updating expressions: " + newName;
+						containingWindow.update();
+					}
 					//in all comps, update the name in the expressions
 					for (var j in previousComps)
 					{
@@ -1946,20 +1982,26 @@ if (typeof Duik === 'object') delete Duik;
 						Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
 					}
 				}
+				
+				if (useProgressBar)
+				{
+					containingWindow.hide();
+				}
+						
 				return newMainComp;
 			}
 		}
-		// REPLACE IN EXPRESSIONS - Duik.utils.replaceInExpressions(prop,oldString,newString)
+		// REPLACE IN EXPRESSIONS - Duik.utils.replaceInExpressions(prop,oldString,newString,caseSensitive)
 		if (typeof Duik.utils.replaceInExpressions !== 'function')
 		{
-			Duik.utils.replaceInExpressions = function (prop,oldString,newString)
+			Duik.utils.replaceInExpressions = function (prop,oldString,newString,caseSensitive)
 			{
 				if (prop.propertyType == PropertyType.PROPERTY)
 				{
 					if (prop.canSetExpression)
 					{
 						var expr = prop.expression;
-						expr = Duik.javascript.replaceAll(expr,oldString,newString);
+						expr = Duik.javascript.replaceAll(expr,oldString,newString,caseSensitive);
 						prop.expression = expr;
 						delete expr;
 					}
@@ -1973,7 +2015,7 @@ if (typeof Duik === 'object') delete Duik;
 				}
 			}			
 		}
-		/* REPLACE IN LAYERS EXPRESSIONS - Duik.utils.replaceInLayersExpressions(layers,oldString,newString);
+		/* REPLACE IN LAYERS EXPRESSIONS - Duik.utils.replaceInLayersExpressions(layers,oldString,newString,caseSensitive);
 		
 			Replaces all occurences of oldString by newString in all the expressions of all the layers.
 		
@@ -1988,23 +2030,23 @@ if (typeof Duik === 'object') delete Duik;
 		*/
 		if (typeof Duik.utils.replaceInLayersExpressions !== 'function')
 		{
-			Duik.utils.replaceInLayersExpressions = function (layrs,oldString,newString)
+			Duik.utils.replaceInLayersExpressions = function (layrs,oldString,newString,caseSensitive)
 			{
-				if (newString.indexOf(oldString) >=0) return;
+				if (caseSensitive == undefined) caseSensitive = true;
 				var layers = Duik.utils.convertCollectionToArray(layrs);
 				for (var layerIndex = 0 ; layerIndex<layers.length ; layerIndex++)
 				{
-					var l = Duik.utils.getItem(layers,layerIndex);
+					var l = layers[layerIndex];
 					var locked = l.locked;
 					l.locked = false;
 					//transform
-					Duik.utils.replaceInExpressions(l.transform,oldString,newString);
+					Duik.utils.replaceInExpressions(l("ADBE Transform Group"),oldString,newString,caseSensitive);
 					//masks
-					if (l("ADBE Mask Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString);
+					if (l("ADBE Mask Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Mask Parade"),oldString,newString,caseSensitive);
 					//effects
-					if (l("ADBE Effect Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString);
+					if (l("ADBE Effect Parade") != null) Duik.utils.replaceInExpressions(l("ADBE Effect Parade"),oldString,newString,caseSensitive);
 					//time remapping
-					if (l("ADBE Time Remapping") != null) Duik.utils.replaceInExpressions(l("ADBE Time Remapping"),oldString,newString);
+					if (l("ADBE Time Remapping") != null) Duik.utils.replaceInExpressions(l("ADBE Time Remapping"),oldString,newString,caseSensitive);
 					l.locked = locked;
 					delete l;
 					delete locked;
@@ -4891,19 +4933,20 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				useProgressBar = true;
 			}
+	
+			app.beginSuppressDialogs();
+						
+			//duplicate character comp
+			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_", progressBar, progressText, containingWindow);
+			
 			if (useProgressBar)
 			{
 				containingWindow.show();
 				progressBar.maxValue = 1000;
-				progressBar.value = 0;
+				progressBar.value = 1;
 				progressText.text = "Importing " + characterName + "_" + characterComp.name;
 				containingWindow.update();
 			}
-			
-			app.beginSuppressDialogs();
-						
-			//duplicate character comp
-			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
 
 			//add character comp in the comp
 			var characterLayer = comp.layers.add(characterComp);
@@ -5107,7 +5150,7 @@ if (typeof Duik === 'object') delete Duik;
 			app.endSuppressDialogs(false);
 		}
 	}
-	/* IMPORT RIG IN COMP - Duik.moveAway(layer);
+	/* MOVE AWAY - Duik.moveAway(layer);
 
 	Rigs the position of the layer to be able to move it away from its parent with a simple slider.
 
