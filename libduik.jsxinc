@@ -203,6 +203,7 @@ if (typeof Duik === 'object') delete Duik;
 		this.scale = false;
 		this.arc = false;
 		this.eye = false;
+		this.camera = false;
 		this.size = 0;
 		this.color = [1,1,1,1];
 		this.layer = null;
@@ -219,7 +220,7 @@ if (typeof Duik === 'object') delete Duik;
 		var posValue = this.layer.transform.position.value;
 		var rotValue = this.layer.transform.rotation.value;
 		var scaValue = this.layer.transform.scale.value;
-		if (!this.xPosition && !this.yPosition && !this.eye)
+		if (!this.xPosition && !this.yPosition && !this.eye && !this.camera)
 		{
 			if (this.layer.transform.position.canSetExpression)
 			{
@@ -239,7 +240,7 @@ if (typeof Duik === 'object') delete Duik;
 		{
 			this.layer.transform.position.expression = "[" + posValue[0] + ",value[1]]";
 		}
-		if (!this.rotation || !this.arc)
+		if (!this.rotation && !this.arc && !this.camera)
 		{
 			this.layer.transform.rotation.expression = rotValue;
 		}
@@ -285,21 +286,13 @@ if (typeof Duik === 'object') delete Duik;
 			else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10)*100/30;
 		}
 
-		if (this.arc)
+		if (this.arc || this.eye || this.camera)
 		{
 			this.xPosition = false;
 			this.yPosition = false;
 			this.rotation = false;
 			this.scale = false;
 			this.eye = false;
-		}
-		else if (this.eye)
-		{
-			this.xPosition = false;
-			this.yPosition = false;
-			this.rotation = false;
-			this.scale = false;
-			this.arc = false;
 		}
 		
 		iconGroup = this.layer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -482,7 +475,26 @@ if (typeof Duik === 'object') delete Duik;
 			stroke("ADBE Vector Stroke Width").setValue(2);
 
 		}
-		
+		if (this.camera)
+		{
+			var group = iconGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+			group.name = "Camera";
+			var groupContent = group.property("ADBE Vectors Group");
+			
+			var cam = groupContent.addProperty("ADBE Vector Shape - Group");
+			var camShape = new Shape();
+			camShape.vertices = [[-15,-7], [-5,-3], [-5,-7], [15,-7], [15,7], [-5,7], [-5,3], [-15,7]];
+			camShape.closed = true;
+			cam("ADBE Vector Shape").setValue(camShape);
+			var reel1 = groupContent.addProperty("ADBE Vector Shape - Ellipse");
+			reel1("ADBE Vector Ellipse Size").setValue([15,15]);
+			reel1("ADBE Vector Ellipse Position").setValue([12,-10]);
+			var reel2 = groupContent.addProperty("ADBE Vector Shape - Ellipse");
+			reel2("ADBE Vector Ellipse Size").setValue([10,10]);
+			reel2("ADBE Vector Ellipse Position").setValue([-2,-10]);
+			var fill = groupContent.addProperty("ADBE Vector Graphic - Fill");
+			fill("ADBE Vector Fill Color").setValue(this.color);
+		}
 	}
 }
 
@@ -1811,6 +1823,11 @@ if (typeof Duik === 'object') delete Duik;
 							else if (iconGroup("ADBE Vectors Group")(j).name == "Eye")
 							{
 								controller.eye = true;
+								controller.color = iconGroup("ADBE Vectors Group")(j)("ADBE Vectors Group")(2)("ADBE Vectors Group")("ADBE Vector Graphic - Stroke")("ADBE Vector Stroke Color").value;
+							}
+							else if (iconGroup("ADBE Vectors Group")(j).name == "Camera")
+							{
+								controller.camera = true;
 								controller.color = iconGroup("ADBE Vectors Group")(j)("ADBE Vectors Group")(2)("ADBE Vectors Group")("ADBE Vector Graphic - Stroke")("ADBE Vector Stroke Color").value;
 							}
 						}

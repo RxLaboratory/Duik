@@ -1252,7 +1252,7 @@ function fnDuIK(thisObj)
 				else if (ctrlColorList.selection == 9) color = [0,0,0,1];
 				else color = [1,1,1,1];
 				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,undefined,color,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
-				if (ctrlArcButton.value)
+				if (ctrlShapeList.selection == 1)
 				{
 					for (var i in newControllers)
 					{
@@ -1260,11 +1260,19 @@ function fnDuIK(thisObj)
 						newControllers[i].update();
 					}
 				}
-				if (ctrlEyeButton.value)
+				else if (ctrlShapeList.selection == 2)
 				{
 					for (var i in newControllers)
 					{
 						newControllers[i].eye = true;
+						newControllers[i].update();
+					}
+				}
+				else if (ctrlShapeList.selection == 3)
+				{
+					for (var i in newControllers)
+					{
+						newControllers[i].camera = true;
 						newControllers[i].update();
 					}
 				}
@@ -3874,53 +3882,64 @@ function fnDuIK(thisObj)
 			ctrlMainGroup.spacing = 15;
 			var ctrlShapeGroup = addVGroup(ctrlMainGroup);
 			ctrlShapeGroup.alignChildren = ["fill","top"];
+			var ctrlShapeList = ctrlShapeGroup.add("dropdownlist",undefined,["","","",""]);
+			ctrlShapeList.items[0].image = ScriptUI.newImage(dossierIcones + "ctrl_transform.png");
+			ctrlShapeList.items[1].image = ScriptUI.newImage(dossierIcones + "ctrl_arc.png");
+			ctrlShapeList.items[2].image = ScriptUI.newImage(dossierIcones + "ctrl_eye.png");
+			ctrlShapeList.items[3].image = ScriptUI.newImage(dossierIcones + "ctrl_cam.png");
+			ctrlShapeList.selection = 0;
 			var ctrlRotationGroup = addHGroup(ctrlShapeGroup);
 			var ctrlRotationButton = ctrlRotationGroup.add("checkbox",undefined,"");
 			ctrlRotationButton.value = true;
 			ctrlRotationButton.helpTip = "Rotation";
 			ctrlRotationButton.alignment = ["left","bottom"];
-			ctrlRotationGroup.add("image",undefined,dossierIcones + "ctrl_rot.png");
+			var ctrlRotationImage = ctrlRotationGroup.add("image",undefined,dossierIcones + "ctrl_rot.png");
 			var ctrlXPositionGroup = addHGroup(ctrlShapeGroup);
 			var ctrlXPositionButton = ctrlXPositionGroup.add("checkbox",undefined,"");
 			ctrlXPositionButton.value = true;
 			ctrlXPositionButton.helpTip = "X position";
 			ctrlXPositionButton.alignment = ["left","bottom"];
-			ctrlXPositionGroup.add("image",undefined,dossierIcones + "ctrl_xpos.png");
+			var ctrlXPositionImage = ctrlXPositionGroup.add("image",undefined,dossierIcones + "ctrl_xpos.png");
 			var ctrlYPositionGroup = addHGroup(ctrlShapeGroup);
 			var ctrlYPositionButton = ctrlYPositionGroup.add("checkbox",undefined,"");
 			ctrlYPositionButton.value = true;
 			ctrlYPositionButton.helpTip = "Y position";
 			ctrlYPositionButton.alignment = ["left","bottom"];
-			ctrlYPositionGroup.add("image",undefined,dossierIcones + "ctrl_ypos.png");
+			var ctrlYPositionImage = ctrlYPositionGroup.add("image",undefined,dossierIcones + "ctrl_ypos.png");
 			var ctrlScaleGroup = addHGroup(ctrlShapeGroup);
 			var ctrlScaleButton = ctrlScaleGroup.add("checkbox",undefined,"");
 			ctrlScaleButton.alignment = ["left","bottom"];
 			ctrlScaleButton.helpTip = "Scale";
-			ctrlScaleGroup.add("image",undefined,dossierIcones + "ctrl_sca.png");
-			var ctrlArcGroup = addHGroup(ctrlShapeGroup);
-			var ctrlArcButton = ctrlArcGroup.add("checkbox",undefined,"");
-			ctrlArcButton.helpTip = "Arc";
-			ctrlArcButton.onClick = function () {
-				ctrlRotationButton.enabled = !ctrlArcButton.value;
-				ctrlXPositionButton.enabled = !ctrlArcButton.value;
-				ctrlYPositionButton.enabled = !ctrlArcButton.value;
-				ctrlScaleButton.enabled = !ctrlArcButton.value;
-				ctrlEyeButton.enabled = !ctrlArcButton.value;
+			var ctrlScaleImage = ctrlScaleGroup.add("image",undefined,dossierIcones + "ctrl_sca.png");
+
+			
+			ctrlShapeList.onChange = function ()
+			{
+				var sel = ctrlShapeList.selection == 0;
+				if (sel)
+				{
+					ctrlRotationGroup.enabled = sel;
+					ctrlRotationImage.image = ScriptUI.newImage(dossierIcones + "ctrl_rot.png");
+					ctrlXPositionGroup.enabled = sel;
+					ctrlXPositionImage.image = ScriptUI.newImage(dossierIcones + "ctrl_xpos.png");
+					ctrlYPositionGroup.enabled = sel;
+					ctrlYPositionImage.image = ScriptUI.newImage(dossierIcones + "ctrl_ypos.png");
+					ctrlScaleGroup.enabled = sel;
+					ctrlScaleImage.image = ScriptUI.newImage(dossierIcones + "ctrl_sca.png");
+				}
+				else
+				{
+					ctrlRotationGroup.enabled = sel;
+					ctrlRotationImage.image = ScriptUI.newImage(dossierIcones + "ctrl_rot_d.png");
+					ctrlXPositionGroup.enabled = sel;
+					ctrlXPositionImage.image = ScriptUI.newImage(dossierIcones + "ctrl_xpos_d.png");
+					ctrlYPositionGroup.enabled = sel;
+					ctrlYPositionImage.image = ScriptUI.newImage(dossierIcones + "ctrl_ypos_d.png");
+					ctrlScaleGroup.enabled = sel;
+					ctrlScaleImage.image = ScriptUI.newImage(dossierIcones + "ctrl_sca_d.png");
+				}
+				
 			}
-			ctrlArcButton.alignment = ["left","bottom"];
-			ctrlArcGroup.add("image",undefined,dossierIcones + "ctrl_arc.png");
-			var ctrlEyeGroup = addHGroup(ctrlShapeGroup);
-			var ctrlEyeButton = ctrlEyeGroup.add("checkbox",undefined,"");
-			ctrlEyeButton.helpTip = "Eye";
-			ctrlEyeButton.onClick = function () {
-				ctrlRotationButton.enabled = !ctrlEyeButton.value;
-				ctrlXPositionButton.enabled = !ctrlEyeButton.value;
-				ctrlYPositionButton.enabled = !ctrlEyeButton.value;
-				ctrlScaleButton.enabled = !ctrlEyeButton.value;
-				ctrlArcButton.enabled = !ctrlEyeButton.value;
-			}
-			ctrlEyeButton.alignment = ["left","bottom"];
-			ctrlEyeGroup.add("image",undefined,dossierIcones + "ctrl_eye.png");
 			
 			var ctrlSettingsGroup = addVGroup(ctrlMainGroup);
 			ctrlSettingsGroup.alignChildren = ["fill","top"];
