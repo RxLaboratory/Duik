@@ -43,21 +43,7 @@ function fnDuIK(thisObj)
 	var palette = (thisObj instanceof Panel) ? thisObj : new Window("palette","Duik",undefined, {resizeable:true});
 	palette.orientation = "stack";
 	palette.alignChildren = ["fill","fill"];
-	
-	// PROGRESS BAR
-	{
-		var progressPanel = new Window("window","Progress",undefined,{borderless:true});
-		progressPanel.size=[300,50];
-		progressPanel.alignChildren = ["fill","top"];
-		var progressGroup = progressPanel.add("group");
-		progressGroup.alignChildren = ["fill","fill"];
-		progressGroup.orientation = "column";
-		progressGroup.spacing = 2;
-		progressGroup.margins = 0;
-		var progressBar = progressGroup.add("progressbar",undefined);
-		var progressStatus = progressGroup.add("statictext",undefined,"-----------idle----------");
-	}
-		
+			
 	//=================================
 	//======== APP.SETTINGS ===========
 	//=================================
@@ -85,8 +71,6 @@ function fnDuIK(thisObj)
 				app.executeCommand(2359);
 			}
 			
-			progressPanel.hide();
-
 			var wfGroup = palette.add("group");
 			wfGroup.orientation = "column";
 			wfGroup.alignChildren = ["fill","fill"];
@@ -141,12 +125,7 @@ function fnDuIK(thisObj)
 	}
 	
 	function preloadDuik ()
-	{
-		progressPanel.show();
-		progressBar.value = 1;
-		progressStatus.text = "Duik - checking for new Updates";
-		progressPanel.update();
-		
+	{	
 		if (app.settings.getSetting("duik","version") == "oui")
 		{
 			var newV = checkForUpdate(version,false);
@@ -179,13 +158,6 @@ function fnDuIK(thisObj)
 	
 	function loadDuik()
 	{
-		//-------------progressBar
-		{
-			progressPanel.show();
-			progressBar.value = 2;
-			progressStatus.text = "Duik - Waking up libDuik";
-			progressPanel.update();
-		}
 		
 		//=================================
 		//========== LOAD libDuik =========
@@ -472,13 +444,7 @@ function fnDuIK(thisObj)
 			Duik.settings.load();
 		}
 	
-		//-------------progressBar
-		{
-			progressPanel.show();
-			progressBar.value = 3;
-			progressStatus.text = "Duik - Loading icons";
-			progressPanel.update();
-		}
+		Duik.ui.showProgressPanel(2,"Duik - Loading icons");
 	
 		//=================================
 		//======== LOAD ICONS =============
@@ -535,13 +501,7 @@ function fnDuIK(thisObj)
 			}
 		}
 
-		//-------------progressBar
-		{
-			progressPanel.show();
-			progressBar.value = 4;
-			progressStatus.text = "Duik - Loading functions";
-			progressPanel.update();
-		}
+		Duik.ui.updateProgressPanel(1,"Duik - Loading functions");
 		
 		//===============================================
 		//============ FUNCTIONS ========================
@@ -1867,7 +1827,7 @@ function fnDuIK(thisObj)
 				var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(" ")));
 				
 				app.beginUndoGroup("Import rig: " + irNameText.text);
-				Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text,progressBar,progressStatus,progressPanel);
+				Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text);
 				app.endUndoGroup();
 								
 			}
@@ -2681,6 +2641,8 @@ function fnDuIK(thisObj)
 		{
 		//TODO renommer les éléments d'UI
 		
+		Duik.ui.updateProgressPanel(2,"Duik - Creating UI");
+		
 		//folders and needed variables
 		var dossierIcones = Folder.userData.absoluteURI  + "/DuIK/";
 		var animationSaved = [];
@@ -2780,13 +2742,6 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
-		//---------------progressbar
-		{
-			progressPanel.show();
-			progressBar.value = 5;
-			progressStatus.text = "Duik - Creating UI";
-			progressPanel.update();
-		}
 		
 				//TODO update to new UI
 		
@@ -4411,8 +4366,7 @@ function fnDuIK(thisObj)
 		palette.layout.resize();
 		palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 		
-		progressPanel.hide();
-		
+		Duik.ui.hideProgressPanel();
 		}
 	}
 	
@@ -4421,7 +4375,7 @@ function fnDuIK(thisObj)
 	palette.layout.resize();
 	palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 	
-	progressPanel.hide();
+	Duik.ui.hideProgressPanel();
 	
 	return palette;
 	

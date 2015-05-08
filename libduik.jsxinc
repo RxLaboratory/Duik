@@ -491,12 +491,12 @@ if (typeof Duik === 'object') delete Duik;
 /////////////////////////////
 (function ()
 {
-	if (Duik.versionNumber != 15.0013)
+	if (Duik.versionNumber != 15.01)
 	{
 		delete Duik;
 		Duik = {};
-		Duik.version = "15.alpha13";
-		Duik.versionNumber = 15.0013;
+		Duik.version = "15.beta1";
+		Duik.versionNumber = 15.0014;
 		Duik.usePresets = true;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 		Duik.presetEffectsInstalledVersion = 0.0;
@@ -534,7 +534,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.setup = {};
 		//Duik.setup.presetEffects String
 		{
-			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0013 -->\r\n" + 
+			Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.0014 -->\r\n" + 
 				"<Effect matchname='DUIK_One_Layer_IK' name='$$$/AE/Preset/1ik=DUIK_One_Layer_IK'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikWeight=Weight' default='100' valid_min='-1000' valid_max='1000' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
 				"    <Checkbox name='$$$/AE/Preset/DuikReverse=Reverse' default='true'/>\r\n" + 
@@ -769,6 +769,45 @@ if (typeof Duik === 'object') delete Duik;
 (function ()
 {	
 	//================================
+	//============== UI ==============
+	//================================
+	
+	if (typeof Duik.ui !== 'object')
+	{
+		Duik.ui = {};
+		Duik.ui.progressPanel = new Window("window","Duik",undefined);
+		Duik.ui.progressPanel.size = [350,70];
+		Duik.ui.progressPanel.alignChildren = ["fill","top"];
+		Duik.ui.progressPanel.margins = 7;
+		Duik.ui.progressGroup = Duik.ui.progressPanel.add("group");
+		Duik.ui.progressGroup.alignChildren = ["fill","top"];
+		Duik.ui.progressGroup.orientation = "column";
+		Duik.ui.progressGroup.spacing = 2;
+		Duik.ui.progressGroup.margins = 0;
+		Duik.ui.progressGroup.add("statictext",undefined,"Please be patient while Duik is doing its magic.");
+		Duik.ui.progressBar = Duik.ui.progressGroup.add("progressbar",undefined);
+		Duik.ui.progressStatus = Duik.ui.progressGroup.add("statictext",undefined,"Can you feel the magic?");
+		Duik.ui.updateProgressPanel = function (val,status)
+		{
+			Duik.ui.progressBar.value = val;
+			if (status != undefined) Duik.ui.progressStatus.text = status;
+			Duik.ui.progressPanel.update();
+		};
+		Duik.ui.showProgressPanel = function (maxVal,status)
+		{
+			Duik.ui.progressBar.maxvalue = maxVal;
+			Duik.ui.progressBar.value = 0;
+			Duik.ui.progressStatus.text = status;
+			Duik.ui.progressPanel.show();
+			Duik.ui.progressPanel.update();
+		};
+		Duik.ui.hideProgressPanel = function ()
+		{
+			Duik.ui.progressPanel.hide();
+		};
+	}
+
+	//================================
 	//========= UI Strings ===========
 	//================================
 	
@@ -819,6 +858,7 @@ if (typeof Duik === 'object') delete Duik;
 		if (! app.settings.haveSetting("duik", "getLayersMethod")){app.settings.saveSetting("duik","getLayersMethod",Duik.getLayers.NAME);}
 		if (! app.settings.haveSetting("duik", "bonePlacement")){app.settings.saveSetting("duik","bonePlacement",Duik.placement.OVER_LAYER);}
 		if (! app.settings.haveSetting("duik", "ctrlPlacement")){app.settings.saveSetting("duik","ctrlPlacement",Duik.placement.TOP);}
+		if (! app.settings.haveSetting("duik", "displayProgressPanel")){app.settings.saveSetting("duik","displayProgressPanel",true);}
 		
 		Duik.settings.save = function ()
 		{
@@ -835,6 +875,7 @@ if (typeof Duik === 'object') delete Duik;
 			app.settings.saveSetting("duik","getLayersMethod",Duik.settings.getLayersMethod);
 			app.settings.saveSetting("duik","bonePlacement",Duik.settings.bonePlacement);
 			app.settings.saveSetting("duik","ctrlPlacement",Duik.settings.ctrlPlacement);
+			app.settings.saveSetting("duik","displayProgressPanel",Duik.settings.displayProgressPanel);
 		}
 		
 		Duik.settings.load = function ()
@@ -852,6 +893,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.getLayersMethod = eval(app.settings.getSetting("duik","getLayersMethod"));
 			Duik.settings.bonePlacement = eval(app.settings.getSetting("duik","bonePlacement"));
 			Duik.settings.ctrlPlacement = eval(app.settings.getSetting("duik","ctrlPlacement"));
+			Duik.settings.displayProgressPanel = eval(app.settings.getSetting("duik","displayProgressPanel"));
 		}
 		
 		Duik.settings.restoreDefaults = function ()
@@ -869,6 +911,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.getLayersMethod = Duik.getLayers.NAME;
 			Duik.settings.bonePlacement = Duik.placement.OVER_LAYER;
 			Duik.settings.ctrlPlacement = Duik.placement.TOP;
+			Duik.settings.displayProgressPanel = true;
 			
 			Duik.settings.save();
 		}
@@ -1844,23 +1887,11 @@ if (typeof Duik === 'object') delete Duik;
 		//returns void
 		if (typeof Duik.utils.duplicateComp !== 'function')
 		{
-			Duik.utils.duplicateComp = function (comp,prefix, progressBar, progressText, containingWindow)
+			Duik.utils.duplicateComp = function (comp,prefix)
 			{
-				var useProgressBar = false;
-				if (progressBar != undefined && progressText != undefined && containingWindow != undefined)
-				{
-					useProgressBar = true;
-				}
-				if (useProgressBar)
-				{
-					containingWindow.show();
-					progressBar.maxValue = 100;
-					progressBar.value = 0;
-					progressText.text = "Duplicating comp " + comp.name;
-					containingWindow.update();
-				}
-				
-				
+
+				if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(100,"Duplicating " + comp.name);
+
 				var previousComps = [];
 				 
 				//NEEDED FUNCTIONS
@@ -1940,12 +1971,7 @@ if (typeof Duik === 'object') delete Duik;
 					parentFolder.parentFolder = comp.parentFolder;
 				}
 				 
-				if (useProgressBar)
-				{
-					progressBar.value = 1;
-					progressText.text = "Duplicating precomps";
-					containingWindow.update();
-				}
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(1,"Duplicating precomps");
 				 
 				//go
 				var newMainComp = duplicateStructure(comp, parentFolder,prefix);
@@ -1953,12 +1979,7 @@ if (typeof Duik === 'object') delete Duik;
 				//add the main comp to the comps duplicated
 				previousComps[comp.id] = newMainComp.id;
 				
-				if (useProgressBar)
-				{
-					progressBar.value = 2;
-					progressText.text = "Updating expressions";
-					containingWindow.update();
-				}
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(2,"Updating expressions");
 				
 				//update expressions
 				for (var i in previousComps)
@@ -1969,12 +1990,7 @@ if (typeof Duik === 'object') delete Duik;
 					var newComp = getItemWithID(previousComps[i]);
 					var oldName = oldComp.name;
 					var newName = newComp.name;
-					if (useProgressBar)
-					{
-						progressBar.value = progressBar.value+1;
-						progressText.text = "Updating expressions: " + newName;
-						containingWindow.update();
-					}
+					if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(Duik.ui.progressBar.value + 1,"Updating expressions: " + newName);
 					//in all comps, update the name in the expressions
 					for (var j in previousComps)
 					{
@@ -1992,11 +2008,8 @@ if (typeof Duik === 'object') delete Duik;
 					}
 				}
 				
-				if (useProgressBar)
-				{
-					containingWindow.hide();
-				}
-						
+				if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+				
 				return newMainComp;
 			}
 		}
@@ -4933,7 +4946,7 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 	}
-	/* IMPORT RIG IN COMP - Duik.importRigInComp(comp,rigComp,rigName, progressBar, progressText,containingWindow);
+	/* IMPORT RIG IN COMP - Duik.importRigInComp(comp,rigComp,rigName);
 
 	Imports a rig in the comp, transferring and linking the controllers in the new comp, while keeping the rig precomposed.
 	The rig comp is duplicated, including precomps, renamed, and expressions are updated, so that one can import the same rig seeveral times.
@@ -4942,9 +4955,6 @@ if (typeof Duik === 'object') delete Duik;
 		comp | CompItem, the comp where to import the rig
 		rigComp | CompItem, the comp containing the rig
 		rigName | the name of this instance of the rig, must be unique in the project
-		progressBar | scriptUI ProgressBar, optionnal, to display the progression
-		progressText | Any scriptUI Control with a text property, needed if progressBar is provided
-		containingWindow | scriptUI Window containing the provided progressBar and progressText
 		
 	returns
 		void
@@ -4952,36 +4962,15 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.importRigInComp !== 'function')
 	{
-		Duik.importRigInComp = function (comp, characterComp, characterName, progressBar, progressText, containingWindow)
+		Duik.importRigInComp = function (comp, characterComp, characterName)
 		{	
-			var useProgressBar = false;
-			if (progressBar != undefined && progressText != undefined && containingWindow != undefined)
-			{
-				useProgressBar = true;
-			}
-	
 			app.beginSuppressDialogs();
 						
 			//duplicate character comp
-			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_", progressBar, progressText, containingWindow);
+			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
 			
-			if (useProgressBar)
-			{
-				containingWindow.show();
-				progressBar.maxValue = 1000;
-				progressBar.value = 1;
-				progressText.text = "Importing " + characterName + "_" + characterComp.name;
-				containingWindow.update();
-			}
-
 			//add character comp in the comp
 			var characterLayer = comp.layers.add(characterComp);
-			
-			if (useProgressBar)
-			{
-				progressText.text = "Getting existing controllers";
-				containingWindow.update();
-			}
 			
 			//Create a null object to get world coordinates of the zeros in the character comp
 			var tempNull = characterComp.layers.addNull();
@@ -4991,22 +4980,14 @@ if (typeof Duik === 'object') delete Duik;
 			var characterZeros = [];
 			var characterControllers = Duik.utils.getControllers(characterComp.layers);
 			
-			if (useProgressBar)
-			{
-				progressBar.maxValue = characterControllers.length*4;
-				progressText.text = "Preparing controllers and zeros";
-				containingWindow.update();
-				var progressValue = 0;
-			}
+			if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(characterControllers.length*4,"Preparing controllers and zeros");
+			var progressValue = 0;
 			
 			for (var i in characterControllers)
 			{
-				if (useProgressBar)
-				{
-					progressValue++;
-					progressBar.value = progressValue;
-					containingWindow.update();
-				}
+				progressValue++;
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+
 				var zero = characterControllers[i].layer.parent;
 				if (zero == null || zero.name.indexOf("Zero") != 0)
 				{
@@ -5019,23 +5000,17 @@ if (typeof Duik === 'object') delete Duik;
 			}
 			tempNull.remove();
 			
-			if (useProgressBar)
-			{
-				progressText.text = "Creating new controllers";
-				containingWindow.update();
-			}
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Creating new controllers");
 			
 			//create the new zeros and controllers in the comp
 			var newZeros = [];
 			var newControllerLayers = [];
 			for (var i = characterControllers.length -1; i>=0 ; i--)
 			{
-				if (useProgressBar)
-				{
-					progressValue++;
-					progressBar.value = progressValue;
-					containingWindow.update();
-				}
+				progressValue++;
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+				
 				var oldZero = characterZeros[i];
 				var newZero = comp.layers.addNull();
 				newZero.parent = characterLayer;
@@ -5070,23 +5045,17 @@ if (typeof Duik === 'object') delete Duik;
 				Duik.utils.linkProperties(oldController.layer.transform,newController.layer.transform);
 			}
 
-			if (useProgressBar)
-			{
-				progressText.text = "Updating expressions";
-				containingWindow.update();
-			}
+			
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Updating expressions");
 			
 			//update expressions (controller and zeros names have changed)
 			
 			for (var i in characterControllers)
 			{
-				if (useProgressBar)
-				{
-					progressValue++;
-					progressBar.value = progressValue;
-					containingWindow.update();
-				}
-				
+				progressValue++;
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,);
+
 				//controllers
 				try {
 					//check names
@@ -5121,21 +5090,16 @@ if (typeof Duik === 'object') delete Duik;
 				catch (err2) {}
 			}
 			
-			if (useProgressBar)
-			{
-				progressText.text = "Linking and locking zeros";
-				containingWindow.update();
-			}
+			
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Linking and locking zeros");
 
 			//link and lock the zeros in the comp
 			for  (var i in characterZeros)
 			{
-				if (useProgressBar)
-				{
-					progressValue++;
-					progressBar.value = progressValue;
-					containingWindow.update();
-				}
+				progressValue++;
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+				
 				var newZero = newZeros[i];
 				//Link zero
 				if (characterZeros[i].parent != null)
@@ -5151,12 +5115,10 @@ if (typeof Duik === 'object') delete Duik;
 				}
 				newZero.locked = true;
 			}
-              
-			if (useProgressBar)
-			{			  
-				progressText.text = "Setting up master controller";
-				containingWindow.update();
-			}
+            
+
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Setting up master controller");
 				
 			//And finally, a master ctrl to control them all!
 			var masterC = Duik.addController(characterLayer,Duik.settings.controllerType,[1,1,1],false,true,true,true,true,false);
@@ -5171,7 +5133,7 @@ if (typeof Duik === 'object') delete Duik;
 			characterLayer.parent = masterC.layer;
 			characterLayer.locked = true;
 			
-			containingWindow.hide();
+			if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
 			
 			app.endSuppressDialogs(false);
 		}
