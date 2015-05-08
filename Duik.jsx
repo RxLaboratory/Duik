@@ -2399,12 +2399,6 @@ function fnDuIK(thisObj)
 			
 			//============= SETTINGS ============================
 
-			//FONCTION POUR AFFICHER DE L'AIDE
-			function help(){
-			//alert(getMessage(14));
-			alert("This is a test version, if you encounter any problem,\nplease notify it by email to duduf@duduf.com");
-			}
-
 			//FONCTION POUR CHOISIR LA LANGUE
 			function choixLangue() {
 				if (boutonlangue.selection == 0) app.settings.saveSetting("duik","lang","FRENCH");
@@ -3030,9 +3024,6 @@ function fnDuIK(thisObj)
 			entete.alignment = ["fill","top"];
 			entete.spacing = 2;
 			entete.margins = 0;
-			var boutonhelp = entete.add ("button",undefined,"?");
-			boutonhelp.size = [22,22];
-			boutonhelp.onClick = help;
 			var boutonNotes = entete.add("iconbutton",undefined,dossierIcones + "btn_notes.png");
 			boutonNotes.size = [22,22];
 			boutonNotes.helpTip = "Simple notepad, with auto-save.";
@@ -3071,8 +3062,11 @@ function fnDuIK(thisObj)
 			var settingsPanelButton = addIconButton(selectorButtons,"sel_settings.png","");
 			settingsPanelButton.size = [22,22];
 			settingsPanelButton.helpTip = "Settings";
+			var helpPanelButton = addIconButton(selectorButtons,"sel_help.png","");
+			helpPanelButton.size = [22,22];
+			helpPanelButton.helpTip = "Help!";
 			//LIST
-			var selecteur = selectorGroup.add("dropdownlist",undefined,[getMessage(136),"Automation","Animation",getMessage(72),getMessage(75)]);
+			var selecteur = selectorGroup.add("dropdownlist",undefined,[getMessage(136),"Automation","Animation",getMessage(72),getMessage(75),"Help"]);
 			selecteur.alignment = ["right","center"];
 			selecteur.helpTip = "Panels";
 			selecteur.items[0].image = ScriptUI.newImage(dossierIcones + "sel_rigging.png");
@@ -3085,6 +3079,8 @@ function fnDuIK(thisObj)
 			if (expertMode) selecteur.items[3].text = "";
 			selecteur.items[4].image = ScriptUI.newImage(dossierIcones + "sel_settings.png");
 			if (expertMode) selecteur.items[4].text = "";
+			selecteur.items[5].image = ScriptUI.newImage(dossierIcones + "sel_help.png");
+			if (expertMode) selecteur.items[5].text = "";
 			if (!eval(app.settings.getSetting("duik", "dropDownSelector"))) selecteur.hide();
 			else selectorButtons.hide();
 			
@@ -3097,7 +3093,15 @@ function fnDuIK(thisObj)
 			if (!expertMode) panos.minimumSize = [250,250];
 			else panos.minimumSize = [100,100];
 			
-			var duikText = mainGroup.add ("statictext",undefined,"www.duduf.net - Duik " + version);
+			var bottomGroup = addHGroup(mainGroup);
+			bottomGroup.alignment = ["fill","bottom"];
+			if (!expertMode)
+			{
+				var duikURL = bottomGroup.add ("statictext",undefined,"www.duduf.net");
+				duikURL.alignment = ["left","bottom"];
+			}
+			bottomGroup.add("image",undefined,dossierIcones + "small_logo.png");
+			var duikText = bottomGroup.add ("statictext",undefined,"Duik " + version);
 			duikText.alignment = ["right","bottom"];
 		}
 		
@@ -3113,6 +3117,8 @@ function fnDuIK(thisObj)
 		panocam.visible = false;
 		var panosettings = addVPanel(panos);
 		panosettings.visible = false;
+		var helpPanel = addVPanel(panos);
+		helpPanel.visible = false;
 		
 		var ctrlPanel = addVPanel(panos);
 		ctrlPanel.visible = false;
@@ -3162,6 +3168,7 @@ function fnDuIK(thisObj)
 				panointerpo.visible = false;
 				panocam.visible = false;
 				panosettings.visible = false;
+				helpPanel.visible = false;
 				app.settings.saveSetting("duik","pano","0");
 				if (!expertMode) selectorText.text = "Rigging";
 			}
@@ -3171,6 +3178,7 @@ function fnDuIK(thisObj)
 				panointerpo.visible = false;
 				panocam.visible = false;
 				panosettings.visible = false;
+				helpPanel.visible = false;
 				app.settings.saveSetting("duik","pano","1");
 				if (!expertMode) selectorText.text = "Automation";
 			}
@@ -3180,6 +3188,7 @@ function fnDuIK(thisObj)
 				panointerpo.visible = true;
 				panocam.visible = false;
 				panosettings.visible = false;
+				helpPanel.visible = false;
 				app.settings.saveSetting("duik","pano","2");
 				if (!expertMode) selectorText.text = "Animation";
 			}
@@ -3189,6 +3198,7 @@ function fnDuIK(thisObj)
 				panointerpo.visible = false;
 				panocam.visible = true;
 				panosettings.visible = false;
+				helpPanel.visible = false;
 				app.settings.saveSetting("duik","pano","3");
 				if (!expertMode) selectorText.text = "Cameras";
 			}
@@ -3198,8 +3208,19 @@ function fnDuIK(thisObj)
 				panointerpo.visible = false;
 				panocam.visible = false;
 				panosettings.visible = true;
+				helpPanel.visible = false;
 				app.settings.saveSetting("duik","pano","4");
 				if (!expertMode) selectorText.text = "Settings";
+			}
+			else if (selecteur.selection == 5){
+				panoik.visible = false;
+				panoanimation.visible = false;
+				panointerpo.visible = false;
+				panocam.visible = false;
+				panosettings.visible = false;
+				helpPanel.visible = true;
+				app.settings.saveSetting("duik","pano","5");
+				if (!expertMode) selectorText.text = "Help / About";
 			}
 		}
 
@@ -3208,6 +3229,7 @@ function fnDuIK(thisObj)
 		animationPanelButton.onClick = function () { selecteur.selection = 2 ; displayPanel(); };
 		camerasPanelButton.onClick = function () { selecteur.selection = 3 ; displayPanel(); };
 		settingsPanelButton.onClick = function () { selecteur.selection = 4 ; displayPanel(); };
+		helpPanelButton.onClick = function () { selecteur.selection = 5 ; displayPanel(); };
 		
 		selecteur.onChange = displayPanel;
 		selecteur.selection = eval(app.settings.getSetting("duik","pano"));
@@ -3215,6 +3237,40 @@ function fnDuIK(thisObj)
 		//--------------
 		// SUB PANELS
 		//--------------
+		
+		// HELP
+		{
+			helpPanel.alignment = ["fill","top"];
+			helpPanel.alignChildren = ["fill","top"];
+			helpPanel.add("image",undefined,dossierIcones + "logo.png");
+			var helpURL = helpPanel.add("statictext",undefined,"www.duduf.net");
+			helpURL.alignment = ["center","top"];
+			var helpTestGroup = addVPanel(helpPanel);
+			helpTestGroup.margins = 10;
+			helpTestGroup.add("statictext",undefined,"Warning, this is a version for testing purposes only!");
+			helpTestGroup.add("statictext",undefined,"It may or may not be shipped with a lot of bugs.");
+			helpTestGroup.add("statictext",undefined,"A form is available at http://duiktest.duduf.net");
+			helpTestGroup.add("statictext",undefined,"to report bugs or make suggestions!");
+			var helpLinksGroup = addVPanel(helpPanel);
+			helpLinksGroup.margins = 10;
+			helpLinksGroup.add("statictext",undefined,"If you need help using Duik,");
+			helpLinksGroup.add("statictext",undefined,"those resources can be useful:");
+			helpTrainingURL = helpLinksGroup.add("statictext",undefined,"• " + "Duduf Training, documents and tutorials:");
+			helpTrainingURL = helpLinksGroup.add("statictext",undefined,"www.duduf.training");
+			helpForumURL = helpLinksGroup.add("statictext",undefined,"• " + "Duduf Forum, where you can ask your questions:");
+			helpForumURL = helpLinksGroup.add("statictext",undefined,"forum.duduf.com");
+			var helpLicenseGroup = addVPanel(helpPanel);
+			helpLicenseGroup.margins = 10;
+			helpLicenseGroup.add("statictext",undefined,"License: Duik is free software,");
+			helpLicenseGroup.add("statictext",undefined,"released under the GNU-GPL v3");
+			var helpCreditsGroup = addVPanel(helpPanel);
+			helpCreditsGroup.margins = 10;
+			helpCreditsGroup.add("statictext",undefined,"Credits:");
+			helpCreditsGroup.add("statictext",undefined,"Nicolas Dufresne - Lead developper" );
+			helpCreditsGroup.add("statictext",undefined,"Kevin Schires - Including images in the script" );
+			helpCreditsGroup.add("statictext",undefined,"Eric Epstein - IK with 3D Layers");
+			helpCreditsGroup.add("statictext",undefined,"Zeg - UI designer");
+		}
 		
 		// SETTINGS
 		{
