@@ -292,7 +292,6 @@ if (typeof Duik === 'object') delete Duik;
 			this.yPosition = false;
 			this.rotation = false;
 			this.scale = false;
-			this.eye = false;
 		}
 		
 		iconGroup = this.layer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -530,6 +529,17 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.placement.BOTTOM = 1;
 		Duik.placement.OVER_LAYER = 2;
 		Duik.placement.UNDER_LAYER = 3;
+		Duik.colors = {};
+		Duik.colors.WHITE = [1,1,1,1];
+		Duik.colors.RED = [1,0,0,1];
+		Duik.colors.GREEN = [0,1,0,1];
+		Duik.colors.BLUE = [0,0,1,1];
+		Duik.colors.CYAN = [0,1,1,1];
+		Duik.colors.MAGENTA = [1,0,1,1];
+		Duik.colors.YELLOW = [1,1,0,1];
+		Duik.colors.BLACK = [0,0,0,1];
+		Duik.colors.LIGHT_GRAY = [0.75,0.75,0.75,1];
+		Duik.colors.DARK_GRAY = [0.25,0.25,0.25,1];
 	}
 }());
 
@@ -855,7 +865,7 @@ if (typeof Duik === 'object') delete Duik;
 	
 	*/
 	if (typeof Duik.settings !== 'object')
-	{
+	{	
 		Duik.settings = {};
 		if (! app.settings.haveSetting("duik", "boneType")){app.settings.saveSetting("duik","boneType",Duik.layerTypes.SOLID);}
 		if (! app.settings.haveSetting("duik", "controllerType")){app.settings.saveSetting("duik","controllerType",Duik.layerTypes.VECTOR);}
@@ -871,6 +881,7 @@ if (typeof Duik === 'object') delete Duik;
 		if (! app.settings.haveSetting("duik", "bonePlacement")){app.settings.saveSetting("duik","bonePlacement",Duik.placement.OVER_LAYER);}
 		if (! app.settings.haveSetting("duik", "ctrlPlacement")){app.settings.saveSetting("duik","ctrlPlacement",Duik.placement.TOP);}
 		if (! app.settings.haveSetting("duik", "displayProgressPanel")){app.settings.saveSetting("duik","displayProgressPanel",true);}
+		if (! app.settings.haveSetting("duik", "controllerColor")){app.settings.saveSetting("duik","controllerColor",Duik.colors.WHITE.toSource());}
 		
 		Duik.settings.save = function ()
 		{
@@ -888,6 +899,7 @@ if (typeof Duik === 'object') delete Duik;
 			app.settings.saveSetting("duik","bonePlacement",Duik.settings.bonePlacement);
 			app.settings.saveSetting("duik","ctrlPlacement",Duik.settings.ctrlPlacement);
 			app.settings.saveSetting("duik","displayProgressPanel",Duik.settings.displayProgressPanel);
+			app.settings.saveSetting("duik","controllerColor",Duik.settings.controllerColor.toSource());
 		}
 		
 		Duik.settings.load = function ()
@@ -906,6 +918,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.bonePlacement = eval(app.settings.getSetting("duik","bonePlacement"));
 			Duik.settings.ctrlPlacement = eval(app.settings.getSetting("duik","ctrlPlacement"));
 			Duik.settings.displayProgressPanel = eval(app.settings.getSetting("duik","displayProgressPanel"));
+			Duik.settings.controllerColor = eval(app.settings.getSetting("duik","controllerColor"));
 		}
 		
 		Duik.settings.restoreDefaults = function ()
@@ -924,6 +937,7 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.settings.bonePlacement = Duik.placement.OVER_LAYER;
 			Duik.settings.ctrlPlacement = Duik.placement.TOP;
 			Duik.settings.displayProgressPanel = true;
+			Duik.settings.controllerColor = Duik.colors.WHITE;
 			
 			Duik.settings.save();
 		}
@@ -1828,7 +1842,7 @@ if (typeof Duik === 'object') delete Duik;
 							else if (iconGroup("ADBE Vectors Group")(j).name == "Camera")
 							{
 								controller.camera = true;
-								controller.color = iconGroup("ADBE Vectors Group")(j)("ADBE Vectors Group")(2)("ADBE Vectors Group")("ADBE Vector Graphic - Stroke")("ADBE Vector Stroke Color").value;
+								controller.color = iconGroup("ADBE Vectors Group")(j)("ADBE Vectors Group")("ADBE Vector Graphic - Fill")("ADBE Vector Fill Color").value;
 							}
 						}
 						controllers.push(controller);
@@ -2931,35 +2945,31 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	/* ADD CONTROLLER - Duik.addController(layer,type,color,autoLock,rotation,xPosition,yPosition,scale,placement)
+	/* ADD CONTROLLER - Duik.addController(layer,autoLock,rotation,xPosition,yPosition,scale,placement)
 	
 		parameters
 		layer | AVLayer, default: null
-		type | Duik.layerTypes.NULL or Duik.layerTypes.VECTOR, default: Duik.settings.controllerType
-		color | Array of 4 floats R,V,B,A
 		autoLock | boolean
 		rotation | boolean
 		position | boolean
 		scale | boolean
-		placement | Duik.placement.OVER_LAYER or Duik.placement.UNDER_LAYER or Duik.placement.TOP or Duik.placement.BOTTOM, default: Duik.settings.ctrlPlacement
 		
 		returns
 		Controller Object
 	*/
 	if (typeof Duik.addController !== 'function')
 	{
-		Duik.addController = function (layer,type,color,autoLock,rotation,xPosition,yPosition,scale,placement)
+		Duik.addController = function (layer,autoLock,rotation,xPosition,yPosition,scale)
 		{
-			if (placement == undefined) placement = Duik.settings.ctrlPlacement;
-			
 			if (layer == undefined) layer = null;
 			if (rotation == undefined) rotation = true;
 			if (xPosition == undefined) xPosition = true;
 			if (yPosition == undefined) yPosition = true;
 			if (scale == undefined) scale = false;
-			if (color == undefined) color = [1,1,1,1];
 			if (autoLock == undefined) autoLock = false;
-			if (type == undefined) type = Duik.settings.controllerType;
+			var type = Duik.settings.controllerType;
+			var color = Duik.settings.controllerColor;
+			var placement = Duik.settings.ctrlPlacement;
 				
 			if (layer != null)
 			{

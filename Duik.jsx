@@ -1239,19 +1239,8 @@ function fnDuIK(thisObj)
 				if (!(app.project.activeItem instanceof CompItem)) return;
 				//  début de groupe d'annulation
 				app.beginUndoGroup("Duik - " + getMessage(116));
-				var color;
-				if (ctrlColorList.selection == 0) color = [1,0,0,1];
-				else if (ctrlColorList.selection == 1) color = [0,1,0,1];
-				else if (ctrlColorList.selection == 2) color = [0,0,1,1];
-				else if (ctrlColorList.selection == 3) color = [0,1,1,1];
-				else if (ctrlColorList.selection == 4) color = [1,0,1,1];
-				else if (ctrlColorList.selection == 5) color = [1,1,0,1];
-				else if (ctrlColorList.selection == 6) color = [1,1,1,1];
-				else if (ctrlColorList.selection == 7) color = [0.75,0.75,0.75,1];
-				else if (ctrlColorList.selection == 8) color = [0.25,0.25,0.25,1];
-				else if (ctrlColorList.selection == 9) color = [0,0,0,1];
-				else color = [1,1,1,1];
-				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,undefined,color,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
+				
+				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
 				if (ctrlShapeList.selection == 1)
 				{
 					for (var i in newControllers)
@@ -1305,26 +1294,17 @@ function fnDuIK(thisObj)
 				for (var i = 0 ; i < controllers.length ; i++)
 				{
 					controllers[i].type = Duik.layerTypes.VECTOR;
-					
-					if (ctrlColorList.selection == 0) controllers[i].color = [1,0,0,1];
-					else if (ctrlColorList.selection == 1) controllers[i].color = [0,1,0,1];
-					else if (ctrlColorList.selection == 2) controllers[i].color = [0,0,1,1];
-					else if (ctrlColorList.selection == 3) controllers[i].color = [0,1,1,1];
-					else if (ctrlColorList.selection == 4) controllers[i].color = [1,0,1,1];
-					else if (ctrlColorList.selection == 5) controllers[i].color = [1,1,0,1];
-					else if (ctrlColorList.selection == 6) controllers[i].color = [1,1,1,1];
-					else if (ctrlColorList.selection == 7) controllers[i].color = [0.75,0.75,0.75,1];
-					else if (ctrlColorList.selection == 8) controllers[i].color = [0.25,0.25,0.25,1];
-					else if (ctrlColorList.selection == 9) controllers[i].color = [0,0,0,1];
-					else controllers[i].color = [1,1,1,1];
+										
+					controllers[i].color = Duik.settings.controllerColor;
 					
 					controllers[i].xPosition = ctrlXPositionButton.value;
 					controllers[i].yPosition = ctrlYPositionButton.value;
 					controllers[i].rotation = ctrlRotationButton.value;
 					controllers[i].scale = ctrlScaleButton.value;
-					controllers[i].arc = ctrlArcButton.value;
-					controllers[i].eye = ctrlEyeButton.value;
-
+					controllers[i].arc = ctrlShapeList.selection == 1;
+					controllers[i].eye = ctrlShapeList.selection == 2;
+					controllers[i].camera = ctrlShapeList.selection == 3;
+					
 					controllers[i].update();
 					
 					controllers[i].unlock();
@@ -2330,57 +2310,62 @@ function fnDuIK(thisObj)
 
 			//FONCTION TARGET CAM
 			function controlcam() {
+				
+				if (!(app.project.activeItem instanceof CompItem)) return;
 				//vérifier qu'il n'y a qu'un calque sélectionné
-			if (app.project.activeItem.selectedLayers.length == 1){
+				if (app.project.activeItem.selectedLayers.length != 1) alert (getMessage(22),getMessage(24),true);
 				//vérifier que c'est une caméra
-				if (app.project.activeItem.selectedLayers[0] instanceof CameraLayer) {
-
-			//début du groupe d'annulation
-			app.beginUndoGroup(getMessage(21));
+				if (!(app.project.activeItem.selectedLayers[0] instanceof CameraLayer)) alert (getMessage(22),getMessage(23),true);
 
 
-			//récupérer la caméra
-			var camera = app.project.activeItem.selectedLayers[0];
+				//début du groupe d'annulation
+				app.beginUndoGroup(getMessage(21));
 
-			//créer le target
-			var target = app.project.activeItem.layers.addNull();
-			target.name = camera.name + " target";
-			target.threeDLayer = true;
-			target.position.setValue(camera.transform.pointOfInterest.value);
+				//récupérer la caméra
+				var camera = app.project.activeItem.selectedLayers[0];
 
-			//créer la cam
-			var cam = app.project.activeItem.layers.addNull();
-			cam.name = camera.name + " position";
-			cam.threeDLayer = true;
-			cam.position.setValue(camera.transform.position.value);
+				//créer le target
+				var targetCtrl = Duik.addController(undefined,false,false,true,true);
+				var target = targetCtrl.layer;
+				target.name = camera.name + " target";
+				target.threeDLayer = true;
+				target.position.setValue(camera.transform.pointOfInterest.value);
 
-			//créer celui tout en haut
-			var controleur = app.project.activeItem.layers.addNull();
-			controleur.name = "Control_" + camera.name;
-			controleur.threeDLayer = true;
+				//créer la cam
+				var camCtrl = Duik.addController(undefined,false,false,true,true);
+				var cam = camCtrl.layer;
+				cam.name = camera.name + " position";
+				cam.threeDLayer = true;
+				cam.position.setValue(camera.transform.position.value);
 
-			cam.parent = controleur;
-			target.parent = controleur;
+				//créer celui tout en haut
+				var controleurCtrl = Duik.addController();
+				controleurCtrl.camera = true;
+				controleurCtrl.update();
+				var controleur = controleurCtrl.layer;
+				controleur.name = "Control_" + camera.name;
+				controleur.threeDLayer = true;
+				controleur.position.setValue(camera.transform.position.value);
 
-			//définir les expressions
-			camera.position.expression = "thisComp.layer(\"" + cam.name + "\").toWorld(thisComp.layer(\"" + cam.name + "\").transform.anchorPoint)";
-			camera.pointOfInterest.expression = "thisComp.layer(\"" + target.name + "\").toWorld(thisComp.layer(\"" + target.name + "\").transform.anchorPoint)";
-			camera.orientation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.orientation";
-			camera.xRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.xRotation";
-			camera.yRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.yRotation";
-			camera.rotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.rotation";
+				cam.parent = controleur;
+				target.parent = controleur;
 
-			//bloquer la camera
-			camera.locked = true;
+				//définir les expressions
+				camera.position.expression = "thisComp.layer(\"" + cam.name + "\").toWorld(thisComp.layer(\"" + cam.name + "\").transform.anchorPoint)";
+				camera.pointOfInterest.expression = "thisComp.layer(\"" + target.name + "\").toWorld(thisComp.layer(\"" + target.name + "\").transform.anchorPoint)";
+				camera.orientation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.orientation";
+				camera.xRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.xRotation";
+				camera.yRotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.yRotation";
+				camera.rotation.expression = "value + thisComp.layer(\"" + cam.name + "\").transform.rotation";
 
-			//fin du groupe d'annulation
-			app.endUndoGroup();
+				//bloquer la camera
+				camera.locked = true;
 
-			}
-			else { alert (getMessage(22),getMessage(23),true); }
-			}
+				//fin du groupe d'annulation
+				app.endUndoGroup();
 
-			else { alert (getMessage(22),getMessage(24),true); }
+
+
 				
 				
 				
@@ -3978,9 +3963,33 @@ function fnDuIK(thisObj)
 			//color
 			var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
 			if (!expertMode) ctrlColorGroup.add("statictext",undefined,"Color");
-			var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Grey","Dark Grey","Black"]);
-			ctrlColorList.selection = 6;
+			var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Gray","Dark Gray","Black"]);
 			ctrlColorList.helpTip = "Color";
+			ctrlColorList.onChange = function () {
+				if (ctrlColorList.selection == 0) Duik.settings.controllerColor = Duik.colors.RED;
+				else if (ctrlColorList.selection == 1) Duik.settings.controllerColor = Duik.colors.GREEN;
+				else if (ctrlColorList.selection == 2) Duik.settings.controllerColor = Duik.colors.BLUE;
+				else if (ctrlColorList.selection == 3) Duik.settings.controllerColor = Duik.colors.CYAN;
+				else if (ctrlColorList.selection == 4) Duik.settings.controllerColor = Duik.colors.MAGENTA;
+				else if (ctrlColorList.selection == 5) Duik.settings.controllerColor = Duik.colors.YELLOW;
+				else if (ctrlColorList.selection == 6) Duik.settings.controllerColor = Duik.colors.WHITE;
+				else if (ctrlColorList.selection == 7) Duik.settings.controllerColor = Duik.colors.LIGHT_GRAY;
+				else if (ctrlColorList.selection == 8) Duik.settings.controllerColor = Duik.colors.DARK_GRAY;
+				else if (ctrlColorList.selection == 9) Duik.settings.controllerColor = Duik.colors.BLACK;
+				else Duik.settings.controllerColor = Duik.colors.WHITE;
+				Duik.settings.save();
+			}
+			if (Duik.settings.controllerColor.toSource() == Duik.colors.RED.toSource()) ctrlColorList.selection = 0;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.GREEN.toSource()) ctrlColorList.selection = 1;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLUE.toSource()) ctrlColorList.selection = 2;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.CYAN.toSource()) ctrlColorList.selection = 3;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.MAGENTA.toSource()) ctrlColorList.selection = 4;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.YELLOW.toSource()) ctrlColorList.selection = 5;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.WHITE.toSource()) ctrlColorList.selection = 6;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.LIGHT_GRAY.toSource()) ctrlColorList.selection = 7;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.DARK_GRAY.toSource()) ctrlColorList.selection = 8;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLACK.toSource()) ctrlColorList.selection = 9;
+			else ctrlColorList.selection = 6;
 			//autolock
 			var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
 			ctrlAutoLockButton.alignment = ["fill","bottom"];
