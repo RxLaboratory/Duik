@@ -135,7 +135,6 @@ function fnDuIK(thisObj)
 			}
 			else
 			{
-				progressPanel.hide();
 				var updGroup = palette.add("group");
 				updGroup.orientation = "column";
 				updGroup.alignChildren = ["center","top"];
