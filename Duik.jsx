@@ -2042,7 +2042,7 @@ function fnDuIK(thisObj)
 				app.beginUndoGroup("Duik Auto-Exposure");
 				if (adaptativeExposureButton.value)
 				{
-					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,exposurePreExpressionButton.value,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
+					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
 				}
 				else
 				{
