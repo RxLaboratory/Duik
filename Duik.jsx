@@ -2137,6 +2137,48 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 			}
 			
+			//RANDOMIZE
+			function randOKButtonClicked()
+			{
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				
+				app.beginUndoGroup("Duik - Randomize");
+				
+				var xmin = parseFloat(randMinXValueEdit.text);
+				var xmax = parseFloat(randMaxXValueEdit.text);
+				var ymin = parseFloat(randMinYValueEdit.text);
+				var ymax = parseFloat(randMaxYValueEdit.text);
+				var zmin = parseFloat(randMinZValueEdit.text);
+				var zmax = parseFloat(randMaxZValueEdit.text);
+				
+				if (randPropertiesButton.value)
+				{
+					for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
+					{
+						var layer = app.project.activeItem.selectedLayers[i];						
+						Duik.randomizeProperties(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
+					}
+				}
+				else
+				{
+					if (randStartTimeButton.value)
+					{
+						Duik.randomizeStartTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+					}
+					if (randInPointButton.value)
+					{
+						Duik.randomizeInPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+					}
+					if (randOutPointButton.value)
+					{
+						Duik.randomizeOutPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+					}
+				}
+				
+				app.endUndoGroup();
+			}
+			
+			
 			//CEL Animation
 			function celCreateCelButtonClicked() {
 				var comp = app.project.activeItem;
@@ -3142,6 +3184,9 @@ function fnDuIK(thisObj)
 		var irPanel = addVPanel(panos);
 		irPanel.visible = false;
 		irPanel.alignChildren = ["fill","top"];
+		var randPanel = addVPanel(panos);
+		randPanel.visible = false;
+		randPanel.alignChildren = ["fill","top"];
 		
 		function displayPanel() {
 			ctrlPanel.hide();
@@ -3154,6 +3199,7 @@ function fnDuIK(thisObj)
 			celPanel.hide();
 			wigglePanel.hide();
 			irPanel.hide();
+			randPanel.hide();
 			if (selecteur.selection == 0){
 				panoik.visible = true;
 				panoanimation.visible = false;
@@ -3834,6 +3880,14 @@ function fnDuIK(thisObj)
 			timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
 			timeRemapButton.helpTip = "Time remapping tools.";
 			
+			//randomize
+			var randButton = addIconButton(groupeAnimationG,"btn_rand.png","Randomize");
+			randButton.onClick = function () { panoanimation.hide(); randPanel.show(); } ;
+			randButton.helpTip = "Randomize properties and layers.";
+			
+			//placeholder
+			var placeholderButton = addIconButton(groupeAnimationD,"btn_placeholder.png","");
+			placeholderButton.enabled = false;
 		}
 		
 		// CAMERAS
@@ -4442,6 +4496,93 @@ function fnDuIK(thisObj)
 			irOKButton.onClick = function () { irOKButtonClicked();};
 			irOKButton.helpTip = "Import selected rig";
 		}
+		//RANDOMIZE PANEL
+		{
+			var randPropertiesButton = randPanel.add("checkbox",undefined,"Selected properties");
+			var randStartTimeButton = randPanel.add("checkbox",undefined,"Layer start times");
+			var randInPointButton = randPanel.add("checkbox",undefined,"Layer in points");
+			var randOutPointButton = randPanel.add("checkbox",undefined,"Layer out points");
+			randPropertiesButton.value = true;
+			
+			randPropertiesButton.onClick = function () {
+				if (randPropertiesButton.value)
+				{
+					randStartTimeButton.value = false;
+					randInPointButton.value = false;
+					randOutPointButton.value = false;
+				}
+			}
+			randInPointButton.onClick = function () {
+				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
+				{
+					randPropertiesButton.value = true;
+				}
+				else
+				{
+					randPropertiesButton.value = false;
+				}
+			}
+			randOutPointButton.onClick = function () {
+				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
+				{
+					randPropertiesButton.value = true;
+				}
+				else
+				{
+					randPropertiesButton.value = false;
+				}
+			}
+			randStartTimeButton.onClick = function () {
+				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
+				{
+					randPropertiesButton.value = true;
+				}
+				else
+				{
+					randPropertiesButton.value = false;
+				}
+			}
+			
+			var randValuesGroup = addHGroup(randPanel);
+			var randXValueGroup = addVGroup(randValuesGroup);
+			var randXLabel = randXValueGroup.add("statictext",undefined,"X");
+			randXLabel.alignment = ["center","center"];
+			var randMaxXValueEdit = randXValueGroup.add("edittext",undefined,"Max");
+			var randMaxXSlider = randXValueGroup.add("slider",undefined,0,-100,100);
+			randMaxXSlider.onChanging = function () {randMaxXValueEdit.text = Math.round(randMaxXSlider.value);};
+			var randMinXValueEdit = randXValueGroup.add("edittext",undefined,"Min");
+			var randMinXSlider = randXValueGroup.add("slider",undefined,0,-100,100);
+			randMinXSlider.onChanging = function () {randMinXValueEdit.text = Math.round(randMinXSlider.value);};
+			var randYValueGroup = addVGroup(randValuesGroup);
+			var randYLabel = randYValueGroup.add("statictext",undefined,"Y");
+			randYLabel.alignment = ["center","center"];
+			var randMaxYValueEdit = randYValueGroup.add("edittext",undefined,"Max");
+			var randMaxYSlider = randYValueGroup.add("slider",undefined,0,-100,100);
+			randMaxYSlider.onChanging = function () {randMaxYValueEdit.text = Math.round(randMaxYSlider.value);};
+			var randMinYValueEdit = randYValueGroup.add("edittext",undefined,"Min");
+			var randMinYSlider = randYValueGroup.add("slider",undefined,0,-100,100);
+			randMinYSlider.onChanging = function () {randMinYValueEdit.text = Math.round(randMinYSlider.value);};
+			var randZValueGroup = addVGroup(randValuesGroup);
+			var randZLabel = randZValueGroup.add("statictext",undefined,"Z");
+			randZLabel.alignment = ["center","center"];
+			var randMaxZValueEdit = randZValueGroup.add("edittext",undefined,"Max");
+			var randMaxZSlider = randZValueGroup.add("slider",undefined,0,-100,100);
+			randMaxZSlider.onChanging = function () {randMaxZValueEdit.text = Math.round(randMaxZSlider.value);};
+			var randMinZValueEdit = randZValueGroup.add("edittext",undefined,"Min");
+			var randMinZSlider = randZValueGroup.add("slider",undefined,0,-100,100);
+			randMinZSlider.onChanging = function () {randMinZValueEdit.text = Math.round(randMinZSlider.value);};
+			
+			var randFromValueButton = randPanel.add("checkbox",undefined,"From current value");
+			randFromValueButton.value = true;
+			
+			var randButtonsGroup = addHGroup(randPanel);
+			var randCancelButton = addIconButton(randButtonsGroup,"btn_cancel.png","Cancel");
+			randCancelButton.onClick = function () { randPanel.hide();panoanimation.show();};
+			randCancelButton.helpTip = "Cancel";
+			var randOKButton = addIconButton(randButtonsGroup,"btn_valid.png","Randomize");
+			randOKButton.onClick = function () { randOKButtonClicked();};
+			randOKButton.helpTip = "Randomize properties and layers";
+		}
 		
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée
@@ -4457,8 +4598,7 @@ function fnDuIK(thisObj)
 	palette.layout.layout(true);
 	palette.layout.resize();
 	palette.onResizing = palette.onResize = function () { this.layout.resize(); }
-	
-	Duik.ui.hideProgressPanel();
+
 	
 	return palette;
 	

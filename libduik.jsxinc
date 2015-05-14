@@ -2208,6 +2208,37 @@ if (typeof Duik === 'object') delete Duik;
 				app.endSuppressDialogs(false);
 			}
 		}
+		// RANDOM
+		if (typeof Duik.utils.random !== 'function')
+		{
+			Duik.utils.random = function (min, max)
+			{
+				return Math.random() * (max - min) + min;
+			}
+		}
+		// GET PROP LAYER
+		if (typeof Duik.utils.getPropertyLayer !== 'function')
+		{
+			Duik.utils.getPropertyLayer = function (prop)
+			{
+				var parentProp = prop;
+				while (parentProp.parentProperty !== null)
+				{
+					// Traverse up the property tree
+					parentProp = parentProp.parentProperty;
+				}
+				return parentProp;
+			}
+		}
+		// GET PROP COMP
+		if (typeof Duik.utils.getPropertyComp !== 'function')
+		{
+			Duik.utils.getPropertyComp = function (prop)
+			{
+				var layer = Duik.utils.getPropertyLayer(prop);
+				return layer.containingComp;
+			}
+		}
 	}
 
 	//================================
@@ -5199,6 +5230,154 @@ if (typeof Duik === 'object') delete Duik;
 												"{\n" + 
 												"value\n" + 
 												"}\n";
+		}
+	}
+	/* RANDOMIZE - Duik.randomizeProperties(props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax);
+
+	Randomizes the values of the properties.
+	Min and max values for each axis can be undefined: in this case, the axis won't be randomized.
+
+	parameters
+		props | Array of PropertyBase
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeProperties !== 'function')
+	{
+		Duik.randomizeProperties = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+		{
+			if (props == undefined) return;
+			if (props.length == 0) return;
+			var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+			var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+			var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+						
+			for (var i = 0;i<props.length;i++)
+			{
+				var prop = props[i];
+				if (prop.propertyType == PropertyType.PROPERTY)
+				{
+					//Get containing comp
+					var comp = Duik.utils.getPropertyComp(prop);
+					var dim = Duik.utils.getPropertyDimensions(prop);
+					var xval = 0;
+					var yval = 0;
+					var zval = 0;
+					//X
+					if (x) xval = Duik.utils.random(xMin,xMax);
+					else if (dim == 1) xval = prop.value;
+					else xval = prop.value[0];
+					//Y
+					if (dim == 2 || dim == 3 && y) yval = Duik.utils.random(yMin,yMax);
+					else if (dim == 3 || dim == 2) yval = 0;
+					//Z
+					if (dim == 3 && z) zval = Duik.utils.random(zMin,zMax);
+					else if (dim == 3) zval = 0;
+					//SET VALUE
+					var val;
+					if (dim == 1) val = xval;
+					if (dim == 2) val = [xval,yval];
+					if (dim == 3) val = [xval,yval,zval];
+					if (fromCurrentVal) val = val + prop.value;
+					prop.numKeys ? prop.setValueAtTime(comp.time,val) : prop.setValue(val);
+				}
+			}
+		}
+	}
+	/* RANDOMIZE - Duik.randomizeStartTimes(layers,fromCurrentVal,min,max);
+
+	Randomizes start times of the given layers.
+	Min and Max in seconds (comp time).
+
+	parameters
+		layers | Array of Layers or LayerCollection
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeStartTimes !== 'function')
+	{
+		Duik.randomizeStartTimes = function (layrs,fromCurrentVal,min,max)
+		{
+			if (layrs == undefined) return;
+			if (layrs.length == 0 ) return;
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			
+			for (var i = 0; i< layers.length;i++)
+			{
+				var l = layers[i];
+				var startTime = Duik.utils.random(min,max);
+				if (fromCurrentVal) l.startTime = l.startTime + startTime;
+				else l.startTime = startTime;
+			}
+		}
+	}
+	/* RANDOMIZE - Duik.randomizeInPoints(layers,fromCurrentVal,min,max);
+
+	Randomizes start times of the given layers.
+	Min and Max in seconds (comp time).
+
+	parameters
+		layers | Array of Layers or LayerCollection
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeInPoints !== 'function')
+	{
+		Duik.randomizeInPoints = function (layrs,fromCurrentVal,min,max)
+		{
+			if (layrs == undefined) return;
+			if (layrs.length == 0 ) return;
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			
+			for (var i = 0; i< layers.length;i++)
+			{
+				var l = layers[i];
+				var inPoint = Duik.utils.random(min,max);
+				if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
+				else l.inPoint = inPoint;
+			}
+		}
+	}
+	/* RANDOMIZE - Duik.randomizeOutPoints(layers,fromCurrentVal,min,max);
+
+	Randomizes start times of the given layers.
+	Min and Max in seconds (comp time).
+
+	parameters
+		layers | Array of Layers or LayerCollection
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeOutPoints !== 'function')
+	{
+		Duik.randomizeOutPoints = function (layrs,fromCurrentVal,min,max)
+		{
+			if (layrs == undefined) return;
+			if (layrs.length == 0 ) return;
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			
+			for (var i = 0; i< layers.length;i++)
+			{
+				var l = layers[i];
+				var outPoint = Duik.utils.random(min,max);
+				if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
+				else l.outPoint = outPoint;
+			}
 		}
 	}
 }());
