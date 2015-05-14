@@ -2416,11 +2416,10 @@ function fnDuIK(thisObj)
 			function multiplan()
 			{
 				//début du groupe d'annulation
-				app.beginUndoGroup("Multi Plan");
-				Duik.multiplane(parseInt(nombre.text),pos.value,sca.value);
+				app.beginUndoGroup("Duik - Multiplane");
+				Duik.multiplane(parseInt(nombre.text));
 				//fin du groupe d'annulation
 				app.endUndoGroup();
-				fenetremultiplan.hide();
 			}	
 			
 			function scaleZLinkButtonClicked()
@@ -3028,18 +3027,7 @@ function fnDuIK(thisObj)
 					
 				}
 					
-				//la fenetre d'option de multiplan
-				{
-					var fenetremultiplan = createDialog(getMessage(188),true,multiplan);
-					fenetremultiplan.groupe.orientation = "column";
-					
-					var nombreGroupe = fenetremultiplan.groupe.add("group");
-					nombreGroupe.add("statictext",undefined,"Nombre de calques :");
-					var nombre = nombreGroupe.add("edittext",undefined,"03");
-					var pos = fenetremultiplan.groupe.add("checkbox",undefined,"Position");
-					pos.value = true;
-					var sca = fenetremultiplan.groupe.add("checkbox",undefined,"Scale");
-				}
+				
 	
 		//------------
 		// MAIN PANEL
@@ -3187,6 +3175,9 @@ function fnDuIK(thisObj)
 		var randPanel = addVPanel(panos);
 		randPanel.visible = false;
 		randPanel.alignChildren = ["fill","top"];
+		var multiplanePanel = addVPanel(panos);
+		multiplanePanel.visible = false;
+		multiplanePanel.alignChildren = ["fill","top"];
 		
 		function displayPanel() {
 			ctrlPanel.hide();
@@ -3200,6 +3191,7 @@ function fnDuIK(thisObj)
 			wigglePanel.hide();
 			irPanel.hide();
 			randPanel.hide();
+			multiplanePanel.hide();
 			if (selecteur.selection == 0){
 				panoik.visible = true;
 				panoanimation.visible = false;
@@ -3872,7 +3864,7 @@ function fnDuIK(thisObj)
 			boutontcam.helpTip = getMessage(102);
 			//bouton pour multiplan 2D
 			var boutontcam2d = addIconButton(groupCameraG,"btn_2dmultiplane.png",getMessage(188));
-			boutontcam2d.onClick = function () { fenetremultiplan.show() ;};
+			boutontcam2d.onClick = function () { panocam.hide() ; multiplanePanel.show();};
 			boutontcam2d.helpTip = "Creates multiplane controllers to use as a 2D camera";
 			//scale Z-link button
 			var scaleZLinkButton = addIconButton(groupCameraG,"btn_scalezlink.png","Scale Z-Link");
@@ -4554,7 +4546,27 @@ function fnDuIK(thisObj)
 			randOKButton.onClick = function () { randOKButtonClicked();};
 			randOKButton.helpTip = "Randomize properties and layers";
 		}
-		
+		//MULTIPLANE PANEL
+		{		
+			var nombreGroupe = addHGroup(multiplanePanel);
+			nombreGroupe.add("statictext",undefined,"Layers:");
+			var nombre = nombreGroupe.add("edittext",undefined,"05");
+			var multiplaneSlider = multiplanePanel.add("slider",undefined,5,1,10);
+			multiplaneSlider.onChanging = function () {
+				nombre.text = Math.round(multiplaneSlider.value);
+			}
+			nombre.onChanging = function () {
+				multiplaneSlider.value = parseInt(nombre.text);
+			}
+			
+			var multiplaneButtonsGroup = addHGroup(multiplanePanel);
+			var multiplaneCancelButton = addIconButton(multiplaneButtonsGroup,"btn_cancel.png","Cancel");
+			multiplaneCancelButton.onClick = function () { multiplanePanel.hide();panocam.show();};
+			multiplaneCancelButton.helpTip = "Cancel";
+			var multiplaneOKButton = addIconButton(multiplaneButtonsGroup,"btn_valid.png","Multiplane");
+			multiplaneOKButton.onClick = function () { multiplan(); multiplanePanel.hide(); panocam.show()};
+			multiplaneOKButton.helpTip = "Creates a 2D multiplane camera rig";
+		}
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée
 		palette.layout.layout(true);

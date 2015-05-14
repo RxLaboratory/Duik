@@ -684,6 +684,12 @@ if (typeof Duik === 'object') delete Duik;
 				"	<Slider name='$$$/AE/Preset/yOffvalue=Y Off value' default='0' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='2'/>\r\n" + 
 				"	<Slider name='$$$/AE/Preset/zOffvalue=Z Off value' default='0' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='2'/>\r\n" + 
 				"</Effect>\r\n" + 
+				"<Effect matchname='DUIK_Multiplane\' name='$$$/AE/Preset/DUIK_Multiplane=DUIK_Multiplane'>\r\n" + 
+				"	<Point name='$$$/AE/Preset/Pan=Pan' default_x='0.5' default_y='0.5'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Zoom=Zoom' default='0' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/TruckInOut=Truck In Out' default='0' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Angle name='$$$/AE/Preset/Tilt=Tilt' default='0.0'/>\r\n" + 
+				"</Effect>\r\n" + 
 				"<!-- END DUIK PSEUDO EFFECTS -->\r\n";
 		}
 		// INSTALL PSEUDO EFFECTS - Duik.setup.installCustomEffects();
@@ -855,6 +861,8 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.scale = "Scale";
 		Duik.uiStrings.flip = "Flip";
 		Duik.uiStrings.moveAway = "Distance from parent";
+		Duik.uiStrings.multiplane = "Multiplane";
+		Duik.uiStrings.camInfluence = "Camera Influence";
 	}
 
 	//================================
@@ -3319,7 +3327,7 @@ if (typeof Duik === 'object') delete Duik;
 			if (limit == undefined) limit = 100;
 			if (limit == 0) limit = 1;
 			
-			limit = 1/limit*10000;		
+			limit = 1/limit*10000;
 			
 			//for each frame of the comp
 			var comp = layers[0].containingComp;
@@ -4244,14 +4252,12 @@ if (typeof Duik === 'object') delete Duik;
 			"} else value;";
 		}
 	}
-	/* MULTIPLANE - Duik.multiplane(numLayers,position,scale);
+	/* MULTIPLANE - Duik.multiplane(numLayers);
 	
 		Creates null objects rigged to easily animate a 2D multiplane camera.
 	
 		parameters
 		numLayers | int, number of layers to create, default: 3
-		position | boolean, true to rig positions, default: true
-		scale | boolean, true to rig scales, default: false
 		
 		returns
 		void
@@ -4259,204 +4265,100 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.multiplane !== 'function')
 	{
-		Duik.multiplane = function (nbre,pos,sca)
+		Duik.multiplane = function (nbre)
 		{
 			if (nbre == undefined) nbre = 3;
-			if (pos == undefined) pos = true;
-			if (sca == undefined) sca = true;
-			
 			//la couche caméra
 			camNbre = Math.ceil(nbre/2);
 
-			if (pos && !sca)
-			{
-				//créer un zéro
-				var zero = app.project.activeItem.layers.addNull();
-				zero.name = "Zero_multiplane";
-				//verrouiller et masquer le zéro
-				zero.moveToEnd();
-				zero.guideLayer = true;
-				zero.locked = true;
-				zero.shy = true;
-				zero.enabled = false;
-
-				for (var i=1;i<=nbre;i++)
-				{
-					var numero = "L00";
-					i < 10 ? numero = "L0" + i : numero = "L" + i ;
-					//créer les nuls et leurs zéros
-					var calque = app.project.activeItem.layers.addNull() ;
-					calque.parent = zero;
-					if (i == camNbre) 
-					{
-						calque.name = numero + " cam";
-					}
-					else
-					{
-						calque.name = numero;
-						calque.locked = true;
-					}
-					delete calque;
-				}
+			var calqueCam;
 			
-				delete zero;
-
-				//ajouter les expressions et curseurs
-				for (var i=1;i<=nbre;i++)
-				{
-					//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-					if (i != camNbre-nbre%2+1 )
-					{
-						var calque = app.project.activeItem.layer(i);
-						var curseur = calque.Effects.addProperty("ADBE Slider Control");
-						curseur.name = "influence position";
-						(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-						delete curseur;
-						calque.transform.position.expression = "thisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"influence position\")(1)";
-					}
-				}
-		   }
-
-			else if (!pos && sca)
+			for (var i=1;i<=nbre;i++)
 			{
-				//créer un zéro
-				var zero = app.project.activeItem.layers.addNull();
-				zero.name = "Zero_multiplan";
-				//verrouiller et masquer le zéro
-				zero.moveToEnd();
-				zero.guideLayer = true;
-				zero.locked = true;
-				zero.shy = true;
-				zero.enabled = false;
-
-				for (var i=1;i<=nbre;i++)
+				var numero = "L00";
+				i < 10 ? numero = "L0" + i : numero = "L" + i ;
+				//créer les nuls et leurs zéros
+				
+				if (i == camNbre) 
 				{
-					var numero = "L00";
-					i < 10 ? numero = "L0" + i : numero = "L" + i ;
-					//créer les nuls et leurs zéros
-					var calque = app.project.activeItem.layers.addNull() ;
-					calque.parent = zero;
-					if (i == camNbre) 
+					if (Duik.settings.controllerType == Duik.layerTypes.VECTOR)
 					{
-						calque.name = numero + " cam";
+						var cam = Duik.addController();
+						cam.camera = true;
+						cam.update();
+						calqueCam = cam.layer;
 					}
 					else
 					{
-						calque.name = numero;
-						calque.locked = true;
+						var calqueCam = app.project.activeItem.layers.addNull();
 					}
-					delete calque;
+					
+					//Créer un ctrl cam
+					calqueCam.name = numero + " cam";
+					//ajouter un zero
+					Duik.addZero(calqueCam);
 				}
-				
-				delete zero;
-
-				//ajouter les expressions et curseurs
-				for (var i=1;i<=nbre;i++)
+				else
 				{
-					//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-					if (i != camNbre-nbre%2+1 )
-					{
-						var calque = app.project.activeItem.layer(i);
-						var curseur = calque.Effects.addProperty("ADBE Slider Control");
-						curseur.name = "influence echelle";
-						(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-						delete curseur;
-						calque.transform.scale.expression = "thisComp.layer(\"L0" + camNbre + " cam\").scale * effect(\"influence echelle\")(1) - [100,100]* effect(\"influence echelle\")(1) + [100,100]";
-					}
+					var calque = app.project.activeItem.layers.addNull() ;
+					calque.name = numero;
+					//ajouter un zero
+					Duik.addZero(calque);
 				}
 			}
-
-			else if (pos && sca)
+			
+			//cam effect
+			var effect;
+			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(calqueCam,"DUIK_Multiplane");
+			else effect = calqueCam.effect.addProperty("DUIK_Multiplane");
+			effect.name = Duik.uiStrings.multiplane;
+			
+			//cam rig
+			var camZero = calqueCam.parent;
+			//tilt
+			camZero.transform.rotation.expression = "//Duik.multiplane\n" + 
+													"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
+			//zoom & truck in/out
+			camZero.transform.scale.expression = "//Duik.multiplane\n" + 
+												"var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" + 
+												"var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" + 
+												"value + [zoom,zoom] + [truck,truck];";
+			//pan
+			camZero.transform.position.expression = "//Duik.multiplane\n" + 
+													"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
+		
+			//ajouter les expressions et curseurs
+			for (var i=1;i<=nbre;i++)
 			{
-				//créer un zéro
-				var zero = app.project.activeItem.layers.addNull();
-				zero.name = "Zero_multiplan";
-				//verrouiller et masquer le zéro
-				zero.moveToEnd();
-				zero.guideLayer = true;
-				zero.locked = true;
-				zero.shy = true;
-				zero.enabled = false;
-
-				for (var i=1;i<=nbre;i++)
+				//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
+				if (i != camNbre-nbre%2+1 )
 				{
-					var numero = "L00";
-					i < 10 ? numero = "L0" + i : numero = "L" + i ;
-					//créer les nuls et leurs zéros position
-					var calque = app.project.activeItem.layers.addNull() ;
-					calque.parent = zero;
-					if (i == camNbre) 
-					{
-						calque.name = numero + " cam position";
-					}
-					else
-					{
-						calque.name = numero;
-						calque.locked = true;
-					}
-					delete calque;
+					var calque = app.project.activeItem.layer(i);
+					var zero = calque.parent;
+					//add position expression
+					var curseur = calque.Effects.addProperty("ADBE Slider Control");
+					curseur.name = Duik.uiStrings.camInfluence;
+					(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
+					delete curseur;
+					calque.transform.position.expression = "//Duik.multiplane\nthisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"" + curseur.name + "\")(1)";
+					//rig the zero
+					//tilt
+					zero.transform.rotation.expression = "//Duik.multiplane\n" + 
+															"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
+					//zoom & truck in/out
+					zero.transform.scale.expression = "//Duik.multiplane\n" + 
+														"var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" + 
+														"var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" + 
+														"var infl = thisComp.layer(\"" + calque.name + "\").effect(\"" + curseur.name + "\")(1);\n" + 
+														"value + [zoom,zoom] + [truck,truck]*infl;";
+					//pan
+					zero.transform.position.expression = "//Duik.multiplane\n" + 
+															"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
 				}
-
-				//ajouter les expressions et curseurs position
-				for (var i=1;i<=nbre;i++)
-				{
-					//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-					if (i != camNbre-nbre%2+1 )
-					{
-						var calque = app.project.activeItem.layer(i);
-						var curseur = calque.Effects.addProperty("ADBE Slider Control");
-						curseur.name = "influence position";
-						(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-						delete curseur;
-						calque.transform.position.expression = "thisComp.layer(\"L0" + camNbre + " cam position\").position * effect(\"influence position\")(1)";
-					}
-				}
-				
-				for (var i=1;i<=nbre;i++)
-				{
-					var numero = "L00";
-					i < 10 ? numero = "L0" + i : numero = "L" + i ;
-					//créer les nuls et leurs zéros scale
-					var calque = app.project.activeItem.layers.addNull() ;
-					calque.parent = zero;
-					if (i == camNbre) 
-					{
-						calque.name = numero + " cam scale";
-					}
-					else
-					{
-						calque.name = numero;
-						calque.locked = true;
-					}
-					delete calque;
-				}
-				
-				//ajouter les expressions et curseurs scale
-				for (var i=1;i<=nbre;i++)
-				{
-					//si on n'est pas sur le calque cam (dont on différencie le numéro si il est pair ou impair)
-					if (i != camNbre-nbre%2+1 )
-					{
-						var calque = app.project.activeItem.layer(i);
-						var curseur = calque.Effects.addProperty("ADBE Slider Control");
-						curseur.name = "influence echelle";
-						(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-						delete curseur;
-						calque.transform.scale.expression = "thisComp.layer(\"L0" + camNbre + " cam scale\").scale * effect(\"influence echelle\")(1) - [100,100]* effect(\"influence echelle\")(1) + [100,100]";
-					}
-				}
-
-				delete zero;
-
-				//relinker les positions aux échelles
-				for (var i=1;i<=nbre;i++)
-				{
-					app.project.activeItem.layer(nbre + i).locked = false;
-					app.project.activeItem.layer(nbre + i).parent = app.project.activeItem.layer(i);
-					if (app.project.activeItem.layer(nbre + i).name.indexOf("cam") < 0) app.project.activeItem.layer(nbre + i).locked = true;
-				}
-
 			}
+			
+			Duik.utils.deselectLayers();
+			calqueCam.selected = true;
 		}
 	}
 	/* COPY ANIM - Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
