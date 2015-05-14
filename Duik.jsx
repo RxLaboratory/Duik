@@ -3497,35 +3497,6 @@ function fnDuIK(thisObj)
 			Duik.settings.controllerType = boutonCtrlType.selection.index+1;
 			Duik.settings.save();
 			};
-		//taille des controleurs
-		var groupeCtrlSize = addHGroup(controllersGroup);
-		var groupeCtrlSizeAuto = addHGroup(controllersGroup);
-		groupeCtrlSize.add("statictext",undefined,getMessage(169));
-		var boutonCtrlSize = groupeCtrlSize.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
-		boutonCtrlSize.onChange = function() {
-			Duik.settings.controllerSize = parseInt(boutonCtrlSize.text);
-			Duik.settings.save();
-			};
-		boutonCtrlSize.text = Duik.settings.controllerSize;
-		//taille auto controleurs
-		var boutonCtrlSizeAuto = groupeCtrlSizeAuto.add("checkbox",undefined,getMessage(170));
-		boutonCtrlSizeAuto.onClick = function() {
-			boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value;
-			boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value;
-			Duik.settings.controllerSizeAuto = boutonCtrlSizeAuto.value;
-			Duik.settings.save();
-			};
-		boutonCtrlSizeAuto.value = Duik.settings.controllerSizeAuto;
-		boutonCtrlSizeAuto.alignment = ["fill","bottom"];
-		//size hint controllers
-		var boutonCtrlSizeAutoValue = groupeCtrlSizeAuto.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
-		boutonCtrlSizeAutoValue.selection = Duik.settings.controllerSizeHint;
-		boutonCtrlSizeAutoValue.onChange = function () {
-			Duik.settings.controllerSizeHint = boutonCtrlSizeAutoValue.selection.index;
-			Duik.settings.save();
-			};
-		boutonCtrlSize.enabled = !boutonCtrlSizeAuto.value ;
-		boutonCtrlSizeAutoValue.enabled = boutonCtrlSizeAuto.value ;
 		var groupeCtrlLocation = addHGroup(controllersGroup);
 		groupeCtrlLocation.add("statictext",undefined,"Controller placement")
 		var boutonCtrlPlacement = groupeCtrlLocation.add("dropdownlist",undefined,["Top","Bottom","Over layer","Under layer"]);
