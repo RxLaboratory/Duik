@@ -1858,11 +1858,6 @@ function fnDuIK(thisObj)
 				}
 			}
 
-			//FONCTION ROUE
-			function creroue(){
-				rayonfenetre.show();
-				}
-
 			//FONCTION QUI MESURE LE RAYON D'UNE ROUE
 			function mesurer() {
 				
@@ -1892,9 +1887,7 @@ function fnDuIK(thisObj)
 						app.endUndoGroup();
 
 						} else { alert (getMessage(19),getMessage(20),true); }
-						
-						rayonfenetre.hide();
-				}
+			}
 				
 			//FONCTION LENTILLE
 			function lentille() {
@@ -1945,34 +1938,6 @@ function fnDuIK(thisObj)
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 				
-				}
-			}
-
-			//FONCTION SPRING
-			function spring() {
-				// Vérifions si il y a des calques sélectionnés
-				if (app.project.activeItem.selectedLayers.length < 1){ alert(getMessage(47),getMessage(49)); return;}
-					
-				var calque = app.project.activeItem.selectedLayers[0];
-
-				//vérifier si il y a des propriétés sélectionnées
-				if (calque.selectedProperties.length == 0){ alert(getMessage(47),getMessage(48)); return;}
-
-				//regarder si on a des trucs en position
-				var pos = false;
-				for (i = 0;i < calque.selectedProperties.length ; i++)
-				{
-					if (calque.selectedProperties[i].matchName == "ADBE Position")
-					{
-						pos = true;
-						break;
-					}
-				}
-				if (pos) fenetrespring.show();
-				else
-				{
-					boutonLightSpring.value = true;
-					springok();
 				}
 			}
 
@@ -2177,8 +2142,7 @@ function fnDuIK(thisObj)
 				
 				app.endUndoGroup();
 			}
-			
-			
+					
 			//CEL Animation
 			function celCreateCelButtonClicked() {
 				var comp = app.project.activeItem;
@@ -2769,29 +2733,7 @@ function fnDuIK(thisObj)
 			return f;
 		}
 
-		
-				//TODO update to new UI
-		
-				//les options de création de spring
-				{
-					var fenetrespring = createDialog(getMessage(126),true,springok);
-					fenetrespring.groupe.orientation = "column";
-					fenetrespring.groupe.add("statictext",undefined,getMessage(181));
-					fenetrespring.groupe.add("statictext",undefined,getMessage(182));
-					fenetrespring.groupe.add("statictext",undefined,"----------");
-					//boutons léger ou simulation
-					var boutonLightSpring = fenetrespring.groupe.add("radiobutton",undefined,getMessage(179));
-					fenetrespring.groupe.add("statictext",undefined,getMessage(183));
-					boutonLightSpring.value = false;
-					fenetrespring.groupe.add("statictext",undefined,"----------");
-					var boutonSimulatedSpring = fenetrespring.groupe.add("radiobutton",undefined,getMessage(180));
-					fenetrespring.groupe.add("statictext",undefined,getMessage(184));
-					fenetrespring.groupe.add("statictext",undefined,getMessage(185));
-					fenetrespring.groupe.add("statictext",undefined,"----------");
-					boutonLightSpring.onClick = function () { boutonSimulatedSpring.value = !boutonLightSpring.value;};
-					boutonSimulatedSpring.onClick = function () { boutonLightSpring.value = !boutonSimulatedSpring.value;};
-					boutonSimulatedSpring.value = true;
-				}
+			
 				//la fenetre Autorig
 				{
 					var fenetreAutorig = createDialog(getMessage(142),true,startAutoRig);
@@ -2902,30 +2844,6 @@ function fnDuIK(thisObj)
 								
 				}
 
-				//fenètre de la roue
-				{
-				//on a besoin d'une variable globale...
-				var OA = 0;
-				var rayonfenetre = createDialog(getMessage(63),true,roue);
-				rayonfenetre.groupe.orientation = "column";
-				var rayonGroupeRayon = addHGroup(rayonfenetre.groupe);
-				//champ de saisie
-				var rayonbouton = rayonGroupeRayon.add ("edittext", undefined);
-				rayonbouton.size = ["100","20"];
-				rayonbouton.helpTip = getMessage(64);
-				rayonfenetre.groupe.add("statictext",undefined,getMessage(176));
-				//bouton mesurer
-				var mesurebouton = rayonGroupeRayon.add("button",undefined,getMessage(106));
-				mesurebouton.value = false;
-				mesurebouton.helpTip = getMessage(65);
-				mesurebouton.onClick = mesurer;
-				//boutons type de déplacement
-				var rayonGroupeType = addHGroup(rayonfenetre.groupe);
-				var roueH = rayonGroupeType.add("radiobutton",undefined,getMessage(174));
-				var roueC = rayonGroupeType.add("radiobutton",undefined,getMessage(175));
-				roueH.value = true;
-				}
-				
 				// la fenetre de la calculatrice
 				{
 					 
@@ -3178,6 +3096,13 @@ function fnDuIK(thisObj)
 		var multiplanePanel = addVPanel(panos);
 		multiplanePanel.visible = false;
 		multiplanePanel.alignChildren = ["fill","top"];
+		var wheelPanel = addVPanel(panos);
+		wheelPanel.visible = false;
+		wheelPanel.alignChildren = ["fill","top"];
+		var springPanel = addVPanel(panos);
+		springPanel.visible = false;
+		springPanel.alignChildren = ["fill","top"];
+		
 		
 		function displayPanel() {
 			ctrlPanel.hide();
@@ -3192,6 +3117,8 @@ function fnDuIK(thisObj)
 			irPanel.hide();
 			randPanel.hide();
 			multiplanePanel.hide();
+			wheelPanel.hide();
+			springPanel.hide();
 			if (selecteur.selection == 0){
 				panoik.visible = true;
 				panoanimation.visible = false;
@@ -3800,7 +3727,7 @@ function fnDuIK(thisObj)
 			boutonosc.helpTip = getMessage(93);
 			//bouton spring
 			var boutonspring = addIconButton(groupeAnimationG,"btn_rebond.png",getMessage(126));
-			boutonspring.onClick = spring;
+			boutonspring.onClick = function () {panoanimation.hide(); springPanel.show();};
 			boutonspring.helpTip = getMessage(97);
 			//Blink
 			var blinkButton = addIconButton(groupeAnimationD,"/btn_blink.png","Blink");
@@ -3813,7 +3740,7 @@ function fnDuIK(thisObj)
 			boutonpathfollow.helpTip = getMessage(95);
 			//bouton roue
 			var boutonroue = addIconButton(groupeAnimationD,"btn_roue.png",getMessage(125));
-			boutonroue.onClick = creroue;
+			boutonroue.onClick = function () { panoanimation.hide(); wheelPanel.show(); };
 			boutonroue.helpTip = getMessage(96);
 			//bouton lentille
 			var boutonlentille = addIconButton(groupeAnimationG,"/btn_lentille.png",getMessage(128));
@@ -4355,10 +4282,6 @@ function fnDuIK(thisObj)
 			adaptativeExposureButton.value = true;
 			adaptativeExposureButton.onClick = exposureSelect;
 			addSeparator(exposurePanel,"");
-			var exposurePreExpressionButton = exposurePanel.add("radiobutton",undefined,"Pre-expression");
-			var exposurePostExpressionButton = exposurePanel.add("radiobutton",undefined,"Post-expression");
-			exposurePostExpressionButton.value = true;
-			addSeparator(exposurePanel,"");
 			var lowerExposureGroup = addHGroup(exposurePanel);
 			lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
 			var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
@@ -4566,6 +4489,62 @@ function fnDuIK(thisObj)
 			var multiplaneOKButton = addIconButton(multiplaneButtonsGroup,"btn_valid.png","Multiplane");
 			multiplaneOKButton.onClick = function () { multiplan(); multiplanePanel.hide(); panocam.show()};
 			multiplaneOKButton.helpTip = "Creates a 2D multiplane camera rig";
+		}
+		//WHEEL PANEL
+		{
+		//on a besoin d'une variable globale...
+		var OA = 0;
+		var rayonGroupeRayon = addHGroup(wheelPanel);
+		//champ de saisie
+		rayonGroupeRayon.add("statictext",undefined,"Radius:");
+		var rayonbouton = rayonGroupeRayon.add ("edittext", undefined);
+		rayonbouton.size = ["100","20"];
+		rayonbouton.helpTip = getMessage(64);
+		wheelPanel.add("statictext",undefined,getMessage(176));
+		//bouton mesurer
+		var mesurebouton = rayonGroupeRayon.add("button",undefined,getMessage(106));
+		mesurebouton.value = false;
+		mesurebouton.helpTip = getMessage(65);
+		mesurebouton.onClick = mesurer;
+		//boutons type de déplacement
+		var rayonGroupeType = addHGroup(wheelPanel);
+		var roueH = rayonGroupeType.add("radiobutton",undefined,getMessage(174));
+		var roueC = rayonGroupeType.add("radiobutton",undefined,getMessage(175));
+		roueH.value = true;
+		
+		var wheelButtonsGroup = addHGroup(wheelPanel);
+		var wheelCancelButton = addIconButton(wheelButtonsGroup,"btn_cancel.png","Cancel");
+		wheelCancelButton.onClick = function () { wheelPanel.hide();panoanimation.show();};
+		wheelCancelButton.helpTip = "Cancel";
+		var wheelOKButton = addIconButton(wheelButtonsGroup,"btn_valid.png","Wheel");
+		wheelOKButton.onClick = function () { roue(); wheelPanel.hide(); panoanimation.show()};
+		wheelOKButton.helpTip = "Wheel";
+		}
+		//SPRING PANEL
+		{
+			springPanel.add("statictext",undefined,getMessage(181),{multiline:true});
+			springPanel.add("statictext",undefined,getMessage(182),{multiline:true});
+			addSeparator(springPanel,"");
+			//boutons léger ou simulation
+			var boutonLightSpring = springPanel.add("radiobutton",undefined,getMessage(179));
+			springPanel.add("statictext",undefined,getMessage(183),{multiline:true});
+			boutonLightSpring.value = false;
+			addSeparator(springPanel,"");
+			var boutonSimulatedSpring = springPanel.add("radiobutton",undefined,getMessage(180));
+			springPanel.add("statictext",undefined,getMessage(184),{multiline:true});
+			springPanel.add("statictext",undefined,getMessage(185),{multiline:true});
+			addSeparator(springPanel,"");
+			boutonLightSpring.onClick = function () { boutonSimulatedSpring.value = !boutonLightSpring.value;};
+			boutonSimulatedSpring.onClick = function () { boutonLightSpring.value = !boutonSimulatedSpring.value;};
+			boutonSimulatedSpring.value = true;
+			
+			var springButtonsGroup = addHGroup(springPanel);
+			var springCancelButton = addIconButton(springButtonsGroup,"btn_cancel.png","Cancel");
+			springCancelButton.onClick = function () { springPanel.hide();panoanimation.show();};
+			springCancelButton.helpTip = "Cancel";
+			var springOKButton = addIconButton(springButtonsGroup,"btn_valid.png","Spring");
+			springOKButton.onClick = function () { springok(); springPanel.hide(); panoanimation.show()};
+			springOKButton.helpTip = "Spring";
 		}
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée
