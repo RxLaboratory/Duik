@@ -2051,6 +2051,16 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 			}
 			
+			//PAINT GROUP
+			function paintGroupButtonClicked() {
+				if (!(app.project.activeItem instanceof CompItem)) return;
+				if (app.project.activeItem.selectedLayers.length == 0) return;
+				app.beginUndoGroup("Duik - Paint group");
+				Duik.groupPaint(app.project.activeItem.selectedLayers[0].selectedProperties);
+				app.endUndoGroup();
+			}
+			
+			//BLINK
 			function blinkButtonClicked() {
 				// Vérifions si il n'y a qu'un calque sélectionné
 				if (app.project.activeItem.selectedLayers.length == 1){
@@ -2076,6 +2086,8 @@ function fnDuIK(thisObj)
 				}else{alert(getMessage(47),getMessage(49));}
 			}
 			
+			
+			//TIME REMAP
 			function timeRemapButtonClicked() {
 				if (app.project.activeItem == null) return;
 				var layers = app.project.activeItem.selectedLayers;
@@ -2853,6 +2865,7 @@ function fnDuIK(thisObj)
 					var resultatcalc1 = fenetrecalc.groupe.add("statictext",undefined,"");
 					var resultatcalc2 = fenetrecalc.groupe.add("statictext",undefined,"");
 					var textecalc = fenetrecalc.groupe.add ("edittext", undefined);
+					textecalc.enabled = false;
 					var ligneCalc1 = addHGroup(fenetrecalc.groupe);
 					ligneCalc1.spacing = 0;
 					ligneCalc1.alignChildren = ["fill","center"];
@@ -2911,6 +2924,35 @@ function fnDuIK(thisObj)
 
 					fenetrecalc.layout.layout(true);
 					fenetrecalc.layout.resize();
+					
+					function calcKeyDown(e)
+					{
+						if (e.keyName == "0") calc0.onClick();
+						else if (e.keyName == "1") calc1.onClick();
+						else if (e.keyName == "2") calc2.onClick();
+						else if (e.keyName == "3") calc3.onClick();
+						else if (e.keyName == "4") calc4.onClick();
+						else if (e.keyName == "5") calc5.onClick();
+						else if (e.keyName == "6") calc6.onClick();
+						else if (e.keyName == "7") calc7.onClick();
+						else if (e.keyName == "8") calc8.onClick();
+						else if (e.keyName == "9") calc9.onClick();
+						else if (e.keyName == "Backspace") calcErase.onClick();
+						else if (e.keyName == "Delete") calcCancel.onClick();
+						else if (e.keyName == "Divide") calcDiv.onClick();
+						else if (e.keyName == "Multiply") calcMult.onClick();
+						else if (e.keyName == "Minus") calcMin.onClick();
+						else if (e.keyName == "Plus") calcAdd.onClick();
+						else if (e.keyName == "Enter") calcEquals.onClick();
+						else if (e.keyName == "Decimal") calcPoint.onClick();
+						else if (e.keyName == "Comma") calcPoint.onClick();
+						else if (e.keyName == "Period") calcPoint.onClick();
+						
+					}
+					
+					fenetrecalc.addEventListener("keydown",calcKeyDown);
+					
+					
 
 				}
 				
@@ -3765,19 +3807,20 @@ function fnDuIK(thisObj)
 			paintRigButton.onClick = paintRigButtonClicked;
 			paintRigButton.helpTip = "Rig the paint effects to be able to animate all strokes as if there was only one.";
 			
-			//Timeremap
-			var timeRemapButton = addIconButton(groupeAnimationD,"btn_timeremap.png","Time remap");
-			timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
-			timeRemapButton.helpTip = "Time remapping tools.";
+			//Paint Group
+			var paintGroupButton = addIconButton(groupeAnimationD,"btn_paintgroup.png","Paint group");
+			paintGroupButton.onClick = paintGroupButtonClicked ;
+			paintGroupButton.helpTip = "Rig the paint effects to be able to animate selected strokes as if there was only one.";
 			
 			//randomize
 			var randButton = addIconButton(groupeAnimationG,"btn_rand.png","Randomize");
 			randButton.onClick = function () { panoanimation.hide(); randPanel.show(); } ;
 			randButton.helpTip = "Randomize properties and layers.";
 			
-			//placeholder
-			var placeholderButton = addIconButton(groupeAnimationD,"btn_placeholder.png","");
-			placeholderButton.enabled = false;
+			//Timeremap
+			var timeRemapButton = addIconButton(groupeAnimationD,"btn_timeremap.png","Time remap");
+			timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
+			timeRemapButton.helpTip = "Time remapping tools.";
 		}
 		
 		// CAMERAS

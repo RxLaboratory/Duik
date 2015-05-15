@@ -690,6 +690,20 @@ if (typeof Duik === 'object') delete Duik;
 				"	<Slider name='$$$/AE/Preset/TruckInOut=Truck In Out' default='0' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
 				"	<Angle name='$$$/AE/Preset/Tilt=Tilt' default='0.0'/>\r\n" + 
 				"</Effect>\r\n" + 
+				"<Effect matchname='DUIKPaintGroup' name='$$$/AE/Preset/DUIK_Paint_Group=DUIK_Paint_Group'>\r\n" + 
+				"<Group name='$$$/AE/Preset/StrokeOptions=Stroke Options'>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Start=Start' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/End=End' default='100' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Color name='$$$/AE/Preset/Color=Color' default_red='255' default_green='0' default_blue='0'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Diameter=Diameter' default='0' valid_min='-32000' valid_max='32000' slider_min='-100' slider_max='100' precision='1'/>\r\n" + 
+				"</Group>\r\n" + 
+				"<Group name='$$$/AE/Preset/Transform=Transform'>\r\n" + 
+				"	<Point name='$$$/AE/Preset/AnchorPoint=Anchor Point' default_x='0.5' default_y='0.5'/>\r\n" + 
+				"	<Point name='$$$/AE/Preset/Position=Position' default_x='0.5' default_y='0.5'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/Scale=Scale' default='100' valid_min='-10000' valid_max='10000' slider_min='-100' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" + 
+				"	<Angle name='$$$/AE/Preset/Rotation=Rotation' default='0.0'/>\r\n" + 
+				"</Group>\r\n" + 
+				"</Effect>\r\n" + 
 				"<!-- END DUIK PSEUDO EFFECTS -->\r\n";
 		}
 		// INSTALL PSEUDO EFFECTS - Duik.setup.installCustomEffects();
@@ -857,6 +871,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.distanceLink = "Distance Link";
 		Duik.uiStrings.spring = "Spring";
 		Duik.uiStrings.paintRig = "Paint Rig";
+		Duik.uiStrings.paintGroup = "Paint Group";
 		Duik.uiStrings.blink = "Blink";
 		Duik.uiStrings.scale = "Scale";
 		Duik.uiStrings.flip = "Flip";
@@ -4564,7 +4579,7 @@ if (typeof Duik === 'object') delete Duik;
 				//if there's no paint effect
 				var paintEffect = layer("Effects")("ADBE Paint");
 				if (paintEffect == null) continue;
-				
+								
 				//add effect
 				var effect;
 				if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,"DUIK_Paint_Rig");
@@ -4580,9 +4595,10 @@ if (typeof Duik === 'object') delete Duik;
 				var nbre = paintEffect.property(2).numProperties;
 				for (var j=1;j<=nbre;j++)
 				{
-					var propStart = paintEffect.property(2).property(j).property(4).property(1);
-					var propEnd = paintEffect.property(2).property(j).property(4).property(2);
-					var propDiam = paintEffect.property(2).property(j).property(4).property(4);
+					var stroke = paintEffect.property(2).property(j);
+					var propStart = stroke.property(4).property(1);
+					var propEnd = stroke.property(4).property(2);
+					var propDiam = stroke.property(4).property(4);
 					
 					propStart.expression = "//Duik.PaintRig\n" + 
 							"var ctrl = effect(\"" + effectName + "\")(1);\n" + 
@@ -5279,6 +5295,109 @@ if (typeof Duik === 'object') delete Duik;
 				var outPoint = Duik.utils.random(min,max);
 				if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
 				else l.outPoint = outPoint;
+			}
+		}
+	}
+	/* GROUP PAINT - Duik.groupPaint(props);
+
+	Rigs the paint effects to be able to animate all strokes as if there was only one.
+
+	parameters
+	props | Array of Properties
+		
+	returns
+	void
+	
+	*/
+	if (typeof Duik.groupPaint !== 'function')
+	{
+		Duik.groupPaint = function (props)
+		{
+			if (props == undefined) return;
+			if (props.length == 0) return;
+			//get selection
+			var selection = [];
+			for (var i = 0 ; i < props.length ; i++)
+			{
+				var stroke = props[i];
+				if (stroke.matchName != "ADBE Paint Atom") continue;
+				if (stroke.selected) selection.push(stroke.propertyIndex);
+			}
+			if (selection.length == 0) return;
+
+			//add effect
+			var effect;
+			var layer = Duik.utils.getPropertyLayer(props[0]);
+			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,"DUIK_Paint_Group");
+			else effect = layer.effect.addProperty("DUIK_Paint_Group");
+			
+			var paintEffect = layer("Effects")("ADBE Paint");
+			var firstStroke = paintEffect.property(2).property(selection[0]);
+			
+			effect.name = firstStroke.name + " " + Duik.uiStrings.paintGroup;
+
+			//anchorPoint
+			effect(8).setValue(firstStroke.property(5).property(1).value);
+			firstStroke.property(5).property(1).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(8);";
+			//position
+			effect(9).setValue(firstStroke.property(5).property(2).value);
+			firstStroke.property(5).property(2).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(9);";
+			//scale
+			effect(10).setValue(firstStroke.property(5).property(3).value[0]);
+			firstStroke.property(5).property(3).expression = "//Duik.groupPaint\n" + 
+						"var sca = effect(\"" + effect.name + "\")(10);\n" + 
+						"[sca,sca]";
+			//rotation
+			effect(11).setValue(firstStroke.property(5).property(4).value);
+			firstStroke.property(5).property(4).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(11);";
+			
+			//start
+			firstStroke.property(4).property(1).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(2);\n";
+			//end
+			firstStroke.property(4).property(2).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(3);\n";
+			//color
+			firstStroke.property(4).property(3).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(4);\n";
+			//diameter
+			firstStroke.property(4).property(4).expression = "//Duik.groupPaint\n" + 
+						"value+effect(\"" + effect.name + "\")(5);\n";					
+
+
+			//for each stroke
+			for (var j=1;j<selection.length;j++)
+			{
+				var stroke = paintEffect.property(2).property(selection[j]);
+				var propStart = stroke.property(4).property(1);
+				var propEnd = stroke.property(4).property(2);
+				var propColor = stroke.property(4).property(3);
+				var propDiam = stroke.property(4).property(4);
+				
+				propStart.expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(2);\n";
+						
+				propEnd.expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(3);";
+						
+				propColor.expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(4);";
+						
+				propDiam.expression = "//Duik.groupPaint\n" + 
+						"value+effect(\"" + effect.name + "\")(5);";
+						
+				stroke.property(5).property(1).expression = "//Duik.groupPaint\n" + 
+						"-" + stroke.property(5).property(2).value.toSource() + " + " + effect(9).value.toSource() + " + effect(\"" + effect.name + "\")(8);\n";
+				stroke.property(5).property(2).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(9);";
+				stroke.property(5).property(3).expression = "//Duik.groupPaint\n" + 
+						"var sca = effect(\"" + effect.name + "\")(10);\n" + 
+						"[sca,sca]";
+				stroke.property(5).property(4).expression = "//Duik.groupPaint\n" + 
+						"effect(\"" + effect.name + "\")(11);";
 			}
 		}
 	}
