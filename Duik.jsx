@@ -2398,12 +2398,33 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 			}	
 			
+			//SCALE Z-LINK
 			function scaleZLinkButtonClicked()
 			{
 				if (app.project.activeItem == null) return;
 				app.beginUndoGroup("Duik - Scale Z-Link");
 				Duik.scaleZLink(app.project.activeItem.selectedLayers);
 				app.endUndoGroup();
+			}
+			
+			//TVPAINT CAMERA
+			function tvpCamOKButtonClicked () {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				app.beginUndoGroup("Duik - Import TVPaint Camera");
+				//request file
+				var camFile = File.openDialog("Choose the camera file you want to import","TVP cam:*.cpt,All files:*.*",false);
+				if (!camFile) return;
+				var cam = Duik.bridge.tvPaint.loadCamFile(camFile);
+				if (tvpCamNullButton.value)
+				{
+					cam.createNull(comp,tvpCamLinkButton.value);
+				}
+				else
+				{
+					cam.precompose(comp);
+				}
+				
 			}
 			
 			//============= SETTINGS ============================
@@ -3144,6 +3165,9 @@ function fnDuIK(thisObj)
 		var springPanel = addVPanel(panos);
 		springPanel.visible = false;
 		springPanel.alignChildren = ["fill","top"];
+		var tvpCamPanel = addVPanel(panos);
+		tvpCamPanel.visible = false;
+		tvpCamPanel.alignChildren = ["fill","top"];
 		
 		
 		function displayPanel() {
@@ -3161,6 +3185,7 @@ function fnDuIK(thisObj)
 			multiplanePanel.hide();
 			wheelPanel.hide();
 			springPanel.hide();
+			tvpCamPanel.hide();
 			if (selecteur.selection == 0){
 				panoik.visible = true;
 				panoanimation.visible = false;
@@ -3827,20 +3852,23 @@ function fnDuIK(thisObj)
 		{
 			panocam.orientation = "row";
 			var groupCameraG = addVGroup(panocam);
-			//var groupCameraD = addVGroup(panocam);
+			var groupCameraD = addVGroup(panocam);
 			//bouton pour créer une target cam
 			var boutontcam = addIconButton(groupCameraG,"btn_controleur-cam.png",getMessage(134));
 			boutontcam.onClick = controlcam;
 			boutontcam.helpTip = getMessage(102);
+			//scale Z-link button
+			var scaleZLinkButton = addIconButton(groupCameraD,"btn_scalezlink.png","Scale Z-Link");
+			scaleZLinkButton.onClick = scaleZLinkButtonClicked;
+			scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
 			//bouton pour multiplan 2D
 			var boutontcam2d = addIconButton(groupCameraG,"btn_2dmultiplane.png",getMessage(188));
 			boutontcam2d.onClick = function () { panocam.hide() ; multiplanePanel.show();};
 			boutontcam2d.helpTip = "Creates multiplane controllers to use as a 2D camera";
-			//scale Z-link button
-			var scaleZLinkButton = addIconButton(groupCameraG,"btn_scalezlink.png","Scale Z-Link");
-			scaleZLinkButton.onClick = scaleZLinkButtonClicked;
-			scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
-			
+			//TVP Cam
+			var tvpCamButton = addIconButton(groupCameraD,"btn_tvpcam.png","Import TVPaint Cam");
+			tvpCamButton.onClick = function () {panocam.hide();tvpCamPanel.show();};
+			tvpCamButton.helpTip = "Imports a camera from TVPaint.";
 		}
 		
 		//---------------
@@ -4588,6 +4616,25 @@ function fnDuIK(thisObj)
 			var springOKButton = addIconButton(springButtonsGroup,"btn_valid.png","Spring");
 			springOKButton.onClick = function () { springok(); springPanel.hide(); panoanimation.show()};
 			springOKButton.helpTip = "Spring";
+		}
+		//TVPAINT CAM PANEL
+		{
+			var tvpCamMethodGroup = addHGroup(tvpCamPanel);
+			var tvpCamNullButton = tvpCamMethodGroup.add("radiobutton",undefined,"Use a Null Object");
+			var tvpCamPrecompButton = tvpCamMethodGroup.add("radiobutton",undefined,"Precompose layers");
+			var tvpCamLinkButton = tvpCamPanel.add("checkbox",undefined,"Auto-parent layers");
+			tvpCamNullButton.value = true;
+			tvpCamLinkButton.value = true;
+			tvpCamNullButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
+			tvpCamPrecompButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
+			
+			var tvpCamButtonsGroup = addHGroup(tvpCamPanel);
+			var tvpCamCancelButton = addIconButton(tvpCamButtonsGroup,"btn_cancel.png","Cancel");
+			tvpCamCancelButton.onClick = function () { tvpCamPanel.hide();panocam.show();};
+			tvpCamCancelButton.helpTip = "Cancel";
+			var tvpCamOKButton = addIconButton(tvpCamButtonsGroup,"btn_valid.png","Import TVP Cam");
+			tvpCamOKButton.onClick = function () { tvpCamOKButtonClicked(); tvpCamPanel.hide(); panocam.show()};
+			tvpCamOKButton.helpTip = "Imports TVPaint camera.";
 		}
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée

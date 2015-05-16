@@ -495,6 +495,125 @@ if (typeof Duik === 'object') delete Duik;
 			fill("ADBE Vector Fill Color").setValue(this.color);
 		}
 	}
+	function TVPCamera ()
+	{
+		this.points = [];
+		this.pointCout = 0;
+		this.profileprof = new TVPProfileprof();
+	}
+	function TVPCameraPoint ()
+	{
+		this.x = 0.0;
+		this.y = 0.0;
+		this.zoom = 1.0;
+		this.rotation = 0.0;
+	}
+	function TVPProfileprof ()
+	{
+		this.points = [];
+		this.linear = false;
+		this.pointCount = 0;
+	}
+	function TVPProfileprofPoint ()
+	{
+		this.u = 0.0;
+		this.v = 0.0;
+	}
+	TVPCamera.prototype.createNull = function(comp,link)
+	{
+		var camLayer = comp.layers.addNull();
+		camLayer.name = "TVPaint Camera";
+		this.applyToLayer(camLayer,link);
+	}
+	TVPCamera.prototype.precompose = function(comp)
+	{
+		var indices = [];
+		for (var i = 1;i<=comp.numLayers;i++)
+		{
+			indices.push(i);
+		}
+		var precompItem = comp.layers.precompose(indices,"TVPaint " + comp.name);
+		var camLayer = comp.layer(1);
+		this.applyToLayer(camLayer,false);
+	}
+	TVPCamera.prototype.applyToLayer = function(camLayer,link)
+	{
+		var comp = camLayer.containingComp;
+		var numPoints = this.pointCount;
+
+		//Anchor Point
+		for (var i = 0;i< numPoints;i++)
+		{
+			var point = this.points[i];
+			var time = (comp.duration-comp.frameDuration)/(numPoints-1)*i;
+			camLayer.transform.anchorPoint.setValueAtTime(time,[point.x,point.y]); 
+			if (i == 0 || i == numPoints-1)
+			{
+				camLayer.transform.anchorPoint.setSpatialTangentsAtKey(i+1,[0,0,0],[0,0,0]);
+			}
+			else
+			{
+				camLayer.transform.anchorPoint.setSpatialAutoBezierAtKey(i+1,true);
+				var inTangent = camLayer.transform.anchorPoint.keyInSpatialTangent(i+1);
+				var outTangent = camLayer.transform.anchorPoint.keyOutSpatialTangent(i+1);
+				//camLayer.transform.position.setSpatialTangentsAtKey(i+1,inTangent*2,outTangent*2);
+			}
+		}
+
+		//rotation & scale
+		for (var i =0; i < numPoints;i++)
+		{
+			var point = this.points[i];
+			camLayer.transform.anchorPoint.setRovingAtKey(i+1,true);
+			time = camLayer.transform.anchorPoint.keyTime(i+1);
+			 camLayer.transform.rotation.setValueAtTime(time,point.rotation); 
+			var zoom = (1+(1-point.zoom))*100;
+			camLayer.transform.scale.setValueAtTime(time,[zoom,zoom,zoom]);
+		}
+
+		//Morpher
+		var morpher = camLayer.Effects.addProperty("ADBE Slider Control");
+		morpher.name = "Morpher";
+
+		var exp = "valueAtTime((thisComp.layer(\"" + camLayer.name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
+		camLayer.transform.anchorPoint.expression = exp;
+		camLayer.transform.rotation.expression = exp;
+		camLayer.transform.scale.expression = exp;
+
+		//add morpher keys
+		var numProfPoints = this.profileprof.pointCount;
+		for (var i = 0;i<numProfPoints;i++)
+		{
+			var point = this.profileprof.points[i];
+			morpher(1).setValueAtTime((comp.duration-comp.frameDuration)*point.u,(comp.duration-comp.frameDuration)/comp.frameDuration*point.v);
+		}
+		//bezier
+		if (!this.profileprof.linear)
+		{
+			for (var i = 1;i<= morpher(1).numKeys;i++)
+			{
+				morpher(1).setInterpolationTypeAtKey(i,KeyframeInterpolationType.BEZIER);
+				if (i != 1 && i != morpher(1).numKeys)
+				{
+					morpher(1).setTemporalContinuousAtKey(i, true);
+					morpher(1).setTemporalAutoBezierAtKey(i, true);
+				}
+					else
+					{
+						var easeIn = new KeyframeEase(0,100/3);
+						morpher(1).setTemporalEaseAtKey(i,[easeIn]);
+					}
+			}
+		}
+		
+		if (link)
+		{
+			for (var i = 2;i<=comp.numLayers;i++)
+			{
+				if (comp.layer(i).parent == null) comp.layer(i).parent = camLayer;
+			}
+		}
+	}
 }
 
 /////////////////////////////
@@ -972,25 +1091,147 @@ if (typeof Duik === 'object') delete Duik;
 	//========== JS TOOLS ============
 	//================================
 	
-	if (typeof Duik.javascript !== 'object')
+	if (typeof Duik.js !== 'object')
 	{
-		Duik.javascript = {};
+		Duik.js = {};
 		// ESCAPE REGEXP
-		if (typeof Duik.javascript.escapeRegExp !== 'function')
+		if (typeof Duik.js.escapeRegExp !== 'function')
 		{
-			Duik.javascript.escapeRegExp = function (string)
+			Duik.js.escapeRegExp = function (string)
 			{
 				return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 			}
 		}
 		// ESCAPE REGEXP
-		if (typeof Duik.javascript.replaceAll !== 'function')
+		if (typeof Duik.js.replaceAll !== 'function')
 		{
-			Duik.javascript.replaceAll = function (string, find, replace, caseSensitive)
+			Duik.js.replaceAll = function (string, find, replace, caseSensitive)
 			{
 				if (caseSensitive == undefined) caseSensitive = true;
-				var re = new RegExp(Duik.javascript.escapeRegExp(find),caseSensitive ? 'g' : 'gi');
+				var re = new RegExp(Duik.js.escapeRegExp(find),caseSensitive ? 'g' : 'gi');
 				return string.replace(re, replace);
+			}
+		}
+		// RANDOM
+		if (typeof Duik.js.random !== 'function')
+		{
+			Duik.js.random = function (min, max)
+			{
+				return Math.random() * (max - min) + min;
+			}
+		}
+	}
+	
+	//================================
+	//===== IMPORT EXPORT TOOLS ======
+	//================================
+	
+	if (typeof Duik.bridge !== 'object')
+	{
+		Duik.bridge = {};
+		Duik.bridge.tvPaint = {};
+		//PARSE TVPCamera
+		if (typeof Duik.bridge.tvPaint.parseCam !== 'function')
+		{
+			Duik.bridge.tvPaint.parseCam = function (camString)
+			{
+				var camera = new TVPCamera();
+				
+				var lines = camString.split("\n");
+				
+				var reXPoint = /point\.(\d+)\.x=(\d+\.?\d*)/i;
+				var reYPoint = /point\.(\d+)\.y=(\d+\.?\d*)/i;
+				var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
+				var reRPoint = /point\.(\d+)\.rotation=(\d+\.?\d*)/i;
+				var reLinear = /profileprof_linear=([01])/i;
+				var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
+				var rePointCout = /pointcount=(\d+)/i;
+				var reProfPointCount = /profileprof_numpoint=(\d+)/i;
+				for (var i in lines)
+				{
+					var line = lines[i];
+					var count = line.match(rePointCout);
+					if (count != null)
+					{
+						camera.pointCount = parseInt(count[1]);
+					}
+					var xPoint = line.match(reXPoint);
+					if (xPoint != null)
+					{
+                        var index = parseInt(xPoint[1]);
+                        var value = parseFloat(xPoint[2]);
+						var point = camera.points[index];
+						if (point == undefined) point = new TVPCameraPoint();
+						point.x = value ;
+                        camera.points[index] = point;
+                    }
+					var yPoint = line.match(reYPoint);
+					if (yPoint != null)
+					{
+                        var index = parseInt(yPoint[1]);
+                        var value = parseFloat(yPoint[2]);
+						var point = camera.points[index];
+						if (point == undefined) point = new TVPCameraPoint();
+						point.y = value ;
+                        camera.points[index] = point;
+                    }
+					var zPoint = line.match(reZPoint);
+					if (zPoint != null)
+					{
+                        var index = parseInt(zPoint[1]);
+                        var value = parseFloat(zPoint[2]);
+						var point = camera.points[index];
+						if (point == undefined) point = new TVPCameraPoint();
+						point.zoom = value ;
+                        camera.points[index] = point;
+                    }
+					var rPoint = line.match(reRPoint);
+					if (rPoint != null)
+					{
+                        var index = parseInt(rPoint[1]);
+                        var value = parseFloat(rPoint[2]);
+						var point = camera.points[index];
+						if (point == undefined) point = new TVPCameraPoint();
+						point.rotation = value ;
+                        camera.points[index] = point;
+                    }
+					var linear = line.match(reLinear);
+					if (linear != null)
+					{
+						var lin = parseInt(linear[1]);
+						camera.profileprof.linear = (lin == 1);
+					}
+					var profPoint = line.match(reProfPoint);
+					if (profPoint != null)
+					{
+						var index = parseInt(profPoint[1]);
+						var u = parseFloat(profPoint[2]);
+						var v = parseFloat(profPoint[3]);
+						var point = new TVPProfileprofPoint();
+						point.u = u;
+						point.v = v;
+						camera.profileprof.points[index] = point;
+					}
+					var profCount = line.match(reProfPointCount);
+					if (profCount != null)
+					{
+						camera.profileprof.pointCount = parseInt(profCount[1]);
+					}
+				}
+				
+				return camera;
+			}
+		}
+		//PARSE TVPCamera
+		if (typeof Duik.bridge.tvPaint.loadCamFile !== 'function')
+		{
+			Duik.bridge.tvPaint.loadCamFile = function (camFile)
+			{
+				camFile.open("r");
+				var camString = camFile.read();
+				camFile.close();
+				var tvpCam = Duik.bridge.tvPaint.parseCam(camString);
+				return tvpCam;
 			}
 		}
 	}
@@ -2077,7 +2318,7 @@ if (typeof Duik === 'object') delete Duik;
 					if (prop.canSetExpression)
 					{
 						var expr = prop.expression;
-						expr = Duik.javascript.replaceAll(expr,oldString,newString,caseSensitive);
+						expr = Duik.js.replaceAll(expr,oldString,newString,caseSensitive);
 						prop.expression = expr;
 						delete expr;
 					}
@@ -2229,14 +2470,6 @@ if (typeof Duik === 'object') delete Duik;
 				}
 				
 				app.endSuppressDialogs(false);
-			}
-		}
-		// RANDOM
-		if (typeof Duik.utils.random !== 'function')
-		{
-			Duik.utils.random = function (min, max)
-			{
-				return Math.random() * (max - min) + min;
 			}
 		}
 		// GET PROP LAYER
@@ -5185,14 +5418,14 @@ if (typeof Duik === 'object') delete Duik;
 					var yval = 0;
 					var zval = 0;
 					//X
-					if (x) xval = Duik.utils.random(xMin,xMax);
+					if (x) xval = Duik.js.random(xMin,xMax);
 					else if (dim == 1) xval = prop.value;
 					else xval = prop.value[0];
 					//Y
-					if (dim == 2 || dim == 3 && y) yval = Duik.utils.random(yMin,yMax);
+					if (dim == 2 || dim == 3 && y) yval = Duik.js.random(yMin,yMax);
 					else if (dim == 3 || dim == 2) yval = 0;
 					//Z
-					if (dim == 3 && z) zval = Duik.utils.random(zMin,zMax);
+					if (dim == 3 && z) zval = Duik.js.random(zMin,zMax);
 					else if (dim == 3) zval = 0;
 					//SET VALUE
 					var val;
@@ -5230,7 +5463,7 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var startTime = Duik.utils.random(min,max);
+				var startTime = Duik.js.random(min,max);
 				if (fromCurrentVal) l.startTime = l.startTime + startTime;
 				else l.startTime = startTime;
 			}
@@ -5261,7 +5494,7 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var inPoint = Duik.utils.random(min,max);
+				var inPoint = Duik.js.random(min,max);
 				if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
 				else l.inPoint = inPoint;
 			}
@@ -5292,7 +5525,7 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var outPoint = Duik.utils.random(min,max);
+				var outPoint = Duik.js.random(min,max);
 				if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
 				else l.outPoint = outPoint;
 			}
