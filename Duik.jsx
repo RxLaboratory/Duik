@@ -57,6 +57,7 @@ function fnDuIK(thisObj)
 		if (!app.settings.haveSetting("duik", "stretch")){app.settings.saveSetting("duik","stretch","true");}
 		if (!app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
 		if (!app.settings.haveSetting("duik", "dropDownSelector")){app.settings.saveSetting("duik","dropDownSelector","false");}
+		if (!app.settings.haveSetting("duik", "interactiveUpdate")){app.settings.saveSetting("duik","interactiveUpdate","false");}
 	}
 		
 	//=================================
@@ -2553,44 +2554,47 @@ function fnDuIK(thisObj)
 
 			function infl() {
 			
-			if (! (app.project.activeItem instanceof CompItem)) return;
-			
-			var inVal = parseInt(interpoInEdit.text);
-			var outVal = parseInt(interpoOutEdit.text);
-			
-			if (boutonEloignement.value && !outVal) return;
-			if (boutonApproche.value && !inVal) return;
-			
-			for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-				for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
-					if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
-						for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
-							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j]; 
-							if (!prop.isSpatial && prop.value.length == 3) {
-								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeIn3 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
-								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeOut3 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
-								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
-								}
-							else if (!prop.isSpatial && prop.value.length == 2) {
-								var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-								var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
-								}
-							else {
-								var easeIn =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-								var easeOut = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-								prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
+				if (! (app.project.activeItem instanceof CompItem)) return;
+				
+				var inVal = parseInt(interpoInEdit.text);
+				var outVal = parseInt(interpoOutEdit.text);
+				
+				if (boutonEloignement.value && !outVal) return;
+				if (boutonApproche.value && !inVal) return;
+				
+				app.beginUndoGroup("Duik - Interpolation");
+				
+				for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
+					for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+						if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
+							for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j]; 
+								if (!prop.isSpatial && prop.value.length == 3) {
+									var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeIn3 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
+									var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeOut3 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
+									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
+									}
+								else if (!prop.isSpatial && prop.value.length == 2) {
+									var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
+									}
+								else {
+									var easeIn =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
+									}
 								}
 							}
 						}
 					}
-				}     
+				app.endUndoGroup();
 			}
 			
 			function roving () {
@@ -2723,6 +2727,13 @@ function fnDuIK(thisObj)
 			groupe.spacing = 2;
 			groupe.margins = 0;
 			return groupe;
+		}
+		function addBox(conteneur,nom){
+			var box = conteneur.add("panel",undefined,nom);
+			box.alignChildren =["fill","top"];
+			box.spacing = 2;
+			box.margins = 10;
+			return box;
 		}
 		//fonction pour ajouter des séparateurs
 		function addSeparator(conteneur,name) {
@@ -3109,154 +3120,156 @@ function fnDuIK(thisObj)
 		}
 		
 		//------------
-		// PANELS
+		// PANELS GROUP
 		//------------
-		var panoik = addVPanel(panos);
-		var panoanimation = addVPanel(panos);
-		panoanimation.visible = false;
-		var panointerpo =  addVPanel(panos);
-		panointerpo.visible = false;
-		var panocam = addVPanel(panos);
-		panocam.visible = false;
-		var panosettings = addVPanel(panos);
-		panosettings.visible = false;
-		var helpPanel = addVPanel(panos);
-		helpPanel.visible = false;
-		
-		var ctrlPanel = addVPanel(panos);
-		ctrlPanel.visible = false;
-		ctrlPanel.alignChildren = ["fill","top"];
-		var ikPanel = addVPanel(panos);
-		ikPanel.visible = false;
-		ikPanel.alignChildren = ["fill","top"];
-		var renamePanel = addVPanel(panos);
-		renamePanel.visible = false;
-		renamePanel.alignChildren = ["fill","top"];
-		var riePanel = addVPanel(panos);
-		riePanel.visible = false;
-		riePanel.alignChildren = ["fill","top"];
-		var measurePanel = addVPanel(panos);
-		measurePanel.visible = false;
-		measurePanel.alignChildren = ["fill","top"];
-		var timeRemapPanel = addVPanel(panos);
-		timeRemapPanel.visible = false;
-		timeRemapPanel.alignChildren = ["fill","top"];
-		var exposurePanel = addVPanel(panos);
-		exposurePanel.visible = false;
-		exposurePanel.alignChildren = ["fill","top"];
-		var celPanel = addVPanel(panos);
-		celPanel.visible = false;
-		celPanel.alignChildren = ["fill","top"];
-		var wigglePanel = addVPanel(panos);
-		wigglePanel.visible = false;
-		wigglePanel.alignChildren = ["fill","top"];
-		var irPanel = addVPanel(panos);
-		irPanel.visible = false;
-		irPanel.alignChildren = ["fill","top"];
-		var randPanel = addVPanel(panos);
-		randPanel.visible = false;
-		randPanel.alignChildren = ["fill","top"];
-		var multiplanePanel = addVPanel(panos);
-		multiplanePanel.visible = false;
-		multiplanePanel.alignChildren = ["fill","top"];
-		var wheelPanel = addVPanel(panos);
-		wheelPanel.visible = false;
-		wheelPanel.alignChildren = ["fill","top"];
-		var springPanel = addVPanel(panos);
-		springPanel.visible = false;
-		springPanel.alignChildren = ["fill","top"];
-		var tvpCamPanel = addVPanel(panos);
-		tvpCamPanel.visible = false;
-		tvpCamPanel.alignChildren = ["fill","top"];
-		
-		
-		function displayPanel() {
-			ctrlPanel.hide();
-			ikPanel.hide();
-			renamePanel.hide();
-			riePanel.hide();
-			measurePanel.hide();
-			timeRemapPanel.hide();
-			exposurePanel.hide();
-			celPanel.hide();
-			wigglePanel.hide();
-			irPanel.hide();
-			randPanel.hide();
-			multiplanePanel.hide();
-			wheelPanel.hide();
-			springPanel.hide();
-			tvpCamPanel.hide();
-			if (selecteur.selection == 0){
-				panoik.visible = true;
-				panoanimation.visible = false;
-				panointerpo.visible = false;
-				panocam.visible = false;
-				panosettings.visible = false;
-				helpPanel.visible = false;
-				app.settings.saveSetting("duik","pano","0");
-				if (!expertMode) selectorText.text = "Rigging";
+		{
+			var panoik = addVPanel(panos);
+			var panoanimation = addVPanel(panos);
+			panoanimation.visible = false;
+			var panointerpo =  addVPanel(panos);
+			panointerpo.visible = false;
+			var panocam = addVPanel(panos);
+			panocam.visible = false;
+			var panosettings = addVPanel(panos);
+			panosettings.visible = false;
+			var helpPanel = addVPanel(panos);
+			helpPanel.visible = false;
+			
+			var ctrlPanel = addVPanel(panos);
+			ctrlPanel.visible = false;
+			ctrlPanel.alignChildren = ["fill","top"];
+			var ikPanel = addVPanel(panos);
+			ikPanel.visible = false;
+			ikPanel.alignChildren = ["fill","top"];
+			var renamePanel = addVPanel(panos);
+			renamePanel.visible = false;
+			renamePanel.alignChildren = ["fill","top"];
+			var riePanel = addVPanel(panos);
+			riePanel.visible = false;
+			riePanel.alignChildren = ["fill","top"];
+			var measurePanel = addVPanel(panos);
+			measurePanel.visible = false;
+			measurePanel.alignChildren = ["fill","top"];
+			var timeRemapPanel = addVPanel(panos);
+			timeRemapPanel.visible = false;
+			timeRemapPanel.alignChildren = ["fill","top"];
+			var exposurePanel = addVPanel(panos);
+			exposurePanel.visible = false;
+			exposurePanel.alignChildren = ["fill","top"];
+			var celPanel = addVPanel(panos);
+			celPanel.visible = false;
+			celPanel.alignChildren = ["fill","top"];
+			var wigglePanel = addVPanel(panos);
+			wigglePanel.visible = false;
+			wigglePanel.alignChildren = ["fill","top"];
+			var irPanel = addVPanel(panos);
+			irPanel.visible = false;
+			irPanel.alignChildren = ["fill","top"];
+			var randPanel = addVPanel(panos);
+			randPanel.visible = false;
+			randPanel.alignChildren = ["fill","top"];
+			var multiplanePanel = addVPanel(panos);
+			multiplanePanel.visible = false;
+			multiplanePanel.alignChildren = ["fill","top"];
+			var wheelPanel = addVPanel(panos);
+			wheelPanel.visible = false;
+			wheelPanel.alignChildren = ["fill","top"];
+			var springPanel = addVPanel(panos);
+			springPanel.visible = false;
+			springPanel.alignChildren = ["fill","top"];
+			var tvpCamPanel = addVPanel(panos);
+			tvpCamPanel.visible = false;
+			tvpCamPanel.alignChildren = ["fill","top"];
+			
+			
+			function displayPanel() {
+				ctrlPanel.hide();
+				ikPanel.hide();
+				renamePanel.hide();
+				riePanel.hide();
+				measurePanel.hide();
+				timeRemapPanel.hide();
+				exposurePanel.hide();
+				celPanel.hide();
+				wigglePanel.hide();
+				irPanel.hide();
+				randPanel.hide();
+				multiplanePanel.hide();
+				wheelPanel.hide();
+				springPanel.hide();
+				tvpCamPanel.hide();
+				if (selecteur.selection == 0){
+					panoik.visible = true;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = false;
+					helpPanel.visible = false;
+					app.settings.saveSetting("duik","pano","0");
+					if (!expertMode) selectorText.text = "Rigging";
+				}
+				else if (selecteur.selection == 1){
+					panoik.visible = false;
+					panoanimation.visible = true;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = false;
+					helpPanel.visible = false;
+					app.settings.saveSetting("duik","pano","1");
+					if (!expertMode) selectorText.text = "Automation";
+				}
+				else if (selecteur.selection == 2){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = true;
+					panocam.visible = false;
+					panosettings.visible = false;
+					helpPanel.visible = false;
+					app.settings.saveSetting("duik","pano","2");
+					if (!expertMode) selectorText.text = "Animation";
+				}
+				else if (selecteur.selection == 3){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = true;
+					panosettings.visible = false;
+					helpPanel.visible = false;
+					app.settings.saveSetting("duik","pano","3");
+					if (!expertMode) selectorText.text = "Cameras";
+				}
+				else if (selecteur.selection == 4){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = true;
+					helpPanel.visible = false;
+					app.settings.saveSetting("duik","pano","4");
+					if (!expertMode) selectorText.text = "Settings";
+				}
+				else if (selecteur.selection == 5){
+					panoik.visible = false;
+					panoanimation.visible = false;
+					panointerpo.visible = false;
+					panocam.visible = false;
+					panosettings.visible = false;
+					helpPanel.visible = true;
+					app.settings.saveSetting("duik","pano","5");
+					if (!expertMode) selectorText.text = "Help / About";
+				}
 			}
-			else if (selecteur.selection == 1){
-				panoik.visible = false;
-				panoanimation.visible = true;
-				panointerpo.visible = false;
-				panocam.visible = false;
-				panosettings.visible = false;
-				helpPanel.visible = false;
-				app.settings.saveSetting("duik","pano","1");
-				if (!expertMode) selectorText.text = "Automation";
-			}
-			else if (selecteur.selection == 2){
-				panoik.visible = false;
-				panoanimation.visible = false;
-				panointerpo.visible = true;
-				panocam.visible = false;
-				panosettings.visible = false;
-				helpPanel.visible = false;
-				app.settings.saveSetting("duik","pano","2");
-				if (!expertMode) selectorText.text = "Animation";
-			}
-			else if (selecteur.selection == 3){
-				panoik.visible = false;
-				panoanimation.visible = false;
-				panointerpo.visible = false;
-				panocam.visible = true;
-				panosettings.visible = false;
-				helpPanel.visible = false;
-				app.settings.saveSetting("duik","pano","3");
-				if (!expertMode) selectorText.text = "Cameras";
-			}
-			else if (selecteur.selection == 4){
-				panoik.visible = false;
-				panoanimation.visible = false;
-				panointerpo.visible = false;
-				panocam.visible = false;
-				panosettings.visible = true;
-				helpPanel.visible = false;
-				app.settings.saveSetting("duik","pano","4");
-				if (!expertMode) selectorText.text = "Settings";
-			}
-			else if (selecteur.selection == 5){
-				panoik.visible = false;
-				panoanimation.visible = false;
-				panointerpo.visible = false;
-				panocam.visible = false;
-				panosettings.visible = false;
-				helpPanel.visible = true;
-				app.settings.saveSetting("duik","pano","5");
-				if (!expertMode) selectorText.text = "Help / About";
-			}
-		}
 
-		riggingPanelButton.onClick = function () { selecteur.selection = 0 ; displayPanel(); };
-		automationPanelButton.onClick = function () { selecteur.selection = 1 ; displayPanel(); };
-		animationPanelButton.onClick = function () { selecteur.selection = 2 ; displayPanel(); };
-		camerasPanelButton.onClick = function () { selecteur.selection = 3 ; displayPanel(); };
-		settingsPanelButton.onClick = function () { selecteur.selection = 4 ; displayPanel(); };
-		helpPanelButton.onClick = function () { selecteur.selection = 5 ; displayPanel(); };
-		
-		selecteur.onChange = displayPanel;
-		selecteur.selection = eval(app.settings.getSetting("duik","pano"));
+			riggingPanelButton.onClick = function () { selecteur.selection = 0 ; displayPanel(); };
+			automationPanelButton.onClick = function () { selecteur.selection = 1 ; displayPanel(); };
+			animationPanelButton.onClick = function () { selecteur.selection = 2 ; displayPanel(); };
+			camerasPanelButton.onClick = function () { selecteur.selection = 3 ; displayPanel(); };
+			settingsPanelButton.onClick = function () { selecteur.selection = 4 ; displayPanel(); };
+			helpPanelButton.onClick = function () { selecteur.selection = 5 ; displayPanel(); };
+			
+			selecteur.onChange = displayPanel;
+			selecteur.selection = eval(app.settings.getSetting("duik","pano"));
+		}
 		
 		//--------------
 		// SUB PANELS
@@ -3300,60 +3313,38 @@ function fnDuIK(thisObj)
 		{
 		panosettings.alignment = ["fill","top"];
 		panosettings.alignChildren = ["fill","top"];
-		var settingsDropdown = panosettings.add("dropdownlist",undefined,["User Interface","Updates","Bones","Controllers","Copy/Paste Animation"]);
-		addSeparator(panosettings,"");
+		var settingsDropdown = panosettings.add("dropdownlist",undefined,["General","Rigging","Animation"]);
 		var settingsGroup = addVPanel(panosettings);
 		settingsGroup.orientation = "stack";
 		settingsGroup.alignChildren = ["center","top"];
 		
-		var uiGroup = addVGroup(settingsGroup);
-		var updatesGroup = addVGroup(settingsGroup);
-		var bonesGroup = addVGroup(settingsGroup);
-		var controllersGroup = addVGroup(settingsGroup);
-		var copyPasteAnimGroup = addVGroup(settingsGroup);
+		var settingsgeneralGroup = addVGroup(settingsGroup);
+		var settingsRiggingGroup = addVGroup(settingsGroup);
+		var settingsAnimationGroup = addVGroup(settingsGroup);
 		
 		settingsDropdown.onChange = function() {
 			if (settingsDropdown.selection == 0) {
-				uiGroup.visible = true;
-				updatesGroup.visible = false;
-				bonesGroup.visible = false;
-				controllersGroup.visible = false;
-				copyPasteAnimGroup.visible = false;
+				settingsgeneralGroup.visible = true;
+				settingsRiggingGroup.visible = false;
+				settingsAnimationGroup.visible = false;
 			}
 			else if (settingsDropdown.selection == 1) {
-				uiGroup.visible = false;
-				updatesGroup.visible = true;
-				bonesGroup.visible = false;
-				controllersGroup.visible = false;
-				copyPasteAnimGroup.visible = false;
+				settingsgeneralGroup.visible = false;
+				settingsRiggingGroup.visible = true;
+				settingsAnimationGroup.visible = false;
 			}
 			else if (settingsDropdown.selection == 2) {
-				uiGroup.visible = false;
-				updatesGroup.visible = false;
-				bonesGroup.visible = true;
-				controllersGroup.visible = false;
-				copyPasteAnimGroup.visible = false;
-			}
-			else if (settingsDropdown.selection == 3) {
-				uiGroup.visible = false;
-				updatesGroup.visible = false;
-				bonesGroup.visible = false;
-				controllersGroup.visible = true;
-				copyPasteAnimGroup.visible = false;
-			}
-			else if (settingsDropdown.selection == 4) {
-				uiGroup.visible = false;
-				updatesGroup.visible = false;
-				bonesGroup.visible = false;
-				controllersGroup.visible = false;
-				copyPasteAnimGroup.visible = true;
+				settingsgeneralGroup.visible = false;
+				settingsRiggingGroup.visible = false;
+				settingsAnimationGroup.visible = true;
 			}
 		}
 		settingsDropdown.selection = 0;
 		
 		
-		//UI
-		var groupeLangues = uiGroup.add("group");
+		//GENERAL
+		var settingsUIGroup = addBox(settingsgeneralGroup,"UI");
+		var groupeLangues = settingsUIGroup.add("group");
 		groupeLangues.alignment = ["left","center"];
 		groupeLangues.add("statictext",undefined,getMessage(76));
 		var boutonlangue = groupeLangues.add("dropdownlist",undefined,["Français","English","Español","Deutsch","Bahasa","Português"]);
@@ -3364,9 +3355,9 @@ function fnDuIK(thisObj)
 		if (app.settings.getSetting("duik", "lang") == "BAHASA") boutonlangue.selection = 4;
 		if (app.settings.getSetting("duik", "lang") == "PORTUGUESE") boutonlangue.selection = 5;
 		boutonlangue.onChange = choixLangue;
-		addSeparator(uiGroup,"");
-		uiGroup.add("statictext",undefined,"Panel selector:");
-		var dropDownSelectorButton = uiGroup.add("radiobutton",undefined,"Use dropdown");
+		addSeparator(settingsUIGroup,"");
+		settingsUIGroup.add("statictext",undefined,"Panel selector:");
+		var dropDownSelectorButton = settingsUIGroup.add("radiobutton",undefined,"Use dropdown");
 		dropDownSelectorButton.value = eval(app.settings.getSetting("duik", "dropDownSelector"));
 		dropDownSelectorButton.onClick = function(){
 				app.settings.saveSetting("duik","dropDownSelector",dropDownSelectorButton.value);
@@ -3381,7 +3372,7 @@ function fnDuIK(thisObj)
 					selectorButtons.show();
 				}
 			};
-		var buttonsSelectorButton = uiGroup.add("radiobutton",undefined,"Use buttons");
+		var buttonsSelectorButton = settingsUIGroup.add("radiobutton",undefined,"Use buttons");
 		buttonsSelectorButton.value = eval(app.settings.getSetting("duik", "dropDownSelector"));
 		buttonsSelectorButton.value = !eval(app.settings.getSetting("duik", "dropDownSelector"));
 		buttonsSelectorButton.onClick = function(){
@@ -3397,25 +3388,25 @@ function fnDuIK(thisObj)
 					selectorButtons.show();
 				}
 			};
-		addSeparator(uiGroup,"");
-		var expertModeButton = uiGroup.add("checkbox",undefined,"Expert Mode");
+		addSeparator(settingsUIGroup,"");
+		var expertModeButton = settingsUIGroup.add("checkbox",undefined,"Expert Mode");
 		expertModeButton.value = eval(app.settings.getSetting("duik", "expertMode"));
 		expertModeButton.onClick = function(){app.settings.saveSetting("duik","expertMode",expertModeButton.value)};
-		
-		//Updates
-		var boutonVMAJ = updatesGroup.add("checkbox",undefined,getMessage(77));
+		var settingsUpdatesGroup = addBox(settingsgeneralGroup,"Updates");
+		var boutonVMAJ = settingsUpdatesGroup.add("checkbox",undefined,getMessage(77));
 		if (app.settings.getSetting("duik", "version") == "oui") {boutonVMAJ.value = true; }
 		boutonVMAJ.onClick = function() {
 			if (boutonVMAJ.value) {app.settings.saveSetting("duik","version","oui");} else {app.settings.saveSetting("duik","version","non");}
 			}
-		var boutonMAJ = updatesGroup.add("button",undefined,getMessage(113));
+		var boutonMAJ = settingsUpdatesGroup.add("button",undefined,getMessage(113));
 		boutonMAJ.onClick = function() {
 			if (version == checkForUpdate(version,true)) { alert(getMessage(78)); };
 			}
 		
 		//boutons options bones et controleurs
+		var settingsBonesGroup = addBox(settingsRiggingGroup,"Bones");
 		//type de bones
-		var groupeBoneType = addHGroup(bonesGroup);
+		var groupeBoneType = addHGroup(settingsBonesGroup);
 		groupeBoneType.add("statictext",undefined,getMessage(165));
 		var boutonBoneType = groupeBoneType.add("dropdownlist",undefined,[getMessage(166),getMessage(167)]);
 		boutonBoneType.selection = Duik.settings.boneType;
@@ -3425,8 +3416,8 @@ function fnDuIK(thisObj)
 			Duik.settings.save();
 			};
 		//taille des bones
-		var groupeBoneSize = addHGroup(bonesGroup);
-		var groupeBoneSizeAuto = addHGroup(bonesGroup);
+		var groupeBoneSize = addHGroup(settingsBonesGroup);
+		var groupeBoneSizeAuto = addHGroup(settingsBonesGroup);
 		groupeBoneSize.add("statictext",undefined,getMessage(168));
 		var boutonBoneSize = groupeBoneSize.add("edittext",undefined,app.settings.getSetting("duik", "boneSize"));
 		boutonBoneSize.onChange = function() {
@@ -3454,7 +3445,7 @@ function fnDuIK(thisObj)
 		boutonBoneSize.enabled = !boutonBoneSizeAuto.value ;
 		boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value ;
 		//bone color
-		var groupeBoneColor = addHGroup(bonesGroup);
+		var groupeBoneColor = addHGroup(settingsBonesGroup);
 		groupeBoneColor.add("statictext",undefined,getMessage(187));
 		var boutonBoneColorSharp = groupeBoneColor.add("statictext",undefined,"#");
 		boutonBoneColorSharp.alignment = ["right","fill"];
@@ -3465,8 +3456,8 @@ function fnDuIK(thisObj)
 			};
 		boutonBoneColor.text = Duik.settings.boneColor;
 		boutonBoneColor.enabled = boutonBoneType.selection == 0;
-		var groupeBoneLocation = addHGroup(bonesGroup);
-		groupeBoneLocation.add("statictext",undefined,"Bone placement")
+		var groupeBoneLocation = addHGroup(settingsBonesGroup);
+		groupeBoneLocation.add("statictext",undefined,"Placement")
 		var boutonBonePlacement = groupeBoneLocation.add("dropdownlist",undefined,["Top","Bottom","Over layer","Under layer"]);
 		boutonBonePlacement.selection = Duik.settings.bonePlacement;
 		boutonBonePlacement.onChange = function() {
@@ -3474,17 +3465,18 @@ function fnDuIK(thisObj)
 			Duik.settings.save();
 			};
 		
+		var settingsCtrlGroup = addBox(settingsRiggingGroup,"Controllers");
 		//controller types
-		var groupeCtrlType = addHGroup(controllersGroup);
-		groupeCtrlType.add("statictext",undefined,"Controllers type");
+		var groupeCtrlType = addHGroup(settingsCtrlGroup);
+		groupeCtrlType.add("statictext",undefined,"Type");
 		var boutonCtrlType = groupeCtrlType.add("dropdownlist",undefined,["Null","Icon"]);
 		boutonCtrlType.selection = Duik.settings.controllerType-1;
 		boutonCtrlType.onChange = function() {
 			Duik.settings.controllerType = boutonCtrlType.selection.index+1;
 			Duik.settings.save();
 			};
-		var groupeCtrlLocation = addHGroup(controllersGroup);
-		groupeCtrlLocation.add("statictext",undefined,"Controller placement")
+		var groupeCtrlLocation = addHGroup(settingsCtrlGroup);
+		groupeCtrlLocation.add("statictext",undefined,"Placement")
 		var boutonCtrlPlacement = groupeCtrlLocation.add("dropdownlist",undefined,["Top","Bottom","Over layer","Under layer"]);
 		boutonCtrlPlacement.selection = Duik.settings.ctrlPlacement;
 		boutonCtrlPlacement.onChange = function() {
@@ -3492,10 +3484,32 @@ function fnDuIK(thisObj)
 			Duik.settings.save();
 			};
 		
+		var settingsInterpolationsGroup = addBox(settingsAnimationGroup,"Interpolations");
+		var settingsInteractiveUpdateButton = settingsInterpolationsGroup.add("checkbox",undefined,"Interactive update");
+		settingsInteractiveUpdateButton.helpTip = "Warning, interactive update can create a LOT of history items (Undos) and could easily fill up your entire history.";
+		settingsInteractiveUpdateButton.value = eval(app.settings.getSetting("duik","interactiveUpdate"));
+		settingsInteractiveUpdateButton.onClick = function () {
+			if (settingsInteractiveUpdateButton.value)
+			{
+				if (confirm("Are you sure you want to activate interactive update?\n\nInteractive update can create a LOT of history items (Undos) and could easily fill up your entire history.",true,"Interactive upsate"))
+				{
+					app.settings.saveSetting("duik","interactiveUpdate","true");
+				}
+				else
+				{
+					settingsInteractiveUpdateButton.value = false;
+				}
+			}
+			else
+			{
+				app.settings.saveSetting("duik","interactiveUpdate","false");
+			}
+		}
 		
-		var pauiNamesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer names");
-		var pauiIndexesButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use layer indexes");
-		var pauiSelectionButton = copyPasteAnimGroup.add("radiobutton",undefined,"Use selection order");
+		var settingsPaGroup = addBox(settingsAnimationGroup,"Copy/paste");
+		var pauiNamesButton = settingsPaGroup.add("radiobutton",undefined,"Use layer names");
+		var pauiIndexesButton = settingsPaGroup.add("radiobutton",undefined,"Use layer indexes");
+		var pauiSelectionButton = settingsPaGroup.add("radiobutton",undefined,"Use selection order");
 		if (Duik.settings.getLayersMethod == Duik.getLayers.INDEX)
 		{
 			pauiIndexesButton.value = true;
@@ -3654,6 +3668,10 @@ function fnDuIK(thisObj)
 						interpoOutSlider.value = val;
 						interpoOutEdit.text = val;
 					}
+					if (settingsInteractiveUpdateButton.value) infl();
+				}
+				interpoInSlider.onChange = function ()
+				{
 					infl();
 				}
 				var interpoInEdit = interpoInGroup.add("edittext",undefined,"33");
@@ -3682,8 +3700,13 @@ function fnDuIK(thisObj)
 				interpoOutSlider.alignment = ["fill","center"];
 				interpoOutSlider.onChanging = function()
 				{
+					if (!settingsInteractiveUpdateButton.value) return;
 					var val = Math.round(interpoOutSlider.value);
 					interpoOutEdit.text = val;
+					infl();
+				}
+				interpoOutSlider.onChange = function ()
+				{
 					infl();
 				}
 				var interpoOutEdit = groupeInterpoOut.add("edittext",undefined,"33");
