@@ -3681,6 +3681,11 @@ function fnDuIK(thisObj)
 					var val = parseInt(interpoInEdit.text);
 					if (!val) return;
 					interpoInSlider.value = val;
+					if (interpoLockInfluencesButton.value)
+					{
+						interpoOutSlider.value = val;
+						interpoOutEdit.text = val;
+					}
 					infl();
 				}
 				
