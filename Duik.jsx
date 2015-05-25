@@ -5,6 +5,7 @@ http://ik.duduf.fr
 http://ik.duduf.com
 
 Many thanks to :
+Dan Ebberts - Writing the first IK Expressions
 Kevin Schires - including the images needed by Duik directly in the Script
 Eric Epstein - making the IK's work with 3D Layers
 Zeg - designing the buttons
@@ -29,7 +30,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15 Beta 1";
+	var version = "15 Beta 2";
 	//=========================
 
 	//=================================
@@ -57,8 +58,7 @@ function fnDuIK(thisObj)
 		if (!app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
 		if (!app.settings.haveSetting("duik", "dropDownSelector")){app.settings.saveSetting("duik","dropDownSelector","false");}
 	}
-	
-	
+		
 	//=================================
 	//== DUIK NEEDS TO WRITE FILES ====
 	//=================================
@@ -4641,6 +4641,7 @@ function fnDuIK(thisObj)
 		palette.layout.layout(true);
 		palette.layout.resize();
 		palette.onResizing = palette.onResize = function () { this.layout.resize(); }
+		if (!(thisObj instanceof Panel)) palette.show();
 		
 		Duik.ui.hideProgressPanel();
 		}
@@ -4650,6 +4651,7 @@ function fnDuIK(thisObj)
 	palette.layout.layout(true);
 	palette.layout.resize();
 	palette.onResizing = palette.onResize = function () { this.layout.resize(); }
+	if (!(thisObj instanceof Panel)) palette.show();
 
 	
 	return palette;
