@@ -3705,12 +3705,10 @@ function fnDuIK(thisObj)
 					{
 						boutonApproche.value = true;
 						boutonApproche.enabled = false;
-						groupeInterpoOut.enabled = false;
 						boutonEloignement.value = true;
 						interpoInSlider.enabled = true;
 						interpoInEdit.enabled = true;
-						interpoOutSlider.enabled = true;
-						interpoOutEdit.enabled = true;
+						groupeInterpoOut.enabled = false;
 						interpoOutSlider.value = parseInt(interpoInEdit.text);
 						interpoOutEdit.text = parseInt(interpoInEdit.text);
 					}
