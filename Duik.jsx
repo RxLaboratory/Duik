@@ -2472,12 +2472,28 @@ function fnDuIK(thisObj)
 
 			function lissageA() {
 
+			var inVal = parseInt(interpoInEdit.text);
+			if (!inVal) inVal = 33;
+			easeIn = new KeyframeEase(0,inVal);
+			var outVal = parseInt(interpoOutEdit.text);
+			if (!outVal) outVal = 33;
+			easeOut = new KeyframeEase(0,outVal);
+			
 			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
 				for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
 					if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+							
+							//influences
+							if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+							else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+							else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+							
+							//type
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
+							
+							//not roving
 							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
@@ -2487,12 +2503,28 @@ function fnDuIK(thisObj)
 
 			function lissageE() {
 				
+			var inVal = parseInt(interpoInEdit.text);
+			if (!inVal) inVal = 33;
+			easeIn = new KeyframeEase(0,inVal);
+			var outVal = parseInt(interpoOutEdit.text);
+			if (!outVal) outVal = 33;
+			easeOut = new KeyframeEase(0,outVal);
+				
 			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
 				for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
 					if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
 						for (k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+							
+							//influences
+							if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+							else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+							else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+							
+							//type
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
+							
+							//not roving
 							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
@@ -2501,6 +2533,13 @@ function fnDuIK(thisObj)
 			}
 
 			function lissage() {
+				
+			var inVal = parseInt(interpoInEdit.text);
+			if (!inVal) inVal = 33;
+			easeIn = new KeyframeEase(0,inVal);
+			var outVal = parseInt(interpoOutEdit.text);
+			if (!outVal) outVal = 33;
+			easeOut = new KeyframeEase(0,outVal);
 
 			for (i=0;i<app.project.activeItem.selectedLayers.length;i++) {
 				for (j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
@@ -2509,10 +2548,12 @@ function fnDuIK(thisObj)
 							var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 							prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
 							prop.setTemporalContinuousAtKey(prop.selectedKeys[k], false);
-							var easeIn = new KeyframeEase(0,100/3);
-							if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn]); }
-							else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn]); }
-							else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn]); }
+							
+							//influences
+							if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+							else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+							else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+							
 							if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
 							}
 						}
@@ -3705,10 +3746,9 @@ function fnDuIK(thisObj)
 				interpoOutSlider.alignment = ["fill","center"];
 				interpoOutSlider.onChanging = function()
 				{
-					if (!settingsInteractiveUpdateButton.value) return;
 					var val = Math.round(interpoOutSlider.value);
 					interpoOutEdit.text = val;
-					infl();
+					if (settingsInteractiveUpdateButton.value) infl();
 				}
 				interpoOutSlider.onChange = function ()
 				{
