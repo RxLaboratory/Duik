@@ -2419,11 +2419,11 @@ function fnDuIK(thisObj)
 				var cam = Duik.bridge.tvPaint.loadCamFile(camFile);
 				if (tvpCamNullButton.value)
 				{
-					cam.createNull(comp,tvpCamLinkButton.value);
+					cam.createNull(comp,tvpCamLinkButton.value,tvpCamAnchorPointButton.value);
 				}
 				else
 				{
-					cam.precompose(comp);
+					cam.precompose(comp,tvpCamAnchorPointButton.value);
 				}
 				
 			}
@@ -4911,6 +4911,11 @@ function fnDuIK(thisObj)
 			tvpCamLinkButton.value = true;
 			tvpCamNullButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
 			tvpCamPrecompButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
+			
+			var tvpCamMoveGroup = addHGroup(tvpCamPanel);
+			var tvpCamPositionButton = tvpCamMoveGroup.add("radiobutton",undefined,"Animate position");
+			var tvpCamAnchorPointButton = tvpCamMoveGroup.add("radiobutton",undefined,"Animate anchor point");
+			tvpCamPositionButton.value = true;
 			
 			var tvpCamButtonsGroup = addHGroup(tvpCamPanel);
 			var tvpCamCancelButton = addIconButton(tvpCamButtonsGroup,"btn_cancel.png","Cancel");
