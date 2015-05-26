@@ -981,6 +981,8 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings = {};
 		
 		Duik.uiStrings.ik = "IK";
+		Duik.uiStrings.IKDirection = "IK Direction";
+		Duik.uiStrings.IKLimit = "IK Limit"
 		Duik.uiStrings.wiggle = "Wiggle";
 		Duik.uiStrings.exposure = "Exposure";
 		Duik.uiStrings.rotMorph = "Rotation Morph";
@@ -2617,8 +2619,12 @@ if (typeof Duik === 'object') delete Duik;
 
 			if (threeD) {
 				direction = controller.Effects.addProperty("ADBE Angle Control");
-				direction.name = "IK Direction " +  rootName.slice(-15);
+				direction.name = Duik.uiStrings.IKDirection + " " + endName;
 			}
+			
+			//limit
+			limit = root.Effects.addProperty("ADBE Angle Control");
+			limit.name = Duik.uiStrings.IKLimit;
 					
 			//créer un zéro
 			endZero = controller.containingComp.layers.addNull();
@@ -2655,9 +2661,7 @@ if (typeof Duik === 'object') delete Duik;
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
 				"}\n" + 
-				"function oriente(a, b, P) {\n" +
-				"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
-				"}\n" +
+				"function ik() {\n" +
 				"A = getWorldPos(boneracine);\n" + 
 				"B = getWorldPos(bonebout);\n" + 
 				"C = getWorldPos(zero);\n" + 
@@ -2675,7 +2679,9 @@ if (typeof Duik === 'object') delete Duik;
 				"  V2 = C - B;\n" + 
 				"  adj2 = radiansToDegrees(Math.atan2(V2[1],V2[0]));\n" + 
 				"  IK = result +  adj1 - adj2 + value;\n" + 
-				"IKFK ? IK : FK;";
+				"return IK;\n" + 
+				"}\n" + 
+				"IKFK ? ik() : FK;";
 			//=========================================================
 
 			threeD ? end.transform.zRotation.expression = endExpression : end.transform.rotation.expression = endExpression;
@@ -2687,6 +2693,7 @@ if (typeof Duik === 'object') delete Duik;
 				"bonebout = \"" + endName + "\";\n" + 
 				"zero = \"" + endZeroName + "\";\n" + 
 				"controleur = \"" + controllerName + "\";\n" +
+				"limit = effect(\"" + limit.name + "\")(1);\n" + 
 				"FK = thisComp.layer(controleur).effect(\"" + effectName + "\")(4);\n" +
 				"IKFK = thisComp.layer(controleur).effect(\"" + effectName + "\")(3) == 0;\n" +
 				"if (thisComp.layer(controleur).effect(\"" + effectName + "\")(1) == 1) {cw = true}else{cw=false}\n" +
@@ -2694,9 +2701,7 @@ if (typeof Duik === 'object') delete Duik;
 				"  L = thisComp.layer(theLayerName);\n" + 
 				"  return L.toWorld(L.anchorPoint);\n" + 
 				"}\n" + 
-				"function oriente(a, b, P) {\n" +
-				"return ((b[0]-a[0])*(P[1]-a[1]) - (P[0]-a[0])*(b[1]-a[1]) );\n" +
-				"}\n" +
+				"function ik() {\n" +
 				"A = getWorldPos(boneracine);\n" + 
 				"B = getWorldPos(bonebout);\n" + 
 				"C = getWorldPos(zero);\n" + 
@@ -2712,7 +2717,10 @@ if (typeof Duik === 'object') delete Duik;
 				"V = B - A;\n" + 
 				"adj1 = radiansToDegrees(Math.atan2(V[1],V[0]));\n" + 
 				"IK = result - adj1 + value;\n" + 
-				"IKFK ? IK : FK;";
+				"if (IK < limit) IK+=360;\n" + 
+				"return IK;\n" + 
+				"}\n" + 
+				"IKFK ? ik() : FK;";
 			//=======================================================
 
 			threeD ? root.transform.zRotation.expression = rootExpression : root.transform.rotation.expression = rootExpression;
@@ -2847,6 +2855,10 @@ if (typeof Duik === 'object') delete Duik;
 			else effect = controller.effect.addProperty("DUIK_Three_Layer_IK");
 			effect.name = Duik.uiStrings.ik + " "  + endName;
 			if (clockWise) effect(1).setValue(1);
+			
+			//limit
+			limit = root.Effects.addProperty("ADBE Angle Control");
+			limit.name = Duik.uiStrings.IKLimit;
 			
 			//créer un zéro
 			endZero = controller.containingComp.layers.addNull();
@@ -2983,6 +2995,7 @@ if (typeof Duik === 'object') delete Duik;
 					"middleBone = \"" + middleName + "\";\n" + 
 					"lowerBone = \"" + endName + "\";\n" + 
 					"controller = \"" + controllerName + "\";\n" + 
+					"limit = effect(\"" + limit.name + "\")(1)\n" + 
 					"FK = thisComp.layer(controller).effect(\"" + effect.name + "\")(4);\n" + 
 					"IKFK = thisComp.layer(controller).effect(\"" + effect.name + "\")(3) == 0;\n" + 
 					"if (thisComp.layer(controller).effect(\"" + effect.name + "\")(1) == 1) {cw = true}else{cw=false}\n" + 
@@ -3019,6 +3032,7 @@ if (typeof Duik === 'object') delete Duik;
 					"var uToC =getAngle(uPos,cPos);\n" + 
 					"var uToM =getAngle(uPos,mPos);\n" + 
 					"var ikResult = upperA + uToC - uToM;\n" + 
+					"if (ikResult < limit) ikResult +=360;\n" + 
 					"return ikResult;\n" + 
 					"}\n" + 
 					"var result = value;\n" + 
