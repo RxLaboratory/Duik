@@ -519,44 +519,58 @@ if (typeof Duik === 'object') delete Duik;
 		this.u = 0.0;
 		this.v = 0.0;
 	}
-	TVPCamera.prototype.createNull = function(comp,link)
+	TVPCamera.prototype.createNull = function(comp,link,useAnchorPoint)
 	{
 		var camLayer = comp.layers.addNull();
 		camLayer.name = "TVPaint Camera";
-		this.applyToLayer(camLayer,link);
+		this.applyToLayer(camLayer,link,useAnchorPoint);
 	}
-	TVPCamera.prototype.precompose = function(comp)
+	TVPCamera.prototype.precompose = function(comp,useAnchorPoint)
 	{
-		var indices = [];
-		for (var i = 1;i<=comp.numLayers;i++)
-		{
-			indices.push(i);
-		}
-		var precompItem = comp.layers.precompose(indices,"TVPaint " + comp.name);
-		var camLayer = comp.layer(1);
-		this.applyToLayer(camLayer,false);
+		var tvpComp = app.project.items.addComp("TVPaint Camera",comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+		var camLayer = tvpComp.layers.add(comp);
+		this.applyToLayer(camLayer,false,useAnchorPoint);
 	}
-	TVPCamera.prototype.applyToLayer = function(camLayer,link)
+	TVPCamera.prototype.applyToLayer = function(camLayer,link,useAnchorPoint)
 	{
 		var comp = camLayer.containingComp;
 		var numPoints = this.pointCount;
-
-		//Anchor Point
+		
+		if (link == undefined) link = false;
+		if (useAnchorPoint == undefined) useAnchorPoint = false;
+		
+		var moveProp = camLayer.transform.anchorPoint;
+		var rotationLayer = camLayer;
+		
+		// Move
+		if (!useAnchorPoint)
+		{
+			moveProp = camLayer.transform.position;
+			rotationLayer = camLayer.containingComp.layers.addNull();
+			rotationLayer.name = "TVPaint Rotation & Scale";
+		}
+		var startPos = camLayer.transform.position.value;
+		var intialDif = [0,0];
 		for (var i = 0;i< numPoints;i++)
 		{
 			var point = this.points[i];
 			var time = (comp.duration-comp.frameDuration)/(numPoints-1)*i;
-			camLayer.transform.anchorPoint.setValueAtTime(time,[point.x,point.y]); 
+			
+			if (i == 0) initialDif = startPos - [point.x,point.y];
+			var val;
+			useAnchorPoint ? val = [point.x,point.y] : val = 2*startPos-[point.x,point.y]-initialDif;
+			
+			moveProp.setValueAtTime(time,val);
+			
 			if (i == 0 || i == numPoints-1)
 			{
-				camLayer.transform.anchorPoint.setSpatialTangentsAtKey(i+1,[0,0,0],[0,0,0]);
+				moveProp.setSpatialTangentsAtKey(i+1,[0,0,0],[0,0,0]);
 			}
 			else
 			{
-				camLayer.transform.anchorPoint.setSpatialAutoBezierAtKey(i+1,true);
-				var inTangent = camLayer.transform.anchorPoint.keyInSpatialTangent(i+1);
-				var outTangent = camLayer.transform.anchorPoint.keyOutSpatialTangent(i+1);
-				//camLayer.transform.position.setSpatialTangentsAtKey(i+1,inTangent*2,outTangent*2);
+				moveProp.setSpatialAutoBezierAtKey(i+1,true);
+				var inTangent = moveProp.keyInSpatialTangent(i+1);
+				var outTangent = moveProp.keyOutSpatialTangent(i+1);
 			}
 		}
 
@@ -564,11 +578,11 @@ if (typeof Duik === 'object') delete Duik;
 		for (var i =0; i < numPoints;i++)
 		{
 			var point = this.points[i];
-			camLayer.transform.anchorPoint.setRovingAtKey(i+1,true);
-			time = camLayer.transform.anchorPoint.keyTime(i+1);
-			 camLayer.transform.rotation.setValueAtTime(time,point.rotation); 
+			moveProp.setRovingAtKey(i+1,true);
+			time = moveProp.keyTime(i+1);
+			rotationLayer.transform.rotation.setValueAtTime(time,point.rotation); 
 			var zoom = (1+(1-point.zoom))*100;
-			camLayer.transform.scale.setValueAtTime(time,[zoom,zoom,zoom]);
+			rotationLayer.transform.scale.setValueAtTime(time,[zoom,zoom,zoom]);
 		}
 
 		//Morpher
@@ -576,9 +590,9 @@ if (typeof Duik === 'object') delete Duik;
 		morpher.name = "Morpher";
 
 		var exp = "valueAtTime((thisComp.layer(\"" + camLayer.name +"\").effect(\"Morpher\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
-		camLayer.transform.anchorPoint.expression = exp;
-		camLayer.transform.rotation.expression = exp;
-		camLayer.transform.scale.expression = exp;
+		moveProp.expression = exp;
+		rotationLayer.transform.rotation.expression = exp;
+		rotationLayer.transform.scale.expression = exp;
 
 		//add morpher keys
 		var numProfPoints = this.profileprof.pointCount;
@@ -606,10 +620,13 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 		
+		if (!useAnchorPoint) camLayer.parent = rotationLayer;
+		
 		if (link)
 		{
-			for (var i = 2;i<=comp.numLayers;i++)
+			for (var i = 1;i<=comp.numLayers;i++)
 			{
+				if (i == camLayer.index || i == rotationLayer.index) continue;
 				if (comp.layer(i).parent == null) comp.layer(i).parent = camLayer;
 			}
 		}
