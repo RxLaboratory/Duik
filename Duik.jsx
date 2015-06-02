@@ -1848,6 +1848,9 @@ function fnDuIK(thisObj)
 				var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
                     if (prop == undefined) return;
 				var dim = prop.propertyValueType ;
+				
+				app.beginUndoGroup("Duik - Wiggle");
+				
 				if (dim == PropertyValueType.ThreeD_SPATIAL || dim == PropertyValueType.ThreeD || dim == PropertyValueType.TwoD_SPATIAL || dim == PropertyValueType.TwoD)
 				{
 					panoanimation.hide();
@@ -1857,6 +1860,8 @@ function fnDuIK(thisObj)
 				{
 					Duik.wiggle(app.project.activeItem.selectedLayers[0],prop);
 				}
+				
+				app.endUndoGroup();
 			}
 
 			//FONCTION QUI MESURE LE RAYON D'UNE ROUE
@@ -4627,7 +4632,7 @@ function fnDuIK(thisObj)
 				upperExposureGroup.enabled = adaptativeExposureButton.value;
 				precisionGroup.enabled = adaptativeExposureButton.value;
 				exposureSyncGroup.enabled = adaptativeExposureButton.value;
-				exposurePreExpressionButton.enabled = adaptativeExposureButton.value;
+				exposurePrecisionSlider.enabled = adaptativeExposureButton.value;
 				exposurePostExpressionButton.enabled = adaptativeExposureButton.value;
 			}
 			var exposureTypeGroup = addHGroup(exposurePanel);
