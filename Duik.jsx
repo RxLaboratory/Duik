@@ -1944,14 +1944,14 @@ function fnDuIK(thisObj)
 
 			function springok() {
 				
-			//  début de groupe d'annulation
-			app.beginUndoGroup(getMessage(42));
+				//  début de groupe d'annulation
+				app.beginUndoGroup(getMessage(42));
 
-			var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-			Duik.spring(ef,ef = app.project.activeItem.selectedLayers[0],!boutonLightSpring.value);
+				var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
+				Duik.spring(ef,app.project.activeItem.selectedLayers[0],!boutonLightSpring.value);
 
-			//fin du groupe d'annulation
-			app.endUndoGroup();
+				//fin du groupe d'annulation
+				app.endUndoGroup();
 
 			}
 
