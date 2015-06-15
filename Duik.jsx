@@ -2426,6 +2426,14 @@ function fnDuIK(thisObj)
 				{
 					cam.createNull(comp,tvpCamLinkButton.value,tvpCamAnchorPointButton.value);
 				}
+				else if (tvpCamLayerButton.value)
+				{
+					if (comp.selectedLayers.length)
+					{
+						var layer = comp.selectedLayers[0];
+						cam.applyToLayer(layer,tvpCamLinkButton.value,tvpCamAnchorPointButton.value);
+					}
+				}
 				else
 				{
 					cam.precompose(comp,tvpCamAnchorPointButton.value);
@@ -4908,14 +4916,26 @@ function fnDuIK(thisObj)
 		}
 		//TVPAINT CAM PANEL
 		{
-			var tvpCamMethodGroup = addHGroup(tvpCamPanel);
-			var tvpCamNullButton = tvpCamMethodGroup.add("radiobutton",undefined,"Use a Null Object");
-			var tvpCamPrecompButton = tvpCamMethodGroup.add("radiobutton",undefined,"Precompose layers");
+			var tvpCamNullGroup = addHGroup(tvpCamPanel);
+			var tvpCamNullButton = tvpCamPanel.add("radiobutton",undefined,"Use a Null Object");
+			var tvpCamPrecompButton = tvpCamPanel.add("radiobutton",undefined,"Precompose layers");
+			var tvpCamLayerButton = tvpCamPanel.add("radiobutton",undefined,"Use selected layer");
 			var tvpCamLinkButton = tvpCamPanel.add("checkbox",undefined,"Auto-parent layers");
+			
+			tvpCamNullButton.onClick = function () {
+				tvpCamLinkButton.enabled = true;
+			};
+			tvpCamPrecompButton.onClick = function () {
+				tvpCamLinkButton.enabled = false;
+			};
+			tvpCamLayerButton.onClick = function () {
+				tvpCamLinkButton.enabled = true;
+			};
+			
 			tvpCamNullButton.value = true;
 			tvpCamLinkButton.value = true;
-			tvpCamNullButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
-			tvpCamPrecompButton.onClick = function () {tvpCamLinkButton.enabled = tvpCamNullButton.value;};
+			
+			addSeparator(tvpCamPanel,"");
 			
 			var tvpCamMoveGroup = addHGroup(tvpCamPanel);
 			var tvpCamPositionButton = tvpCamMoveGroup.add("radiobutton",undefined,"Animate position");
