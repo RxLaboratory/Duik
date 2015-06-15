@@ -2237,7 +2237,7 @@ function fnDuIK(thisObj)
 				
 				
 				app.beginUndoGroup("Duik - Update Onion Skin");
-				Duik.onionSkin(layer,celOnionButton.value,parseInt(celOnionDurationEdit.text));
+				Duik.onionSkin(layer,celOnionButton.value,parseInt(celOnionDurationEdit.text),parseInt(celExposureEdit.text));
 				app.endUndoGroup();
 			}
 			
