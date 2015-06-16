@@ -30,7 +30,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15 Beta 2";
+	var version = "15 Beta 3";
 	//=========================
 
 	//=================================
@@ -1770,6 +1770,7 @@ function fnDuIK(thisObj)
 				}
 			}
 			
+			//LOCK PROPERTY
 			function lockButtonClicked() {
 				// Vérifions si il n'y a qu'un calque sélectionné
 				if (app.project.activeItem.selectedLayers.length == 1)
@@ -1787,6 +1788,25 @@ function fnDuIK(thisObj)
 
 					app.endUndoGroup();
 				}
+			}
+			
+			//LIST
+			function listButtonClicked() {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				if (!comp.selectedLayers.length) return;
+				var layer = comp.selectedLayers[0];
+				if (!layer.selectedProperties.length) return;
+				var prop = layer.selectedProperties.pop();
+				if(!prop.canSetExpression) return;
+				
+				//  début de groupe d'annulation
+				app.beginUndoGroup("Duik - List");
+				
+
+				Duik.list(prop);
+
+				app.endUndoGroup();
 			}
 			
 			//=============== ANIMATION =========================
@@ -3844,6 +3864,14 @@ function fnDuIK(thisObj)
 			var boutongoal = addIconButton(groupeikD,"btn_goal.png",getMessage(115));
 			boutongoal.onClick = pregoal;
 			boutongoal.helpTip = getMessage(79);
+			//bezier IK button
+			var bezierIKButton = addIconButton(groupeikG,"btn_bezier.png","Beizier IK");
+			//bezierIKButton.onClick = bezierIKButtonClicked;
+			bezierIKButton.helpTip = "Move layers as a Bezier curve";
+			//bouton rotmorph
+			var boutonrotmorph = addIconButton(groupeikD,"btn_rotmorph.png",getMessage(119));
+			boutonrotmorph.onClick = rotmorph;
+			boutonrotmorph.helpTip = getMessage(120);
 			//bouton controleur
 			var controllerButton =  addIconButton(groupeikG,"btn_controleur.png",getMessage(116));
 			controllerButton.onClick = function () { controllersFromRiggingPanel = true; controllerButtonClicked(); };
@@ -3856,10 +3884,10 @@ function fnDuIK(thisObj)
 			var boutonzero2 = addIconButton(groupeikG,"btn_zero.png",getMessage(118));
 			boutonzero2.onClick = zero;
 			boutonzero2.helpTip = getMessage(84);
-			//bouton rotmorph
-			var boutonrotmorph = addIconButton(groupeikD,"btn_rotmorph.png",getMessage(119));
-			boutonrotmorph.onClick = rotmorph;
-			boutonrotmorph.helpTip = getMessage(120);
+			//list button
+			var listButton = addIconButton(groupeikD,"btn_list.png","List");
+			listButton.onClick = listButtonClicked;
+			listButton.helpTip = "Adds an animation list on the property";
 			//bouton renommer
 			var boutonrename = addIconButton(groupeikG,"btn_renommer.png",getMessage(111));
 			boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
