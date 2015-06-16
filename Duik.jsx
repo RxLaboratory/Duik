@@ -1200,6 +1200,20 @@ function fnDuIK(thisObj)
 				}
 			}
 
+			//BEZIER IK
+			function bikCreateButtonClicked() {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				if (comp.selectedLayers.length < 3) return;
+				app.beginUndoGroup("Duik - Bezier IK");
+				var numCtrls = 1;
+				if (bikCubicButton.value) numCtrls = 2;
+				Duik.bezierIK(comp.selectedLayers,numCtrls);
+				app.endUndoGroup();
+				bezierIkPanel.hide();
+				panoik.show();
+			}
+			
 			//FONCTION QUAND ON CLIQUE SUR GOAL
 			function pregoal(){
 				if (app.project.activeItem.selectedLayers.length == 1) {
@@ -3433,6 +3447,9 @@ function fnDuIK(thisObj)
 			var ikPanel = addVPanel(panos);
 			ikPanel.visible = false;
 			ikPanel.alignChildren = ["fill","top"];
+			var bezierIkPanel = addVPanel(panos);
+			bezierIkPanel.visible = false;
+			bezierIkPanel.alignChildren = ["fill","top"];
 			var renamePanel = addVPanel(panos);
 			renamePanel.visible = false;
 			renamePanel.alignChildren = ["fill","top"];
@@ -3477,6 +3494,7 @@ function fnDuIK(thisObj)
 			function displayPanel() {
 				ctrlPanel.hide();
 				ikPanel.hide();
+				bezierIkPanel.hide();
 				renamePanel.hide();
 				riePanel.hide();
 				measurePanel.hide();
@@ -3865,8 +3883,8 @@ function fnDuIK(thisObj)
 			boutongoal.onClick = pregoal;
 			boutongoal.helpTip = getMessage(79);
 			//bezier IK button
-			var bezierIKButton = addIconButton(groupeikG,"btn_bezier.png","Beizier IK");
-			//bezierIKButton.onClick = bezierIKButtonClicked;
+			var bezierIKButton = addIconButton(groupeikG,"btn_bezier.png","Bezier IK");
+			bezierIKButton.onClick = function() { panoik.hide(); bezierIkPanel.show();}
 			bezierIKButton.helpTip = "Move layers as a Bezier curve";
 			//bouton rotmorph
 			var boutonrotmorph = addIconButton(groupeikD,"btn_rotmorph.png",getMessage(119));
@@ -4457,6 +4475,36 @@ function fnDuIK(thisObj)
 			var ikCreateButton = addIconButton(ikButtonsGroup,"btn_valid.png","Create");
 			
 			
+		}
+		//BEZIER IK PANEL
+		{
+			var bikTypeGroup = addHGroup(bezierIkPanel);
+			
+			if (!expertMode)
+			{
+				var bikSimpleGroup = addVGroup(bikTypeGroup);
+				bikSimpleGroup.alignChildren = ["center","top"];
+				bikSimpleGroup.add("image",undefined,dossierIcones + "btn_bezierik1.png");
+			}
+			var bikSimpleButton = expertMode ? bikTypeGroup.add("radiobutton",undefined,"Sim.") : bikSimpleGroup.add("radiobutton",undefined,"Simple");
+			if (!expertMode)
+			{
+				var bikCubicGroup = addVGroup(bikTypeGroup);
+				bikCubicGroup.alignChildren = ["center","top"];
+				bikCubicGroup.add("image",undefined,dossierIcones + "btn_bezierik2.png");
+			}
+			var bikCubicButton = expertMode ?  bikTypeGroup.add("radiobutton",undefined,"Cub.") : bikCubicGroup.add("radiobutton",undefined,"Cubic");
+			
+			bikCubicButton.onClick = function () {bikSimpleButton.value = false;};
+			bikSimpleButton.onClick = function () {bikCubicButton.value = false;};
+			
+			bikSimpleButton.value = true;
+			
+			var bikButtonsGroup = addHGroup(bezierIkPanel);
+			var bikCancelButton = addIconButton(bikButtonsGroup,"btn_cancel.png","Cancel");
+			bikCancelButton.onClick = function () { bezierIkPanel.hide();panoik.show(); };
+			var bikCreateButton = addIconButton(bikButtonsGroup,"btn_valid.png","Create");
+			bikCreateButton.onClick = bikCreateButtonClicked;
 		}
 		//RENAME PANEL
 		{
