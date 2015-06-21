@@ -631,6 +631,14 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 	}
+	function OnionSkin()
+	{
+		this.activated = false;
+		this.duration = 5;
+		this.inOpacity = 0;
+		this.outOpacity = 50;
+		this.exposure = 2;
+	}
 }
 
 /////////////////////////////
@@ -5399,9 +5407,7 @@ if (typeof Duik === 'object') delete Duik;
 
 	parameters
 		layer | AVLayer
-		activate | boolean, default: true
-		duration | integer, onion skin duration in frames, default: 5
-		exposure | integer, animation exposure, default: 2
+		onionSkin | OnionSkin
 		
 	returns
 		void
@@ -5409,12 +5415,19 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.onionSkin !== 'function')
 	{
-		Duik.onionSkin = function (layer,activate,onionDuration,exposure)
+		Duik.onionSkin = function (layer,onionSkin)
 		{
 			if (layer == undefined) return;
-			if (activate == undefined) activate = true;
-			if (onionDuration == undefined) onionDuration = 5;
-			if (exposure == undefined) exposure = 2;
+			if (onionSkin == undefined) 
+			{
+				onionSkin = new OnionSkin();
+				onionSkin.activated = true;
+			}
+			activate = onionSkin.activated;
+			onionDuration = onionSkin.duration;
+			exposure = onionSkin.exposure;
+			inOpacity = onionSkin.inOpacity;
+			outOpacity = onionSkin.outOpacity;
 			
 			var comp = layer.containingComp;
 			for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
@@ -5445,29 +5458,89 @@ if (typeof Duik === 'object') delete Duik;
 						//if keyframes (already activated)
 						if (opacity.numKeys > 0)
 						{
-							outPoint = opacity.keyTime(1);
+							if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+							{
+								outPoint = opacity.keyTime(2);
+							}
+							else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+							{
+								inPoint = opacity.keyTime(3);
+							}
+							else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+							{
+								inPoint = opacity.keyTime(3);
+								outPoint = opacity.keyTime(5);
+							}
+
 							//remove keys
 							while (opacity.numKeys>0)
 							{
 								opacity.removeKey(1);
 							}
 							opacity.setValue(100);
+							stroke.name = stroke.name.replace(/ #Out/g,"");
+							stroke.name = stroke.name.replace(/ #In/g,"");
 						}
-						duration = outPoint - inPoint + onionDuration*comp.frameDuration;
 						
 						//set duration
-						stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+						if (outOpacity > 0 && inOpacity <= 0)
+						{
+							duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+							stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+						}
+						else if (outOpacity <= 0 && inOpacity > 0)
+						{
+							duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+							stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+						}
+						else
+						{
+							duration = outPoint - inPoint + 2*onionDuration*comp.frameDuration;
+							stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+						}
+						
+						
 						//add keyframes
-						opacity.setValueAtTime(outPoint,100);
-						opacity.setValueAtTime(inPoint +duration,0);
+						if (outOpacity > 0)
+						{
+							opacity.setValueAtTime(outPoint-comp.frameDuration,100);
+							opacity.setValueAtTime(outPoint,outOpacity);
+							opacity.setValueAtTime(outPoint + onionDuration*comp.frameDuration,0);
+							stroke.name = stroke.name + " #Out";
+						}
+						if (inOpacity > 0)
+						{
+							opacity.setValueAtTime(inPoint,100);
+							opacity.setValueAtTime(inPoint-onionDuration*comp.frameDuration,0);
+							opacity.setValueAtTime(inPoint-comp.frameDuration,inOpacity);
+							stroke.name = stroke.name + " #In";
+						}
+
 					}
 					else
 					{
 						var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
 						if (opacity.numKeys > 0)
 						{
-							var inPoint = stroke.property("ADBE Paint Duration").value[0];
-							var outPoint = opacity.keyTime(1);
+							inPoint = 0;
+							outPoint = 1;
+							if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+							{
+								inPoint = stroke.property("ADBE Paint Duration").value[0];
+								outPoint = opacity.keyTime(2);
+							}
+							else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+							{
+								outPoint = stroke.property("ADBE Paint Duration").value[0] + stroke.property("ADBE Paint Duration").value[1];
+								inPoint = opacity.keyTime(3);
+							}
+							else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+							{
+								inPoint = opacity.keyTime(3);
+								outPoint = opacity.keyTime(5);
+							}
+							
+							
 							while (opacity.numKeys>0)
 							{
 								opacity.removeKey(1);
@@ -5475,6 +5548,9 @@ if (typeof Duik === 'object') delete Duik;
 							opacity.setValue(100);
 							 //set duration
 							stroke.property("ADBE Paint Duration").setValue([inPoint,outPoint-inPoint]);
+							
+							stroke.name = stroke.name.replace(/ #In/g,"");
+							stroke.name = stroke.name.replace(/ #Out/g,"");
 						}
 					}
 				}
@@ -5484,6 +5560,76 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				layer.selectedProperties[0].selected = false;
 			}
+		}
+	}
+	/* ONION SKIN - Duik.getOnionSkin(layer);
+
+	Gets current onion skin parameters from the layer.
+
+	parameters
+		layer | AVLayer
+		
+	returns
+		OnionSkin object
+	
+	*/
+	if (typeof Duik.getOnionSkin !== 'function')
+	{
+		Duik.getOnionSkin = function (layer)
+		{
+			var onionSkin = new OnionSkin();
+			if (layer == undefined) return onionSkin;
+			
+			
+			var comp = layer.containingComp;
+			for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+			{
+				var paint = layer.effect(i);
+				if (paint.matchName != "ADBE Paint") continue;
+				for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+				{
+					var stroke = paint.property("ADBE Paint Group")(j);
+					if (stroke.matchName != "ADBE Paint Atom") continue;
+					
+					var inPoint = stroke.property("ADBE Paint Duration").value[0];
+					var duration = stroke.property("ADBE Paint Duration").value[1];
+					var outPoint = inPoint + duration;
+					
+					var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+					
+					if (stroke.name.indexOf("#In") >=0 && stroke.name.indexOf("#Out") >=0)
+					{
+						onionSkin.activated = true;
+						onionSkin.duration = (opacity.keyTime(3) - inPoint)/comp.frameDuration;
+						onionSkin.inOpacity = opacity.keyValue(2);
+						onionSkin.outOpacity = opacity.keyValue(5);
+						onionSkin.exposure = (opacity.keyTime(4) - opacity.keyTime(3))/comp.frameDuration;
+					}
+					else if (stroke.name.indexOf("#In") >=0 && stroke.name.indexOf("#Out") < 0)
+					{
+						onionSkin.activated = true;
+						onionSkin.duration = (opacity.keyTime(3) - inPoint)/comp.frameDuration;
+						onionSkin.inOpacity = opacity.keyValue(2);
+						onionSkin.outOpacity = 0;
+						onionSkin.exposure = (outPoint - opacity.keyTime(3))/comp.frameDuration;
+					}
+					else if (stroke.name.indexOf("#In") < 0 && stroke.name.indexOf("#Out") >= 0)
+					{
+						onionSkin.activated = true;
+						onionSkin.duration = (opacity.keyTime(3) - opacity.keyTime(2))/comp.frameDuration;
+						onionSkin.inOpacity = 0;
+						onionSkin.outOpacity = opacity.keyValue(2);
+						onionSkin.exposure = (opacity.keyTime(2) - inPoint)/comp.frameDuration;
+					}
+					else
+					{
+						onionSkin.activated = false;
+					}
+					break;
+				}
+			}
+			
+			return onionSkin;
 		}
 	}
 	/* IMPORT RIG IN COMP - Duik.importRigInComp(comp,rigComp,rigName);

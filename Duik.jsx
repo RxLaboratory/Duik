@@ -58,6 +58,7 @@ function fnDuIK(thisObj)
 		if (!app.settings.haveSetting("duik", "ikfk")){app.settings.saveSetting("duik","ikfk","true");}
 		if (!app.settings.haveSetting("duik", "dropDownSelector")){app.settings.saveSetting("duik","dropDownSelector","false");}
 		if (!app.settings.haveSetting("duik", "interactiveUpdate")){app.settings.saveSetting("duik","interactiveUpdate","false");}
+		if (!app.settings.haveSetting("duik", "interpolationPresets")){app.settings.saveSetting("duik","interpolationPresets","['Presets','0 - 33/33','0 - 50/50','0 - 80/80','0 - 25/75','0 - 15/85']");}
 	}
 		
 	//=================================
@@ -2271,7 +2272,17 @@ function fnDuIK(thisObj)
 				
 				
 				app.beginUndoGroup("Duik - Update Onion Skin");
-				Duik.onionSkin(layer,celOnionButton.value,parseInt(celOnionDurationEdit.text),parseInt(celExposureEdit.text));
+				var inOpacity = 0;
+				var outOpacity = 0;
+				if (celOnionInOpacityButton.value) inOpacity = parseInt(celOnionInOpacityEdit.text);
+				if (celOnionOutOpacityButton.value) outOpacity = parseInt(celOnionOutOpacityEdit.text);
+				var os = new OnionSkin();
+				os.activated = celOnionButton.value;
+				os.duration = parseInt(celOnionDurationEdit.text);
+				os.exposure = parseInt(celExposureEdit.text);
+				os.outOpacity = outOpacity;
+				os.inOpacity = inOpacity;
+				Duik.onionSkin(layer,os);
 				app.endUndoGroup();
 			}
 			
@@ -2289,6 +2300,70 @@ function fnDuIK(thisObj)
 				if (!(comp instanceof CompItem)) return;
 				comp.time = comp.time + comp.frameDuration*parseInt(celExposureEdit.text);
 				celOnionUpdateButtonClicked();
+			}
+			
+			function celOnionGetButtonClicked()
+			{
+				var comp = app.project.activeItem;
+				if (comp == null) return;
+				if (!(comp instanceof CompItem)) return;
+				
+				var layer = null;
+				if (comp.selectedLayers.length == 0)
+				{
+					for (var i = 1 ; i <= comp.layers.length ; i++)
+					{
+						if (comp.layer(i).name.indexOf("Cel") >= 0)
+						{
+							layer = comp.layer(i);
+							break;
+						}
+					}
+				}
+				else
+				{
+					layer = comp.selectedLayers[0];
+				}
+				
+				var os = Duik.getOnionSkin(layer);
+				
+				celOnionButton.value = os.activated;
+				if (os.activated)
+				{
+					celOnionDurationEdit.text = os.duration
+					if (os.outOpacity > 0)
+					{
+						celOnionOutOpacityEdit.text = os.outOpacity;
+						celOnionOutOpacitySlider.value = os.outOpacity;
+						celOnionOutOpacityButton.value = true;
+					}
+					else
+					{
+						celOnionOutOpacityButton.value = false;
+					}
+					if (os.inOpacity > 0)
+					{
+						celOnionInOpacityEdit.text = os.inOpacity;
+						celOnionInOpacitySlider.value = os.inOpacity;
+						celOnionInOpacityButton.value = true;
+					}
+					else
+					{
+						celOnionInOpacityButton.value = false;
+					}
+				}
+				
+				celOnionInOpacitySlider.enabled = celOnionInOpacityButton.value;
+				celOnionInOpacityEdit.enabled = celOnionInOpacityButton.value;
+				
+				celOnionOutOpacitySlider.enabled = celOnionOutOpacityButton.value;
+				celOnionOutOpacityEdit.enabled = celOnionOutOpacityButton.value;
+				
+				celOnionDurationEdit.enabled = celOnionButton.value;
+				celOnionDurationLabel.enabled = celOnionButton.value;
+				celOnionInOpacityGroup.enabled = celOnionButton.value;
+				celOnionOutOpacityGroup.enabled = celOnionButton.value;
+				celOnionUpdateButton.enabled = celOnionButton.value;
 			}
 			
 			//COPY AND PASTE ANIM
@@ -2833,6 +2908,7 @@ function fnDuIK(thisObj)
 				
 				var inVal = parseInt(interpoInEdit.text);
 				var outVal = parseInt(interpoOutEdit.text);
+				var speedVal = parseFloat(interpoSpeedEdit.text);
 				
 				if (boutonEloignement.value && !outVal) return;
 				if (boutonApproche.value && !inVal) return;
@@ -2845,24 +2921,24 @@ function fnDuIK(thisObj)
 							for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 								var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j]; 
 								if (!prop.isSpatial && prop.value.length == 3) {
-									var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-									var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-									var easeIn3 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
-									var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-									var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-									var easeOut3 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
+									var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeIn3 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
+									var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeOut3 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
 									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
 									}
 								else if (!prop.isSpatial && prop.value.length == 2) {
-									var easeIn1 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-									var easeIn2 =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-									var easeOut1 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-									var easeOut2 = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+									var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
 									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
 									}
 								else {
-									var easeIn =  new KeyframeEase(prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-									var easeOut = new KeyframeEase(prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeIn =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+									var easeOut = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
 									prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
 									}
 								}
@@ -2870,6 +2946,90 @@ function fnDuIK(thisObj)
 						}
 					}
 				app.endUndoGroup();
+			}
+			
+			function interpoPresetsListChanged() {
+				if (interpoPresetsList.selection == null) return;
+				if (interpoPresetsList.selection.index == 0) return;
+				var preset = interpoPresetsList.selection.text;
+				var rePreset = /(\d+) \- (\d+)\/(\d+)/i;
+				var vals = preset.match(rePreset);
+				if (vals == null) return;
+				if (vals.length != 4) return;
+				interpoSpeedSlider.value = parseInt(vals[1]);
+				interpoSpeedEdit.text = vals[1];
+				interpoInSlider.value = parseInt(vals[2]);
+				interpoInEdit.text = vals[2];
+				interpoOutSlider.value = parseInt(vals[3]);
+				interpoOutEdit.text = vals[3];
+				if (interpoInSlider.value != interpoOutSlider.value)
+				{
+					interpoLockInfluencesButton.value = false;
+					boutonApproche.enabled = true;
+					groupeInterpoOut.enabled = true;
+				}
+				infl();
+			}
+			
+			function interpoPresetsAddButtonClicked(){
+				var presets = [];
+				for (var i = 1 ; i < interpoPresetsList.items.length ; i++)
+				{
+					presets.push(interpoPresetsList.items[i].text);
+				}
+				presets.push(interpoSpeedEdit.text + " - " + interpoInEdit.text + "/" + interpoOutEdit.text);
+				presets.sort();
+				presets.unshift("Presets");
+				interpoPresetsList.removeAll();
+				for (var i in presets)
+				{
+					interpoPresetsList.add("item",presets[i]);
+				}
+				app.settings.saveSetting("duik","interpolationPresets",presets.toSource());
+				interpoPresetsList.selection = 0;
+			}
+			
+			function interpoPresetsRemoveButtonClicked(){
+				if (interpoPresetsList.selection == null) return;
+				if (interpoPresetsList.selection.index == 0) return;
+				interpoPresetsList.remove(interpoPresetsList.selection);
+				var presets = [];
+				for (var i = 0 ; i < interpoPresetsList.items.length ; i++)
+				{
+					presets.push(interpoPresetsList.items[i].text);
+				}
+				app.settings.saveSetting("duik","interpolationPresets",presets.toSource());
+				interpoPresetsList.selection = 0;
+			}
+			
+			function interpoGetInflButtonClicked(){
+				var comp = app.project.activeItem;
+				if (! (comp instanceof CompItem)) return;
+				if (comp.selectedLayers.length == 0) return;
+				var layer = comp.selectedLayers[0];
+				if (layer.selectedProperties.length == 0) return;
+				for (var j=0;j<layer.selectedProperties.length;j++)
+				{
+					if (layer.selectedProperties[j].selectedKeys.length == 0) continue;
+					var prop = layer.selectedProperties[j]; 
+					var speed = prop.keyInTemporalEase(prop.selectedKeys[0])[0].speed;
+					var easeIn = prop.keyInTemporalEase(prop.selectedKeys[0])[0].influence;
+					var easeOut = prop.keyOutTemporalEase(prop.selectedKeys[0])[0].influence;
+					break;
+				}
+				interpoInEdit.text = easeIn;
+				interpoOutEdit.text = easeOut;
+				interpoSpeedEdit.text = speed;
+				interpoInSlider.value = easeIn;
+				interpoOutSlider.value = easeOut;
+				interpoSpeedSlider.value = speed;
+				if (interpoInSlider.value != interpoOutSlider.value)
+				{
+					interpoLockInfluencesButton.value = false;
+					boutonApproche.enabled = true;
+					groupeInterpoOut.enabled = true;
+				}
+				
 			}
 			
 			function roving () {
@@ -3928,7 +4088,8 @@ function fnDuIK(thisObj)
 		{
 			// INTERPOLATIONS
 			{
-				addSeparator(panointerpo,"Interpolation type");
+				//addSeparator(panointerpo,"Interpolation type");
+				
 				//Interpolation types
 				var groupeInterpoClefs = addHGroup(panointerpo);
 				var rovingButton = groupeInterpoClefs.add("iconbutton",undefined,dossierIcones + "interpo_roving.png");
@@ -3960,11 +4121,61 @@ function fnDuIK(thisObj)
 				boutonMaintien.onClick = maintien;
 				boutonMaintien.helpTip = "Maintien";
 				
+				//presets
+				var interpoPresetsGroup = addHGroup(panointerpo);
+				var interpoPresetsList = interpoPresetsGroup.add("dropdownlist",undefined,eval(app.settings.getSetting("duik", "interpolationPresets")));
+				interpoPresetsList.selection = 0;
+				interpoPresetsList.onChange = interpoPresetsListChanged;
+				var interpoPresetsAddButton = addIconButton(interpoPresetsGroup,"btn_add.png","");
+				interpoPresetsAddButton.alignment = ["right","fill"];
+				interpoPresetsAddButton.onClick = interpoPresetsAddButtonClicked;
+				var interpoPresetsRemoveButton = addIconButton(interpoPresetsGroup,"btn_remove.png","");
+				interpoPresetsRemoveButton.alignment = ["right","fill"];
+				interpoPresetsRemoveButton.onClick = interpoPresetsRemoveButtonClicked;
+				
+				//speed
+				var interpoSpeedGroup = addHGroup(panointerpo);
+				var interpoSpeedButton = interpoSpeedGroup.add("checkbox",undefined,"Speed");
+				interpoSpeedButton.alignment = ["left","center"];
+				interpoSpeedButton.minimumSize = [40,10];
+				interpoSpeedButton.onClick = function ()
+				{
+					interpoSpeedSlider.enabled = interpoSpeedButton.value;
+					interpoSpeedEdit.enabled = interpoSpeedButton.value;
+				}
+				var interpoSpeedSlider = interpoSpeedGroup.add("slider",undefined,0,-1000,1000);
+				interpoSpeedSlider.alignment = ["fill","center"];
+				interpoSpeedSlider.onChanging = function ()
+				{
+					var val = Math.round(interpoSpeedSlider.value);
+					interpoSpeedEdit.text = val;
+					if (settingsInteractiveUpdateButton.value) infl();
+				}
+				interpoSpeedSlider.onChange = function ()
+				{
+					interpoPresetsList.selection = 0;
+					infl();
+				}
+				var interpoSpeedEdit = interpoSpeedGroup.add("edittext",undefined,"0");
+				interpoSpeedEdit.minimumSize = [30,10];
+				interpoSpeedEdit.alignment = ["right","fill"];
+				interpoSpeedEdit.onChanging = function () {
+					var val = parseInt(interpoSpeedEdit.text);
+					if (!val) return;
+					interpoSpeedSlider.value = val;
+					interpoPresetsList.selection = 0;
+					infl();
+				}
+				interpoSpeedEdit.onChange = infl;
+				
+				interpoSpeedSlider.enabled = false;
+				interpoSpeedEdit.enabled = false;
+				
 				//interpolation influences
-				addSeparator(panointerpo,"Interpolation influence");
+				//addSeparator(panointerpo,"Interpolation influence");
 							
 				var interpoInGroup = addHGroup(panointerpo);
-				var boutonApproche = interpoInGroup.add("checkbox",undefined,getMessage(86));
+				var boutonApproche = interpoInGroup.add("checkbox",undefined,"In I.");
 				boutonApproche.helpTip = getMessage(88);
 				boutonApproche.alignment = ["left","center"];
 				boutonApproche.minimumSize = [40,10];
@@ -3990,6 +4201,7 @@ function fnDuIK(thisObj)
 				}
 				interpoInSlider.onChange = function ()
 				{
+					interpoPresetsList.selection = 0;
 					infl();
 				}
 				var interpoInEdit = interpoInGroup.add("edittext",undefined,"33");
@@ -4004,12 +4216,13 @@ function fnDuIK(thisObj)
 						interpoOutSlider.value = val;
 						interpoOutEdit.text = val;
 					}
+					interpoPresetsList.selection = 0;
 					infl();
 				}
 				
 				var groupeInterpoOut = addHGroup(panointerpo);
 				groupeInterpoOut.enabled = false;
-				var boutonEloignement = groupeInterpoOut.add("checkbox",undefined,getMessage(87));
+				var boutonEloignement = groupeInterpoOut.add("checkbox",undefined,"Out I.");
 				boutonEloignement.helpTip = getMessage(89);
 				boutonEloignement.alignment = ["left","center"];
 				boutonEloignement.minimumSize = [40,10];
@@ -4029,6 +4242,7 @@ function fnDuIK(thisObj)
 				}
 				interpoOutSlider.onChange = function ()
 				{
+					interpoPresetsList.selection = 0;
 					infl();
 				}
 				var interpoOutEdit = groupeInterpoOut.add("edittext",undefined,"33");
@@ -4038,8 +4252,11 @@ function fnDuIK(thisObj)
 					var val = parseInt(interpoOutEdit.text);
 					if (!val) return;
 					interpoOutSlider.value = val;
+					interpoPresetsList.selection = 0;
 					infl();
 				}
+				
+				
 				var interoInfluTopGroup = addHGroup(panointerpo);
 				var interpoLockInfluencesButton = interoInfluTopGroup.add("checkbox",undefined,"Lock In and Out");
 				interpoLockInfluencesButton.alignment = ["left","bottom"];
@@ -4063,7 +4280,10 @@ function fnDuIK(thisObj)
 						groupeInterpoOut.enabled = true;
 					}
 				}
-				var boutonInfluence = addIconButton(interoInfluTopGroup,"btn_valid.png","");
+				var interpoGetInflButton = addIconButton(interoInfluTopGroup,"btn_getkey.png","Get");
+				interpoGetInflButton.size = [30,22];
+				interpoGetInflButton.onClick = interpoGetInflButtonClicked;
+				var boutonInfluence = addIconButton(interoInfluTopGroup,"btn_valid.png","Set");
 				boutonInfluence.size = [30,22];
 				boutonInfluence.onClick = infl;
 					
@@ -4768,16 +4988,91 @@ function fnDuIK(thisObj)
 			var celCreateCelButton = addButton(celCreateCelGroup,"New Cel.");
 			celCreateCelButton.helpTip = "Creates a new animation cel.";
 			celCreateCelButton.onClick = celCreateCelButtonClicked;
+			
+			addSeparator(celPanel,"");
+			
 			var celOnionGroup = addHGroup(celPanel);
 			var celOnionButton = celOnionGroup.add("checkbox",undefined,"Onion skin");
 			celOnionButton.helpTip = "Activates onion skin";
 			celOnionButton.alignment = ["left","bottom"];
-			celOnionButton.onClick = celOnionUpdateButtonClicked;
-			var celOnionDurationEdit = celOnionGroup.add("edittext",undefined,"5");
+			var celOnionDurationEdit = celOnionGroup.add("edittext",undefined,"05");
 			celOnionDurationEdit.helpTip = "Onion skin duration (frames)";
 			celOnionDurationEdit.onChange = celOnionUpdateButtonClicked;
-			var celOnionUpdateButton = addButton(celPanel,"Update Onion Skin");
+			celOnionDurationEdit.alignment = ["left","fill"];
+			var celOnionDurationLabel = celOnionGroup.add("statictext",undefined,"frames");
+			celOnionDurationLabel.alignment = ["left","fill"];
+			
+			var celOnionInOpacityGroup = addHGroup(celPanel);
+			var celOnionInOpacityButton = celOnionInOpacityGroup.add("checkbox",undefined,"In Opacity");
+			celOnionInOpacityButton.alignment = ["left","bottom"];
+			var celOnionInOpacitySlider = celOnionInOpacityGroup.add("slider",undefined,50,1,100);
+			celOnionInOpacitySlider.alignment = ["fill","center"];
+			var celOnionInOpacityEdit = celOnionInOpacityGroup.add("edittext",undefined,"050");
+			celOnionInOpacityEdit.alignment = ["right","fill"];
+			celOnionInOpacitySlider.onChanging = function() { celOnionInOpacityEdit.text = parseInt(celOnionInOpacitySlider.value); };
+			celOnionInOpacitySlider.onChange = celOnionUpdateButtonClicked;
+			celOnionInOpacityEdit.onChange = function() { celOnionInOpacitySlider.value = parseInt(celOnionInOpacityEdit.text); celOnionUpdateButtonClicked(); };
+			celOnionInOpacityButton.onClick = function() {
+				celOnionInOpacitySlider.enabled = celOnionInOpacityButton.value;
+				celOnionInOpacityEdit.enabled = celOnionInOpacityButton.value;
+				if (!celOnionInOpacityButton.value && !celOnionOutOpacityButton.value )
+				{
+					celOnionOutOpacityButton.value = true;
+					celOnionOutOpacitySlider.enabled = true;
+					celOnionOutOpacityEdit.enabled = true;
+				}
+				
+				celOnionUpdateButtonClicked();
+				};
+			
+			celOnionInOpacitySlider.enabled = false;
+			celOnionInOpacityEdit.enabled = false;
+			
+			var celOnionOutOpacityGroup = addHGroup(celPanel);
+			var celOnionOutOpacityButton = celOnionOutOpacityGroup.add("checkbox",undefined,"Out Opacity");
+			celOnionOutOpacityButton.alignment = ["left","bottom"];
+			var celOnionOutOpacitySlider = celOnionOutOpacityGroup.add("slider",undefined,50,1,100);
+			celOnionOutOpacitySlider.alignment = ["fill","center"];
+			var celOnionOutOpacityEdit = celOnionOutOpacityGroup.add("edittext",undefined,"050");
+			celOnionOutOpacityEdit.alignment = ["right","fill"];
+			celOnionOutOpacitySlider.onChanging = function() { celOnionOutOpacityEdit.text = parseInt(celOnionOutOpacitySlider.value);};
+			celOnionOutOpacitySlider.onChange = celOnionUpdateButtonClicked;
+			celOnionOutOpacityEdit.onChange = function() { celOnionOutOpacitySlider.value = parseInt(celOnionOutOpacityEdit.text); celOnionUpdateButtonClicked(); };
+			celOnionOutOpacityButton.onClick = function() {
+				celOnionOutOpacitySlider.enabled = celOnionOutOpacityButton.value;
+				celOnionOutOpacityEdit.enabled = celOnionOutOpacityButton.value;
+				if (!celOnionInOpacityButton.value && !celOnionOutOpacityButton.value )
+				{
+					celOnionInOpacityButton.value = true;
+					celOnionInOpacitySlider.enabled = true;
+					celOnionInOpacityEdit.enabled = true;
+				}
+				celOnionUpdateButtonClicked();
+				};
+
+			celOnionOutOpacityButton.value = true;
+			
+			var celOnionUpdateGroup = addHGroup(celPanel);
+			var celOnionGetButton = addIconButton(celOnionUpdateGroup,"btn_getonion.png","Get current Onion Skin");
+			celOnionGetButton.onClick = celOnionGetButtonClicked;
+			var celOnionUpdateButton = addIconButton(celOnionUpdateGroup,"btn_onion.png","Apply Onion Skin");
 			celOnionUpdateButton.onClick = celOnionUpdateButtonClicked;
+			
+			celOnionButton.onClick = function() {
+				celOnionDurationEdit.enabled = celOnionButton.value;
+				celOnionDurationLabel.enabled = celOnionButton.value;
+				celOnionInOpacityGroup.enabled = celOnionButton.value;
+				celOnionOutOpacityGroup.enabled = celOnionButton.value;
+				celOnionUpdateButton.enabled = celOnionButton.value;
+				
+				celOnionUpdateButtonClicked();
+			}
+			
+			celOnionButton.value = true;
+			
+			
+			addSeparator(celPanel,"");
+			
 			var celNavButtonsGroup = addHGroup(celPanel);
 			var celPreviousButton = addIconButton(celNavButtonsGroup,"btn_prev.png","");
 			celPreviousButton.helpTip = "Previous frame";
