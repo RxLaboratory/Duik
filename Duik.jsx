@@ -1982,13 +1982,37 @@ function fnDuIK(thisObj)
 				}
 			}
 
+			//Spring
+			function boutonspringClicked() {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				if (!comp.selectedLayers.length) return;
+				var layer = comp.selectedLayers[0];
+				var prop = layer.selectedProperties.pop();
+				if (prop.matchName != "ADBE Position")
+				{
+					//  début de groupe d'annulation
+					app.beginUndoGroup(getMessage(42));
+					
+					Duik.spring(prop);
+					
+					//fin du groupe d'annulation
+					app.endUndoGroup();
+				}
+				else
+				{
+					panoanimation.hide();
+					springPanel.show();
+				}
+			}
+			
 			function springok() {
 				
 				//  début de groupe d'annulation
 				app.beginUndoGroup(getMessage(42));
 
 				var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-				Duik.spring(ef,app.project.activeItem.selectedLayers[0],!boutonLightSpring.value);
+				Duik.spring(ef,!boutonLightSpring.value);
 
 				//fin du groupe d'annulation
 				app.endUndoGroup();
@@ -4357,7 +4381,7 @@ function fnDuIK(thisObj)
 			boutonosc.helpTip = getMessage(93);
 			//bouton spring
 			var boutonspring = addIconButton(groupeAnimationG,"btn_rebond.png",getMessage(126));
-			boutonspring.onClick = function () {panoanimation.hide(); springPanel.show();};
+			boutonspring.onClick = boutonspringClicked;
 			boutonspring.helpTip = getMessage(97);
 			//Blink
 			var blinkButton = addIconButton(groupeAnimationD,"/btn_blink.png","Blink");
