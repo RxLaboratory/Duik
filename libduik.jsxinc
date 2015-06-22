@@ -656,6 +656,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 		Duik.presetEffectsInstalledVersion = 0.0;
 		Duik.copiedAnim = [];
+		Duik.detectedExposure = [];
 		Duik.sizes = {};
 		Duik.sizes.SMALL = 0;
 		Duik.sizes.MEDIUM = 1;
@@ -2685,6 +2686,131 @@ if (typeof Duik === 'object') delete Duik;
 				effect.name = name;
 			}
 		}
+		// GET FOOTAGE EXPOSURE
+		if (typeof Duik.utils.getFootageExposure !== 'function')
+		{
+			Duik.utils.getFootageExposure = function (layer,accuracy,tolerance,r,g,b,a)
+			{
+				if (layer == undefined) return [];
+				var comp = layer.containingComp;
+				if (accuracy == undefined) accuracy = 50;
+				precision = accuracy / 100;
+				if (tolerance == undefined) tolerance = 10;
+				tolerance = tolerance/1000;
+				if (r == undefined) r = true;
+				if (g == undefined) g = true;
+				if (b == undefined) b = true;
+				if (a == undefined) a = false;
+				
+				var numSamplesX = 10;
+				var numSamplesY = numSamplesX;
+				
+				//detected expo
+				var detectedExposure = [];
+
+				//Expression to get samples
+
+				exp = "var numSamplesX = " + numSamplesX + ";\n" +
+					"var numSamplesY = " + numSamplesY + ";\n" +
+					"var precision = " + precision + ";\n" +
+					"var result = [0,0,0,0];\n" +
+					"for ( i = 1 ; i <= numSamplesX ; i++)\n" +
+					"for (j = 1 ; j <= numSamplesY ; j++)\n" +
+					"result = result + sampleImage([i*(width/numSamplesX)-(width/numSamplesX/2),j*(height/numSamplesY)-(height/numSamplesY/2)],[width/2/numSamplesX*precision,height/2/numSamplesY*precision]);\n" +
+					"result = result/(numSamplesX+numSamplesY);"
+					"result;";
+
+				//color
+				var color = layer.Effects.addProperty("ADBE Color Control");
+				var colorProp = color(1);
+				colorProp.expression = exp;
+
+				//add keyframes
+				var frames = comp.duration / comp.frameDuration;
+				var inFrame = layer.inPoint / comp.frameDuration;
+				var outFrame = layer.outPoint / comp.frameDuration;
+				if (inFrame < 0) inFrame = 0;
+				if (outFrame > (comp.duration/comp.frameDuration)) outFrame = comp.duration /comp.frameDuration;
+				
+				if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(outFrame-inFrame,"Exposure detection from layer " + layer.name);
+
+				var prevColor = colorProp.valueAtTime(layer.inPoint,false);
+				
+				detectedExposure.push(layer.inPoint);
+
+				var progressValue = 0;
+				for (var frame = inFrame ; frame < outFrame ; frame++)
+				{
+					progressValue++;
+					if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Exposure detection: " + layer.name + " - Frame: " + frame);
+					var time = frame*comp.frameDuration;
+					if (Duik.aeVersion >= 13.5)
+					{
+						comp.time = time;
+						$.sleep(1000);
+					}
+					var hasChanged = false;
+					var currentColor = colorProp.valueAtTime(time,false);
+					var rVariation = Math.abs(prevColor[0] - currentColor[0]);
+					var gVariation = Math.abs(prevColor[1] - currentColor[1]);
+					var bVariation = Math.abs(prevColor[2] - currentColor[2]);
+					var aVariation = Math.abs(prevColor[3] - currentColor[3]);
+					if (r && rVariation > tolerance )
+					{
+						hasChanged = true;
+					}
+					else if (g && gVariation > tolerance )
+					{
+						hasChanged = true;
+					}
+					else if (b && bVariation > tolerance )
+					{
+						hasChanged = true;
+					}
+					else if (a && aVariation > tolerance )
+					{
+						hasChanged = true;
+					}
+					
+					if (hasChanged)
+					{
+						detectedExposure.push(time);
+						prevColor = currentColor;
+					}
+				}
+
+				color.remove();
+				
+				if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+				
+				Duik.detectedExposure = detectedExposure;
+
+				return detectedExposure;
+			}
+		}
+		// STEP SELECTED PROPERTIES
+		if (typeof Duik.utils.stepSelectedProperties !== 'function')
+		{
+			Duik.utils.stepSelectedProperties = function (layrs)
+			{
+				var layers = Duik.utils.convertCollectionToArray(layrs);
+				for (var i = 0 ; i < layers.length ; i++)
+				{
+					var layer = layers[i];
+					if (layer.selectedProperties.length == 0) continue;
+					for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+					{
+						var prop = layer.selectedProperties[j];
+						if (prop.propertyType != PropertyType.PROPERTY) continue;
+						if (prop.numKeys == 0) continue;
+						for (var keyIndex = 1;keyIndex <= prop.numKeys;keyIndex++)
+						{
+							prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//================================
@@ -3860,7 +3986,7 @@ if (typeof Duik === 'object') delete Duik;
 		maxExp | integer, default: 4
 		
 		returns
-		Array of AVLayers, the bones created
+		void
 		
 	*/
 	if (typeof Duik.adaptativeExposure !== 'function')
@@ -4019,22 +4145,52 @@ if (typeof Duik === 'object') delete Duik;
 				}
 			}
 			//all key interpolations to HOLD
-			for (var i = 0 ; i < layers.length ; i++)
+			Duik.utils.stepSelectedProperties(layers);
+			return true;
+		}
+	}
+	/* SET EXPOSURE - Duik.setExposure(layers,exposure)
+	
+		Sets the animation exposure on the selected props on the layers.
+		If the exposure is not provided, the function will use Duik.detectedExposure, the exposure detected using Duik.utils.getFootageExposure
+		
+		parameters
+		layers | Array of AVLayer or LayerCollection
+		exposure | Array of float, the times where a keyframe must be added, default: Duik.detectedExposure
+		
+		returns
+		void
+		
+	*/
+	if (typeof Duik.setExposure !== 'function')
+	{
+		Duik.setExposure = function (layrs,exposure)
+		{
+			if (layrs == undefined) return;
+			if (exposure == undefined) exposure = Duik.detectedExposure;
+			if (!exposure.length) return;
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			
+			//for each time in exposure
+			for (var e in exposure)
 			{
-				var layer = layers[i];
-				if (layer.selectedProperties.length == 0) continue;
-				for (var j = 0 ; j < layer.selectedProperties.length ; j++)
+				var time = exposure[e];
+				//POUR CHAQUE CALQUE
+				for (var i = 0 ; i < layers.length ; i++)
 				{
-					var prop = layer.selectedProperties[j];
-					if (prop.propertyType != PropertyType.PROPERTY) continue;
-					if (prop.numKeys == 0) continue;
-					for (var keyIndex = 1;keyIndex <= prop.numKeys;keyIndex++)
+					var layer = layers[i];
+					if (layer.selectedProperties.length == 0) continue;
+					//POUR CHAQUE PROP
+					for (var j = 0 ; j < layer.selectedProperties.length ; j++)
 					{
-						prop.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+						layer.selectedProperties[j].addKey(time);
 					}
 				}
 			}
-			return true;
+			
+			//STEP
+			Duik.utils.stepSelectedProperties(layers);
 		}
 	}
 	/* FIXED EXPOSURE - Duik.fixedExposure(layer,prop);

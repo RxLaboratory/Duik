@@ -2048,6 +2048,16 @@ function fnDuIK(thisObj)
 				}
 
 			//FONCTIONS EXPOSITION
+			function exposureAnalyzeButtonClicked() {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				var reLayer = /(\d+) - /i;
+				var ltest = exposureLayerList.selection.text.match(reLayer);
+				var layer = comp.layer(parseInt(ltest[1]));
+				var expo = Duik.utils.getFootageExposure(layer,parseFloat(exposureDetectionPrecisionEdit.text),parseFloat(exposureToleranceEdit.text),exposureRButton.value,exposureGButton.value,exposureBButton.value,exposureAButton.value);
+				exposureAnalyzeLabel.text = "Analyzed - " + layer.name;
+			}
+			
 			function detectExposurePrecision() {
 				var layers = app.project.activeItem.selectedLayers;
 				var speed = Duik.utils.getAverageSpeeds(layers,exposurePreExpressionButton.value);
@@ -2065,6 +2075,16 @@ function fnDuIK(thisObj)
 				}
 			}
 
+			function exposureLayerRefreshButtonClicked() {
+				var comp = app.project.activeItem;
+				if (!(comp instanceof CompItem)) return;
+				exposureLayerList.removeAll();
+				for (var i = 1; i <= comp.numLayers;i++)
+				{
+					exposureLayerList.add("item",comp.layer(i).index + " - " + comp.layer(i).name);
+				}
+			}
+			
 			function exposureOKButtonClicked() {
 				if (app.project.activeItem == null) return;
 				if (app.project.activeItem.selectedLayers.length == 0) return;
@@ -2074,11 +2094,15 @@ function fnDuIK(thisObj)
 				{
 					Duik.adaptativeExposure(app.project.activeItem.selectedLayers,parseInt(precisionEdit.text),parseInt(lowerExposureEdit.text),parseInt(upperExposureEdit.text),exposureSyncButton.value,exposureSyncLayerButton.value);
 				}
-				else
+				else if (evenExposureButton.value)
 				{
 					var layer = app.project.activeItem.selectedLayers[0];
 					var effet = layer.selectedProperties.pop();
 					Duik.fixedExposure(layer,effet);
+				}
+				else
+				{
+					Duik.setExposure(app.project.activeItem.selectedLayers);
 				}
 				app.endUndoGroup();
 				
@@ -4961,15 +4985,33 @@ function fnDuIK(thisObj)
 				precisionGroup.enabled = adaptativeExposureButton.value;
 				exposureSyncGroup.enabled = adaptativeExposureButton.value;
 				exposurePrecisionSlider.enabled = adaptativeExposureButton.value;
-				exposurePostExpressionButton.enabled = adaptativeExposureButton.value;
+				exposureAnalyzeButton.enabled = exposureFromFootageButton.value;
+				exposureAnalyzeLabel.enabled = exposureFromFootageButton.value;
+				exposureChannelsGroup.enabled = exposureFromFootageButton.value;
+				exposureToleranceGroup.enabled = exposureFromFootageButton.value;
+				exposureDetectionPrecisionGroup.enabled = exposureFromFootageButton.value;
+				exposureLayerGroup.enabled = exposureFromFootageButton.value;
 			}
-			var exposureTypeGroup = addHGroup(exposurePanel);
-			var evenExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Fixed");
-			evenExposureButton.onClick = exposureSelect;
-			var adaptativeExposureButton = exposureTypeGroup.add("radiobutton",undefined,"Adaptative");
-			adaptativeExposureButton.value = true;
-			adaptativeExposureButton.onClick = exposureSelect;
+			
+			//FIXED
+			var evenExposureButton = exposurePanel.add("radiobutton",undefined,"Fixed");
+			evenExposureButton.onClick = function () {
+				exposureFromFootageButton.value = false;
+				adaptativeExposureButton.value = false;
+				exposureSelect();
+			}
+			
 			addSeparator(exposurePanel,"");
+			
+			//ADAPTATIVE
+			var adaptativeExposureButton = exposurePanel.add("radiobutton",undefined,"Adaptative");
+			adaptativeExposureButton.value = true;
+			adaptativeExposureButton.onClick = function () {
+				exposureFromFootageButton.value = false;
+				evenExposureButton.value = false;
+				exposureSelect();
+			}
+			
 			var lowerExposureGroup = addHGroup(exposurePanel);
 			lowerExposureGroup.add("statictext",undefined,"Lower exp. limit: ");
 			var lowerExposureEdit = lowerExposureGroup.add("edittext",undefined,"1");
@@ -4984,7 +5026,6 @@ function fnDuIK(thisObj)
 			precisionButton.onClick = detectExposurePrecision;
 			var exposurePrecisionSlider = exposurePanel.add("slider",undefined,500,0,1000);
 			exposurePrecisionSlider.onChanging = function () {precisionEdit.text = Math.floor(exposurePrecisionSlider.value);};
-			addSeparator(exposurePanel,"");
 			var exposureSyncGroup = addHGroup(exposurePanel);
 			var exposureSyncButton = exposureSyncGroup.add("checkbox",undefined,"Sync");
 			exposureSyncButton.value = true;
@@ -4995,6 +5036,82 @@ function fnDuIK(thisObj)
 				exposureSyncLayerButton.enabled = exposureSyncButton.value;
 				exposureSyncAllButton.enabled = exposureSyncButton.value;
 			}
+			
+			addSeparator(exposurePanel,"");
+			
+			//FROM FOOTAGE
+			var exposureFromFootageButton = exposurePanel.add("radiobutton",undefined,"From Footage");
+			exposureFromFootageButton.value = false;
+			exposureFromFootageButton.onClick = function () {
+				adaptativeExposureButton.value = false;
+				evenExposureButton.value = false;
+				exposureSelect();
+				exposureLayerRefreshButtonClicked();
+			}
+			
+			var exposureLayerGroup = addHGroup(exposurePanel);
+			if (!expertMode) {
+				var exposureLayerLabel = exposureLayerGroup.add("statictext",undefined,"Layer:");
+				exposureLayerLabel.alignment = ["left","fill"];
+			}
+			var exposureLayerList = exposureLayerGroup.add("dropdownlist");
+			var exposureLayerRefreshButton = addIconButton(exposureLayerGroup,"btn_refresh.png","");
+			exposureLayerRefreshButton.alignment = ["right","fill"];
+			exposureLayerRefreshButton.onClick = exposureLayerRefreshButtonClicked;
+			
+			var exposureDetectionPrecisionGroup = addHGroup(exposurePanel);
+			var exposureDetectionPrecisionLabel = exposureDetectionPrecisionGroup.add("statictext",undefined,"Accuracy");
+			exposureDetectionPrecisionLabel.helpTip = "Lower accuracy can speed up analysis";
+			exposureDetectionPrecisionLabel.alignment = ["left","center"];
+			exposureDetectionPrecisionLabel.minimumSize = [40,10];
+			var exposureDetectionPrecisionSlider = exposureDetectionPrecisionGroup.add("slider",undefined,50,0,100);
+			exposureDetectionPrecisionSlider.helpTip = "Lower accuracy can speed up analysis";
+			exposureDetectionPrecisionSlider.alignment = ["fill","center"];
+			exposureDetectionPrecisionSlider.onChanging = function ()
+			{
+				var val = Math.round(exposureDetectionPrecisionSlider.value);
+				exposureDetectionPrecisionEdit.text = val;
+			}
+			var exposureDetectionPrecisionEdit = exposureDetectionPrecisionGroup.add("edittext",undefined,"50");
+			exposureDetectionPrecisionEdit.helpTip = "Lower accuracy can speed up analysis";
+			exposureDetectionPrecisionEdit.minimumSize = [30,10];
+			exposureDetectionPrecisionEdit.alignment = ["right","fill"];
+			
+			var exposureToleranceGroup = addHGroup(exposurePanel);
+			var exposureToleranceLabel = exposureToleranceGroup.add("statictext",undefined,"Tolerance");
+			exposureToleranceLabel.helpTip = "Higher tolerance will result in higher exposure";
+			exposureToleranceLabel.alignment = ["left","center"];
+			exposureToleranceLabel.minimumSize = [40,10];
+			var exposureToleranceSlider = exposureToleranceGroup.add("slider",undefined,10,0,100);
+			exposureToleranceSlider.helpTip = "Higher tolerance will result in higher exposure";
+			exposureToleranceSlider.alignment = ["fill","center"];
+			exposureToleranceSlider.onChanging = function ()
+			{
+				var val = Math.round(exposureToleranceSlider.value);
+				exposureToleranceEdit.text = val;
+			}
+			var exposureToleranceEdit = exposureToleranceGroup.add("edittext",undefined,"10");
+			exposureToleranceEdit.helpTip = "Higher tolerance will result in higher exposure";
+			exposureToleranceEdit.minimumSize = [30,10];
+			exposureToleranceEdit.alignment = ["right","fill"];
+			
+			var exposureChannelsGroup = addHGroup(exposurePanel);
+			var exposureRButton = exposureChannelsGroup.add("checkbox",undefined,"R");
+			exposureRButton.value = true;
+			var exposureGButton = exposureChannelsGroup.add("checkbox",undefined,"G");
+			exposureGButton.value = true;
+			var exposureBButton = exposureChannelsGroup.add("checkbox",undefined,"B");
+			exposureBButton.value = true;
+			var exposureAButton = exposureChannelsGroup.add("checkbox",undefined,"A");
+						
+			var exposureAnalyzeButton = addButton(exposurePanel,"Analyze");
+			exposureAnalyzeButton.onClick = exposureAnalyzeButtonClicked;
+			var exposureAnalyzeLabel = exposurePanel.add("statictext",undefined,"Analyze layer to detect exposure");
+
+			addSeparator(exposurePanel,"");
+			
+			exposureSelect();
+			
 			var exposureButtonsGroup = addHGroup(exposurePanel);
 			var exposureCancelButton = addIconButton(exposureButtonsGroup,"btn_cancel.png","Back");
 			exposureCancelButton.onClick = function () { exposurePanel.hide();panoanimation.show();};
