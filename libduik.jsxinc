@@ -794,13 +794,15 @@ if (typeof Duik === 'object') delete Duik;
 				"    <Slider name='$$$/AE/Preset/DuikFalloff=Falloff' default='10' valid_min='0' valid_max='1000' slider_min='0' slider_max='100' precision='1'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<Effect matchname='PSEUDO/DUIK_Spring' name='$$$/AE/Preset/spring=DUIK_Spring'>\r\n" + 
-				"    <Slider name='$$$/AE/Preset/DuikElasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
-				"    <Slider name='$$$/AE/Preset/DuikDamping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
+				"   <Slider name='$$$/AE/Preset/DuikElasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
+				"   <Slider name='$$$/AE/Preset/DuikDamping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
+				"	<Slider name='$$$/AE/Preset/DuikSpeedLimit=Trigger speed' default='0.1' valid_min='0' valid_max='1000' slider_min='0' slider_max='10' precision='2'/>\r\n" + 
 				"</Effect>\r\n" + 
 				"<Effect matchname='PSEUDO/DUIK_Spring_Bounce' name='$$$/AE/Preset/springbounce=DUIK_Spring_Bounce'>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikElasticity=Elasticity' default='10' valid_min='0' valid_max='100' slider_min='0' slider_max='25' precision='1'/>\r\n" + 
 				"    <Slider name='$$$/AE/Preset/DuikDamping=Damping' default='5' valid_min='0' valid_max='100' slider_min='0' slider_max='20' precision='1'/>\r\n" + 
-				"    <Checkbox name='$$$/AE/Preset/DuikBounce=Bounce' default='false'/>\r\n" + 
+				"    <Checkbox name='$$$/AE/Preset/DuikBounce=Bounce' default='false'/>\r\n" +
+				"	<Slider name='$$$/AE/Preset/DuikSpeedLimit=Trigger speed' default='0.1' valid_min='0' valid_max='1000' slider_min='0' slider_max='10' precision='2'/>\r\n" + 				
 				"</Effect>\r\n" + 
 				"<Effect matchname='PSEUDO/DUIK_Paint_Rig' name='$$$/AE/Preset/DUIK_Paint_Rig=DUIK_Paint_Rig'>\r\n" + 
 				"	<Slider name='$$$/AE/Preset/Start=Start' default='0' valid_min='0' valid_max='100' slider_min='0' slider_max='100' precision='2' DISPLAY_PERCENT='true'/>\r\n" + 
@@ -1208,7 +1210,7 @@ if (typeof Duik === 'object') delete Duik;
 				return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 			}
 		}
-		// ESCAPE REGEXP
+		// REPLACE TEXT
 		if (typeof Duik.js.replaceAll !== 'function')
 		{
 			Duik.js.replaceAll = function (string, find, replace, caseSensitive)
@@ -4699,17 +4701,19 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				prop.expression = "//Duik.Spring\r\n" + 
 							"amorti = effect(\"" + effect.name + "\")(2);\n" + 
-							"freq = effect(\"" + effect.name + "\")(1);\n\n" + 
+							"freq = effect(\"" + effect.name + "\")(1);\n" + 
+							"speedLimit = effect(\"" + effect.name + "\")(4);\n" + 
 							"rebond = effect(\"" + effect.name + "\")(3);\n\n" + 
 							"if (numKeys > 1 && freq != 0 ){\n" + 
 							"if (nearestKey(time).index == 1) { value }\n" + 
 							"else {\n\n" + 
-							"if (length(velocity) == 0) {\n\n" + 
+							"if (length(velocity) <= speedLimit ) {\n\n" + 
 							"tempsClefProx = nearestKey(time).time;\n\n" + 
 							"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
 							"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
 							"temps = time - tempsDebut;\n\n" + 
-							"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
+							"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n" + 
+							"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" + 
 							"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
 							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
 							"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
@@ -4723,17 +4727,19 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				prop.expression = "//Duik.Spring\r\n" + 
 								"amorti = effect(\"" + effect.name + "\")(2);\n" + 
-								"freq = effect(\"" + effect.name + "\")(1);\n\n" + 
+								"freq = effect(\"" + effect.name + "\")(1);\n" + 
+								"speedLimit = effect(\"" + effect.name + "\")(3);\n" + 
 								"rebond = 0;\n\n" + 
 								"if (numKeys > 1 && freq != 0 ){\n" + 
 								"if (nearestKey(time).index == 1) { value }\n" + 
 								"else {\n\n" + 
-								"if (length(velocity) == 0) {\n\n" + 
+								"if (length(velocity) <= speedLimit ) {\n\n" + 
 								"tempsClefProx = nearestKey(time).time;\n\n" + 
 								"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" + 
 								"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" + 
 								"temps = time - tempsDebut;\n\n" + 
-								"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n\n" + 
+								"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/freq * Math.sin(freq * temps * 2 * Math.PI) / Math.exp( temps * amorti ) );\n" + 
+								"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" + 
 								"if (rebond == 0) valueAtTime(tempsDebut) + spring;\n\n" + 
 								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" + 
 								"if (rebond == 1 &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" + 
