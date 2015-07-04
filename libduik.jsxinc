@@ -54,7 +54,7 @@ This file is part of Duik.
 /////////////////////////////
 // FORCE RELOAD
 /////////////////////////////
-//if (typeof Duik === 'object') delete Duik;
+if (typeof Duik === 'object') delete Duik;
 
 ////////////////////////////
 // DEFINITIONS
@@ -133,7 +133,7 @@ This file is part of Duik.
 			if (!this.created) return;
 			if (this.goal != null)
 			{
-				if (this.layer1.parent = this.goal) this.layer1.parent = null;
+				if (this.layer1.parent == this.goal) this.layer1.parent = null;
 				this.goal.parent = this.layer1;
 				Duik.goal(this.goal,this.controller);
 			}
@@ -932,6 +932,11 @@ This file is part of Duik.
 				"	<Slider name='$$$/AE/Preset/Offset=Offset' default='0' valid_min='-1000' valid_max='1000' slider_min='-100' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" +
 				"	<Checkbox name='$$$/AE/Preset/AutoOrientation=Auto Orientation' default='true'/>\r\n" +
 				"</Effect>\r\n" +
+				"<Effect matchname='PSEUDO/DUIK_Foot_Roll' name='$$$/AE/Preset/DUIK_Foot_Roll=DUIK_Foot_Roll'>\r\n" +
+				"	<Angle name='$$$/AE/Preset/Tiptoe=Tiptoe' default='0.0'/>\r\n" +
+				"	<Angle name='$$$/AE/Preset/Heel=Heel' default='0.0'/>\r\n" +
+				"	<Angle name='$$$/AE/Preset/FootRoll=Foot roll' default='0.0'/>\r\n" +
+				"</Effect>\r\n" +
 				"<!-- END DUIK PSEUDO EFFECTS -->\r\n";
 		}
 		// INSTALL PSEUDO EFFECTS - Duik.setup.installCustomEffects();
@@ -1358,6 +1363,16 @@ This file is part of Duik.
 	if (typeof Duik.utils !== 'object')
 	{
 		Duik.utils = {};
+		// RIG PROPERTY - Duik.utils.rigProperty(layer,prop,effectMatchName)
+		if (typeof Duik.utils.addEffect !== 'function')
+		{
+			Duik.utils.addEffect = function (layer,effectMatchName)
+			{
+				if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(layer,effectMatchName);
+				else effect = layer.effect.addProperty("PSEUDO/" + effectMatchName);
+				return effect;
+			}
+		}
 		// RIG PROPERTY - Duik.utils.rigProperty(layer,prop,effectMatchName)
 		if (typeof Duik.utils.rigProperty !== 'function')
 		{
@@ -2811,6 +2826,21 @@ This file is part of Duik.
 				}
 			}
 		}
+		// ADD NULL ON LAYER
+		if (typeof Duik.utils.addNullOnLayer !== 'function')
+		{
+			Duik.utils.addNullOnLayer = function (layer)
+			{
+				if (layer == undefined) return null;
+				layerParent = layer.parent;
+				layer.parent = null;
+				var nullLayer = layer.containingComp.layers.addNull();
+				nullLayer.transform.position.setValue(layer.transform.position.value);
+				layer.parent = layerParent;
+				nullLayer.moveBefore(layer);
+				return nullLayer;
+			}
+		}
 	}
 
 	//================================
@@ -2999,6 +3029,9 @@ This file is part of Duik.
 						
 			//rotation d'origine
 			var orot = layer1.transform.rotation.value;
+			//remove expression
+			layer1.transform.rotation.expression = "";
+			layer1.transform.rotation.setValue(orot);
 
 			//=========================================================
 			//EXPRESSION TO INSERT
