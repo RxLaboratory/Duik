@@ -2219,6 +2219,12 @@ if (typeof Duik === 'object') delete Duik;
 					tempEffect.remove();
 				}
 				
+				//Detect clockwise if IK is of type 2
+				if (rig.type == 2 || rig.type == 3)
+				{
+					rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
+				}
+				
 				return rig;
 			}
 		}
@@ -2841,6 +2847,40 @@ if (typeof Duik === 'object') delete Duik;
 				return nullLayer;
 			}
 		}
+		// IS IK Clockwise
+		if (typeof Duik.utils.isIKClockwise !== 'function')
+		{
+			Duik.utils.isIKClockwise = function (root,middle,end)
+			{
+				if (root == undefined) return false;
+				if (middle == undefined) return false;
+				if (end == undefined) return false;
+				
+				//unparent
+				var rootParent = root.parent;
+				root.parent = null;
+				var middleParent = middle.parent;
+				middle.parent = null;
+				var endParent = end.parent;
+				end.parent = null;
+				
+				var endPos = end.transform.position.value - root.transform.position.value;
+				var middlePos = middle.transform.position.value - root.transform.position.value;
+				var coef = endPos[1]/endPos[0];
+				
+				var clockwise = false;
+				
+				if (middlePos[1] < middlePos[0]*coef && endPos[0] > 0) clockwise = true;
+				if (middlePos[1] > middlePos[0]*coef && endPos[0] < 0) clockwise = true;
+				
+				//reparent
+				root.parent = rootParent;
+				middle.parent = middleParent;
+				end.parent = endParent;
+				
+				return clockwise;
+			}
+		}
 	}
 
 	//================================
@@ -2849,7 +2889,7 @@ if (typeof Duik === 'object') delete Duik;
 	
 	//TODO, instead of returning true or false, functions should return the effect created
 	
-	/*	ADD IK - Duik.autoIK(layers,clockWise,frontFacing)
+	/*	ADD IK - Duik.autoIK(layers,frontFacing)
 		adds an IK to the layers
 		
 		parameters:
@@ -2862,14 +2902,12 @@ if (typeof Duik === 'object') delete Duik;
 	*/
 	if (typeof Duik.autoIK !== 'function')
 	{
-		Duik.autoIK = function (layers,cw,frontFacing)
+		Duik.autoIK = function (layers,frontFacing)
 		{				
-			if (cw == undefined) cw = false;
 			if (frontFacing == undefined) frontFacing = false;
 
 			var ik = Duik.utils.prepIK(layers);
 			ik.frontFacing = frontFacing;
-			ik.clockWise = cw;
 			ik.create();
 
 			return ik;
@@ -3071,7 +3109,7 @@ if (typeof Duik === 'object') delete Duik;
 			return true;
 		}
 	}
-	// ADD TWO-LAYER IK - Duik.twoLayerIK(controller,root,end,clockWise,frontFacing)
+	// ADD TWO-LAYER IK - Duik.twoLayerIK(controller,root,end,clockwise,frontFacing)
 	if (typeof Duik.twoLayerIK !== 'function')
 	{
 		Duik.twoLayerIK = function (controller,root,end,clockWise,frontFacing)
