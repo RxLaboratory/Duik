@@ -284,6 +284,7 @@ if (typeof Duik === 'object') delete Duik;
 			if (Duik.settings.controllerSizeHint == Duik.sizes.SMALL) controllerSize = Math.floor(controllerSize/40)*100/30;
 			else if (Duik.settings.controllerSizeHint == Duik.sizes.MEDIUM) controllerSize = Math.floor(controllerSize/20)*100/30;
 			else if (Duik.settings.controllerSizeHint == Duik.sizes.BIG) controllerSize = Math.floor(controllerSize/10)*100/30;
+			this.size = controllerSize;
 		}
 
 		if (this.arc || this.eye || this.camera)
@@ -2949,7 +2950,7 @@ if (typeof Duik === 'object') delete Duik;
 			
 			//create curvature controllers
 			var curveCtrl1 = Duik.addController(endController,false,false,true,true,false);
-			curveCtrl1.layer.name = curveCtrl1.layer.name + "_curve";
+			curveCtrl1.layer.name = endController.name + "_curve";
 			
 			
 			if (numControllers == 1)
@@ -2959,7 +2960,7 @@ if (typeof Duik === 'object') delete Duik;
 			else 
 			{
 				var curveCtrl2 = Duik.addController(rootController,false,false,true,true,false);
-				curveCtrl2.layer.name = curveCtrl2.layer.name + "_curve";
+				curveCtrl2.layer.name = rootController.name + "_curve";
 				curveCtrl1.layer.transform.position.setValue((2*endPosition+rootPosition)/3);
 				curveCtrl2.layer.transform.position.setValue((endPosition+2*rootPosition)/3);
 			}
@@ -2981,9 +2982,10 @@ if (typeof Duik === 'object') delete Duik;
 				var offsetEffect = layer.Effects.addProperty("ADBE Slider Control");
 				offsetEffect.name = Duik.uiStrings.bezierIKOffset;
 				//index
-				var index = i/layers.length+1.5/layers.length;
+				var index = i/(layers.length-2)+1.5/layers.length;
 				
 				//position
+				var opos = layer.transform.position.value;
 				if (numControllers == 1)
 				{
 					layer.transform.position.expression = "//Duik.bezierIK\n" + 
@@ -3022,7 +3024,11 @@ if (typeof Duik === 'object') delete Duik;
 											"result + value - " + layer.transform.position.value.toSource() + ";";
 				}
 				
+				var npos = layer.transform.position.value;
+				layer.transform.position.setValue(-npos+2*opos);
+				
 				//rotation
+				var orot = layer.transform.rotation.value;
 				layer.transform.rotation.expression = "//Duik.bezierIK\n" + 
 													"var CName = \"" + prevLayerName + "\";\n" + 
 													"var autoOrient = thisComp.layer(\"" + endController.name + "\").effect(\"" + effect.name + "\")(2);\n" + 
@@ -3041,9 +3047,14 @@ if (typeof Duik === 'object') delete Duik;
 													"var result = value;\n" + 
 													"if (autoOrient==1) result += ik;\n" + 
 													"result;";
-													
+				var nrot = layer.transform.rotation.value;
+				layer.transform.rotation.setValue(-nrot+2*orot);
+				
 				prevLayerName = layer.name;
-			}	
+			}
+
+			if (numControllers == 1) return curveCtrl1;
+			else return [curveCtrl1,curveCtrl2];
 		}
 	}
 	// ADD ONE-LAYER IK - Duik.oneLayerIK(controller,layer)
