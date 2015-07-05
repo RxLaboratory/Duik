@@ -1,17 +1,18 @@
 ﻿function plantigradeBackLeg(femur,tibia,tarsus,claws,tiptoe,heel) {
     
+    //checks
+    if (claws && !femur) return null;
+    if (claws && !tibia) return null;
+    if ( !tarsus) return null;    
+    
     //unparent
-    if (femur) femur.parent = null;
-    if (tibia) tibia.parent = null;
-    if (tarsus) tarsus.parent = null;
+    if (tibia && femur) tibia.parent = null;
+    if (tarsus && (tibia || femur)) tarsus.parent = null;
     if (claws) claws.parent = null;
     if (tiptoe) tiptoe.parent = null;
     if (heel) heel.parent = null;
     
-    //checks
-    if (claws && !femur) return null;
-    if (claws && !tibia) return null;
-    if ( !tarsus) return null;
+
     
     //add nulls and controllers
     var clawsNull, footNull;
@@ -125,17 +126,16 @@
 
 function digitigradeBackLeg(femur,tibia,tarsus,claws,tiptoe) {
     
-    //unparent
-    if (femur) femur.parent = null;
-    if (tibia) tibia.parent = null;
-    if (tarsus) tarsus.parent = null;
-    if (claws) claws.parent = null;
-    if (tiptoe) tiptoe.parent = null;
-    
     //checks
     if (claws && !femur) return null;
     if (claws && !tibia) return null;
-    if ( !tarsus) return null;
+    if ( !tarsus) return null;    
+    
+    //unparent
+    if (tibia && femur) tibia.parent = null;
+    if (tarsus && (tibia || femur)) tarsus.parent = null;
+    if (claws) claws.parent = null;
+    if (tiptoe) tiptoe.parent = null;
     
     //add nulls and controllers
     var clawsNull, footNull;
@@ -236,18 +236,16 @@ function digitigradeBackLeg(femur,tibia,tarsus,claws,tiptoe) {
 
 
 function ungulateBackLeg(femur,tibia,tarsus,claws) {
-    
-    //unparent
-    if (femur) femur.parent = null;
-    if (tibia) tibia.parent = null;
-    if (tarsus) tarsus.parent = null;
-    if (claws) claws.parent = null;
-    
     //checks
     if (claws && !femur) return null;
     if (claws && !tibia) return null;
-    if ( !tarsus) return null;
+    if ( !tarsus) return null;    
     
+    //unparent
+    if (tibia && femur) tibia.parent = null;
+    if (tarsus && (tibia || femur)) tarsus.parent = null;
+    if (claws) claws.parent = null;
+
    //Controller
    var ctrl;
     if (claws)  ctrl = Duik.addController(claws,true,true,true,true,false);
@@ -282,21 +280,20 @@ function ungulateBackLeg(femur,tibia,tarsus,claws) {
 }
 
 function plantigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe,palm) {
-    
-    //unparent
-    if (shoulder) shoulder.parent = null;
-    if (humerus)humerus.parent = null;
-    if (radius) radius.parent = null;
-    if (carpus) carpus.parent = null;
-    if (claws) claws.parent = null;
-    if (tiptoe) tiptoe.parent = null;
-    if (palm) palm.parent = null;
-    
+   
     //checks
     if (claws && !humerus) return null;
     if (claws && !radius) return null;
     if ( !carpus) return null;
     
+    
+    //unparent
+    if (radius && humerus) radius.parent = null;
+    if (carpus && (humerus || tibia)) carpus.parent = null;
+    if (claws) claws.parent = null;
+    if (tiptoe) tiptoe.parent = null;
+    if (palm) palm.parent = null;
+       
     //add nulls and controllers
     var clawsNull, handNull;
     if (claws)
@@ -448,20 +445,19 @@ function plantigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe,palm) {
 }
 
 function digitigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe) {
-    
-    //unparent
-    if (shoulder) shoulder.parent = null;
-    if (humerus)humerus.parent = null;
-    if (radius) radius.parent = null;
-    if (carpus) carpus.parent = null;
-    if (claws) claws.parent = null;
-    if (tiptoe) tiptoe.parent = null;
-    
+   
     //checks
     if (claws && !humerus) return null;
     if (claws && !radius) return null;
     if ( !carpus) return null;
+   
+    //unparent
+    if (radius && humerus) radius.parent = null;
+    if (carpus && (humerus || tibia)) carpus.parent = null;
+    if (claws) claws.parent = null;
+    if (tiptoe) tiptoe.parent = null;
     
+   
     //add nulls and controllers
     var clawsNull, handNull;
     if (claws)
@@ -602,19 +598,17 @@ function digitigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe) {
 
 
 function ungulateFrontLeg(shoulder,humerus,radius,carpus,claws) {
-    
-    //unparent
-     if (shoulder) shoulder.parent = null;
-    if (humerus) humerus.parent = null;
-    if (radius) radius.parent = null;
-    if (carpus) carpus.parent = null;
-    if (claws) claws.parent = null;
-    
+   
     //checks
     if (claws && !humerus) return null;
     if (claws && !radius) return null;
     if ( !carpus) return null;
-    
+   
+    //unparent
+    if (radius && humerus) radius.parent = null;
+    if (carpus && (humerus || tibia)) carpus.parent = null;
+    if (claws) claws.parent = null;
+
    //Controller
    var ctrl;
     if (claws)  ctrl = Duik.addController(claws,true,true,true,true,false);
@@ -643,7 +637,7 @@ function ungulateFrontLeg(shoulder,humerus,radius,carpus,claws) {
         Duik.autoIK([humerus,ctrl.layer]);
         }
     else {
-        if (humerus && radius) Duik.autoIK([carpus,radius,humerus,ctrl.layer],clockwise);
+        if (humerus && radius) Duik.autoIK([carpus,radius,humerus,ctrl.layer]);
         else if (radius) Duik.autoIK([carpus,radius,ctrl.layer]);
         else if (humerus) Duik.autoIK([carpus,humerus,ctrl.layer]);
         }
@@ -691,9 +685,154 @@ function ungulateFrontLeg(shoulder,humerus,radius,carpus,claws) {
     return ctrl;
 }
 
+
+function spine(hips,back,neck,head) {
+    if (!head) return null;
+    if (!hips && !back) return null;
+    
+    //unparent
+    var hipsParent = null;
+    if (hips) { 
+        hipsParent = hips.parent;
+        hips.parent = null;
+        }
+    if (back) for (var i in back) back[i].parent = null;
+    if (neck) for (var i in neck) neck[i].parent = null;
+    if (head) head.parent = null;
+    
+    var controllers = [];
+    
+    //controllers
+    var hipsCtrl = null;
+    var bigHipsCtrl = null;
+    var shoulderCtrl = null;
+    var headCtrl = null;
+    if (hips) {
+        bigHipsCtrl = Duik.addController(hips,true,true,true,true,false);
+        hipsCtrl = Duik.addController(bigHipsCtrl.layer,true,true,true,true,false);
+        bigHipsCtrl.size = bigHipsCtrl.size*1.5;
+        bigHipsCtrl.color = bigHipsCtrl.color *0.5;
+        bigHipsCtrl.update();
+
+        }
+    else if (back) {
+        bigHipsCtrl = Duik.addController(back[back.length-1],true,true,true,true,false);
+        hipsCtrl = Duik.addController(bigHipsCtrl.layer,true,true,true,true,false);
+        bigHipsCtrl.size = bigHipsCtrl.size*1.5;
+        bigHipsCtrl.color = bigHipsCtrl.color *0.5;
+        bigHipsCtrl.update();
+        }
+    controllers.push(bigHipsCtrl);
+    controllers.push(hipsCtrl);
+    if (neck) {
+        shoulderCtrl = Duik.addController(neck[neck.length-1],true,true,true,true,false);
+        shoulderCtrl.layer.name = "C_Shoulders";
+        controllers.push(shoulderCtrl);
+        }
+    headCtrl = Duik.addController(head,false,true,false,false,false);
+    controllers.push(headCtrl);
+
+    //parent
+    //bones
+    if (hips) {
+        hips.parent = hipsCtrl.layer;
+        }
+    if (back) {
+        if (!hips) back[back.length-1].parent = hipsCtrl.layer;
+        else back[back.length-1].parent = hips;
+        }
+    if (neck) {
+        if (back) neck[neck.length-1].parent = back[0];
+        else neck[neck.length-1].parent = hips;
+        for (var i = 0;i<neck.length-1;i++) {
+            neck[i].parent = neck[i+1];
+            }
+        }
+    if (head) {
+        if (neck) head.parent = neck[0];
+        else if (back) head.parent = back[0];
+        else if (hips) head.parent = hips;
+        }
+    //controllers
+    bigHipsCtrl.layer.parent = hipsParent;
+    hipsCtrl.layer.parent = bigHipsCtrl.layer;
+    if (shoulderCtrl) {
+        shoulderCtrl.layer.parent = bigHipsCtrl.layer;
+        headCtrl.layer.parent = shoulderCtrl.layer;
+        }
+    else {
+        headCtrl.layer.parent = bigHipsCtrl.layer;
+        }
+    headCtrl.lock();
+    
+    //IK
+    if (hips && !back) {
+        if (shoulderCtrl) Duik.autoIK([hips,shoulderCtrl.layer]);
+        else Duik.autoIK([hips,headCtrl.layer]);
+        }
+    else if (back.length == 1) {
+        if (shoulderCtrl) Duik.autoIK([back[0],shoulderCtrl.layer]);
+        else Duik.autoIK([back[0],headCtrl.layer]);
+        }
+    else {
+        var bezLayers = back;
+        if (shoulderCtrl) bezLayers.push(shoulderCtrl.layer);
+        else bezLayers.push(headCtrl.layer);
+        bezLayers.push(hipsCtrl.layer);
+        var backCurveCtrl = Duik.bezierIK(bezLayers);
+        backCurveCtrl.layer.parent = bigHipsCtrl.layer;
+        controllers.push(backCurveCtrl);
+        delete bezLayers;
+        }
+    
+    //controls
+    //neck
+    if (neck) {
+        var goalCtrl;
+        var goalCtrlLayerName = "";
+        if (shoulderCtrl) {
+            goalCtrl = shoulderCtrl.layer.effect.addProperty("ADBE Checkbox Control");
+            goalCtrlLayerName = shoulderCtrl.layer.name;
+            }
+        else {
+            goalCtrl = headCtrl.layer.effect.addProperty("ADBE Checkbox Control");
+            goalCtrlLayerName = headCtrl.layer.name;
+            }
+        goalCtrl.name = neck[neck.length-1].name + " goal";
+        goalCtrl(1).setValue(1);
+        
+        for (var i in neck) {
+            var l = neck[i];
+            var torsoName = "";
+            var torsoRot = 0;
+            if (back) {
+                torsoName = back[0].name;
+                torsoRot = back[0].transform.rotation.value;
+                }
+            else {
+                torsoName = hips.name;
+                torsoRot = hips.transform.rotation.value;
+                }
+            l.transform.rotation.expression = "//Duik.neck\n" + 
+                                                            "var goal = thisComp.layer(\"" + goalCtrlLayerName + "\").effect(\"" + goalCtrl.name + "\")(1) == 1;\n" + 
+                                                            "var torso = thisComp.layer(\"" + torsoName + "\").rotation;\n" + 
+                                                            "var ctrl = thisComp.layer(\"" + shoulderCtrl.layer.name + "\").rotation;\n" + 
+                                                            "var numNeckLayers = " + neck.length + ";\n" + 
+                                                            "var result = value;\n" + 
+                                                            "result = result + ctrl/numNeckLayers;\n" + 
+                                                            "goal ? result-torso/numNeckLayers+" + torsoRot + "/numNeckLayers : result;";
+            }
+        }
+    
+    //head
+    Duik.goal(head,headCtrl.layer);
+    
+    
+    }
+
 app.beginUndoGroup("autorigTest");
 
 var layers = Duik.utils.convertCollectionToArray(app.project.activeItem.layers);
-ungulateFrontLeg(layers[4],layers[3],layers[2],layers[1],layers[0]);
+spine(layers[7],[layers[4],layers[5],layers[6]],[layers[1],layers[2],layers[3]],layers[0]);
 
 app.endUndoGroup();
