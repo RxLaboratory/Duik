@@ -30,7 +30,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15 Beta 3";
+	var version = "15 Beta 4";
 	//=========================
 
 	//=================================
@@ -511,25 +511,6 @@ function fnDuIK(thisObj)
 			//TODO renommer les fonctions (onButtonBonesClick() par exemple), et clarifier le code	
 			//=================== UTILS =========================
 
-			//UTILE : TROUVE L'INDEX D'UNE STRING DANS UN ARRAY DE STRINGS
-			function arrayIndexOf(array,string){
-				for (i = 0;i<array.length;i++)
-				{
-					if (array[i] == string) return i;
-				}
-				return -1;
-			}
-
-			//UTILE : TROUVE LES DUPLICATA DANS UN ARRAY
-			function arrayIsDuplicates(array) {
-				for (i = 0;i<array.length-1;i++) {
-					for (j=i+1;j<array.length;j++) {
-						if (array[i] == array[j]) return true;
-					}
-				}
-				return false;
-			}
-
 			//FONCTION CARRE
 			function carre(nombre) {
 				return Math.pow(nombre,2);
@@ -538,125 +519,7 @@ function fnDuIK(thisObj)
 			//====================== AUTORIG ======================
 
 			//FONCTION QUAND ON CLIQUE SUR AUTORIG
-			function autorig() {
-
-				Duik.utils.checkNames();
-
-				var compo = app.project.activeItem;
-
-				//1 - parcourir tous les calques et les ranger
-				var piedG,molletG,cuisseG,piedD,molletD,cuisseD,corps,mainG,avantBrasG,brasG,mainD,avantBrasD,brasD,tete,cou,bassin;
-				var calques = [];
-				var calquesNoms = ["Aucun"];
-				
-				//si rien de sélectionné, on charge les calques de toute la compo
-				if (compo.selectedLayers.length == 0) {
-					for (i = 1;i<=compo.layers.length;i++) {
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(156).toLowerCase()) >= 0 ) piedG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(159).toLowerCase()) >= 0 ) piedD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(155).toLowerCase()) >= 0 ) molletG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(158).toLowerCase()) >= 0 ) molletD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(154).toLowerCase()) >= 0 ) cuisseG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(157).toLowerCase()) >= 0 ) cuisseD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(146).toLowerCase()) >= 0 ) corps = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(147).toLowerCase()) >= 0 ) bassin = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(150).toLowerCase()) >= 0 ) mainG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(153).toLowerCase()) >= 0 ) mainD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(149).toLowerCase()) >= 0 ) avantBrasG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(152).toLowerCase()) >= 0 ) avantBrasD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(148).toLowerCase()) >= 0 ) brasG = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(151).toLowerCase()) >= 0 ) brasD = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(144).toLowerCase()) >= 0 ) tete = compo.layers[i];
-						if (compo.layers[i].name.toLowerCase().indexOf(getMessage(145).toLowerCase()) >= 0 ) cou = compo.layers[i];
-						calques.push(compo.layers[i]);
-						calquesNoms.push(i + " - " + compo.layers[i].name);
-					}
-				}
-				else //sinon que la sélection
-				{
-					for (i = 0;i<compo.selectedLayers.length;i++) {
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(156).toLowerCase()) >= 0 ) piedG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(159).toLowerCase()) >= 0 ) piedD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(155).toLowerCase()) >= 0 ) molletG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(158).toLowerCase()) >= 0 ) molletD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(154).toLowerCase()) >= 0 ) cuisseG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(157).toLowerCase()) >= 0 ) cuisseD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(146).toLowerCase()) >= 0 ) corps = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(147).toLowerCase()) >= 0 ) bassin = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(150).toLowerCase()) >= 0 ) mainG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(153).toLowerCase()) >= 0 ) mainD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(149).toLowerCase()) >= 0 ) avantBrasG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(152).toLowerCase()) >= 0 ) avantBrasD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(148).toLowerCase()) >= 0 ) brasG = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(151).toLowerCase()) >= 0 ) brasD = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(144).toLowerCase()) >= 0 ) tete = compo.selectedLayers[i];
-						if (compo.selectedLayers[i].name.toLowerCase().indexOf(getMessage(145).toLowerCase()) >= 0 ) cou = compo.selectedLayers[i];
-						calques.push(compo.selectedLayers[i]);
-						calquesNoms.push(compo.selectedLayers[i].index + " - " + compo.selectedLayers[i].name);
-					}
-				}
-
-				//2 - afficher une fenetre pour pouvoir préciser qui est qui, et options
-				
-				//ajouter les listes de calques
-				teteBouton.removeAll();
-				couBouton.removeAll();
-				corpsBouton.removeAll();
-				bassinBouton.removeAll();
-				brasGBouton.removeAll();
-				avantBrasGBouton.removeAll();
-				mainGBouton.removeAll();
-				brasDBouton.removeAll();
-				avantBrasDBouton.removeAll();
-				mainDBouton.removeAll();
-				cuisseGBouton.removeAll();
-				molletGBouton.removeAll();
-				piedGBouton.removeAll();
-				cuisseDBouton.removeAll();
-				molletDBouton.removeAll();
-				piedDBouton.removeAll();
-				for (i = 0;i<calquesNoms.length;i++) {
-					teteBouton.add("item",calquesNoms[i]);
-					couBouton.add("item",calquesNoms[i]);
-					corpsBouton.add("item",calquesNoms[i]);
-					bassinBouton.add("item",calquesNoms[i]);
-					brasGBouton.add("item",calquesNoms[i]);
-					avantBrasGBouton.add("item",calquesNoms[i]);
-					mainGBouton.add("item",calquesNoms[i]);
-					brasDBouton.add("item",calquesNoms[i]);
-					avantBrasDBouton.add("item",calquesNoms[i]);
-					mainDBouton.add("item",calquesNoms[i]);
-					cuisseGBouton.add("item",calquesNoms[i]);
-					molletGBouton.add("item",calquesNoms[i]);
-					piedGBouton.add("item",calquesNoms[i]);
-					cuisseDBouton.add("item",calquesNoms[i]);
-					molletDBouton.add("item",calquesNoms[i]);
-					piedDBouton.add("item",calquesNoms[i]);
-				}
-				
-				//préselectionner
-				if (tete != undefined) teteBouton.selection = arrayIndexOf(calquesNoms,tete.index + " - " + tete.name);
-				if (cou != undefined) couBouton.selection = arrayIndexOf(calquesNoms,cou.index + " - " + cou.name);
-				if (corps != undefined) corpsBouton.selection = arrayIndexOf(calquesNoms,corps.index + " - " + corps.name);
-				if (bassin != undefined) bassinBouton.selection = arrayIndexOf(calquesNoms,bassin.index + " - " + bassin.name);
-				if (brasG != undefined) brasGBouton.selection = arrayIndexOf(calquesNoms,brasG.index + " - " + brasG.name);
-				if (avantBrasG != undefined) avantBrasGBouton.selection = arrayIndexOf(calquesNoms,avantBrasG.index + " - " + avantBrasG.name);
-				if (mainG != undefined) mainGBouton.selection = arrayIndexOf(calquesNoms,mainG.index + " - " + mainG.name);
-				if (brasD != undefined) brasDBouton.selection = arrayIndexOf(calquesNoms,brasD.index + " - " + brasD.name);
-				if (avantBrasD != undefined) avantBrasDBouton.selection = arrayIndexOf(calquesNoms,avantBrasD.index + " - " + avantBrasD.name);
-				if (mainD != undefined) mainDBouton.selection = arrayIndexOf(calquesNoms,mainD.index + " - " + mainD.name);
-				if (cuisseG != undefined) cuisseGBouton.selection = arrayIndexOf(calquesNoms,cuisseG.index + " - " + cuisseG.name);
-				if (molletG != undefined) molletGBouton.selection = arrayIndexOf(calquesNoms,molletG.index + " - " + molletG.name);
-				if (piedG != undefined) piedGBouton.selection = arrayIndexOf(calquesNoms,piedG.index + " - " + piedG.name);
-				if (cuisseD != undefined) cuisseDBouton.selection = arrayIndexOf(calquesNoms,cuisseD.index + " - " + cuisseD.name);
-				if (molletD != undefined) molletDBouton.selection = arrayIndexOf(calquesNoms,molletD.index + " - " + molletD.name);
-				if (piedD != undefined) piedDBouton.selection = arrayIndexOf(calquesNoms,piedD.index + " - " + piedD.name);
-
-				fenetreAutorig.layout.layout(true);
-				fenetreAutorig.layout.resize();
-				fenetreAutorig.show();
-			}
-
+/*			
 			//FONCTION LANCE L'AUTORIG
 			function startAutoRig() {
 
@@ -665,93 +528,7 @@ function fnDuIK(thisObj)
 				
 				//réassigner les calques en fonction des choix utilisateur
 				
-				if (piedGBouton.selection == null) piedGBouton.selection = 0;
-				if (molletGBouton.selection == null) molletGBouton.selection = 0;
-				if (cuisseGBouton.selection == null) cuisseGBouton.selection = 0;
-				if (piedDBouton.selection == null) piedDBouton.selection = 0;
-				if (molletDBouton.selection == null) molletDBouton.selection = 0;
-				if (cuisseDBouton.selection == null) cuisseDBouton.selection = 0;
-				if (corpsBouton.selection == null) corpsBouton.selection = 0;
-				if (mainGBouton.selection == null) mainGBouton.selection = 0;
-				if (avantBrasGBouton.selection == null) avantBrasGBouton.selection = 0;
-				if (brasGBouton.selection == null) brasGBouton.selection = 0;
-				if (mainDBouton.selection == null) mainDBouton.selection = 0;
-				if (avantBrasDBouton.selection == null) avantBrasDBouton.selection = 0;
-				if (brasDBouton.selection == null) brasDBouton.selection = 0;
-				if (teteBouton.selection == null) teteBouton.selection = 0;
-				if (couBouton.selection == null) couBouton.selection = 0;
-				if (bassinBouton.selection == null) bassinBouton.selection = 0;
 				
-				piedGBouton.selection.index == 0 ? piedG = undefined : piedG = compo.layers[piedGBouton.selection.text.split(" - ")[0]];
-				molletGBouton.selection.index == 0 ? molletG = undefined : molletG = compo.layers[molletGBouton.selection.text.split(" - ")[0]];
-				cuisseGBouton.selection.index == 0 ? cuisseG = undefined : cuisseG = compo.layers[cuisseGBouton.selection.text.split(" - ")[0]];
-				piedDBouton.selection.index == 0 ? piedD = undefined : piedD = compo.layers[piedDBouton.selection.text.split(" - ")[0]];
-				molletDBouton.selection.index == 0 ? molletD = undefined : molletD = compo.layers[molletDBouton.selection.text.split(" - ")[0]];
-				cuisseDBouton.selection.index == 0 ? cuisseD = undefined : cuisseD = compo.layers[cuisseDBouton.selection.text.split(" - ")[0]];
-				corpsBouton.selection.index == 0 ? corps = undefined : corps = compo.layers[corpsBouton.selection.text.split(" - ")[0]];
-				mainGBouton.selection.index == 0 ? mainG = undefined : mainG = compo.layers[mainGBouton.selection.text.split(" - ")[0]];
-				avantBrasGBouton.selection.index == 0 ? avantBrasG = undefined : avantBrasG = compo.layers[avantBrasGBouton.selection.text.split(" - ")[0]];
-				brasGBouton.selection.index == 0 ? brasG = undefined : brasG = compo.layers[brasGBouton.selection.text.split(" - ")[0]];
-				mainDBouton.selection.index == 0 ? mainD = undefined : mainD = compo.layers[mainDBouton.selection.text.split(" - ")[0]];
-				avantBrasDBouton.selection.index == 0 ? avantBrasD = undefined : avantBrasD = compo.layers[avantBrasDBouton.selection.text.split(" - ")[0]];
-				brasDBouton.selection.index == 0 ? brasD = undefined : brasD = compo.layers[brasDBouton.selection.text.split(" - ")[0]];
-				teteBouton.selection.index == 0 ? tete = undefined : tete = compo.layers[teteBouton.selection.text.split(" - ")[0]];
-				couBouton.selection.index == 0 ? cou = undefined : cou = compo.layers[couBouton.selection.text.split(" - ")[0]];
-				bassinBouton.selection.index == 0 ? bassin = undefined : bassin = compo.layers[bassinBouton.selection.text.split(" - ")[0]];
-				
-				//vérifier qu'il n'y a pas deux calques assignés au meme élément
-				var indexUtilises = [];
-				if (piedG != undefined) indexUtilises.push(piedG.index);
-				if (molletG != undefined) indexUtilises.push(molletG.index);
-				if (cuisseG != undefined) indexUtilises.push(cuisseG.index);
-				if (piedD != undefined) indexUtilises.push(piedD.index);
-				if (molletD != undefined) indexUtilises.push(molletD.index);
-				if (cuisseD != undefined) indexUtilises.push(cuisseD.index);
-				if (corps != undefined) indexUtilises.push(corps.index);
-				if (mainG != undefined) indexUtilises.push(mainG.index);
-				if (avantBrasG != undefined) indexUtilises.push(avantBrasG.index);
-				if (brasG != undefined) indexUtilises.push(brasG.index);
-				if (mainD != undefined) indexUtilises.push(mainD.index);
-				if (avantBrasD != undefined) indexUtilises.push(avantBrasD.index);
-				if (brasD != undefined) indexUtilises.push(brasD.index);
-				if (tete != undefined) indexUtilises.push(tete.index);
-				if (cou != undefined) indexUtilises.push(cou.index);
-				if (bassin != undefined) indexUtilises.push(bassin.index);
-				
-				//verif duplicates de l'array
-				if (arrayIsDuplicates(indexUtilises)) { alert ("Attention à ne pas assigner deux fois le même calque") ; fenetreAutorig.show(); return; }
-				
-				//vérifier qu'il ne manque rien d'indispensable (mains, pieds, corps)
-				var calquesManquants = [];
-				if (mainG == undefined && (avantBrasG != undefined || brasG != undefined)) calquesManquants.push("Main Gauche");
-				if (mainD == undefined && (avantBrasD != undefined || brasD != undefined)) calquesManquants.push("Main Droite");
-				if (piedG == undefined && (cuisseG != undefined || molletG != undefined)) calquesManquants.push("Pied Gauche");
-				if (piedD == undefined && (cuisseD != undefined || molletD != undefined)) calquesManquants.push("Pied Gauche");
-				if (corps == undefined) calquesManquants.push("Corps");
-				
-
-				if (calquesManquants.length > 0) { alert ("Il manque des calques indispensables :\n\n" + calquesManquants.join("\n")); fenetreAutorig.show(); return; }
-				
-				//vérifier si 3D
-				var tridi = false;
-				if (mainG != undefined) if (mainG.threeDLayer) tridi = true;
-				if (avantBrasG != undefined) if (avantBrasG.threeDLayer) tridi = true;
-				if (brasG != undefined) if (brasG.threeDLayer) tridi = true;
-				if (mainD != undefined) if (mainD.threeDLayer) tridi = true;
-				if (avantBrasD != undefined) if (avantBrasD.threeDLayer) tridi = true;
-				if (brasD != undefined) if (brasD.threeDLayer) tridi = true;
-				if (piedG != undefined) if (piedG.threeDLayer) tridi = true;
-				if (molletG != undefined) if (molletG.threeDLayer) tridi = true;
-				if (cuisseG != undefined) if (cuisseG.threeDLayer) tridi = true;
-				if (piedD != undefined) if (piedD.threeDLayer) tridi = true;
-				if (molletD != undefined) if (molletD.threeDLayer) tridi = true;
-				if (cuisseD != undefined) if (cuisseD.threeDLayer) tridi = true;
-				if (corps != undefined) if (corps.threeDLayer) tridi = true;
-				if (tete != undefined) if (tete.threeDLayer) tridi = true;
-				if (cou != undefined) if (cou.threeDLayer) tridi = true;
-				if (bassin != undefined) if (bassin.threeDLayer) tridi = true;
-				
-				if (tridi) { alert ("L'Auto-Rig ne fonctionne pas encore avec des calques 3D"); return ; }
 				
 				//groupe d'annulation
 				app.beginUndoGroup("Duik - Autorig");
@@ -1019,7 +796,1013 @@ function fnDuIK(thisObj)
 				app.endUndoGroup();
 
 			}
+*/
+			
+			function frontLegClicked() {
+				
+				var compo = app.project.activeItem;
+				if (!(compo instanceof CompItem)) return;
+				
+				Duik.utils.checkNames();
 
+
+				//1 - parcourir tous les calques et les ranger
+				
+				var layers = [];
+				
+				//si rien de sélectionné, on charge les calques de toute la compo
+				if (compo.selectedLayers.length == 0) layers = compo.layers;
+				else layers = compo.selectedLayers;
+				
+				var shoulder = Duik.utils.getLayerByNames(layers,["shoulder blade","blade","clavicle","shoulder"]);
+				var humerus = Duik.utils.getLayerByNames(layers,["humerus","arm","shoulder"]);
+				var radius = Duik.utils.getLayerByNames(layers,["ulna","radius","forearm","elbow"]);
+				var carpus = Duik.utils.getLayerByNames(layers,["carpus","palm","hand"]);
+				var claws = Duik.utils.getLayerByNames(layers,["claws","hoof","finger"]);
+				var tip = Duik.utils.getLayerByNames(layers,["tip","tiptoe"]);
+				var heel = Duik.utils.getLayerByNames(layers,["heel","back","contact","palm"]);
+				
+				//get layer list
+				var layersList = Duik.utils.getLayersReadableList(layers);
+				layersList.unshift("None");
+				
+				//ajouter les listes de calques
+				frontLegShoulderButton.removeAll();
+				frontLegHumerusButton.removeAll();
+				frontLegRadiusButton.removeAll();
+				frontLegCarpusButton.removeAll();
+				frontLegClawsButton.removeAll();
+				frontLegTipButton.removeAll();
+				frontLegHeelButton.removeAll();
+				
+				for (i = 0;i<layersList.length;i++) {
+					frontLegShoulderButton.add("item",layersList[i]);
+					frontLegHumerusButton.add("item",layersList[i]);
+					frontLegRadiusButton.add("item",layersList[i]);
+					frontLegCarpusButton.add("item",layersList[i]);
+					frontLegClawsButton.add("item",layersList[i]);
+					frontLegTipButton.add("item",layersList[i]);
+					frontLegHeelButton.add("item",layersList[i]);
+				}
+				
+				//préselectionner
+				if (shoulder) frontLegShoulderButton.selection = Duik.js.getIndexOfStringInArray(layersList,shoulder.index + " - " + shoulder.name);
+				if (humerus) frontLegHumerusButton.selection = Duik.js.getIndexOfStringInArray(layersList,humerus.index + " - " + humerus.name);
+				if (radius) frontLegRadiusButton.selection = Duik.js.getIndexOfStringInArray(layersList,radius.index + " - " + radius.name);
+				if (carpus) frontLegCarpusButton.selection = Duik.js.getIndexOfStringInArray(layersList,carpus.index + " - " + carpus.name);
+				if (claws) frontLegClawsButton.selection = Duik.js.getIndexOfStringInArray(layersList,claws.index + " - " + claws.name);
+				if (tip) frontLegTipButton.selection = Duik.js.getIndexOfStringInArray(layersList,tip.index + " - " + tip.name);
+				if (heel) frontLegHeelButton.selection = Duik.js.getIndexOfStringInArray(layersList,heel.index + " - " + heel.name);
+
+				frontLegDialog.layout.layout(true);
+				frontLegDialog.layout.resize();
+				
+				function getUserSel()
+				{
+					if (frontLegShoulderButton.selection == null) frontLegShoulderButton.selection = 0;
+					if (frontLegHumerusButton.selection == null) frontLegHumerusButton.selection = 0;
+					if (frontLegRadiusButton.selection == null) frontLegRadiusButton.selection = 0;
+					if (frontLegCarpusButton.selection == null) frontLegCarpusButton.selection = 0;
+					if (frontLegClawsButton.selection == null) frontLegClawsButton.selection = 0;
+					if (frontLegTipButton.selection == null) frontLegTipButton.selection = 0;
+					if (frontLegHeelButton.selection == null) frontLegHeelButton.selection = 0;
+					
+					frontLegShoulderButton.selection.index == 0 ? shoulder = null : shoulder = compo.layers[frontLegShoulderButton.selection.text.split(" - ")[0]];
+					frontLegHumerusButton.selection.index == 0 ? humerus = null : humerus = compo.layers[frontLegHumerusButton.selection.text.split(" - ")[0]];
+					frontLegRadiusButton.selection.index == 0 ? radius = null : radius = compo.layers[frontLegRadiusButton.selection.text.split(" - ")[0]];
+					frontLegCarpusButton.selection.index == 0 ? carpus = null : carpus = compo.layers[frontLegCarpusButton.selection.text.split(" - ")[0]];
+					frontLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[frontLegClawsButton.selection.text.split(" - ")[0]];
+					frontLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[frontLegTipButton.selection.text.split(" - ")[0]];
+					frontLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[frontLegHeelButton.selection.text.split(" - ")[0]];
+										
+					//vérifier qu'il n'y a pas deux calques assignés au meme élément
+					var indexUtilises = [];
+					if (shoulder) indexUtilises.push(shoulder.index);
+					if (humerus) indexUtilises.push(humerus.index);
+					if (radius) indexUtilises.push(radius.index);
+					if (carpus) indexUtilises.push(carpus.index);
+					if (claws) indexUtilises.push(claws.index);
+					if (tip && (autorigDigitigradeButton.value || autorigPlantigradeButton.value)) indexUtilises.push(tip.index);
+					if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
+
+					//verif duplicates de l'array
+					if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+					
+					//vérifier qu'il ne manque rien d'indispensable (mains)
+					var calquesManquants = [];
+					if (!carpus) calquesManquants.push("Carpus");
+					if (claws && !humerus) calquesManquants.push("Humerus");
+					if (claws && !radius) calquesManquants.push("Radius");
+					
+					if (calquesManquants.length > 0) { alert ("Those layers are needed:\n\n" + calquesManquants.join("\n")); return false; }
+					
+					//vérifier si 3D
+					var tridi = false;
+					if (shoulder) if (shoulder.threeDLayer) tridi = true;
+					if (humerus) if (humerus.threeDLayer) tridi = true;
+					if (radius) if (radius.threeDLayer) tridi = true;
+					if (carpus) if (carpus.threeDLayer) tridi = true;
+					if (claws) if (claws.threeDLayer) tridi = true;
+					if (tip) if (tip.threeDLayer) tridi = true;
+					if (heel) if (heel.threeDLayer) tridi = true;
+					
+					
+					if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
+					
+					
+					return true;
+				}
+				
+				if (autorigDigitigradeButton.value)
+				{
+					frontLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Front Leg Autorig");
+							digitigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tip);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+				else if (autorigPlantigradeButton.value)
+				{
+					frontLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Front Leg Autorig");
+							plantigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tip,heel);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+				else if (autorigUngulateButton.value)
+				{
+					frontLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Front Leg Autorig");
+							ungulateFrontLeg(shoulder,humerus,radius,carpus,claws);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+				
+				frontLegDialog.show();
+			}
+			
+			function backLegClicked() {
+				
+				var compo = app.project.activeItem;
+				if (!(compo instanceof CompItem)) return;
+				
+				Duik.utils.checkNames();
+
+
+				//1 - parcourir tous les calques et les ranger
+				
+				var layers = [];
+				
+				//si rien de sélectionné, on charge les calques de toute la compo
+				if (compo.selectedLayers.length == 0) layers = compo.layers;
+				else layers = compo.selectedLayers;
+				
+				var femur = Duik.utils.getLayerByNames(layers,["femur","thigh"]);
+				var tibia = Duik.utils.getLayerByNames(layers,["tibia","fibula","calf","knee"]);
+				var tarsus = Duik.utils.getLayerByNames(layers,["tarsus","foot"]);
+				var claws = Duik.utils.getLayerByNames(layers,["claws","hoof","toes"]);
+				var tip = Duik.utils.getLayerByNames(layers,["tip","tiptoe"]);
+				var heel = Duik.utils.getLayerByNames(layers,["heel","back","contact","palm"]);
+				
+				//get layer list
+				var layersList = Duik.utils.getLayersReadableList(layers);
+				layersList.unshift("None");
+				
+				//ajouter les listes de calques
+				backLegFemurButton.removeAll();
+				backLegTibiaButton.removeAll();
+				backLegTarsusButton.removeAll();
+				backLegClawsButton.removeAll();
+				backLegTipButton.removeAll();
+				backLegHeelButton.removeAll();
+				
+				for (i = 0;i<layersList.length;i++) {
+					backLegFemurButton.add("item",layersList[i]);
+					backLegTibiaButton.add("item",layersList[i]);
+					backLegTarsusButton.add("item",layersList[i]);
+					backLegClawsButton.add("item",layersList[i]);
+					backLegTipButton.add("item",layersList[i]);
+					backLegHeelButton.add("item",layersList[i]);
+				}
+				
+				//préselectionner
+				if (femur) backLegFemurButton.selection = Duik.js.getIndexOfStringInArray(layersList,femur.index + " - " + femur.name);
+				if (tibia) backLegTibiaButton.selection = Duik.js.getIndexOfStringInArray(layersList,tibia.index + " - " + tibia.name);
+				if (tarsus) backLegTarsusButton.selection = Duik.js.getIndexOfStringInArray(layersList,tarsus.index + " - " + tarsus.name);
+				if (claws) backLegClawsButton.selection = Duik.js.getIndexOfStringInArray(layersList,claws.index + " - " + claws.name);
+				if (tip) backLegTipButton.selection = Duik.js.getIndexOfStringInArray(layersList,tip.index + " - " + tip.name);
+				if (heel) backLegHeelButton.selection = Duik.js.getIndexOfStringInArray(layersList,heel.index + " - " + heel.name);
+
+				
+				function getUserSel()
+				{
+					if (backLegFemurButton.selection == null) backLegFemurButton.selection = 0;
+					if (backLegTibiaButton.selection == null) backLegTibiaButton.selection = 0;
+					if (backLegTarsusButton.selection == null) backLegTarsusButton.selection = 0;
+					if (backLegClawsButton.selection == null) backLegClawsButton.selection = 0;
+					if (backLegTipButton.selection == null) backLegTipButton.selection = 0;
+					if (backLegHeelButton.selection == null) backLegHeelButton.selection = 0;
+					
+					backLegFemurButton.selection.index == 0 ? femur = null : femur = compo.layers[backLegFemurButton.selection.text.split(" - ")[0]];
+					backLegTibiaButton.selection.index == 0 ? tibia = null : tibia = compo.layers[backLegTibiaButton.selection.text.split(" - ")[0]];
+					backLegTarsusButton.selection.index == 0 ? tarsus = null : tarsus = compo.layers[backLegTarsusButton.selection.text.split(" - ")[0]];
+					backLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[backLegClawsButton.selection.text.split(" - ")[0]];
+					backLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[backLegTipButton.selection.text.split(" - ")[0]];
+					backLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[backLegHeelButton.selection.text.split(" - ")[0]];
+										
+					//vérifier qu'il n'y a pas deux calques assignés au meme élément
+					var indexUtilises = [];
+					if (femur) indexUtilises.push(femur.index);
+					if (tibia) indexUtilises.push(tibia.index);
+					if (tarsus) indexUtilises.push(tarsus.index);
+					if (claws) indexUtilises.push(claws.index);
+					if (tip && (autorigDigitigradeButton.value || autorigPlantigradeButton.value)) indexUtilises.push(tip.index);
+					if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
+
+					//verif duplicates de l'array
+					if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+					
+					//vérifier qu'il ne manque rien d'indispensable (mains)
+					var calquesManquants = [];
+					if (!tarsus) calquesManquants.push("Tarsus");
+					if (claws && !femur) calquesManquants.push("Femur");
+					if (claws && !tibia) calquesManquants.push("Tibia");
+					
+					if (calquesManquants.length > 0) { alert ("Those layers are needed:\n\n" + calquesManquants.join("\n")); return false; }
+					
+					//vérifier si 3D
+					var tridi = false;
+					if (femur) if (femur.threeDLayer) tridi = true;
+					if (tibia) if (tibia.threeDLayer) tridi = true;
+					if (tarsus) if (tarsus.threeDLayer) tridi = true;
+					if (claws) if (claws.threeDLayer) tridi = true;
+					if (tip) if (tip.threeDLayer) tridi = true;
+					if (heel) if (heel.threeDLayer) tridi = true;
+					
+					
+					if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
+					
+					
+					return true;
+				}
+				
+				backLegDialog.layout.layout(true);
+				backLegDialog.layout.resize();
+				
+				if (autorigDigitigradeButton.value)
+				{
+					backLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Back Leg Autorig");
+							digitigradeBackLeg(femur,tibia,tarsus,claws,tip);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+				else if (autorigPlantigradeButton.value)
+				{
+					backLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Back Leg Autorig");
+							plantigradeBackLeg(femur,tibia,tarsus,claws,tip,heel);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+				else if (autorigUngulateButton.value)
+				{
+					backLegOK.onClick = function () {
+						//get the user selection of layers
+						if (getUserSel())
+						{
+							app.beginUndoGroup("Duik - Back Leg Autorig");
+							ungulateBackLeg(femur,tibia,tarsus,claws);
+							app.endUndoGroup();
+							frontLegDialog.hide();
+						}
+					}
+				}
+								
+				backLegDialog.show();
+			}
+			
+			function spineClicked() {
+				
+			}
+			
+			//LIMBS AUTORIG
+			{
+				function plantigradeBackLeg(femur,tibia,tarsus,claws,tiptoe,heel) {
+    
+				//checks
+				if (claws && !femur) return null;
+				if (claws && !tibia) return null;
+				if ( !tarsus) return null;    
+				
+				//unparent
+				if (tibia && femur) tibia.parent = null;
+				if (tarsus && (tibia || femur)) tarsus.parent = null;
+				if (claws) claws.parent = null;
+				if (tiptoe) tiptoe.parent = null;
+				if (heel) heel.parent = null;
+				
+
+				
+				//add nulls and controllers
+				var clawsNull, footNull;
+				if (claws)
+				{
+					//claws
+					clawsNull = Duik.utils.addNullOnLayer(claws);
+					clawsNull.name = "IK " + claws.name
+					
+					var footSize = claws.transform.position.value[0] - tarsus.transform.position.value[0];
+					//tiptoe
+					if (!tiptoe)
+					{
+						tiptoe = Duik.utils.addNullOnLayer(claws);
+						tiptoe.name = "IK tiptoe " + claws.name
+						tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + footSize,clawsNull.transform.position.value[1]]);
+					}
+				
+					if (!heel)
+					{
+						heel = Duik.utils.addNullOnLayer(claws);
+						heel.name = "IK heel " + tarsus.name
+						heel.transform.position.setValue([tarsus.transform.position.value[0],clawsNull.transform.position.value[1]]);
+					}
+					
+					//foot
+					footNull = Duik.utils.addNullOnLayer(tarsus);
+					footNull.name = "IK  " + tarsus.name;
+					
+					if (footSize > 0) clockwise = true;
+				}
+			   //Controller
+				var ctrl = Duik.addController(tarsus,true,true,true,true,false);
+				 Duik.addZero(ctrl.layer);
+				
+				//parent
+				if (claws) claws.parent = tarsus;
+				if (tibia) {
+					tarsus.parent = tibia;
+					if (femur) tibia.parent = femur;
+					}
+			   else if (femur) tarsus.parent = femur;
+			   if (claws) {
+				   footNull.parent = clawsNull;
+				   clawsNull.parent = tiptoe;
+				   tiptoe.parent = heel;
+				   heel.parent = ctrl.layer;
+			   }
+
+
+				
+				//IKs
+				if (claws) {
+					//claws
+					Duik.autoIK([claws,tiptoe]);
+					//leg
+					Duik.autoIK([tarsus,tibia,femur,footNull]);
+					//foot
+					Duik.autoIK([tarsus,clawsNull]);
+					}
+				else {
+					if (femur && tibia) Duik.autoIK([tarsus,tibia,femur,ctrl.layer]);
+					else if (tibia) Duik.autoIK([tarsus,tibia,ctrl.layer]);
+					else if (femur) Duik.autoIK([tarsus,femur,ctrl.layer]);
+					}
+				
+				//Controls
+				if (claws) {
+					//add an IK effect on the controller
+					var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
+					//the effect on the null of the foot
+					var ikEffect = footNull.effect("PSEUDO/DUIK_Two_Layer_IK");
+					ikCtrl.name = ikEffect.name;
+					//link the properties
+					Duik.utils.linkProperties(ikEffect,ikCtrl);
+					
+					//tiptoe, heel and footroll
+					var footCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
+					footCtrl.name = tarsus.name + " Foot roll";
+					tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
+					heel.transform.rotation.expression = "//Duik.footRoll\n" + 
+																			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" + 
+																			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" + 
+																			"roll > 0 ? roll+ctrl : ctrl;";
+					clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
+																				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" + 
+																				"ctrl < 0 ? ctrl : 0;";
+					}
+				
+				//hide and lock
+				if (claws){
+					tiptoe.enabled = false;
+					tiptoe.shy = true;
+					tiptoe.locked = true;
+					heel.enabled = false;
+					heel.shy = true;
+					heel.locked = true;
+					clawsNull.enabled = false;
+					clawsNull.shy = true;
+					clawsNull.locked = true;
+					footNull.enabled = false;
+					footNull.shy = true;
+					footNull.locked = true;
+					}
+				
+				//select controller
+				Duik.utils.deselectLayers();
+				ctrl.layer.selected = true;
+				return ctrl;
+			}
+
+				function digitigradeBackLeg(femur,tibia,tarsus,claws,tiptoe) {
+					
+					//checks
+					if (claws && !femur) return null;
+					if (claws && !tibia) return null;
+					if ( !tarsus) return null;    
+					
+					//unparent
+					if (tibia && femur) tibia.parent = null;
+					if (tarsus && (tibia || femur)) tarsus.parent = null;
+					if (claws) claws.parent = null;
+					if (tiptoe) tiptoe.parent = null;
+					
+					//add nulls and controllers
+					var clawsNull, footNull;
+					if (claws)
+					{
+						//claws
+						clawsNull = Duik.utils.addNullOnLayer(claws);
+						clawsNull.name = "IK " + claws.name
+						
+						var footSize = claws.transform.position.value[0] - tarsus.transform.position.value[0];
+						//tiptoe
+						if (!tiptoe)
+						{
+							tiptoe = Duik.utils.addNullOnLayer(claws);
+							tiptoe.name = "IK tiptoe " + claws.name
+							tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + footSize,clawsNull.transform.position.value[1]]);
+						}
+							
+						//foot
+						footNull = Duik.utils.addNullOnLayer(tarsus);
+						footNull.name = "IK  " + tarsus.name;
+						
+						if (footSize > 0) clockwise = true;
+					}
+				   //Controller
+					var ctrl = Duik.addController(tarsus,true,true,true,true,false);
+					 Duik.addZero(ctrl.layer);
+					
+					//parent
+					if (claws) claws.parent = tarsus;
+					if (tibia) {
+						tarsus.parent = tibia;
+						if (femur) tibia.parent = femur;
+						}
+				   else if (femur) tarsus.parent = femur;
+				   if (claws) {
+					   footNull.parent = clawsNull;
+					   clawsNull.parent = tiptoe;
+					   tiptoe.parent = ctrl.layer
+				   }
+
+
+					
+					//IKs
+					if (claws) {
+						//claws
+						Duik.autoIK([claws,tiptoe]);
+						//leg
+						Duik.autoIK([tarsus,tibia,femur,footNull]);
+						//foot
+						Duik.autoIK([tarsus,clawsNull]);
+						}
+					else {
+						if (femur && tibia) Duik.autoIK([tarsus,tibia,femur,ctrl.layer]);
+						else if (tibia) Duik.autoIK([tarsus,tibia,ctrl.layer]);
+						else if (femur) Duik.autoIK([tarsus,femur,ctrl.layer]);
+						}
+					
+					//Controls
+					if (claws) {
+						//add an IK effect on the controller
+						var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
+						//the effect on the null of the foot
+						var ikEffect = footNull.effect("PSEUDO/DUIK_Two_Layer_IK");
+						ikCtrl.name = ikEffect.name;
+						//link the properties
+						Duik.utils.linkProperties(ikEffect,ikCtrl);
+						
+						//tiptoe, heel and footroll
+						var footCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
+						footCtrl.name = tarsus.name + " Foot roll";
+						tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
+						clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
+																					"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" + 
+																					 "var tiptoe = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);\n" + 
+																					"ctrl-tiptoe;";
+					   tiptoe.effect("PSEUDO/DUIK_One_Layer_IK")(3).expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);";
+						}
+					
+					//hide and lock
+					if (claws){
+						tiptoe.enabled = false;
+						tiptoe.shy = true;
+						tiptoe.locked = true;
+						clawsNull.enabled = false;
+						clawsNull.shy = true;
+						clawsNull.locked = true;
+						footNull.enabled = false;
+						footNull.shy = true;
+						footNull.locked = true;
+						}
+					
+					//select controller
+					Duik.utils.deselectLayers();
+					ctrl.layer.selected = true;
+					return ctrl;
+				}
+
+				function ungulateBackLeg(femur,tibia,tarsus,claws) {
+					//checks
+					if (claws && !femur) return null;
+					if (claws && !tibia) return null;
+					if ( !tarsus) return null;    
+					
+					//unparent
+					if (tibia && femur) tibia.parent = null;
+					if (tarsus && (tibia || femur)) tarsus.parent = null;
+					if (claws) claws.parent = null;
+
+				   //Controller
+				   var ctrl;
+					if (claws)  ctrl = Duik.addController(claws,true,true,true,true,false);
+					else ctrl = Duik.addController(tarsus,true,true,true,true,false);
+					 Duik.addZero(ctrl.layer);
+					
+					//parent
+					if (claws) claws.parent = tarsus;
+					if (tibia) {
+						tarsus.parent = tibia;
+						if (femur) tibia.parent = femur;
+						}
+				   else if (femur) tarsus.parent = femur;
+					
+					//IKs
+					if (claws) {
+						//claws
+						Duik.autoIK([claws,tarsus,tibia,ctrl.layer]);
+						//leg
+						Duik.autoIK([femur,ctrl.layer]);
+						}
+					else {
+						if (femur && tibia) Duik.autoIK([tarsus,tibia,femur,ctrl.layer],clockwise);
+						else if (tibia) Duik.autoIK([tarsus,tibia,ctrl.layer]);
+						else if (femur) Duik.autoIK([tarsus,femur,ctrl.layer]);
+						}
+							
+					//select controller
+					Duik.utils.deselectLayers();
+					ctrl.layer.selected = true;
+					return ctrl;
+				}
+
+				function plantigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe,palm) {
+				   
+					//checks
+					if (claws && !humerus) return null;
+					if (claws && !radius) return null;
+					if ( !carpus) return null;
+					
+					
+					//unparent
+					if (radius && humerus) radius.parent = null;
+					if (carpus && (humerus || radius)) carpus.parent = null;
+					if (claws) claws.parent = null;
+					if (tiptoe) tiptoe.parent = null;
+					if (palm) palm.parent = null;
+					   
+					//add nulls and controllers
+					var clawsNull, handNull;
+					if (claws)
+					{
+						//claws
+						clawsNull = Duik.utils.addNullOnLayer(claws);
+						clawsNull.name = "IK " + claws.name
+						
+						var handSize = claws.transform.position.value[0] - carpus.transform.position.value[0];
+						//tiptoe
+						if (!tiptoe)
+						{
+							tiptoe = Duik.utils.addNullOnLayer(claws);
+							tiptoe.name = "IK tiptoe " + claws.name
+							tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + handSize,clawsNull.transform.position.value[1]]);
+						}
+					
+						if (!palm)
+						{
+							palm = Duik.utils.addNullOnLayer(claws);
+							palm.name = "IK heel " + carpus.name
+							palm.transform.position.setValue([carpus.transform.position.value[0],clawsNull.transform.position.value[1]]);
+						}
+						
+						//foot
+						handNull = Duik.utils.addNullOnLayer(carpus);
+						handNull.name = "IK  " + carpus.name;
+						
+						if (handSize < 0) clockwise = true;
+					}
+				   //Controller
+					var ctrl = Duik.addController(carpus,true,true,true,true,false);
+					Duik.addZero(ctrl.layer);
+					
+					//parent
+					if (claws) claws.parent = carpus;
+					if (radius) {
+						carpus.parent = radius;
+						if (humerus) radius.parent = humerus;
+						}
+				   else if (humerus) carpus.parent = humerus;
+				   if (claws) {
+					   handNull.parent = clawsNull;
+					   clawsNull.parent = tiptoe;
+					   tiptoe.parent = palm;
+					   palm.parent = ctrl.layer;
+				   }
+					if (shoulder) {
+						if (humerus) humerus.parent = shoulder;
+						else if (radius) radius.parent = shoulder;
+						else carpus.parent = shoulder;
+						}
+
+
+					
+					//IKs
+					if (claws) {
+						//claws
+						Duik.autoIK([claws,tiptoe]);
+						//leg
+						Duik.autoIK([carpus,radius,humerus,handNull]);
+						//foot
+						Duik.autoIK([carpus,clawsNull]);
+						}
+					else {
+						if (humerus && radius) Duik.autoIK([carpus,radius,humerus,ctrl.layer]);
+						else if (radius) Duik.autoIK([carpus,radius,ctrl.layer]);
+						else if (humerus) Duik.autoIK([carpus,humerus,ctrl.layer]);
+						}
+					if (shoulder) {
+					   
+						Duik.addZero(shoulder);
+						Duik.autoIK([shoulder,ctrl.layer]); 
+						var ikShoulderCtrl = ctrl.layer.effect("PSEUDO/DUIK_One_Layer_IK");
+						ikShoulderCtrl(1).setValue(50);
+						ikShoulderCtrl(3).setValue(-shoulder.transform.rotation.value);
+						}
+					
+					//Controls
+					if (claws) {
+						//add an IK effect on the controller
+						var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
+						//the effect on the null of the foot
+						var ikEffect = handNull.effect("PSEUDO/DUIK_Two_Layer_IK");
+						ikCtrl.name = ikEffect.name;
+						//link the properties
+						Duik.utils.linkProperties(ikEffect,ikCtrl);
+						
+						//tiptoe, heel and footroll
+						var handCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
+						handCtrl.name = carpus.name + " Foot roll";
+						tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);";
+						palm.transform.rotation.expression = "//Duik.footRoll\n" + 
+																				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);\n" + 
+																				"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" + 
+																				"roll > 0 ? roll+ctrl : ctrl;";
+						clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
+																					"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" + 
+																					"ctrl < 0 ? ctrl : 0;";
+						}
+					if (shoulder) {
+						 var shoulderCtrl = ctrl.layer.effect.addProperty("ADBE Slider Control");
+						 shoulderCtrl.name = shoulder.name + " auto-position %";
+						 shoulderCtrl(1).setValue(10);
+
+						//get Ctrl position
+						var parent = ctrl.layer.parent;
+						 ctrl.layer.parent = null;
+						 var posC = ctrl.layer.transform.position.value;
+						 ctrl.layer.parent = parent;
+						 
+						 //get shoulder position
+						 parent = shoulder.parent;
+						 shoulder.parent = null;
+						 var posS = shoulder.transform.position.value;
+						 shoulder.parent = parent;
+						 
+						 delete parent;
+						 
+						 var pos = posS-posC;
+						 
+						 shoulder.transform.position.expression = "//Duik.shoulder\n" + 
+																					"var w = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + shoulderCtrl.name + "\")(1);\n" + 
+																					"var z = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);\n" + 
+																					"var p = thisComp.layer(\"" + ctrl.layer.name + "\").toWorld(thisComp.layer(\"" + ctrl.layer.name + "\").anchorPoint);\n" +
+																					"((p-z)+" + pos.toSource() + ")* w/100 + value;";
+						}
+					
+					//hide and lock
+					if (claws){
+						tiptoe.enabled = false;
+						tiptoe.shy = true;
+						tiptoe.locked = true;
+						palm.enabled = false;
+						palm.shy = true;
+						palm.locked = true;
+						clawsNull.enabled = false;
+						clawsNull.shy = true;
+						clawsNull.locked = true;
+						handNull.enabled = false;
+						handNull.shy = true;
+						handNull.locked = true;
+						}
+					
+					//select controller
+					Duik.utils.deselectLayers();
+					ctrl.layer.selected = true;
+					return ctrl;
+				}
+
+				function digitigradeFrontLeg(shoulder,humerus,radius,carpus,claws,tiptoe) {
+				   
+					//checks
+					if (claws && !humerus) return null;
+					if (claws && !radius) return null;
+					if ( !carpus) return null;
+				   
+					//unparent
+					if (radius && humerus) radius.parent = null;
+					if (carpus && (humerus || tibia)) carpus.parent = null;
+					if (claws) claws.parent = null;
+					if (tiptoe) tiptoe.parent = null;
+					
+				   
+					//add nulls and controllers
+					var clawsNull, handNull;
+					if (claws)
+					{
+						//claws
+						clawsNull = Duik.utils.addNullOnLayer(claws);
+						clawsNull.name = "IK " + claws.name
+						
+						var handSize = claws.transform.position.value[0] - carpus.transform.position.value[0];
+						//tiptoe
+						if (!tiptoe)
+						{
+							tiptoe = Duik.utils.addNullOnLayer(claws);
+							tiptoe.name = "IK tiptoe " + claws.name
+							tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + handSize,clawsNull.transform.position.value[1]]);
+						}
+							
+						//foot
+						handNull = Duik.utils.addNullOnLayer(carpus);
+						handNull.name = "IK  " + carpus.name;
+						
+						if (handSize < 0) clockwise = true;
+					}
+				   //Controller
+					var ctrl = Duik.addController(carpus,true,true,true,true,false);
+					Duik.addZero(ctrl.layer);
+					
+					//parent
+					if (claws) claws.parent = carpus;
+					if (radius) {
+						carpus.parent = radius;
+						if (humerus) radius.parent = humerus;
+						}
+				   else if (humerus) carpus.parent = humerus;
+				   if (claws) {
+					   handNull.parent = clawsNull;
+					   clawsNull.parent = tiptoe;
+					   tiptoe.parent =  ctrl.layer;
+				   }
+					if (shoulder) {
+						if (humerus) humerus.parent = shoulder;
+						else if (radius) radius.parent = shoulder;
+						else carpus.parent = shoulder;
+						}
+
+
+					
+					//IKs
+					if (claws) {
+						//claws
+						Duik.autoIK([claws,tiptoe]);
+						//leg
+						Duik.autoIK([carpus,radius,humerus,handNull]);
+						//foot
+						Duik.autoIK([carpus,clawsNull]);
+						}
+					else {
+						if (humerus && radius) Duik.autoIK([carpus,radius,humerus,ctrl.layer]);
+						else if (radius) Duik.autoIK([carpus,radius,ctrl.layer]);
+						else if (humerus) Duik.autoIK([carpus,humerus,ctrl.layer]);
+						}
+					if (shoulder) {
+					   
+						Duik.addZero(shoulder);
+						Duik.autoIK([shoulder,ctrl.layer]); 
+						var ikShoulderCtrl = ctrl.layer.effect("PSEUDO/DUIK_One_Layer_IK");
+						ikShoulderCtrl(1).setValue(50);
+						ikShoulderCtrl(3).setValue(-shoulder.transform.rotation.value);
+						}
+					
+					//Controls
+					if (claws) {
+						//add an IK effect on the controller
+						var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
+						//the effect on the null of the foot
+						var ikEffect = handNull.effect("PSEUDO/DUIK_Two_Layer_IK");
+						ikCtrl.name = ikEffect.name;
+						//link the properties
+						Duik.utils.linkProperties(ikEffect,ikCtrl);
+						
+						//tiptoe, heel and footroll
+						var handCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
+						handCtrl.name = carpus.name + " Foot roll";
+						tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);";
+						clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
+																					"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" + 
+																					 "var tiptoe = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);\n" + 
+																					"ctrl-tiptoe;";
+					   tiptoe.effect("PSEUDO/DUIK_One_Layer_IK")(3).expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);";
+						}
+					if (shoulder) {
+						 var shoulderCtrl = ctrl.layer.effect.addProperty("ADBE Slider Control");
+						 shoulderCtrl.name = shoulder.name + " auto-position %";
+						 shoulderCtrl(1).setValue(10);
+
+						//get Ctrl position
+						var parent = ctrl.layer.parent;
+						 ctrl.layer.parent = null;
+						 var posC = ctrl.layer.transform.position.value;
+						 ctrl.layer.parent = parent;
+						 
+						 //get shoulder position
+						 parent = shoulder.parent;
+						 shoulder.parent = null;
+						 var posS = shoulder.transform.position.value;
+						 shoulder.parent = parent;
+						 
+						 delete parent;
+						 
+						 var pos = posS-posC;
+						 
+						 shoulder.transform.position.expression = "//Duik.shoulder\n" + 
+																					"var w = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + shoulderCtrl.name + "\")(1);\n" + 
+																					"var z = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);\n" + 
+																					"var p = thisComp.layer(\"" + ctrl.layer.name + "\").toWorld(thisComp.layer(\"" + ctrl.layer.name + "\").anchorPoint);\n" +
+																					"((p-z)+" + pos.toSource() + ")* w/100 + value;";
+						}
+					
+					//hide and lock
+					if (claws){
+						tiptoe.enabled = false;
+						tiptoe.shy = true;
+						tiptoe.locked = true;
+						clawsNull.enabled = false;
+						clawsNull.shy = true;
+						clawsNull.locked = true;
+						handNull.enabled = false;
+						handNull.shy = true;
+						handNull.locked = true;
+						}
+					
+					//select controller
+					Duik.utils.deselectLayers();
+					ctrl.layer.selected = true;
+					return ctrl;
+				}
+
+				function ungulateFrontLeg(shoulder,humerus,radius,carpus,claws) {
+				   
+					//checks
+					if (claws && !humerus) return null;
+					if (claws && !radius) return null;
+					if ( !carpus) return null;
+				   
+					//unparent
+					if (radius && humerus) radius.parent = null;
+					if (carpus && (humerus || tibia)) carpus.parent = null;
+					if (claws) claws.parent = null;
+
+				   //Controller
+				   var ctrl;
+					if (claws)  ctrl = Duik.addController(claws,true,true,true,true,false);
+					else ctrl = Duik.addController(carpus,true,true,true,true,false);
+					 Duik.addZero(ctrl.layer);
+					
+					//parent
+					if (claws) claws.parent = carpus;
+					if (radius) {
+						carpus.parent = radius;
+						if (humerus) radius.parent = humerus;
+						}
+				   else if (humerus) radius.parent = humerus;
+					if (shoulder) {
+						if (humerus) humerus.parent = shoulder;
+						else if (radius) radius.parent = shoulder;
+						else carpus.parent = shoulder;
+						}
+
+					
+					//IKs
+					if (claws) {
+						//claws
+						Duik.autoIK([claws,carpus,radius,ctrl.layer]);
+						//leg
+						Duik.autoIK([humerus,ctrl.layer]);
+						}
+					else {
+						if (humerus && radius) Duik.autoIK([carpus,radius,humerus,ctrl.layer]);
+						else if (radius) Duik.autoIK([carpus,radius,ctrl.layer]);
+						else if (humerus) Duik.autoIK([carpus,humerus,ctrl.layer]);
+						}
+					 if (shoulder) {
+					   
+						Duik.addZero(shoulder);
+						Duik.autoIK([shoulder,ctrl.layer]); 
+						var ikShoulderCtrl = ctrl.layer.effect(Duik.uiStrings.ik + " "  + shoulder.name);
+						ikShoulderCtrl(1).setValue(50);
+						ikShoulderCtrl(3).setValue(-shoulder.transform.rotation.value);
+						}
+					
+					//Controls
+					if (shoulder) {
+					 var shoulderCtrl = ctrl.layer.effect.addProperty("ADBE Slider Control");
+					 shoulderCtrl.name = shoulder.name + " auto-position %";
+					 shoulderCtrl(1).setValue(10);
+
+					//get Ctrl position
+					var parent = ctrl.layer.parent;
+					 ctrl.layer.parent = null;
+					 var posC = ctrl.layer.transform.position.value;
+					 ctrl.layer.parent = parent;
+					 
+					 //get shoulder position
+					 parent = shoulder.parent;
+					 shoulder.parent = null;
+					 var posS = shoulder.transform.position.value;
+					 shoulder.parent = parent;
+					 
+					 delete parent;
+					 
+					 var pos = posS-posC;
+					 
+					 shoulder.transform.position.expression = "//Duik.shoulder\n" + 
+																				"var w = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + shoulderCtrl.name + "\")(1);\n" + 
+																				"var z = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);\n" + 
+																				"var p = thisComp.layer(\"" + ctrl.layer.name + "\").toWorld(thisComp.layer(\"" + ctrl.layer.name + "\").anchorPoint);\n" +
+																				"((p-z)+" + pos.toSource() + ")* w/100 + value;";
+					}
+							
+					//select controller
+					Duik.utils.deselectLayers();
+					ctrl.layer.selected = true;
+					return ctrl;
+				}
+				
+			}
+			
+			function spine() {
+				
+			}
+			
 			//========== RIGGING ================================
 
 			//FONCTION QUAND ON CLIQUE SUR CREER IK
@@ -1059,7 +1842,6 @@ function fnDuIK(thisObj)
 					ikType3Group.hide();
 					ikType4Group.hide();
 					ik3DGroup.hide();
-					ikCWButton.hide();
 				}
 				else if (ikRig.type == 1 && ikRig.goal != null)
 				{
@@ -1102,8 +1884,6 @@ function fnDuIK(thisObj)
 					{
 						ik3DGroup.hide();
 					}
-					ikCWButton.show();
-					ikCWButton.enabled = true;
 				}
 				else if (ikRig.type == 2 && ikRig.goal != null)
 				{
@@ -1124,8 +1904,6 @@ function fnDuIK(thisObj)
 					{
 						ik3DGroup.hide();
 					}
-					ikCWButton.show();
-					ikCWButton.enabled = true;
 				}
 				else if (ikRig.type == 3 && ikRig.goal == null)
 				{
@@ -1146,8 +1924,6 @@ function fnDuIK(thisObj)
 					{
 						ik3DGroup.hide();
 					}
-					ikCWButton.show();
-					ikCWButton.enabled = true;
 				}
 				else if (ikRig.type == 3 && ikRig.goal != null)
 				{
@@ -1156,12 +1932,9 @@ function fnDuIK(thisObj)
 					ikType3Group.hide();
 					ikType4Group.show();
 					ik3DGroup.hide();
-					ikCWButton.show();
-					ikCWButton.enabled = true;
 				}
 			
 				ikCreateButton.onClick = function() {
-					ikRig.clockWise = ikCWButton.value;
 					ikRig.frontFacing = ikFrontFacingButton.value;
 					if (ikType2Group.visible)
 					{
@@ -3199,6 +3972,14 @@ function fnDuIK(thisObj)
 			if (!expertMode) bouton.text = text;
 			return bouton;
 		}
+		function addIconRadioButton(conteneur,image,text){
+			if (expertMode) text = "";
+			var g = addVGroup(conteneur);
+			g.alignChildren = ["center","fill"];
+			g.add("image",undefined,dossierIcones + image);
+			g.button = g.add("radiobutton",undefined,text);
+			return g;
+		}
 		function addButton(conteneur,texte){
 			var bouton = conteneur.add("button",undefined,texte);
 			//bouton.size = [108,18];
@@ -3290,248 +4071,155 @@ function fnDuIK(thisObj)
 			
 			return f;
 		}
+		//fonction pour changer la couleur d'un texte
+		function textColor(text,color) {
+			var g = text.graphics;
+			var textPen = g.newPen(g.PenType.SOLID_COLOR,color,1);
+			g.foregroundColor = textPen;
+		}
+		//colors
+		{
+			var col = {};
+			col.orange = [223/254,145/254,62/254,1];
+			col.lightOrange = [223/254,187/254,62/254,1];
+			col.yellow = [221/254,223/254,62/254,1];
+			col.blue = [62/254,130/254,223/254,1];
+			col.purple = [149/254,62/254,223/254,1];
+			col.red = [1,68/254,68/254,1];
+		}
+		
+		
 
+		// la fenetre de la calculatrice
+		{
+			 
+			var fenetrecalc = createDialog(getMessage(73),false);
+			fenetrecalc.groupe.orientation = "column";
+			fenetrecalc.groupe.spacing = 0;
+			var resultatcalc1 = fenetrecalc.groupe.add("statictext",undefined,"");
+			var resultatcalc2 = fenetrecalc.groupe.add("statictext",undefined,"");
+			var textecalc = fenetrecalc.groupe.add ("edittext", undefined);
+			textecalc.enabled = false;
+			var ligneCalc1 = addHGroup(fenetrecalc.groupe);
+			ligneCalc1.spacing = 0;
+			ligneCalc1.alignChildren = ["fill","center"];
+			var calcErase = addButton(ligneCalc1,"<-");
+			calcErase.onClick = function() {textecalc.text = textecalc.text.substr(0,textecalc.text.length-1);};
+			var calcCancel = addButton(ligneCalc1,"CE");
+			calcCancel.onClick = function() {textecalc.text = "";};
+			var calcO = addButton(ligneCalc1,"(");
+			calcO.onClick = function() { textecalc.text += "(";};
+			var calcC = addButton(ligneCalc1,")");
+			calcC.onClick = function() { textecalc.text += ")";};
+			var ligneCalc2 = addHGroup(fenetrecalc.groupe);
+			ligneCalc2.spacing = 0;
+			ligneCalc2.alignChildren = ["fill","center"];
+			var calc7 = addButton(ligneCalc2,"7");
+			calc7.onClick = function() { textecalc.text += "7";};
+			var calc8 = addButton(ligneCalc2,"8");
+			calc8.onClick = function() { textecalc.text += "8";};
+			var calc9 = addButton(ligneCalc2,"9");
+			calc9.onClick = function() { textecalc.text += "9";};
+			var calcDiv = addButton(ligneCalc2,"/");
+			calcDiv.onClick = function() { textecalc.text += "/";};
+			var ligneCalc3 = addHGroup(fenetrecalc.groupe);
+			ligneCalc3.spacing = 0;
+			ligneCalc3.alignChildren = ["fill","center"];
+			var calc4 = addButton(ligneCalc3,"4");
+			calc4.onClick = function() { textecalc.text += "4";};
+			var calc5 = addButton(ligneCalc3,"5");
+			calc5.onClick = function() { textecalc.text += "5";};
+			var calc6 = addButton(ligneCalc3,"6");
+			calc6.onClick = function() { textecalc.text += "6";};
+			var calcMult = addButton(ligneCalc3,"X");
+			calcMult.onClick = function() { textecalc.text += "*";};
+			var ligneCalc4 = addHGroup(fenetrecalc.groupe);
+			ligneCalc4.spacing = 0;
+			ligneCalc4.alignChildren = ["fill","center"];
+			var calc1 = addButton(ligneCalc4,"1");
+			calc1.onClick = function() { textecalc.text += "1";};
+			var calc2 = addButton(ligneCalc4,"2");
+			calc2.onClick = function() { textecalc.text += "2";};
+			var calc3 = addButton(ligneCalc4,"3");
+			calc3.onClick = function() { textecalc.text += "3";};
+			var calcMin = addButton(ligneCalc4,"-");
+			calcMin.onClick = function() { textecalc.text += "-";};
+			var ligneCalc5 = addHGroup(fenetrecalc.groupe);
+			ligneCalc5.spacing = 0;
+			ligneCalc5.alignChildren = ["fill","center"];
+			var calc0 = addButton(ligneCalc5,"0");
+			calc0.onClick = function() { textecalc.text += "0";};
+			var calcPoint = addButton(ligneCalc5,".");
+			calcPoint.onClick = function() { textecalc.text += ".";};
+			var calcEquals = addButton(ligneCalc5,"=");
+			calcEquals.onClick = calc;
+			var calcAdd = addButton(ligneCalc5,"+");
+			calcAdd.onClick = function() { textecalc.text += "+";};
+
+			fenetrecalc.layout.layout(true);
+			fenetrecalc.layout.resize();
 			
-				//la fenetre Autorig
-				{
-					var fenetreAutorig = createDialog(getMessage(142),true,startAutoRig);
-					
-					//BOUTONS DES CALQUES
-					var autorigGroupeCalques = fenetreAutorig.groupe.add("group"); //contient les calques : des groupes en row de text + dropdownlist
-					autorigGroupeCalques.orientation = "column";
-					autorigGroupeCalques.spacing = 2;
-					autorigGroupeCalques.alignChildren = "fill";
-					var texte0 = autorigGroupeCalques.add("statictext",undefined,getMessage(143));
-					texte0.alignment = ["left","top"];
-					//tete
-					var autorigGroupe1 = autorigGroupeCalques.add("group");
-					autorigGroupe1.alignChildren = ["left","center"];
-					autorigGroupe1.add("statictext",undefined,getMessage(144));
-					var teteBouton = autorigGroupe1.add("dropdownlist");
-					teteBouton.alignment = ["right","center"];
-					//cou
-					var autorigGroupe2 = autorigGroupeCalques.add("group");
-					autorigGroupe2.add("statictext",undefined,getMessage(145));
-					var couBouton = autorigGroupe2.add("dropdownlist");
-					couBouton.alignment = ["right","center"];
-					//corps
-					var autorigGroupe3 = autorigGroupeCalques.add("group");
-					autorigGroupe3.add("statictext",undefined,getMessage(146));
-					var corpsBouton = autorigGroupe3.add("dropdownlist");
-					corpsBouton.alignment = ["right","center"];
-					//bassin
-					var autorigGroupe4 = autorigGroupeCalques.add("group");
-					var texte4 = autorigGroupe4.add("statictext",undefined,getMessage(147));
-					var bassinBouton = autorigGroupe4.add("dropdownlist");
-					bassinBouton.alignment = ["right","center"];
-					//bras g
-					var autorigGroupe5 = autorigGroupeCalques.add("group");
-					autorigGroupe5.add("statictext",undefined,getMessage(148));
-					var brasGBouton = autorigGroupe5.add("dropdownlist");
-					brasGBouton.alignment = ["right","center"];
-					//avant bras g
-					var autorigGroupe6 = autorigGroupeCalques.add("group");
-					autorigGroupe6.add("statictext",undefined,getMessage(149));
-					var avantBrasGBouton = autorigGroupe6.add("dropdownlist");
-					avantBrasGBouton.alignment = ["right","center"];
-					//main g
-					var autorigGroupe7 = autorigGroupeCalques.add("group");
-					autorigGroupe7.add("statictext",undefined,getMessage(150));
-					var mainGBouton = autorigGroupe7.add("dropdownlist");
-					mainGBouton.alignment = ["right","center"];
-					//bras d
-					var autorigGroupe8 = autorigGroupeCalques.add("group");
-					autorigGroupe8.add("statictext",undefined,getMessage(151));
-					var brasDBouton = autorigGroupe8.add("dropdownlist");
-					brasDBouton.alignment = ["right","center"];
-					//avant bras d
-					var autorigGroupe9 = autorigGroupeCalques.add("group");
-					autorigGroupe9.add("statictext",undefined,getMessage(152));
-					var avantBrasDBouton = autorigGroupe9.add("dropdownlist");
-					avantBrasDBouton.alignment = ["right","center"];
-					//main d
-					var autorigGroupe10 = autorigGroupeCalques.add("group");
-					autorigGroupe10.add("statictext",undefined,getMessage(153));
-					var mainDBouton = autorigGroupe10.add("dropdownlist");
-					mainDBouton.alignment = ["right","center"];
-					//cuisse g
-					var autorigGroupe11 = autorigGroupeCalques.add("group");
-					autorigGroupe11.add("statictext",undefined,getMessage(154));
-					var cuisseGBouton = autorigGroupe11.add("dropdownlist");
-					cuisseGBouton.alignment = ["right","center"];
-					//mollet g
-					var autorigGroupe12 = autorigGroupeCalques.add("group");
-					autorigGroupe12.add("statictext",undefined,getMessage(155));
-					var molletGBouton = autorigGroupe12.add("dropdownlist");
-					molletGBouton.alignment = ["right","center"];
-					//pied g
-					var autorigGroupe13 = autorigGroupeCalques.add("group");
-					autorigGroupe13.add("statictext",undefined,getMessage(156));
-					var piedGBouton = autorigGroupe13.add("dropdownlist");
-					piedGBouton.alignment = ["right","center"];
-					//cuisse d
-					var autorigGroupe14 = autorigGroupeCalques.add("group");
-					autorigGroupe14.add("statictext",undefined,getMessage(157));
-					var cuisseDBouton = autorigGroupe14.add("dropdownlist");
-					cuisseDBouton.alignment = ["right","center"];
-					//mollet d
-					var autorigGroupe15 = autorigGroupeCalques.add("group");
-					autorigGroupe15.add("statictext",undefined,getMessage(158));
-					var molletDBouton = autorigGroupe15.add("dropdownlist");
-					molletDBouton.alignment = ["right","center"];
-					//pied d
-					var autorigGroupe16 = autorigGroupeCalques.add("group");
-					autorigGroupe16.add("statictext",undefined,getMessage(159));
-					var piedDBouton = autorigGroupe16.add("dropdownlist");
-					piedDBouton.alignment = ["right","center"];
-					
-					//OPTIONS
-					var autorigGroupeOptions = fenetreAutorig.groupe.add("group");
-					autorigGroupeOptions.orientation = "column";
-					autorigGroupeOptions.alignChildren = ["left","top"];
-					autorigGroupeOptions.alignment = ["fill","top"];
-					autorigGroupeOptions.add("statictext",undefined,getMessage(160));
-					var autorigIKdos = autorigGroupeOptions.add("checkbox",undefined,getMessage(161));
-					autorigIKdos.value = true;
-					var autorigIKcou = autorigGroupeOptions.add("checkbox",undefined,getMessage(162));
-					autorigIKcou.value = true;
-					var autorigStretch = autorigGroupeOptions.add("checkbox",undefined,getMessage(163));
-					autorigStretch.value = true;
-					var autorigFK = autorigGroupeOptions.add("checkbox",undefined,getMessage(164));
-					autorigFK.value = true;
-								
-				}
-
-				// la fenetre de la calculatrice
-				{
-					 
-					var fenetrecalc = createDialog(getMessage(73),false);
-					fenetrecalc.groupe.orientation = "column";
-					fenetrecalc.groupe.spacing = 0;
-					var resultatcalc1 = fenetrecalc.groupe.add("statictext",undefined,"");
-					var resultatcalc2 = fenetrecalc.groupe.add("statictext",undefined,"");
-					var textecalc = fenetrecalc.groupe.add ("edittext", undefined);
-					textecalc.enabled = false;
-					var ligneCalc1 = addHGroup(fenetrecalc.groupe);
-					ligneCalc1.spacing = 0;
-					ligneCalc1.alignChildren = ["fill","center"];
-					var calcErase = addButton(ligneCalc1,"<-");
-					calcErase.onClick = function() {textecalc.text = textecalc.text.substr(0,textecalc.text.length-1);};
-					var calcCancel = addButton(ligneCalc1,"CE");
-					calcCancel.onClick = function() {textecalc.text = "";};
-					var calcO = addButton(ligneCalc1,"(");
-					calcO.onClick = function() { textecalc.text += "(";};
-					var calcC = addButton(ligneCalc1,")");
-					calcC.onClick = function() { textecalc.text += ")";};
-					var ligneCalc2 = addHGroup(fenetrecalc.groupe);
-					ligneCalc2.spacing = 0;
-					ligneCalc2.alignChildren = ["fill","center"];
-					var calc7 = addButton(ligneCalc2,"7");
-					calc7.onClick = function() { textecalc.text += "7";};
-					var calc8 = addButton(ligneCalc2,"8");
-					calc8.onClick = function() { textecalc.text += "8";};
-					var calc9 = addButton(ligneCalc2,"9");
-					calc9.onClick = function() { textecalc.text += "9";};
-					var calcDiv = addButton(ligneCalc2,"/");
-					calcDiv.onClick = function() { textecalc.text += "/";};
-					var ligneCalc3 = addHGroup(fenetrecalc.groupe);
-					ligneCalc3.spacing = 0;
-					ligneCalc3.alignChildren = ["fill","center"];
-					var calc4 = addButton(ligneCalc3,"4");
-					calc4.onClick = function() { textecalc.text += "4";};
-					var calc5 = addButton(ligneCalc3,"5");
-					calc5.onClick = function() { textecalc.text += "5";};
-					var calc6 = addButton(ligneCalc3,"6");
-					calc6.onClick = function() { textecalc.text += "6";};
-					var calcMult = addButton(ligneCalc3,"X");
-					calcMult.onClick = function() { textecalc.text += "*";};
-					var ligneCalc4 = addHGroup(fenetrecalc.groupe);
-					ligneCalc4.spacing = 0;
-					ligneCalc4.alignChildren = ["fill","center"];
-					var calc1 = addButton(ligneCalc4,"1");
-					calc1.onClick = function() { textecalc.text += "1";};
-					var calc2 = addButton(ligneCalc4,"2");
-					calc2.onClick = function() { textecalc.text += "2";};
-					var calc3 = addButton(ligneCalc4,"3");
-					calc3.onClick = function() { textecalc.text += "3";};
-					var calcMin = addButton(ligneCalc4,"-");
-					calcMin.onClick = function() { textecalc.text += "-";};
-					var ligneCalc5 = addHGroup(fenetrecalc.groupe);
-					ligneCalc5.spacing = 0;
-					ligneCalc5.alignChildren = ["fill","center"];
-					var calc0 = addButton(ligneCalc5,"0");
-					calc0.onClick = function() { textecalc.text += "0";};
-					var calcPoint = addButton(ligneCalc5,".");
-					calcPoint.onClick = function() { textecalc.text += ".";};
-					var calcEquals = addButton(ligneCalc5,"=");
-					calcEquals.onClick = calc;
-					var calcAdd = addButton(ligneCalc5,"+");
-					calcAdd.onClick = function() { textecalc.text += "+";};
-
-					fenetrecalc.layout.layout(true);
-					fenetrecalc.layout.resize();
-					
-					function calcKeyDown(e)
-					{
-						if (e.keyName == "0") calc0.onClick();
-						else if (e.keyName == "1") calc1.onClick();
-						else if (e.keyName == "2") calc2.onClick();
-						else if (e.keyName == "3") calc3.onClick();
-						else if (e.keyName == "4") calc4.onClick();
-						else if (e.keyName == "5") calc5.onClick();
-						else if (e.keyName == "6") calc6.onClick();
-						else if (e.keyName == "7") calc7.onClick();
-						else if (e.keyName == "8") calc8.onClick();
-						else if (e.keyName == "9") calc9.onClick();
-						else if (e.keyName == "Backspace") calcErase.onClick();
-						else if (e.keyName == "Delete") calcCancel.onClick();
-						else if (e.keyName == "Divide") calcDiv.onClick();
-						else if (e.keyName == "Multiply") calcMult.onClick();
-						else if (e.keyName == "Minus") calcMin.onClick();
-						else if (e.keyName == "Plus") calcAdd.onClick();
-						else if (e.keyName == "Enter") calcEquals.onClick();
-						else if (e.keyName == "Decimal") calcPoint.onClick();
-						else if (e.keyName == "Comma") calcPoint.onClick();
-						else if (e.keyName == "Period") calcPoint.onClick();
-						
-					}
-					
-					fenetrecalc.addEventListener("keydown",calcKeyDown);
-					
-					
-
-				}
+			function calcKeyDown(e)
+			{
+				if (e.keyName == "0") calc0.onClick();
+				else if (e.keyName == "1") calc1.onClick();
+				else if (e.keyName == "2") calc2.onClick();
+				else if (e.keyName == "3") calc3.onClick();
+				else if (e.keyName == "4") calc4.onClick();
+				else if (e.keyName == "5") calc5.onClick();
+				else if (e.keyName == "6") calc6.onClick();
+				else if (e.keyName == "7") calc7.onClick();
+				else if (e.keyName == "8") calc8.onClick();
+				else if (e.keyName == "9") calc9.onClick();
+				else if (e.keyName == "Backspace") calcErase.onClick();
+				else if (e.keyName == "Delete") calcCancel.onClick();
+				else if (e.keyName == "Divide") calcDiv.onClick();
+				else if (e.keyName == "Multiply") calcMult.onClick();
+				else if (e.keyName == "Minus") calcMin.onClick();
+				else if (e.keyName == "Plus") calcAdd.onClick();
+				else if (e.keyName == "Enter") calcEquals.onClick();
+				else if (e.keyName == "Decimal") calcPoint.onClick();
+				else if (e.keyName == "Comma") calcPoint.onClick();
+				else if (e.keyName == "Period") calcPoint.onClick();
 				
-				// la fenetre du bloc notes
+			}
+			
+			fenetrecalc.addEventListener("keydown",calcKeyDown);
+			
+			
+
+		}
+		
+		// la fenetre du bloc notes
+		{
+			var fenetrenotes = createDialog(getMessage(74),false,undefined,true);
+			fenetrenotes.groupe.orientation = "column";
+			fenetrenotes.groupe.alignment = ["fill","fill"];
+			fenetrenotes.groupe.alignChildren = ["fill","fill"];
+			var textenotes = fenetrenotes.groupe.add ("edittext", undefined,"",{multiline: true});
+			textenotes.helpTip = getMessage(104);
+			var charCounter = fenetrenotes.groupe.add ("statictext", undefined,"0");
+			charCounter.alignment = ["fill","bottom"];
+			//récup le texte sauvegardé
+			var texteRecup = "";
+			try { texteRecup = app.settings.getSetting("duik","notes"); }
+			catch(err) { alert(err); }
+			textenotes.text = texteRecup;
+			charCounter.text = textenotes.text.length + " / 1500";
+			
+			//fonction quand texte modifié
+			textenotes.onChanging = function ()
+			{
+				if (textenotes.text.length > 1500)
 				{
-					var fenetrenotes = createDialog(getMessage(74),false,undefined,true);
-					fenetrenotes.groupe.orientation = "column";
-					fenetrenotes.groupe.alignment = ["fill","fill"];
-					fenetrenotes.groupe.alignChildren = ["fill","fill"];
-					var textenotes = fenetrenotes.groupe.add ("edittext", undefined,"",{multiline: true});
-					textenotes.helpTip = getMessage(104);
-					var charCounter = fenetrenotes.groupe.add ("statictext", undefined,"0");
-					charCounter.alignment = ["fill","bottom"];
-					//récup le texte sauvegardé
-					var texteRecup = "";
-					try { texteRecup = app.settings.getSetting("duik","notes"); }
-					catch(err) { alert(err); }
-					textenotes.text = texteRecup;
-					charCounter.text = textenotes.text.length + " / 1500";
-					
-					//fonction quand texte modifié
-					textenotes.onChanging = function ()
-					{
-						if (textenotes.text.length > 1500)
-						{
-							textenotes.text = textenotes.text.substring(0,1500);
-						}
-						charCounter.text = textenotes.text.length + " / 1500";
-						app.settings.saveSetting("duik","notes",textenotes.text);
-					};
-					fenetrenotes.size = [300,300];
-					
+					textenotes.text = textenotes.text.substring(0,1500);
 				}
+				charCounter.text = textenotes.text.length + " / 1500";
+				app.settings.saveSetting("duik","notes",textenotes.text);
+			};
+			fenetrenotes.size = [300,300];
+			
+		}
 					
 				
 	
@@ -3697,6 +4385,9 @@ function fnDuIK(thisObj)
 			var tvpCamPanel = addVPanel(panos);
 			tvpCamPanel.visible = false;
 			tvpCamPanel.alignChildren = ["fill","top"];
+			var autorigPanel = addVPanel(panos);
+			autorigPanel.visible = false;
+			autorigPanel.alignChildren = ["fill","top"];
 			
 			
 			function displayPanel() {
@@ -3716,6 +4407,7 @@ function fnDuIK(thisObj)
 				wheelPanel.hide();
 				springPanel.hide();
 				tvpCamPanel.hide();
+				autorigPanel.hide();
 				if (selecteur.selection == 0){
 					panoik.visible = true;
 					panoanimation.visible = false;
@@ -4075,9 +4767,8 @@ function fnDuIK(thisObj)
 		{
 			//bouton autorig
 			var boutonautorig = addIconButton(panoik,"btn_autorig.png",getMessage(142)) ;
-			boutonautorig.onClick = autorig;
+			boutonautorig.onClick = function () {panoik.hide();autorigPanel.show();};
 			boutonautorig.helpTip = "Autorig";
-			boutonautorig.enabled = false;
 			//boutonautorig.helpTip = "tip à écrire";
 			var groupeik = addHGroup(panoik);
 			var groupeikG = addVGroup(groupeik);
@@ -4723,19 +5414,19 @@ function fnDuIK(thisObj)
 			
 			var ikSettingsGroup = addHGroup(ikPanel);
 			
-			var ikCWButton = ikSettingsGroup.add("checkbox",undefined,"Clockwise");
-			ikCWButton.visible = false;
+			//var ikCWButton = ikSettingsGroup.add("checkbox",undefined,"Clockwise");
+			//ikCWButton.visible = false;
 								
 			var ik3DGroup = addVGroup(ikSettingsGroup);
 			ik3DGroup.visible = false;
 			var ikFrontFacingButton = ik3DGroup.add("radiobutton",undefined,"Front/Back view");
 			var ikRightFacingButton = ik3DGroup.add("radiobutton",undefined,"Left/Right view");
 			
-			ik3LayerButton.onClick = function () { ik2GoalButton.value = false; ik3DGroup.enabled = false;  ikCWButton.enabled = true;};
-			ik2GoalButton.onClick = function () { ik3LayerButton.value = false; ik3DGroup.enabled = true; ikCWButton.enabled = true;};
+			ik3LayerButton.onClick = function () { ik2GoalButton.value = false; ik3DGroup.enabled = false;};
+			ik2GoalButton.onClick = function () { ik3LayerButton.value = false; ik3DGroup.enabled = true;};
 			
-			ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true; ikCWButton.enabled = true;};
-			ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false; ikCWButton.enabled = false; };
+			ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true;};
+			ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false;};
 			
 			var ikButtonsGroup = addHGroup(ikPanel);
 			var ikCancelButton = addIconButton(ikButtonsGroup,"btn_cancel.png","Cancel");
@@ -4854,10 +5545,10 @@ function fnDuIK(thisObj)
 			//buttons
 			var renameButtonsGroup = addHGroup(renamePanel);
 			var renameCloseButton = addIconButton(renameButtonsGroup,"btn_cancel.png","Back");
-			renameCloseButton.alignment = ["left","top"];
+			renameCloseButton.alignment = ["fill","top"];
 			renameCloseButton.onClick = function () { renamePanel.hide() ; panoik.show(); };
 			var renameCreateButton = addIconButton(renameButtonsGroup,"btn_valid.png","Rename");
-			renameCreateButton.alignment = ["right","top"];
+			renameCreateButton.alignment = ["fill","top"];
 			renameCreateButton.onClick = rename;
 		}
 		//SEARCH AND REPLACE PANEL
@@ -5462,6 +6153,307 @@ function fnDuIK(thisObj)
 			tvpCamOKButton.onClick = function () { tvpCamOKButtonClicked(); tvpCamPanel.hide(); panocam.show()};
 			tvpCamOKButton.helpTip = "Imports TVPaint camera.";
 		}
+		//AUTORIG PANEL
+		{
+			autorigPanel.alignment = ["fill","fill"];
+			autorigPanel.alignChildren = ["fill","fill"];
+			
+			var autorigTypeGroup = addHGroup(autorigPanel);
+			autorigTypeGroup.alignment = ["fill","top"];
+			autorigTypeGroup.alignChildren = ["fill","top"];
+			var autorigUngulateGroup = addIconRadioButton(autorigTypeGroup,"autorig_ungu.png","Ungulate");
+			var autorigUngulateButton = autorigUngulateGroup.button;
+			autorigUngulateButton.helpTip = "Horses, cattles, girafes, pigs, deers, camels, hippopotamuses...";
+			var autorigDigitigradeGroup = addIconRadioButton(autorigTypeGroup,"autorig_digi.png","Digitigrade");
+			var autorigDigitigradeButton = autorigDigitigradeGroup.button;
+			autorigDigitigradeButton.helpTip = "Dogs, cats, dinosaurs, walking birds...";
+			var autorigPlantigradeGroup = addIconRadioButton(autorigTypeGroup,"autorig_planti.png","Plantigrade");
+			var autorigPlantigradeButton = autorigPlantigradeGroup.button;
+			autorigPlantigradeButton.helpTip = "Bears, humans and primates, rabbits...";
+			
+			autorigUngulateButton.onClick = function () { autorigDigitigradeButton.value = false; autorigPlantigradeButton.value = false; };
+			autorigDigitigradeButton.onClick = function () { autorigUngulateButton.value = false; autorigPlantigradeButton.value = false; };
+			autorigPlantigradeButton.onClick = function () { autorigUngulateButton.value = false; autorigDigitigradeButton.value = false; };
+			autorigPlantigradeButton.value = true;
+			
+			var autorigCharacterButton = addIconButton(autorigPanel,"btn_autorig.png","Full character");
+			
+			var autorigLimbsGroup = addHGroup(autorigPanel);
+			var autorigLeftGroup = addVGroup(autorigLimbsGroup);
+			var autorigRightGroup = addVGroup(autorigLimbsGroup);
+			
+			var autorigFrontLegButton = addIconButton(autorigLeftGroup,"btn_frontleg.png","Front leg / Arm");
+			autorigFrontLegButton.onClick = function () {
+					frontLegDigiImage.visible = autorigDigitigradeButton.value;
+					frontLegPlantiImage.visible = autorigPlantigradeButton.value;
+					frontLegUnguImage.visible = autorigUngulateButton.value;
+					if (autorigDigitigradeButton.value)
+					{
+						frontLegTipGroup.visible = true;
+						frontLegHeelGroup.visible = false;
+						frontLegNullsLabel.visible = true;
+					}
+					if (autorigPlantigradeButton.value)
+					{
+						frontLegTipGroup.visible = true;
+						frontLegHeelGroup.visible = true;
+						frontLegNullsLabel.visible = true;
+					}
+					if (autorigUngulateButton.value)
+					{
+						frontLegTipGroup.visible = false;
+						frontLegHeelGroup.visible = false;
+						frontLegNullsLabel.visible = false;
+					}
+					frontLegClicked();
+				}
+			var autorigBackLegButton = addIconButton(autorigRightGroup,"btn_backleg.png","Back leg");
+			autorigBackLegButton.onClick = function () {
+					backLegDigiImage.visible = autorigDigitigradeButton.value;
+					backLegPlantiImage.visible = autorigPlantigradeButton.value;
+					backLegUnguImage.visible = autorigUngulateButton.value;
+					if (autorigDigitigradeButton.value)
+					{
+						backLegTipGroup.visible = true;
+						backLegHeelGroup.visible = false;
+						backLegNullsLabel.visible = true;
+					}
+					if (autorigPlantigradeButton.value)
+					{
+						backLegTipGroup.visible = true;
+						backLegHeelGroup.visible = true;
+						backLegNullsLabel.visible = true;
+					}
+					if (autorigUngulateButton.value)
+					{
+						backLegTipGroup.visible = false;
+						backLegHeelGroup.visible = false;
+						backLegNullsLabel.visible = false;
+					}
+					backLegClicked();
+				}
+			var autorigSpineButton = addIconButton(autorigLeftGroup,"btn_spine.png","Spine - Neck - Head");
+			autorigSpineButton.onClick = function () {
+					spineDialog.show();
+				}
+			var autorigTailButton = addIconButton(autorigRightGroup,"btn_tail.png","Tail");
+			
+			var autorigCancelButton = addIconButton(autorigPanel,"btn_cancel.png","Cancel");
+			autorigCancelButton.onClick = function () { autorigPanel.hide();panoik.show();};
+			autorigCancelButton.helpTip = "Cancel";
+			autorigCancelButton.alignment = ["fill","bottom"];
+			
+			//FRONT LEG WINDOW
+			{
+				var frontLegDialog = new Window ("palette","Front Leg Autorig",undefined,{closeButton:true,resizeable:false});
+				frontLegDialog.spacing = 2;
+				frontLegDialog.margins = 5;
+				frontLegDialog.alignChildren = ["fill","top"];
+				frontLegDialog.groupe = frontLegDialog.add("group");
+				frontLegDialog.groupe.alignChildren = ["fill","top"];
+				
+				//IMAGES
+				var frontLegImageGroup = frontLegDialog.groupe.add("group");
+				frontLegImageGroup.orientation = "stack";
+				var frontLegDigiImage = frontLegImageGroup.add("image",undefined,dossierIcones + "legs_front_digi.png");
+				var frontLegPlantiImage = frontLegImageGroup.add("image",undefined,dossierIcones + "legs_front_planti.png");
+				var frontLegUnguImage = frontLegImageGroup.add("image",undefined,dossierIcones + "legs_front_ungu.png");
+				
+				//BOUTONS DES CALQUES
+				var frontLegLayersGroup = addVGroup(frontLegDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
+				frontLegLayersGroup.alignment = ["fill","center"];
+				
+				//layers
+				
+				var frontLegLayersLabel = frontLegLayersGroup.add("statictext",undefined,getMessage(143));
+				frontLegLayersLabel.alignment = ["left","top"];
+				
+				var frontLegGroup1 = addHGroup(frontLegLayersGroup);
+				var text = frontLegGroup1.add("statictext",undefined,"Shoulder blade, clavicle");
+				textColor(text,col.orange);
+				var frontLegShoulderButton = frontLegGroup1.add("dropdownlist");
+				frontLegShoulderButton.alignment = ["right","center"];
+				
+				var frontLegGroup2 = addHGroup(frontLegLayersGroup);
+				text = frontLegGroup2.add("statictext",undefined,"Arm, humerus, shoulder");
+				textColor(text,col.lightOrange);
+				var frontLegHumerusButton = frontLegGroup2.add("dropdownlist");
+				frontLegHumerusButton.alignment = ["right","center"];
+				
+				var frontLegGroup3 = addHGroup(frontLegLayersGroup);
+				text = frontLegGroup3.add("statictext",undefined,"Ulna, radius, forearm, elbow");
+				textColor(text,col.yellow);
+				var frontLegRadiusButton = frontLegGroup3.add("dropdownlist");
+				frontLegRadiusButton.alignment = ["right","center"];
+				
+				var frontLegGroup4 = addHGroup(frontLegLayersGroup);
+				text = frontLegGroup4.add("statictext",undefined,"Carpus, palm, hand");
+				textColor(text,col.blue);
+				var frontLegCarpusButton = frontLegGroup4.add("dropdownlist");
+				frontLegCarpusButton.alignment = ["right","center"];
+				
+				var frontLegGroup5 = addHGroup(frontLegLayersGroup);
+				text = frontLegGroup5.add("statictext",undefined,"Claws, hoof, fingers");
+				textColor(text,col.purple);
+				var frontLegClawsButton = frontLegGroup5.add("dropdownlist");
+				frontLegClawsButton.alignment = ["right","center"];
+				
+				//Null Objects
+				
+				var frontLegNullsLabel = frontLegLayersGroup.add("statictext",undefined,"Null Objects:");
+				frontLegNullsLabel.alignment = ["left","top"];
+				
+				var frontLegTipGroup = addHGroup(frontLegLayersGroup);
+				var text = frontLegTipGroup.add("statictext",undefined,"Tip, tiptoe");
+				textColor(text,col.red);
+				var frontLegTipButton = frontLegTipGroup.add("dropdownlist");
+				frontLegTipButton.alignment = ["right","center"];
+				
+				var frontLegHeelGroup = addHGroup(frontLegLayersGroup);
+				var text = frontLegHeelGroup.add("statictext",undefined,"Heel, back, contact, palm");
+				textColor(text,col.red);
+				var frontLegHeelButton = frontLegHeelGroup.add("dropdownlist");
+				frontLegHeelButton.alignment = ["right","center"];
+				
+				
+				var frontLegButtonsGroup = addHGroup(frontLegDialog);
+				frontLegButtonsGroup.alignment = ["fill","bottom"];
+				frontLegButtonsGroup.margins = 10;
+				var frontLegCancel = addButton(frontLegButtonsGroup,"Cancel");
+				frontLegCancel.onClick = function() { frontLegDialog.hide(); };
+				frontLegCancel.alignment = ["left","bottom"];
+				var frontLegOK = addButton(frontLegButtonsGroup,"OK");
+				frontLegOK.alignment = ["right","bottom"];
+			}
+			
+			//BACK LEG WINDOW
+			{
+				var backLegDialog = new Window ("palette","Back Leg Autorig",undefined,{closeButton:true,resizeable:false});
+				backLegDialog.spacing = 2;
+				backLegDialog.margins = 5;
+				backLegDialog.alignChildren = ["fill","top"];
+				backLegDialog.groupe = backLegDialog.add("group");
+				backLegDialog.groupe.alignChildren = ["fill","top"];
+				
+				//IMAGES
+				var backLegImageGroup = backLegDialog.groupe.add("group");
+				backLegImageGroup.orientation = "stack";
+				var backLegDigiImage = backLegImageGroup.add("image",undefined,dossierIcones + "legs_back_digi.png");
+				var backLegPlantiImage = backLegImageGroup.add("image",undefined,dossierIcones + "legs_back_planti.png");
+				var backLegUnguImage = backLegImageGroup.add("image",undefined,dossierIcones + "legs_back_ungu.png");
+				
+				//BOUTONS DES CALQUES
+				var backLegLayersGroup = addVGroup(backLegDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
+				backLegLayersGroup.alignment = ["fill","center"];
+				var backLegLabel = backLegLayersGroup.add("statictext",undefined,getMessage(143));
+				backLegLabel.alignment = ["left","top"];
+				//tete
+				
+				var backLegGroup2 = addHGroup(backLegLayersGroup);
+				text = backLegGroup2.add("statictext",undefined,"Femur, thigh");
+				textColor(text,col.lightOrange);
+				var backLegFemurButton = backLegGroup2.add("dropdownlist");
+				backLegFemurButton.alignment = ["right","center"];
+				
+				var backLegGroup3 = addHGroup(backLegLayersGroup);
+				text = backLegGroup3.add("statictext",undefined,"Tibia, fibula, calf, knee");
+				textColor(text,col.yellow);
+				var backLegTibiaButton = backLegGroup3.add("dropdownlist");
+				backLegTibiaButton.alignment = ["right","center"];
+				
+				var backLegGroup4 = addHGroup(backLegLayersGroup);
+				text = backLegGroup4.add("statictext",undefined,"Tarsus, foot");
+				textColor(text,col.blue);
+				var backLegTarsusButton = backLegGroup4.add("dropdownlist");
+				backLegTarsusButton.alignment = ["right","center"];
+				
+				var backLegGroup5 = addHGroup(backLegLayersGroup);
+				text = backLegGroup5.add("statictext",undefined,"Claws, hoof, toes");
+				textColor(text,col.purple);
+				var backLegClawsButton = backLegGroup5.add("dropdownlist");
+				backLegClawsButton.alignment = ["right","center"];
+				
+				
+				//Null Objects
+				
+				var backLegNullsLabel = backLegLayersGroup.add("statictext",undefined,"Null Objects:");
+				backLegNullsLabel.alignment = ["left","top"];
+				
+				var backLegTipGroup = addHGroup(backLegLayersGroup);
+				var text = backLegTipGroup.add("statictext",undefined,"Tip, tiptoe");
+				textColor(text,col.red);
+				var backLegTipButton = backLegTipGroup.add("dropdownlist");
+				backLegTipButton.alignment = ["right","center"];
+				
+				var backLegHeelGroup = addHGroup(backLegLayersGroup);
+				var text = backLegHeelGroup.add("statictext",undefined,"Heel, back, contact, palm");
+				textColor(text,col.red);
+				var backLegHeelButton = backLegHeelGroup.add("dropdownlist");
+				backLegHeelButton.alignment = ["right","center"];
+				
+				
+				var backLegButtonsGroup = addHGroup(backLegDialog);
+				backLegButtonsGroup.alignment = ["fill","bottom"];
+				backLegButtonsGroup.margins = 10;
+				var backLegCancel = addButton(backLegButtonsGroup,"Cancel");
+				backLegCancel.onClick = function() { backLegDialog.hide(); };
+				backLegCancel.alignment = ["left","bottom"];
+				var backLegOK = addButton(backLegButtonsGroup,"OK");
+				backLegOK.alignment = ["right","bottom"];
+			}
+			
+			//SPINE WINDOW
+			{
+				var spineDialog = createDialog("Spine Autorig",true,spine);
+				
+				//IMAGES
+				spineDialog.groupe.add("image",undefined,dossierIcones + "spine.png");
+
+				
+				//BOUTONS DES CALQUES
+				var spineLayersGroup = addVGroup(spineDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
+				spineLayersGroup.alignment = ["fill","center"];
+				var spineLabel = spineLayersGroup.add("statictext",undefined,getMessage(143));
+				spineLabel.alignment = ["left","top"];
+				//buttons
+				var spineGroup1 = addHGroup(spineLayersGroup);
+				var text = spineGroup1.add("statictext",undefined,"Head");
+				textColor(text,col.orange);
+				var spineHeadButton = spineGroup1.add("dropdownlist");
+				spineHeadButton.alignment = ["right","center"];
+				
+				var text = spineLayersGroup.add("statictext",undefined,"Neck");
+				textColor(text,col.yellow);
+				var spineNeckFromGroup = addHGroup(spineLayersGroup);
+				spineNeckFromGroup.add("statictext",undefined,"From");
+				var spineNeckFromButton = spineNeckFromGroup.add("dropdownlist");
+				spineNeckFromButton.alignment = ["right","center"];
+				var spineNeckToGroup = addHGroup(spineLayersGroup);
+				spineNeckToGroup.add("statictext",undefined,"To");
+				var spineNeckToButton = spineNeckToGroup.add("dropdownlist");
+				spineNeckToButton.alignment = ["right","center"];
+				
+				var text = spineLayersGroup.add("statictext",undefined,"Spine, back, torso, chest, thorax");
+				textColor(text,col.blue);
+				var spineSpineFromGroup = addHGroup(spineLayersGroup);
+				spineSpineFromGroup.add("statictext",undefined,"From");
+				var spineSpineFromButton = spineSpineFromGroup.add("dropdownlist");
+				spineSpineFromButton.alignment = ["right","center"];
+				var spineSpineToGroup = addHGroup(spineLayersGroup);
+				spineSpineToGroup.add("statictext",undefined,"To");
+				var spineSpineToButton = spineSpineToGroup.add("dropdownlist");
+				spineSpineToButton.alignment = ["right","center"];
+				
+				var spineGroup2 = addHGroup(spineLayersGroup);
+				var text = spineGroup2.add("statictext",undefined,"Hips, pelvis, abdomen");
+				textColor(text,col.purple);
+				var spineHipsButton = spineGroup2.add("dropdownlist");
+				spineHipsButton.alignment = ["right","center"];
+				
+			}
+		}
+		
+		
 		
 		// On définit le layout et on redessine la fenètre quand elle est resizée
 		palette.layout.layout(true);

@@ -830,6 +830,9 @@ function spine(hips,back,neck,head) {
     
     }
 
+
+
+
 app.beginUndoGroup("autorigTest");
 
 var layers = Duik.utils.convertCollectionToArray(app.project.activeItem.layers);
