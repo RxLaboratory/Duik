@@ -1109,6 +1109,160 @@ function fnDuIK(thisObj)
 			
 			function spineClicked() {
 				
+				var compo = app.project.activeItem;
+				if (!(compo instanceof CompItem)) return;
+				
+				Duik.utils.checkNames();
+
+
+				//1 - parcourir tous les calques et les ranger
+				
+				var layers = [];
+				
+				//si rien de sélectionné, on charge les calques de toute la compo
+				if (compo.selectedLayers.length == 0) layers = compo.layers;
+				else layers = compo.selectedLayers;
+				
+				var head = Duik.utils.getLayerByNames(layers,["head"]);
+				var neck = Duik.utils.getLayersByNames(layers,["neck"]);
+				var spine = Duik.utils.getLayersByNames(layers,["spine","torso","thorax","chest"]);
+				var hips = Duik.utils.getLayerByNames(layers,["hips","pelvis","abdomen"]);
+				
+				//get layer list
+				var layersList = Duik.utils.getLayersReadableList(layers);
+				layersList.unshift("None");
+				
+				//ajouter les listes de calques
+				spineHeadButton.removeAll();
+				spineNeckFromButton.removeAll();
+				spineNeckToButton.removeAll();
+				spineSpineFromButton.removeAll();
+				spineSpineToButton.removeAll();
+				spineHipsButton.removeAll();
+				
+				for (i = 0;i<layersList.length;i++) {
+					spineHeadButton.add("item",layersList[i]);
+					spineNeckFromButton.add("item",layersList[i]);
+					spineNeckToButton.add("item",layersList[i]);
+					spineSpineFromButton.add("item",layersList[i]);
+					spineSpineToButton.add("item",layersList[i]);
+					spineHipsButton.add("item",layersList[i]);
+				}
+				
+				//préselectionner
+				if (head) spineHeadButton.selection = Duik.js.getIndexOfStringInArray(layersList,head.index + " - " + head.name);
+				if (neck.length) {
+					spineNeckFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[0].index + " - " + neck[0].name);
+					spineNeckToButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[neck.length-1].index + " - " + neck[neck.length-1].name);
+				}
+				if (neck.length) {
+					spineSpineFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[0].index + " - " + spine[0].name);
+					spineSpineToButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[spine.length-1].index + " - " + spine[spine.length-1].name);
+				}				
+				if (hips) spineHipsButton.selection = Duik.js.getIndexOfStringInArray(layersList,hips.index + " - " + hips.name);
+
+				
+				function getUserSel()
+				{
+					if (spineHeadButton.selection == null) spineHeadButton.selection = 0;
+					if (spineNeckFromButton.selection == null) spineNeckFromButton.selection = 0;
+					if (spineNeckToButton.selection == null) spineNeckToButton.selection = 0;
+					if (spineSpineFromButton.selection == null) spineSpineFromButton.selection = 0;
+					if (spineSpineToButton.selection == null) spineSpineToButton.selection = 0;
+					if (spineHipsButton.selection == null) spineHipsButton.selection = 0;
+					
+					spineHeadButton.selection.index == 0 ? head = null : head = compo.layers[spineHeadButton.selection.text.split(" - ")[0]];
+					var neckFirst = null;
+					var neckLast = null;
+					spineNeckFromButton.selection.index == 0 ? neckFirst = null : neckFirst = compo.layers[spineNeckFromButton.selection.text.split(" - ")[0]];
+					spineNeckToButton.selection.index == 0 ? neckLast = null : neckLast = compo.layers[spineNeckToButton.selection.text.split(" - ")[0]];
+					var spineFirst = null;
+					var spineLast = null;
+					spineSpineFromButton.selection.index == 0 ? spineFirst = null : spineFirst = compo.layers[spineSpineFromButton.selection.text.split(" - ")[0]];
+					spineSpineToButton.selection.index == 0 ? spineLast = null : spineLast = compo.layers[spineSpineToButton.selection.text.split(" - ")[0]];
+					spineHipsButton.selection.index == 0 ? hips = null : hips = compo.layers[spineHipsButton.selection.text.split(" - ")[0]];
+					
+					//neck array
+					neck = [];
+					if (neckFirst && neckLast)
+					{
+						for (var i = neckFirst.index; i <= neckLast.index ; i++)
+						{
+							neck.push(compo.layers[i]);
+						}
+					}
+					else if (neckFirst)
+					{
+						neck = [compo.layers[neckFirst]];
+					}
+					else if (neckLast)
+					{
+						neck = [compo.layers[neckLast]];
+					}
+					
+					//spine array
+					spine = [];
+					if (spineFirst && spineLast)
+					{
+						for (var i = spineFirst.index; i <= spineLast.index ; i++)
+						{
+							spine.push(compo.layers[i]);
+						}
+					}
+					else if (spineFirst)
+					{
+						spine = [compo.layers[spineFirst]];
+					}
+					else if (spineLast)
+					{
+						spine = [compo.layers[spineLast]];
+					}
+										
+					//vérifier qu'il n'y a pas deux calques assignés au meme élément
+					var indexUtilises = [];
+					if (head) indexUtilises.push(head.index);
+					if (neck.length) for (var i in neck) indexUtilises.push(neck[i].index);
+					if (spine.length) for (var i in spine) indexUtilises.push(spine[i].index);
+					if (hips) indexUtilises.push(hips.index);
+
+					//verif duplicates de l'array
+					if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+					
+					//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
+					var calquesManquants = [];
+					if (!head) calquesManquants.push("Head");
+					if (!spine.length && !hips) calquesManquants.push("Spine and/or Hips");
+					
+					if (calquesManquants.length > 0) { alert ("Those layers are needed:\n\n" + calquesManquants.join("\n")); return false; }
+					
+					//vérifier si 3D
+					var tridi = false;
+					if (head) if (head.threeDLayer) tridi = true;
+					if (hips) if (hips.threeDLayer) tridi = true;
+					if (neck.length) for (var i in neck) if (neck[i].threeDLayer) tridi = true;
+					if (spine.length) for (var i in spine) if (spine[i].threeDLayer) tridi = true;
+
+					if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
+
+					return true;
+				}
+				
+				spineDialog.layout.layout(true);
+				spineDialog.layout.resize();
+				
+
+				spineOK.onClick = function () {
+					//get the user selection of layers
+					if (getUserSel())
+					{
+						app.beginUndoGroup("Duik - Spine Autorig");
+						spineRig(hips,spine,neck,head);
+						app.endUndoGroup();
+						spineDialog.hide();
+					}
+				}
+				
+				spineDialog.show();
 			}
 			
 			//LIMBS AUTORIG
@@ -1797,12 +1951,155 @@ function fnDuIK(thisObj)
 					return ctrl;
 				}
 				
+				function spineRig(hips,back,neck,head) {
+					if (!head) return null;
+					if (!hips && !back) return null;
+					
+					if (neck) if (neck.length == 0) neck = null;
+					if (back) if (back.length == 0) back = null;
+					
+					//unparent
+					var hipsParent = null;
+					if (hips) { 
+						hipsParent = hips.parent;
+						hips.parent = null;
+						}
+					if (back) for (var i in back) back[i].parent = null;
+					if (neck) for (var i in neck) neck[i].parent = null;
+					if (head) head.parent = null;
+					
+					var controllers = [];
+					
+					//controllers
+					var hipsCtrl = null;
+					var bigHipsCtrl = null;
+					var shoulderCtrl = null;
+					var headCtrl = null;
+					if (hips) {
+						bigHipsCtrl = Duik.addController(hips,true,true,true,true,false);
+						hipsCtrl = Duik.addController(bigHipsCtrl.layer,true,true,true,true,false);
+						bigHipsCtrl.size = bigHipsCtrl.size*1.5;
+						bigHipsCtrl.color = bigHipsCtrl.color *0.5;
+						bigHipsCtrl.update();
+
+						}
+					else if (back) {
+						bigHipsCtrl = Duik.addController(back[back.length-1],true,true,true,true,false);
+						hipsCtrl = Duik.addController(bigHipsCtrl.layer,true,true,true,true,false);
+						bigHipsCtrl.size = bigHipsCtrl.size*1.5;
+						bigHipsCtrl.color = bigHipsCtrl.color *0.5;
+						bigHipsCtrl.update();
+						}
+					controllers.push(bigHipsCtrl);
+					controllers.push(hipsCtrl);
+					if (neck) {
+						shoulderCtrl = Duik.addController(neck[neck.length-1],true,true,true,true,false);
+						shoulderCtrl.layer.name = "C_Shoulders";
+						controllers.push(shoulderCtrl);
+						}
+					headCtrl = Duik.addController(head,false,true,false,false,false);
+					controllers.push(headCtrl);
+
+					//parent
+					//bones
+					if (hips) {
+						hips.parent = hipsCtrl.layer;
+						}
+					if (back) {
+						if (!hips) back[back.length-1].parent = hipsCtrl.layer;
+						else back[back.length-1].parent = hips;
+						}
+					if (neck) {
+						if (back) neck[neck.length-1].parent = back[0];
+						else neck[neck.length-1].parent = hips;
+						for (var i = 0;i<neck.length-1;i++) {
+							neck[i].parent = neck[i+1];
+							}
+						}
+					if (head) {
+						if (neck) head.parent = neck[0];
+						else if (back) head.parent = back[0];
+						else if (hips) head.parent = hips;
+						}
+					//controllers
+					bigHipsCtrl.layer.parent = hipsParent;
+					hipsCtrl.layer.parent = bigHipsCtrl.layer;
+					if (shoulderCtrl) {
+						shoulderCtrl.layer.parent = bigHipsCtrl.layer;
+						headCtrl.layer.parent = shoulderCtrl.layer;
+						}
+					else {
+						headCtrl.layer.parent = bigHipsCtrl.layer;
+						}
+					headCtrl.lock();
+					
+					//IK
+					if (hips && !back) {
+						if (shoulderCtrl) Duik.autoIK([hips,shoulderCtrl.layer]);
+						else Duik.autoIK([hips,headCtrl.layer]);
+						}
+					else if (back.length == 1) {
+						if (shoulderCtrl) Duik.autoIK([back[0],shoulderCtrl.layer]);
+						else Duik.autoIK([back[0],headCtrl.layer]);
+						}
+					else {
+						var bezLayers = back;
+						if (shoulderCtrl) bezLayers.push(shoulderCtrl.layer);
+						else bezLayers.push(headCtrl.layer);
+						bezLayers.push(hipsCtrl.layer);
+						var backCurveCtrl = Duik.bezierIK(bezLayers);
+						backCurveCtrl.layer.parent = bigHipsCtrl.layer;
+						controllers.push(backCurveCtrl);
+						delete bezLayers;
+						}
+					
+					//controls
+					//neck
+					if (neck) {
+						var goalCtrl;
+						var goalCtrlLayerName = "";
+						if (shoulderCtrl) {
+							goalCtrl = shoulderCtrl.layer.effect.addProperty("ADBE Checkbox Control");
+							goalCtrlLayerName = shoulderCtrl.layer.name;
+							}
+						else {
+							goalCtrl = headCtrl.layer.effect.addProperty("ADBE Checkbox Control");
+							goalCtrlLayerName = headCtrl.layer.name;
+							}
+						goalCtrl.name = neck[neck.length-1].name + " goal";
+						goalCtrl(1).setValue(1);
+						
+						for (var i in neck) {
+							var l = neck[i];
+							var torsoName = "";
+							var torsoRot = 0;
+							if (back) {
+								torsoName = back[0].name;
+								torsoRot = back[0].transform.rotation.value;
+								}
+							else {
+								torsoName = hips.name;
+								torsoRot = hips.transform.rotation.value;
+								}
+							l.transform.rotation.expression = "//Duik.neck\n" + 
+																			"var goal = thisComp.layer(\"" + goalCtrlLayerName + "\").effect(\"" + goalCtrl.name + "\")(1) == 1;\n" + 
+																			"var torso = thisComp.layer(\"" + torsoName + "\").rotation;\n" + 
+																			"var ctrl = thisComp.layer(\"" + shoulderCtrl.layer.name + "\").rotation;\n" + 
+																			"var numNeckLayers = " + neck.length + ";\n" + 
+																			"var result = value;\n" + 
+																			"result = result + ctrl/numNeckLayers;\n" + 
+																			"goal ? result-torso/numNeckLayers+" + torsoRot + "/numNeckLayers : result;";
+							}
+						}
+					
+					//head
+					Duik.goal(head,headCtrl.layer);
+					
+					return controllers;
+
+				}
 			}
-			
-			function spine() {
-				
-			}
-			
+						
 			//========== RIGGING ================================
 
 			//FONCTION QUAND ON CLIQUE SUR CREER IK
@@ -6234,7 +6531,7 @@ function fnDuIK(thisObj)
 				}
 			var autorigSpineButton = addIconButton(autorigLeftGroup,"btn_spine.png","Spine - Neck - Head");
 			autorigSpineButton.onClick = function () {
-					spineDialog.show();
+					spineClicked();
 				}
 			var autorigTailButton = addIconButton(autorigRightGroup,"btn_tail.png","Tail");
 			
@@ -6245,7 +6542,7 @@ function fnDuIK(thisObj)
 			
 			//FRONT LEG WINDOW
 			{
-				var frontLegDialog = new Window ("palette","Front Leg Autorig",undefined,{closeButton:true,resizeable:false});
+				var frontLegDialog = new Window ("palette","Front Leg Autorig",undefined,{closeButton:false,resizeable:false});
 				frontLegDialog.spacing = 2;
 				frontLegDialog.margins = 5;
 				frontLegDialog.alignChildren = ["fill","top"];
@@ -6328,7 +6625,7 @@ function fnDuIK(thisObj)
 			
 			//BACK LEG WINDOW
 			{
-				var backLegDialog = new Window ("palette","Back Leg Autorig",undefined,{closeButton:true,resizeable:false});
+				var backLegDialog = new Window ("palette","Back Leg Autorig",undefined,{closeButton:false,resizeable:false});
 				backLegDialog.spacing = 2;
 				backLegDialog.margins = 5;
 				backLegDialog.alignChildren = ["fill","top"];
@@ -6404,7 +6701,12 @@ function fnDuIK(thisObj)
 			
 			//SPINE WINDOW
 			{
-				var spineDialog = createDialog("Spine Autorig",true,spine);
+				var spineDialog = new Window ("palette","Spine Autorig",undefined,{closeButton:false,resizeable:false});
+				spineDialog.spacing = 2;
+				spineDialog.margins = 5;
+				spineDialog.alignChildren = ["fill","top"];
+				spineDialog.groupe = spineDialog.add("group");
+				spineDialog.groupe.alignChildren = ["fill","top"];
 				
 				//IMAGES
 				spineDialog.groupe.add("image",undefined,dossierIcones + "spine.png");
@@ -6433,7 +6735,7 @@ function fnDuIK(thisObj)
 				var spineNeckToButton = spineNeckToGroup.add("dropdownlist");
 				spineNeckToButton.alignment = ["right","center"];
 				
-				var text = spineLayersGroup.add("statictext",undefined,"Spine, back, torso, chest, thorax");
+				var text = spineLayersGroup.add("statictext",undefined,"Spine, torso, chest, thorax");
 				textColor(text,col.blue);
 				var spineSpineFromGroup = addHGroup(spineLayersGroup);
 				spineSpineFromGroup.add("statictext",undefined,"From");
@@ -6449,6 +6751,15 @@ function fnDuIK(thisObj)
 				textColor(text,col.purple);
 				var spineHipsButton = spineGroup2.add("dropdownlist");
 				spineHipsButton.alignment = ["right","center"];
+				
+				var spineButtonsGroup = addHGroup(spineDialog);
+				spineButtonsGroup.alignment = ["fill","bottom"];
+				spineButtonsGroup.margins = 10;
+				var spineCancel = addButton(spineButtonsGroup,"Cancel");
+				spineCancel.onClick = function() { spineDialog.hide(); };
+				spineCancel.alignment = ["left","bottom"];
+				var spineOK = addButton(spineButtonsGroup,"OK");
+				spineOK.alignment = ["right","bottom"];
 				
 			}
 		}
