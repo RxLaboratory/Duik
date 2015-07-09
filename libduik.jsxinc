@@ -3017,6 +3017,47 @@ if (typeof Duik === 'object') delete Duik;
 				return list;
 			}
 		}
+		// SORT LAYERS BY DISTANCE FROM REF
+		if (typeof Duik.utils.sortByDistance !== 'function')
+		{
+			Duik.utils.sortByDistance = function (layrs,from)
+			{
+				if (layrs == undefined) return layrs;
+				
+				var layers = Duik.utils.convertCollectionToArray(layrs);
+				
+				var fromPos = Duik.utils.getWorldPos(from);
+				
+				function sorter(l1,l2)
+				{
+					var l1Pos = Duik.utils.getWorldPos(l1);
+					var l2Pos = Duik.utils.getWorldPos(l2);
+					
+					var l1d = Duik.utils.getLength(l1Pos,fromPos);
+					var l2d = Duik.utils.getLength(l2Pos,fromPos);
+					
+					return l1d-l2d;
+				}
+				
+				if (layers.length >= 2) layers.sort(sorter);
+
+				return layers;
+			}
+		}
+		// GET WORLD POSITION
+		if (typeof Duik.utils.getWorldPos !== 'function')
+		{
+			Duik.utils.getWorldPos = function (l)
+			{
+				if (!l) return [];
+				var p = l.parent;
+				l.parent = null;
+				var pos = l.transform.position.value;
+				l.parent = p;
+				return pos;
+			}
+		}
+	
 	}
 
 	//================================
@@ -3051,6 +3092,8 @@ if (typeof Duik === 'object') delete Duik;
 	}
 	/*	BEZIER IK - Duik.bezierIK(layers,numControllers)
 		adds a Bezier IK to the layers
+		the Array layers is sorted as:
+		[end,middle1,...,middleN,root,endCtrl,rootCtrl]
 		
 		parameters:
 		layers | Array of AVLayers or LayerCollection
@@ -3066,7 +3109,7 @@ if (typeof Duik === 'object') delete Duik;
 			if (layers == undefined) return;
 			if (layers.length < 3) return;
 			if (numControllers == undefined) numControllers = 1;
-			
+						
 			var endController = layers[layers.length-2];
 			var rootController = layers[layers.length-1];
 			

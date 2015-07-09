@@ -517,286 +517,6 @@ function fnDuIK(thisObj)
 				}
 
 			//====================== AUTORIG ======================
-
-			//FONCTION QUAND ON CLIQUE SUR AUTORIG
-/*			
-			//FONCTION LANCE L'AUTORIG
-			function startAutoRig() {
-
-				var compo = app.project.activeItem;
-				var piedG,molletG,cuisseG,piedD,molletD,cuisseD,corps,mainG,avantBrasG,brasG,mainD,avantBrasD,brasD,tete,cou,bassin;
-				
-				//réassigner les calques en fonction des choix utilisateur
-				
-				
-				
-				//groupe d'annulation
-				app.beginUndoGroup("Duik - Autorig");
-				
-				//tout délinker au cas où...
-				if (mainG != undefined) mainG.parent = null;
-				if (avantBrasG != undefined) avantBrasG.parent = null;
-				if (brasG != undefined) brasG.parent = null;
-				if (mainD != undefined) mainD.parent = null;
-				if (avantBrasD != undefined) avantBrasD.parent = null;
-				if (brasD != undefined) brasD.parent = null;
-				if (piedG != undefined) piedG.parent = null;
-				if (molletG != undefined) molletG.parent = null;
-				if (cuisseG != undefined) cuisseG.parent = null;
-				if (piedD != undefined) piedD.parent = null;
-				if (molletD != undefined) molletD.parent = null;
-				if (cuisseD != undefined) cuisseD.parent = null;
-				if (corps != undefined) corps.parent = null;
-				if (tete != undefined) tete.parent = null;
-				if (cou != undefined) cou.parent = null;
-				if (bassin != undefined) bassin.parent = null;
-				
-				//ajouter les controleurs
-				//le master
-				var Cmaster = compo.layers.addNull();
-				Cmaster.source.width = eval(boutonCtrlSize.text);
-				Cmaster.source.height = eval(boutonCtrlSize.text);
-				Cmaster.anchorPoint.setValue([Cmaster.source.width/2,Cmaster.source.height/2]);
-				Cmaster.transform.position.setValue([compo.width/2,compo.height]);
-				Cmaster.name = "C_" + getMessage(177);
-				
-				var CpiedG,CpiedD,Ccorps,Ccorps2,CmainG,CmainD,Ctete,Cepaules,Cdos,Ccou;
-				//mains
-				if (mainG != undefined) CmainG = Duik.addController(mainG);
-				if (mainD != undefined) CmainD = Duik.addController(mainD);
-				//corps
-				bassin != undefined ? Ccorps = Duik.addController(bassin) : Ccorps = Duik.addController(corps);
-				Ccorps2 = Duik.addController(Ccorps);
-				Ccorps2.source.width = eval(boutonCtrlSize.text)*0.8;
-				Ccorps2.source.height = eval(boutonCtrlSize.text)*0.8;
-				//pieds
-				if (piedD != undefined) CpiedD = Duik.addController(piedD);
-				if (piedG != undefined) CpiedG = Duik.addController(piedG);
-				//tete
-				if (tete != undefined) Ctete = Duik.addController(tete);
-				//épaules
-				if (autorigIKdos.value) {
-					//les positions des épaules, pour placer le controleur à mi chemin entre les deux
-					var posEpauleG,posEpauleD,posCou,posTete;
-					if (brasG != undefined) posEpauleG = brasG.transform.position.value;
-					else if (avantBrasG != undefined) posEpauleG = avantBrasG.position.value;
-					else if (mainG != undefined) posEpauleG = mainG.position.value;
-					if (brasD != undefined) posEpauleD = brasD.transform.position.value;
-					else if (avantBrasD != undefined) posEpauleD = avantBrasD.position.value;
-					else if (mainD != undefined) posEpauleD = mainD.position.value;
-
-					var posEpaules = [compo.width/2,0];
-					if (posEpauleG != undefined && posEpauleD != undefined) posEpaules = [(posEpauleG[0] + posEpauleD[0])/2,(posEpauleG[1] + posEpauleD[1])/2];
-					else if (posEpauleG != undefined) posEpaules = posEpauleG;
-					else if (posEpauleD != undefined) posEpaules = posEpauleD;
-					else if (cou != undefined) posEpaules = cou.transform.position.value;
-					else if (tete != undefined) posEpaules = tete.transform.position.value;
-					var Cepaules = app.project.activeItem.layers.addNull();
-					Cepaules.source.width = eval(boutonCtrlSize.text)*0.8;
-					Cepaules.source.height = eval(boutonCtrlSize.text)*0.8;
-					Cepaules.anchorPoint.setValue([Cepaules.source.width/2,Cepaules.source.height/2]);
-					Cepaules.transform.position.setValue(posEpaules);
-					Cepaules.name = "C_" + getMessage(178);
-
-				}
-				//dos (si bassin et pas d'épaule)
-				if (bassin != undefined && !autorigIKdos.value) Cdos = Duik.addController(corps);
-				//cou (si pas d'ik dedans)
-				if (!autorigIKcou.value && cou != undefined) Ccou = Duik.addController(cou);
-				
-				//les liens de parentés
-				//bras G
-				if (mainG != undefined){
-					if (avantBrasG != undefined) mainG.parent = avantBrasG;
-					else if (brasG != undefined) mainG.parent = brasG;
-					else mainG.parent = corps;
-					}
-				if (avantBrasG != undefined) {
-					if (brasG != undefined) avantBrasG.parent = brasG;
-					else avantBrasG.parent = corps;
-					}
-				if (brasG != undefined) brasG.parent = corps;
-				//bras D
-				if (mainD != undefined){
-					if (avantBrasD != undefined) mainD.parent = avantBrasD;
-					else if (brasD != undefined) mainD.parent = brasD;
-					else mainD.parent = corps;
-					}
-				if (avantBrasD != undefined) {
-					if (brasD != undefined) avantBrasD.parent = brasD;
-					else avantBrasD.parent = corps;
-					}
-				if (brasD != undefined) brasD.parent = corps;
-				//jambe G
-				if (piedG != undefined){
-					if (molletG != undefined) piedG.parent = molletG;
-					else if (cuisseG != undefined) piedG.parent = cuisseG;
-					else if (bassin != undefined) piedG.parent = bassin;
-					else piedG.parent = corps;
-					}
-				if (molletG != undefined) {
-					if (cuisseG != undefined) molletG.parent = cuisseG;
-					else if (bassin != undefined) molletG.parent = bassin;
-					else molletG.parent = corps;
-					}
-				if (cuisseG != undefined) {
-					if (bassin != undefined) cuisseG.parent = bassin;
-					else cuisseG.parent = corps;
-					}
-				//jambe D
-				if (piedD != undefined){
-					if (molletD != undefined) piedD.parent = molletD;
-					else if (cuisseD != undefined) piedD.parent = cuisseD;
-					else if (bassin != undefined) piedD.parent = bassin;
-					else piedD.parent = corps;
-					}
-				if (molletD != undefined) {
-					if (cuisseD != undefined) molletD.parent = cuisseD;
-					else if (bassin != undefined) molletD.parent = bassin;
-					else molletD.parent = corps;
-					}
-				if (cuisseD != undefined) {
-					if (bassin != undefined) cuisseD.parent = bassin;
-					else cuisseD.parent = corps;
-					}
-				//tete
-				if (tete != undefined) cou != undefined ? tete.parent = cou : tete.parent = corps;
-				//cou
-				if (cou != undefined) cou.parent = corps;	
-				//corps
-				bassin != undefined ? corps.parent = bassin : corps.parent = Ccorps2;
-				//bassin
-				if (bassin != undefined) bassin.parent = Ccorps2;
-				//controleurs
-				if (CpiedG != undefined) CpiedG.parent = Cmaster;
-				if (CpiedD != undefined) CpiedD.parent = Cmaster;
-				Ccorps2.parent = Ccorps;
-				Ccorps.parent = Cmaster;
-				if (CmainG != undefined) CmainG.parent = Ccorps;
-				if (CmainD != undefined) CmainD.parent = Ccorps;
-				if (Ctete != undefined) { if (Ccou != undefined) Ctete.parent = Ccou; else if (Cepaules != undefined)  Ctete.parent = Cepaules ; else if (Cdos != undefined) Ctete.parent = Cdos; else Ctete.parent = Ccorps2; }
-				if (Cepaules != undefined) Cepaules.parent = Ccorps;
-				if (Cdos != undefined) Cdos.parent = Ccorps2;
-				if (Ccou != undefined) { if (Cepaules != undefined) Ccou.parent = Cepaules; else if (Cdos != undefined) Ccou.parent = Cdos; else Ccou.parent = Ccorps2; }
-					
-				
-				//les options d'ik
-				boutonStretch.value = autorigStretch.value;
-				boutonFK.value = autorigFK.value;
-				
-				//les IK
-				//bras G
-				if (mainG != undefined)
-				{
-					if (avantBrasG != undefined && brasG != undefined)
-					{
-						Duik.autoIK([mainG,avantBrasG,brasG,CmainG],false,false);
-					}
-					else if (avantBrasG != undefined)
-					{
-						
-						Duik.autoIK([avantBrasG,CmainG]);
-						Duik.goal(mainG,CmainG);
-					}
-					else if (brasG != undefined)
-					{
-						Duik.autoIK([brasG,CmainG]);
-						Duik.goal(mainG,CmainG);
-					}
-					else
-					{
-						Duik.goal(mainG,CmainG);
-					}
-				}
-				//bras D
-				if (mainD != undefined)
-				{
-					if (avantBrasD != undefined && brasD != undefined)
-					{
-						Duik.autoIK([mainD,avantBrasD,brasD,CmainD],false,false);
-					}
-					else if (avantBrasD != undefined) {
-						Duik.autoIK([avantBrasD,CmainD]);
-						Duik.goal(mainD,CmainD);
-						}
-					else if (brasD != undefined) {
-						Duik.autoIK([brasD,CmainD]);
-						Duik.goal(mainD,CmainD);
-						}
-					else Duik.goal(mainD,CmainD);
-				}
-				//jambe D
-				if (piedD != undefined)
-				{
-					if (molletD != undefined && cuisseD != undefined)
-					{
-						Duik.autoIK([piedD,molletD,cuisseD,CpiedD],false,false);
-					}
-					else if (molletD != undefined) {
-						Duik.autoIK([molletD,CpiedD]);
-						Duik.goal(piedD,CpiedD);
-						}
-					else if (cuisseD != undefined) {
-						Duik.autoIK([cuisseD,CpiedD]);
-						Duik.goal(piedD,CpiedD);
-						}
-					else Duik.goal(piedD,CpiedD);
-				}
-				//jambe G
-				if (piedG != undefined)
-				{
-					if (molletG != undefined && cuisseG != undefined)
-					{
-						Duik.autoIK([piedG,molletG,cuisseG,CpiedG],false,false);
-					}
-					else if (molletG != undefined) {
-						Duik.autoIK([molletG,CpiedG]);
-						Duik.goal(piedG,CpiedG);
-						}
-					else if (cuisseG != undefined) {
-						Duik.autoIK([cuisseG,CpiedG]);
-						Duik.goal(piedG,CpiedG);
-						}
-					else Duik.goal(piedG,CpiedG);
-				}
-				//dos
-				if (autorigIKdos.value) {
-					Duik.autoIK([corps,Cepaules]);
-				}
-				//cou
-				if (autorigIKcou.value && cou != undefined) {
-					Duik.autoIK([cou,Ctete]);
-				}
-				
-				
-				//les FK
-				//dos
-				if (!autorigIKdos.value && Cdos != undefined) {
-					corps.transform.rotation.expression = "thisComp.layer('" + Cdos.name + "').transform.rotation + value";
-					Cdos.transform.position.expression = "[" + Cdos.transform.position.value[0] + "," + Cdos.transform.position.value[1] + "]";
-				}
-				//cou
-				if (!autorigIKcou.value && Ccou != undefined && cou != undefined) {
-					cou.transform.rotation.expression = "thisComp.layer('" + Ccou.name + "').transform.rotation + value";
-					Ccou.transform.position.expression = "[" + Ccou.transform.position.value[0] + "," + Ccou.transform.position.value[1] + "]";
-				}
-				//tete
-				if (tete != undefined) {
-					tete.transform.rotation.expression = "thisComp.layer('" + Ctete.name + "').transform.rotation + value";
-					if (!autorigIKcou.value || cou == undefined) Ctete.transform.position.expression = "[" + Ctete.transform.position.value[0] + "," + Ctete.transform.position.value[1] + "]";
-				}
-				
-				//les goals
-				//tete
-				if (tete != undefined) {
-					Duik.goal(tete,Ctete);
-				}
-				
-				//groupe d'annulation
-				app.endUndoGroup();
-
-			}
-*/
 			
 			function frontLegClicked() {
 				
@@ -1112,7 +832,7 @@ function fnDuIK(thisObj)
 				var compo = app.project.activeItem;
 				if (!(compo instanceof CompItem)) return;
 				
-				Duik.utils.checkNames();
+				Duik.utils.checkNames(compo);
 
 
 				//1 - parcourir tous les calques et les ranger
@@ -1124,9 +844,9 @@ function fnDuIK(thisObj)
 				else layers = compo.selectedLayers;
 				
 				var head = Duik.utils.getLayerByNames(layers,["head"]);
-				var neck = Duik.utils.getLayersByNames(layers,["neck"]);
-				var spine = Duik.utils.getLayersByNames(layers,["spine","torso","thorax","chest"]);
 				var hips = Duik.utils.getLayerByNames(layers,["hips","pelvis","abdomen"]);
+				var spine = Duik.utils.getLayersByNames(layers,["spine","torso","chest","thorax"]);
+				var neck = Duik.utils.getLayersByNames(layers,["neck"]);
 				
 				//get layer list
 				var layersList = Duik.utils.getLayersReadableList(layers);
@@ -1151,16 +871,19 @@ function fnDuIK(thisObj)
 				
 				//préselectionner
 				if (head) spineHeadButton.selection = Duik.js.getIndexOfStringInArray(layersList,head.index + " - " + head.name);
+				if (spine.length) {
+					if (hips) spine = Duik.utils.sortByDistance(spine,hips);
+					spineSpineFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[spine.length-1].index + " - " + spine[spine.length-1].name);
+					spineSpineToButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[0].index + " - " + spine[0].name);
+				}	
 				if (neck.length) {
-					spineNeckFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[0].index + " - " + neck[0].name);
-					spineNeckToButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[neck.length-1].index + " - " + neck[neck.length-1].name);
-				}
-				if (neck.length) {
-					spineSpineFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[0].index + " - " + spine[0].name);
-					spineSpineToButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[spine.length-1].index + " - " + spine[spine.length-1].name);
-				}				
+					if (hips) neck = Duik.utils.sortByDistance(neck,hips);
+					else if (spine.length) neck = Duik.utils.sortByDistance(neck,spine[0]);
+					spineNeckFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[neck.length-1].index + " - " + neck[neck.length-1].name);
+					spineNeckToButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[0].index + " - " + neck[0].name);
+				}			
 				if (hips) spineHipsButton.selection = Duik.js.getIndexOfStringInArray(layersList,hips.index + " - " + hips.name);
-
+				
 				
 				function getUserSel()
 				{
@@ -1186,7 +909,11 @@ function fnDuIK(thisObj)
 					neck = [];
 					if (neckFirst && neckLast)
 					{
-						for (var i = neckFirst.index; i <= neckLast.index ; i++)
+						if (neckFirst.index <= neckLast.index) for (var i = neckFirst.index; i <= neckLast.index ; i++)
+						{
+							neck.push(compo.layers[i]);
+						}
+						else for (var i = neckFirst.index; i >= neckLast.index ; i--)
 						{
 							neck.push(compo.layers[i]);
 						}
@@ -1204,7 +931,11 @@ function fnDuIK(thisObj)
 					spine = [];
 					if (spineFirst && spineLast)
 					{
-						for (var i = spineFirst.index; i <= spineLast.index ; i++)
+						if (spineFirst.index <= spineLast.index) for (var i = spineFirst.index; i <= spineLast.index ; i++)
+						{
+							spine.push(compo.layers[i]);
+						}
+						else for (var i = spineFirst.index; i >= spineLast.index ; i--)
 						{
 							spine.push(compo.layers[i]);
 						}
@@ -1263,6 +994,127 @@ function fnDuIK(thisObj)
 				}
 				
 				spineDialog.show();
+			}
+			
+			function tailClicked()
+			{
+				
+				var compo = app.project.activeItem;
+				if (!(compo instanceof CompItem)) return;
+				
+				Duik.utils.checkNames(compo);
+
+
+				//1 - parcourir tous les calques et les ranger
+				
+				var layers = [];
+				
+				//si rien de sélectionné, on charge les calques de toute la compo
+				if (compo.selectedLayers.length == 0) layers = compo.layers;
+				else layers = compo.selectedLayers;
+				
+				var hips = Duik.utils.getLayerByNames(layers,["hips","pelvis","abdomen"]);
+				var tail = Duik.utils.getLayersByNames(layers,["tail"]);
+				
+				//get layer list
+				var layersList = Duik.utils.getLayersReadableList(layers);
+				layersList.unshift("None");
+				
+				//ajouter les listes de calques
+				tailHipsButton.removeAll();
+				tailTailFromButton.removeAll();
+				tailTailToButton.removeAll();
+				
+				for (i = 0;i<layersList.length;i++) {
+					tailHipsButton.add("item",layersList[i]);
+					tailTailFromButton.add("item",layersList[i]);
+					tailTailToButton.add("item",layersList[i]);
+				}
+				
+				//préselectionner
+				if (hips) tailHipsButton.selection = Duik.js.getIndexOfStringInArray(layersList,hips.index + " - " + hips.name);
+				if (tail.length) {
+					tail = Duik.utils.sortByDistance(tail,hips);
+					tailTailFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,tail[0].index + " - " + tail[0].name);
+					tailTailToButton.selection = Duik.js.getIndexOfStringInArray(layersList,tail[tail.length-1].index + " - " + tail[tail.length-1].name);
+				}
+								
+				function getUserSel()
+				{
+					if (tailHipsButton.selection == null) tailHipsButton.selection = 0;
+					if (tailTailFromButton.selection == null) tailTailFromButton.selection = 0;
+					if (tailTailToButton.selection == null) tailTailToButton.selection = 0;
+					
+					tailHipsButton.selection.index == 0 ? hips = null : hips = compo.layers[tailHipsButton.selection.text.split(" - ")[0]];
+					var tailFirst = null;
+					var tailLast = null;
+					tailTailFromButton.selection.index == 0 ? tailFirst = null : tailFirst = compo.layers[tailTailFromButton.selection.text.split(" - ")[0]];
+					tailTailToButton.selection.index == 0 ? tailLast = null : tailLast = compo.layers[tailTailToButton.selection.text.split(" - ")[0]];
+										
+					//tail array
+					tail = [];
+					if (tailFirst && tailLast)
+					{
+						if (tailFirst.index <= tailLast.index) for (var i = tailFirst.index; i <= tailLast.index ; i++)
+						{
+							tail.push(compo.layers[i]);
+						}
+						else for (var i = tailFirst.index; i >= tailLast.index ; i--)
+						{
+							tail.push(compo.layers[i]);
+						}
+					}
+					else if (tailFirst)
+					{
+						tail = [compo.layers[tailFirst]];
+					}
+					else if (tailLast)
+					{
+						tail = [compo.layers[tailLast]];
+					}
+					
+										
+					//vérifier qu'il n'y a pas deux calques assignés au meme élément
+					var indexUtilises = [];
+					if (hips) indexUtilises.push(hips.index);
+					if (tail.length) for (var i in tail) indexUtilises.push(tail[i].index);
+
+					//verif duplicates de l'array
+					if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+					
+					//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
+					var calquesManquants = [];
+					if (!hips) calquesManquants.push("Hips");
+					if (!tail.length) calquesManquants.push("Tail(s)");
+					
+					if (calquesManquants.length > 0) { alert ("Those layers are needed:\n\n" + calquesManquants.join("\n")); return false; }
+					
+					//vérifier si 3D
+					var tridi = false;
+					if (hips) if (hips.threeDLayer) tridi = true;
+					if (tail.length) for (var i in tail) if (tail[i].threeDLayer) tridi = true;
+
+					if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
+
+					return true;
+				}
+				
+				tailDialog.layout.layout(true);
+				tailDialog.layout.resize();
+				
+
+				tailOK.onClick = function () {
+					//get the user selection of layers
+					if (getUserSel())
+					{
+						app.beginUndoGroup("Duik - Spine Autorig");
+						tailRig(hips,tail,tailCubicButton.value);
+						app.endUndoGroup();
+						spineDialog.hide();
+					}
+				}
+				
+				tailDialog.show();
 			}
 			
 			//LIMBS AUTORIG
@@ -2097,6 +1949,43 @@ function fnDuIK(thisObj)
 					
 					return controllers;
 
+				}
+			
+				function tailRig(hips,tail,cubic) {
+					if (!hips) return;
+					if (!tail) return;
+					if (!tail.length) return;
+					
+					if (cubic == undefined) cubic = false;
+					
+					//unparent
+					for (var i in tail) tail[i].parent = null;
+					
+					var controllers = [];
+					
+					//controllers
+					var tailCtrl = Duik.addController(tail[0],false,false,true,true,false);
+					controllers.push(tailCtrl);
+					
+					var tailCtrlPos = [0,0,0];
+					var endPos = tail[tail.length-1].transform.position.value;
+					var prevPos = tail.length > 1 ? tail[tail.length-2].transform.position.value : hips.transform.position.value;
+					
+					tailCtrlPos = endPos + [endPos[0]-prevPos[0],endPos[1]-prevPos[1],0];
+					
+					tailCtrl.layer.transform.position.setValue(tailCtrlPos);
+					
+					//IK
+					var numCtrl = cubic ? 2 : 1;
+					var bezLayers = tail.reverse();
+					bezLayers.push(tailCtrl.layer);
+					bezLayers.push(hips);
+					var curveCtrls = Duik.bezierIK(bezLayers,numCtrl);
+					
+					controllers = controllers.concat(curveCtrls);
+						
+					tailDialog.hide();
+					return controllers;
 				}
 			}
 						
@@ -6530,10 +6419,9 @@ function fnDuIK(thisObj)
 					backLegClicked();
 				}
 			var autorigSpineButton = addIconButton(autorigLeftGroup,"btn_spine.png","Spine - Neck - Head");
-			autorigSpineButton.onClick = function () {
-					spineClicked();
-				}
+			autorigSpineButton.onClick = spineClicked;
 			var autorigTailButton = addIconButton(autorigRightGroup,"btn_tail.png","Tail");
+			autorigTailButton.onClick = tailClicked;
 			
 			var autorigCancelButton = addIconButton(autorigPanel,"btn_cancel.png","Cancel");
 			autorigCancelButton.onClick = function () { autorigPanel.hide();panoik.show();};
@@ -6616,10 +6504,10 @@ function fnDuIK(thisObj)
 				var frontLegButtonsGroup = addHGroup(frontLegDialog);
 				frontLegButtonsGroup.alignment = ["fill","bottom"];
 				frontLegButtonsGroup.margins = 10;
-				var frontLegCancel = addButton(frontLegButtonsGroup,"Cancel");
+				var frontLegCancel = addIconButton(frontLegButtonsGroup,"btn_cancel.png","Cancel");
 				frontLegCancel.onClick = function() { frontLegDialog.hide(); };
 				frontLegCancel.alignment = ["left","bottom"];
-				var frontLegOK = addButton(frontLegButtonsGroup,"OK");
+				var frontLegOK = addIconButton(frontLegButtonsGroup,"btn_valid.png","OK");
 				frontLegOK.alignment = ["right","bottom"];
 			}
 			
@@ -6692,10 +6580,10 @@ function fnDuIK(thisObj)
 				var backLegButtonsGroup = addHGroup(backLegDialog);
 				backLegButtonsGroup.alignment = ["fill","bottom"];
 				backLegButtonsGroup.margins = 10;
-				var backLegCancel = addButton(backLegButtonsGroup,"Cancel");
+				var backLegCancel = addIconButton(backLegButtonsGroup,"btn_cancel.png","Cancel");
 				backLegCancel.onClick = function() { backLegDialog.hide(); };
 				backLegCancel.alignment = ["left","bottom"];
-				var backLegOK = addButton(backLegButtonsGroup,"OK");
+				var backLegOK = addIconButton(backLegButtonsGroup,"btn_valid.png","OK");
 				backLegOK.alignment = ["right","bottom"];
 			}
 			
@@ -6755,11 +6643,65 @@ function fnDuIK(thisObj)
 				var spineButtonsGroup = addHGroup(spineDialog);
 				spineButtonsGroup.alignment = ["fill","bottom"];
 				spineButtonsGroup.margins = 10;
-				var spineCancel = addButton(spineButtonsGroup,"Cancel");
+				var spineCancel = addIconButton(spineButtonsGroup,"btn_cancel.png","Cancel");
 				spineCancel.onClick = function() { spineDialog.hide(); };
 				spineCancel.alignment = ["left","bottom"];
-				var spineOK = addButton(spineButtonsGroup,"OK");
+				var spineOK = addIconButton(spineButtonsGroup,"btn_valid.png","OK");
 				spineOK.alignment = ["right","bottom"];
+				
+			}
+			
+			//TAIL WINDOW
+			{
+				var tailDialog = new Window ("palette","Tail Autorig",undefined,{closeButton:false,resizeable:false});
+				tailDialog.spacing = 2;
+				tailDialog.margins = 5;
+				tailDialog.alignChildren = ["fill","top"];
+				tailDialog.groupe = tailDialog.add("group");
+				tailDialog.groupe.alignChildren = ["fill","top"];
+				
+				//IMAGES
+				tailDialog.groupe.add("image",undefined,dossierIcones + "tail.png");
+
+				//BOUTONS DES CALQUES
+				var tailLayersGroup = addVGroup(tailDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
+				tailLayersGroup.alignment = ["fill","center"];
+				var tailLabel = tailLayersGroup.add("statictext",undefined,getMessage(143));
+				tailLabel.alignment = ["left","top"];
+				//buttons
+				var tailGroup1 = addHGroup(tailLayersGroup);
+				var text = tailGroup1.add("statictext",undefined,"Hips, pelvis, abdomen");
+				textColor(text,col.purple);
+				var tailHipsButton = tailGroup1.add("dropdownlist");
+				tailHipsButton.alignment = ["right","center"];
+				
+				var text = tailLayersGroup.add("statictext",undefined,"Tail");
+				textColor(text,col.yellow);
+				var tailTailFromGroup = addHGroup(tailLayersGroup);
+				tailTailFromGroup.add("statictext",undefined,"From");
+				var tailTailFromButton = tailTailFromGroup.add("dropdownlist");
+				tailTailFromButton.alignment = ["right","center"];
+				var tailTailToGroup = addHGroup(tailLayersGroup);
+				tailTailToGroup.add("statictext",undefined,"To");
+				var tailTailToButton = tailTailToGroup.add("dropdownlist");
+				tailTailToButton.alignment = ["right","center"];
+				
+				var tailOptionsLabel = tailLayersGroup.add("statictext",undefined,"Options:");
+				tailOptionsLabel.alignment = ["left","top"];
+				
+				var tailGroup2 = addHGroup(tailLayersGroup);
+				var tailSimpleButton = tailGroup2.add("radiobutton",undefined,"Simple");
+				var tailCubicButton = tailGroup2.add("radiobutton",undefined,"Two curves");
+				tailSimpleButton.value = true;
+				
+				var tailButtonsGroup = addHGroup(tailDialog);
+				tailButtonsGroup.alignment = ["fill","bottom"];
+				tailButtonsGroup.margins = 10;
+				var tailCancel = addIconButton(tailButtonsGroup,"btn_cancel.png","Cancel");
+				tailCancel.onClick = function() { tailDialog.hide(); };
+				tailCancel.alignment = ["left","bottom"];
+				var tailOK = addIconButton(tailButtonsGroup,"btn_valid.png","OK");
+				tailOK.alignment = ["right","bottom"];
 				
 			}
 		}
