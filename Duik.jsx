@@ -1896,12 +1896,18 @@ function fnDuIK(thisObj)
 						}
 					else {
 						var bezLayers = back;
+						var rootNull = Duik.utils.addNullOnLayer(back[back.length-1]);
+						rootNull.parent = hipsCtrl.layer;
+						rootNull.name = "IK " + back[back.length-1].name;
 						if (shoulderCtrl) bezLayers.push(shoulderCtrl.layer);
 						else bezLayers.push(headCtrl.layer);
-						bezLayers.push(hipsCtrl.layer);
+						bezLayers.push(rootNull);
 						var backCurveCtrl = Duik.bezierIK(bezLayers);
 						backCurveCtrl.layer.parent = bigHipsCtrl.layer;
 						controllers.push(backCurveCtrl);
+						rootNull.shy = true;
+						rootNull.enabled = false;
+						rootNull.locked = true;
 						delete bezLayers;
 						}
 					
@@ -1977,10 +1983,17 @@ function fnDuIK(thisObj)
 					
 					//IK
 					var numCtrl = cubic ? 2 : 1;
+					var rootNull = Duik.utils.addNullOnLayer(tail[0]);
+					rootNull.parent = hips;
+					rootNull.name = "IK " + tail[0].name;
 					var bezLayers = tail.reverse();
 					bezLayers.push(tailCtrl.layer);
-					bezLayers.push(hips);
+					bezLayers.push(rootNull);
 					var curveCtrls = Duik.bezierIK(bezLayers,numCtrl);
+					
+					rootNull.shy = true;
+					rootNull.enabled = false;
+					rootNull.locked = true;
 					
 					controllers = controllers.concat(curveCtrls);
 						
