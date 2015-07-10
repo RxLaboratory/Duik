@@ -54,7 +54,7 @@ This file is part of Duik.
 /////////////////////////////
 // FORCE RELOAD
 /////////////////////////////
-if (typeof Duik === 'object') delete Duik;
+//if (typeof Duik === 'object') delete Duik;
 
 ////////////////////////////
 // DEFINITIONS
@@ -3202,6 +3202,16 @@ if (typeof Duik === 'object') delete Duik;
 					goalCtrl.name = neck[neck.length-1].name + " goal";
 					goalCtrl(1).setValue(1);
 					
+					var left = false;
+					var ctrlPos = [0,0,0];
+					if (shoulderCtrl) {
+						ctrlPos = shoulderCtrl.layer.transform.position.value;
+					}
+					else {
+						ctrlPos = headCtrl.layer.transform.position.value;
+					}
+					if (ctrlPos[0] - neck[0].transform.position.value[0] < 0) left = true;
+					
 					for (var i in neck) {
 						var l = neck[i];
 						var torsoName = "";
@@ -3214,14 +3224,19 @@ if (typeof Duik === 'object') delete Duik;
 							torsoName = hips.name;
 							torsoRot = hips.transform.rotation.value;
 							}
-						l.transform.rotation.expression = "//Duik.neck\n" + 
-																		"var goal = thisComp.layer(\"" + goalCtrlLayerName + "\").effect(\"" + goalCtrl.name + "\")(1) == 1;\n" + 
-																		"var torso = thisComp.layer(\"" + torsoName + "\").rotation;\n" + 
-																		"var ctrl = thisComp.layer(\"" + shoulderCtrl.layer.name + "\").rotation;\n" + 
-																		"var numNeckLayers = " + neck.length + ";\n" + 
-																		"var result = value;\n" + 
-																		"result = result + ctrl/numNeckLayers;\n" + 
-																		"goal ? result-torso/numNeckLayers+" + torsoRot + "/numNeckLayers : result;";
+						var exp = "//Duik.neck\n" + 
+									"var goal = thisComp.layer(\"" + goalCtrlLayerName + "\").effect(\"" + goalCtrl.name + "\")(1) == 1;\n" + 
+									"var torso = thisComp.layer(\"" + torsoName + "\").rotation;\n" + 
+									"var ctrl = thisComp.layer(\"" + shoulderCtrl.layer.name + "\").rotation;\n" + 
+									"var numNeckLayers = " + neck.length + ";\n" + 
+									"var result = value;\n" + 
+									"result = result + ctrl/numNeckLayers;\n";
+									if (left) {
+										exp += "if (torso < 0) torso += 360;\n" + 
+											"goal ? result-torso/numNeckLayers+(360+" + torsoRot + ")/numNeckLayers : result;";
+									}
+									else exp += "goal ? result-torso/numNeckLayers+" + torsoRot + "/numNeckLayers : result;";
+						l.transform.rotation.expression = exp;
 						}
 					}
 				
