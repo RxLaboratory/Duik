@@ -651,7 +651,7 @@ This file is part of Duik.
 	{
 		delete Duik;
 		Duik = {};
-		Duik.version = "15.beta4";
+		Duik.version = "15.beta4b";
 		Duik.versionNumber = 15.0017;
 		Duik.usePresets = true;
 		Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
@@ -3201,17 +3201,7 @@ This file is part of Duik.
 						}
 					goalCtrl.name = neck[neck.length-1].name + " goal";
 					goalCtrl(1).setValue(1);
-					
-					var left = false;
-					var ctrlPos = [0,0,0];
-					if (shoulderCtrl) {
-						ctrlPos = shoulderCtrl.layer.transform.position.value;
-					}
-					else {
-						ctrlPos = headCtrl.layer.transform.position.value;
-					}
-					if (ctrlPos[0] - neck[0].transform.position.value[0] < 0) left = true;
-					
+										
 					for (var i in neck) {
 						var l = neck[i];
 						var torsoName = "";
@@ -3230,12 +3220,10 @@ This file is part of Duik.
 									"var ctrl = thisComp.layer(\"" + shoulderCtrl.layer.name + "\").rotation;\n" + 
 									"var numNeckLayers = " + neck.length + ";\n" + 
 									"var result = value;\n" + 
-									"result = result + ctrl/numNeckLayers;\n";
-									if (left) {
-										exp += "if (torso < 0) torso += 360;\n" + 
-											"goal ? result-torso/numNeckLayers+(360+" + torsoRot + ")/numNeckLayers : result;";
-									}
-									else exp += "goal ? result-torso/numNeckLayers+" + torsoRot + "/numNeckLayers : result;";
+									"result = result + ctrl/numNeckLayers;\n" + 
+									"if (torso < 180+" + torsoRot + ") torso += 360;\n" + 
+									"goal ? result-torso/numNeckLayers+(360+" + torsoRot + ")/numNeckLayers : result;";
+									
 						l.transform.rotation.expression = exp;
 						}
 					}
@@ -3659,6 +3647,10 @@ This file is part of Duik.
 				
 				//Controls
 				if (claws) {
+					var clawsPos = Duik.utils.getWorldPos(claws);
+					var carpusPos = Duik.utils.getWorldPos(carpus);
+					var right = clawsPos[0] - carpusPos[0] > 0;
+					
 					//add an IK effect on the controller
 					var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
 					//the effect on the null of the foot
@@ -3671,18 +3663,20 @@ This file is part of Duik.
 					var handCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
 					handCtrl.name = carpus.name + " Foot roll";
 					tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);";
+					var op  = right ? "<" : ">";
 					palm.transform.rotation.expression = "//Duik.footRoll\n" + 
 																			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);\n" + 
 																			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" + 
-																			"roll > 0 ? roll+ctrl : ctrl;";
+																			"roll " + op + " 0 ? roll+ctrl : ctrl;";
+					op = right ? ">" : "<";
 					clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
 																				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" + 
-																				"ctrl < 0 ? ctrl : 0;";
+																				"ctrl " + op + " 0 ? ctrl : 0;";
 					}
 				if (shoulder) {
 					 var shoulderCtrl = ctrl.layer.effect.addProperty("ADBE Slider Control");
 					 shoulderCtrl.name = shoulder.name + " auto-position %";
-					 shoulderCtrl(1).setValue(10);
+					 shoulderCtrl(1).setValue(0);
 
 					//get Ctrl position
 					var parent = ctrl.layer.parent;
@@ -3779,7 +3773,7 @@ This file is part of Duik.
 				}
 			   //Controller
 				var ctrl = Duik.addController(tarsus,true,true,true,true,false);
-				 Duik.addZero(ctrl.layer);
+				Duik.addZero(ctrl.layer);
 				
 				//parent
 				if (claws) claws.parent = tarsus;
@@ -3814,6 +3808,10 @@ This file is part of Duik.
 				
 				//Controls
 				if (claws) {
+					var clawsPos = Duik.utils.getWorldPos(claws);
+					var tarsusPos = Duik.utils.getWorldPos(tarsus);
+					var right = clawsPos[0] - tarsusPos[0] > 0;
+					
 					//add an IK effect on the controller
 					var ikCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Two_Layer_IK");
 					//the effect on the null of the foot
@@ -3826,13 +3824,15 @@ This file is part of Duik.
 					var footCtrl = Duik.utils.addEffect(ctrl.layer,"DUIK_Foot_Roll");
 					footCtrl.name = tarsus.name + " Foot roll";
 					tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
+					var op  = right ? "<" : ">";
 					heel.transform.rotation.expression = "//Duik.footRoll\n" + 
 																			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" + 
 																			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" + 
-																			"roll > 0 ? roll+ctrl : ctrl;";
+																			"roll " + op + " 0 ? roll+ctrl : ctrl;";
+					op  = right ? ">" : "<";
 					clawsNull.transform.rotation.expression = "//Duik.footRoll\n" + 
 																				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" + 
-																				"ctrl < 0 ? ctrl : 0;";
+																				"ctrl " + op + " 0 ? ctrl : 0;";
 					}
 				
 				//hide and lock
@@ -4196,11 +4196,20 @@ This file is part of Duik.
 					
 			var controllerName = ctrl.name;
 			
+			//is right ?
+			var ctrlPos = Duik.utils.getWorldPos(ctrl);
+			var bonePos = Duik.utils.getWorldPos(layer1);
+			
+			var right = (ctrlPos[0] - bonePos[0]) < 0;
+			
 			//pseudo effect
 			var effect;
 			if (Duik.usePresets) effect = Duik.utils.addPseudoEffect(ctrl,"DUIK_One_Layer_IK");
 			else effect = ctrl.effect.addProperty("PSEUDO/DUIK_One_Layer_IK");
 			effect.name = Duik.uiStrings.ik + " "  + layer1.name;
+			
+			if (right) effect(2).setValue(1);
+			else effect(2).setValue(0);
 						
 			//rotation d'origine
 			var orot = layer1.transform.rotation.value;
