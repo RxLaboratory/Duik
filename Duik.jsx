@@ -490,7 +490,7 @@ function fnDuIK(thisObj)
 			#include "Duik_images.jsxinc"
 
 			var imgFolder = new Folder(Folder.userData.fsName + "/DuIK").fsName;
-			for (var k in scriptMng.files)
+			for (var k=0;k<scriptMng.files.length;k++ )
 			{
 				if (scriptMng.files.hasOwnProperty(k))
 				{
@@ -513,7 +513,7 @@ function fnDuIK(thisObj)
 
 			//FONCTION CARRE
 			function carre(nombre) {
-				return Math.pow(nombre,2);
+				return nombre*nombre;
 				}
 
 			//====================== AUTORIG ======================
@@ -610,13 +610,13 @@ function fnDuIK(thisObj)
 						}
 						
 						//préselectionner
-						if (shoulder) frontLegShoulderButton.selection = Duik.js.getIndexOfStringInArray(layersList,shoulder.index + " - " + shoulder.name);
-						if (humerus) frontLegHumerusButton.selection = Duik.js.getIndexOfStringInArray(layersList,humerus.index + " - " + humerus.name);
-						if (radius) frontLegRadiusButton.selection = Duik.js.getIndexOfStringInArray(layersList,radius.index + " - " + radius.name);
-						if (carpus) frontLegCarpusButton.selection = Duik.js.getIndexOfStringInArray(layersList,carpus.index + " - " + carpus.name);
-						if (claws) frontLegClawsButton.selection = Duik.js.getIndexOfStringInArray(layersList,claws.index + " - " + claws.name);
-						if (tip) frontLegTipButton.selection = Duik.js.getIndexOfStringInArray(layersList,tip.index + " - " + tip.name);
-						if (heel) frontLegHeelButton.selection = Duik.js.getIndexOfStringInArray(layersList,heel.index + " - " + heel.name);
+						if (shoulder) frontLegShoulderButton.selection = Duik.js.arrayIndexOf(layersList,shoulder.index + " - " + shoulder.name);
+						if (humerus) frontLegHumerusButton.selection = Duik.js.arrayIndexOf(layersList,humerus.index + " - " + humerus.name);
+						if (radius) frontLegRadiusButton.selection = Duik.js.arrayIndexOf(layersList,radius.index + " - " + radius.name);
+						if (carpus) frontLegCarpusButton.selection = Duik.js.arrayIndexOf(layersList,carpus.index + " - " + carpus.name);
+						if (claws) frontLegClawsButton.selection = Duik.js.arrayIndexOf(layersList,claws.index + " - " + claws.name);
+						if (tip) frontLegTipButton.selection = Duik.js.arrayIndexOf(layersList,tip.index + " - " + tip.name);
+						if (heel) frontLegHeelButton.selection = Duik.js.arrayIndexOf(layersList,heel.index + " - " + heel.name);
 
 						frontLegDialog.layout.layout(true);
 						frontLegDialog.layout.resize();
@@ -654,7 +654,16 @@ function fnDuIK(thisObj)
 						if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
 
 						//verif duplicates de l'array
-						if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+						if (Duik.js.arrayHasDuplicates(indexUtilises)) {
+							var dup = Duik.js.arrayGetDuplicates(indexUtilises);
+							var dupNames = [];
+							for (var i = 0 ; i< dup.length;i++)
+							{
+								dupNames.push(dup[i] + " - " + compo.layer(dup[i]).name);
+							}
+							alert ("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n" + dupNames.join("\n")) ;
+							return false;
+							}
 						
 						//vérifier qu'il ne manque rien d'indispensable (mains)
 						var calquesManquants = [];
@@ -894,12 +903,12 @@ function fnDuIK(thisObj)
 						}
 						
 						//préselectionner
-						if (femur) backLegFemurButton.selection = Duik.js.getIndexOfStringInArray(layersList,femur.index + " - " + femur.name);
-						if (tibia) backLegTibiaButton.selection = Duik.js.getIndexOfStringInArray(layersList,tibia.index + " - " + tibia.name);
-						if (tarsus) backLegTarsusButton.selection = Duik.js.getIndexOfStringInArray(layersList,tarsus.index + " - " + tarsus.name);
-						if (claws) backLegClawsButton.selection = Duik.js.getIndexOfStringInArray(layersList,claws.index + " - " + claws.name);
-						if (tip) backLegTipButton.selection = Duik.js.getIndexOfStringInArray(layersList,tip.index + " - " + tip.name);
-						if (heel) backLegHeelButton.selection = Duik.js.getIndexOfStringInArray(layersList,heel.index + " - " + heel.name);
+						if (femur) backLegFemurButton.selection = Duik.js.arrayIndexOf(layersList,femur.index + " - " + femur.name);
+						if (tibia) backLegTibiaButton.selection = Duik.js.arrayIndexOf(layersList,tibia.index + " - " + tibia.name);
+						if (tarsus) backLegTarsusButton.selection = Duik.js.arrayIndexOf(layersList,tarsus.index + " - " + tarsus.name);
+						if (claws) backLegClawsButton.selection = Duik.js.arrayIndexOf(layersList,claws.index + " - " + claws.name);
+						if (tip) backLegTipButton.selection = Duik.js.arrayIndexOf(layersList,tip.index + " - " + tip.name);
+						if (heel) backLegHeelButton.selection = Duik.js.arrayIndexOf(layersList,heel.index + " - " + heel.name);
 						
 						backLegDialog.layout.layout(true);
 						backLegDialog.layout.resize();
@@ -932,7 +941,16 @@ function fnDuIK(thisObj)
 						if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
 
 						//verif duplicates de l'array
-						if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+						if (Duik.js.arrayHasDuplicates(indexUtilises)) {
+							var dup = Duik.js.arrayGetDuplicates(indexUtilises);
+							var dupNames = [];
+							for (var i = 0 ; i< dup.length;i++)
+							{
+								dupNames.push(dup[i] + " - " + compo.layer(dup[i]).name);
+							}
+							alert ("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n" + dupNames.join("\n")) ;
+							return false;
+							}
 						
 						//vérifier qu'il ne manque rien d'indispensable (mains)
 						var calquesManquants = [];
@@ -1148,19 +1166,19 @@ function fnDuIK(thisObj)
 						}
 						
 						//préselectionner
-						if (head) spineHeadButton.selection = Duik.js.getIndexOfStringInArray(layersList,head.index + " - " + head.name);
+						if (head) spineHeadButton.selection = Duik.js.arrayIndexOf(layersList,head.index + " - " + head.name);
 						if (spine.length) {
 							if (hips) spine = Duik.utils.sortByDistance(spine,hips);
-							spineSpineFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[spine.length-1].index + " - " + spine[spine.length-1].name);
-							spineSpineToButton.selection = Duik.js.getIndexOfStringInArray(layersList,spine[0].index + " - " + spine[0].name);
+							spineSpineFromButton.selection = Duik.js.arrayIndexOf(layersList,spine[spine.length-1].index + " - " + spine[spine.length-1].name);
+							spineSpineToButton.selection = Duik.js.arrayIndexOf(layersList,spine[0].index + " - " + spine[0].name);
 						}	
 						if (neck.length) {
 							if (hips) neck = Duik.utils.sortByDistance(neck,hips);
 							else if (spine.length) neck = Duik.utils.sortByDistance(neck,spine[0]);
-							spineNeckFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[neck.length-1].index + " - " + neck[neck.length-1].name);
-							spineNeckToButton.selection = Duik.js.getIndexOfStringInArray(layersList,neck[0].index + " - " + neck[0].name);
+							spineNeckFromButton.selection = Duik.js.arrayIndexOf(layersList,neck[neck.length-1].index + " - " + neck[neck.length-1].name);
+							spineNeckToButton.selection = Duik.js.arrayIndexOf(layersList,neck[0].index + " - " + neck[0].name);
 						}			
-						if (hips) spineHipsButton.selection = Duik.js.getIndexOfStringInArray(layersList,hips.index + " - " + hips.name);
+						if (hips) spineHipsButton.selection = Duik.js.arrayIndexOf(layersList,hips.index + " - " + hips.name);
 						
 						spineDialog.layout.layout(true);
 						spineDialog.layout.resize();
@@ -1190,7 +1208,7 @@ function fnDuIK(thisObj)
 						spineHipsButton.selection.index == 0 ? hips = null : hips = compo.layers[spineHipsButton.selection.text.split(" - ")[0]];
 						
 						//neck array
-						neck = [];
+						var neck = [];
 						if (neckFirst && neckLast)
 						{
 							if (neckFirst.index <= neckLast.index) for (var i = neckFirst.index; i <= neckLast.index ; i++)
@@ -1232,16 +1250,26 @@ function fnDuIK(thisObj)
 						{
 							spine = [compo.layers[spineLast]];
 						}
-											
+						
+							
 						//vérifier qu'il n'y a pas deux calques assignés au meme élément
 						var indexUtilises = [];
 						if (head) indexUtilises.push(head.index);
-						if (neck.length) for (var i in neck) indexUtilises.push(neck[i].index);
-						if (spine.length) for (var i in spine) indexUtilises.push(spine[i].index);
+						if (neck.length) for (var i = 0 ; i < neck.length;i++) indexUtilises.push(neck[i].index);
+						if (spine.length) for (var i = 0 ; i < spine.length;i++) indexUtilises.push(spine[i].index);
 						if (hips) indexUtilises.push(hips.index);
-
+						
 						//verif duplicates de l'array
-						if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+						if (Duik.js.arrayHasDuplicates(indexUtilises)) {
+							var dup = Duik.js.arrayGetDuplicates(indexUtilises);
+							var dupNames = [];
+							for (var i = 0 ; i< dup.length;i++)
+							{
+								dupNames.push(dup[i] + " - " + compo.layer(dup[i]).name);
+							}
+							alert ("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n" + dupNames.join("\n")) ;
+							return false;
+							}
 						
 						//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
 						var calquesManquants = [];
@@ -1256,8 +1284,8 @@ function fnDuIK(thisObj)
 						var tridi = false;
 						if (head) if (head.threeDLayer) tridi = true;
 						if (hips) if (hips.threeDLayer) tridi = true;
-						if (neck.length) for (var i in neck) if (neck[i].threeDLayer) tridi = true;
-						if (spine.length) for (var i in spine) if (spine[i].threeDLayer) tridi = true;
+						if (neck.length) for (var i = 0;i< neck.length;i++) if (neck[i].threeDLayer) tridi = true;
+						if (spine.length) for (var i = 0;i< spine.length;i++) if (spine[i].threeDLayer) tridi = true;
 
 						if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
 
@@ -1364,11 +1392,11 @@ function fnDuIK(thisObj)
 						}
 						
 						//préselectionner
-						if (hips) tailHipsButton.selection = Duik.js.getIndexOfStringInArray(layersList,hips.index + " - " + hips.name);
+						if (hips) tailHipsButton.selection = Duik.js.arrayIndexOf(layersList,hips.index + " - " + hips.name);
 						if (tail.length) {
 							tail = Duik.utils.sortByDistance(tail,hips);
-							tailTailFromButton.selection = Duik.js.getIndexOfStringInArray(layersList,tail[0].index + " - " + tail[0].name);
-							tailTailToButton.selection = Duik.js.getIndexOfStringInArray(layersList,tail[tail.length-1].index + " - " + tail[tail.length-1].name);
+							tailTailFromButton.selection = Duik.js.arrayIndexOf(layersList,tail[0].index + " - " + tail[0].name);
+							tailTailToButton.selection = Duik.js.arrayIndexOf(layersList,tail[tail.length-1].index + " - " + tail[tail.length-1].name);
 						}
 						
 					}
@@ -1413,10 +1441,19 @@ function fnDuIK(thisObj)
 						//vérifier qu'il n'y a pas deux calques assignés au meme élément
 						var indexUtilises = [];
 						if (hips) indexUtilises.push(hips.index);
-						if (tail.length) for (var i in tail) indexUtilises.push(tail[i].index);
+						if (tail.length) for (var i =0;i<tail.length;i++) indexUtilises.push(tail[i].index);
 
 						//verif duplicates de l'array
-						if (Duik.js.arrayHasDuplicates(indexUtilises)) { alert ("Be careful not to assign twice the same layer") ; return false; }
+						if (Duik.js.arrayHasDuplicates(indexUtilises)) {
+							var dup = Duik.js.arrayGetDuplicates(indexUtilises);
+							var dupNames = [];
+							for (var i = 0 ; i< dup.length;i++)
+							{
+								dupNames.push(dup[i] + " - " + compo.layer(dup[i]).name);
+							}
+							alert ("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n" + dupNames.join("\n")) ;
+							return false;
+							}
 						
 						//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
 						var calquesManquants = [];
@@ -1430,7 +1467,7 @@ function fnDuIK(thisObj)
 						//vérifier si 3D
 						var tridi = false;
 						if (hips) if (hips.threeDLayer) tridi = true;
-						if (tail.length) for (var i in tail) if (tail[i].threeDLayer) tridi = true;
+						if (tail.length) for (var i=0;i<tail.length;i++) if (tail[i].threeDLayer) tridi = true;
 
 						if (tridi) { alert ("The autorig does not work with 3D Layers"); return false; }
 
@@ -1584,7 +1621,7 @@ function fnDuIK(thisObj)
 					{
 						if (tailCtrls.length && spineCtrls.length)
 						{
-							for (var i in tailCtrls)
+							for (var i=0;i<tailCtrls.length;i++)
 							{
 								tailCtrls[i].layer.parent = spineCtrls[0].layer;
 							}
@@ -1860,7 +1897,7 @@ function fnDuIK(thisObj)
 				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
 				if (ctrlShapeList.selection == 1)
 				{
-					for (var i in newControllers)
+					for (var i=0;i<newControllers.length;i++)
 					{
 						newControllers[i].arc = true;
 						newControllers[i].update();
@@ -1868,7 +1905,7 @@ function fnDuIK(thisObj)
 				}
 				else if (ctrlShapeList.selection == 2)
 				{
-					for (var i in newControllers)
+					for (var i=0;i<newControllers.length;i++)
 					{
 						newControllers[i].eye = true;
 						newControllers[i].update();
@@ -1876,7 +1913,7 @@ function fnDuIK(thisObj)
 				}
 				else if (ctrlShapeList.selection == 3)
 				{
-					for (var i in newControllers)
+					for (var i=0;i<newControllers.length;i++)
 					{
 						newControllers[i].camera = true;
 						newControllers[i].update();
@@ -1959,7 +1996,7 @@ function fnDuIK(thisObj)
 				
 				app.beginUndoGroup("Reset Ctrl. Transform.");
 				
-				for (var i in ctrls)
+				for (var i=0;i<ctrls.length;i++)
 				{
 					var c = ctrls[i].layer;
 					if (c.parent == null) c.transform.position.setValue([c.containingComp.width/2,c.containingComp.height/2,0]);
@@ -3631,7 +3668,7 @@ function fnDuIK(thisObj)
 				presets.sort();
 				presets.unshift("Presets");
 				interpoPresetsList.removeAll();
-				for (var i in presets)
+				for (var i=0;i<presets.length;i++)
 				{
 					interpoPresetsList.add("item",presets[i]);
 				}
