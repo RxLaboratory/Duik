@@ -3195,7 +3195,24 @@ function fnDuIK(thisObj)
 			{
 				//début du groupe d'annulation
 				app.beginUndoGroup("Duik - Multiplane");
+				var comp = app.project.activeItem;
+				var layers = [];
+				if (comp instanceof CompItem)
+				{
+					layers = comp.selectedLayers;
+					layers = Duik.utils.sortLayersByIndex(layers);
+				}
+				
 				Duik.multiplane(parseInt(nombre.text));
+				
+				if (layers.length == parseInt(nombre.text))
+				{
+					for (var i = 0 ; i<layers.length;i++)
+					{
+						layers[i].parent = comp.layer(i+1);
+					}
+				}
+
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 			}	
@@ -5034,7 +5051,20 @@ function fnDuIK(thisObj)
 			scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
 			//bouton pour multiplan 2D
 			var boutontcam2d = addIconButton(groupCameraG,"btn_2dmultiplane.png",getMessage(188));
-			boutontcam2d.onClick = function () { panocam.hide() ; multiplanePanel.show();};
+			boutontcam2d.onClick = function () {
+				panocam.hide() ;
+				//get number of layers
+				var comp = app.project.activeItem;
+				if (comp instanceof CompItem)
+				{
+					var numLayers = comp.selectedLayers.length;
+					if (numLayers) {
+						nombre.text = numLayers;
+						multiplaneSlider.value = numLayers;
+					}
+				}
+				multiplanePanel.show();
+				};
 			boutontcam2d.helpTip = "Creates multiplane controllers to use as a 2D camera";
 			//TVP Cam
 			var tvpCamButton = addIconButton(groupCameraD,"btn_tvpcam.png","Import TVPaint Cam");
