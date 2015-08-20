@@ -30,7 +30,7 @@ This file is part of Duik.
 function fnDuIK(thisObj)
 {
 	//=========================
-	var version = "15 Beta 4b";
+	var version = "15 RC 1";
 	//=========================
 
 	//=================================
