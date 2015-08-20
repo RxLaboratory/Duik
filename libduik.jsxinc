@@ -4542,9 +4542,10 @@ if (typeof Duik === 'object') delete Duik;
 				"root = thisComp.layer(rootName);\n" +
 				"controller = thisComp.layer(controllerName);\n" +
 				"ctrlEffect = controller.effect('" + effectName + "');\n" +
-				"stretch = ctrlEffect(9)/2;\n" +
+				"stretch = ctrlEffect(9);\n" +
 				"auto = ctrlEffect(8) == 1;\n" +
 				"IK = ctrlEffect(3) == 0;\n" +
+				"shrinkVal = ctrlEffect(10)/100;\n" +
 				"function getWorldPos(L){\n" +
 				"return L.toWorld(L.anchorPoint);\n" +
 				"}\n" +
@@ -4557,8 +4558,12 @@ if (typeof Duik === 'object') delete Duik;
 				"posC = getWorldPos(controller);\n" +
 				"posR = getWorldPos(root);\n" +
 				"distC = length(posC,posR);\n" +
-				"if (distC > IKStretched && auto && IK) boneStretch = (distC-IKLength)*proportion;\n" +
-				"else boneStretch = stretch*proportion;\n" +
+				"shrinkMax = IKLength*shrinkVal;\n" +
+				"shrink = 0;\n" +
+				"if (distC < IKStretched) shrink = 1-distC/IKStretched;\n" +
+				"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+				"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+				"else boneStretch += stretch*proportion;\n" +
 				"coef = 1;\n" +
 				"dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;\n" +
 				"(" + posbout + "-" + apracine + ")*coef+" + apracine + ";";
@@ -4571,9 +4576,10 @@ if (typeof Duik === 'object') delete Duik;
 				"root = thisComp.layer(rootName);\n" +
 				"controller = thisComp.layer(controllerName);\n" +
 				"ctrlEffect = controller.effect('" + effectName + "');\n" +
-				"stretch = ctrlEffect(9)/2;\n" +
+				"stretch = ctrlEffect(9);\n" +
 				"auto = ctrlEffect(8) == 1;\n" +
 				"IK = ctrlEffect(3) == 0;\n" +
+				"shrinkVal = ctrlEffect(10)/100;\n" +
 				"function getWorldPos(L){\n" +
 				"return L.toWorld(L.anchorPoint);\n" +
 				"}\n" +
@@ -4586,8 +4592,12 @@ if (typeof Duik === 'object') delete Duik;
 				"posC = getWorldPos(controller);\n" +
 				"posR = getWorldPos(root);\n" +
 				"distC = length(posC,posR);\n" +
-				"if (distC > IKStretched && auto && IK) boneStretch = (distC-IKLength)*proportion;\n" +
-				"else boneStretch = stretch*proportion;\n" +
+				"shrinkMax = IKLength*shrinkVal;\n" +
+				"shrink = 0;\n" +
+				"if (distC < IKStretched) shrink = 1-distC/IKStretched;\n" +
+				"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+				"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+				"else boneStretch += stretch*proportion;\n" +
 				"coef = 1;\n" +
 				"dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;\n" +
 				"(" + poszero + "-" + apbout + ")*coef+" + apbout + ";";
@@ -4825,6 +4835,9 @@ if (typeof Duik === 'object') delete Duik;
 					root.transform.rotation.setValue(0);
 			//=========================================================
 			
+			//move the controller to avoid bugs (forces expressions evaluation)
+			controller.transform.position.setValue(controller.transform.position.value);
+			
 			//les expressions de stretch
 			//les positions d'origine
 			var posmiddle = middle.transform.position.value.toSource();
@@ -4836,16 +4849,19 @@ if (typeof Duik === 'object') delete Duik;
 			
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE BONE MIDDLE
-			middle.transform.position.expression = "//Duik.threeLayerIK.stretch\n" + 
-					"boneracine = \"" + rootName + "\";\n" + 
-					"controleur = \"" + controllerName + "\";\n" + 
-					"stretch = thisComp.layer(controleur).effect(\"" + effect.name + "\")(10)/2;\n" + 
-					"auto = thisComp.layer(controleur).effect(\"" + effect.name + "\")(9);\n" + 
-					"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" + 
-					"function getWorldPos(theLayerName){\n" + 
-					"L = thisComp.layer(theLayerName);\n" + 
-					"return L.toWorld(L.anchorPoint);\n" + 
-					"}\n" + 
+			middle.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
+					"rootName = '" + rootName + "';\n" +
+					"controllerName = '" + controllerName + "';\n" +
+					"root = thisComp.layer(rootName);\n" +
+					"controller = thisComp.layer(controllerName);\n" +
+					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"stretch = ctrlEffect(10);\n" +
+					"auto = ctrlEffect(9) == 1;\n" +
+					"IK = ctrlEffect(3) == 0;\n" +
+					"shrinkVal = ctrlEffect(11)/100;\n" +
+					"function getWorldPos(L){\n" +
+					"return L.toWorld(L.anchorPoint);\n" +
+					"}\n" +
 					"var upperAP = " + aproot + ";\n" + 
 					"var middlePos = " + posmiddle + ";\n" + 
 					"var middleAP = " + apmiddle + ";\n" + 
@@ -4855,30 +4871,39 @@ if (typeof Duik === 'object') delete Duik;
 					"dist1 = length(upperAP,middlePos);\n" + 
 					"dist2 = length(middleAP,lowerPos);\n" + 
 					"dist3 = length(lowerAP,zeroPos);\n" + 
-					"ikLength = dist1+dist2+dist3;\n" + 
-					"proportion = dist1/ikLength;\n" + 
-					"posC = getWorldPos(controleur);\n" + 
-					"posR = getWorldPos(boneracine);\n" + 
-					"distC = length(posC,posR);\n" + 
-					"if (distC > ikLength+stretch && auto ==1 && IKFK) stretch = (distC-ikLength)*proportion;\n" + 
-					"else stretch = stretch*proportion;\n" + 
-					"coef = 1;\n" + 
-					"dist1 != 0 ? coef = (dist1+stretch)/dist1 : coef = 1;\n" + 
+					"IKLength = dist1+dist2+dist3;\n" + 
+					"IKStretched = IKLength+stretch;\n" +
+					"boneStretch = 0;\n" +
+					"proportion = dist1/(IKLength);\n" +
+					"posC = getWorldPos(controller);\n" +
+					"posR = getWorldPos(root);\n" +
+					"distC = length(posC,posR);\n" +
+					"shrinkMax = IKLength*shrinkVal;\n" +
+					"shrink = 0;\n" +
+					"if (distC < IKStretched) shrink = 1-distC/IKStretched;\n" +
+					"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+					"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+					"else boneStretch += stretch*proportion;\n" +
+					"coef = 1;\n" +
+					"dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;\n" +
 					"(middlePos-upperAP)*coef+upperAP;\n";
 			//=========================================================
 			
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE BONE BOUT
-			end.transform.position.expression = "//Duik.threeLayerIK.stretch\n" + 
-					"boneracine = \"" + rootName + "\";\n" + 
-					"controleur = \"" + controllerName + "\";\n" + 
-					"stretch = thisComp.layer(controleur).effect(\"" + effect.name + "\")(10)/2;\n" + 
-					"auto = thisComp.layer(controleur).effect(\"" + effect.name + "\")(9);\n" + 
-					"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" + 
-					"function getWorldPos(theLayerName){\n" + 
-					"L = thisComp.layer(theLayerName);\n" + 
-					"return L.toWorld(L.anchorPoint);\n" + 
-					"}\n" + 
+			end.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
+					"rootName = '" + rootName + "';\n" +
+					"controllerName = '" + controllerName + "';\n" +
+					"root = thisComp.layer(rootName);\n" +
+					"controller = thisComp.layer(controllerName);\n" +
+					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"stretch = ctrlEffect(10);\n" +
+					"auto = ctrlEffect(9) == 1;\n" +
+					"IK = ctrlEffect(3) == 0;\n" +
+					"shrinkVal = ctrlEffect(11)/100;\n" +
+					"function getWorldPos(L){\n" +
+					"return L.toWorld(L.anchorPoint);\n" +
+					"}\n" +
 					"var upperAP = " + aproot + ";\n" + 
 					"var middlePos = " + posmiddle + ";\n" + 
 					"var middleAP = " + apmiddle + ";\n" + 
@@ -4888,30 +4913,39 @@ if (typeof Duik === 'object') delete Duik;
 					"dist1 = length(upperAP,middlePos);\n" + 
 					"dist2 = length(middleAP,lowerPos);\n" + 
 					"dist3 = length(lowerAP,zeroPos);\n" + 
-					"ikLength = dist1+dist2+dist3;\n" + 
-					"proportion = dist2/ikLength;\n" + 
-					"posC = getWorldPos(controleur);\n" + 
-					"posR = getWorldPos(boneracine);\n" + 
-					"distC = length(posC,posR);\n" + 
-					"if (distC > ikLength+stretch && auto ==1 && IKFK) stretch = (distC-ikLength)*proportion;\n" + 
-					"else stretch = stretch*proportion;\n" + 
-					"coef = 1;\n" + 
-					"dist2 != 0 ? coef = (dist2+stretch)/dist2 : coef = 1;\n" + 
-					"(lowerPos-middleAP)*coef+middleAP;\n";
+					"IKLength = dist1+dist2+dist3;\n" + 
+					"IKStretched = IKLength+stretch;\n" +
+					"boneStretch = 0;\n" +
+					"proportion = dist2/(IKLength);\n" +
+					"posC = getWorldPos(controller);\n" +
+					"posR = getWorldPos(root);\n" +
+					"distC = length(posC,posR);\n" +
+					"shrinkMax = IKLength*shrinkVal;\n" +
+					"shrink = 0;\n" +
+					"if (distC < IKStretched) shrink = 1-distC/IKStretched;\n" +
+					"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+					"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+					"else boneStretch += stretch*proportion;\n" +
+					"coef = 1;\n" +
+					"dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;\n" +
+					"(middlePos-upperAP)*coef+upperAP;\n";
 			//=========================================================
 			
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE ZERO
-			expressionstretchgoal = "//Duik.threeLayerIK.stretch\n" + 
-					"boneracine = \"" + rootName + "\";\n" + 
-					"controleur = \"" + controllerName + "\";\n" + 
-					"stretch = thisComp.layer(controleur).effect(\"" + effect.name + "\")(10)/2;\n" + 
-					"auto = thisComp.layer(controleur).effect(\"" + effect.name + "\")(9);\n" + 
-					"IKFK = thisComp.layer(controleur).effect(\"" + effect.name + "\")(3) == 0;\n" + 
-					"function getWorldPos(theLayerName){\n" + 
-					"L = thisComp.layer(theLayerName);\n" + 
-					"return L.toWorld(L.anchorPoint);\n" + 
-					"}\n" + 
+			expressionstretchgoal = "//Duik.threeLayerIK.stretch\n" +
+					"rootName = '" + rootName + "';\n" +
+					"controllerName = '" + controllerName + "';\n" +
+					"root = thisComp.layer(rootName);\n" +
+					"controller = thisComp.layer(controllerName);\n" +
+					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"stretch = ctrlEffect(10);\n" +
+					"auto = ctrlEffect(9) == 1;\n" +
+					"IK = ctrlEffect(3) == 0;\n" +
+					"shrinkVal = ctrlEffect(11)/100;\n" +
+					"function getWorldPos(L){\n" +
+					"return L.toWorld(L.anchorPoint);\n" +
+					"}\n" +
 					"var upperAP = " + aproot + ";\n" + 
 					"var middlePos = " + posmiddle + ";\n" + 
 					"var middleAP = " + apmiddle + ";\n" + 
@@ -4921,16 +4955,22 @@ if (typeof Duik === 'object') delete Duik;
 					"dist1 = length(upperAP,middlePos);\n" + 
 					"dist2 = length(middleAP,lowerPos);\n" + 
 					"dist3 = length(lowerAP,zeroPos);\n" + 
-					"ikLength = dist1+dist2+dist3;\n" + 
-					"proportion = dist3/ikLength;\n" + 
-					"posC = getWorldPos(controleur);\n" + 
-					"posR = getWorldPos(boneracine);\n" + 
-					"distC = length(posC,posR);\n" + 
-					"if (distC > ikLength+stretch && auto ==1 && IKFK) stretch = (distC-ikLength)*proportion;\n" + 
-					"else stretch = stretch*proportion;\n" + 
-					"coef = 1;\n" + 
-					"dist3 != 0 ? coef = (dist3+stretch)/dist3 : coef = 1;\n" + 
-					"(zeroPos-lowerAP)*coef+lowerAP;\n";
+					"IKLength = dist1+dist2+dist3;\n" + 
+					"IKStretched = IKLength+stretch;\n" +
+					"boneStretch = 0;\n" +
+					"proportion = dist3/(IKLength);\n" +
+					"posC = getWorldPos(controller);\n" +
+					"posR = getWorldPos(root);\n" +
+					"distC = length(posC,posR);\n" +
+					"shrinkMax = IKLength*shrinkVal;\n" +
+					"shrink = 0;\n" +
+					"if (distC < IKStretched) shrink = 1-distC/IKStretched;\n" +
+					"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+					"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+					"else boneStretch += stretch*proportion;\n" +
+					"coef = 1;\n" +
+					"dist3 != 0 ? coef = (dist3+boneStretch)/dist3 : coef = 1;\n" +
+					"(middlePos-upperAP)*coef+upperAP;\n";
 					
 					endEffect(1).expression = expressionstretchgoal;
 			//=========================================================
