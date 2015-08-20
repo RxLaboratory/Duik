@@ -137,7 +137,6 @@ if (typeof Duik === 'object') delete Duik;
 				this.goal.parent = this.layer1;
 				Duik.goal(this.goal,this.controller);
 			}
-			return null;
 		}
 		else if (this.type == 2 && this.layer1 != null && this.layer2 != null && this.controller != null)
 		{
@@ -154,9 +153,8 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				this.goal.parent = this.layer2;
 				Duik.goal(this.goal,this.controller);
-				this.goal.transform.position.expression = "thisComp.layer('" + this.layer2.name + "').effect('" + Duik.uiStrings.ikGoalStretch + "')(1)";
+				this.goal.transform.position.expression = "thisComp.layer('" + this.layer2.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
 			}
-			return zero;
 		}
 		else if (this.type == 3 && this.layer1 != null && this.layer2 != null && this.layer3 != null && this.controller != null)
 		{
@@ -173,10 +171,11 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				this.goal.parent = this.layer3;
 				Duik.goal(this.goal,this.controller);
-				this.goal.transform.position.expression = "thisComp.layer('" + this.layer3.name + "').effect('" + Duik.uiStrings.ikGoalStretch + "')(1)";
+				this.goal.transform.position.expression = "thisComp.layer('" + this.layer3.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
 			}
-			return zero;
 		}
+		//move the controller to avoid bugs
+		this.controller.transform.position.setValue(this.controller.transform.position.value);
 	}
 	function PropertyDescription()
 	{
@@ -1148,7 +1147,7 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.uiStrings.ik = "IK";
 		Duik.uiStrings.ikDirection = "IK Direction";
 		Duik.uiStrings.ikLimit = "IK Limit"
-		Duik.uiStrings.ikGoalStretch = "IK Goal stretch";
+		Duik.uiStrings.ikEnd = "IK End";
 		Duik.uiStrings.wiggle = "Wiggle";
 		Duik.uiStrings.exposure = "Exposure";
 		Duik.uiStrings.rotMorph = "Rotation Morph";
@@ -4365,14 +4364,7 @@ if (typeof Duik === 'object') delete Duik;
 			var endName = end.name;
 			var rootName = root.name;
 			var controllerName = controller.name;
-			
-			//Get controller coordinates from end
-			var ctrlParent = controller.parent;
-			controller.parent = end;
-			var ctrlPos = controller.transform.position.value;
-			controller.parent = ctrlParent;
-			delete ctrlParent;
-			
+						
 			//pseudo effect
 			var effect;
 			effect = Duik.utils.addEffect(controller,Duik.effects.Two_Layer_IK);
@@ -4388,7 +4380,24 @@ if (typeof Duik === 'object') delete Duik;
 			//limit
 			limit = root.Effects.addProperty("ADBE Angle Control");
 			limit.name = Duik.uiStrings.ikLimit;
+			
+			//add an effect to store the goal stretch
+			var endEffect = end.Effects.addProperty("ADBE Point Control");
+			endEffect.name = Duik.uiStrings.ikEnd;
+			//set the value of the effect and store it
+			if (end instanceof ShapeLayer)
+			{
+				endEffect(1).expression = "thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint)";
+			}
+			else
+			{
+				endEffect(1).expression = "bonePos = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\nfromWorld(bonePos)";
+			}
+			var zeroValue = endEffect(1).value;
+			endEffect(1).expression = "";
+			endEffect(1).setValue(zeroValue);
 
+			
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE BONE BOUT
 			var endExpression = "//Duik.twoLayerIK\r\n" +
@@ -4399,6 +4408,7 @@ if (typeof Duik === 'object') delete Duik;
 				"end = thisComp.layer(endName);\n" +
 				"controller = thisComp.layer(controllerName);\n" +
 				"ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
+				"endPos = end.effect(\'" + endEffect.name + "')(1);\n" + 
 				"FK = ctrlEffect(5);\n" +
 				"IKFK = ctrlEffect(3) == 0;\n" +
 				"cw = ctrlEffect(1) == 1;\n" +
@@ -4408,7 +4418,7 @@ if (typeof Duik === 'object') delete Duik;
 				"function ik() {\n" +
 				"A = getWorldPos(root);\n" +
 				"B = getWorldPos(end);\n" +
-				"C = B-end.anchorPoint+" + ctrlPos.toSource() + ";\n" +
+				"C = end.toWorld(endPos);\n" +
 				"E = getWorldPos(controller);\n" +
 				"a = length(B,C);\n" +
 				"b = length(E,A);\n" +
@@ -4427,7 +4437,9 @@ if (typeof Duik === 'object') delete Duik;
 				"IKFK ? ik() : FK;";
 			//=========================================================
 
-			threeD ? end.transform.zRotation.expression = endExpression : end.transform.rotation.expression = endExpression;
+			if (threeD) {end.transform.zRotation.expression = endExpression; end.transform.zRotation.setValue(0);} 
+			else {end.transform.rotation.expression = endExpression; end.transform.rotation.setValue(0);}
+			
 
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE BONE RACINE
@@ -4440,6 +4452,7 @@ if (typeof Duik === 'object') delete Duik;
 				"controller = thisComp.layer(controllerName);\n" +
 				"ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
 				"limit = effect('" + limit.name + "')(1);\n" + 
+				"endPos = end.effect(\'" + endEffect.name + "')(1);\n" + 
 				"FK = ctrlEffect(5);\n" +
 				"IKFK = ctrlEffect(3) == 0;\n" +
 				"cw = ctrlEffect(1) == 1;\n" +
@@ -4449,7 +4462,7 @@ if (typeof Duik === 'object') delete Duik;
 				"function ik() {\n" +
 				"A = getWorldPos(root);\n" +
 				"B = getWorldPos(end);\n" +
-				"C = B-end.anchorPoint+" + ctrlPos.toSource() + ";\n" +
+				"C = end.toWorld(endPos);\n" +
 				"E = getWorldPos(controller);\n" +
 				"a = length(B,C);\n" +
 				"b = length(E,A);\n" +
@@ -4468,7 +4481,8 @@ if (typeof Duik === 'object') delete Duik;
 				"IKFK ? ik() : FK;";
 			//=======================================================
 
-			threeD ? root.transform.zRotation.expression = rootExpression : root.transform.rotation.expression = rootExpression;
+			if (threeD) {root.transform.zRotation.expression = rootExpression; root.transform.zRotation.setValue(0);} 
+			else {root.transform.rotation.expression = rootExpression; root.transform.rotation.setValue(0);}
 
 			if (threeD) {
 				//si 3D : le zéro de la jambe pour l'orientation
@@ -4518,7 +4532,7 @@ if (typeof Duik === 'object') delete Duik;
 			//les expressions de stretch
 			//les positions d'origine
 			var posbout = end.transform.position.value.toSource();
-			var poszero = ctrlPos.toSource();
+			var poszero = zeroValue.toSource();
 			var apracine = root.transform.anchorPoint.value.toSource();
 			var apbout = end.transform.anchorPoint.value.toSource();
 
@@ -4578,14 +4592,14 @@ if (typeof Duik === 'object') delete Duik;
 				"dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;\n" +
 				"(" + poszero + "-" + apbout + ")*coef+" + apbout + ";";
 				
-			//add an effect to store the goal stretch
-			var stretchGoalEffect = end.Effects.addProperty("ADBE Point Control");
-			stretchGoalEffect.name = Duik.uiStrings.ikGoalStretch;
-			stretchGoalEffect(1).expression = expressionstretchgoal;
+			endEffect(1).expression = expressionstretchgoal;
 						
 			//select controller
 			Duik.utils.deselectLayers();
 			controller.selected = true;
+			
+			//move the controller to avoid bugs (forces expressions evaluation)
+			controller.transform.position.setValue(controller.transform.position.value);
 		}
 	}
 	// ADD THREE-LAYER IK - Duik.threeLayerIK(controller,root,middle,end,clockWise)
@@ -4607,13 +4621,6 @@ if (typeof Duik === 'object') delete Duik;
 			var middleName = middle.name;
 			var rootName = root.name;
 			var controllerName = controller.name;
-			
-			//Get controller coordinates from end
-			var ctrlParent = controller.parent;
-			controller.parent = end;
-			var ctrlPos = controller.transform.position.value;
-			controller.parent = ctrlParent;
-			delete ctrlParent;
 
 			//pseudo effect
 			var effect;
@@ -4624,6 +4631,22 @@ if (typeof Duik === 'object') delete Duik;
 			//limit
 			limit = root.Effects.addProperty("ADBE Angle Control");
 			limit.name = Duik.uiStrings.ikLimit;
+			
+			//add an effect to store the goal stretch
+			var endEffect = end.Effects.addProperty("ADBE Point Control");
+			endEffect.name = Duik.uiStrings.ikEnd;
+			//set the value of the effect and store it
+			if (end instanceof ShapeLayer)
+			{
+				endEffect(1).expression = "thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint)";
+			}
+			else
+			{
+				endEffect(1).expression = "bonePos = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\nfromWorld(bonePos)";
+			}
+			var zeroValue = endEffect(1).value;
+			endEffect(1).expression = "";
+			endEffect(1).setValue(zeroValue);
 			
 			//=========================================================
 			//EXPRESSION A INSERER SUR LE BONE BOUT
@@ -4637,6 +4660,7 @@ if (typeof Duik === 'object') delete Duik;
 					"end = thisComp.layer(endName);\n" +
 					"controller = thisComp.layer(controllerName);\n" +
 					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"endPos = end.effect(\'" + endEffect.name + "')(1);\n" + 
 					"FK = ctrlEffect(6);\n" +
 					"IKFK = ctrlEffect(3) == 0;\n" +
 					"cw = ctrlEffect(1) == 1;\n" +
@@ -4655,7 +4679,7 @@ if (typeof Duik === 'object') delete Duik;
 					"var uPos = getWorldPos(root);\n" +
 					"var mPos = getWorldPos(middle);\n" +
 					"var lPos = getWorldPos(end);\n" +
-					"var zPos = lPos-end.anchorPoint+" + ctrlPos.toSource() + ";\n" +
+					"var zPos = end.toWorld(endPos);\n" +
 					"var cPos = getWorldPos(controller);\n" +
 					"var uLength = length(uPos,mPos);\n" + 
 					"var mLength = length(mPos,lPos);\n" + 
@@ -4679,6 +4703,8 @@ if (typeof Duik === 'object') delete Duik;
 					"var result = value;\n" + 
 					"IKFK ? result += ik() : result += FK;\n" + 
 					"result;\n";
+					
+					end.transform.rotation.setValue(0);
 			//=========================================================
 			
 			//=========================================================
@@ -4693,6 +4719,7 @@ if (typeof Duik === 'object') delete Duik;
 					"end = thisComp.layer(endName);\n" +
 					"controller = thisComp.layer(controllerName);\n" +
 					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"endPos = end.effect(\'" + endEffect.name + "')(1);\n" + 
 					"FK = ctrlEffect(6);\n" +
 					"IKFK = ctrlEffect(3) == 0;\n" +
 					"cw = ctrlEffect(1) == 1;\n" +
@@ -4711,7 +4738,7 @@ if (typeof Duik === 'object') delete Duik;
 					"var uPos = getWorldPos(root);\n" +
 					"var mPos = getWorldPos(middle);\n" +
 					"var lPos = getWorldPos(end);\n" +
-					"var zPos = lPos-end.anchorPoint+" + ctrlPos.toSource() + ";\n" +
+					"var zPos = end.toWorld(endPos);\n" +
 					"var cPos = getWorldPos(controller);\n" +
 					"var uLength = length(uPos,mPos);\n" + 
 					"var mLength = length(mPos,lPos);\n" + 
@@ -4735,6 +4762,8 @@ if (typeof Duik === 'object') delete Duik;
 					"var result = value;\n" + 
 					"IKFK ? result += ik() : result += FK;\n" + 
 					"result;\n";
+					
+					middle.transform.rotation.setValue(0);
 			//=========================================================
 			
 			//=========================================================
@@ -4750,6 +4779,7 @@ if (typeof Duik === 'object') delete Duik;
 					"end = thisComp.layer(endName);\n" +
 					"controller = thisComp.layer(controllerName);\n" +
 					"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+					"endPos = end.effect(\'" + endEffect.name + "')(1);\n" + 
 					"FK = ctrlEffect(6);\n" +
 					"IKFK = ctrlEffect(3) == 0;\n" +
 					"cw = ctrlEffect(1) == 1;\n" +
@@ -4768,7 +4798,7 @@ if (typeof Duik === 'object') delete Duik;
 					"var uPos = getWorldPos(root);\n" +
 					"var mPos = getWorldPos(middle);\n" +
 					"var lPos = getWorldPos(end);\n" +
-					"var zPos = lPos-end.anchorPoint+" + ctrlPos.toSource() + ";\n" +
+					"var zPos = end.toWorld(endPos);\n" +
 					"var cPos = getWorldPos(controller);\n" +
 					"var uLength = length(uPos,mPos);\n" + 
 					"var mLength = length(mPos,lPos);\n" + 
@@ -4791,13 +4821,15 @@ if (typeof Duik === 'object') delete Duik;
 					"var result = value;\n" + 
 					"IKFK ? result += ik() : result += FK;\n" + 
 					"result;\n";
+					
+					root.transform.rotation.setValue(0);
 			//=========================================================
 			
 			//les expressions de stretch
 			//les positions d'origine
 			var posmiddle = middle.transform.position.value.toSource();
 			var posend = end.transform.position.value.toSource();
-			var poszero = ctrlPos.toSource();
+			var poszero = zeroValue.toSource();
 			var aproot = root.transform.anchorPoint.value.toSource();
 			var apmiddle = middle.transform.anchorPoint.value.toSource();
 			var apend = end.transform.anchorPoint.value.toSource();
@@ -4900,10 +4932,7 @@ if (typeof Duik === 'object') delete Duik;
 					"dist3 != 0 ? coef = (dist3+stretch)/dist3 : coef = 1;\n" + 
 					"(zeroPos-lowerAP)*coef+lowerAP;\n";
 					
-					//add an effect to store the goal stretch
-					var stretchGoalEffect = end.Effects.addProperty("ADBE Point Control");
-					stretchGoalEffect.name = Duik.uiStrings.ikGoalStretch;
-					stretchGoalEffect(1).expression = expressionstretchgoal;
+					endEffect(1).expression = expressionstretchgoal;
 			//=========================================================
 			
 			
@@ -4911,6 +4940,9 @@ if (typeof Duik === 'object') delete Duik;
 			//select controller
 			Duik.utils.deselectLayers();
 			controller.selected = true;
+			
+			//move the controller to avoid bugs (forces expressions evaluation)
+			controller.transform.position.setValue(controller.transform.position.value);
 		}
 	}
 	/* ADD GOAL - Duik.goal(layer,controller)
@@ -5589,7 +5621,7 @@ if (typeof Duik === 'object') delete Duik;
 				//si il n'y a pas de coins sélectionnés, on les prend tous
 				if (coins.length == 0) coins = Duik.utils.getPuppetPins(calque("Effects"));
 				//si on a vraiment rien trouvé, on laisse tomber
-				if (coins.length == 0) return;
+				if (coins.length == 0) throw "Please select any spatial property to link it to a bone";
 				
 				for (var j=0;j<coins.length;j++)
 				{
