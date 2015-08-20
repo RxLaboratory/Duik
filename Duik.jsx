@@ -5143,43 +5143,67 @@ function fnDuIK(thisObj)
 			
 			var ctrlSettingsGroup = addVGroup(ctrlMainGroup);
 			ctrlSettingsGroup.alignChildren = ["fill","top"];
-			//taille des controleurs
-			var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
+			
+			//size hint controllers
 			var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
-			if (!expertMode) ctrlSizeGroup.add("statictext",undefined,getMessage(169));
+			if (!expertMode) ctrlSizeAutoGroup.add("statictext",undefined,"Size");
+			var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173),"Custom"]);
+			ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
+			if (!Duik.settings.controllerSizeAuto) ctrlSizeAutoList.selection = 3;
+			ctrlSizeAutoList.helpTip = "Auto-size";
+			
+			//custom size
+			var ctrlSizeGroup = addHGroup(ctrlSettingsGroup);
+			if (!expertMode) ctrlSizeGroup.add("statictext",undefined,"Custom size");
 			var ctrlSizeEdit = ctrlSizeGroup.add("edittext",undefined,app.settings.getSetting("duik", "ctrlSize"));
-			ctrlSizeEdit.helpTip = "Size";
+			ctrlSizeEdit.helpTip = "Custom size";
+			ctrlSizeEdit.text = Duik.settings.controllerSize;
+			ctrlSizeEdit.enabled = !Duik.settings.controllerSizeAuto ;
+			
 			ctrlSizeEdit.onChange = function() {
 				Duik.settings.controllerSize = parseInt(ctrlSizeEdit.text);
 				Duik.settings.save();
 				};
-			ctrlSizeEdit.text = Duik.settings.controllerSize;
-			//taille auto controleurs
-			var ctrlSizeAutoButton = ctrlSizeAutoGroup.add("checkbox",undefined,expertMode ? "" : getMessage(170));
-			ctrlSizeAutoButton.helpTip = "Auto-size";
-			ctrlSizeAutoButton.alignment = ["left","bottom"];
-			ctrlSizeAutoButton.onClick = function() {
-				ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value;
-				ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value;
-				Duik.settings.controllerSizeAuto = ctrlSizeAutoButton.value;
-				Duik.settings.save();
-				};
-			ctrlSizeAutoButton.value = Duik.settings.controllerSizeAuto;
-			//size hint controllers
-			var ctrlSizeAutoList = ctrlSizeAutoGroup.add("dropdownlist",undefined,[getMessage(171),getMessage(172),getMessage(173)]);
-			ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
-			ctrlSizeAutoList.helpTip = "Auto-size";
+				
 			ctrlSizeAutoList.onChange = function () {
-				Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
+				if (ctrlSizeAutoList.selection.index < 3)
+				{
+					Duik.settings.controllerSizeAuto = true;
+					ctrlSizeEdit.enabled = false;
+					Duik.settings.controllerSizeHint = ctrlSizeAutoList.selection.index;
+				}
+				else
+				{
+					Duik.settings.controllerSizeAuto = false;
+					ctrlSizeEdit.enabled = true;
+				}
 				Duik.settings.save();
 				};
-			ctrlSizeEdit.enabled = !ctrlSizeAutoButton.value ;
-			ctrlSizeAutoList.enabled = ctrlSizeAutoButton.value ;
+			
 			//color
 			var ctrlColorGroup = addHGroup(ctrlSettingsGroup);
 			if (!expertMode) ctrlColorGroup.add("statictext",undefined,"Color");
-			var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Gray","Dark Gray","Black"]);
+			var ctrlColorList = ctrlColorGroup.add("dropdownlist",undefined,["Red","Green","Blue","Cyan","Magenta","Yellow","White","Light Gray","Dark Gray","Black","Custom"]);
 			ctrlColorList.helpTip = "Color";
+			
+			if (Duik.settings.controllerColor.toSource() == Duik.colors.RED.toSource()) ctrlColorList.selection = 0;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.GREEN.toSource()) ctrlColorList.selection = 1;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLUE.toSource()) ctrlColorList.selection = 2;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.CYAN.toSource()) ctrlColorList.selection = 3;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.MAGENTA.toSource()) ctrlColorList.selection = 4;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.YELLOW.toSource()) ctrlColorList.selection = 5;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.WHITE.toSource()) ctrlColorList.selection = 6;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.LIGHT_GRAY.toSource()) ctrlColorList.selection = 7;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.DARK_GRAY.toSource()) ctrlColorList.selection = 8;
+			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLACK.toSource()) ctrlColorList.selection = 9;
+			else ctrlColorList.selection = 10;
+			
+			var ctrlCustomColorGroup = addHGroup(ctrlSettingsGroup);
+			if (!expertMode) ctrlCustomColorGroup.add("statictext",undefined,"Custom color");
+			var ctrlCustomColorSharp = ctrlCustomColorGroup.add("statictext",undefined,"#");
+			ctrlCustomColorSharp.alignment = ["left","fill"];
+			var ctrlCustomColorEdit = ctrlCustomColorGroup.add("edittext",undefined,Duik.utils.rvbColorToHex(Duik.settings.controllerColor));
+			
 			ctrlColorList.onChange = function () {
 				if (ctrlColorList.selection == 0) Duik.settings.controllerColor = Duik.colors.RED;
 				else if (ctrlColorList.selection == 1) Duik.settings.controllerColor = Duik.colors.GREEN;
@@ -5191,20 +5215,23 @@ function fnDuIK(thisObj)
 				else if (ctrlColorList.selection == 7) Duik.settings.controllerColor = Duik.colors.LIGHT_GRAY;
 				else if (ctrlColorList.selection == 8) Duik.settings.controllerColor = Duik.colors.DARK_GRAY;
 				else if (ctrlColorList.selection == 9) Duik.settings.controllerColor = Duik.colors.BLACK;
+				else if (ctrlColorList.selection == 10) Duik.settings.controllerColor = Duik.utils.hexColorToRVB(ctrlCustomColorEdit.text);
 				else Duik.settings.controllerColor = Duik.colors.WHITE;
 				Duik.settings.save();
+				
+				if (ctrlColorList.selection == 10) ctrlCustomColorEdit.enabled = true;
+				else ctrlCustomColorEdit.enabled = false;
 			}
-			if (Duik.settings.controllerColor.toSource() == Duik.colors.RED.toSource()) ctrlColorList.selection = 0;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.GREEN.toSource()) ctrlColorList.selection = 1;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLUE.toSource()) ctrlColorList.selection = 2;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.CYAN.toSource()) ctrlColorList.selection = 3;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.MAGENTA.toSource()) ctrlColorList.selection = 4;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.YELLOW.toSource()) ctrlColorList.selection = 5;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.WHITE.toSource()) ctrlColorList.selection = 6;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.LIGHT_GRAY.toSource()) ctrlColorList.selection = 7;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.DARK_GRAY.toSource()) ctrlColorList.selection = 8;
-			else if (Duik.settings.controllerColor.toSource() == Duik.colors.BLACK.toSource()) ctrlColorList.selection = 9;
-			else ctrlColorList.selection = 6;
+			
+			ctrlCustomColorEdit.onChange = function () {
+				Duik.settings.controllerColor = Duik.utils.hexColorToRVB(ctrlCustomColorEdit.text);
+				Duik.settings.save();
+			}
+			
+			if (ctrlColorList.selection == 10) ctrlCustomColorEdit.enabled = true;
+			else ctrlCustomColorEdit.enabled = false;
+			
+			
 			//autolock
 			var ctrlAutoLockButton = ctrlSettingsGroup.add("checkbox",undefined,"Auto Lock");
 			ctrlAutoLockButton.alignment = ["fill","bottom"];
