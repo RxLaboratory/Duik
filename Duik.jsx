@@ -2864,20 +2864,29 @@ function fnDuIK(thisObj)
 						Duik.randomizeProperties(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
 					}
 				}
-				else
+				else if (randStartTimeButton.value)
 				{
-					if (randStartTimeButton.value)
+					Duik.randomizeStartTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+				}
+				else if (randInPointButton.value)
+				{
+					Duik.randomizeInPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+				}
+				else if (randOutPointButton.value)
+				{
+					Duik.randomizeOutPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+				}
+				else if (randKeyValueButton.value)
+				{
+					for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
 					{
-						Duik.randomizeStartTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+						var layer = app.project.activeItem.selectedLayers[i];						
+						Duik.randomizeSelectedKeys(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
 					}
-					if (randInPointButton.value)
-					{
-						Duik.randomizeInPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-					}
-					if (randOutPointButton.value)
-					{
-						Duik.randomizeOutPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-					}
+				}
+				else if (randKeyTimeButton.value)
+				{					
+					Duik.randomizeSelectedKeyTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
 				}
 				
 				app.endUndoGroup();
@@ -5882,9 +5891,13 @@ function fnDuIK(thisObj)
 		//RANDOMIZE PANEL
 		{
 			var randPropertiesButton = randPanel.add("checkbox",undefined,"Selected properties");
-			var randStartTimeButton = randPanel.add("checkbox",undefined,"Layer start times");
-			var randInPointButton = randPanel.add("checkbox",undefined,"Layer in points");
-			var randOutPointButton = randPanel.add("checkbox",undefined,"Layer out points");
+			randPanel.add("statictext",undefined,"Layers");
+			var randStartTimeButton = randPanel.add("checkbox",undefined,"Start times");
+			var randInPointButton = randPanel.add("checkbox",undefined,"In points");
+			var randOutPointButton = randPanel.add("checkbox",undefined,"Out points");
+			randPanel.add("statictext",undefined,"Selected keyframes");
+			var randKeyTimeButton = randPanel.add("checkbox",undefined,"Times");
+			var randKeyValueButton = randPanel.add("checkbox",undefined,"Values");
 			randPropertiesButton.value = true;
 			
 			randPropertiesButton.onClick = function () {
@@ -5893,37 +5906,51 @@ function fnDuIK(thisObj)
 					randStartTimeButton.value = false;
 					randInPointButton.value = false;
 					randOutPointButton.value = false;
+					randKeyTimeButton.value = false;
+					randKeyValueButton.value = false;
 				}
 			}
-			randInPointButton.onClick = function () {
-				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
+			
+			function randNothingChecked() {
+				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value && !randKeyTimeButton.value && !randKeyValueButton.value)
 				{
 					randPropertiesButton.value = true;
+					return true;
 				}
-				else
-				{
-					randPropertiesButton.value = false;
-				}
+				else return false;
+			}
+			
+			randInPointButton.onClick = function () {
+				if (randNothingChecked()) return;
+				randKeyTimeButton.value = false;
+				randKeyValueButton.value = false;
+				randPropertiesButton.value = false;
 			}
 			randOutPointButton.onClick = function () {
-				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
-				{
-					randPropertiesButton.value = true;
-				}
-				else
-				{
-					randPropertiesButton.value = false;
-				}
+				if (randNothingChecked()) return;
+				randKeyTimeButton.value = false;
+				randKeyValueButton.value = false;
+				randPropertiesButton.value = false;
 			}
 			randStartTimeButton.onClick = function () {
-				if (!randStartTimeButton.value && !randInPointButton.value && !randOutPointButton.value )
-				{
-					randPropertiesButton.value = true;
-				}
-				else
-				{
-					randPropertiesButton.value = false;
-				}
+				if (randNothingChecked()) return;
+				randKeyTimeButton.value = false;
+				randKeyValueButton.value = false;
+				randPropertiesButton.value = false;
+			}
+			randKeyTimeButton.onClick = function () {
+				if (randNothingChecked()) return;
+				randStartTimeButton.value = false;
+				randInPointButton.value = false;
+				randOutPointButton.value = false;
+				randPropertiesButton.value = false;
+			}
+			randKeyValueButton.onClick = function () {
+				if (randNothingChecked()) return;
+				randStartTimeButton.value = false;
+				randInPointButton.value = false;
+				randOutPointButton.value = false;
+				randPropertiesButton.value = false;
 			}
 			
 			var randValuesGroup = addHGroup(randPanel);

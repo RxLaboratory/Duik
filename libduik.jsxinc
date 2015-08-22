@@ -7467,8 +7467,8 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.randomizeProperties = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
 		{
-			if (props == undefined) return;
-			if (props.length == 0) return;
+			if (props == undefined) throw "You must select the properties you want to randomize";
+			if (props.length == 0) throw "You must select the properties you want to randomize";
 			var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
 			var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
 			var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
@@ -7505,6 +7505,133 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 	}
+	/* RANDOMIZE - Duik.randomizeSelectedKeys(props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax);
+
+	Randomizes the values of the selected keyframes of the properties.
+	Min and max values for each axis can be undefined: in this case, the axis won't be randomized.
+
+	parameters
+		props | Array of PropertyBase
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeSelectedKeys !== 'function')
+	{
+		Duik.randomizeSelectedKeys = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+		{
+			if (props == undefined) throw "You must select the keyframes you want to randomize";
+			if (props.length == 0) throw "You must select the keyframes you want to randomize";
+			var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+			var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+			var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+			for (var i = 0;i<props.length;i++)
+			{
+				var prop = props[i];
+				if (prop.propertyType == PropertyType.PROPERTY)
+				{
+					//Get containing comp and dimensions
+					var comp = Duik.utils.getPropertyComp(prop);
+					var dim = Duik.utils.getPropertyDimensions(prop);
+					//loop through selected keyframes
+					for (var j = 0 ; j < prop.selectedKeys.length; j++)
+					{
+						var key = prop.selectedKeys[j];
+						var xval = 0;
+						var yval = 0;
+						var zval = 0;
+						//X
+						if (x) xval = Duik.js.random(xMin,xMax);
+						else if (dim == 1) xval = prop.value;
+						else xval = prop.value[0];
+						//Y
+						if (dim == 2 || dim == 3 && y) yval = Duik.js.random(yMin,yMax);
+						else if (dim == 3 || dim == 2) yval = 0;
+						//Z
+						if (dim == 3 && z) zval = Duik.js.random(zMin,zMax);
+						else if (dim == 3) zval = 0;
+						//SET VALUE
+						var val;
+						if (dim == 1) val = xval;
+						if (dim == 2) val = [xval,yval];
+						if (dim == 3) val = [xval,yval,zval];
+						if (fromCurrentVal) val = val + prop.keyValue(key);
+						prop.setValueAtKey(key,val);
+					}				
+				}
+			}
+		}
+	}
+	/* RANDOMIZE - Duik.randomizeSelectedKeys(layrs,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax);
+
+	Randomizes the values of the selected keyframes of the properties.
+	Min and max values for each axis can be undefined: in this case, the axis won't be randomized.
+
+	parameters
+		layrs | Array or Collection of Layers
+		fromCurrentVal | boolean, if true, min and max values are added to current property value
+		
+	returns
+		void
+	
+	*/
+	if (typeof Duik.randomizeSelectedKeyTimes !== 'function')
+	{
+		Duik.randomizeSelectedKeyTimes = function (layrs,fromCurrentVal,min,max)
+		{
+			if (layrs == undefined) throw "You must select the keyframes you want to randomize";
+			if (layrs.length == 0) throw "You must select the keyframes you want to randomize";
+			var x = (min != undefined && max != undefined && !isNaN(min) && !isNaN(max));
+			if (!x) throw "You must define a randomizing range";
+			
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			
+			//array to list keys to be removed
+			var krProps = [];
+			var krKeys = [];
+			
+			for (var l = 0 ; l < layers.length; l++)
+			{
+				var layer = layers[l];
+				var props = layer.selectedProperties;
+				for (var i = 0;i<props.length;i++)
+				{
+					var prop = props[i];
+					krProps.push(prop);
+					var krK = [];
+					if (prop.propertyType == PropertyType.PROPERTY)
+					{
+						//Get containing comp and dimensions
+						var comp = Duik.utils.getPropertyComp(prop);
+						var dim = Duik.utils.getPropertyDimensions(prop);
+						//loop through selected keyframes
+						for (var j = 0 ; j < prop.selectedKeys.length; j++)
+						{
+							var key = prop.selectedKeys[j];
+							var t = Duik.js.random(min,max)*comp.frameDuration;
+							//SET VALUE
+							if (fromCurrentVal) r += prop.keyTime(key);
+							var oldKey = Duik.utils.getKey(prop,key);
+							krK.push(prop.keyTime(key));
+							Duik.utils.addKey(prop,oldKey,t);
+						}				
+					}
+					krKeys.push(krK);
+				}
+			}
+			
+			for (var i = 0 ; i < krProps.length ; i++)
+			{
+				var prop = krProps[i];
+				for (var j = 0 ; j < krKeys[i].length ; j++)
+				{
+					prop.removeKey(prop.nearestKeyIndex(krKeys[i][j]));
+				}
+			}
+		}
+	}
 	/* RANDOMIZE - Duik.randomizeStartTimes(layers,fromCurrentVal,min,max);
 
 	Randomizes start times of the given layers.
@@ -7530,7 +7657,8 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var startTime = Duik.js.random(min,max);
+				var comp = l.containingComp;
+				var startTime = Duik.js.random(min,max)*comp.frameDuration;
 				if (fromCurrentVal) l.startTime = l.startTime + startTime;
 				else l.startTime = startTime;
 			}
@@ -7561,7 +7689,8 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var inPoint = Duik.js.random(min,max);
+				var comp = l.containingComp;
+				var inPoint = Duik.js.random(min,max)*comp.frameDuration;
 				if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
 				else l.inPoint = inPoint;
 			}
@@ -7592,7 +7721,8 @@ if (typeof Duik === 'object') delete Duik;
 			for (var i = 0; i< layers.length;i++)
 			{
 				var l = layers[i];
-				var outPoint = Duik.js.random(min,max);
+				var comp = l.containingComp;
+				var outPoint = Duik.js.random(min,max)*comp.frameDuration;
 				if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
 				else l.outPoint = outPoint;
 			}
