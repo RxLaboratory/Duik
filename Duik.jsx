@@ -2667,7 +2667,7 @@ function fnDuIK(thisObj)
 			
 			function detectExposurePrecision() {
 				var layers = app.project.activeItem.selectedLayers;
-				var speed = Duik.utils.getAverageSpeeds(layers,exposurePreExpressionButton.value);
+				var speed = Duik.utils.getAverageSpeeds(layers);
 				var exp = (parseInt(lowerExposureEdit.text) + parseInt(upperExposureEdit.text)) /2
 				if (speed > 0)
 				{
