@@ -2674,7 +2674,7 @@ if (typeof Duik === 'object') delete Duik;
 		// RENAME LAYER
 		if (typeof Duik.utils.renameLayer !== 'function')
 		{
-			Duik.utils.renameLayer = function (layer,newName,updateExpressions)
+			Duik.utils.renameLayer = function (layer,newName,updateExpressions,currentComp)
 			{
 				if (layer == undefined) return;
 				if (newName == undefined) return;
@@ -2692,26 +2692,29 @@ if (typeof Duik === 'object') delete Duik;
 				{
 					
 					//all items
-					for (var j = 1;j<=app.project.items.length;j++)
+					if (!currentComp)
 					{
-						var comp = app.project.item(j);
-						if (comp instanceof CompItem)
+						for (var j = 1;j<=app.project.items.length;j++)
 						{
-							try
+							var comp = app.project.item(j);
+							if (comp instanceof CompItem)
 							{
-								//double quotes
-								var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
-								var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
-								Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
-								//single quotes
-								var old = "comp('" + compName + "').layer('" + oldName + "'";
-								var newExpr = "comp('" + compName + "').layer('" + newName + "'";
-								Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
+								try
+								{
+									//double quotes
+									var old = "comp(\"" + compName + "\").layer(\"" + oldName + "\"";
+									var newExpr = "comp(\"" + compName + "\").layer(\"" + newName + "\"";
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
+									//single quotes
+									var old = "comp('" + compName + "').layer('" + oldName + "'";
+									var newExpr = "comp('" + compName + "').layer('" + newName + "'";
+									Duik.utils.replaceInLayersExpressions(comp.layers,old,newExpr);
+								}
+								catch (err) {};
 							}
-							catch (err) {};
 						}
 					}
-					
+		
 					//containing comp (thisComp)
 					try
 					{
@@ -2733,7 +2736,7 @@ if (typeof Duik === 'object') delete Duik;
 		// RENAME ITEM
 		if (typeof Duik.utils.renameItem !== 'function')
 		{
-			Duik.utils.renameItem = function (item,newName,updateExpressions)
+			Duik.utils.renameItem = function (item,newName,updateExpressions,currentComp)
 			{
 				if (item == undefined) return;
 				if (newName == undefined) return;
@@ -3166,13 +3169,24 @@ if (typeof Duik === 'object') delete Duik;
 		//CONVERT HEX COLOR TO RVB
 		if (typeof Duik.utils.hexColorToRVB !== 'function')
 		{
-			Duik.utils.hexColorToRVB = function (hexColor)
+			Duik.utils.hexColorToRVB = function (hexColor,isString)
 			{
-				if (hexColor.indexOf("#") == 0) hexColor = hexColor.replace("#","");
-				var red = parseInt(hexColor.substr(0,2),16)/255.0;
-				var green = parseInt(hexColor.substr(2,2),16)/255.0;
-				var blue = parseInt(hexColor.substr(4,2),16)/255.0;
-				return [red,green,blue];
+				if (isString == undefined) isString = true;
+				if (isString)
+				{
+					if (hexColor.indexOf("#") == 0) hexColor = hexColor.replace("#","");
+					var red = parseInt(hexColor.substr(0,2),16)/255.0;
+					var green = parseInt(hexColor.substr(2,2),16)/255.0;
+					var blue = parseInt(hexColor.substr(4,2),16)/255.0;
+					return [red,green,blue];
+				}
+				else
+				{
+					var r = hexColor >> 16;
+					var g = (hexColor & 0x00ff00) >> 8;
+					var b = hexColor & 0xff;
+					return [r/255,g/255,b/255,1];
+				}
 			}
 		}
 		//CONVERT RVB COLOR TO HEX
@@ -5867,7 +5881,7 @@ if (typeof Duik === 'object') delete Duik;
 	{
 		Duik.rotationMorph = function (layer,prop)
 		{
-			var prep = Duik.utils.rigProperty(layer,propDuik.effects.RotMorph);
+			var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.RotMorph);
 			var effect = prep[0];
 			prop = prep[1];
 			if (effect == null) return false;
