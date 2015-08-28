@@ -489,8 +489,10 @@ function fnDuIK(thisObj)
 			
 			#include "Duik_images.jsxinc"
 
-			var imgFolder = new Folder(Folder.userData.fsName + "/DuIK").fsName;
-			for (var k=0;k<scriptMng.files.length;k++ )
+			var duFolder = new Folder(Folder.userData.fsName + "/Duduf");
+			if (!duFolder.exists) duFolder.create();
+			var imgFolder = new Folder(duFolder.fsName + "/DuIK").fsName;
+			for (var k in scriptMng.files)
 			{
 				if (scriptMng.files.hasOwnProperty(k))
 				{
@@ -585,6 +587,16 @@ function fnDuIK(thisObj)
 						var claws = Duik.utils.getLayerByNames(layers,[searchPrefix + "claws",searchPrefix + "hoof",searchPrefix + "finger"]);
 						var tip = Duik.utils.getLayerByNames(layers,[searchPrefix + "tip",searchPrefix + "tiptoe"]);
 						var heel = Duik.utils.getLayerByNames(layers,[searchPrefix + "heel",searchPrefix + "back",searchPrefix + "contact",searchPrefix + "palm"]);
+						
+						searchPrefix = searchPrefix.replace("_"," ");
+						
+						if (!shoulder) shoulder = Duik.utils.getLayerByNames(layers,[searchPrefix + "femur",searchPrefix + "thigh"]);
+						if (!humerus) humerus = Duik.utils.getLayerByNames(layers,[searchPrefix + "tibia",searchPrefix + "fibula",searchPrefix + "calf",searchPrefix + "knee"]);
+						if (!radius) radius = Duik.utils.getLayerByNames(layers,[searchPrefix + "ulna",searchPrefix + "radius",searchPrefix  + "forearm",searchPrefix + "elbow"]);
+						if (!carpus) carpus = Duik.utils.getLayerByNames(layers,[searchPrefix + "carpus",searchPrefix + "palm",searchPrefix + "hand"]);
+						if (!claws) claws = Duik.utils.getLayerByNames(layers,[searchPrefix + "claws",searchPrefix + "hoof",searchPrefix + "finger"]);
+						if (!tip) tip = Duik.utils.getLayerByNames(layers,[searchPrefix + "tip",searchPrefix + "tiptoe"]);
+						if (!heel) heel = Duik.utils.getLayerByNames(layers,[searchPrefix + "heel",searchPrefix + "back",searchPrefix + "contact",searchPrefix + "palm"]);
 						
 						//get layer list
 						var layersList = Duik.utils.getLayersReadableList(layers);
@@ -880,6 +892,15 @@ function fnDuIK(thisObj)
 						var claws = Duik.utils.getLayerByNames(layers,[searchPrefix + "claws",searchPrefix + "hoof",searchPrefix + "toes"]);
 						var tip = Duik.utils.getLayerByNames(layers,[searchPrefix + "tip",searchPrefix + "tiptoe"]);
 						var heel = Duik.utils.getLayerByNames(layers,[searchPrefix + "heel",searchPrefix + "back",searchPrefix + "contact",searchPrefix + "palm"]);
+						
+						searchPrefix = searchPrefix.replace("_"," ");
+						
+						if (!femur) femur = Duik.utils.getLayerByNames(layers,[searchPrefix + "femur",searchPrefix + "thigh"]);
+						if (!tibia) tibia = Duik.utils.getLayerByNames(layers,[searchPrefix + "tibia",searchPrefix + "fibula",searchPrefix + "calf",searchPrefix + "knee"]);
+						if (!tarsus) tarsus = Duik.utils.getLayerByNames(layers,[searchPrefix + "tarsus",searchPrefix + "foot"]);
+						if (!claws) claws = Duik.utils.getLayerByNames(layers,[searchPrefix + "claws",searchPrefix + "hoof",searchPrefix + "toes"]);
+						if (!tip) tip = Duik.utils.getLayerByNames(layers,[searchPrefix + "tip",searchPrefix + "tiptoe"]);
+						if (!heel) heel = Duik.utils.getLayerByNames(layers,[searchPrefix + "heel",searchPrefix + "back",searchPrefix + "contact",searchPrefix + "palm"]);
 						
 						//get layer list
 						var layersList = Duik.utils.getLayersReadableList(layers);
@@ -2108,7 +2129,7 @@ function fnDuIK(thisObj)
 							newName += parseInt(numero.text) + i;
 						}
 						
-						Duik.utils.renameLayer(layers[i],newName,renameInExpressionsButton.value);
+						Duik.utils.renameLayer(layers[i],newName,renameInExpressionsButton.value,renameInExpressionsCurrentCompButton.value);
 					}
 						
 					renameRemFirstDValue.text = "0";
@@ -2333,11 +2354,11 @@ function fnDuIK(thisObj)
 					
 					//go!
 					app.beginUndoGroup("Duik - Search and replace");
-					for(var i in layers)
+					for(var i = 0 ; i < layers.length ; i++)
 					{
 						var l = layers[i];
 						var oldName = l.name;
-						l.name = Duik.javascript.replaceAll(l.name,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+						l.name = Duik.js.replaceAll(l.name,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 						var newName = l.name;
 						//update expressions
 						var compName = l.containingComp.name;
@@ -2395,7 +2416,7 @@ function fnDuIK(thisObj)
 						var newName = oldName;
 						if ((item instanceof CompItem && rieCompItemButton.value) || (item instanceof FootageItem && rieFootageItemButton.value) || (item instanceof FolderItem && rieFolderItemButton.value))
 						{
-							newName = Duik.javascript.replaceAll(newName,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+							newName = Duik.js.replaceAll(newName,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
 							item.name = newName;
 							if (rieUpdateExpressionsButton.value && item instanceof CompItem)
 							{
@@ -3851,7 +3872,7 @@ function fnDuIK(thisObj)
 		Duik.ui.updateProgressPanel(2,"Duik - Creating UI");
 		
 		//folders and needed variables
-		var dossierIcones = Folder.userData.absoluteURI  + "/DuIK/";
+		var dossierIcones = Folder.userData.absoluteURI  + "/Duduf/DuIK/";
 		var animationSaved = [];
 		var controllersFromRiggingPanel = true;
 		
@@ -5404,14 +5425,24 @@ function fnDuIK(thisObj)
 		{
 			var renameTypeGroup = addHGroup(renamePanel);
 			function renameTypeSelect() {
-				if (renameLayersButton.value || renameItemsButton.value)
+				if (renameItemsButton.value)
+				{
+					renameExpressionsGroup.enabled = false;
+					renameInExpressionsButton.enabled = true;
+					renameInExpressionsCurrentCompButton.value = false;
+				}
+				else if (renameLayersButton.value)
 				{
 					renameInExpressionsButton.enabled = true;
+					renameExpressionsGroup.enabled = renameInExpressionsButton.value;
+					renameInExpressionsCurrentCompButton.value = true;
 				}
 				else
 				{
 					renameInExpressionsButton.enabled = false;
+					renameExpressionsGroup.enabled = false;
 				}
+
 			}
 			var renameLayersButton = renameTypeGroup.add("radiobutton",undefined,"Layers");
 			renameLayersButton.value = true;
@@ -5477,6 +5508,11 @@ function fnDuIK(thisObj)
 			//in expressions too
 			var renameInExpressionsButton = renamePanel.add("checkbox",undefined,"Update expressions");
 			renameInExpressionsButton.value = true;
+			var renameExpressionsGroup = addHGroup(renamePanel);
+			var renameInExpressionsCurrentCompButton = renameExpressionsGroup.add("radiobutton",undefined,"Current comp");
+			renameInExpressionsCurrentCompButton.value = true;
+			renameExpressionsGroup.add("radiobutton",undefined,"Project");
+			renameInExpressionsButton.onClick = function(){renameExpressionsGroup.enabled =renameInExpressionsButton.value };
 			//buttons
 			var renameButtonsGroup = addHGroup(renamePanel);
 			var renameCloseButton = addIconButton(renameButtonsGroup,"btn_cancel.png","Back");
