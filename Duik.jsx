@@ -2889,10 +2889,25 @@ function fnDuIK(thisObj)
 				
 				if (singleLayer == undefined) singleLayer = true;
 				
-				if (!singleLayer || layer == null)
+				if (layer == null)
 				{
 					//create solid
 					layer = comp.layers.addSolid([0,0,0], "Cel 1", comp.width, comp.height, comp.pixelAspect , comp.duration);
+				}
+				else if (!singleLayer)
+				{
+					//look for other cells
+					var maxCelNumber = 0;
+					var re = /Cel (\d+)/i;
+					for (var i = 1 ; i <= comp.layers.length ; i++)
+					{
+						var thisCelNumber = 0;
+						var test = comp.layer(i).name.match(re);
+						if (test) thisCelNumber = parseInt(test[1]);
+						if (thisCelNumber > maxCelNumber) maxCelNumber = thisCelNumber;
+					}
+					var celNumber = maxCelNumber+1;
+					layer = comp.layers.addSolid([0,0,0], "Cel " + celNumber, comp.width, comp.height, comp.pixelAspect , comp.duration);
 				}
 
 				var first = true;
