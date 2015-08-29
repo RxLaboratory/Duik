@@ -49,7 +49,7 @@ function fnDuIK(thisObj)
 	//======== APP.SETTINGS ===========
 	//=================================
 	{
-		if (!app.settings.haveSetting('duik', 'lang')){app.settings.saveSetting('duik','lang','ENGLISH');}
+		if (!app.settings.haveSetting('duik', 'lang')){app.settings.saveSetting('duik','lang','en');}
 		if (!app.settings.haveSetting('duik','version')){app.settings.saveSetting('duik','version','oui');}
 		if (!app.settings.haveSetting('duik','expertMode')){app.settings.saveSetting('duik','expertMode','false');}
 		if (!app.settings.haveSetting('duik', 'notes')){app.settings.saveSetting('duik','notes','');}
@@ -59,6 +59,8 @@ function fnDuIK(thisObj)
 		if (!app.settings.haveSetting('duik', 'dropDownSelector')){app.settings.saveSetting('duik','dropDownSelector','false');}
 		if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
 		if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
+		//Set language
+		Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));
 	}
 		
 	//=================================
@@ -3137,13 +3139,17 @@ function fnDuIK(thisObj)
 
 			//FONCTION POUR CHOISIR LA LANGUE
 			function choixLangue() {
-				if (boutonlangue.selection == 0) app.settings.saveSetting('duik','lang','FRENCH');
-				if (boutonlangue.selection == 1) app.settings.saveSetting('duik','lang','ENGLISH');
-				if (boutonlangue.selection == 2) app.settings.saveSetting('duik','lang','SPANISH');
-				if (boutonlangue.selection == 3) app.settings.saveSetting('duik','lang','GERMAN');
-				if (boutonlangue.selection == 4) app.settings.saveSetting('duik','lang','BAHASA');
-				if (boutonlangue.selection == 5) app.settings.saveSetting('duik','lang','PORTUGUESE');
+				for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+				{
+					if (Dutranslator.languages[i][1] == boutonlangue.selection.text)
+					{
+						Dutranslator.setLanguage(Dutranslator.languages[i][0]);
+						app.settings.saveSetting('duik','lang',Dutranslator.languages[i][0]);
+						alert(Dutranslator.languages[i][0]);
+						break;
+					}
 				}
+			}
 
 			//FONCTIONS CALC
 			function calc() {
@@ -4319,17 +4325,29 @@ function fnDuIK(thisObj)
 		
 		//GENERAL
 		var settingsUIGroup = addBox(settingsgeneralGroup,tr("UI"));
+		
+		//language
 		var groupeLangues = settingsUIGroup.add('group');
 		groupeLangues.alignment = ['left','center'];
 		groupeLangues.add('statictext',undefined,tr("Language :"));
-		var boutonlangue = groupeLangues.add('dropdownlist',undefined,['Français','English','Español','Deutsch','Bahasa','Português']);
-		if (app.settings.getSetting('duik', 'lang') == 'FRENCH') boutonlangue.selection = 0;
-		if (app.settings.getSetting('duik', 'lang') == 'ENGLISH') boutonlangue.selection = 1;
-		if (app.settings.getSetting('duik', 'lang') == 'SPANISH') boutonlangue.selection = 2;
-		if (app.settings.getSetting('duik', 'lang') == 'GERMAN') boutonlangue.selection = 3;
-		if (app.settings.getSetting('duik', 'lang') == 'BAHASA') boutonlangue.selection = 4;
-		if (app.settings.getSetting('duik', 'lang') == 'PORTUGUESE') boutonlangue.selection = 5;
+		
+		var availableLanguages = [tr("Default")];
+		for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+		{
+			availableLanguages.push(Dutranslator.languages[i][1]);
+		}
+		var boutonlangue = groupeLangues.add('dropdownlist',undefined,availableLanguages);
+		boutonlangue.selection = 0;
+		for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+		{
+			if (Dutranslator.languages[i][0] == Dutranslator.current)
+			{
+				boutonlangue.selection = i+1;
+				break;
+			}
+		}
 		boutonlangue.onChange = choixLangue;
+		
 		addSeparator(settingsUIGroup,'');
 		settingsUIGroup.add('statictext',undefined,tr("Panel selector:"));
 		var dropDownSelectorButton = settingsUIGroup.add('radiobutton',undefined,tr("Use dropdown"));
@@ -4466,7 +4484,7 @@ function fnDuIK(thisObj)
 		settingsInteractiveUpdateButton.onClick = function () {
 			if (settingsInteractiveUpdateButton.value)
 			{
-				if (confirm(tr("Are you sure you want to activate interactive update?\n\nInteractive update can create a LOT of history items (Undos) and could easily fill up your entire history."),true,tr("Interactive upsate")))
+				if (confirm(tr("Are you sure you want to activate interactive update?\n\nInteractive update can create a LOT of history items (Undos) and could easily fill up your entire history."),true,tr("Interactive update")))
 				{
 					app.settings.saveSetting('duik','interactiveUpdate','true');
 				}
@@ -4561,7 +4579,7 @@ function fnDuIK(thisObj)
 			//bouton bone
 			var boutonbone2 = addIconButton(groupeikD,'btn_bones.png',tr("Bones"));
 			boutonbone2.onClick = bone;
-			boutonbone2.helpTip = tr("Creates a bone on a puppet pin");
+			boutonbone2.helpTip = tr("Creates a bone on a point of an effect");
 			//bouton zero
 			var boutonzero2 = addIconButton(groupeikG,'btn_zero.png',tr("Zero"));
 			boutonzero2.onClick = zero;
