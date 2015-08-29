@@ -3139,13 +3139,17 @@ function fnDuIK(thisObj)
 
 			//FONCTION POUR CHOISIR LA LANGUE
 			function choixLangue() {
+				if (boutonlangue.selection.index == 0)
+				{
+					Dutranslator.setLanguage('en');
+					app.settings.saveSetting('duik','lang','en');
+				}
 				for (var i = 0 ; i < Dutranslator.languages.length ; i++)
 				{
 					if (Dutranslator.languages[i][1] == boutonlangue.selection.text)
 					{
 						Dutranslator.setLanguage(Dutranslator.languages[i][0]);
 						app.settings.saveSetting('duik','lang',Dutranslator.languages[i][0]);
-						alert(Dutranslator.languages[i][0]);
 						break;
 					}
 				}
@@ -4331,7 +4335,7 @@ function fnDuIK(thisObj)
 		groupeLangues.alignment = ['left','center'];
 		groupeLangues.add('statictext',undefined,tr("Language :"));
 		
-		var availableLanguages = [tr("Default")];
+		var availableLanguages = [tr("English")];
 		for (var i = 0 ; i < Dutranslator.languages.length ; i++)
 		{
 			availableLanguages.push(Dutranslator.languages[i][1]);
