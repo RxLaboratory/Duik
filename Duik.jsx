@@ -1,4 +1,4 @@
-﻿/*
+/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2014 Nicolas Dufresne
 http://ik.duduf.fr
@@ -36,7 +36,7 @@ function fnDuIK(thisObj)
 	//=================================
 	//========= LOAD TRANSLATIONS =====
 	//=================================
-	#include "Duik_translations.jsxinc"
+	//#include "Duik_translations.jsxinc"
 	
 	//=================================
 	//======== DUIK PALETTE ===========
@@ -120,7 +120,7 @@ function fnDuIK(thisObj)
 			if(reponse != -1)
 			{
 				newVersion = reply.slice(reponse+8,reply.length+1);
-				if (showAlert && version != newVersion) alert(getMessage(2));
+				if (showAlert && version != newVersion) alert("A new version of Duik is available,\ngo to http://ik.duduf.com to download it");
 				return newVersion;
 			}
 		}
@@ -1595,7 +1595,7 @@ function fnDuIK(thisObj)
 				}
 				if (!okToGo)
 				{
-					alert(getMessage(7));
+					alert("Select the bones and the controller before creating IK");
 					return;
 				}
 				
@@ -1778,7 +1778,7 @@ function fnDuIK(thisObj)
 					//groupe d'annulation
 					app.endUndoGroup();
 				}
-				else{alert(getMessage(10),"Attention",true);}
+				else{alert("Select the layer before applying IK Goal","Attention",true);}
 			}
 
 			//FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
@@ -1792,7 +1792,7 @@ function fnDuIK(thisObj)
 				else
 				{
 					//  début de groupe d'annulation
-					app.beginUndoGroup("Duik - " + getMessage(116));
+					app.beginUndoGroup("Duik - " + "Controllers");
 					Duik.addControllers(app.project.activeItem.selectedLayers);
 					app.endUndoGroup();
 				}
@@ -1800,7 +1800,7 @@ function fnDuIK(thisObj)
 			function controleur(){
 				if (!(app.project.activeItem instanceof CompItem)) return;
 				//  début de groupe d'annulation
-				app.beginUndoGroup("Duik - " + getMessage(116));
+				app.beginUndoGroup("Duik - " + "Controllers");
 				
 				var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
 				if (ctrlShapeList.selection == 1)
@@ -1924,7 +1924,7 @@ function fnDuIK(thisObj)
 
 				//le(s) calque(s) sélectionné(s)
 				var calques = app.project.activeItem.selectedLayers ;
-				if (calques.length ==0) { alert(getMessage(13),"Attention"); return; }
+				if (calques.length ==0) { alert("Select a pin to create a bone","Attention"); return; }
 				
 				Duik.addBones(calques);
 
@@ -1965,7 +1965,7 @@ function fnDuIK(thisObj)
 				
 				
 				
-			} else { alert(getMessage(50),"Attention",true); }
+			} else { alert("Select a layer to apply Zero","Attention",true); }
 
 				}
 
@@ -2368,7 +2368,7 @@ function fnDuIK(thisObj)
 					//fin du groupe d'annulation
 					app.endUndoGroup();
 					
-				} else { alert(getMessage(12)); }
+				} else { alert("Select the property where to apply the \"wiggle\" function"); }
 			}
 
 			//FONCTION WIGGLE
@@ -2403,7 +2403,7 @@ function fnDuIK(thisObj)
 				rayonbouton.text = dist;
 				return dist;
 
-			} else { alert(getMessage(15),"Attention",true); }
+			} else { alert("Select two layers to measure distance from one layer to another!","Attention",true); }
 
 				}
 
@@ -2414,14 +2414,14 @@ function fnDuIK(thisObj)
 						if (OA != 0 && OA != NaN) {
 							
 						//  début de groupe d'annulation
-						app.beginUndoGroup(getMessage(18));
+						app.beginUndoGroup("Wheel");
 							
 						Duik.wheel(app.project.activeItem.selectedLayers[0],OA,roueC.value);
 						
 						//  fin de groupe d'annulation
 						app.endUndoGroup();
 
-						} else { alert (getMessage(19),getMessage(20),true); }
+						} else { alert ("Invalid Radius","What is the radius of the wheel?",true); }
 			}
 				
 			//FONCTION LENTILLE
@@ -2434,7 +2434,7 @@ function fnDuIK(thisObj)
 						if (calques.length > 1){
 
 						//  début de groupe d'annulation
-						app.beginUndoGroup(getMessage(29));
+						app.beginUndoGroup("Lens Controller");
 				
 						Duik.lensFlare(calques);
 						
@@ -2443,7 +2443,7 @@ function fnDuIK(thisObj)
 						app.endUndoGroup();
 
 						} else {
-							alert(getMessage(33));
+							alert("Select all the layers of the lens flare, beginning by the center");
 							}
 						
 						
@@ -2466,7 +2466,7 @@ function fnDuIK(thisObj)
 			var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 
 				//  début de groupe d'annulation
-				app.beginUndoGroup(getMessage(34));
+				app.beginUndoGroup("Distance Link");
 
 				Duik.distanceLink(calque,effet,calqueRef);
 				
@@ -2486,7 +2486,7 @@ function fnDuIK(thisObj)
 				if (prop.matchName != 'ADBE Position')
 				{
 					//  début de groupe d'annulation
-					app.beginUndoGroup(getMessage(42));
+					app.beginUndoGroup("Spring");
 					
 					Duik.spring(prop);
 					
@@ -2503,7 +2503,7 @@ function fnDuIK(thisObj)
 			function springok() {
 				
 				//  début de groupe d'annulation
-				app.beginUndoGroup(getMessage(42));
+				app.beginUndoGroup("Spring");
 
 				var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 				Duik.spring(ef,!boutonLightSpring.value);
@@ -2528,15 +2528,15 @@ function fnDuIK(thisObj)
 				if(effet.canSetExpression) {
 					
 				//  début de groupe d'annulation
-				app.beginUndoGroup(getMessage(52));
+				app.beginUndoGroup("Oscillation");
 					
 				Duik.swing(calque,effet);
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 
-				}else{alert(getMessage(38),getMessage(46));}
-				}else{alert(getMessage(47),getMessage(48));}
-				}else{alert(getMessage(47),getMessage(49));}
+				}else{alert("Cannot create expression on this effect","Impossible spring");}
+				}else{alert("Select the effect where you want to create the spring","No effect selected");}
+				}else{alert("Select the effect where you want to create the spring","No layer selected");}
 
 
 				}
@@ -2608,13 +2608,13 @@ function fnDuIK(thisObj)
 				if (app.project.activeItem.selectedLayers.length == 1)
 				{
 					//  début de groupe d'annulation
-					app.beginUndoGroup(getMessage(61));
+					app.beginUndoGroup("Path Follow");
 					Duik.pathFollow(app.project.activeItem.selectedLayers[0]);
 					app.endUndoGroup();	
 				}
 				else
 				{
-					alert(getMessage(49));
+					alert("No layer selected");
 				}
 			}	
 			
@@ -2664,9 +2664,9 @@ function fnDuIK(thisObj)
 				//fin du groupe d'annulation
 				app.endUndoGroup();
 
-				}else{alert(getMessage(38),getMessage(46));}
-				}else{alert(getMessage(47),getMessage(48));}
-				}else{alert(getMessage(47),getMessage(49));}
+				}else{alert("Cannot create expression on this effect","Impossible spring");}
+				}else{alert("Select the effect where you want to create the spring","No effect selected");}
+				}else{alert("Select the effect where you want to create the spring","No layer selected");}
 			}
 			
 			
@@ -2994,7 +2994,7 @@ function fnDuIK(thisObj)
 			function morpher() {
 
 			//  début de groupe d'annulation
-			app.beginUndoGroup(getMessage(28));
+			app.beginUndoGroup("Create a morpher");
 
 			Duik.morpher(app.project.activeItem.selectedLayers);
 
@@ -3011,13 +3011,13 @@ function fnDuIK(thisObj)
 				
 				if (!(app.project.activeItem instanceof CompItem)) return;
 				//vérifier qu'il n'y a qu'un calque sélectionné
-				if (app.project.activeItem.selectedLayers.length != 1) alert (getMessage(22),getMessage(24),true);
+				if (app.project.activeItem.selectedLayers.length != 1) alert ("Select the camera","No camera selected",true);
 				//vérifier que c'est une caméra
-				if (!(app.project.activeItem.selectedLayers[0] instanceof CameraLayer)) alert (getMessage(22),getMessage(23),true);
+				if (!(app.project.activeItem.selectedLayers[0] instanceof CameraLayer)) alert ("Select the camera","Selected layer is not a camera",true);
 
 
 				//début du groupe d'annulation
-				app.beginUndoGroup(getMessage(21));
+				app.beginUndoGroup("Camera Controller");
 
 				//récupérer la caméra
 				var camera = app.project.activeItem.selectedLayers[0];
@@ -3858,7 +3858,7 @@ function fnDuIK(thisObj)
 		// la fenetre de la calculatrice
 		{
 			 
-			var fenetrecalc = createDialog(getMessage(73),false);
+			var fenetrecalc = createDialog("Calculator",false);
 			fenetrecalc.groupe.orientation = 'column';
 			fenetrecalc.groupe.spacing = 0;
 			var resultatcalc1 = fenetrecalc.groupe.add('statictext',undefined,'');
@@ -3957,12 +3957,12 @@ function fnDuIK(thisObj)
 		
 		// la fenetre du bloc notes
 		{
-			var fenetrenotes = createDialog(getMessage(74),false,undefined,true);
+			var fenetrenotes = createDialog("Notes",false,undefined,true);
 			fenetrenotes.groupe.orientation = 'column';
 			fenetrenotes.groupe.alignment = ['fill','fill'];
 			fenetrenotes.groupe.alignChildren = ['fill','fill'];
 			var textenotes = fenetrenotes.groupe.add ('edittext', undefined,'',{multiline: true});
-			textenotes.helpTip = getMessage(104);
+			textenotes.helpTip = "New line : CTRL + Enter";
 			var charCounter = fenetrenotes.groupe.add ('statictext', undefined,'0');
 			charCounter.alignment = ['fill','bottom'];
 			//récup le texte sauvegardé
@@ -4047,7 +4047,7 @@ function fnDuIK(thisObj)
 			helpPanelButton.size = [22,22];
 			helpPanelButton.helpTip = "Help!";
 			//LIST
-			var selecteur = selectorGroup.add('dropdownlist',undefined,[getMessage(136),"Automation","Animation",getMessage(72),getMessage(75),"Help"]);
+			var selecteur = selectorGroup.add('dropdownlist',undefined,["Rigging","Automation","Animation","Cameras","Settings","Help"]);
 			selecteur.alignment = ['right','center'];
 			selecteur.helpTip = "Tool boxes";
 			selecteur.items[0].image = ScriptUI.newImage(dossierIcones + 'sel_rigging.png');
@@ -4321,7 +4321,7 @@ function fnDuIK(thisObj)
 		var settingsUIGroup = addBox(settingsgeneralGroup,"UI");
 		var groupeLangues = settingsUIGroup.add('group');
 		groupeLangues.alignment = ['left','center'];
-		groupeLangues.add('statictext',undefined,getMessage(76));
+		groupeLangues.add('statictext',undefined,"Language :");
 		var boutonlangue = groupeLangues.add('dropdownlist',undefined,['Français','English','Español','Deutsch','Bahasa','Português']);
 		if (app.settings.getSetting('duik', 'lang') == 'FRENCH') boutonlangue.selection = 0;
 		if (app.settings.getSetting('duik', 'lang') == 'ENGLISH') boutonlangue.selection = 1;
@@ -4368,22 +4368,22 @@ function fnDuIK(thisObj)
 		expertModeButton.value = eval(app.settings.getSetting('duik', 'expertMode'));
 		expertModeButton.onClick = function(){app.settings.saveSetting('duik','expertMode',expertModeButton.value)};
 		var settingsUpdatesGroup = addBox(settingsgeneralGroup,"Updates");
-		var boutonVMAJ = settingsUpdatesGroup.add('checkbox',undefined,getMessage(77));
+		var boutonVMAJ = settingsUpdatesGroup.add('checkbox',undefined,"Check for update at startup");
 		if (app.settings.getSetting('duik', 'version') == 'oui') {boutonVMAJ.value = true; }
 		boutonVMAJ.onClick = function() {
 			if (boutonVMAJ.value) {app.settings.saveSetting('duik','version','oui');} else {app.settings.saveSetting('duik','version','non');}
 			}
-		var boutonMAJ = settingsUpdatesGroup.add('button',undefined,getMessage(113));
+		var boutonMAJ = settingsUpdatesGroup.add('button',undefined,"Check for updates");
 		boutonMAJ.onClick = function() {
-			if (version == checkForUpdate(version,true)) { alert(getMessage(78)); };
+			if (version == checkForUpdate(version,true)) { alert("Duik is up-to-date"); };
 			}
 		
 		//boutons options bones et controleurs
 		var settingsBonesGroup = addBox(settingsRiggingGroup,"Bones");
 		//type de bones
 		var groupeBoneType = addHGroup(settingsBonesGroup);
-		groupeBoneType.add('statictext',undefined,getMessage(165));
-		var boutonBoneType = groupeBoneType.add('dropdownlist',undefined,[getMessage(166),getMessage(167)]);
+		groupeBoneType.add('statictext',undefined,"Type :");
+		var boutonBoneType = groupeBoneType.add('dropdownlist',undefined,["Solid","Null"]);
 		boutonBoneType.selection = Duik.settings.boneType;
 		boutonBoneType.onChange = function() {
 			boutonBoneColor.enabled = boutonBoneType.selection == 0;
@@ -4393,7 +4393,7 @@ function fnDuIK(thisObj)
 		//taille des bones
 		var groupeBoneSize = addHGroup(settingsBonesGroup);
 		var groupeBoneSizeAuto = addHGroup(settingsBonesGroup);
-		groupeBoneSize.add('statictext',undefined,getMessage(168));
+		groupeBoneSize.add('statictext',undefined,"Size :");
 		var boutonBoneSize = groupeBoneSize.add('edittext',undefined,app.settings.getSetting('duik', 'boneSize'));
 		boutonBoneSize.onChange = function() {
 			Duik.settings.boneSize = parseInt(boutonBoneSize.text);
@@ -4401,7 +4401,7 @@ function fnDuIK(thisObj)
 			};
 		boutonBoneSize.text = Duik.settings.boneSize
 		//taille auto des bones
-		var boutonBoneSizeAuto = groupeBoneSizeAuto.add('checkbox',undefined,getMessage(170));
+		var boutonBoneSizeAuto = groupeBoneSizeAuto.add('checkbox',undefined,"Auto size");
 		boutonBoneSizeAuto.onClick = function() {
 			boutonBoneSize.enabled = !boutonBoneSizeAuto.value;
 			boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value;
@@ -4411,7 +4411,7 @@ function fnDuIK(thisObj)
 		boutonBoneSizeAuto.value = Duik.settings.boneSizeAuto;
 		boutonBoneSizeAuto.alignment = ['fill','bottom'];
 		//size hint des bones
-		var boutonBoneSizeAutoValue = groupeBoneSizeAuto.add('dropdownlist',undefined,[getMessage(171),getMessage(172),getMessage(173)]);
+		var boutonBoneSizeAutoValue = groupeBoneSizeAuto.add('dropdownlist',undefined,["Small","Medium","Big"]);
 		boutonBoneSizeAutoValue.selection = Duik.settings.boneSizeHint;
 		boutonBoneSizeAutoValue.onChange = function () {
 			Duik.settings.boneSizeHint = boutonBoneSizeAutoValue.selection.index;
@@ -4421,7 +4421,7 @@ function fnDuIK(thisObj)
 		boutonBoneSizeAutoValue.enabled = boutonBoneSizeAuto.value ;
 		//bone color
 		var groupeBoneColor = addHGroup(settingsBonesGroup);
-		groupeBoneColor.add('statictext',undefined,getMessage(187));
+		groupeBoneColor.add('statictext',undefined,"Color:");
 		var boutonBoneColorSharp = groupeBoneColor.add('statictext',undefined,'#');
 		boutonBoneColorSharp.alignment = ['right','fill'];
 		var boutonBoneColor = groupeBoneColor.add('edittext',undefined,'FF0000');
@@ -4531,7 +4531,7 @@ function fnDuIK(thisObj)
 		// RIGGING
 		{
 			//bouton autorig
-			var boutonautorig = addIconButton(panoik,'btn_autorig.png',getMessage(142)) ;
+			var boutonautorig = addIconButton(panoik,'btn_autorig.png',"Auto-Rig") ;
 			boutonautorig.onClick = function () {panoik.hide();autorigPanel.show();};
 			boutonautorig.helpTip = "Autorig";
 			//boutonautorig.helpTip = 'tip à écrire';
@@ -4539,45 +4539,45 @@ function fnDuIK(thisObj)
 			var groupeikG = addVGroup(groupeik);
 			var groupeikD = addVGroup(groupeik);
 			//bouton pour créer l'IK
-			var boutonik = addIconButton(groupeikG,'btn_creer.png',getMessage(114));
+			var boutonik = addIconButton(groupeikG,'btn_creer.png',"IK");
 			boutonik.onClick = ik;
 			boutonik.helpTip = "IK";
 			//bouton pour créer un goal
-			var boutongoal = addIconButton(groupeikD,'btn_goal.png',getMessage(115));
+			var boutongoal = addIconButton(groupeikD,'btn_goal.png',"Goal");
 			boutongoal.onClick = pregoal;
-			boutongoal.helpTip = getMessage(79);
+			boutongoal.helpTip = "Selected layer will keep its orientation, despite the transformations of its parent";
 			//bezier IK button
 			var bezierIKButton = addIconButton(groupeikG,'btn_bezier.png',"Bezier IK");
 			bezierIKButton.onClick = function() { panoik.hide(); bezierIkPanel.show();}
 			bezierIKButton.helpTip = "Move layers as a Bezier curve";
 			//bouton rotmorph
-			var boutonrotmorph = addIconButton(groupeikD,'btn_rotmorph.png',getMessage(119));
+			var boutonrotmorph = addIconButton(groupeikD,'btn_rotmorph.png',"Rot Morph");
 			boutonrotmorph.onClick = rotmorph;
-			boutonrotmorph.helpTip = getMessage(120);
+			boutonrotmorph.helpTip = "'Morphs' the property based on a layer rotation";
 			//bouton controleur
-			var controllerButton =  addIconButton(groupeikG,'btn_controleur.png',getMessage(116));
+			var controllerButton =  addIconButton(groupeikG,'btn_controleur.png',"Controllers");
 			controllerButton.onClick = function () { controllersFromRiggingPanel = true; controllerButtonClicked(); };
 			controllerButton.helpTip = "Controller";
 			//bouton bone
-			var boutonbone2 = addIconButton(groupeikD,'btn_bones.png',getMessage(117));
+			var boutonbone2 = addIconButton(groupeikD,'btn_bones.png',"Bones");
 			boutonbone2.onClick = bone;
-			boutonbone2.helpTip = getMessage(83);
+			boutonbone2.helpTip = "Creates a bone on a puppet pin";
 			//bouton zero
-			var boutonzero2 = addIconButton(groupeikG,'btn_zero.png',getMessage(118));
+			var boutonzero2 = addIconButton(groupeikG,'btn_zero.png',"Zero");
 			boutonzero2.onClick = zero;
-			boutonzero2.helpTip = getMessage(84);
+			boutonzero2.helpTip = "Creates a \"Zero\" object on a layer";
 			//list button
 			var listButton = addIconButton(groupeikD,'btn_list.png',"List");
 			listButton.onClick = listButtonClicked;
 			listButton.helpTip = "Adds an animation list on the property";
 			//bouton renommer
-			var boutonrename = addIconButton(groupeikG,'btn_renommer.png',getMessage(111));
+			var boutonrename = addIconButton(groupeikG,'btn_renommer.png',"Rename");
 			boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
-			boutonrename.helpTip = getMessage(85);
+			boutonrename.helpTip = "Rename layers";
 			//bouton mesurer
-			var boutonmesurer = addIconButton(groupeikD,'btn_mesurer.png',getMessage(106));
+			var boutonmesurer = addIconButton(groupeikD,'btn_mesurer.png',"Measure");
 			boutonmesurer.onClick = function () {mesure();panoik.hide();measurePanel.show();};
-			boutonmesurer.helpTip = getMessage(100);
+			boutonmesurer.helpTip = "Measure distance between two layers";
 			//replace in expressions button
 			var rieButton = addIconButton(groupeikG,'btn_replaceinexpr.png',"Replace");
 			rieButton.onClick = function () { panoik.hide(); riePanel.show();}
@@ -4680,7 +4680,7 @@ function fnDuIK(thisObj)
 							
 				var interpoInGroup = addHGroup(panointerpo);
 				var boutonApproche = interpoInGroup.add('checkbox',undefined,"In I.");
-				boutonApproche.helpTip = getMessage(88);
+				boutonApproche.helpTip = "Ease In influence";
 				boutonApproche.alignment = ['left','center'];
 				boutonApproche.minimumSize = [40,10];
 				boutonApproche.value = true;
@@ -4727,7 +4727,7 @@ function fnDuIK(thisObj)
 				var groupeInterpoOut = addHGroup(panointerpo);
 				groupeInterpoOut.enabled = false;
 				var boutonEloignement = groupeInterpoOut.add('checkbox',undefined,"Out I.");
-				boutonEloignement.helpTip = getMessage(89);
+				boutonEloignement.helpTip = "Ease Out influence";
 				boutonEloignement.alignment = ['left','center'];
 				boutonEloignement.minimumSize = [40,10];
 				boutonEloignement.value = true;
@@ -4809,7 +4809,7 @@ function fnDuIK(thisObj)
 				var morpherGroup = addHGroup(panointerpo);
 				var boutonMoprher = addIconButton(morpherGroup,'btn_morph.png',"Morpher");
 				boutonMoprher.onClick = morpher;
-				boutonMoprher.helpTip = getMessage(90);
+				boutonMoprher.helpTip = "Create Morpher";
 				var boutonMKey = morpherGroup.add('checkbox',undefined,"Keyframes");
 				boutonMKey.value = true;
 				boutonMKey.alignment = ['fill','center'];
@@ -4821,19 +4821,19 @@ function fnDuIK(thisObj)
 				
 				
 				//bouton Copy ANIM
-				var boutonCopyAnim = addIconButton(animationToolsGroupL,'/btn_copy.png',getMessage(129));
+				var boutonCopyAnim = addIconButton(animationToolsGroupL,'/btn_copy.png',"Copy anim");
 				boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
-				boutonCopyAnim.helpTip = getMessage(131);
+				boutonCopyAnim.helpTip = "Copy animation from selected layers";
 				//bouton Paste ANIM
-				var boutonPasteAnim = addIconButton(animationToolsGroupR,'/btn_paste.png',getMessage(130));
+				var boutonPasteAnim = addIconButton(animationToolsGroupR,'/btn_paste.png',"Paste anim");
 				boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
-				boutonPasteAnim.helpTip = getMessage(132);
+				boutonPasteAnim.helpTip = "Automatically paste animation in the comp (using layer names)";
 				//Cel
 				var celButton = addIconButton(animationToolsGroupL,'btn_cel.png',"Cel animation");
 				celButton.helpTip = "Cel animation tools";
 				celButton.onClick = function () { panointerpo.hide(); celPanel.show(); } ;
 				//controllers
-				var controllerButton2 =  addIconButton(animationToolsGroupR,'btn_controleur.png',getMessage(116));
+				var controllerButton2 =  addIconButton(animationToolsGroupR,'btn_controleur.png',"Controllers");
 				controllerButton2.onClick = function () { controllersFromRiggingPanel = false; controllerButtonClicked(); };
 				controllerButton2.helpTip = "Controllers";
 								
@@ -4852,47 +4852,47 @@ function fnDuIK(thisObj)
 			var groupeAnimationG = addVGroup(animationMainGroup);
 			var groupeAnimationD = addVGroup(animationMainGroup);
 			//bouton wiggle
-			var boutonwiggle = addIconButton(groupeAnimationG,'btn_wiggle.png',getMessage(121));
+			var boutonwiggle = addIconButton(groupeAnimationG,'btn_wiggle.png',"Wiggle");
 			boutonwiggle.onClick = wiggle;
-			boutonwiggle.helpTip = getMessage(92);
+			boutonwiggle.helpTip = "Create a wiggle function in a property of the selected layer";
 			//bouton swing
 			var boutonosc = addIconButton(groupeAnimationD,'btn_osc.png',"Swing");
 			boutonosc.onClick = oscillation;
-			boutonosc.helpTip = getMessage(93);
+			boutonosc.helpTip = "Create an oscillation on the selected property";
 			//bouton spring
-			var boutonspring = addIconButton(groupeAnimationG,'btn_rebond.png',getMessage(126));
+			var boutonspring = addIconButton(groupeAnimationG,'btn_rebond.png',"Spring");
 			boutonspring.onClick = boutonspringClicked;
-			boutonspring.helpTip = getMessage(97);
+			boutonspring.helpTip = "The property will automatically bounce like a spring";
 			//Blink
 			var blinkButton = addIconButton(groupeAnimationD,'/btn_blink.png',"Blink");
 			blinkButton.onClick = blinkButtonClicked;
 			blinkButton.helpTip = "Makes the property blink.";
 			
 			//bouton path follow
-			var boutonpathfollow = addIconButton(groupeAnimationG,'btn_pf.png',getMessage(124));
+			var boutonpathfollow = addIconButton(groupeAnimationG,'btn_pf.png',"Path follow");
 			boutonpathfollow.onClick = pathFollow;
-			boutonpathfollow.helpTip = getMessage(95);
+			boutonpathfollow.helpTip = "Auto orientation of the layer along its path";
 			//bouton roue
-			var boutonroue = addIconButton(groupeAnimationD,'btn_roue.png',getMessage(125));
+			var boutonroue = addIconButton(groupeAnimationD,'btn_roue.png',"Wheel");
 			boutonroue.onClick = function () { panoanimation.hide(); wheelPanel.show(); };
-			boutonroue.helpTip = getMessage(96);
+			boutonroue.helpTip = "Automates the rotation of a wheel while moving the layer";
 			//bouton lentille
-			var boutonlentille = addIconButton(groupeAnimationG,'/btn_lentille.png',getMessage(128));
+			var boutonlentille = addIconButton(groupeAnimationG,'/btn_lentille.png',"Lens");
 			boutonlentille.onClick = lentille;
-			boutonlentille.helpTip = getMessage(99);
+			boutonlentille.helpTip = "Creates a lens flare with selected layers";
 			//MoveAway
 			var moveAwayButton = addIconButton(groupeAnimationD,'btn_moveaway.png',"Move away");
 			moveAwayButton.onClick = moveAwayButtonClicked ;
 			moveAwayButton.helpTip = "A simple controller to move away a layer from its parent";
 			//bouton lien de distance
-			var boutondistance = addIconButton(groupeAnimationG,'btn_lien-de-distance.png',getMessage(127));
+			var boutondistance = addIconButton(groupeAnimationG,'btn_lien-de-distance.png',"Dist. link");
 			boutondistance.onClick = distanceLink;
-			boutondistance.helpTip = getMessage(98);
+			boutondistance.helpTip = "Links an effect with the distance with another layer";
 			
 			//bouton exposure
 			var boutonnframes = addIconButton(groupeAnimationD,'btn_expo.png',"Exposure");
 			boutonnframes.onClick = function () { panoanimation.hide(); exposurePanel.show(); } ;
-			boutonnframes.helpTip = getMessage(94);
+			boutonnframes.helpTip = "Changes the exposure of the animation on the selected property";
 			
 			//Paint Rig button
 			var paintRigButton = addIconButton(groupeAnimationG,'/btn_paint.png',"Paint rigging");
@@ -4921,15 +4921,15 @@ function fnDuIK(thisObj)
 			var groupCameraG = addVGroup(panocam);
 			var groupCameraD = addVGroup(panocam);
 			//bouton pour créer une target cam
-			var boutontcam = addIconButton(groupCameraG,'btn_controleur-cam.png',getMessage(134));
+			var boutontcam = addIconButton(groupCameraG,'btn_controleur-cam.png',"Control Cam");
 			boutontcam.onClick = controlcam;
-			boutontcam.helpTip = getMessage(102);
+			boutontcam.helpTip = "Creates animation controllers for a camera";
 			//scale Z-link button
 			var scaleZLinkButton = addIconButton(groupCameraD,'btn_scalezlink.png',"Scale Z-Link");
 			scaleZLinkButton.onClick = scaleZLinkButtonClicked;
 			scaleZLinkButton.helpTip = "Links the distance of the layer from the camera to its scale, so its apparent size won't change.";
 			//bouton pour multiplan 2D
-			var boutontcam2d = addIconButton(groupCameraG,'btn_2dmultiplane.png',getMessage(188));
+			var boutontcam2d = addIconButton(groupCameraG,'btn_2dmultiplane.png',"2D Multiplane");
 			boutontcam2d.onClick = function () {
 				panocam.hide() ;
 				//get number of layers
@@ -5026,7 +5026,7 @@ function fnDuIK(thisObj)
 			//size hint controllers
 			var ctrlSizeAutoGroup = addHGroup(ctrlSettingsGroup);
 			if (!expertMode) ctrlSizeAutoGroup.add('statictext',undefined,"Size");
-			var ctrlSizeAutoList = ctrlSizeAutoGroup.add('dropdownlist',undefined,[getMessage(171),getMessage(172),getMessage(173),"Custom"]);
+			var ctrlSizeAutoList = ctrlSizeAutoGroup.add('dropdownlist',undefined,["Small","Medium","Big","Custom"]);
 			ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
 			if (!Duik.settings.controllerSizeAuto) ctrlSizeAutoList.selection = 3;
 			ctrlSizeAutoList.helpTip = "Auto-size";
@@ -5305,7 +5305,7 @@ function fnDuIK(thisObj)
 			//nom
 			var groupeNom = addHGroup(renamePanel);
 			groupeNom.alignChildren = ['fill','center'];
-			var nametexte = groupeNom.add('checkbox',undefined,getMessage(108));
+			var nametexte = groupeNom.add('checkbox',undefined,"Name");
 			nametexte.alignment = ['left','center'];
 			var name = groupeNom.add('edittext',undefined);
 			name.enabled = false;
@@ -5316,7 +5316,7 @@ function fnDuIK(thisObj)
 			renamePanel.alignChildren = ['fill','top'];
 			var groupePrefix = addHGroup(renamePanel);
 			groupePrefix.alignChildren = ['fill','center'];
-			var prefixtexte = groupePrefix.add('checkbox',undefined,getMessage(107));
+			var prefixtexte = groupePrefix.add('checkbox',undefined,"Prefix");
 			prefixtexte.alignment = ['left','center'];
 			var prefix = groupePrefix.add('edittext',undefined);
 			prefix.enabled = false;
@@ -5326,7 +5326,7 @@ function fnDuIK(thisObj)
 			//suffix
 			var groupeSuffix = addHGroup(renamePanel);
 			groupeSuffix.alignChildren = ['fill','center'];
-			var suffixtexte = groupeSuffix.add('checkbox',undefined,getMessage(109));
+			var suffixtexte = groupeSuffix.add('checkbox',undefined,"Suffix");
 			suffixtexte.alignment = ['left','center'];
 			var suffix = groupeSuffix.add('edittext',undefined);
 			suffix.enabled = false;
@@ -5346,7 +5346,7 @@ function fnDuIK(thisObj)
 			//numéros
 			var groupeNumeros = addHGroup(renamePanel);
 			groupeNumeros.alignChildren = ['fill','center'];
-			var numerotexte = groupeNumeros.add('checkbox',undefined,getMessage(110));
+			var numerotexte = groupeNumeros.add('checkbox',undefined,"Number from");
 			numerotexte.alignment = ['left','center'];
 			var numero = groupeNumeros.add('edittext',undefined,'1');
 			numero.enabled = false;
@@ -5939,17 +5939,17 @@ function fnDuIK(thisObj)
 		rayonGroupeRayon.add('statictext',undefined,"Radius:");
 		var rayonbouton = rayonGroupeRayon.add ('edittext', undefined);
 		rayonbouton.size = ['100','20'];
-		rayonbouton.helpTip = getMessage(64);
-		wheelPanel.add('statictext',undefined,getMessage(176));
+		rayonbouton.helpTip = "Radius of the wheel, pixels";
+		wheelPanel.add('statictext',undefined,"Movement:");
 		//bouton mesurer
-		var mesurebouton = rayonGroupeRayon.add('button',undefined,getMessage(106));
+		var mesurebouton = rayonGroupeRayon.add('button',undefined,"Measure");
 		mesurebouton.value = false;
-		mesurebouton.helpTip = getMessage(65);
+		mesurebouton.helpTip = "Measure with another object";
 		mesurebouton.onClick = mesurer;
 		//boutons type de déplacement
 		var rayonGroupeType = addHGroup(wheelPanel);
-		var roueH = rayonGroupeType.add('radiobutton',undefined,getMessage(174));
-		var roueC = rayonGroupeType.add('radiobutton',undefined,getMessage(175));
+		var roueH = rayonGroupeType.add('radiobutton',undefined,"Horizontal");
+		var roueC = rayonGroupeType.add('radiobutton',undefined,"Curved");
 		roueH.value = true;
 		
 		var wheelButtonsGroup = addHGroup(wheelPanel);
@@ -5962,17 +5962,17 @@ function fnDuIK(thisObj)
 		}
 		//SPRING PANEL
 		{
-			springPanel.add('statictext',undefined,getMessage(181),{multiline:true});
-			springPanel.add('statictext',undefined,getMessage(182),{multiline:true});
+			springPanel.add('statictext',undefined,"When the Spring is used on the position property of a layer,",{multiline:true});
+			springPanel.add('statictext',undefined,"there are two ways to compute it:",{multiline:true});
 			addSeparator(springPanel,'');
 			//boutons léger ou simulation
-			var boutonLightSpring = springPanel.add('radiobutton',undefined,getMessage(179));
-			springPanel.add('statictext',undefined,getMessage(183),{multiline:true});
+			var boutonLightSpring = springPanel.add('radiobutton',undefined,"Without simulation - Light");
+			springPanel.add('statictext',undefined,"Needs an animation on the layer itself to work.",{multiline:true});
 			boutonLightSpring.value = false;
 			addSeparator(springPanel,'');
-			var boutonSimulatedSpring = springPanel.add('radiobutton',undefined,getMessage(180));
-			springPanel.add('statictext',undefined,getMessage(184),{multiline:true});
-			springPanel.add('statictext',undefined,getMessage(185),{multiline:true});
+			var boutonSimulatedSpring = springPanel.add('radiobutton',undefined,"Simulated - Heavy computing");
+			springPanel.add('statictext',undefined,"Works even if there is no animation on the layer, using the movement of the parent layers.",{multiline:true});
+			springPanel.add('statictext',undefined,"Resulting animation may be smoother too.",{multiline:true});
 			addSeparator(springPanel,'');
 			boutonLightSpring.onClick = function () { boutonSimulatedSpring.value = !boutonLightSpring.value;};
 			boutonSimulatedSpring.onClick = function () { boutonLightSpring.value = !boutonSimulatedSpring.value;};
@@ -6121,7 +6121,7 @@ function fnDuIK(thisObj)
 				
 				//layers
 				
-				var frontLegLayersLabel = frontLegLayersGroup.add('statictext',undefined,getMessage(143));
+				var frontLegLayersLabel = frontLegLayersGroup.add('statictext',undefined,"Layers :");
 				frontLegLayersLabel.alignment = ['left','top'];
 				
 				var frontLegGroup1 = addHGroup(frontLegLayersGroup);
@@ -6228,7 +6228,7 @@ function fnDuIK(thisObj)
 				var backLegTypeLabel = backLegLayersGroup.add('statictext',undefined,"Right Leg");
 				backLegTypeLabel.alignment = ['fill','top'];
 				
-				var backLegLabel = backLegLayersGroup.add('statictext',undefined,getMessage(143));
+				var backLegLabel = backLegLayersGroup.add('statictext',undefined,"Layers :");
 				backLegLabel.alignment = ['left','top'];
 				//tete
 				
@@ -6321,7 +6321,7 @@ function fnDuIK(thisObj)
 				//BOUTONS DES CALQUES
 				var spineLayersGroup = addVGroup(spineDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
 				spineLayersGroup.alignment = ['fill','center'];
-				var spineLabel = spineLayersGroup.add('statictext',undefined,getMessage(143));
+				var spineLabel = spineLayersGroup.add('statictext',undefined,"Layers :");
 				spineLabel.alignment = ['left','top'];
 				//buttons
 				var spineGroup1 = addHGroup(spineLayersGroup);
@@ -6404,7 +6404,7 @@ function fnDuIK(thisObj)
 				//BOUTONS DES CALQUES
 				var tailLayersGroup = addVGroup(tailDialog.groupe); //contient les calques : des groupes en row de text + dropdownlist*
 				tailLayersGroup.alignment = ['fill','center'];
-				var tailLabel = tailLayersGroup.add('statictext',undefined,getMessage(143));
+				var tailLabel = tailLayersGroup.add('statictext',undefined,"Layers :");
 				tailLabel.alignment = ['left','top'];
 				//buttons
 				var tailGroup1 = addHGroup(tailLayersGroup);
