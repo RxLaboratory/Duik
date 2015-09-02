@@ -54,7 +54,7 @@ This file is part of Duik.
 /////////////////////////////
 // FORCE RELOAD
 /////////////////////////////
-if (typeof Duik === 'object') delete Duik;
+//if (typeof Duik === 'object') delete Duik;
 
 ////////////////////////////
 // DEFINITIONS
@@ -1103,23 +1103,43 @@ if (typeof Duik === 'object') delete Duik;
 		Duik.ui.progressPanel.size = [350,70];
 		Duik.ui.progressPanel.alignChildren = ["fill","top"];
 		Duik.ui.progressPanel.margins = 7;
-		Duik.ui.progressPanel.orientation = "row";
+		Duik.ui.progressPanel.spacing = 2;
+		Duik.ui.progressPanel.orientation = "column";
+		Duik.ui.progressPanel.add("statictext",undefined,"Please be patient while Duik is doing its magic.");
 		Duik.ui.progressGroup = Duik.ui.progressPanel.add("group");
 		Duik.ui.progressGroup.alignChildren = ["fill","top"];
-		Duik.ui.progressGroup.orientation = "column";
-		Duik.ui.progressGroup.spacing = 2;
 		Duik.ui.progressGroup.margins = 0;
-		Duik.ui.progressGroup.add("statictext",undefined,"Please be patient while Duik is doing its magic.");
+		Duik.ui.progressGroup.spacing = 2;
 		Duik.ui.progressBar = Duik.ui.progressGroup.add("progressbar",undefined);
-		Duik.ui.progressStatus = Duik.ui.progressGroup.add("statictext",undefined,"Can you feel the magic?");
+		Duik.ui.etr = Duik.ui.progressGroup.add("statictext",undefined," 00:00 " + "remaining");
+		Duik.ui.etr.alignment = ["right","top"];
+		Duik.ui.progressStatus = Duik.ui.progressPanel.add("statictext",undefined,"Can you feel the magic?");
+		Duik.ui.progressStartTime = new Date();
 		Duik.ui.updateProgressPanel = function (val,status)
 		{
+			var currentDate = new Date();
+			var timeElapsed = currentDate.getTime() - Duik.ui.progressStartTime.getTime();
+			var iTime = timeElapsed/val;
+			
+			var remainingIterations = Duik.ui.progressBar.maxvalue-val;
+			var remainingTime = iTime*remainingIterations;
+			var remainingSeconds = parseInt(remainingTime/1000);
+			var minutes = parseInt(remainingSeconds/60);
+			var seconds = remainingSeconds - minutes*60;
+			if (minutes == 0) minutes = "00";
+			else if (minutes < 10) minutes = "0" + minutes;
+			if (seconds == 0) seconds = "00";
+			else if (seconds < 10) seconds = "0" + seconds;
+			
+			Duik.ui.etr.text = minutes + ":" + seconds + " remaining";
+			
 			Duik.ui.progressBar.value = val;
 			if (status != undefined) Duik.ui.progressStatus.text = status;
 			if (Duik.aeVersion >= 9) Duik.ui.progressPanel.update();
 		};
 		Duik.ui.showProgressPanel = function (maxVal,status)
 		{
+			Duik.ui.progressStartTime = new Date();
 			Duik.ui.progressBar.maxvalue = maxVal;
 			Duik.ui.progressBar.value = 0;
 			Duik.ui.progressStatus.text = status;
@@ -1128,6 +1148,7 @@ if (typeof Duik === 'object') delete Duik;
 		};
 		Duik.ui.hideProgressPanel = function ()
 		{
+			Duik.ui.progressIterationDuration = 0;
 			Duik.ui.progressPanel.hide();
 		};
 	}
@@ -1296,14 +1317,14 @@ if (typeof Duik === 'object') delete Duik;
 		{
 			Duik.js.arrayIndexOf = function (arr,value)
 			{
-				if (value == undefined) throw "Missing value in indexOf function";
+				if (value == undefined) throw "Value can not be undefined";
 				
 				for (var i = 0;i<arr.length;i++)
 				{
 					if (arr[i] == value) return i;
 				}
 				return -1;
-			}		
+			}
 		}
 		if (typeof Duik.js.arrayHasDuplicates !== 'function')
 		{
