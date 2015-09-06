@@ -3559,7 +3559,7 @@ function fnDuIK(thisObj)
 				{
 					interpoLockInfluencesButton.value = false;
 					boutonApproche.enabled = true;
-					groupeInterpoOut.enabled = true;
+					groupeInterpoOut.visible = true;
 				}
 				infl();
 			}
@@ -3750,6 +3750,14 @@ function fnDuIK(thisObj)
 			g.alignChildren = ['center','fill'];
 			g.add('image',undefined,dossierIcones + image);
 			g.button = g.add('radiobutton',undefined,text);
+			return g;
+		}
+		function addIconCheckbox(conteneur,image,text){
+			if (expertMode) text = '';
+			var g = addHGroup(conteneur);
+			g.alignChildren = ['left','center'];
+			g.button = g.add('checkbox',undefined,text);
+			g.img = g.add('image',undefined,dossierIcones + image);
 			return g;
 		}
 		function addButton(conteneur,texte){
@@ -4661,9 +4669,11 @@ function fnDuIK(thisObj)
 				
 				//speed
 				var interpoSpeedGroup = addHGroup(panointerpo);
-				var interpoSpeedButton = interpoSpeedGroup.add('checkbox',undefined,tr("Speed"));
-				interpoSpeedButton.alignment = ['left','center'];
-				interpoSpeedButton.minimumSize = [40,10];
+				var interpoSpeedButtonGroupe = addIconCheckbox(interpoSpeedGroup,'btn_interpo_speed.png','');
+				var interpoSpeedButton = interpoSpeedButtonGroupe.button;
+				interpoSpeedButtonGroupe.alignment = ['left','center'];
+				interpoSpeedButton.helpTip = tr("Speed");
+				interpoSpeedButtonGroupe.size = [40,10];
 				interpoSpeedButton.onClick = function ()
 				{
 					interpoSpeedSlider.enabled = interpoSpeedButton.value;
@@ -4701,10 +4711,11 @@ function fnDuIK(thisObj)
 				//addSeparator(panointerpo,'Interpolation influence');
 							
 				var interpoInGroup = addHGroup(panointerpo);
-				var boutonApproche = interpoInGroup.add('checkbox',undefined,tr("In I."));
+				var boutonApprocheGroupe = addIconCheckbox(interpoInGroup,'btn_interpo_lis.png','');
+				boutonApproche = boutonApprocheGroupe.button;
 				boutonApproche.helpTip = tr("Ease In influence");
-				boutonApproche.alignment = ['left','center'];
-				boutonApproche.minimumSize = [40,10];
+				boutonApprocheGroupe.alignment = ['left','center'];
+				boutonApprocheGroupe.size = [40,10];
 				boutonApproche.value = true;
 				boutonApproche.enabled = false;
 				boutonApproche.onClick = function ()
@@ -4747,11 +4758,12 @@ function fnDuIK(thisObj)
 				}
 				
 				var groupeInterpoOut = addHGroup(panointerpo);
-				groupeInterpoOut.enabled = false;
-				var boutonEloignement = groupeInterpoOut.add('checkbox',undefined,tr("Out I."));
+				groupeInterpoOut.visible = false;
+				var boutonEloignementGroupe = addIconCheckbox(groupeInterpoOut,'btn_interpo_out.png','');
+				boutonEloignement = boutonEloignementGroupe.button,
 				boutonEloignement.helpTip = tr("Ease Out influence");
-				boutonEloignement.alignment = ['left','center'];
-				boutonEloignement.minimumSize = [40,10];
+				boutonEloignementGroupe.alignment = ['left','center'];
+				boutonEloignementGroupe.size = [40,10];
 				boutonEloignement.value = true;
 				boutonEloignement.onClick = function ()
 				{
@@ -4784,7 +4796,8 @@ function fnDuIK(thisObj)
 				
 				
 				var interoInfluTopGroup = addHGroup(panointerpo);
-				var interpoLockInfluencesButton = interoInfluTopGroup.add('checkbox',undefined,tr("Lock In and Out"));
+				interpoLockInfluencesButtonGroup = addIconCheckbox(interoInfluTopGroup,'btn_interpo_lock.png','');
+				interpoLockInfluencesButton = interpoLockInfluencesButtonGroup.button;
 				interpoLockInfluencesButton.alignment = ['left','bottom'];
 				interpoLockInfluencesButton.value = true;
 				interpoLockInfluencesButton.onClick = function ()
@@ -4796,14 +4809,18 @@ function fnDuIK(thisObj)
 						boutonEloignement.value = true;
 						interpoInSlider.enabled = true;
 						interpoInEdit.enabled = true;
-						groupeInterpoOut.enabled = false;
+						groupeInterpoOut.visible = false;
 						interpoOutSlider.value = parseInt(interpoInEdit.text);
-						interpoOutEdit.text = parseInt(interpoInEdit.text);
+						interpoOutEdit.text = parseInt(interpoInEdit.text);$
+						boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lis.png');
+						interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lock.png');
 					}
 					else
 					{
 						boutonApproche.enabled = true;
-						groupeInterpoOut.enabled = true;
+						groupeInterpoOut.visible = true;
+						boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_in.png');
+						interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_unlock.png');
 					}
 				}
 				var interpoGetInflButton = addIconButton(interoInfluTopGroup,'btn_getkey.png',tr("Get"));
@@ -4891,7 +4908,7 @@ function fnDuIK(thisObj)
 			blinkButton.helpTip = tr("Makes the property blink.");
 			
 			//bouton path follow
-			var boutonpathfollow = addIconButton(groupeAnimationG,'btn_pf.png',tr("Path follow"));
+			var boutonpathfollow = addIconButton(groupeAnimationG,'btn_pf.png',tr("Orient to path"));
 			boutonpathfollow.onClick = pathFollow;
 			boutonpathfollow.helpTip = tr("Auto orientation of the layer along its path");
 			//bouton roue
