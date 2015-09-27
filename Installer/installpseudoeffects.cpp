@@ -10,12 +10,11 @@ InstallPseudoEffects::InstallPseudoEffects(QObject *parent): QThread(parent)
 void InstallPseudoEffects::run()
 {
     QString ver = version[2];
-    emit log("\n\n# " + ver);
+    emit log("\n\n" + QTime::currentTime().toString("[hh:mm:ss]") + " " + ver);
 
     bool ok = true;
 
     //update presetEffects.xml
-    emit  log("\n# Adding pseudo-effects to After Effects.");
     if (!updatePresetEffects(version[0]))
     {
         ok = false;
@@ -24,7 +23,6 @@ void InstallPseudoEffects::run()
     }
 
     //copy duik to ScriptUI Panels
-    emit log("\n# Copying Duik.");
     if (!updateDuik(version[1]))
     {
         ok = false;
@@ -37,7 +35,8 @@ void InstallPseudoEffects::run()
 
 bool InstallPseudoEffects::updatePresetEffects(QString presetsFileName)
 {
-     emit log("# Backuping 'PresetEffects.xml' to 'PresetEffects.xml.bak");
+     emit log("\n\n# " + QTime::currentTime().toString("[hh:mm:ss]") + " Updating " + presetsFileName);
+     emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Backuping 'PresetEffects.xml' to 'PresetEffects.xml.bak");
      QFichier xmlDestination(presetsFileName);
      if (!xmlDestination.exists()) return false;
      //backup file
@@ -46,7 +45,7 @@ bool InstallPseudoEffects::updatePresetEffects(QString presetsFileName)
      QFile::copy(presetsFileName,presetsFileName + ".bak");
      if (!backupFile.exists()) return false;
 
-     emit log("# Searching for older version of Duik");
+     emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Searching for older version of Duik");
      //find Duik, if exists, remove
      QStringList xml = xmlDestination.getLines(false);
      bool inDuik = false;
@@ -64,12 +63,12 @@ bool InstallPseudoEffects::updatePresetEffects(QString presetsFileName)
          }
      }
 
-     emit log("# Loading new version of Duik");
+     emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Loading new version of Duik");
      //load Duik xml </effects>
      QFichier xmlSource(":/duik/xml");
      QStringList xmlDuik = xmlSource.getLines();
 
-     emit log("# Writing new 'PresetEffects.xml'");
+     emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Writing new 'PresetEffects.xml'");
      //write new file
      if (!xmlDestination.open(QIODevice::WriteOnly | QIODevice::Text))
      {
@@ -93,13 +92,14 @@ bool InstallPseudoEffects::updatePresetEffects(QString presetsFileName)
      }
      xmlDestination.close();
 
-     emit log("# 'PresetEffects.xml' succesfully patched");
+     emit log(QTime::currentTime().toString("[hh:mm:ss]") + " 'PresetEffects.xml' succesfully patched");
 
      return true;
 }
 
 bool InstallPseudoEffects::updateDuik(QString scriptUIpath)
 {
+    emit log("\n\n# " + QTime::currentTime().toString("[hh:mm:ss]") + " Updating Duik: " + scriptUIpath);
     //remove existing Duik
     QDirIterator it(":/duikjsx");
     while (it.hasNext()) {
@@ -112,10 +112,10 @@ bool InstallPseudoEffects::updateDuik(QString scriptUIpath)
 
         if (!old.open(QIODevice::WriteOnly | QIODevice::Text))
         {
-            emit log("# Could not open "+ name + " for update");
+            emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Could not open "+ name + " for update");
             return false;
         }
-        emit log("# Updating " + name);
+        emit log(QTime::currentTime().toString("[hh:mm:ss]") + " Updating " + name);
         QTextStream out(&old);
         foreach(QString line, newLines)
         {

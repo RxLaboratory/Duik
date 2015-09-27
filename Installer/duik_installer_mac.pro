@@ -16,14 +16,17 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     qfichier.cpp \
     aecheckbox.cpp \
-    installpseudoeffects.cpp
+    installpseudoeffects.cpp \
+    custompathwidget.cpp
 
 HEADERS  += mainwindow.h \
     qfichier.h \
     aecheckbox.h \
-    installpseudoeffects.h
+    installpseudoeffects.h \
+    custompathwidget.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    custompathwidget.ui
 
 RESOURCES += \
     resources.qrc

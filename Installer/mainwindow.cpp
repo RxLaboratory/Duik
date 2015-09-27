@@ -6,16 +6,31 @@ MainWindow::MainWindow(QWidget *parent) :
     setupUi(this);
     logEdit->hide();
     //find AE
+    bool found = false;
 #ifdef Q_OS_WIN
-    findAeVersions("C:\\Program Files\\Adobe\\");
-    findAeVersions("C:\\Program Files (x86)\\Adobe\\");
+    found = findAeVersions("C:\\Program Files\\Adobe\\");
+    bool found2 = findAeVersions("C:\\Program Files (x86)\\Adobe\\");
+    if (!found) found = found2;
 #endif
 #ifdef Q_OS_MAC
-    findAeVersions("/Applications");
+    found = findAeVersions("/Applications");
 #endif
+
+    if (!found)
+    {
+        label->setText("The installer could not find any valid installation of After Effects.\nPlease select the folder where it is installed.");
+        //add custom path
+        CustomPathWidget *cpw = new CustomPathWidget;
+        versionsLayout->addWidget(cpw);
+        connect(cpw,SIGNAL(chosen(QString,QString,QString,bool)),this,SLOT(aeCheckBox_clicked(QString,QString,QString,bool)));
+    }
+
+
+
+    versionsLayout->addStretch();
 }
 
-void MainWindow::findAeVersions(QString dir)
+bool MainWindow::findAeVersions(QString dir)
 {
     QStringList filters("Adobe After Effects *");
 
@@ -25,6 +40,9 @@ void MainWindow::findAeVersions(QString dir)
     adobeDir.setFilter(QDir::Dirs);
 
     QFileInfoList versionPaths = adobeDir.entryInfoList();
+
+    bool found = false;
+
     foreach(QFileInfo path,versionPaths)
     {
         QDir aePath(path.absoluteFilePath());
@@ -46,10 +64,10 @@ void MainWindow::findAeVersions(QString dir)
             aeButton->setScriptUI(scriptUI.absolutePath());
             versionsLayout->addWidget(aeButton);
             connect(aeButton,SIGNAL(chosen(QString,QString,QString,bool)),this,SLOT(aeCheckBox_clicked(QString,QString,QString,bool)));
+            found = true;
         }
     }
-
-    versionsLayout->addStretch();
+    return found;
 }
 
 void MainWindow::on_installButton_clicked()
