@@ -12,6 +12,7 @@
 #include <QDirIterator>
 #include <installpseudoeffects.h>
 #include <QScrollBar>
+#include "custompathwidget.h"
 
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
@@ -29,7 +30,7 @@ private slots:
     void finished(bool o);
 
 private:
-    void findAeVersions(QString dir);
+    bool findAeVersions(QString dir);
     bool updatePresetEffects(QString presetsFileName);
     bool updateDuik(QString scriptUIpath);
     QList<QStringList> versionsToInstall;

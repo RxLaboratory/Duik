@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QStringList>
+#include <QTime>
 
 class InstallPseudoEffects : public QThread
 {
