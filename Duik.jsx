@@ -1,4 +1,4 @@
-﻿/*
+/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2014 Nicolas Dufresne
 http://ik.duduf.fr
@@ -30,7 +30,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 function fnDuIK(thisObj)
 {
 //=========================
-var version = '15.02';
+var version = '15.03';
 //=========================
 
 //=================================
@@ -170,72 +170,72 @@ function loadDuik()
 //if pseudo effects are not installed
 if (Duik.usePresets)
 {
-//PALETTE
-{
-var installGroup = palette.add('group');
-installGroup.orientation = 'column';
-installGroup.alignChildren = ['fill','fill'];
-var versionBox = installGroup.add('statictext',undefined,'Duik v' + version);
-versionBox.alignment = ['center','top'];
-var paletteContent = installGroup.add('group');
-paletteContent.orientation = 'stack';
-paletteContent.alignChildren = ['fill','fill'];
-//INSTALL COMPLETE GROUP
-var icGroup = paletteContent.add('group',undefined);
-icGroup.orientation = 'column';
-icGroup.alignChildren = ['fill','fill'];
-var icText = icGroup.add('statictext',undefined,'',{multiline:true});
-icText.minimumSize = [150,60];
-icText.alignment = ['center','top'];
-icText.text = '-- ' + tr("INSTALLATION COMPLETE") + ' --\n\n' + tr("After Effects must be restarted\n\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n") + '-----------------------------';
-icGroup.visible = false;
-//MANUAL INSTALL
-var mmGroup = paletteContent.add('group',undefined);
-mmGroup.orientation = 'column';
-mmGroup.alignChildren = ['fill','fill'];
-var mmTexts = mmGroup.add('group');
-mmTexts.orientation = 'stack';
-mmTexts.alignment = ['center','top'];
-var mmText = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText.alignment = ['center','top'];
-mmText.text = tr("It seems Duik can not automatically install the pseudo effects it needs.\n\nThe easiest way to fix this is by restarting After Effects with administrator privileges,\n\nor you can manually install the pseudo effects needed by Duik: click on the 'Next' button below.");
-var mmText2 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText2.alignment = ['center','top'];
-mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.");
-if ($.os.toLowerCase().indexOf('win') >= 0) mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.");
-mmText2.visible = false;
-var mmText3 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText3.alignment = ['center','top'];
-mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.");
-if ($.os.toLowerCase().indexOf('win') >= 0) mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.");
-mmText3.visible = false;
-var mmText4 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText4.alignment = ['center','top'];
-mmText4.text = '• 3 - ' + tr("Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.");
-mmText4.visible = false;
-var mmNavButtons = mmGroup.add('group');
-mmNavButtons.orientation = 'row';
-mmNavButtons.alignment = ['center','top'];
-var mmPrevButton = mmNavButtons.add('button',undefined,tr("Previous"));
-mmPrevButton.alignment = ['left','top'];
-mmPrevButton.enabled = false;
-var mmNextButton = mmNavButtons.add('button',undefined,tr("Next"));
-mmNextButton.alignment = ['right','top'];
-mmContinueButton = mmGroup.add('button',undefined,tr("Finish installation now!"));
-mmContinueButton.alignment = ['center','bottom'];
-var mmXmlBox = mmGroup.add('edittext',undefined,'test',{multiline:true});
-mmXmlBox.text = Duik.setup.presetEffects;
-mmGroup.visible = false;
-//CANNOT INSTALL
-var ciGroup = paletteContent.add('group',undefined);
-ciGroup.orientation = 'column';
-ciGroup.alignChildren = ['fill','fill'];
-var ciText = ciGroup.add('statictext',undefined,'',{multiline:true});
-ciText.minimumSize = [150,60];
-ciText.alignment = ['center','top'];
-ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://www.duduf.net to get help.") + '\n\n-----------------------------';
-ciGroup.visible = false;
-}
+	//PALETTE
+	{
+		var installGroup = palette.add('group');
+		installGroup.orientation = 'column';
+		installGroup.alignChildren = ['fill','fill'];
+		var versionBox = installGroup.add('statictext',undefined,'Duik v' + version);
+		versionBox.alignment = ['center','top'];
+		var paletteContent = installGroup.add('group');
+		paletteContent.orientation = 'stack';
+		paletteContent.alignChildren = ['fill','fill'];
+		//INSTALL COMPLETE GROUP
+		var icGroup = paletteContent.add('group',undefined);
+		icGroup.orientation = 'column';
+		icGroup.alignChildren = ['fill','fill'];
+		var icText = icGroup.add('statictext',undefined,'',{multiline:true});
+		icText.minimumSize = [150,60];
+		icText.alignment = ['center','top'];
+		icText.text = '-- ' + tr("INSTALLATION COMPLETE") + ' --\n\n' + tr("After Effects must be restarted\n\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n") + '-----------------------------';
+		icGroup.visible = false;
+		//MANUAL INSTALL
+		var mmGroup = paletteContent.add('group',undefined);
+		mmGroup.orientation = 'column';
+		mmGroup.alignChildren = ['fill','fill'];
+		var mmTexts = mmGroup.add('group');
+		mmTexts.orientation = 'stack';
+		mmTexts.alignment = ['center','top'];
+		var mmText = mmTexts.add('statictext',undefined,'',{multiline:true});
+		mmText.alignment = ['center','top'];
+		mmText.text = tr("It seems Duik can not automatically install the pseudo effects it needs.\n\nThe easiest way to fix this is by restarting After Effects with administrator privileges,\n\nor you can manually install the pseudo effects needed by Duik: click on the 'Next' button below.");
+		var mmText2 = mmTexts.add('statictext',undefined,'',{multiline:true});
+		mmText2.alignment = ['center','top'];
+		mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.");
+		if ($.os.toLowerCase().indexOf('win') >= 0) mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.");
+		mmText2.visible = false;
+		var mmText3 = mmTexts.add('statictext',undefined,'',{multiline:true});
+		mmText3.alignment = ['center','top'];
+		mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.");
+		if ($.os.toLowerCase().indexOf('win') >= 0) mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.");
+		mmText3.visible = false;
+		var mmText4 = mmTexts.add('statictext',undefined,'',{multiline:true});
+		mmText4.alignment = ['center','top'];
+		mmText4.text = '• 3 - ' + tr("Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.");
+		mmText4.visible = false;
+		var mmNavButtons = mmGroup.add('group');
+		mmNavButtons.orientation = 'row';
+		mmNavButtons.alignment = ['center','top'];
+		var mmPrevButton = mmNavButtons.add('button',undefined,tr("Previous"));
+		mmPrevButton.alignment = ['left','top'];
+		mmPrevButton.enabled = false;
+		var mmNextButton = mmNavButtons.add('button',undefined,tr("Next"));
+		mmNextButton.alignment = ['right','top'];
+		mmContinueButton = mmGroup.add('button',undefined,tr("Finish installation now!"));
+		mmContinueButton.alignment = ['center','bottom'];
+		var mmXmlBox = mmGroup.add('edittext',undefined,'test',{multiline:true});
+		mmXmlBox.text = Duik.setup.presetEffects;
+		mmGroup.visible = false;
+		//CANNOT INSTALL
+		var ciGroup = paletteContent.add('group',undefined);
+		ciGroup.orientation = 'column';
+		ciGroup.alignChildren = ['fill','fill'];
+		var ciText = ciGroup.add('statictext',undefined,'',{multiline:true});
+		ciText.minimumSize = [150,60];
+		ciText.alignment = ['center','top'];
+		ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://www.duduf.net to get help.") + '\n\n-----------------------------';
+		ciGroup.visible = false;
+	}
 
 mmNextButton.onClick = function ()
 {
