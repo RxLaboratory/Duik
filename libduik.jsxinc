@@ -2508,131 +2508,131 @@ Duik.setup.installPseudoEffects();
 		//returns void
 		if (typeof Duik.utils.duplicateComp !== 'function')
 		{
-		Duik.utils.duplicateComp = function (comp,prefix)
-		{
+			Duik.utils.duplicateComp = function (comp,prefix)
+			{
 
-		if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(100,"Duplicating " + comp.name);
+				if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(100,"Duplicating " + comp.name);
 
-		var previousComps = [];
+				var previousComps = [];
 
-		//NEEDED FUNCTIONS
+				//NEEDED FUNCTIONS
 
-		//gets an item with its ID
-		function getItemWithID(id)
-		{
-		for (var x=1; x<=app.project.numItems; x++)
-		{
-		if (app.project.item(x).id == id)
-		{
-		return app.project.item(x);
-		}
-		}
-		return null;
-		}
+				//gets an item with its ID
+				function getItemWithID(id)
+				{
+				for (var x=1; x<=app.project.numItems; x++)
+				{
+				if (app.project.item(x).id == id)
+				{
+				return app.project.item(x);
+				}
+				}
+				return null;
+				}
 
-		//duplicates a comp (recursive through precomps)
-		function duplicateStructure(comp,parentFolder,prefix) {
-		// Duplicate the incoming comp
-		var newCompName = prefix + comp.name;
-		var comp = comp.duplicate();
-		comp.name = newCompName;
+				//duplicates a comp (recursive through precomps)
+				function duplicateStructure(comp,parentFolder,prefix) {
+				// Duplicate the incoming comp
+				var newCompName = prefix + comp.name;
+				var comp = comp.duplicate();
+				comp.name = newCompName;
 
-		// For each of the layers in the comp, check for subcomps
-		for (var i=1; i<=comp.numLayers; i++)
-		{
-		var layer = comp.layer(i);
-		//Check if layer has a source and that its type is a composition
-		if (layer.source && layer.source instanceof CompItem)
-		{
-		// Check if this comp has already been duplicated
-		var check = null;
-		if (previousComps[layer.source.id])
-		{
-		check = getItemWithID(previousComps[layer.source.id]);
-		}
+				// For each of the layers in the comp, check for subcomps
+				for (var i=1; i<=comp.numLayers; i++)
+				{
+				var layer = comp.layer(i);
+				//Check if layer has a source and that its type is a composition
+				if (layer.source && layer.source instanceof CompItem)
+				{
+				// Check if this comp has already been duplicated
+				var check = null;
+				if (previousComps[layer.source.id])
+				{
+				check = getItemWithID(previousComps[layer.source.id]);
+				}
 
-		if (check == null)
-		{
-		// The subcomp hasn't been duplicated before
+				if (check == null)
+				{
+				// The subcomp hasn't been duplicated before
 
-		// Store the original comp id to remember the correlation
-		var sourceID = layer.source.id;
-		// Replace the source of the layer, and recursively check in that subcomp for sub-subcomps
-		layer.replaceSource(duplicateStructure(layer.source, parentFolder,prefix), false);
-		// Store the new comp id to remember the correlation
-		var destID = layer.source.id;
-		//Add the correlation to an array
-		previousComps[sourceID] = destID;
-		} else
-		{
-		// Replace the source with the already duplicated comp
-		layer.replaceSource(check, false);
-		}
-		}
-		}
+				// Store the original comp id to remember the correlation
+				var sourceID = layer.source.id;
+				// Replace the source of the layer, and recursively check in that subcomp for sub-subcomps
+				layer.replaceSource(duplicateStructure(layer.source, parentFolder,prefix), false);
+				// Store the new comp id to remember the correlation
+				var destID = layer.source.id;
+				//Add the correlation to an array
+				previousComps[sourceID] = destID;
+				} else
+				{
+				// Replace the source with the already duplicated comp
+				layer.replaceSource(check, false);
+				}
+				}
+				}
 
-		//Move the comp to the folder
-		comp.parentFolder = parentFolder;
+				//Move the comp to the folder
+				comp.parentFolder = parentFolder;
 
-		// For the recursion, return the duplicated comp
-		return comp;
-		}
+				// For the recursion, return the duplicated comp
+				return comp;
+				}
 
-		//LET's GO
+				//LET's GO
 
-		//create a new folder
-		var parentFolder = app.project.items.addFolder(prefix + comp.name);
+				//create a new folder
+				var parentFolder = app.project.items.addFolder(prefix + comp.name);
 
-		// If the mainComp is not in the root of the project, then put the new folder on the same hierarchy level as the original parent folder
-		if (comp.parentFolder.parentFolder)
-		{
-		parentFolder.parentFolder = comp.parentFolder.parentFolder;
-		} else
-		{
-		parentFolder.parentFolder = comp.parentFolder;
-		}
+				// If the mainComp is not in the root of the project, then put the new folder on the same hierarchy level as the original parent folder
+				if (comp.parentFolder.parentFolder)
+				{
+				parentFolder.parentFolder = comp.parentFolder.parentFolder;
+				} else
+				{
+				parentFolder.parentFolder = comp.parentFolder;
+				}
 
-		if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(1,"Duplicating precomps");
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(1,"Duplicating precomps");
 
-		//go
-		var newMainComp = duplicateStructure(comp, parentFolder,prefix);
+				//go
+				var newMainComp = duplicateStructure(comp, parentFolder,prefix);
 
-		//add the main comp to the comps duplicated
-		previousComps[comp.id] = newMainComp.id;
+				//add the main comp to the comps duplicated
+				previousComps[comp.id] = newMainComp.id;
 
-		if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(2,"Updating expressions");
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(2,"Updating expressions");
 
-		//update expressions
-		for (var i=0;i<previousComps.length;i++ )
-		{
-		//for each comp, get the new name
-		var oldComp = getItemWithID(i);
-		if (oldComp == null) continue;
-		var newComp = getItemWithID(previousComps[i]);
-		var oldName = oldComp.name;
-		var newName = newComp.name;
-		if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(Duik.ui.progressBar.value + 1,"Updating expressions: " + newName);
-		//in all comps, update the name in the expressions
-		for (var i=0;i<previousComps.length;i++ )
-		{
-		var oldComp2 = getItemWithID(j);
-		if (oldComp2 == null) continue;
-		var newComp2 = getItemWithID(previousComps[j]);
-		//double quotes
-		var old = "comp(\"" + oldName + "\"";
-		var newExpr = "comp(\"" + newName + "\"";
-		Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
-		//single quotes
-		var old = "comp('" + oldName + "'";
-		var newExpr = "comp('" + newName + "'";
-		Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
-		}
-		}
+				//update expressions
+				for (var i=0;i<previousComps.length;i++ )
+				{
+					//for each comp, get the new name
+					var oldComp = getItemWithID(i);
+					if (oldComp == null) continue;
+					var newComp = getItemWithID(previousComps[i]);
+					var oldName = oldComp.name;
+					var newName = newComp.name;
+					if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(Duik.ui.progressBar.value + 1,"Updating expressions: " + newName);
+					//in all comps, update the name in the expressions
+					for (var j=0;j<previousComps.length;j++ )
+					{
+						var oldComp2 = getItemWithID(j);
+						if (oldComp2 == null) continue;
+						var newComp2 = getItemWithID(previousComps[j]);
+						//double quotes
+						var old = "comp(\"" + oldName + "\"";
+						var newExpr = "comp(\"" + newName + "\"";
+						Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
+						//single quotes
+						var old = "comp('" + oldName + "'";
+						var newExpr = "comp('" + newName + "'";
+						Duik.utils.replaceInLayersExpressions(newComp2.layers,old,newExpr);
+					}
+				}
 
-		if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+				if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
 
-		return newMainComp;
-		}
+				return newMainComp;
+			}
 		}
 		// REPLACE IN EXPRESSIONS - Duik.utils.replaceInExpressions(prop,oldString,newString,caseSensitive)
 		if (typeof Duik.utils.replaceInExpressions !== 'function')
@@ -7404,183 +7404,183 @@ Duik.setup.installPseudoEffects();
 	*/
 	if (typeof Duik.importRigInComp !== 'function')
 	{
-	Duik.importRigInComp = function (comp, characterComp, characterName)
-	{
-	app.beginSuppressDialogs();
+		Duik.importRigInComp = function (comp, characterComp, characterName)
+		{
+			app.beginSuppressDialogs();
 
-	//duplicate character comp
-	var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
+			//duplicate character comp
+			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
 
-	//add character comp in the comp
-	var characterLayer = comp.layers.add(characterComp);
+			//add character comp in the comp
+			var characterLayer = comp.layers.add(characterComp);
 
-	//Create a null object to get world coordinates of the zeros in the character comp
-	var tempNull = characterComp.layers.addNull();
-	//check if all controllers have a zero, create it if needed
-	//get world pos of the zeros
-	var zerosPos = [];
-	var characterZeros = [];
-	var characterControllers = Duik.utils.getControllers(characterComp.layers);
+			//Create a null object to get world coordinates of the zeros in the character comp
+			var tempNull = characterComp.layers.addNull();
+			//check if all controllers have a zero, create it if needed
+			//get world pos of the zeros
+			var zerosPos = [];
+			var characterZeros = [];
+			var characterControllers = Duik.utils.getControllers(characterComp.layers);
 
-	if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(characterControllers.length*4,"Preparing controllers and zeros");
-	var progressValue = 0;
+			if (Duik.settings.displayProgressPanel) Duik.ui.showProgressPanel(characterControllers.length*4,"Preparing controllers and zeros");
+			var progressValue = 0;
 
-	for (var i in characterControllers)
-	{
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+			for (var i = 0;i<characterControllers.length;i++)
+			{
+				progressValue++;
+				if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
 
-	var zero = characterControllers[i].layer.parent;
-	if (zero == null || zero.name.indexOf("Zero") != 0)
-	{
-	zero = Duik.addZero(characterControllers[i].layer);
-	}
-	//get the coordinates of the zero
-	tempNull.transform.position.expression = "thisComp.layer(" + characterControllers[i].layer.parent.index + ").toWorld(thisComp.layer(" + characterControllers[i].layer.parent.index + ").anchorPoint)";
-	zerosPos.push(tempNull.transform.position.value);
-	characterZeros.push(zero);
-	}
-	tempNull.remove();
+				var zero = characterControllers[i].layer.parent;
+				if (zero == null || zero.name.indexOf("Zero") != 0)
+				{
+					zero = Duik.addZero(characterControllers[i].layer);
+				}
+				//get the coordinates of the zero
+				tempNull.transform.position.expression = "thisComp.layer(" + characterControllers[i].layer.parent.index + ").toWorld(thisComp.layer(" + characterControllers[i].layer.parent.index + ").anchorPoint)";
+				zerosPos.push(tempNull.transform.position.value);
+				characterZeros.push(zero);
+			}
+			tempNull.remove();
 
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Creating new controllers");
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Creating new controllers");
 
-	//create the new zeros and controllers in the comp
-	var newZeros = [];
-	var newControllerLayers = [];
-	for (var i = characterControllers.length -1; i>=0 ; i--)
-	{
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+			//create the new zeros and controllers in the comp
+			var newZeros = [];
+			var newControllerLayers = [];
+			for (var i = characterControllers.length -1; i>=0 ; i--)
+			{
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
 
-	var oldZero = characterZeros[i];
-	var newZero = comp.layers.addNull();
-	newZero.parent = characterLayer;
-	newZero.transform.position.setValue(zerosPos[i]);
-	newZero.name = "Zero_" + characterName + "_" + characterControllers[i].layer.name;
-	newZero.guideLayer = true;
-	newZero.shy = true;
-	newZero.moveToEnd();
-	newZero.enabled = false;
-	newZeros.unshift(newZero);
+			var oldZero = characterZeros[i];
+			var newZero = comp.layers.addNull();
+			newZero.parent = characterLayer;
+			newZero.transform.position.setValue(zerosPos[i]);
+			newZero.name = "Zero_" + characterName + "_" + characterControllers[i].layer.name;
+			newZero.guideLayer = true;
+			newZero.shy = true;
+			newZero.moveToEnd();
+			newZero.enabled = false;
+			newZeros.unshift(newZero);
 
-	var oldController = characterControllers[i];
-	var newController = Duik.addController(newZero,false,oldController.rotation,oldController.xPosition,oldController.yPosition,oldController.scale);
-	newController.color = oldController.color;
-	newController.type = oldController.type;
-	newController.size = oldController.size;
-	newController.arc = oldController.arc;
-	newController.eye = oldController.eye;
-	newController.update();
-	newController.layer.name = characterName + "_" + oldController.layer.name;
-	newController.layer.parent = newZero;
-	newControllerLayers.unshift(newController.layer);
+			var oldController = characterControllers[i];
+			var newController = Duik.addController(newZero,false,oldController.rotation,oldController.xPosition,oldController.yPosition,oldController.scale);
+			newController.color = oldController.color;
+			newController.type = oldController.type;
+			newController.size = oldController.size;
+			newController.arc = oldController.arc;
+			newController.eye = oldController.eye;
+			newController.update();
+			newController.layer.name = characterName + "_" + oldController.layer.name;
+			newController.layer.parent = newZero;
+			newControllerLayers.unshift(newController.layer);
 
-	//Get the effects
-	for (var j = 1; j <= oldController.layer.effect.numProperties ; j++)
-	{
-	var oldEffect = oldController.layer.effect(j);
-	var newEffect = newController.layer.effect.addProperty(oldEffect.matchName);
-	newEffect.name = oldEffect.name;
-	//set the properties
-	Duik.utils.linkProperties(oldEffect,newEffect);
-	}
+			//Get the effects
+			for (var j = 1; j <= oldController.layer.effect.numProperties ; j++)
+			{
+			var oldEffect = oldController.layer.effect(j);
+			var newEffect = newController.layer.effect.addProperty(oldEffect.matchName);
+			newEffect.name = oldEffect.name;
+			//set the properties
+			Duik.utils.linkProperties(oldEffect,newEffect);
+			}
 
-	Duik.utils.linkProperties(oldController.layer.transform,newController.layer.transform);
-	}
-
-
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Updating expressions");
-
-	//update expressions (controller and zeros names have changed)
-
-	for (var i in characterControllers)
-	{
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,);
-
-	//controllers
-	try {
-	//check names
-	var oldName = characterControllers[i].layer.name;
-	var newName = newControllerLayers[i].name;
-	//update
-	//double quotes
-	var old = "layer(\"" + oldName + "\"";
-	var newExpr = "layer(\"" + newName + "\"";
-	Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
-	//single quotes
-	var old = "layer('" + oldName + "'";
-	var newExpr = "layer('" + newName + "'";
-	Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
-	}
-	catch (err2) {}
-	//zeros
-	try {
-	//check names
-	var oldName = characterZeros[i].name;
-	var newName = newZeros[i].name;
-	//update
-	//double quotes
-	var old = "layer(\"" + oldName + "\"";
-	var newExpr = "layer(\"" + newName + "\"";
-	Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
-	//single quotes
-	var old = "layer('" + oldName + "'";
-	var newExpr = "layer('" + newName + "'";
-	Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
-	}
-	catch (err2) {}
-	}
+			Duik.utils.linkProperties(oldController.layer.transform,newController.layer.transform);
+			}
 
 
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Linking and locking zeros");
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Updating expressions");
 
-	//link and lock the zeros in the comp
-	for  (var i in characterZeros)
-	{
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
+			//update expressions (controller and zeros names have changed)
 
-	var newZero = newZeros[i];
-	//Link zero
-	if (characterZeros[i].parent != null)
-	{
-	for (var j = 1 ; j <= comp.numLayers ; j++)
-	{
-	if (comp.layer(j).name == characterName + "_" + characterZeros[i].parent.name)
-	{
-	newZero.parent = comp.layer(j);
-	break;
-	}
-	}
-	}
-	newZero.locked = true;
-	}
+			for (var i in characterControllers)
+			{
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,);
+
+			//controllers
+			try {
+			//check names
+			var oldName = characterControllers[i].layer.name;
+			var newName = newControllerLayers[i].name;
+			//update
+			//double quotes
+			var old = "layer(\"" + oldName + "\"";
+			var newExpr = "layer(\"" + newName + "\"";
+			Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+			//single quotes
+			var old = "layer('" + oldName + "'";
+			var newExpr = "layer('" + newName + "'";
+			Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+			}
+			catch (err2) {}
+			//zeros
+			try {
+			//check names
+			var oldName = characterZeros[i].name;
+			var newName = newZeros[i].name;
+			//update
+			//double quotes
+			var old = "layer(\"" + oldName + "\"";
+			var newExpr = "layer(\"" + newName + "\"";
+			Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+			//single quotes
+			var old = "layer('" + oldName + "'";
+			var newExpr = "layer('" + newName + "'";
+			Duik.utils.replaceInLayersExpressions(newControllerLayers,old,newExpr);
+			}
+			catch (err2) {}
+			}
 
 
-	progressValue++;
-	if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Setting up master controller");
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Linking and locking zeros");
 
-	//And finally, a master ctrl to control them all!
-	var masterC = Duik.addController(characterLayer,false,true,true,true,true,false);
-	masterC.layer.transform.position.setValue([masterC.layer.transform.position.value[0],comp.height-20]);
-	masterC.layer.name = "MASTER_" + characterName;
-	var flip = masterC.layer.effect.addProperty("ADBE Checkbox Control");
-	flip.name = Duik.uiStrings.flip;
-	masterC.layer.transform.scale.expression = "//Duik.importRig\n" +
-	"var flip = thisLayer.effect(\"" + flip.name + "\")(1).value\n" +
-	"if (flip) [-value[0],value[1]]\n" +
-	"else value";
-	characterLayer.parent = masterC.layer;
-	characterLayer.locked = true;
+			//link and lock the zeros in the comp
+			for  (var i in characterZeros)
+			{
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue);
 
-	if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+			var newZero = newZeros[i];
+			//Link zero
+			if (characterZeros[i].parent != null)
+			{
+			for (var j = 1 ; j <= comp.numLayers ; j++)
+			{
+			if (comp.layer(j).name == characterName + "_" + characterZeros[i].parent.name)
+			{
+			newZero.parent = comp.layer(j);
+			break;
+			}
+			}
+			}
+			newZero.locked = true;
+			}
 
-	app.endSuppressDialogs(false);
-	}
+
+			progressValue++;
+			if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(progressValue,"Setting up master controller");
+
+			//And finally, a master ctrl to control them all!
+			var masterC = Duik.addController(characterLayer,false,true,true,true,true,false);
+			masterC.layer.transform.position.setValue([masterC.layer.transform.position.value[0],comp.height-20]);
+			masterC.layer.name = "MASTER_" + characterName;
+			var flip = masterC.layer.effect.addProperty("ADBE Checkbox Control");
+			flip.name = Duik.uiStrings.flip;
+			masterC.layer.transform.scale.expression = "//Duik.importRig\n" +
+			"var flip = thisLayer.effect(\"" + flip.name + "\")(1).value\n" +
+			"if (flip) [-value[0],value[1]]\n" +
+			"else value";
+			characterLayer.parent = masterC.layer;
+			characterLayer.locked = true;
+
+			if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+
+			app.endSuppressDialogs(false);
+		}
 	}
 	/* MOVE AWAY - Duik.moveAway(layer);
 
