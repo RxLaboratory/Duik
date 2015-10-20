@@ -413,7 +413,7 @@ function getCurrentComp() {
 	if (comp instanceof CompItem) return comp;
 	else
 	{
-		alert(tr("There is no active composition to use this tool\nPlease select a composition or make the composition panel active."));
+		alert(tr("Active composition not found.\nPlease select a composition or activate the composition panel."));
 		return null;
 	}
 	
@@ -1937,18 +1937,23 @@ app.endUndoGroup();
 }
 //FONCTION POUR AJOUTER UN (DES) BONE(S)
 function bone(){
+	
+	var comp = getCurrentComp();
+	if (!comp) return;
+	
 
-//  début de groupe d'annulation
-app.beginUndoGroup(tr("Duik - Bone"));
+	//  début de groupe d'annulation
+	app.beginUndoGroup(tr("Duik - Bone"));
 
-//le(s) calque(s) sélectionné(s)
-var calques = app.project.activeItem.selectedLayers ;
-if (calques.length ==0) { alert(tr("Select a pin to create a bone"),tr("Attention")); return; }
+	//le(s) calque(s) sélectionné(s)
+	var calques = comp.selectedLayers ;
+	if (calques.length ==0) { alert(tr("Select a pin to create a bone"),tr("Attention")); return; }
 
-Duik.addBones(calques);
+	try { Duik.addBones(calques); }
+	catch(e) { alert(e); }
 
-//fin du groupe d'annulation
-app.endUndoGroup();
+	//fin du groupe d'annulation
+	app.endUndoGroup();
 
 
 }
