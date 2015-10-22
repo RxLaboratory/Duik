@@ -416,7 +416,72 @@ function getCurrentComp() {
 		alert(tr("Active composition not found.\nPlease select a composition or activate the composition panel."));
 		return null;
 	}
+}
+
+//FUNCTION TO GET CURRENT Layers
+function getCurrentLayers() {
+	var comp = getCurrentComp();
+	if (!comp) return null;
+	var layers = comp.selectedLayers;
+	if (!layers.length)
+	{
+		alert(tr("No selected layer.\nPlease select a layer/property."));
+		return null;
+	}
+	return layers;
+}
+
+//FUNCTION TO GET ALL Layers
+function getLayers() {
+	var comp = getCurrentComp();
+	if (!comp) return null;
+	var layrs = comp.layers;
+	layers = Duik.utils.convertCollectionToArray(layrs);
+	if (!layers.length)
+	{
+		alert(tr("No layer in this comp.\nPlease select a composition with layers."));
+		return null;
+	}
+	return layers;
+}
+
+//FUNCTION TO GET CURRENT Items
+function getCurrentItems() {
+	var items = app.project.selection;
+	if (!items.length)
+	{
+		alert(tr("No selected item.\nPlease select an item."));
+		return null;
+	}
+	return items;
+}
+
+//FUNCTION TO GET CURRENT Props
+function getCurrentProps() {
+	var layers = getCurrentLayers()
+	if (!layers) return null;
+	var props = layers[0].selectedProperties;
+	if (!props.length)
+	{
+		alert(tr("No selected property.\nPlease select a property."));
+		return null;
+	}
+	return props;
+}
+
+//FUNCTION TO GET CURRENT Prop
+function getCurrentProp(canSetExpression) {
+	if (canSetExpression == undefined) canSetExpression = true;
+	var props = getCurrentProps();
+	if (!props) return null;
+	var prop = props.pop();
+	if (canSetExpression && !prop.canSetExpression)
+	{
+		alert(tr("Selected property cannot get any expression, it cannot be rigged, sorry."));
+		return null;
+	}
 	
+	return prop;
 }
 
 //====================== AUTORIG ======================
@@ -1596,203 +1661,201 @@ app.endUndoGroup();
 //FONCTION QUAND ON CLIQUE SUR CREER IK
 function ik(){
 
-var okToGo = app.project.activeItem != null;
-var calques;
+	var calques = getCurrentLayers()
+	if (!calques) return null;
+	
+	if (calques.length < 2 || calques.length > 5)
+	{
+		alert(tr("Select the bones and the controller before creating IK"));
+		return;
+	}
 
-if (okToGo)
-{
-calques = app.project.activeItem.selectedLayers;
-//if num layers selected is not correct
-if (calques.length < 2 || calques.length > 5) {
-okToGo = false;
-}
-}
-if (!okToGo)
-{
-alert(tr("Select the bones and the controller before creating IK"));
-return;
-}
+	panoik.hide();
+	ikPanel.show();
 
+	//prepIK
+	app.beginUndoGroup(tr("Duik - prepare IK"));
+	var ikRig = Duik.utils.prepIK(calques);
+	app.endUndoGroup();
+	if (ikRig.type == 0) return;
 
-panoik.hide();
-ikPanel.show();
+	if (ikRig.type == 1 && ikRig.goal == null)
+	{
+	ikType1Group.show();
+	ikType2Group.hide();
+	ikType3Group.hide();
+	ikType4Group.hide();
+	ik3DGroup.hide();
+	}
+	else if (ikRig.type == 1 && ikRig.goal != null)
+	{
+	ikType1Group.hide();
+	ikType2Group.show();
+	ikType3Group.hide();
+	ikType4Group.hide();
+	ik1GoalButton.value = true;
+	ik2LayerButton.value = false;
+	ik3DGroup.enabled = false;
+	if (ikRig.threeD)
+	{
+	ik3DGroup.show();
+	ikFrontFacingButton.value = ikRig.frontFacing;
+	ikRightFacingButton.value = !ikRig.frontFacing;
+	}
+	else
+	{
+	ik3DGroup.hide();
+	}
+	ikCWButton.show();
+	ikCWButton.enabled = false;
+	}
+	else if (ikRig.type == 2 && ikRig.goal == null)
+	{
+	ikType1Group.hide();
+	ikType2Group.show();
+	ikType3Group.hide();
+	ikType4Group.hide();
+	ik1GoalButton.value = false;
+	ik2LayerButton.value = true;
+	ik3DGroup.enabled = true;
+	if (ikRig.threeD)
+	{
+	ik3DGroup.show();
+	ikFrontFacingButton.value = ikRig.frontFacing;
+	ikRightFacingButton.value = !ikRig.frontFacing;
+	}
+	else
+	{
+	ik3DGroup.hide();
+	}
+	}
+	else if (ikRig.type == 2 && ikRig.goal != null)
+	{
+	ikType1Group.hide();
+	ikType2Group.hide();
+	ikType3Group.show();
+	ikType4Group.hide();
+	ik3LayerButton.value = false;
+	ik2GoalButton.value = true;
+	ik3DGroup.enabled = true;
+	if (ikRig.threeD)
+	{
+	ik3DGroup.show();
+	ikFrontFacingButton.value = ikRig.frontFacing;
+	ikRightFacingButton.value = !ikRig.frontFacing;
+	}
+	else
+	{
+	ik3DGroup.hide();
+	}
+	}
+	else if (ikRig.type == 3 && ikRig.goal == null)
+	{
+	ikType1Group.hide();
+	ikType2Group.hide();
+	ikType3Group.show();
+	ikType4Group.hide();
+	ik3LayerButton.value = true;
+	ik2GoalButton.value = false;
+	ik3DGroup.enabled = false;
+	if (ikRig.threeD)
+	{
+	ik3DGroup.show();
+	ikFrontFacingButton.value = ikRig.frontFacing;
+	ikRightFacingButton.value = !ikRig.frontFacing;
+	}
+	else
+	{
+	ik3DGroup.hide();
+	}
+	}
+	else if (ikRig.type == 3 && ikRig.goal != null)
+	{
+	ikType1Group.hide();
+	ikType2Group.hide();
+	ikType3Group.hide();
+	ikType4Group.show();
+	ik3DGroup.hide();
+	}
 
-//prepIK
-app.beginUndoGroup(tr("Duik - prepare IK"));
-var ikRig = Duik.utils.prepIK(calques);
-app.endUndoGroup();
-if (ikRig.type == 0) return;
-
-if (ikRig.type == 1 && ikRig.goal == null)
-{
-ikType1Group.show();
-ikType2Group.hide();
-ikType3Group.hide();
-ikType4Group.hide();
-ik3DGroup.hide();
-}
-else if (ikRig.type == 1 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.show();
-ikType3Group.hide();
-ikType4Group.hide();
-ik1GoalButton.value = true;
-ik2LayerButton.value = false;
-ik3DGroup.enabled = false;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-ikCWButton.show();
-ikCWButton.enabled = false;
-}
-else if (ikRig.type == 2 && ikRig.goal == null)
-{
-ikType1Group.hide();
-ikType2Group.show();
-ikType3Group.hide();
-ikType4Group.hide();
-ik1GoalButton.value = false;
-ik2LayerButton.value = true;
-ik3DGroup.enabled = true;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 2 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.show();
-ikType4Group.hide();
-ik3LayerButton.value = false;
-ik2GoalButton.value = true;
-ik3DGroup.enabled = true;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 3 && ikRig.goal == null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.show();
-ikType4Group.hide();
-ik3LayerButton.value = true;
-ik2GoalButton.value = false;
-ik3DGroup.enabled = false;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 3 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.hide();
-ikType4Group.show();
-ik3DGroup.hide();
-}
-
-ikCreateButton.onClick = function() {
-ikRig.frontFacing = ikFrontFacingButton.value;
-if (ikType2Group.visible)
-{
-if (ik2LayerButton.value && ikRig.type == 1)
-{
-ikRig.layer2 = ikRig.goal;
-ikRig.goal = null;
-ikRig.type = 2;
-}
-else if (ik1GoalButton.value && ikRig.type == 2)
-{
-ikRig.goal = ikRig.layer2;
-ikRig.layer2 = null;
-ikRig.type = 1;
-}
-}
-if (ikType3Group.visible)
-{
-if (ik3LayerButton.value && ikRig.type == 2)
-{
-ikRig.layer3 = ikRig.goal;
-ikRig.goal = null;
-ikRig.type = 3;
-}
-else if (ik2GoalButton.value && ikRig.type == 3)
-{
-ikRig.goal = ikRig.layer3;
-ikRig.layer3 = null;
-ikRig.type = 2;
-}
-}
-app.beginUndoGroup(tr("Duik - IK"));
-ikRig.create();
-app.endUndoGroup();
-ikPanel.hide();
-panoik.show();
-}
+	ikCreateButton.onClick = function() {
+	ikRig.frontFacing = ikFrontFacingButton.value;
+	if (ikType2Group.visible)
+	{
+	if (ik2LayerButton.value && ikRig.type == 1)
+	{
+	ikRig.layer2 = ikRig.goal;
+	ikRig.goal = null;
+	ikRig.type = 2;
+	}
+	else if (ik1GoalButton.value && ikRig.type == 2)
+	{
+	ikRig.goal = ikRig.layer2;
+	ikRig.layer2 = null;
+	ikRig.type = 1;
+	}
+	}
+	if (ikType3Group.visible)
+	{
+	if (ik3LayerButton.value && ikRig.type == 2)
+	{
+	ikRig.layer3 = ikRig.goal;
+	ikRig.goal = null;
+	ikRig.type = 3;
+	}
+	else if (ik2GoalButton.value && ikRig.type == 3)
+	{
+	ikRig.goal = ikRig.layer3;
+	ikRig.layer3 = null;
+	ikRig.type = 2;
+	}
+	}
+	app.beginUndoGroup(tr("Duik - IK"));
+	ikRig.create();
+	app.endUndoGroup();
+	ikPanel.hide();
+	panoik.show();
+	}
 }
 
 //BEZIER IK
 function bikCreateButtonClicked() {
-var comp = app.project.activeItem;
-if (!(comp instanceof CompItem)) return;
-if (comp.selectedLayers.length < 3) return;
-app.beginUndoGroup(tr("Duik - Bezier IK"));
-var numCtrls = 1;
-if (bikCubicButton.value) numCtrls = 2;
-Duik.bezierIK(comp.selectedLayers,numCtrls);
-app.endUndoGroup();
-bezierIkPanel.hide();
-panoik.show();
+	var comp = getCurrentComp();
+	if (!comp) return null;
+	
+	if (comp.selectedLayers.length < 3) 
+	{
+		alert(tr("Select the bones and the controller before creating IK"));
+		return;
+	}
+	app.beginUndoGroup(tr("Duik - Bezier IK"));
+	var numCtrls = 1;
+	if (bikCubicButton.value) numCtrls = 2;
+	Duik.bezierIK(comp.selectedLayers,numCtrls);
+	app.endUndoGroup();
+	bezierIkPanel.hide();
+	panoik.show();
 }
 
 //FONCTION QUAND ON CLIQUE SUR GOAL
 function pregoal(){
-if (app.project.activeItem.selectedLayers.length == 1) {
-//groupe d'annulation
-app.beginUndoGroup(tr("Duik - IK Goal"));
-Duik.goal(app.project.activeItem.selectedLayers[0],undefined);
-//groupe d'annulation
-app.endUndoGroup();
-}
-else if (app.project.activeItem.selectedLayers.length == 2) {
-//groupe d'annulation
-app.beginUndoGroup(tr("Duik - IK Goal"));
-Duik.goal(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
-//groupe d'annulation
-app.endUndoGroup();
-}
-else{alert(tr("Select the layer before applying IK Goal"),tr("Attention"),true);}
+	var layers = getCurrentLayers()
+	if (!layers) return null;
+	if (layers.length == 1) {
+		//groupe d'annulation
+		app.beginUndoGroup(tr("Duik - IK Goal"));
+		Duik.goal(layers[0],undefined);
+		//groupe d'annulation
+		app.endUndoGroup();
+	}
+	else if (layers.length == 2) {
+		//groupe d'annulation
+		app.beginUndoGroup(tr("Duik - IK Goal"));
+		Duik.goal(layers[0],layers[1]);
+		//groupe d'annulation
+		app.endUndoGroup();
+	}
+	else{alert(tr("Select the layer before applying IK Goal"),tr("Attention"),true);}
 }
 
 //FONCTION QUAND ON CLIQUE SUR CREER UN CONTROLEUR
@@ -1812,7 +1875,8 @@ app.endUndoGroup();
 }
 }
 function controleur(){
-if (!(app.project.activeItem instanceof CompItem)) return;
+var comp = getCurrentComp();
+if (!comp) return null;
 //  début de groupe d'annulation
 app.beginUndoGroup(tr("Duik - ") + tr("Controllers"));
 
@@ -1974,372 +2038,345 @@ resultattexte.text = tr("Distance = \n") + resultat + tr(" pixels") + '.';
 //FONCTION ZERO
 function zero(){
 
-//vérifions qu'il y a 1 layer sélectionnés
-if (app.project.activeItem.selectedLayers.length > 0) {
-
-//  début de groupe d'annulation
-app.beginUndoGroup(tr("Duik - Zero"));
-
-Duik.addZeros(app.project.activeItem.selectedLayers);
+	var layers = getCurrentLayers()
+	if (!layers) return null;
 
 
 
-//  fin de groupe d'annulation
-app.endUndoGroup();
+	//  début de groupe d'annulation
+	app.beginUndoGroup(tr("Duik - Zero"));
 
+	Duik.addZeros(layers);
 
-
-} else { alert(tr("Select a layer to apply Zero"),tr("Attention"),true); }
+	//  fin de groupe d'annulation
+	app.endUndoGroup();
 
 }
 
 //FONCTION RENOMMER
 function rename() {
 
-if (renameLayersButton.value)
-{
-if (!(app.project.activeItem instanceof CompItem)) return;
+	if (renameLayersButton.value)
+	{
+		var layers = getCurrentLayers()
+		if (!layers) return null;
 
-var prefixe = '';
-prefixtexte.value ? prefixe = prefix.text : prefixe = '';
-var suffixe = '';
-suffixtexte.value ? suffixe = suffix.text : suffixe = '';
+		var prefixe = '';
+		prefixtexte.value ? prefixe = prefix.text : prefixe = '';
+		var suffixe = '';
+		suffixtexte.value ? suffixe = suffix.text : suffixe = '';
 
-app.beginUndoGroup(tr("Duik - Rename"));
+		app.beginUndoGroup(tr("Duik - Rename"));
 
-var layers = app.project.activeItem.selectedLayers;
-if (layers.length == 0) return;
+		for (var i=0;i<layers.length;i++)
+		{
+		//keeping old name
+		var oldName = layers[i].name;
+		var newName = '';
+		//rename
+		if (nametexte.value)
+		{
+		newName = name.text;
+		}
+		else
+		{
+		newName = oldName;
+		var removeFirst = parseInt(renameRemFirstDValue.text);
+		var removeLast = parseInt(renameRemLastDValue.text);
+		if (removeFirst > 0)
+		{
+		newName = newName.substr(removeFirst);
+		}
+		if (removeLast > 0)
+		{
+		newName = newName.substring(0,newName.length-removeLast);
+		}
+		}
+		var newName = prefixe + newName + suffixe;
+		if (numerotexte.value)
+		{
+		newName += parseInt(numero.text) + i;
+		}
 
-for (var i=0;i<layers.length;i++)
-{
-//keeping old name
-var oldName = layers[i].name;
-var newName = '';
-//rename
-if (nametexte.value)
-{
-newName = name.text;
-}
-else
-{
-newName = oldName;
-var removeFirst = parseInt(renameRemFirstDValue.text);
-var removeLast = parseInt(renameRemLastDValue.text);
-if (removeFirst > 0)
-{
-newName = newName.substr(removeFirst);
-}
-if (removeLast > 0)
-{
-newName = newName.substring(0,newName.length-removeLast);
-}
-}
-var newName = prefixe + newName + suffixe;
-if (numerotexte.value)
-{
-newName += parseInt(numero.text) + i;
-}
+		Duik.utils.renameLayer(layers[i],newName,renameInExpressionsButton.value,renameInExpressionsCurrentCompButton.value);
+		}
 
-Duik.utils.renameLayer(layers[i],newName,renameInExpressionsButton.value,renameInExpressionsCurrentCompButton.value);
-}
+		renameRemFirstDValue.text = '0';
+		renameRemLastDValue.text = '0';
 
-renameRemFirstDValue.text = '0';
-renameRemLastDValue.text = '0';
+		app.endUndoGroup();
 
-app.endUndoGroup();
+	}
+	else if (renamePinsButton.value)
+	{
+		var prefixe = '';
+		prefixtexte.value ? prefixe = prefix.text : prefixe = '';
+		var suffixe = '';
+		suffixtexte.value ? suffixe = suffix.text : suffixe = '';
 
-}
-else if (renamePinsButton.value)
-{
-var prefixe = '';
-prefixtexte.value ? prefixe = prefix.text : prefixe = '';
-var suffixe = '';
-suffixtexte.value ? suffixe = suffix.text : suffixe = '';
+		app.beginUndoGroup(tr("Duik - Rename"));
 
-app.beginUndoGroup(tr("Duik - Rename"));
+		var layers = getCurrentLayers()
+		if (!layers) return null;
 
-var layers = app.project.activeItem.selectedLayers;
-if (layers.length == 0) return;
+		var num = parseInt(numero.text);
 
-var num = parseInt(numero.text);
+		for (var i=0;i<layers.length;i++) {
+		//chercher les puppet pins
+		// les propriétés sélectionnées
+		var props = layers[i].selectedProperties;
+		var coins = [];
+		//lister les puppet pins
+		if (props.length > 0)
+		{
+		for (var j=0;j<props.length;j++)
+		{
+		if (props[j].matchName == 'ADBE FreePin3 PosPin Atom') coins.push(props[j]);
+		}
+		}
+		if (coins.length == 0) coins = Duik.utils.getPuppetPins(layers[i]('Effects'));
+		if (coins.length == 0) continue;
+		//rename
+		for (var j = 0;j<coins.length;j++)
+		{
+		//keeping old name
+		var oldName = coins[j].name;
+		var newName = '';
+		//rename
+		if (nametexte.value)
+		{
+		newName = name.text;
+		}
+		else
+		{
+		newName = oldName;
+		var removeFirst = parseInt(renameRemFirstDValue.text);
+		var removeLast = parseInt(renameRemLastDValue.text);
+		if (removeFirst > 0)
+		{
+		newName = newName.substr(removeFirst);
+		}
+		if (removeLast > 0)
+		{
+		newName = newName.substring(0,newName.length-removeLast);
+		}
+		}
+		var newName = prefixe + newName + suffixe;
+		if (numerotexte.value)
+		{
+		newName += num;
+		num++;
+		}
+		coins[j].name = newName;
+		}
+		}
 
-for (var i=0;i<layers.length;i++) {
-//chercher les puppet pins
-// les propriétés sélectionnées
-var props = layers[i].selectedProperties;
-var coins = [];
-//lister les puppet pins
-if (props.length > 0)
-{
-for (var j=0;j<props.length;j++)
-{
-if (props[j].matchName == 'ADBE FreePin3 PosPin Atom') coins.push(props[j]);
-}
-}
-if (coins.length == 0) coins = Duik.utils.getPuppetPins(layers[i]('Effects'));
-if (coins.length == 0) continue;
-//rename
-for (var j = 0;j<coins.length;j++)
-{
-//keeping old name
-var oldName = coins[j].name;
-var newName = '';
-//rename
-if (nametexte.value)
-{
-newName = name.text;
-}
-else
-{
-newName = oldName;
-var removeFirst = parseInt(renameRemFirstDValue.text);
-var removeLast = parseInt(renameRemLastDValue.text);
-if (removeFirst > 0)
-{
-newName = newName.substr(removeFirst);
-}
-if (removeLast > 0)
-{
-newName = newName.substring(0,newName.length-removeLast);
-}
-}
-var newName = prefixe + newName + suffixe;
-if (numerotexte.value)
-{
-newName += num;
-num++;
-}
-coins[j].name = newName;
-}
-}
+		renameRemFirstDValue.text = '0';
+		renameRemLastDValue.text = '0';
 
-renameRemFirstDValue.text = '0';
-renameRemLastDValue.text = '0';
+		app.endUndoGroup();
+		app.endSuppressDialogs(false);
+	}
+	else if (renameItemsButton.value)
+	{
+		var prefixe = '';
+		prefixtexte.value ? prefixe = prefix.text : prefixe = '';
+		var suffixe = '';
+		suffixtexte.value ? suffixe = suffix.text : suffixe = '';
 
-app.endUndoGroup();
-app.endSuppressDialogs(false);
-}
-else if (renameItemsButton.value)
-{
-var prefixe = '';
-prefixtexte.value ? prefixe = prefix.text : prefixe = '';
-var suffixe = '';
-suffixtexte.value ? suffixe = suffix.text : suffixe = '';
+		app.beginUndoGroup(tr("Duik - Rename"));
 
-app.beginUndoGroup(tr("Duik - Rename"));
+		var items = getCurrentItems()
+		if (!items) return null;
 
-var items = app.project.selection;
-if (items.length == 0) return;
+		for (var i=0;i<items.length;i++) {
+		//keeping old name
+		var oldName = items[i].name;
+		var newName = '';
+		//rename
+		if (nametexte.value)
+		{
+		newName = name.text;
+		}
+		else
+		{
+		newName = oldName;
+		var removeFirst = parseInt(renameRemFirstDValue.text);
+		var removeLast = parseInt(renameRemLastDValue.text);
+		if (removeFirst > 0)
+		{
+		newName = newName.substr(removeFirst);
+		}
+		if (removeLast > 0)
+		{
+		newName = newName.substring(0,newName.length-removeLast);
+		}
+		}
+		var newName = prefixe + newName + suffixe;
+		if (numerotexte.value)
+		{
+		newName += parseInt(numero.text) + i;
+		}
 
-for (var i=0;i<items.length;i++) {
-//keeping old name
-var oldName = items[i].name;
-var newName = '';
-//rename
-if (nametexte.value)
-{
-newName = name.text;
-}
-else
-{
-newName = oldName;
-var removeFirst = parseInt(renameRemFirstDValue.text);
-var removeLast = parseInt(renameRemLastDValue.text);
-if (removeFirst > 0)
-{
-newName = newName.substr(removeFirst);
-}
-if (removeLast > 0)
-{
-newName = newName.substring(0,newName.length-removeLast);
-}
-}
-var newName = prefixe + newName + suffixe;
-if (numerotexte.value)
-{
-newName += parseInt(numero.text) + i;
-}
+		Duik.utils.renameItem(items[i],newName,renameInExpressionsButton.value);
+		}
 
-Duik.utils.renameItem(items[i],newName,renameInExpressionsButton.value);
-}
+		renameRemFirstDValue.text = '0';
+		renameRemLastDValue.text = '0';
 
-renameRemFirstDValue.text = '0';
-renameRemLastDValue.text = '0';
-
-app.endUndoGroup();
-}
+		app.endUndoGroup();
+	}
 }
 
 //FONCTION ROT MORPH
 function rotmorph()
 {
-// Vérifions si il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1)
-{
+	//Prendre l'effet
+	var effet = getCurrentProp(true);
+	if (!effet) return;
 
-var calque = app.project.activeItem.selectedLayers[0];
+	//  début de groupe d'annulation
+	app.beginUndoGroup(tr("Duik - Rotation Morph"));
 
-if (calque.selectedProperties.length != 0)
-{
-//Prendre l'effet
-var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie si on peut mettre une expression, sinon inutile de continuer
-if(!effet.canSetExpression) { return; }
+	Duik.rotationMorph(app.project.activeItem.selectedLayers[0],effet);
 
-//  début de groupe d'annulation
-app.beginUndoGroup(tr("Duik - Rotation Morph"));
-
-
-Duik.rotationMorph(app.project.activeItem.selectedLayers[0],effet);
-
-app.endUndoGroup();
-
-}
-
-}
+	app.endUndoGroup();
 }
 
 //SEARCH AND REPLACE
 function replaceInExpr()
 {
-if (rieOldEdit.text == rieNewEdit.text) return;
+	if (rieOldEdit.text == rieNewEdit.text) return;
 
-if (rieExpressionsButton.value)
-{
-if (rieCurrentCompButton.value)
-{
-if (rieAllLayersButton.value)
-{
-app.beginUndoGroup(tr("Duik - Replace in Expressions"));
-Duik.utils.replaceInLayersExpressions(app.project.activeItem.layers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
-app.endUndoGroup();
-}
-else if (app.project.activeItem.selectedLayers.length > 0)
-{
-app.beginUndoGroup(tr("Duik - Replace in Expressions"));
-Duik.utils.replaceInLayersExpressions(app.project.activeItem.selectedLayers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
-app.endUndoGroup();
-}
-}
-else
-{
-for(var i = 1; i<=app.project.items.length ; i++)
-{
-app.beginUndoGroup(tr("Duik - Replace in Expressions"));
-var item = app.project.item(i);
-if (item instanceof CompItem)
-{
-Duik.utils.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
-}
-app.endUndoGroup();
-}
-}
-}
-else if (rieLayersButton.value)
-{
-//get layers
-var layers = [];
-if (rieCurrentCompButton.value)
-{
-if (rieAllLayersButton.value)
-{
-layers = Duik.utils.convertCollectionToArray(app.project.activeItem.layers);
-}
-else
-{
-layers = app.project.activeItem.selectedLayers;
-}
-}
-else
-{
-for(var i = 1; i<=app.project.items.length ; i++)
-{
-if (app.project.item(i) instanceof CompItem)
-{
-var ls = Duik.utils.convertCollectionToArray(app.project.item(i).layers);
-layers = layers.concat(ls);
-}
-}
-}
-if (layers.length == 0) return;
+	if (rieExpressionsButton.value)
+	{
+		if (rieCurrentCompButton.value)
+		{
+			if (rieAllLayersButton.value)
+			{
+				var layers = getLayers();
+				if (!layers) return;
+				app.beginUndoGroup(tr("Duik - Replace in Expressions"));
+				Duik.utils.replaceInLayersExpressions(layers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+				app.endUndoGroup();
+			}
+			else
+			{
+				var layers = getCurrentLayers();
+				if (!layers) return;
+				app.beginUndoGroup(tr("Duik - Replace in Expressions"));
+				Duik.utils.replaceInLayersExpressions(layers,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+				app.endUndoGroup();
+			}
+		}
+		else
+		{
+			for(var i = 1; i<=app.project.items.length ; i++)
+			{
+				app.beginUndoGroup(tr("Duik - Replace in Expressions"));
+				var item = app.project.item(i);
+				if (item instanceof CompItem)
+				{
+					Duik.utils.replaceInLayersExpressions(item.layers,rieOldEdit.text,rieNewEdit.text);
+				}
+				app.endUndoGroup();
+			}
+		}
+	}
+	else if (rieLayersButton.value)
+	{
+		//get layers
+		var layers = [];
+		if (rieCurrentCompButton.value)
+		{
+			if (rieAllLayersButton.value)
+			{
+				layers = getLayers();
+			}
+			else
+			{
+				layers = getCurrentLayers();
+			}
+		}
+		else
+		{
+			for(var i = 1; i<=app.project.items.length ; i++)
+			{
+				if (app.project.item(i) instanceof CompItem)
+				{
+					var ls = Duik.utils.convertCollectionToArray(app.project.item(i).layers);
+					layers = layers.concat(ls);
+				}
+			}
+		}
+		if (!layers) return;
+		if (layers.length == 0) return;
 
-//go!
-app.beginUndoGroup(tr("Duik - Search and replace"));
-for(var i = 0 ; i < layers.length ; i++)
-{
-var l = layers[i];
-var oldName = l.name;
-var newName = Duik.js.replaceAll(l.name,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
-Duik.utils.renameLayer(l,newName,rieUpdateExpressionsButton.value,rieExpressionsCurrentCompButton.value);
-}
-app.endUndoGroup();
-}
-else if (rieItemsButton.value)
-{
-var items = [];
-if (rieItemSelectedButton.value)
-{
-items = app.project.selection;
-}
-else
-{
-items = Duik.utils.convertCollectionToArray(app.project.items);
-}
-if (items.length == 0 ) return;
+		//go!
+		app.beginUndoGroup(tr("Duik - Search and replace"));
+		for(var i = 0 ; i < layers.length ; i++)
+		{
+			var l = layers[i];
+			var oldName = l.name;
+			var newName = Duik.js.replaceAll(l.name,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+			Duik.utils.renameLayer(l,newName,rieUpdateExpressionsButton.value,rieExpressionsCurrentCompButton.value);
+		}
+		app.endUndoGroup();
+	}
+	else if (rieItemsButton.value)
+	{
+		var items = [];
+		if (rieItemSelectedButton.value)
+		{
+			items = getCurrentItems();
+		}
+		else
+		{
+			items = Duik.utils.convertCollectionToArray(app.project.items);
+		}
+		if (!items) return;
+		if (items.length == 0 ) return;
 
-app.beginUndoGroup(tr("Duik - Search and Replace"));
-for (var i = 0 ; i < items.length ; i++)
-{
-var item = items[i];
-var oldName = item.name;
-var newName = oldName;
-if ((item instanceof CompItem && rieCompItemButton.value) || (item instanceof FootageItem && rieFootageItemButton.value) || (item instanceof FolderItem && rieFolderItemButton.value))
-{
-newName = Duik.js.replaceAll(newName,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
-Duik.utils.renameItem(item,newName,rieUpdateExpressionsButton.value)
-}
-}
-app.endUndoGroup();
-}
+		app.beginUndoGroup(tr("Duik - Search and Replace"));
+		for (var i = 0 ; i < items.length ; i++)
+		{
+			var item = items[i];
+			var oldName = item.name;
+			var newName = oldName;
+			if ((item instanceof CompItem && rieCompItemButton.value) || (item instanceof FootageItem && rieFootageItemButton.value) || (item instanceof FolderItem && rieFolderItemButton.value))
+			{
+				newName = Duik.js.replaceAll(newName,rieOldEdit.text,rieNewEdit.text,rieCaseSensitive.value);
+				Duik.utils.renameItem(item,newName,rieUpdateExpressionsButton.value)
+			}
+		}
+		app.endUndoGroup();
+	}
 }
 
 //LOCK PROPERTY
 function lockButtonClicked() {
-// Vérifions si il n'y a qu'un calque sélectionné
-if (app.project.activeItem.selectedLayers.length == 1)
-{
-//Prendre l'effet
-var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie si on peut mettre une expression, sinon inutile de continuer
-if(!effet.canSetExpression) { return; }
-
-//  début de groupe d'annulation
-app.beginUndoGroup(tr("Duik - Lock"));
+	//Prendre l'effet
+	var effet = getCurrentProp(true);
+	if (!effet) return;
+	
+	//  début de groupe d'annulation
+	app.beginUndoGroup(tr("Duik - Lock"));
 
 
-Duik.lockProperty(effet);
+	Duik.lockProperty(effet);
 
-app.endUndoGroup();
-}
+	app.endUndoGroup();
 }
 
 //LIST
 function listButtonClicked() {
-var comp = app.project.activeItem;
-if (!(comp instanceof CompItem)) return;
-if (!comp.selectedLayers.length) return;
-var layer = comp.selectedLayers[0];
-if (!layer.selectedProperties.length) return;
-var prop = layer.selectedProperties.pop();
-if(!prop.canSetExpression) return;
+	var prop = getCurrentProp(true);
+	if (!prop) return;
 
-//  début de groupe d'annulation
-app.beginUndoGroup(tr("Duik - List"));
-
-
-Duik.list(prop);
-
-app.endUndoGroup();
+	//  début de groupe d'annulation
+	app.beginUndoGroup(tr("Duik - List"));
+	Duik.list(prop);
+	app.endUndoGroup();
 }
 
 //=============== ANIMATION =========================
