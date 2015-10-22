@@ -59,6 +59,7 @@ if (!app.settings.haveSetting('duik', 'ikfk')){app.settings.saveSetting('duik','
 if (!app.settings.haveSetting('duik', 'dropDownSelector')){app.settings.saveSetting('duik','dropDownSelector','false');}
 if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
 if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
+if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
 //Set language
 Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));
 }
@@ -4548,6 +4549,7 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	Duik.settings.save();
 	};
 
+	//Interpolations
 	var settingsInterpolationsGroup = addBox(settingsAnimationGroup,tr("Interpolations"));
 	var settingsInteractiveUpdateButton = settingsInterpolationsGroup.add('checkbox',undefined,tr("Interactive update"));
 	settingsInteractiveUpdateButton.helpTip = tr("Warning, interactive update can create a LOT of history items (Undos) and could easily fill up your entire history.");
@@ -4569,7 +4571,20 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	app.settings.saveSetting('duik','interactiveUpdate','false');
 	}
 	}
-
+	var settingsInterpolationSliders = settingsInterpolationsGroup.add('radiobutton',undefined,tr("Use sliders"));
+	var settingsInterpolationButtons = settingsInterpolationsGroup.add('radiobutton',undefined,tr("Use buttons"));
+	function settingsInterpolationControlType() {
+			app.settings.saveSetting('duik','interpolationSliders',settingsInterpolationSliders.value);
+			settingsInteractiveUpdateButton.enabled = settingsInterpolationSliders.value;
+			alert(tr("Duik must be restarted to apply changes."))
+	}
+	settingsInterpolationSliders.onClick = settingsInterpolationButtons.onClick = settingsInterpolationControlType;
+	
+	settingsInterpolationSliders.value = eval(app.settings.getSetting('duik','interpolationSliders'));
+	settingsInterpolationButtons.value = !eval(app.settings.getSetting('duik','interpolationSliders'));
+	settingsInteractiveUpdateButton.enabled = settingsInterpolationSliders.value;
+	
+	//copy paste animation
 	var settingsPaGroup = addBox(settingsAnimationGroup,tr("Copy/paste"));
 	var pauiNamesButton = settingsPaGroup.add('radiobutton',undefined,tr("Use layer names"));
 	var pauiIndexesButton = settingsPaGroup.add('radiobutton',undefined,tr("Use layer indexes"));
@@ -4782,7 +4797,9 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	interpoInSlider.enabled = boutonApproche.value;
 	interpoInEdit.enabled = boutonApproche.value;
 	}
-	var interpoInSlider = interpoInGroup.add('slider',undefined,33,1,100);
+	var interpoInSliderGroup = addHGroup(interpoInGroup);
+	interpoInSliderGroup.orientation = 'stack';
+	var interpoInSlider = interpoInSliderGroup.add('slider',undefined,33,1,100);
 	interpoInSlider.alignment = ['fill','center'];
 	interpoInSlider.onChanging = function ()
 	{
@@ -4800,6 +4817,87 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	interpoPresetsList.selection = 0;
 	infl();
 	}
+	var interpoInSliderButtonsGroup = addHGroup(interpoInSliderGroup);
+	var interpoIn1 = interpoInSliderButtonsGroup.add('button',undefined,"1");
+	interpoIn1.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "1";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "1";
+		}
+		infl();
+	}
+	var interpoIn10 = interpoInSliderButtonsGroup.add('button',undefined,"10");
+	interpoIn10.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "10";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "10";
+		}
+		infl();
+	}
+	var interpoIn25 = interpoInSliderButtonsGroup.add('button',undefined,"25");
+	interpoIn25.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "25";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "25";
+		}
+		infl();
+	}
+	var interpoIn50 = interpoInSliderButtonsGroup.add('button',undefined,"50");
+	interpoIn50.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "50";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "50";
+		}
+		infl();
+	}
+	var interpoIn75 = interpoInSliderButtonsGroup.add('button',undefined,"75");
+	interpoIn75.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "75";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "75";
+		}
+		infl();
+	}
+	var interpoIn90 = interpoInSliderButtonsGroup.add('button',undefined,"90");
+	interpoIn90.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "90";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "90";
+		}
+		infl();
+	}
+	var interpoIn100 = interpoInSliderButtonsGroup.add('button',undefined,"100");
+	interpoIn100.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoInEdit.text = "100";
+		if (interpoLockInfluencesButton.value)
+		{
+			interpoOutEdit.text = "100";
+		}
+		infl();
+	}
+	if (eval(app.settings.getSetting('duik','interpolationSliders'))) interpoInSliderButtonsGroup.hide();
+	else interpoInSlider.hide();
+	
 	var interpoInEdit = interpoInGroup.add('edittext',undefined,'33');
 	interpoInEdit.minimumSize = [30,10];
 	interpoInEdit.alignment = ['right','fill'];
@@ -4829,7 +4927,9 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	interpoOutSlider.enabled = boutonEloignement.value;
 	interpoOutEdit.enabled = boutonEloignement.value;
 	}
-	var interpoOutSlider = groupeInterpoOut.add('slider',undefined,33,1,100);
+	var interpoOutSliderGroup = addHGroup(groupeInterpoOut);
+	interpoOutSliderGroup.orientation = 'stack';
+	var interpoOutSlider = interpoOutSliderGroup.add('slider',undefined,33,1,100);
 	interpoOutSlider.alignment = ['fill','center'];
 	interpoOutSlider.onChanging = function()
 	{
@@ -4842,6 +4942,59 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	interpoPresetsList.selection = 0;
 	infl();
 	}
+	var interpoOutSliderButtonsGroup = addHGroup(interpoOutSliderGroup);
+	var interpoOut1 = interpoOutSliderButtonsGroup.add('button',undefined,"1");
+	interpoOut1.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "1";
+		infl();
+	}
+	var interpoOut10 = interpoOutSliderButtonsGroup.add('button',undefined,"10");
+	interpoOut10.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "10";
+		infl();
+	}
+	var interpoOut25 = interpoOutSliderButtonsGroup.add('button',undefined,"25");
+	interpoOut25.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "25";
+		infl();
+	}
+	var interpoOut50 = interpoOutSliderButtonsGroup.add('button',undefined,"50");
+	interpoOut50.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "50";
+		infl();
+	}
+	var interpoOut75 = interpoOutSliderButtonsGroup.add('button',undefined,"75");
+	interpoOut75.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "75";
+		infl();
+	}
+	var interpoOut90 = interpoOutSliderButtonsGroup.add('button',undefined,"90");
+	interpoOut90.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "90";
+		infl();
+	}
+	var interpoOut100 = interpoOutSliderButtonsGroup.add('button',undefined,"100");
+	interpoOut100.onClick = function ()
+	{
+		interpoPresetsList.selection = 0;
+		interpoOutEdit.text = "100";
+		infl();
+	}
+	if (eval(app.settings.getSetting('duik','interpolationSliders'))) interpoOutSliderButtonsGroup.hide();
+	else interpoOutSlider.hide();
+	
 	var interpoOutEdit = groupeInterpoOut.add('edittext',undefined,'33');
 	interpoOutEdit.alignment = ['right','fill'];
 	interpoOutEdit.minimumSize = [30,10];
