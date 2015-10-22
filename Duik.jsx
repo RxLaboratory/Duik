@@ -27,7 +27,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-function fnDuIK(thisObj)
+(function (thisObj)
 {
 //=========================
 var version = '15.03';
@@ -6567,12 +6567,8 @@ palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 if (!(thisObj instanceof Panel)) palette.show();
 
 
-return palette;
+})(this);
 
 
-}
-
-
-fnDuIK(this);
 
 
