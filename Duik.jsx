@@ -2395,19 +2395,35 @@ irRigButton.add('item',i + ' ' + app.project.item(i).name);
 }
 }
 function irOKButtonClicked(){
-if (irRigButton.selection == null) return;
-if (!(app.project.activeItem instanceof CompItem)) return;
-if (irNameText.text == '') alert(tr("You must specify a (unique) name for this instance of the rig"));
+	if (irRigButton.selection == null) return;
+	var comp = getCurrentComp();
+	if (!comp) return;
+	if (irNameText.text == '') alert(tr("You must specify a (unique) name for this instance of the rig"));
 
-irPanel.hide();
-panointerpo.show();
+	irPanel.hide();
+	panointerpo.show();
 
-//gets the rig comp
-var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(' ')));
+	//gets the rig comp
+	var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(' ')));
 
-app.beginUndoGroup(tr("Import rig: ") + irNameText.text);
-Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text);
-app.endUndoGroup();
+	app.beginUndoGroup(tr("Import rig: ") + irNameText.text);
+	Duik.importRigInComp(app.project.activeItem,app.project.item(index),irNameText.text);
+	app.endUndoGroup();
+}
+
+function irDuplicateButtonClicked(){
+	if (irRigButton.selection == null) return;
+	if (irNameText.text == '') alert(tr("You must specify a (unique) name for this instance of the rig"));
+
+	irPanel.hide();
+	panointerpo.show();
+
+	//gets the rig comp
+	var index = parseInt(irRigButton.selection.text.substring(0,irRigButton.selection.text.indexOf(' ')));
+
+	app.beginUndoGroup(tr("Duplicate rig: ") + irNameText.text);
+	Duik.duplicateRig(app.project.item(index),irNameText.text);
+	app.endUndoGroup();
 
 }
 
@@ -6037,22 +6053,25 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 	}
 	//IMPORT RIG PANEL
 	{
-	irPanel.add('statictext',undefined,tr("Rigged composition to import:"));
-	var irRigGroup = addHGroup(irPanel);
-	var irRigButton = irRigGroup.add('dropdownlist',undefined);
-	irRigButton.alignment = ['fill','fill'];
-	var irRigRefreshButton = addIconButton(irRigGroup,'btn_refresh.png','');
-	irRigRefreshButton.alignment = ['right','fill'];
-	irRigRefreshButton.onClick = irRigRefreshButtonClicked;
-	irPanel.add('statictext',undefined,tr("Name of this instance:"));
-	irNameText = irPanel.add('edittext',undefined,tr("Must be unique!"));
-	var irButtonsGroup = addHGroup(irPanel);
-	var irCancelButton = addIconButton(irButtonsGroup,'btn_cancel.png',tr("Cancel"));
-	irCancelButton.onClick = function () { irPanel.hide();panointerpo.show();};
-	irCancelButton.helpTip = tr("Cancel");
-	var irOKButton = addIconButton(irButtonsGroup,'btn_valid.png',tr("Import"));
-	irOKButton.onClick = function () { irOKButtonClicked();};
-	irOKButton.helpTip = tr("Import selected rig");
+		irPanel.add('statictext',undefined,tr("Rigged composition to import:"));
+		var irRigGroup = addHGroup(irPanel);
+		var irRigButton = irRigGroup.add('dropdownlist',undefined);
+		irRigButton.alignment = ['fill','fill'];
+		var irRigRefreshButton = addIconButton(irRigGroup,'btn_refresh.png','');
+		irRigRefreshButton.alignment = ['right','fill'];
+		irRigRefreshButton.onClick = irRigRefreshButtonClicked;
+		irPanel.add('statictext',undefined,tr("Name of this instance:"));
+		irNameText = irPanel.add('edittext',undefined,tr("Must be unique!"));
+		var irButtonsGroup = addHGroup(irPanel);
+		var irCancelButton = addIconButton(irButtonsGroup,'btn_cancel.png',tr("Cancel"));
+		irCancelButton.onClick = function () { irPanel.hide();panointerpo.show();};
+		irCancelButton.helpTip = tr("Cancel");
+		var irDuplicateButton = addIconButton(irButtonsGroup,'btn_duplicateRig.png',tr("Duplicate"));
+		irDuplicateButton.onClick = function () { irDuplicateButtonClicked();};
+		irDuplicateButton.helpTip = tr("Duplicate selected rig");
+		var irOKButton = addIconButton(irButtonsGroup,'btn_valid.png',tr("Import"));
+		irOKButton.onClick = function () { irOKButtonClicked();};
+		irOKButton.helpTip = tr("Import selected rig");
 	}
 	//RANDOMIZE PANEL
 	{

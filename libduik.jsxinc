@@ -2538,62 +2538,66 @@ Duik.setup.installPseudoEffects();
 				//gets an item with its ID
 				function getItemWithID(id)
 				{
-				for (var x=1; x<=app.project.numItems; x++)
-				{
-				if (app.project.item(x).id == id)
-				{
-				return app.project.item(x);
-				}
-				}
-				return null;
+					for (var x=1; x<=app.project.numItems; x++)
+					{
+						if (app.project.item(x).id == id)
+						{
+							return app.project.item(x);
+						}
+					}
+					return null;
 				}
 
 				//duplicates a comp (recursive through precomps)
 				function duplicateStructure(comp,parentFolder,prefix) {
-				// Duplicate the incoming comp
-				var newCompName = prefix + comp.name;
-				var comp = comp.duplicate();
-				comp.name = newCompName;
+					// Duplicate the incoming comp
+					var newCompName = prefix + comp.name;
+					var comp = comp.duplicate();
+					comp.name = newCompName;
 
-				// For each of the layers in the comp, check for subcomps
-				for (var i=1; i<=comp.numLayers; i++)
-				{
-				var layer = comp.layer(i);
-				//Check if layer has a source and that its type is a composition
-				if (layer.source && layer.source instanceof CompItem)
-				{
-				// Check if this comp has already been duplicated
-				var check = null;
-				if (previousComps[layer.source.id])
-				{
-				check = getItemWithID(previousComps[layer.source.id]);
-				}
+					// For each layer in the comp, check for subcomps
+					for (var i=1; i<=comp.numLayers; i++)
+					{
+						var layer = comp.layer(i);
+						//Check if layer has a source and that its type is a composition
+						if (layer.source)
+						{
+							if (layer.source instanceof CompItem)
+							{
+								// Check if this comp has already been duplicated
+								var check = null;
+								if (previousComps[layer.source.id])
+								{
+									check = getItemWithID(previousComps[layer.source.id]);
+								}
 
-				if (check == null)
-				{
-				// The subcomp hasn't been duplicated before
+								if (check == null)
+								{
+									// The subcomp hasn't been duplicated before
 
-				// Store the original comp id to remember the correlation
-				var sourceID = layer.source.id;
-				// Replace the source of the layer, and recursively check in that subcomp for sub-subcomps
-				layer.replaceSource(duplicateStructure(layer.source, parentFolder,prefix), false);
-				// Store the new comp id to remember the correlation
-				var destID = layer.source.id;
-				//Add the correlation to an array
-				previousComps[sourceID] = destID;
-				} else
-				{
-				// Replace the source with the already duplicated comp
-				layer.replaceSource(check, false);
-				}
-				}
-				}
+									// Store the original comp id to remember the correlation
+									var sourceID = layer.source.id;
+									// Replace the source of the layer, and recursively check in that subcomp for sub-subcomps
+									layer.replaceSource(duplicateStructure(layer.source, parentFolder,prefix), false);
+									// Store the new comp id to remember the correlation
+									var destID = layer.source.id;
+									//Add the correlation to an array
+									previousComps[sourceID] = destID;
+								} else
+								{
+									// Replace the source with the already duplicated comp
+									layer.replaceSource(check, false);
+								}
+							}
+							
+						}
+					}
 
-				//Move the comp to the folder
-				comp.parentFolder = parentFolder;
+					//Move the comp to the folder
+					comp.parentFolder = parentFolder;
 
-				// For the recursion, return the duplicated comp
-				return comp;
+					// For the recursion, return the duplicated comp
+					return comp;
 				}
 
 				//LET's GO
@@ -2625,8 +2629,9 @@ Duik.setup.installPseudoEffects();
 				{
 					//for each comp, get the new name
 					var oldComp = getItemWithID(i);
-					if (oldComp == null) continue;
+					if (!oldComp) continue;
 					var newComp = getItemWithID(previousComps[i]);
+					if (!newComp) continue;
 					var oldName = oldComp.name;
 					var newName = newComp.name;
 					if (Duik.settings.displayProgressPanel) Duik.ui.updateProgressPanel(Duik.ui.progressBar.value + 1,"Updating expressions: " + newName);
@@ -2634,8 +2639,9 @@ Duik.setup.installPseudoEffects();
 					for (var j=0;j<previousComps.length;j++ )
 					{
 						var oldComp2 = getItemWithID(j);
-						if (oldComp2 == null) continue;
+						if (!oldComp2) continue;
 						var newComp2 = getItemWithID(previousComps[j]);
+						if (!newComp2) continue;
 						//double quotes
 						var old = "comp(\"" + oldName + "\"";
 						var newExpr = "comp(\"" + newName + "\"";
@@ -5884,7 +5890,7 @@ Duik.setup.installPseudoEffects();
 				//si il n'y a pas de coins selectionnes, on les prend tous
 				if (!coins.length) coins = Duik.utils.getPuppetPins(calque("Effects"));
 				//si on a vraiment rien trouve, on laisse tomber
-				if (!coins.length) throw "Please select any spatial property to link it to a bone";
+				if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
 
 				for (var j=0;j<coins.length;j++)
 				{
@@ -7598,6 +7604,31 @@ Duik.setup.installPseudoEffects();
 			characterLayer.locked = true;
 
 			if (Duik.settings.displayProgressPanel) Duik.ui.hideProgressPanel();
+
+			app.endSuppressDialogs(false);
+		}
+	}
+	/* DUPLICATE RIG - Duik.duplicateRig(rigComp,rigName);
+
+	Duplicates a rig, including precomps, renamed, and expressions are updated, so that one can duplicate the same rig several times.
+
+	parameters
+	rigComp | CompItem, the comp containing the rig
+	rigName | the name of this instance of the rig, must be unique in the project
+
+	returns
+	void
+
+	*/
+	if (typeof Duik.duplicateRig !== 'function')
+	{
+		Duik.duplicateRig = function (characterComp, characterName)
+		{
+			app.beginSuppressDialogs();
+
+			//duplicate character comp
+			var characterComp = Duik.utils.duplicateComp(characterComp,characterName + "_");
+
 
 			app.endSuppressDialogs(false);
 		}
