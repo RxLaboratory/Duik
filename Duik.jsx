@@ -1,4 +1,4 @@
-/*
+﻿/*
 Duik - Duduf IK Tools
 Copyright (c) 2008 - 2014 Nicolas Dufresne
 http://ik.duduf.fr
@@ -111,14 +111,14 @@ function checkForUpdate(version,showAlert)
 var reply = '';
 //socket
 conn = new Socket;
-// se connecter à duduf.com
+// se connecter a duduf.com
 if (conn.open ('www.duduf.com:80'))
 {
-// récupérer la version actuelle
+// recuperer la version actuelle
 if (conn.writeln ('GET /downloads/duik/version.txt  HTTP/1.0\nHost: duduf.com\n'))
 reply = conn.read(1000);
 conn.close();
-//chercher la version dans la réponse du serveur :
+//chercher la version dans la reponse du serveur :
 var reponse = reply.lastIndexOf('version',reply.length);
 if(reponse != -1)
 {
@@ -325,7 +325,7 @@ else
 mmGroup.visible = true;
 }
 
-// On définit le layout et on redessine la fenètre quand elle est resizée
+// On definit le layout et on redessine la fenetre quand elle est resizee
 palette.layout.layout(true);
 palette.layout.resize();
 palette.onResizing = palette.onResize = function () { this.layout.resize(); };
@@ -543,7 +543,7 @@ Duik.utils.checkNames();
 
 var layers = [];
 
-//si rien de sélectionné, on charge les calques de toute la compo
+//si rien de selectionne, on charge les calques de toute la compo
 if (compo.selectedLayers.length == 0) layers = compo.layers;
 else layers = compo.selectedLayers;
 
@@ -588,7 +588,7 @@ frontLegTipButton.add('item',layersList[i]);
 frontLegHeelButton.add('item',layersList[i]);
 }
 
-//préselectionner
+//preselectionner
 if (shoulder) frontLegShoulderButton.selection = Duik.js.arrayIndexOf(layersList,shoulder.index + ' - ' + shoulder.name);
 if (humerus) frontLegHumerusButton.selection = Duik.js.arrayIndexOf(layersList,humerus.index + ' - ' + humerus.name);
 if (radius) frontLegRadiusButton.selection = Duik.js.arrayIndexOf(layersList,radius.index + ' - ' + radius.name);
@@ -622,7 +622,7 @@ frontLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[f
 frontLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[frontLegTipButton.selection.text.split(' - ')[0]];
 frontLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[frontLegHeelButton.selection.text.split(' - ')[0]];
 
-//vérifier qu'il n'y a pas deux calques assignés au meme élément
+//verifier qu'il n'y a pas deux calques assignes au meme element
 var indexUtilises = [];
 if (shoulder) indexUtilises.push(shoulder.index);
 if (humerus) indexUtilises.push(humerus.index);
@@ -644,7 +644,7 @@ alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twic
 return false;
 }
 
-//vérifier qu'il ne manque rien d'indispensable (mains)
+//verifier qu'il ne manque rien d'indispensable (mains)
 var calquesManquants = [];
 if (!carpus) calquesManquants.push(tr("Carpus"));
 if (claws && !humerus) calquesManquants.push(tr("Humerus"));
@@ -654,7 +654,7 @@ if (!shoulder && !humerus && !radius && !carpus && !claws && !tip && !heel) calq
 
 if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
 
-//vérifier si 3D
+//verifier si 3D
 var tridi = false;
 if (shoulder) if (shoulder.threeDLayer) tridi = true;
 if (humerus) if (humerus.threeDLayer) tridi = true;
@@ -849,7 +849,7 @@ Duik.utils.checkNames();
 
 var layers = [];
 
-//si rien de sélectionné, on charge les calques de toute la compo
+//si rien de selectionne, on charge les calques de toute la compo
 if (compo.selectedLayers.length == 0) layers = compo.layers;
 else layers = compo.selectedLayers;
 
@@ -890,7 +890,7 @@ backLegTipButton.add('item',layersList[i]);
 backLegHeelButton.add('item',layersList[i]);
 }
 
-//préselectionner
+//preselectionner
 if (femur) backLegFemurButton.selection = Duik.js.arrayIndexOf(layersList,femur.index + ' - ' + femur.name);
 if (tibia) backLegTibiaButton.selection = Duik.js.arrayIndexOf(layersList,tibia.index + ' - ' + tibia.name);
 if (tarsus) backLegTarsusButton.selection = Duik.js.arrayIndexOf(layersList,tarsus.index + ' - ' + tarsus.name);
@@ -919,7 +919,7 @@ backLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[ba
 backLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[backLegTipButton.selection.text.split(' - ')[0]];
 backLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[backLegHeelButton.selection.text.split(' - ')[0]];
 
-//vérifier qu'il n'y a pas deux calques assignés au meme élément
+//verifier qu'il n'y a pas deux calques assignes au meme element
 var indexUtilises = [];
 if (femur) indexUtilises.push(femur.index);
 if (tibia) indexUtilises.push(tibia.index);
@@ -940,7 +940,7 @@ alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twic
 return false;
 }
 
-//vérifier qu'il ne manque rien d'indispensable (mains)
+//verifier qu'il ne manque rien d'indispensable (mains)
 var calquesManquants = [];
 if (!tarsus) calquesManquants.push(tr("Tarsus"));
 if (claws && !femur) calquesManquants.push(tr("Femur"));
@@ -950,7 +950,7 @@ if (!femur && !tibia && !tarsus && !claws && !tip && !heel)	calquesManquants = [
 
 if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
 
-//vérifier si 3D
+//verifier si 3D
 var tridi = false;
 if (femur) if (femur.threeDLayer) tridi = true;
 if (tibia) if (tibia.threeDLayer) tridi = true;
@@ -1123,7 +1123,7 @@ Duik.utils.checkNames();
 
 var layers = [];
 
-//si rien de sélectionné, on charge les calques de toute la compo
+//si rien de selectionne, on charge les calques de toute la compo
 if (compo.selectedLayers.length == 0) layers = compo.layers;
 else layers = compo.selectedLayers;
 
@@ -1153,7 +1153,7 @@ spineSpineToButton.add('item',layersList[i]);
 spineHipsButton.add('item',layersList[i]);
 }
 
-//préselectionner
+//preselectionner
 if (head) spineHeadButton.selection = Duik.js.arrayIndexOf(layersList,head.index + ' - ' + head.name);
 if (spine.length) {
 if (hips) spine = Duik.utils.sortByDistance(spine,hips);
@@ -1240,7 +1240,7 @@ spine = [compo.layers[spineLast]];
 }
 
 
-//vérifier qu'il n'y a pas deux calques assignés au meme élément
+//verifier qu'il n'y a pas deux calques assignes au meme element
 var indexUtilises = [];
 if (head) indexUtilises.push(head.index);
 if (neck.length) for (var i = 0 ; i < neck.length;i++) indexUtilises.push(neck[i].index);
@@ -1259,7 +1259,7 @@ alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twic
 return false;
 }
 
-//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
+//verifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
 var calquesManquants = [];
 if (!head) calquesManquants.push(tr("Head"));
 if (!spine.length && !hips) calquesManquants.push(tr("Spine and/or Hips"));
@@ -1268,7 +1268,7 @@ if (!head && !neck.length && !spine.length && !hips) calquesManquants = [];
 
 if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
 
-//vérifier si 3D
+//verifier si 3D
 var tridi = false;
 if (head) if (head.threeDLayer) tridi = true;
 if (hips) if (hips.threeDLayer) tridi = true;
@@ -1357,7 +1357,7 @@ Duik.utils.checkNames();
 
 var layers = [];
 
-//si rien de sélectionné, on charge les calques de toute la compo
+//si rien de selectionne, on charge les calques de toute la compo
 if (compo.selectedLayers.length == 0) layers = compo.layers;
 else layers = compo.selectedLayers;
 
@@ -1379,7 +1379,7 @@ tailTailFromButton.add('item',layersList[i]);
 tailTailToButton.add('item',layersList[i]);
 }
 
-//préselectionner
+//preselectionner
 if (hips) tailHipsButton.selection = Duik.js.arrayIndexOf(layersList,hips.index + ' - ' + hips.name);
 if (tail.length) {
 tail = Duik.utils.sortByDistance(tail,hips);
@@ -1426,7 +1426,7 @@ tail = [compo.layers[tailLast]];
 }
 
 
-//vérifier qu'il n'y a pas deux calques assignés au meme élément
+//verifier qu'il n'y a pas deux calques assignes au meme element
 var indexUtilises = [];
 if (hips) indexUtilises.push(hips.index);
 if (tail.length) for (var i =0;i<tail.length;i++) indexUtilises.push(tail[i].index);
@@ -1443,7 +1443,7 @@ alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twic
 return false;
 }
 
-//vérifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
+//verifier qu'il ne manque rien d'indispensable (tete, et spine ou hips)
 var calquesManquants = [];
 if (!hips) calquesManquants.push(tr("Hips"));
 if (!tail.length) calquesManquants.push(tr("Tail(s)"));
@@ -1452,7 +1452,7 @@ if (!hips && !tail.length) calquesManquants = [];
 
 if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
 
-//vérifier si 3D
+//verifier si 3D
 var tridi = false;
 if (hips) if (hips.threeDLayer) tridi = true;
 if (tail.length) for (var i=0;i<tail.length;i++) if (tail[i].threeDLayer) tridi = true;
@@ -1869,7 +1869,7 @@ panointerpo.hide();
 }
 else
 {
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - ") + tr("Controllers"));
 Duik.addControllers(app.project.activeItem.selectedLayers);
 app.endUndoGroup();
@@ -1878,7 +1878,7 @@ app.endUndoGroup();
 function controleur(){
 var comp = getCurrentComp();
 if (!comp) return null;
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - ") + tr("Controllers"));
 
 var newControllers = Duik.addControllers(app.project.activeItem.selectedLayers,ctrlAutoLockButton.value,ctrlRotationButton.value,ctrlXPositionButton.value,ctrlYPositionButton.value,ctrlScaleButton.value);
@@ -2007,10 +2007,10 @@ var comp = getCurrentComp();
 if (!comp) return;
 
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Bone"));
 
-//le(s) calque(s) sélectionné(s)
+//le(s) calque(s) selectionne(s)
 var calques = comp.selectedLayers ;
 if (calques.length ==0) { alert(tr("Select a pin to create a bone"),tr("Attention")); return; }
 
@@ -2044,7 +2044,7 @@ if (!layers) return null;
 
 
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Zero"));
 
 Duik.addZeros(layers);
@@ -2124,7 +2124,7 @@ var num = parseInt(numero.text);
 
 for (var i=0;i<layers.length;i++) {
 //chercher les puppet pins
-// les propriétés sélectionnées
+// les proprietes selectionnees
 var props = layers[i].selectedProperties;
 var coins = [];
 //lister les puppet pins
@@ -2236,7 +2236,7 @@ function rotmorph()
 var effet = getCurrentProp(true);
 if (!effet) return;
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Rotation Morph"));
 
 Duik.rotationMorph(app.project.activeItem.selectedLayers[0],effet);
@@ -2360,7 +2360,7 @@ function lockButtonClicked() {
 var effet = getCurrentProp(true);
 if (!effet) return;
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Lock"));
 
 
@@ -2374,7 +2374,7 @@ function listButtonClicked() {
 var prop = getCurrentProp(true);
 if (!prop) return;
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - List"));
 Duik.list(prop);
 app.endUndoGroup();
@@ -2430,11 +2430,11 @@ app.endUndoGroup();
 //FONCTION WIGGLE OK
 function wiggleOKButtonClicked(){
 
-//vérifions qu'il n'y a qu'un calque sélectionné
+//verifions qu'il n'y a qu'un calque selectionne
 if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0)
 {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Wiggle"));
 
 //le calque
@@ -2451,7 +2451,7 @@ app.endUndoGroup();
 
 //FONCTION WIGGLE
 function wiggle(){
-//regarder le nombre d'axes dans la propriété sélectionnée
+//regarder le nombre d'axes dans la propriete selectionnee
 var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
 if (prop == undefined) return;
 var dim = prop.propertyValueType ;
@@ -2474,7 +2474,7 @@ app.endUndoGroup();
 //FONCTION QUI MESURE LE RAYON D'UNE ROUE
 function mesurer() {
 
-//vérifions qu'il y a deux calques sélectionnés
+//verifions qu'il y a deux calques selectionnes
 if (app.project.activeItem.selectedLayers.length == 2){
 
 var dist = Duik.utils.getDistance(app.project.activeItem.selectedLayers[0],app.project.activeItem.selectedLayers[1]);
@@ -2491,7 +2491,7 @@ OA = parseFloat(rayonbouton.text);
 
 if (OA != 0 && OA != NaN) {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Wheel"));
 
 Duik.wheel(app.project.activeItem.selectedLayers[0],OA,roueC.value);
@@ -2505,13 +2505,13 @@ app.endUndoGroup();
 //FONCTION LENTILLE
 function lentille() {
 
-//les calques sélectionnés :
+//les calques selectionnes :
 var calques = app.project.activeItem.selectedLayers;
 
-//vérifions qu'il y a plusieurs calques sélectionnés
+//verifions qu'il y a plusieurs calques selectionnes
 if (calques.length > 1){
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Lens Controller"));
 
 Duik.lensFlare(calques);
@@ -2530,20 +2530,20 @@ alert(tr("Select all the layers of the lens flare, beginning by the center"));
 //FONCTION LIEN DE DISTANCE
 function distanceLink() {
 
-//vérifions qu'il n'y a bien que deux calques de sélectionnés
+//verifions qu'il n'y a bien que deux calques de selectionnes
 if (app.project.activeItem.selectedLayers.length == 2) {
 
 
-//récupérer le nom du calque de référence
+//recuperer le nom du calque de reference
 var calqueRef = app.project.activeItem.selectedLayers[1];
 
-//récupérer le calque de destination
+//recuperer le calque de destination
 var calque = app.project.activeItem.selectedLayers[0];
 
 //Prendre l'effet
 var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Distance Link"));
 
 Duik.distanceLink(calque,effet,calqueRef);
@@ -2563,7 +2563,7 @@ var layer = comp.selectedLayers[0];
 var prop = layer.selectedProperties.pop();
 if (prop.matchName != 'ADBE Position')
 {
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Spring"));
 
 Duik.spring(prop);
@@ -2580,7 +2580,7 @@ springPanel.show();
 
 function springok() {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Spring"));
 
 var ef = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
@@ -2593,7 +2593,7 @@ app.endUndoGroup();
 
 //FONCTION OSCILLATION
 function oscillation() {
-// Vérifions si il n'y a qu'un calque sélectionné
+// Verifions si il n'y a qu'un calque selectionne
 if (app.project.activeItem.selectedLayers.length == 1){
 
 var calque = app.project.activeItem.selectedLayers[0];
@@ -2602,10 +2602,10 @@ if (calque.selectedProperties.length != 0){
 
 //Prendre l'effet
 var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie sin on peut mettre une expression, sinon inutile de continuer
+//on verifie sin on peut mettre une expression, sinon inutile de continuer
 if(effet.canSetExpression) {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Oscillation"));
 
 Duik.swing(calque,effet);
@@ -2682,10 +2682,10 @@ app.endUndoGroup();
 
 //FONCTION PATH FOLLOW
 function pathFollow() {
-// Vérifions si il n'y a qu'un calque sélectionné
+// Verifions si il n'y a qu'un calque selectionne
 if (app.project.activeItem.selectedLayers.length == 1)
 {
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Path Follow"));
 Duik.pathFollow(app.project.activeItem.selectedLayers[0]);
 app.endUndoGroup();
@@ -2723,7 +2723,7 @@ app.endUndoGroup();
 
 //BLINK
 function blinkButtonClicked() {
-// Vérifions si il n'y a qu'un calque sélectionné
+// Verifions si il n'y a qu'un calque selectionne
 if (app.project.activeItem.selectedLayers.length == 1){
 
 var calque = app.project.activeItem.selectedLayers[0];
@@ -2732,10 +2732,10 @@ if (calque.selectedProperties.length != 0){
 
 //Prendre l'effet
 var effet = app.project.activeItem.selectedLayers[0].selectedProperties.pop();
-//on vérifie sin on peut mettre une expression, sinon inutile de continuer
+//on verifie sin on peut mettre une expression, sinon inutile de continuer
 if(effet.canSetExpression) {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Duik - Blink"));
 
 Duik.blink(calque,effet);
@@ -3019,8 +3019,8 @@ alert(tr("Please select the layers from which you want to save animation"));
 return;
 }
 
-var selected = false; // est ce qu'il y a des clefs sélectionnées (ou est ce qu'on fait sur toute l'anim)
-var startTime = 86339; // instant de début de l'anim à sauvegarder
+var selected = false; // est ce qu'il y a des clefs selectionnees (ou est ce qu'on fait sur toute l'anim)
+var startTime = 86339; // instant de debut de l'anim a sauvegarder
 var endTime = app.project.activeItem.workAreaDuration + app.project.activeItem.workAreaStart;
 
 //if there are selected keys
@@ -3028,19 +3028,19 @@ for (var i = 0; i < layers.length ; i++)
 {
 selected = Duik.utils.hasSelectedKeys(layers[i]);
 if (selected) break;
-selected = Duik.utils.hasSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+selected = Duik.utils.hasSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAFX
 if (selected) break;
 }
 
 
-// 2 - chercher l'instant de la première clef dans le temps, si ya des clefs sélectionnées
+// 2 - chercher l'instant de la premiere clef dans le temps, si ya des clefs selectionnees
 if (selected)
 {
 for (var i = 0; i < layers.length ; i++)
 {
 var testTime = Duik.utils.getFirstKeyTime(layers[i]);
 if (testTime < startTime) startTime = testTime;
-testTime = Duik.utils.getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des propriétés comme les autres pour after... #StupidAFX
+testTime = Duik.utils.getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAFX
 if (testTime < startTime) startTime = testTime;
 }
 }
@@ -3071,7 +3071,7 @@ if (totalPasted != Duik.copiedAnim.length) alert(tr("Pasted animation on ") + to
 //FONCTION MORPHER
 function morpher() {
 
-//  début de groupe d'annulation
+//  debut de groupe d'annulation
 app.beginUndoGroup(tr("Create a morpher"));
 
 Duik.morpher(app.project.activeItem.selectedLayers);
@@ -3088,33 +3088,33 @@ app.endUndoGroup();
 function controlcam() {
 
 if (!(app.project.activeItem instanceof CompItem)) return;
-//vérifier qu'il n'y a qu'un calque sélectionné
+//verifier qu'il n'y a qu'un calque selectionne
 if (app.project.activeItem.selectedLayers.length != 1) alert (tr("Select the camera"),tr("No camera selected"),true);
-//vérifier que c'est une caméra
+//verifier que c'est une camera
 if (!(app.project.activeItem.selectedLayers[0] instanceof CameraLayer)) alert (tr("Select the camera"),tr("Selected layer is not a camera"),true);
 
 
-//début du groupe d'annulation
+//debut du groupe d'annulation
 app.beginUndoGroup(tr("Camera Controller"));
 
-//récupérer la caméra
+//recuperer la camera
 var camera = app.project.activeItem.selectedLayers[0];
 
-//créer le target
+//creer le target
 var targetCtrl = Duik.addController(undefined,false,false,true,true);
 var target = targetCtrl.layer;
 target.name = camera.name + tr(" target");
 target.threeDLayer = true;
 target.position.setValue(camera.transform.pointOfInterest.value);
 
-//créer la cam
+//creer la cam
 var camCtrl = Duik.addController(undefined,false,false,true,true);
 var cam = camCtrl.layer;
 cam.name = camera.name + tr(" position");
 cam.threeDLayer = true;
 cam.position.setValue(camera.transform.position.value);
 
-//créer celui tout en haut
+//creer celui tout en haut
 var controleurCtrl = Duik.addController();
 controleurCtrl.camera = true;
 controleurCtrl.update();
@@ -3126,7 +3126,7 @@ controleur.position.setValue(camera.transform.position.value);
 cam.parent = controleur;
 target.parent = controleur;
 
-//définir les expressions
+//definir les expressions
 camera.position.expression = 'thisComp.layer(\'' + cam.name + '\').toWorld(thisComp.layer(\'' + cam.name + '\').transform.anchorPoint)';
 camera.pointOfInterest.expression = 'thisComp.layer(\'' + target.name + '\').toWorld(thisComp.layer(\'' + target.name + '\').transform.anchorPoint)';
 camera.orientation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.orientation';
@@ -3150,7 +3150,7 @@ app.endUndoGroup();
 //FONCTION MULTIPLAN
 function multiplan()
 {
-//début du groupe d'annulation
+//debut du groupe d'annulation
 app.beginUndoGroup(tr("Duik - Multiplane"));
 var comp = app.project.activeItem;
 var layers = [];
@@ -3802,7 +3802,7 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 //================ UI ===========================
 //===============================================
 {
-//TODO renommer les éléments d'UI
+//TODO renommer les elements d'UI
 
 Duik.ui.updateProgressPanel(2,tr("Duik - Creating UI"));
 
@@ -3886,7 +3886,7 @@ box.spacing = 2;
 box.margins = 10;
 return box;
 }
-//fonction pour ajouter des séparateurs
+//fonction pour ajouter des separateurs
 function addSeparator(conteneur,name) {
 conteneur = addHGroup(conteneur);
 conteneur.margins = 5;
@@ -4059,14 +4059,14 @@ var textenotes = fenetrenotes.groupe.add ('edittext', undefined,'',{multiline: t
 textenotes.helpTip = tr("New line : CTRL + Enter");
 var charCounter = fenetrenotes.groupe.add ('statictext', undefined,'0');
 charCounter.alignment = ['fill','bottom'];
-//récup le texte sauvegardé
+//recup le texte sauvegarde
 var texteRecup = '';
 try { texteRecup = app.settings.getSetting('duik','notes'); }
 catch(err) { alert(err); }
 textenotes.text = texteRecup;
 charCounter.text = textenotes.text.length + ' / 1500';
 
-//fonction quand texte modifié
+//fonction quand texte modifie
 textenotes.onChanging = function ()
 {
 if (textenotes.text.length > 1500)
@@ -4654,15 +4654,15 @@ Duik.settings.save();
 var boutonautorig = addIconButton(panoik,'btn_autorig.png',tr("Auto-Rig")) ;
 boutonautorig.onClick = function () {panoik.hide();autorigPanel.show();};
 boutonautorig.helpTip = tr("Autorig");
-//boutonautorig.helpTip = 'tip à écrire';
+//boutonautorig.helpTip = 'tip a ecrire';
 var groupeik = addHGroup(panoik);
 var groupeikG = addVGroup(groupeik);
 var groupeikD = addVGroup(groupeik);
-//bouton pour créer l'IK
+//bouton pour creer l'IK
 var boutonik = addIconButton(groupeikG,'btn_creer.png',tr("IK"));
 boutonik.onClick = ik;
 boutonik.helpTip = tr("IK");
-//bouton pour créer un goal
+//bouton pour creer un goal
 var boutongoal = addIconButton(groupeikD,'btn_goal.png',tr("IK Goal"));
 boutongoal.onClick = pregoal;
 boutongoal.helpTip = tr("Selected layer will keep its orientation, despite the transformations of its parent");
@@ -5187,7 +5187,7 @@ timeRemapButton.helpTip = tr("Time remapping tools.");
 panocam.orientation = 'row';
 var groupCameraG = addVGroup(panocam);
 var groupCameraD = addVGroup(panocam);
-//bouton pour créer une target cam
+//bouton pour creer une target cam
 var boutontcam = addIconButton(groupCameraG,'btn_controleur-cam.png',tr("Control Cam"));
 boutontcam.onClick = controlcam;
 boutontcam.helpTip = tr("Creates animation controllers for a camera");
@@ -5609,7 +5609,7 @@ var renameRemLastDGroup = addHGroup(renamePanel);
 renameRemLastDGroup.add('statictext',undefined,tr("Remove last"));
 var renameRemLastDValue = renameRemLastDGroup.add('edittext',undefined,'0');
 renameRemLastDGroup.add('statictext',undefined,tr("digits."));
-//numéros
+//numeros
 var groupeNumeros = addHGroup(renamePanel);
 groupeNumeros.alignChildren = ['fill','center'];
 var numerotexte = groupeNumeros.add('checkbox',undefined,tr("Number from"));
@@ -6215,7 +6215,7 @@ var mesurebouton = rayonGroupeRayon.add('button',undefined,tr("Measure"));
 mesurebouton.value = false;
 mesurebouton.helpTip = tr("Measure with another object");
 mesurebouton.onClick = mesurer;
-//boutons type de déplacement
+//boutons type de deplacement
 var rayonGroupeType = addHGroup(wheelPanel);
 var roueH = rayonGroupeType.add('radiobutton',undefined,tr("Horizontal"));
 var roueC = rayonGroupeType.add('radiobutton',undefined,tr("Curved"));
@@ -6234,7 +6234,7 @@ wheelOKButton.helpTip = tr("Wheel");
 springPanel.add('statictext',undefined,tr("When the Spring is used on the position property of a layer,"),{multiline:true});
 springPanel.add('statictext',undefined,tr("there are two ways to compute it:"),{multiline:true});
 addSeparator(springPanel,'');
-//boutons léger ou simulation
+//boutons leger ou simulation
 var boutonLightSpring = springPanel.add('radiobutton',undefined,tr("Without simulation - Light"));
 springPanel.add('statictext',undefined,tr("Needs an animation on the layer itself to work."),{multiline:true});
 boutonLightSpring.value = false;
@@ -6722,7 +6722,7 @@ tailOK.onClick = tailOKClicked;
 
 }
 
-// On définit le layout et on redessine la fenètre quand elle est resizée
+// On definit le layout et on redessine la fenetre quand elle est resizee
 palette.layout.layout(true);
 palette.layout.resize();
 palette.onResizing = palette.onResize = function () { this.layout.resize(); }
@@ -6732,7 +6732,7 @@ Duik.ui.hideProgressPanel();
 }
 }
 
-// On définit le layout et on redessine la fenètre quand elle est resizée
+// On definit le layout et on redessine la fenetre quand elle est resizee
 palette.layout.layout(true);
 palette.layout.resize();
 palette.onResizing = palette.onResize = function () { this.layout.resize(); }
