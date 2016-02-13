@@ -3585,41 +3585,34 @@ if (boutonApproche.value && !inVal) return;
 app.beginUndoGroup(tr("Duik - Interpolation"));
 
 for (var i=0;i<app.project.activeItem.selectedLayers.length;i++) {
-	for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
-		if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
-			for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
-				var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-				//key to ease if linear
-				if (prop.keyInInterpolationType(prop.selectedKeys[k]) == KeyframeInterpolationType.LINEAR)
-				{
-					if (boutonApproche.value && boutonEloignement.value) lissage();
-					else if (boutonApproche.value) lissageA();
-					else if (boutonEloignement.value) lissageE();
-				}
-				if (!prop.isSpatial && prop.value.length == 3) {
-					var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-					var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-					var easeIn3 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
-					var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-					var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-					var easeOut3 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
-					prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
-				}
-				else if (!prop.isSpatial && prop.value.length == 2) {
-					var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-					var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-					var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-					var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-					prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
-				}
-				else {
-					var easeIn =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-					var easeOut = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-					prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
-				}
-			}
-		}
-	}
+for (var j=0;j<app.project.activeItem.selectedLayers[i].selectedProperties.length;j++) {
+if (app.project.activeItem.selectedLayers[i].selectedProperties[j].canVaryOverTime) {
+for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
+var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+if (!prop.isSpatial && prop.value.length == 3) {
+var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+var easeIn3 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
+var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+var easeOut3 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
+prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
+}
+else if (!prop.isSpatial && prop.value.length == 2) {
+var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
+}
+else {
+var easeIn =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+var easeOut = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
+}
+}
+}
+}
 }
 app.endUndoGroup();
 }
