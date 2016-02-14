@@ -245,7 +245,6 @@ DESCRIPTION
 		smoothingGroup.orientation = 'row';
 		smoothingGroup.margins = 0;
         smoothingGroup.spacing = 0;
-		smoothingGroup.add('statictext',undefined,"Passes");
 
 		var extra = content.add('checkbox',undefined,"Smoother");
 		extra.onClick = smooth;
