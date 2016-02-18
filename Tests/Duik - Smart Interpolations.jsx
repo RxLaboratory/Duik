@@ -21,7 +21,7 @@ DESCRIPTION
 		if (comp instanceof CompItem) return comp;
 		else
 		{
-		alert(tr("Active composition not found.\nPlease select a composition or activate the composition panel."));
+		alert("Active composition not found.\nPlease select a composition or activate the composition panel.");
 		return null;
 		}
 		}
@@ -33,7 +33,7 @@ DESCRIPTION
 		var layers = comp.selectedLayers;
 		if (!layers.length)
 		{
-		alert(tr("No selected layer.\nPlease select a layer/property."));
+		alert("No selected layer.\nPlease select a layer/property.");
 		return null;
 		}
 		return layers;
@@ -47,7 +47,7 @@ DESCRIPTION
 		layers = Duik.utils.convertCollectionToArray(layrs);
 		if (!layers.length)
 		{
-		alert(tr("No layer in this comp.\nPlease select a composition with layers."));
+		alert("No layer in this comp.\nPlease select a composition with layers.");
 		return null;
 		}
 		return layers;
@@ -58,7 +58,7 @@ DESCRIPTION
 		var items = app.project.selection;
 		if (!items.length)
 		{
-		alert(tr("No selected item.\nPlease select an item."));
+		alert("No selected item.\nPlease select an item.");
 		return null;
 		}
 		return items;
@@ -71,7 +71,7 @@ DESCRIPTION
 		var props = layers[0].selectedProperties;
 		if (!props.length)
 		{
-		alert(tr("No selected property.\nPlease select a property."));
+		alert("No selected property.\nPlease select a property.");
 		return null;
 		}
 		return props;
@@ -85,7 +85,7 @@ DESCRIPTION
 		var prop = props.pop();
 		if (canSetExpression && !prop.canSetExpression)
 		{
-		alert(tr("Selected property cannot get any expression, it cannot be rigged, sorry."));
+		alert("Selected property cannot get any expression, it cannot be rigged, sorry.");
 		return null;
 		}
 
