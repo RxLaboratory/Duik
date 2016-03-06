@@ -32,11 +32,23 @@ DESCRIPTION
 		{
 			var prop = getCurrentProp();
 			var type = prop.propertyValueType;
+			masterXButton.enabled = false;
+			masterYButton.enabled = false;
+			masterZButton.enabled = false;
+			masterXButton.text = "X";
+			masterYButton.text = "Y";
+			masterZButton.text = "Z";
 			if (type == PropertyValueType.ThreeD_SPATIAL || type == PropertyValueType.ThreeD || type == PropertyValueType.COLOR)
 			{
 				masterXButton.enabled = true;
 				masterYButton.enabled = true;
 				masterZButton.enabled = true;
+				if (type == PropertyValueType.COLOR)
+				{
+					masterXButton.text = "R";
+					masterYButton.text = "V";
+					masterZButton.text = "B";
+				}
 			}
 			else if (type == PropertyValueType.TwoD_SPATIAL || type == PropertyValueType.TwoD)
 			{
@@ -45,7 +57,7 @@ DESCRIPTION
 			}
 			else if (type == PropertyValueType.OneD)
 			{
-				masterXButton.enabled = true;
+				masterXButton.value = true;
 			}
 			else
 			{
@@ -57,6 +69,14 @@ DESCRIPTION
 		
 		function updateExpressionButtonClicked()
 		{
+			var ctrlValue = masterEdit.text;
+			if (masterYButton.enabled)
+			{
+				if (masterXButton.value) ctrlValue += "[0]";
+				else if (masterYButton.value) ctrlValue += "[1]";
+				else if (masterZButton.value) ctrlValue += "[2]";
+			}
+			
 			connectionGroup.enabled = false;
 			expressionGroup.enabled = true;
 			
@@ -65,8 +85,9 @@ DESCRIPTION
 			var max = parseFloat(masterMaxText.text);
 			if (isNaN(max)) max = 100;
 			
+			
 			var expr = "var ctrlValue = ";
-			expr += masterEdit.text + ";\n";
+			expr += ctrlValue + ";\n";
 			expr += "var ctrlMin = " + min + ";\n";
 			expr += "var ctrlMax = " + max + ";\n";
 			expr += "if (numKeys >= 2)\n";
@@ -109,10 +130,6 @@ DESCRIPTION
 			expressionEditor.text = "Expression";
 			expressionGroup.enabled = false;
 			connectionGroup.enabled = true;
-			masterXButton.enabled = false;
-			masterYButton.enabled = false;
-			masterZButton.enabled = false;
-			masterEdit.text = "Control value..."
 		}
     }
     //==================================================
@@ -173,10 +190,11 @@ DESCRIPTION
 		var masterPickButton = masterGroup.add('button',undefined,"P");
 		masterPickButton.alignment = ['right','fill'];
 		masterPickButton.maximumSize = [25,25];
+		masterPickButton.helpTip = "Pick current property";
 		masterPickButton.onClick = masterPickButtonClicked;
-		var masterSelectButton = masterGroup.add('button',undefined,"S");
+		/*var masterSelectButton = masterGroup.add('button',undefined,"S");
 		masterSelectButton.alignment = ['right','fill'];
-		masterSelectButton.maximumSize = [25,25];
+		masterSelectButton.maximumSize = [25,25];*/
 		
 		var optionsGroup = connectionGroup.add('group');
 		optionsGroup.alignment = ['fill','top'];
