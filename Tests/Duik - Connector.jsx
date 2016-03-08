@@ -93,15 +93,15 @@ DESCRIPTION
 			expr += "if (numKeys >= 2)\n";
 			expr += "{\n";
 			expr += "var t = 0;\n";
-			expr += "var startTime = key(1).time;\n";
+			expr += "var beginTime = key(1).time;\n";
 			expr += "var endTime = key(numKeys).time;\n";
 			expr += "if (ctrlMin > ctrlMax)\n";
 			expr += "{\n";
-			expr += "t = linear(ctrlValue, ctrlMin, ctrlMax, endTime, startTime);\n";
+			expr += "t = linear(ctrlValue, ctrlMin, ctrlMax, endTime, beginTime);\n";
 			expr += "}\n";
 			expr += "else\n";
 			expr += "{\n";
-			expr += "t = linear(ctrlValue, ctrlMin, ctrlMax, startTime, endTime);\n";
+			expr += "t = linear(ctrlValue, ctrlMin, ctrlMax, beginTime, endTime);\n";
 			expr += "}\n";
 			expr += "valueAtTime(t);\n";
 			expr += "}\n";
