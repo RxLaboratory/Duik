@@ -83,7 +83,7 @@ DESCRIPTION
 			tempLayer.transform.position.expression = "thisComp.layer('" + end.name + "').toWorld(thisComp.layer('" + end.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1));"
 			
 			//set controller position
-			ctrl.transform.position.setValue(tempLayer.transform.position.value);
+			ctrl.transform.position.setValueAtTime(comp.time,tempLayer.transform.position.value);
 			
 			tempLayer.remove();
 		}
@@ -161,9 +161,9 @@ DESCRIPTION
 			
 			
 			//set IK effect rot values
-			ikEffect(4).setValue(layer1.transform.rotation.value);
-			ikEffect(5).setValue(layer2.transform.rotation.value);
-			if (threeLayer) ikEffect(6).setValue(layer3.transform.rotation.value);
+			ikEffect(4).setValueAtTime(comp.time,layer1.transform.rotation.value);
+			ikEffect(5).setValueAtTime(comp.time,layer2.transform.rotation.value);
+			if (threeLayer) ikEffect(6).setValueAtTime(comp.time,layer3.transform.rotation.value);
 		}
 		
 		function switchIKFK()
