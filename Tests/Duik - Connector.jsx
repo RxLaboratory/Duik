@@ -115,14 +115,18 @@ DESCRIPTION
 			var comp = app.project.activeItem;
 			if (!(comp instanceof CompItem)) return;
 			if (!comp.selectedLayers.length) return;
-			var layer = comp.selectedLayers[0];
-			if (!layer.selectedProperties.length) return;
-			var props = layer.selectedProperties;
-			for (var i = 0 ; i< props.length;i++)
+			var layers = comp.selectedLayers;
+			for (var l = 0;l<comp.selectedLayers.length;l++)
 			{
-				var prop = props[i];
-				if (prop.canSetExpression) prop.expression = expressionEditor.text;
+				var layer = comp.selectedLayers[l];
+				var props = layer.selectedProperties;
+				for (var i = 0 ; i< props.length;i++)
+				{
+					var prop = props[i];
+					if (prop.canSetExpression) prop.expression = expressionEditor.text;
+				}
 			}
+			
 		}
 		
 		function reinitButtonClicked()
