@@ -47,14 +47,30 @@ DESCRIPTION
 			app.endUndoGroup();
 		}
 		
-		function addBone(comp)
+		function addBone(comp,size)
 		{
+			if (!size)
+			{
+				if (Duik.settings.boneSizeAuto)
+				{
+					size = app.project.activeItem.height/2 + app.project.activeItem.height/2;
+
+					if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) size = Math.floor(size/14);
+					else if (Duik.settings.boneSizeHint == Duik.sizes.MEDIUM) size = Math.floor(size/10);
+					else if (Duik.settings.boneSizeHint == Duik.sizes.BIG) size = Math.floor(size/6);
+				}
+				else size = 100;
+				
+			}
+			
+			
+			
 			//======= NEW ======= CREATE BONE USING SHAPE LAYER =======
 			var bone = comp.layers.addShape();
 			//bone group
 			var boneGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 			boneGroup.name = "Bone";
-			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([boneTaille,boneTaille]);$
+			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([size,size]);
 			//target group
 			var targetGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 			targetGroup.name = "Target";
@@ -152,6 +168,9 @@ DESCRIPTION
 						
 			boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
 			
+			//group
+			Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
+			
 			return bone;
 		}
 		
@@ -216,9 +235,7 @@ DESCRIPTION
 					{
 						position = coin;
 					}
-
-					//creer le bone
-					var bone;
+					
 					//sa taille
 					boneTaille = Duik.settings.boneSize;
 					if (Duik.settings.boneSizeAuto)
@@ -242,14 +259,12 @@ DESCRIPTION
 					}
 					
 					//add bone
-					var bone = addBone(calque.containingComp);
+					var bone = addBone(calque.containingComp,boneTaille);
 					
 					if (placement == Duik.placement.OVER_LAYER) bone.moveBefore(calque);
 					else if (placement == Duik.placement.UNDER_LAYER) bone.moveAfter(calque);
 					else if (placement == Duik.placement.BOTTOM) bone.moveToEnd();
 
-					//group
-					Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
 
 					createdBones.push(bone);
 
