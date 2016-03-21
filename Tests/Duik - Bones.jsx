@@ -28,9 +28,11 @@ DESCRIPTION
 				num = parseInt(count.text);
 				var spacing = comp.width/(num+1);
 				var prevBone = null;
+				var color = Duik.utils.randomColor();
+				
 				for (var i = 0 ; i < num ; i++)
 				{
-					var bone = addBone(comp);
+					var bone = addBone(comp,undefined,color);
 					bone.name = "Bone " + (i+1);
 					if (prevBone)
 					{
@@ -47,7 +49,7 @@ DESCRIPTION
 			app.endUndoGroup();
 		}
 		
-		function addBone(comp,size)
+		function addBone(comp,size,color)
 		{
 			if (!size)
 			{
@@ -63,25 +65,32 @@ DESCRIPTION
 				
 			}
 			
-			
+			if (!color)
+			{
+				color = [1,3.764,3.764,1];
+			}
 			
 			//======= NEW ======= CREATE BONE USING SHAPE LAYER =======
 			var bone = comp.layers.addShape();
+			//size effect
+			var sizeEffect = bone.Effects.addProperty('ADBE Slider Control');
+			sizeEffect.name = "Display Size";
+			sizeEffect(1).setValue(size);
 			//bone group
 			var boneGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 			boneGroup.name = "Bone";
-			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").setValue([size,size]);
+			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = "//Duik.bone\nvar s = effect('Display Size')(1);\n[s,s];";
 			//target group
 			var targetGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 			targetGroup.name = "Target";
 			var targetGroupContent = targetGroup.property("ADBE Vectors Group");
 			var ellipse = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
 			ellipse("ADBE Vector Ellipse Size").setValue([15,15]);
+			var ellipse2 = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
+			ellipse2("ADBE Vector Ellipse Size").setValue([1,1]);
 			var targetStroke = targetGroupContent.addProperty("ADBE Vector Graphic - Stroke");
-			targetStroke("ADBE Vector Stroke Color").setValue([0.3,0.3,0.3,1]);
+			targetStroke("ADBE Vector Stroke Color").setValue([0.1,0.1,0.1,1]);
 			targetStroke("ADBE Vector Stroke Width").setValue(2);
-			var targetFill = targetGroupContent.addProperty("ADBE Vector Graphic - Fill");
-			targetFill("ADBE Vector Fill Color").setValue([0.1,0.1,0.1,1]);
 			//end group
 			var endGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 			endGroup.name = "End";
@@ -89,7 +98,7 @@ DESCRIPTION
 			var rectangle = endGroupContent.addProperty("ADBE Vector Shape - Rect");
 			rectangle("ADBE Vector Rect Size").setValue([24.5,24.5]);
 			endFill = endGroupContent.addProperty("ADBE Vector Graphic - Fill");
-			endFill("ADBE Vector Fill Color").setValue([1,0.3,0.3,1]);
+			endFill("ADBE Vector Fill Color").setValue(color);
 			endGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").setValue(45);
 			//stretchbone group
 			var stretchBoneGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
@@ -100,7 +109,7 @@ DESCRIPTION
 			star("ADBE Vector Star Points").setValue(3);
 			star("ADBE Vector Star Outer Radius").setValue(20);
 			stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
-			stretchBoneFill("ADBE Vector Fill Color").setValue([1,0.3,0.3,1]);
+			stretchBoneFill("ADBE Vector Fill Color").setValue(color);
 			stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
 			
 			var scaExpr = "//Duik.bone\n" + 
@@ -221,6 +230,7 @@ DESCRIPTION
 				if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
 
 				//create bones
+				var color = Duik.utils.randomColor();
 				for (var j=0;j<coins.length;j++)
 				{
 					var coin = coins[j];
@@ -259,7 +269,7 @@ DESCRIPTION
 					}
 					
 					//add bone
-					var bone = addBone(calque.containingComp,boneTaille);
+					var bone = addBone(calque.containingComp,boneTaille,color);
 					
 					if (placement == Duik.placement.OVER_LAYER) bone.moveBefore(calque);
 					else if (placement == Duik.placement.UNDER_LAYER) bone.moveAfter(calque);
