@@ -28,6 +28,7 @@ DESCRIPTION
 				num = parseInt(count.text);
 				var spacing = comp.width/(num+1);
 				var prevBone = null;
+				var createdBones = [];
 				var color = Duik.utils.randomColor();
 				
 				for (var i = 0 ; i < num ; i++)
@@ -44,6 +45,12 @@ DESCRIPTION
 						bone.transform.position.setValue([spacing,comp.height/2]);
 					}
 					prevBone = bone;
+					createdBones.push(bone);
+				}
+				//links
+				for (var i = 0;i < createdBones.length-1 ; i++)
+				{
+					createdBones[i].effect("Link")(1).setValue(createdBones[i+1].index)
 				}
 			}
 			app.endUndoGroup();
@@ -76,6 +83,9 @@ DESCRIPTION
 			var sizeEffect = bone.Effects.addProperty('ADBE Slider Control');
 			sizeEffect.name = "Display Size";
 			sizeEffect(1).setValue(size);
+			//Link effect
+			var linkEffect = bone.Effects.addProperty('ADBE Layer Control');
+			linkEffect.name = "Link";
 			//bone group
 			var boneGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 			boneGroup.name = "Bone";
@@ -115,9 +125,20 @@ DESCRIPTION
 			var scaExpr = "//Duik.bone\n" + 
 							"var X = 100;\n" + 
 							"var Y = 60;\n" + 
+							"function isBone(layer)\n" + 
+							"{\n" + 
+							"var ok = false;\n" + 
+							"try { layer.content('Bone'); ok = true;}\n" + 
+							"catch (e) { ok = false;}\n" + 
+							"return ok;\n" + 
+							"}\n" + 
 							"var child = null;\n" + 
-							"if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
-							"if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" + 
+							"try { child = effect('Link')(1);}\n" + 
+							"catch (e) {child = null;}\n" + 
+							"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
+							"if (!isBone(child)) child = null;\n" + 
+							"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" + 
+							"if (!isBone(child)) child = null;\n" + 
 							"if (!child)\n" + 
 							"{\n" + 
 							"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" + 
@@ -125,7 +146,8 @@ DESCRIPTION
 							"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" + 
 							"{\n" + 
 							"child = thisComp.layer(i);\n" + 
-							"break;\n" + 
+							"if (!isBone(child)) child = null;\n" + 
+							"if (child) break;\n" + 
 							"}\n" + 
 							"}\n" + 
 							"}\n" + 
@@ -144,9 +166,20 @@ DESCRIPTION
 			
 			var rotExpr = "//Duik.bone\n" + 
 						"var R = 45;\n" + 
+						"function isBone(layer)\n" + 
+						"{\n" + 
+						"var ok = false;\n" + 
+						"try { layer.content('Bone'); ok = true;}\n" + 
+						"catch (e) { ok = false;}\n" + 
+						"return ok;\n" + 
+						"}\n" + 
 						"var child = null;\n" + 
-						"if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
-						"if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" + 
+						"try { child = effect('Link')(1);}\n" + 
+						"catch (e) {child = null;}\n" + 
+						"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
+						"if (!isBone(child)) child = null;\n" + 
+						"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" + 
+						"if (!isBone(child)) child = null;\n" + 
 						"if (!child)\n" + 
 						"{\n" + 
 						"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" + 
@@ -154,7 +187,8 @@ DESCRIPTION
 						"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" + 
 						"{\n" + 
 						"child = thisComp.layer(i);\n" + 
-						"break;\n" + 
+						"if (!isBone(child)) child = null;\n" + 
+						"if (child) break;\n" + 
 						"}\n" + 
 						"}\n" + 
 						"}\n" + 
@@ -176,6 +210,8 @@ DESCRIPTION
 						"R;";
 						
 			boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
+			
+			bone.guideLayer = true;
 			
 			//group
 			Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
@@ -298,8 +334,7 @@ DESCRIPTION
 					if (name.length > 32) name = name.substr(0,32);
 					bone.name = name;
 					}
-
-					bone.guideLayer = true;
+					
 					//mettre l'expression dans le coin
 					if (calque instanceof ShapeLayer)
 					{
@@ -313,9 +348,10 @@ DESCRIPTION
 			}//for layers
 			
 			//linking
-			for (var i = 0 ; i < createdBones.length-1 ; i++)
+			for (var i = 0 ; i < createdBones.length ; i++)
 			{
-				createdBones[i].parent = createdBones[i+1];
+				if (i != createdBones.length -1) createdBones[i].parent = createdBones[i+1];
+				if (i > 0) createdBones[i].effect("Link")(1).setValue(createdBones[i-1].index);
 			}
 			return createdBones;
 		}
