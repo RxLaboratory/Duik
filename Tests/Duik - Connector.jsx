@@ -67,8 +67,9 @@ DESCRIPTION
 			masterEdit.text = Duik.utils.getExpressionLink(prop);
 		}
 		
-		function updateExpressionButtonClicked()
+		function generateExpression()
 		{
+			var expr = "";
 			var ctrlValue = masterEdit.text;
 			if (masterYButton.enabled)
 			{
@@ -77,16 +78,13 @@ DESCRIPTION
 				else if (masterZButton.value) ctrlValue += "[2]";
 			}
 			
-			connectionGroup.enabled = false;
-			expressionGroup.enabled = true;
-			
 			var min = parseFloat(masterMinText.text);
 			if (isNaN(min)) min = 0;
 			var max = parseFloat(masterMaxText.text);
 			if (isNaN(max)) max = 100;
 			
 			
-			var expr = "var ctrlValue = ";
+			expr = "var ctrlValue = ";
 			expr += ctrlValue + ";\n";
 			expr += "var ctrlMin = " + min + ";\n";
 			expr += "var ctrlMax = " + max + ";\n";
@@ -107,7 +105,7 @@ DESCRIPTION
 			expr += "}\n";
 			expr += "else value;\n";
 			
-			expressionEditor.text = expr;
+			return expr;
 		}
 		
 		function applyButtonClicked()
@@ -116,6 +114,7 @@ DESCRIPTION
 			if (!(comp instanceof CompItem)) return;
 			if (!comp.selectedLayers.length) return;
 			var layers = comp.selectedLayers;
+			var expr = generateExpression();
 			for (var l = 0;l<comp.selectedLayers.length;l++)
 			{
 				var layer = comp.selectedLayers[l];
@@ -123,18 +122,12 @@ DESCRIPTION
 				for (var i = 0 ; i< props.length;i++)
 				{
 					var prop = props[i];
-					if (prop.canSetExpression) prop.expression = expressionEditor.text;
+					if (prop.canSetExpression) prop.expression = expr;
 				}
 			}
 			
 		}
 		
-		function reinitButtonClicked()
-		{
-			expressionEditor.text = "Expression";
-			expressionGroup.enabled = false;
-			connectionGroup.enabled = true;
-		}
     }
     //==================================================
     
@@ -219,32 +212,8 @@ DESCRIPTION
 		masterMinText.onActivate = function(){if (masterMinText.text == "Min Value") masterMinText.text = '';};
 		var masterMaxText = optionsGroup.add('edittext',undefined,"Max Value");
 		masterMaxText.onActivate = function(){if (masterMaxText.text == "Max Value") masterMaxText.text = '';};
-		
-		var updateExpressionButton = connectionGroup.add('button',undefined,"Generate Expression");
-		updateExpressionButton.alignment = ['fill','top'];
-		updateExpressionButton.onClick = updateExpressionButtonClicked;
-			
-		var expressionGroup = content.add('group');
-		expressionGroup.alignment = ['fill','fill'];
-		expressionGroup.alignChildren = ['fill','fill'];
-        expressionGroup.orientation = 'column';
-        expressionGroup.margins = 0;
-        expressionGroup.spacing = 2;
-		expressionGroup.enabled = false;
-		
-		var expressionEditor = expressionGroup.add('edittext',undefined,"Expression",{multiline:true});
-		
-		var bottomGroup = expressionGroup.add('group');
-		bottomGroup.alignment = ['fill','bottom'];
-		bottomGroup.alignChildren = ['fill','fill'];
-        bottomGroup.orientation = 'row';
-        bottomGroup.margins = 0;
-        bottomGroup.spacing = 2;
-		
-		var reinitButton = bottomGroup.add('button',undefined,"Reinit");
-		reinitButton.onClick = reinitButtonClicked;
-		
-		var applyButton = bottomGroup.add('button',undefined,"Connect");
+
+		var applyButton = content.add('button',undefined,"Connect");
 		applyButton.onClick = applyButtonClicked;
     }
     // ==================================================
