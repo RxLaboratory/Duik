@@ -108,6 +108,30 @@ DESCRIPTION
 			return expr;
 		}
 		
+		function opacitySeqButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			if (!comp.selectedLayers.length) return;
+			app.beginUndoGroup("Duik - Opacity Sequence");
+			for (var i = 0 ; i < comp.selectedLayers.length ; i++)
+			{
+				var t = i*comp.frameDuration;
+				var endTime = (comp.selectedLayers.length-1)*comp.frameDuration;
+				var layer = comp.selectedLayers[i];
+				layer.transform.opacity.setValueAtTime(0,0);
+				layer.transform.opacity.setValueAtTime(endTime,0);
+				layer.transform.opacity.setValueAtTime(t,100);
+				if (i < comp.selectedLayers.length -1 ) layer.transform.opacity.setValueAtTime(t+comp.frameDuration,0);
+				for (var keyIndex = 1;keyIndex <= layer.transform.opacity.numKeys;keyIndex++)
+				{
+					layer.transform.opacity.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+				}
+				
+			}
+			app.endUndoGroup();
+		}
+		
 		function applyButtonClicked()
 		{
 			var comp = app.project.activeItem;
@@ -212,6 +236,9 @@ DESCRIPTION
 		masterMinText.onActivate = function(){if (masterMinText.text == "Min Value") masterMinText.text = '';};
 		var masterMaxText = optionsGroup.add('edittext',undefined,"Max Value");
 		masterMaxText.onActivate = function(){if (masterMaxText.text == "Max Value") masterMaxText.text = '';};
+		
+		var opacitySeqButton = content.add('button',undefined,"Opacity Sequence");
+		opacitySeqButton.onClick = opacitySeqButtonClicked;
 
 		var applyButton = content.add('button',undefined,"Connect");
 		applyButton.onClick = applyButtonClicked;
