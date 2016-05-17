@@ -27,60 +27,21 @@ DESCRIPTION
 			var prop = layer.selectedProperties[layer.selectedProperties.length -1];
 			return prop;
 		}
-		// ------- UI ACTIONS --------
-		function masterPickButtonClicked()
-		{
-			var prop = getCurrentProp();
-			var type = prop.propertyValueType;
-			masterXButton.enabled = false;
-			masterYButton.enabled = false;
-			masterZButton.enabled = false;
-			masterXButton.text = "X";
-			masterYButton.text = "Y";
-			masterZButton.text = "Z";
-			if (type == PropertyValueType.ThreeD_SPATIAL || type == PropertyValueType.ThreeD || type == PropertyValueType.COLOR)
-			{
-				masterXButton.enabled = true;
-				masterYButton.enabled = true;
-				masterZButton.enabled = true;
-				if (type == PropertyValueType.COLOR)
-				{
-					masterXButton.text = "R";
-					masterYButton.text = "V";
-					masterZButton.text = "B";
-				}
-			}
-			else if (type == PropertyValueType.TwoD_SPATIAL || type == PropertyValueType.TwoD)
-			{
-				masterXButton.enabled = true;
-				masterYButton.enabled = true;
-			}
-			else if (type == PropertyValueType.OneD)
-			{
-				masterXButton.value = true;
-			}
-			else
-			{
-				alert("This property cannot be used as a controller.");
-				return;
-			}
-			masterEdit.text = Duik.utils.getExpressionLink(prop);
-		}
 		
 		function generateExpression()
 		{
 			var expr = "";
 			var ctrlValue = masterEdit.text;
-			if (masterYButton.enabled)
+			if (masterValueYButton.enabled)
 			{
-				if (masterXButton.value) ctrlValue += "[0]";
-				else if (masterYButton.value) ctrlValue += "[1]";
-				else if (masterZButton.value) ctrlValue += "[2]";
+				if (masterValueXButton.value) ctrlValue += "[0]";
+				else if (masterValueYButton.value) ctrlValue += "[1]";
+				else if (masterValueZButton.value) ctrlValue += "[2]";
 			}
 			
-			var min = parseFloat(masterMinText.text);
+			var min = parseFloat(masterValueMinText.text);
 			if (isNaN(min)) min = 0;
-			var max = parseFloat(masterMaxText.text);
+			var max = parseFloat(masterValueMaxText.text);
 			if (isNaN(max)) max = 100;
 			
 			
@@ -108,8 +69,9 @@ DESCRIPTION
 			return expr;
 		}
 		
-		function opacitySeqButtonClicked()
+		function opacityConnect(expr)
 		{
+			if (!expr) expr = '';
 			var comp = app.project.activeItem;
 			if (!(comp instanceof CompItem)) return;
 			if (!comp.selectedLayers.length) return;
@@ -127,11 +89,69 @@ DESCRIPTION
 				{
 					layer.transform.opacity.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
 				}
-				
+				layer.transform.opacity.expression = expr;
 			}
 			app.endUndoGroup();
 		}
 		
+		// ------- UI ACTIONS --------
+		function valueButtonClicked()
+		{
+			mainGroup.hide();
+			valueGroup.show();
+		}
+		
+		function cancelValueButtonClicked()
+		{
+			mainGroup.show();
+			valueGroup.hide();
+		}
+		
+		function masterPickButtonClicked()
+		{
+			var prop = getCurrentProp();
+			var type = prop.propertyValueType;
+			masterValueXButton.enabled = false;
+			masterValueYButton.enabled = false;
+			masterValueZButton.enabled = false;
+			masterValueXButton.text = "X";
+			masterValueYButton.text = "Y";
+			masterValueZButton.text = "Z";
+			if (type == PropertyValueType.ThreeD_SPATIAL || type == PropertyValueType.ThreeD || type == PropertyValueType.COLOR)
+			{
+				masterValueXButton.enabled = true;
+				masterValueYButton.enabled = true;
+				masterValueZButton.enabled = true;
+				if (type == PropertyValueType.COLOR)
+				{
+					masterValueXButton.text = "R";
+					masterValueYButton.text = "V";
+					masterValueZButton.text = "B";
+				}
+			}
+			else if (type == PropertyValueType.TwoD_SPATIAL || type == PropertyValueType.TwoD)
+			{
+				masterValueXButton.enabled = true;
+				masterValueYButton.enabled = true;
+			}
+			else if (type == PropertyValueType.OneD)
+			{
+				masterValueXButton.value = true;
+			}
+			else
+			{
+				alert("This property cannot be used as a controller.");
+				return;
+			}
+			masterEdit.text = Duik.utils.getExpressionLink(prop);
+		}
+
+		function opacityValueButtonClicked()
+		{
+			var expr = generateExpression();
+			opacityConnect(expr);
+		}
+			
 		function applyButtonClicked()
 		{
 			var comp = app.project.activeItem;
@@ -152,6 +172,10 @@ DESCRIPTION
 			
 		}
 		
+		function opacitySeqButtonClicked()
+		{
+			opacityConnect();
+		}
     }
     //==================================================
     
@@ -188,60 +212,86 @@ DESCRIPTION
 		
         var content = mainPalette.add('group');
         content.alignChildren = ['fill','top'];
-        content.orientation = 'column';
+        content.orientation = 'stack';
         content.margins = 0;
         content.spacing = 2;
 		
-		var connectionGroup = content.add('group');
-		connectionGroup.alignChildren = ['fill','fill'];
-        connectionGroup.orientation = 'column';
-        connectionGroup.margins = 0;
-        connectionGroup.spacing = 2;
+		// ----------- MAIN -----------
 		
-		var masterGroup = connectionGroup.add('group');
-		masterGroup.alignment = ['fill','top'];
-		masterGroup.alignChildren = ['fill','fill'];
-        masterGroup.orientation = 'row';
-        masterGroup.margins = 0;
-        masterGroup.spacing = 2;
+		var mainGroup = content.add('group');
+		mainGroup.alignment = ['fill','top'];
+		mainGroup.alignChildren = ['fill','fill'];
+        mainGroup.orientation = 'column';
+        mainGroup.margins = 0;
+        mainGroup.spacing = 2;
 		
-		var masterEdit = masterGroup.add('edittext',undefined,"Control value...");
+		mainGroup.add('statictext',undefined,"Master type:");
+		var valueButton = mainGroup.add('button',undefined,"Property Value");
+		valueButton.onClick = valueButtonClicked;
+		var distanceButton = mainGroup.add('button',undefined,"Distance between layers");
+		var velocityButton = mainGroup.add('button',undefined,"Property Velocity");
+		
+		mainGroup.add('statictext',undefined,"Tools:");
+		var opacitySeqButton = mainGroup.add('button',undefined,"Opacity Sequence");
+		opacitySeqButton.onClick = opacitySeqButtonClicked;
+		
+		// -------- VALUE ------------
+		
+		var valueGroup = content.add('group');
+		valueGroup.alignment = ['fill','top'];
+		valueGroup.alignChildren = ['fill','fill'];
+        valueGroup.orientation = 'column';
+        valueGroup.margins = 0;
+        valueGroup.spacing = 2;
+		
+		var masterValueGroup = valueGroup.add('group');
+		masterValueGroup.alignment = ['fill','top'];
+		masterValueGroup.alignChildren = ['fill','fill'];
+        masterValueGroup.orientation = 'row';
+        masterValueGroup.margins = 0;
+        masterValueGroup.spacing = 2;
+		
+		var masterEdit = masterValueGroup.add('edittext',undefined,"Control value...");
 		masterEdit.onActivate = function(){if (masterEdit.text == "Control value...") masterEdit.text = '';};
 		
-		var masterPickButton = masterGroup.add('button',undefined,"P");
+		var masterPickButton = masterValueGroup.add('button',undefined,"P");
 		masterPickButton.alignment = ['right','fill'];
 		masterPickButton.maximumSize = [25,25];
 		masterPickButton.helpTip = "Pick current property";
 		masterPickButton.onClick = masterPickButtonClicked;
-		/*var masterSelectButton = masterGroup.add('button',undefined,"S");
+		/*var masterSelectButton = masterValueGroup.add('button',undefined,"S");
 		masterSelectButton.alignment = ['right','fill'];
 		masterSelectButton.maximumSize = [25,25];*/
 		
-		var optionsGroup = connectionGroup.add('group');
-		optionsGroup.alignment = ['fill','top'];
-		optionsGroup.alignChildren = ['fill','center'];
-        optionsGroup.orientation = 'row';
-        optionsGroup.margins = 0;
-        optionsGroup.spacing = 2;
+		var optionsValueGroup = valueGroup.add('group');
+		optionsValueGroup.alignment = ['fill','top'];
+		optionsValueGroup.alignChildren = ['fill','center'];
+        optionsValueGroup.orientation = 'row';
+        optionsValueGroup.margins = 0;
+        optionsValueGroup.spacing = 2;
 		
-		var masterXButton = optionsGroup.add('radioButton',undefined,"X");
-		masterXButton.value = true;
-		var masterYButton = optionsGroup.add('radioButton',undefined,"Y");
-		var masterZButton = optionsGroup.add('radioButton',undefined,"Z");
-		masterXButton.enabled = false;
-		masterYButton.enabled = false;
-		masterZButton.enabled = false;
+		var masterValueXButton = optionsValueGroup.add('radioButton',undefined,"X");
+		masterValueXButton.value = true;
+		var masterValueYButton = optionsValueGroup.add('radioButton',undefined,"Y");
+		var masterValueZButton = optionsValueGroup.add('radioButton',undefined,"Z");
+		masterValueXButton.enabled = false;
+		masterValueYButton.enabled = false;
+		masterValueZButton.enabled = false;
 		
-		var masterMinText = optionsGroup.add('edittext',undefined,"Min Value");
-		masterMinText.onActivate = function(){if (masterMinText.text == "Min Value") masterMinText.text = '';};
-		var masterMaxText = optionsGroup.add('edittext',undefined,"Max Value");
-		masterMaxText.onActivate = function(){if (masterMaxText.text == "Max Value") masterMaxText.text = '';};
+		var masterValueMinText = optionsValueGroup.add('edittext',undefined,"Min Value");
+		masterValueMinText.onActivate = function(){if (masterValueMinText.text == "Min Value") masterValueMinText.text = '';};
+		var masterValueMaxText = optionsValueGroup.add('edittext',undefined,"Max Value");
+		masterValueMaxText.onActivate = function(){if (masterValueMaxText.text == "Max Value") masterValueMaxText.text = '';};
+	
 		
-		var opacitySeqButton = content.add('button',undefined,"Opacity Sequence");
-		opacitySeqButton.onClick = opacitySeqButtonClicked;
-
-		var applyButton = content.add('button',undefined,"Connect");
-		applyButton.onClick = applyButtonClicked;
+		var applyValueButton = valueGroup.add('button',undefined,"Connect to selected properties");
+		applyValueButton.onClick = applyButtonClicked;
+		var opacityValueButton = valueGroup.add('button',undefined,"Connect to opacities");
+		opacityValueButton.onClick = opacityValueButtonClicked;
+		var cancelValueButton = valueGroup.add('button',undefined,"< Back");
+		cancelValueButton.onClick = cancelValueButtonClicked;
+		
+		valueGroup.hide();
     }
     // ==================================================
     
