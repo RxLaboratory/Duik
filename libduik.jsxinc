@@ -659,12 +659,12 @@ this.exposure = 2;
 /////////////////////////////
 (function ()
 {
-if (Duik.versionNumber != 15.07)
+if (Duik.versionNumber != 15.08)
 {
 delete Duik;
 Duik = {};
-Duik.version = "15.07";
-Duik.versionNumber = 15.07;
+Duik.version = "15.08";
+Duik.versionNumber = 15.08;
 Duik.usePresets = true;
 Duik.presetPath = $.fileName.substring(0,$.fileName.lastIndexOf("/")) + "/";
 Duik.presetEffectsInstalledVersion = 0.0;
@@ -751,6 +751,268 @@ Duik.effects.Bezier_IK = 'PSEUDO/DUIK_Bezier_IK';
 Duik.effects.Bezier_IK.ffx = 'DUIK_Bezier_IK';
 Duik.effects.Foot_Roll = 'PSEUDO/DUIK_Foot_Roll';
 Duik.effects.Foot_Roll.ffx = 'DUIK_Foot_Roll';
+Duik.expressions = {};
+// Associative array that converts property match names to their compact English expression statements.
+// For simple conversions, quote the result!
+Duik.expressions.compactExpressions =
+	{
+		"ADBE Transform Group":"'transform'",
+		// Handle camera/light vs. AV layers
+		"ADBE Anchor Point":"((prop.propertyGroup(prop.propertyDepth).property('intensity')!=null) || (prop.propertyGroup(prop.propertyDepth).property('zoom')!=null)) ? '.pointOfInterest' : '.anchorPoint'",
+		"ADBE Position":"'.position'",
+		"ADBE Scale":"'.scale'",
+		"ADBE Orientation":"'.orientation'",
+		"ADBE Rotate X":"'.xRotation'",
+		"ADBE Rotate Y":"'.yRotation'",
+		// Handle 3D vs. 2D layers
+		"ADBE Rotate Z":"(prop.propertyGroup(prop.propertyDepth).threeDLayer || (prop.propertyGroup(prop.propertyDepth).property('intensity')!=null) || (prop.propertyGroup(prop.propertyDepth).property('zoom')!=null)) ? '.zRotation' : '.rotation'",
+		"ADBE Opacity":"'.opacity'",
+		"ADBE Material Options Group":"'materialOption'",
+		"ADBE Casts Shadows":"'.castsShadows'",
+		"ADBE Light Transmission":"'.lightTransmission'",
+		"ADBE Accepts Shadows":"'.acceptsShadows'",
+		"ADBE Accepts Lights":"'.acceptsLights'",
+		"ADBE Ambient Coefficient":"'.ambient'",
+		"ADBE Diffuse Coefficient":"'.diffuse'",
+		"ADBE Specular Coefficient":"'.specular'",
+		"ADBE Shininess Coefficient":"'.shininess'",
+		"ADBE Metal Coefficient":"'.metal'",
+		"ADBE Light Options Group":"'lightOption'",
+		"ADBE Light Intensity":"'.intensity'",
+		"ADBE Light Color":"'.color'",
+		"ADBE Light Cone Angle":"'.coneAngle'",
+		"ADBE Light Cone Feather 2":"'.coneFeather'",
+		"ADBE Light Shadow Darkness":"'.shadowDarkness'",
+		"ADBE Light Shadow Diffusion":"'.shadowDiffusion'",
+		"ADBE Camera Options Group":"'cameraOption'",
+		"ADBE Camera Zoom":"'.zoom'",
+		"ADBE Camera Depth of Field":"'.depthOfField'",
+		"ADBE Camera Focus Distance":"'.focusDistance'",
+		"ADBE Camera Aperture":"'.aperture'",
+		"ADBE Camera Blur Level":"'.blurLevel'",
+		"ADBE Text Properties":"'text'",
+		"ADBE Text Document":"'.sourceText'",
+		"ADBE Text Path Options":"'.pathOption'",
+		"ADBE Text Path":"'.path'",
+		"ADBE Text Reverse Path":"'.reversePath'",
+		"ADBE Text Perpendicular To Path":"'.perpendicularToPath'",
+		"ADBE Text Force Align Path":"'.forceAlignment'",
+		"ADBE Text First Margin":"'.firstMargin'",
+		"ADBE Text Last Margin":"'.lastMargin'",
+		"ADBE Text More Options":"'.moreOption'",
+		"ADBE Text Anchor Point Option":"'.anchorPointGrouping'",
+		"ADBE Text Anchor Point Align":"'.groupingAlignment'",
+		"ADBE Text Render Order":"'.fillANdStroke'",
+		"ADBE Text Character Blend Mode":"'.interCharacterBlending'",
+		"ADBE Text Animators":"'.animator'",
+		"ADBE Text Selectors":"'.selector'",
+		"ADBE Text Percent Start":"'.start'",
+		"ADBE Text Percent End":"'.end'",
+		"ADBE Text Percent Offset":"'.offset'",
+		"ADBE Text Index Start":"'.start'",
+		"ADBE Text Index End":"'.end'",
+		"ADBE Text Index Offset":"'.offset'",
+		"ADBE Text Range Advanced":"'.advanced'",
+		"ADBE Text Range Units":"'.units'",
+		"ADBE Text Range Type2":"'.basedOn'",
+		"ADBE Text Selector Mode":"'.mode'",
+		"ADBE Text Selector Max Amount":"'.amount'",
+		"ADBE Text Range Shape":"'.shape'",
+		"ADBE Text Selector Smoothness":"'.smoothness'",
+		"ADBE Text Levels Max Ease":"'.easeHigh'",
+		"ADBE Text Levels Min Ease":"'.easeLow'",
+		"ADBE Text Randomize Order":"'.randomizeOrder'",
+		"ADBE Text Random Seed":"'.randomSeed'",
+		"ADBE Text Selector Mode":"'.mode'",
+		"ADBE Text Wiggly Max Amount":"'.maxAmount'",
+		"ADBE Text Wiggly Min Amount":"'.minAmount'",
+		"ADBE Text Range Type2":"'.basedOn'",
+		"ADBE Text Temporal Freq":"'.wigglesSecond'",
+		"ADBE Text Character Correlation":"'.correlation'",
+		"ADBE Text Temporal Phase":"'.temporalPhase'",
+		"ADBE Text Spatial Phase":"'.spatialPhase'",
+		"ADBE Text Wiggly Lock Dim":"'.lockDimensions'",
+		"ADBE Text Wiggly Random Seed":"'.randomSeed'",
+		"ADBE Text Range Type2":"'.basedOn'",
+		"ADBE Text Expressible Amount":"'.amount'",
+		"ADBE Text Animator Properties":"'.property'",
+		"ADBE Text Anchor Point 3D":"'.anchorPoint'",
+		"ADBE Text Position 3D":"'.position'",
+		"ADBE Text Scale 3D":"'.scale'",
+		"ADBE Text Skew":"'.skew'",
+		"ADBE Text Skew Axis":"'.skewAxis'",
+		"ADBE Text Rotation X":"'.xRotation'",
+		"ADBE Text Rotation Y":"'.yRotation'",
+		"ADBE Text Rotation":"'.zRotation'",
+		"ADBE Text Opacity":"'.opacity'",
+		"ADBE Text Fill Opacity":"'.fillOpacity'",
+		"ADBE Text Fill Color":"'.fillColor'",
+		"ADBE Text Fill Hue":"'.fillHue'",
+		"ADBE Text Fill Saturation":"'.fillSaturation'",
+		"ADBE Text Fill Brightness":"'.fillBrightness'",
+		"ADBE Text Stroke Opacity":"'.strokeOpacity'",
+		"ADBE Text Stroke Color":"'.strokeColor'",
+		"ADBE Text Stroke Hue":"'.strokeHue'",
+		"ADBE Text Stroke Saturation":"'.strokeSaturation'",
+		"ADBE Text Stroke Brightness":"'.strokeBrightness'",
+		"ADBE Text Stroke Width":"'.strokeWidth'",
+		"ADBE Text Line Anchor":"'.lineAnchor'",
+		"ADBE Text Line Spacing":"'.lineSpacing'",
+		"ADBE Text Track Type":"'.trackingType'",
+		"ADBE Text Tracking Amount":"'.trackingAmount'",
+		"ADBE Text Character Change Type":"'.characterAlignment'",
+		"ADBE Text Character Range":"'.characterRange'",
+		"ADBE Text Character Replace":"'.characterValue'",
+		"ADBE Text Character Offset":"'.characterOffset'",
+		"ADBE Text Blur":"'.blur'",
+		"ADBE Mask Parade":"'mask'",
+		"ADBE Mask Shape":"'.maskPath'",
+		"ADBE Mask Feather":"'.maskFeather'",
+		"ADBE Mask Opacity":"'.maskOpacity'",
+		"ADBE Mask Offset":"'.maskExpansion'",
+		"ADBE Effect Parade":"'effect'",
+		"ADBE Paint Group":"'.stroke'",
+		"ADBE Paint Shape":"'.path'",
+		"ADBE Paint Properties":"'.strokeOption'",
+		"ADBE Paint Begin":"'.start'",
+		"ADBE Paint End":"'.end'",
+		"ADBE Paint Color":"'.color'",
+		"ADBE Paint Diameter":"'.diameter'",
+		"ADBE Paint Angle":"'.angle'",
+		"ADBE Paint Hardness":"'.hardness'",
+		"ADBE Paint Roundness":"'.roundness'",
+		"ADBE Paint Tip Spacing":"'.spacing'",
+		"ADBE Paint Target Channels":"'.channels'",
+		"ADBE Paint Opacity":"'.opacity'",
+		"ADBE Paint Flow":"'.flow'",
+		"ADBE Paint Clone Layer":"'.cloneSource'",
+		"ADBE Paint Clone Position":"'.clonePosition'",
+		"ADBE Paint Clone Time":"'.cloneTime'",
+		"ADBE Paint Clone Time Shift":"'.cloneTimeShift'",
+		"ADBE Paint Transform":"'.transform'",
+		"ADBE Paint Anchor Point":"'.anchorPoint'",
+		"ADBE Paint Position":"'.position'",
+		"ADBE Paint Scale":"'.scale'",
+		"ADBE Paint Rotation":"'.rotation'",		
+		"ADBE MTrackers":"'motionTracker'",
+		"ADBE MTracker Pt Feature Center":"'.featureCenter'",
+		"ADBE MTracker Pt Feature Size":"'.featureSize'",
+		"ADBE MTracker Pt Search Ofst":"'.searchOffset'",
+		"ADBE MTracker Pt Search Size":"'.searchSize'",
+		"ADBE MTracker Pt Confidence":"'.confidence'",
+		"ADBE MTracker Pt Attach Pt":"'.attachPoint'",
+		"ADBE MTracker Pt Attach Pt Ofst":"'.attachPointOffset'",
+		"ADBE Audio Group":"'audio'",
+		"ADBE Audio Levels":"'.audioLevels'",
+		"ADBE Time Remapping":"'timeRemap'",
+		"ADBE Layer Styles":"'layerStyle'",
+		"ADBE Blend Options Group":"'.blendingOption'",
+			"ADBE Global Angle2":"'.globalLightAngle'",
+			"ADBE Global Altitude2":"'.globalLightAltitude'",
+			"ADBE Adv Blend Group":"'.advancedBlending'",
+			"ADBE Layer Fill Opacity2":"'.fillOpacity'",
+			"ADBE R Channel Blend":"'.red'",
+			"ADBE G Channel Blend":"'.green'",
+			"ADBE B Channel Blend":"'.blue'",
+			"ADBE Blend Interior":"'.blendInteriorStylesAsGroup'",
+			"ADBE Blend Ranges":"'.useBlendRangesFromSource'",
+		"dropShadow/enabled":"'.dropShadow'",
+			"dropShadow/mode2":"'.blendMode'",
+			"dropShadow/color":"'.color'",
+			"dropShadow/opacity":"'.opacity'",
+			"dropShadow/useGlobalAngle":"'.useGlobalLight'",
+			"dropShadow/localLightingAngle":"'.angle'",
+			"dropShadow/distance":"'.distance'",
+			"dropShadow/chokeMatte":"'.spread'",
+			"dropShadow/blur":"'.size'",
+			"dropShadow/noise":"'.noise'",
+			"dropShadow/layerConceals":"'.layerKnocksOutDropShadow'",
+		"innerShadow/enabled":"'.innerShadow'",
+			"innerShadow/mode2":"'.blendMode'",
+			"innerShadow/color":"'.color'",
+			"innerShadow/opacity":"'.opacity'",
+			"innerShadow/useGlobalAngle":"'.useGlobalLight'",
+			"innerShadow/localLightingAngle":"'.angle'",
+			"innerShadow/distance":"'.distance'",
+			"innerShadow/chokeMatte":"'.choke'",
+			"innerShadow/blur":"'.size'",
+			"innerShadow/noise":"'.noise'",
+		"outerGlow/enabled":"'.outerGlow'",
+			"outerGlow/mode2":"'.blendMode'",
+			"outerGlow/opacity":"'.opacity'",
+			"outerGlow/noise":"'.noise'",
+			"outerGlow/AEColorChoice":"'.colorType'",
+			"outerGlow/color":"'.color'",
+			"outerGlow/gradientSmoothness":"'.gradientSmoothness'",
+			"outerGlow/glowTechnique":"'.technique'",
+			"outerGlow/chokeMatte":"'.spread'",
+			"outerGlow/blur":"'.size'",
+			"outerGlow/inputRange":"'.range'",
+			"outerGlow/shadingNoise":"'.jitter'",
+		"innerGlow/enabled":"'.innerGlow'",
+			"innerGlow/mode2":"'.blendMode'",
+			"innerGlow/opacity":"'.opacity'",
+			"innerGlow/noise":"'.noise'",
+			"innerGlow/AEColorChoice":"'.colorType'",
+			"innerGlow/color":"'.color'",
+			"innerGlow/gradientSmoothness":"'.gradientSmoothness'",
+			"innerGlow/glowTechnique":"'.technique'",
+			"innerGlow/innerGlowSource":"'.source'",
+			"innerGlow/chokeMatte":"'.choke'",
+			"innerGlow/blur":"'.size'",
+			"innerGlow/inputRange":"'.range'",
+			"innerGlow/shadingNoise":"'.jitter'",
+		"bevelEmboss/enabled":"'.bevelAndEmboss'",
+			"bevelEmboss/bevelStyle":"'.style'",
+			"bevelEmboss/bevelTechnique":"'.technique'",
+			"bevelEmboss/strengthRatio":"'.depth'",
+			"bevelEmboss/bevelDirection":"'.direction'",
+			"bevelEmboss/blur":"'.size'",
+			"bevelEmboss/softness":"'.soften'",
+			"bevelEmboss/useGlobalAngle":"'.useGlobalLight'",
+			"bevelEmboss/localLightingAngle":"'.angle'",
+			"bevelEmboss/localLightingAltitude":"'.altitude'",
+			"bevelEmboss/highlightMode":"'.highlightMode'",
+			"bevelEmboss/highlightColor":"'.highlightColor'",
+			"bevelEmboss/highlightOpacity":"'.highlightOpacity'",
+			"bevelEmboss/shadowMode":"'.shadowMode'",
+			"bevelEmboss/shadowColor":"'.shadowColor'",
+			"bevelEmboss/shadowOpacity":"'.shadowOpacity'",
+		"chromeFX/enabled":"'.satin'",
+			"chromeFX/mode2":"'.blendMode'",
+			"chromeFX/color":"'.color'",
+			"chromeFX/opacity":"'.opacity'",
+			"chromeFX/localLightingAngle":"'.angle'",
+			"chromeFX/distance":"'.distance'",
+			"chromeFX/blur":"'.size'",
+			"chromeFX/invert":"'.invert'",
+		"solidFill/enabled":"'.colorOverlay'",
+			"solidFill/mode2":"'.blendMode'",
+			"solidFill/color":"'.color'",
+			"solidFill/opacity":"'.opacity'",
+		"gradientFill/enabled":"'.gradientOverlay'",
+			"gradientFill/mode2":"'.blendMode'",
+			"gradientFill/opacity":"'.opacity'",
+			"gradientFill/gradientSmoothness":"'.gradientSmoothness'",
+			"gradientFill/angle":"'.angle'",
+			"gradientFill/type":"'.style'",
+			"gradientFill/reverse":"'.reverse'",
+			"gradientFill/align":"'.alignWithLayer'",
+			"gradientFill/scale":"'.scale'",
+			"gradientFill/offset":"'.offset'",
+		"patternFill/enabled":"'.patternOverlay'",
+			"patternFill/mode2":"'.blendMode'",
+			"patternFill/opacity":"'.opacity'",
+			"patternFill/align":"'.linkWithLayer'",
+			"patternFill/scale":"'.scale'",
+			"patternFill/phase":"'.offset'",
+		"frameFX/enabled":"'.stroke'",
+			"frameFX/mode2":"'.blendMode'",
+			"frameFX/color":"'.color'",
+			"frameFX/size":"'.size'",
+			"frameFX/opacity":"'.opacity'",
+			"frameFX/style":"'.position'",
+	};
 
 //detect AE Version
 var reV = /^(\d+\.?\d*)/i;
@@ -774,7 +1036,7 @@ if (typeof Duik.setup !== 'object')
 Duik.setup = {};
 //Duik.setup.presetEffects String
 {
-Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.07 -->\r\n" +
+Duik.setup.presetEffects = "<!-- BEGIN DUIK PSEUDO EFFECTS v15.08 -->\r\n" +
 "<Effect matchname='PSEUDO/DUIK_One_Layer_IK' name='$$$/AE/Preset/1ik=DUIK_One_Layer_IK'>\r\n" +
 "    <Slider name='$$$/AE/Preset/DuikWeight=Weight' default='100' valid_min='-1000' valid_max='1000' slider_min='0' slider_max='100' precision='1' DISPLAY_PERCENT='true'/>\r\n" +
 "    <Checkbox name='$$$/AE/Preset/DuikReverse=Reverse' default='true'/>\r\n" +
@@ -1332,6 +1594,7 @@ if (typeof Duik.js.random !== 'function')
 {
 Duik.js.random = function (min, max)
 {
+	$.sleep(50);//if random is called to frequently, returns always the same value ; trying to fix this with sleep
 return Math.random() * (max - min) + min;
 }
 }
@@ -2454,44 +2717,56 @@ controllers.push(controller);
 return controllers;
 }
 }
+// GET EXPRESSION LINK
+//returns string
+if (typeof Duik.utils.getExpressionLink !== 'function')
+{
+	Duik.utils.getExpressionLink = function (prop)
+	{
+		//get compact expression from matchName, if available
+		function getCompactExpression(prop, matchName, name)
+		{
+			var translatedName = Duik.expressions.compactExpressions[matchName];
+			
+			if (translatedName !== undefined)
+				return eval(translatedName);
+			else
+				return ("(" + name + ")");
+		}
+		
+		var exprCode = "";
+		var name;
+		while (prop.parentProperty !== null)
+		{			
+			if (prop.propertyType == PropertyType.PROPERTY ) name = prop.propertyIndex;
+			else name = "\"" + prop.name + "\"";
+			compactName = getCompactExpression(prop, prop.matchName, name);
+			exprCode = compactName + exprCode;
+
+			// Traverse up the property tree
+			prop = prop.parentProperty;
+		}
+		
+		var comp = prop.containingComp;
+		// Prefix the layer reference
+		name = "\"" + prop.name + "\"";
+		exprCode = "layer(" + name + ")." + exprCode;
+		// Prefix the comp reference
+		exprCode = "comp(\"" + comp.name + "\")." + exprCode;
+		
+		return exprCode;
+	}
+}
 // PICKWHIP
 //returns void
 if (typeof Duik.utils.pickWhip !== 'function')
 {
-Duik.utils.pickWhip = function (childProp,parentProp)
-{
-if (!childProp.canSetExpression) return;
-var exprCode = "";
-var prop = parentProp;
-var name;
-while (prop.parentProperty !== null)
-{
-if (prop.matchName == "ADBE Effect Parade")
-{
-exprCode = ".effect" + exprCode;
-}
-else if (prop.matchName == "ADBE Mask Parade")
-{
-exprCode = ".mask" + exprCode;
-}
-else
-{
-name = "\"" + prop.name + "\"";
-exprCode = "(" + name + ")" + exprCode;
-}
+	Duik.utils.pickWhip = function (childProp,parentProp)
+	{
+		if (!childProp.canSetExpression) return;
 
-// Traverse up the property tree
-prop = prop.parentProperty;
-}
-var comp = prop.containingComp;
-// Prefix the layer reference
-name = "\"" + prop.name + "\"";
-exprCode = "layer(" + name + ")" + exprCode;
-// Prefix the comp reference
-exprCode = "comp(\"" + comp.name + "\")." + exprCode;
-
-childProp.expression = exprCode;
-}
+		childProp.expression = Duik.utils.getExpressionLink(parentProp);
+	}
 }
 // LINK PROPERTIES
 //returns void
@@ -3260,6 +3535,20 @@ if (layer.comment.indexOf(groupComment) < 0)
 {
 layer.comment = layer.comment + groupComment;
 }
+}
+}
+//RANDOM COLOR
+if (typeof Duik.utils.randomColor !== 'function')
+{
+Duik.utils.randomColor = function ()
+{
+	var color = [0,0,0,1];
+	for (var i = 0 ; i < 3 ; i++)
+	{
+		color[i] = Math.random();
+		$.sleep(10);
+	}
+	return color;
 }
 }
 }
@@ -4513,6 +4802,7 @@ effect.name = effectName;
 if (clockWise) effect(1).setValue(1);
 effect(10).setValue(0);
 
+
 if (threeD) {
 direction = controller.Effects.addProperty("ADBE Angle Control");
 direction.name = Duik.uiStrings.ikDirection + " " + endName;
@@ -4566,18 +4856,15 @@ endEffect(1).setValue(zeroValue);
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE BOUT
 var endExpression = "//Duik.twoLayerIK\r\n" +
-"rootName = '" + rootName + "';\n" +
-"endName = '" + endName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"end = thisComp.layer(endName);\n";
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"layer2 = thisComp.layer('" + endName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n";
 
 if (shapeLayer) endExpression += "zeroName = \"" + endZeroName + "\";\n" +
 "zero = thisComp.layer(zeroName);\n";
-else endExpression += "endPos = end.effect(\'" + endEffect.name + "')(1);\n";
+else endExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
 
-endExpression += "root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
-"ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
+endExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
 "FK = ctrlEffect(5);\n" +
 "IKFK = ctrlEffect(3) == 0;\n" +
 "cw = ctrlEffect(1) == 1;\n" +
@@ -4585,11 +4872,11 @@ endExpression += "root = thisComp.layer(rootName);\n" +
 "return L.toWorld(L.anchorPoint);\n" +
 "}\n" +
 "function ik() {\n" +
-"A = getWorldPos(root);\n" +
-"B = getWorldPos(end);\n";
+"A = getWorldPos(layer1);\n" +
+"B = getWorldPos(layer2);\n";
 
 if (shapeLayer) endExpression += "C = getWorldPos(zero);\n";
-else endExpression += "C = end.toWorld(endPos);\n";
+else endExpression += "C = layer2.toWorld(endPos);\n";
 
 endExpression += "E = getWorldPos(controller);\n" +
 "a = length(B,C);\n" +
@@ -4616,18 +4903,15 @@ else {end.transform.rotation.expression = endExpression; end.transform.rotation.
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE RACINE
 var rootExpression = "//Duik.twoLayerIK\n" +
-"rootName = '" + rootName + "';\n" +
-"endName = '" + endName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"end = thisComp.layer(endName);\n";
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"layer2 = thisComp.layer('" + endName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n";
 
 if (shapeLayer) rootExpression += "zeroName = \"" + endZeroName + "\";\n" +
 "zero = thisComp.layer(zeroName);\n";
-else rootExpression += "endPos = end.effect(\'" + endEffect.name + "')(1);\n";
+else rootExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
 
-rootExpression += "root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
-"ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
+rootExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
 "limit = effect('" + limit.name + "')(1);\n" +
 "FK = ctrlEffect(4);\n" +
 "IKFK = ctrlEffect(3) == 0;\n" +
@@ -4636,11 +4920,11 @@ rootExpression += "root = thisComp.layer(rootName);\n" +
 "return L.toWorld(L.anchorPoint);\n" +
 "}\n" +
 "function ik() {\n" +
-"A = getWorldPos(root);\n" +
-"B = getWorldPos(end);\n";
+"A = getWorldPos(layer1);\n" +
+"B = getWorldPos(layer2);\n";
 
 if (shapeLayer) rootExpression += "C = getWorldPos(zero);\n";
-else rootExpression += "C = end.toWorld(endPos);\n";
+else rootExpression += "C = layer2.toWorld(endPos);\n";
 
 rootExpression += "E = getWorldPos(controller);\n" +
 "a = length(B,C);\n" +
@@ -4718,10 +5002,8 @@ var apracine = root.transform.anchorPoint.value.toSource();
 var apbout = end.transform.anchorPoint.value.toSource();
 
 var expressionstretchbout = "//Duik.twoLayerIK.stretch\n" +
-"rootName = '" + rootName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n" +
 "ctrlEffect = controller.effect('" + effectName + "');\n" +
 "stretch = ctrlEffect(9);\n" +
 "auto = ctrlEffect(8) == 1;\n" +
@@ -4737,7 +5019,7 @@ var expressionstretchbout = "//Duik.twoLayerIK.stretch\n" +
 "boneStretch = 0;\n" +
 "proportion = dist1/(IKLength);\n" +
 "posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(root);\n" +
+"posR = getWorldPos(layer1);\n" +
 "distC = length(posC,posR);\n" +
 "shrinkMax = IKLength*shrinkVal;\n" +
 "shrink = 0;\n" +
@@ -4752,10 +5034,8 @@ var expressionstretchbout = "//Duik.twoLayerIK.stretch\n" +
 end.transform.position.expression = expressionstretchbout;
 
 var expressionstretchgoal = "//Duik.twoLayerIK.stretch\n" +
-"rootName = '" + rootName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n" +
 "ctrlEffect = controller.effect('" + effectName + "');\n" +
 "stretch = ctrlEffect(9);\n" +
 "auto = ctrlEffect(8) == 1;\n" +
@@ -4771,7 +5051,7 @@ var expressionstretchgoal = "//Duik.twoLayerIK.stretch\n" +
 "boneStretch = 0;\n" +
 "proportion = dist2/(IKLength);\n" +
 "posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(root);\n" +
+"posR = getWorldPos(layer1);\n" +
 "distC = length(posC,posR);\n" +
 "shrinkMax = IKLength*shrinkVal;\n" +
 "shrink = 0;\n" +
@@ -4880,20 +5160,16 @@ endEffect(1).setValue(zeroValue);
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE BOUT
 endExpression = "//Duik.threeLayerIK\n" +
-"rootName = '" + rootName + "';\n" +
-"middleName = '" + middleName + "';\n" +
-"endName = '" + endName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"end = thisComp.layer(endName);\n";
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"layer2 = thisComp.layer('" + middleName + "');\n" +
+"layer3 = thisComp.layer('" + endName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n";
 
 if (shapeLayer) endExpression += "zeroName = \"" + endZeroName + "\";\n" +
 "zero = thisComp.layer(zeroName);\n";
-else endExpression += "endPos = end.effect(\'" + endEffect.name + "')(1);\n";
+else endExpression += "endPos = layer3.effect(\'" + endEffect.name + "')(1);\n";
 
-endExpression += "root = thisComp.layer(rootName);\n" +
-"middle = thisComp.layer(middleName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
-"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+endExpression += "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "FK = ctrlEffect(6);\n" +
 "IKFK = ctrlEffect(3) == 0;\n" +
 "cw = ctrlEffect(1) == 1;\n" +
@@ -4909,12 +5185,12 @@ endExpression += "root = thisComp.layer(rootName);\n" +
 "return radiansToDegrees(angle);\n" +
 "}\n" +
 "function ik() {\n" +
-"var uPos = getWorldPos(root);\n" +
-"var mPos = getWorldPos(middle);\n" +
-"var lPos = getWorldPos(end);\n";
+"var uPos = getWorldPos(layer1);\n" +
+"var mPos = getWorldPos(layer2);\n" +
+"var lPos = getWorldPos(layer3);\n";
 
 if (shapeLayer) endExpression += "var zPos = getWorldPos(zero);\n";
-else endExpression += "var zPos = end.toWorld(endPos);\n";
+else endExpression += "var zPos = layer3.toWorld(endPos);\n";
 
 endExpression += "var cPos = getWorldPos(controller);\n" +
 "var uLength = length(uPos,mPos);\n" +
@@ -4947,20 +5223,16 @@ end.transform.rotation.setValue(0);
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE MIDDLE
 middleExpression ="//Duik.threeLayerIK\n" +
-"rootName = '" + rootName + "';\n" +
-"middleName = '" + middleName + "';\n" +
-"endName = '" + endName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"end = thisComp.layer(endName);\n";
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"layer2 = thisComp.layer('" + middleName + "');\n" +
+"layer3 = thisComp.layer('" + endName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n";
 
 if (shapeLayer) middleExpression += "zeroName = \"" + endZeroName + "\";\n" +
 "zero = thisComp.layer(zeroName);\n";
-else middleExpression += "endPos = end.effect(\'" + endEffect.name + "')(1);\n";
+else middleExpression += "endPos = layer3.effect(\'" + endEffect.name + "')(1);\n";
 
-middleExpression += "root = thisComp.layer(rootName);\n" +
-"middle = thisComp.layer(middleName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
-"ctrlEffect = controller.effect('" + effect.name + "');\n" +
+middleExpression += "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "FK = ctrlEffect(5);\n" +
 "IKFK = ctrlEffect(3) == 0;\n" +
 "cw = ctrlEffect(1) == 1;\n" +
@@ -4976,12 +5248,12 @@ middleExpression += "root = thisComp.layer(rootName);\n" +
 "return radiansToDegrees(angle);\n" +
 "}\n" +
 "function ik() {\n" +
-"var uPos = getWorldPos(root);\n" +
-"var mPos = getWorldPos(middle);\n" +
-"var lPos = getWorldPos(end);\n";
+"var uPos = getWorldPos(layer1);\n" +
+"var mPos = getWorldPos(layer2);\n" +
+"var lPos = getWorldPos(layer3);\n";
 
 if (shapeLayer) middleExpression += "var zPos = getWorldPos(zero);\n";
-else middleExpression += "var zPos = end.toWorld(endPos);\n";
+else middleExpression += "var zPos = layer3.toWorld(endPos);\n";
 
 middleExpression += "var cPos = getWorldPos(controller);\n" +
 "var uLength = length(uPos,mPos);\n" +
@@ -5014,20 +5286,16 @@ middle.transform.rotation.setValue(0);
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE ROOT
 rootExpression = "//Duik.threeLayerIK\n" +
-"rootName = '" + rootName + "';\n" +
-"middleName = '" + middleName + "';\n" +
-"endName = '" + endName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"end = thisComp.layer(endName);\n";
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"layer2 = thisComp.layer('" + middleName + "');\n" +
+"layer3 = thisComp.layer('" + endName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n";
 
 if (shapeLayer) rootExpression += "zeroName = \"" + endZeroName + "\";\n" +
 "zero = thisComp.layer(zeroName);\n";
-else rootExpression += "endPos = end.effect(\'" + endEffect.name + "')(1);\n";
+else rootExpression += "endPos = layer3.effect(\'" + endEffect.name + "')(1);\n";
 
 rootExpression += "limit = effect('" + limit.name + "')(1);\n" +
-"root = thisComp.layer(rootName);\n" +
-"middle = thisComp.layer(middleName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
 "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "FK = ctrlEffect(4);\n" +
 "IKFK = ctrlEffect(3) == 0;\n" +
@@ -5044,12 +5312,12 @@ rootExpression += "limit = effect('" + limit.name + "')(1);\n" +
 "return radiansToDegrees(angle);\n" +
 "}\n" +
 "function ik() {\n" +
-"var uPos = getWorldPos(root);\n" +
-"var mPos = getWorldPos(middle);\n" +
-"var lPos = getWorldPos(end);\n";
+"var uPos = getWorldPos(layer1);\n" +
+"var mPos = getWorldPos(layer2);\n" +
+"var lPos = getWorldPos(layer3);\n";
 
 if (shapeLayer) rootExpression += "var zPos = getWorldPos(zero);\n";
-else rootExpression += "var zPos = end.toWorld(endPos);\n";
+else rootExpression += "var zPos = layer3.toWorld(endPos);\n";
 
 rootExpression += "var cPos = getWorldPos(controller);\n" +
 "var uLength = length(uPos,mPos);\n" +
@@ -5095,10 +5363,8 @@ var apend = end.transform.anchorPoint.value.toSource();
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE MIDDLE
 middle.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
-"rootName = '" + rootName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n" +
 "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "stretch = ctrlEffect(10);\n" +
 "auto = ctrlEffect(9) == 1;\n" +
@@ -5121,7 +5387,7 @@ middle.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
 "boneStretch = 0;\n" +
 "proportion = dist1/(IKLength);\n" +
 "posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(root);\n" +
+"posR = getWorldPos(layer1);\n" +
 "distC = length(posC,posR);\n" +
 "shrinkMax = IKLength*shrinkVal;\n" +
 "shrink = 0;\n" +
@@ -5137,10 +5403,8 @@ middle.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
 //=========================================================
 //EXPRESSION A INSERER SUR LE BONE BOUT
 end.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
-"rootName = '" + rootName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n" +
 "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "stretch = ctrlEffect(10);\n" +
 "auto = ctrlEffect(9) == 1;\n" +
@@ -5163,7 +5427,7 @@ end.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
 "boneStretch = 0;\n" +
 "proportion = dist2/(IKLength);\n" +
 "posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(root);\n" +
+"posR = getWorldPos(layer1);\n" +
 "distC = length(posC,posR);\n" +
 "shrinkMax = IKLength*shrinkVal;\n" +
 "shrink = 0;\n" +
@@ -5179,10 +5443,8 @@ end.transform.position.expression = "//Duik.threeLayerIK.stretch\n" +
 //=========================================================
 //EXPRESSION A INSERER SUR LE ZERO
 expressionstretchgoal = "//Duik.threeLayerIK.stretch\n" +
-"rootName = '" + rootName + "';\n" +
-"controllerName = '" + controllerName + "';\n" +
-"root = thisComp.layer(rootName);\n" +
-"controller = thisComp.layer(controllerName);\n" +
+"layer1 = thisComp.layer('" + rootName + "');\n" +
+"controller = thisComp.layer('" + controllerName + "');\n" +
 "ctrlEffect = controller.effect('" + effect.name + "');\n" +
 "stretch = ctrlEffect(10);\n" +
 "auto = ctrlEffect(9) == 1;\n" +
@@ -5205,7 +5467,7 @@ expressionstretchgoal = "//Duik.threeLayerIK.stretch\n" +
 "boneStretch = 0;\n" +
 "proportion = dist3/(IKLength);\n" +
 "posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(root);\n" +
+"posR = getWorldPos(layer1);\n" +
 "distC = length(posC,posR);\n" +
 "shrinkMax = IKLength*shrinkVal;\n" +
 "shrink = 0;\n" +
@@ -5950,7 +6212,6 @@ if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) boneTaille = Math.floor(bone
 else if (Duik.settings.boneSizeHint == Duik.sizes.MEDIUM) boneTaille = Math.floor(boneTaille/40);
 else if (Duik.settings.boneSizeHint == Duik.sizes.BIG) boneTaille = Math.floor(boneTaille/20);
 }
-if (boneTaille < 5) boneTaille = 5;
 if (Duik.settings.boneType == Duik.layerTypes.NULL)
 {
 bone = app.project.activeItem.layers.addNull();
