@@ -115,7 +115,7 @@ conn = new Socket;
 if (conn.open ('www.duduf.com:80'))
 {
 // recuperer la version actuelle
-if (conn.writeln ('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/15.08\nHost: duduf.com\n'))
+if (conn.writeln ('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '\nHost: duduf.com\n'))
 reply = conn.read(1000);
 conn.close();
 //chercher la version dans la reponse du serveur :
