@@ -3255,327 +3255,370 @@ resultatcalc2.text ='error';
 //============= INTERPOLATIONS ======================
 function lineaire() {
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR);
-}
-}
-return;
-}
+	app.beginUndoGroup('Duik - ' + tr("Linear Interpolation"));
+	
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR);
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+		//for props
+		for (var j=0;j<layers[i].selectedProperties.length;j++)
+		{
+			var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+			if (prop.canVaryOverTime)
+			{
+				//for keys
+				for (var k=0;k<prop.selectedKeys.length;k++)
+				{
+					prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+					if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){} //prop.isSpatial is true on shapes? try/catch as a workaround
+				}
+			}
+		}
+	}
+	
+	app.endUndoGroup();
 }
 
 function lissageA() {
 
-var inVal = parseInt(interpoInEdit.text);
-if (!inVal) inVal = 33;
-easeIn = new KeyframeEase(0,inVal);
-var outVal = parseInt(interpoOutEdit.text);
-if (!outVal) outVal = 33;
-easeOut = new KeyframeEase(0,outVal);
+	var inVal = parseInt(interpoInEdit.text);
+	if (!inVal) inVal = 33;
+	easeIn = new KeyframeEase(0,inVal);
+	var outVal = parseInt(interpoOutEdit.text);
+	if (!outVal) outVal = 33;
+	easeOut = new KeyframeEase(0,outVal);
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
+	
+	app.beginUndoGroup('Duik - ' + tr("Ease In"));
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					//influences
+					if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+					else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
+					else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
 
-//type
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
+					//type
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
+				}
 
-}
-}
-return;
-}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+		//for props
+		for (var j=0;j<layers[i].selectedProperties.length;j++)
+		{
+			var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+			if (prop.canVaryOverTime)
+			{
+				//for keys
+				for (var k=0;k<prop.selectedKeys.length;k++)
+				{
+					//influences
+					if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+					else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+					else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
 
-//type
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
+					//type
+					prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
 
-//not roving
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+					//not roving
+				if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+				}
+			}
+		}
+	}
+	app.endUndoGroup();
 }
 
 function lissageE() {
 
-var inVal = parseInt(interpoInEdit.text);
-if (!inVal) inVal = 33;
-easeIn = new KeyframeEase(0,inVal);
-var outVal = parseInt(interpoOutEdit.text);
-if (!outVal) outVal = 33;
-easeOut = new KeyframeEase(0,outVal);
+	var inVal = parseInt(interpoInEdit.text);
+	if (!inVal) inVal = 33;
+	easeIn = new KeyframeEase(0,inVal);
+	var outVal = parseInt(interpoOutEdit.text);
+	if (!outVal) outVal = 33;
+	easeOut = new KeyframeEase(0,outVal);
 
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
+	
+	app.beginUndoGroup('Duik - ' + tr("Ease Out"));
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					//influences
+					if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+					else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
+					else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
 
-//type
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
-}
-}
-return;
-}
+					//type
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+	//for props
+	for (var j=0;j<layers[i].selectedProperties.length;j++)
+	{
+	var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+	if (prop.canVaryOverTime)
+	{
+	//for keys
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+	//influences
+	if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+	else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+	else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
 
-//type
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
+	//type
+	prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
 
-//not roving
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+	//not roving
+	if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+	}
+	}
+	}
+	}
+	app.endUndoGroup();
 }
 
 function lissage() {
 
-var inVal = parseInt(interpoInEdit.text);
-if (!inVal) inVal = 33;
-easeIn = new KeyframeEase(0,inVal);
-var outVal = parseInt(interpoOutEdit.text);
-if (!outVal) outVal = 33;
-easeOut = new KeyframeEase(0,outVal);
+	var inVal = parseInt(interpoInEdit.text);
+	if (!inVal) inVal = 33;
+	easeIn = new KeyframeEase(0,inVal);
+	var outVal = parseInt(interpoOutEdit.text);
+	if (!outVal) outVal = 33;
+	easeOut = new KeyframeEase(0,outVal);
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER);
-prop.setTemporalContinuousAtKey(key, false);
+	app.beginUndoGroup('Duik - ' + tr("Easy Ease"));
 
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
-}
-}
-return;
-}
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER);
+					prop.setTemporalContinuousAtKey(key, false);
+
+					//influences
+					if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+					else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeIn,easeIn],[easeOut,easeOut]); }
+					else { prop.setTemporalEaseAtKey(key,[easeIn],[easeOut]); }
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
-prop.setTemporalContinuousAtKey(prop.selectedKeys[k], false);
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+	//for props
+	for (var j=0;j<layers[i].selectedProperties.length;j++)
+	{
+	var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+	if (prop.canVaryOverTime)
+	{
+	//for keys
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+	prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
+	prop.setTemporalContinuousAtKey(prop.selectedKeys[k], false);
 
-//influences
-if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
-else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
-else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
+	//influences
+	if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn,easeIn],[easeOut,easeOut,easeOut]); }
+	else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn,easeIn],[easeOut,easeOut]); }
+	else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]); }
 
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+	if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+	}
+	}
+	}
+	}
+	app.endUndoGroup();
 }
 
 function continu() {
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER);
-prop.setTemporalContinuousAtKey(key, true);
-prop.setTemporalAutoBezierAtKey(key, true);
-}
-}
-return;
-}
+	app.beginUndoGroup('Duik - ' + tr("Auto Bezier"));
+
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER);
+					prop.setTemporalContinuousAtKey(key, true);
+					prop.setTemporalAutoBezierAtKey(key, true);
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
-prop.setTemporalContinuousAtKey(prop.selectedKeys[k], true);
-prop.setTemporalAutoBezierAtKey(prop.selectedKeys[k], true);
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+	//for props
+	for (var j=0;j<layers[i].selectedProperties.length;j++)
+	{
+	var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+	if (prop.canVaryOverTime)
+	{
+	//for keys
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+	prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
+	prop.setTemporalContinuousAtKey(prop.selectedKeys[k], true);
+	prop.setTemporalAutoBezierAtKey(prop.selectedKeys[k], true);
+	if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+	}
+	}
+	}
+	}
+	app.endUndoGroup();
 }
 
 function maintien() {
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-var key = prop.addKey(comp.time);
-prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.HOLD);
-}
-}
-return;
-}
+	app.beginUndoGroup('Duik - ' + tr("Hold"));
+
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.canVaryOverTime)
+				{
+					var key = prop.addKey(comp.time);
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.HOLD);
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.HOLD);
-if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
-}
-}
-}
-}
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+	//for props
+	for (var j=0;j<layers[i].selectedProperties.length;j++)
+	{
+	var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+	if (prop.canVaryOverTime)
+	{
+	//for keys
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+	prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.HOLD);
+	if (prop.isSpatial) try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+	}
+	}
+	}
+	}
+	app.endUndoGroup();
 }
 
 function infl() {
@@ -3710,51 +3753,54 @@ groupeInterpoOut.enabled = true;
 
 function roving () {
 
-if (!(app.project.activeItem instanceof CompItem)) return;
-var comp = app.project.activeItem;
-if (comp.selectedLayers.length == 0) return;
-var layers = comp.selectedLayers;
+	if (!(app.project.activeItem instanceof CompItem)) return;
+	var comp = app.project.activeItem;
+	if (comp.selectedLayers.length == 0) return;
+	var layers = comp.selectedLayers;
 
-//if no selected keys, add key on selected properties
-if (!Duik.utils.layersHaveSelectedKeys(layers))
-{
-for (var i=0;i<layers.length;i++)
-{
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = layers[i].selectedProperties[j];
-if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-{
-var key = prop.addKey(comp.time);
-prop.setRovingAtKey(key,true);
-}
+	app.beginUndoGroup('Duik - ' + tr("Roving"));
 
-}
-}
-return;
-}
+	//if no selected keys, add key on selected properties
+	if (!Duik.utils.layersHaveSelectedKeys(layers))
+	{
+		for (var i=0;i<layers.length;i++)
+		{
+			for (var j=0;j<layers[i].selectedProperties.length;j++)
+			{
+				var prop = layers[i].selectedProperties[j];
+				if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+				{
+					var key = prop.addKey(comp.time);
+					prop.setRovingAtKey(key,true);
+				}
+			}
+		}
+		app.endUndoGroup();
+		return;
+	}
 
 
-//for layers
-for (var i=0;i<layers.length;i++)
-{
-//for props
-for (var j=0;j<layers[i].selectedProperties.length;j++)
-{
-var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
-if (prop.canVaryOverTime)
-{
-if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-{
-//for keys
-for (var k=0;k<prop.selectedKeys.length;k++)
-{
-prop.setRovingAtKey(prop.selectedKeys[k],true);
-}
-}
-}
-}
-}
+	//for layers
+	for (var i=0;i<layers.length;i++)
+	{
+	//for props
+	for (var j=0;j<layers[i].selectedProperties.length;j++)
+	{
+	var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
+	if (prop.canVaryOverTime)
+	{
+	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+	{
+	//for keys
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+	prop.setRovingAtKey(prop.selectedKeys[k],true);
+	}
+	}
+	}
+	}
+	}
+	app.endUndoGroup();
 }
 
 function interpoSpatialLBezButtonClicked() {
