@@ -173,6 +173,7 @@ function loadDuik()
 //========== LOAD libDuik =========
 //=================================
 {
+	if (developper) if (typeof Duik === 'object') delete Duik;
 #include 'libduik.jsxinc'
 //if pseudo effects are not installed
 if (Duik.usePresets)
@@ -4187,12 +4188,13 @@ fenetrenotes.size = [300,300];
 	
 	//Dev tools
 	if (developper) {
-		mainGroup.add('statictext',undefined,'Dev tools');
-		var reloadLibDuikButton = mainGroup.add('button',undefined,'libDuik reload');
+		mainGroup.add('statictext',undefined,'/!\\ Developper version /!\\');
+		/*var reloadLibDuikButton = mainGroup.add('button',undefined,'libDuik reload');
 		reloadLibDuikButton.onClick = function(){
 			if (typeof Duik === 'object') delete Duik;
 			#include 'libduik.jsxinc'
-		};
+			alert('libDuik reloaded');
+		};*/
 	}
 
 }
