@@ -1,6 +1,6 @@
 ﻿/*
 Duik - Duduf IK Tools
-Copyright (c) 2008 - 2014 Nicolas Dufresne
+Copyright (c) 2008 - 2016 Nicolas Dufresne
 http://ik.duduf.fr
 http://ik.duduf.com
 
