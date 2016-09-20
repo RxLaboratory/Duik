@@ -31,6 +31,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.09';
+var developper = true;
 //=========================
 
 //=================================
@@ -136,33 +137,33 @@ function checkForUpdate(version,showAlert)
 
 function preloadDuik ()
 {
-if (app.settings.getSetting('duik','version') == 'oui')
-{
-var newV = checkForUpdate(version,false);
-if ( version == newV || newV == undefined)
-{
-loadDuik();
-}
-else
-{
-var updGroup = palette.add('group');
-updGroup.orientation = 'column';
-updGroup.alignChildren = ['center','top'];
-var updVersionBox = updGroup.add('statictext',undefined,tr("Duik current version: ") + version);
-var updNewVersionBox = updGroup.add('statictext',undefined,'temp',{multiline:true});
-updNewVersionBox.text = '- ' + tr("UPDATE AVAILABLE -\n\nA new version of Duik is available!\nVersion: ") + newV + tr("\n\nGo to http://rainboxprod.coop to download it.");
-var updButton = updGroup.add('button',undefined,tr("Launch Duik"));
-updButton.onClick = function ()
-{
-updGroup.hide();
-loadDuik();
-}
-}
-}
-else
-{
-loadDuik();
-}
+	if (app.settings.getSetting('duik','version') == 'oui' && !developper)
+	{
+		var newV = checkForUpdate(version,false);
+		if ( version == newV || newV == undefined)
+		{
+		loadDuik();
+		}
+		else
+		{
+		var updGroup = palette.add('group');
+		updGroup.orientation = 'column';
+		updGroup.alignChildren = ['center','top'];
+		var updVersionBox = updGroup.add('statictext',undefined,tr("Duik current version: ") + version);
+		var updNewVersionBox = updGroup.add('statictext',undefined,'temp',{multiline:true});
+		updNewVersionBox.text = '- ' + tr("UPDATE AVAILABLE -\n\nA new version of Duik is available!\nVersion: ") + newV + tr("\n\nGo to http://rainboxprod.coop to download it.");
+		var updButton = updGroup.add('button',undefined,tr("Launch Duik"));
+		updButton.onClick = function ()
+		{
+		updGroup.hide();
+		loadDuik();
+		}
+		}
+	}
+	else
+	{
+		loadDuik();
+	}
 }
 
 function loadDuik()
@@ -2783,51 +2784,51 @@ app.endUndoGroup();
 //RANDOMIZE
 function randOKButtonClicked()
 {
-if (!(app.project.activeItem instanceof CompItem)) return;
+	if (!(app.project.activeItem instanceof CompItem)) return;
 
-app.beginUndoGroup(tr("Duik - Randomize"));
+	app.beginUndoGroup(tr("Duik - Randomize"));
 
-var xmin = parseFloat(randMinXValueEdit.text);
-var xmax = parseFloat(randMaxXValueEdit.text);
-var ymin = parseFloat(randMinYValueEdit.text);
-var ymax = parseFloat(randMaxYValueEdit.text);
-var zmin = parseFloat(randMinZValueEdit.text);
-var zmax = parseFloat(randMaxZValueEdit.text);
+	var xmin = parseFloat(randMinXValueEdit.text);
+	var xmax = parseFloat(randMaxXValueEdit.text);
+	var ymin = parseFloat(randMinYValueEdit.text);
+	var ymax = parseFloat(randMaxYValueEdit.text);
+	var zmin = parseFloat(randMinZValueEdit.text);
+	var zmax = parseFloat(randMaxZValueEdit.text);
 
-if (randPropertiesButton.value)
-{
-for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
-{
-var layer = app.project.activeItem.selectedLayers[i];
-Duik.randomizeProperties(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
-}
-}
-else if (randStartTimeButton.value)
-{
-Duik.randomizeStartTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-}
-else if (randInPointButton.value)
-{
-Duik.randomizeInPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-}
-else if (randOutPointButton.value)
-{
-Duik.randomizeOutPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-}
-else if (randKeyValueButton.value)
-{
-for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
-{
-var layer = app.project.activeItem.selectedLayers[i];
-Duik.randomizeSelectedKeys(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
-}
-}
-else if (randKeyTimeButton.value)
-{
-Duik.randomizeSelectedKeyTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
-}
+	if (randPropertiesButton.value)
+	{
+	for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
+	{
+	var layer = app.project.activeItem.selectedLayers[i];
+	Duik.randomizeProperties(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
+	}
+	}
+	else if (randStartTimeButton.value)
+	{
+		Duik.randomizeStartTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+	}
+	else if (randInPointButton.value)
+	{
+	Duik.randomizeInPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+	}
+	else if (randOutPointButton.value)
+	{
+	Duik.randomizeOutPoints(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+	}
+	else if (randKeyValueButton.value)
+	{
+	for (var i = 0;i<app.project.activeItem.selectedLayers.length;i++)
+	{
+	var layer = app.project.activeItem.selectedLayers[i];
+	Duik.randomizeSelectedKeys(layer.selectedProperties,randFromValueButton.value,xmin,xmax,ymin,ymax,zmin,zmax);
+	}
+	}
+	else if (randKeyTimeButton.value)
+	{
+	Duik.randomizeSelectedKeyTimes(app.project.activeItem.selectedLayers,randFromValueButton.value,xmin,xmax);
+	}
 
-app.endUndoGroup();
+	app.endUndoGroup();
 }
 
 //CEL Animation
@@ -4091,98 +4092,109 @@ fenetrenotes.size = [300,300];
 // MAIN PANEL
 //------------
 {
-var mainGroup = palette.add('group');
-mainGroup.orientation = 'column';
-mainGroup.alignment = ['fill','fill'];
-mainGroup.alignChildren = ['fill','fill'];
+	var mainGroup = palette.add('group');
+	mainGroup.orientation = 'column';
+	mainGroup.alignment = ['fill','fill'];
+	mainGroup.alignChildren = ['fill','fill'];
 
-//HEADER
+	//HEADER
 
-//BUTTONS ON THE RIGHT
-var entete = mainGroup.add('group');
-entete.alignChildren = ['left','center'];
-entete.alignment = ['fill','top'];
-entete.spacing = 2;
-entete.margins = 0;
-var boutonNotes = entete.add('iconbutton',undefined,dossierIcones + 'btn_notes.png');
-boutonNotes.size = [22,22];
-boutonNotes.helpTip = tr("Simple notepad, with auto-save.");
-boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
-var boutonCalc = entete.add('iconbutton',undefined,dossierIcones + 'btn_calc.png');
-boutonCalc.size = [22,22];
-boutonCalc.helpTip = tr("Calculator");
-boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
+	//BUTTONS ON THE RIGHT
+	var entete = mainGroup.add('group');
+	entete.alignChildren = ['left','center'];
+	entete.alignment = ['fill','top'];
+	entete.spacing = 2;
+	entete.margins = 0;
+	var boutonNotes = entete.add('iconbutton',undefined,dossierIcones + 'btn_notes.png');
+	boutonNotes.size = [22,22];
+	boutonNotes.helpTip = tr("Simple notepad, with auto-save.");
+	boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
+	var boutonCalc = entete.add('iconbutton',undefined,dossierIcones + 'btn_calc.png');
+	boutonCalc.size = [22,22];
+	boutonCalc.helpTip = tr("Calculator");
+	boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
 
-//PANEL NAME
-if (!expertMode)
-{
-var selectorText = entete.add('statictext',undefined,'');
-selectorText.alignment = ['center','center'];
-selectorText.size = [75,22];
-}
+	//PANEL NAME
+	if (!expertMode)
+	{
+	var selectorText = entete.add('statictext',undefined,'');
+	selectorText.alignment = ['center','center'];
+	selectorText.size = [75,22];
+	}
 
-//SELECTOR BUTTONS
-var selectorGroup = addVGroup(entete);
-selectorGroup.orientation = 'stack';
-selectorGroup.alignment = ['right','center'];
-var selectorButtons = addHGroup(selectorGroup);
-selectorButtons.alignChildren = ['fill','center'];
-var riggingPanelButton = addIconButton(selectorButtons,'sel_rigging.png','');
-riggingPanelButton.size = [22,22];
-riggingPanelButton.helpTip = tr("Rigging");
-var automationPanelButton = addIconButton(selectorButtons,'sel_animation.png','');
-automationPanelButton.size = [22,22];
-automationPanelButton.helpTip = tr("Automation");
-var animationPanelButton = addIconButton(selectorButtons,'sel_interpo.png','');
-animationPanelButton.size = [22,22];
-animationPanelButton.helpTip = tr("Animation");
-var camerasPanelButton = addIconButton(selectorButtons,'sel_camera.png','');
-camerasPanelButton.size = [22,22];
-camerasPanelButton.helpTip = tr("Cameras");
-var settingsPanelButton = addIconButton(selectorButtons,'sel_settings.png','');
-settingsPanelButton.size = [22,22];
-settingsPanelButton.helpTip = tr("Settings");
-var helpPanelButton = addIconButton(selectorButtons,'sel_help.png','');
-helpPanelButton.size = [22,22];
-helpPanelButton.helpTip = tr("Help!");
-//LIST
-var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Settings"),tr("Help")]);
-selecteur.alignment = ['right','center'];
-selecteur.helpTip = tr("Tool boxes");
-selecteur.items[0].image = ScriptUI.newImage(dossierIcones + 'sel_rigging.png');
-if (expertMode) selecteur.items[0].text = '';
-selecteur.items[1].image = ScriptUI.newImage(dossierIcones + 'sel_animation.png');
-if (expertMode) selecteur.items[1].text = '';
-selecteur.items[2].image = ScriptUI.newImage(dossierIcones + 'sel_interpo.png');
-if (expertMode) selecteur.items[2].text = '';
-selecteur.items[3].image = ScriptUI.newImage(dossierIcones + 'sel_camera.png');
-if (expertMode) selecteur.items[3].text = '';
-selecteur.items[4].image = ScriptUI.newImage(dossierIcones + 'sel_settings.png');
-if (expertMode) selecteur.items[4].text = '';
-selecteur.items[5].image = ScriptUI.newImage(dossierIcones + 'sel_help.png');
-if (expertMode) selecteur.items[5].text = '';
-if (!eval(app.settings.getSetting('duik', 'dropDownSelector'))) selecteur.hide();
-else selectorButtons.hide();
+	//SELECTOR BUTTONS
+	var selectorGroup = addVGroup(entete);
+	selectorGroup.orientation = 'stack';
+	selectorGroup.alignment = ['right','center'];
+	var selectorButtons = addHGroup(selectorGroup);
+	selectorButtons.alignChildren = ['fill','center'];
+	var riggingPanelButton = addIconButton(selectorButtons,'sel_rigging.png','');
+	riggingPanelButton.size = [22,22];
+	riggingPanelButton.helpTip = tr("Rigging");
+	var automationPanelButton = addIconButton(selectorButtons,'sel_animation.png','');
+	automationPanelButton.size = [22,22];
+	automationPanelButton.helpTip = tr("Automation");
+	var animationPanelButton = addIconButton(selectorButtons,'sel_interpo.png','');
+	animationPanelButton.size = [22,22];
+	animationPanelButton.helpTip = tr("Animation");
+	var camerasPanelButton = addIconButton(selectorButtons,'sel_camera.png','');
+	camerasPanelButton.size = [22,22];
+	camerasPanelButton.helpTip = tr("Cameras");
+	var settingsPanelButton = addIconButton(selectorButtons,'sel_settings.png','');
+	settingsPanelButton.size = [22,22];
+	settingsPanelButton.helpTip = tr("Settings");
+	var helpPanelButton = addIconButton(selectorButtons,'sel_help.png','');
+	helpPanelButton.size = [22,22];
+	helpPanelButton.helpTip = tr("Help!");
+	//LIST
+	var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Settings"),tr("Help")]);
+	selecteur.alignment = ['right','center'];
+	selecteur.helpTip = tr("Tool boxes");
+	selecteur.items[0].image = ScriptUI.newImage(dossierIcones + 'sel_rigging.png');
+	if (expertMode) selecteur.items[0].text = '';
+	selecteur.items[1].image = ScriptUI.newImage(dossierIcones + 'sel_animation.png');
+	if (expertMode) selecteur.items[1].text = '';
+	selecteur.items[2].image = ScriptUI.newImage(dossierIcones + 'sel_interpo.png');
+	if (expertMode) selecteur.items[2].text = '';
+	selecteur.items[3].image = ScriptUI.newImage(dossierIcones + 'sel_camera.png');
+	if (expertMode) selecteur.items[3].text = '';
+	selecteur.items[4].image = ScriptUI.newImage(dossierIcones + 'sel_settings.png');
+	if (expertMode) selecteur.items[4].text = '';
+	selecteur.items[5].image = ScriptUI.newImage(dossierIcones + 'sel_help.png');
+	if (expertMode) selecteur.items[5].text = '';
+	if (!eval(app.settings.getSetting('duik', 'dropDownSelector'))) selecteur.hide();
+	else selectorButtons.hide();
 
 
-//les panneaux
-var panos = mainGroup.add('group');
-panos.orientation = 'stack';
-panos.alignChildren = ['fill','fill'];
-panos.maximumSize = [500,500];
-if (!expertMode) panos.minimumSize = [250,250];
-else panos.minimumSize = [100,100];
+	//les panneaux
+	var panos = mainGroup.add('group');
+	panos.orientation = 'stack';
+	panos.alignChildren = ['fill','fill'];
+	panos.maximumSize = [500,500];
+	if (!expertMode) panos.minimumSize = [250,250];
+	else panos.minimumSize = [100,100];
 
-var bottomGroup = addHGroup(mainGroup);
-bottomGroup.alignment = ['fill','bottom'];
-if (!expertMode)
-{
-var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
-duikURL.alignment = ['left','bottom'];
-}
-bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
-var duikText = bottomGroup.add ('statictext',undefined,'Duik ' + version);
-duikText.alignment = ['right','bottom'];
+	var bottomGroup = addHGroup(mainGroup);
+	bottomGroup.alignment = ['fill','bottom'];
+	if (!expertMode)
+	{
+	var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
+	duikURL.alignment = ['left','bottom'];
+	}
+	bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
+	var duikText = bottomGroup.add ('statictext',undefined,'Duik ' + version);
+	duikText.alignment = ['right','bottom'];
+	
+	//Dev tools
+	if (developper) {
+		mainGroup.add('statictext',undefined,'Dev tools');
+		var reloadLibDuikButton = mainGroup.add('button',undefined,'libDuik reload');
+		reloadLibDuikButton.onClick = function(){
+			if (typeof Duik === 'object') delete Duik;
+			#include 'libduik.jsxinc'
+		};
+	}
+
 }
 
 //------------
