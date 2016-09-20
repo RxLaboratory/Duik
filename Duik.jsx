@@ -119,7 +119,7 @@ function checkForUpdate(version,showAlert)
 		var reV = /^(\d+\.?\d*)/i;
 		var v = app.version.match(reV);
 		delete reV;
-		if (conn.writeln('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '_AE-' + v[0] + '\nHost: rainboxprod.coop\n'))
+		if (conn.writeln('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '_AE' + v[0] + '_' + $.os.substr(0,3) + '\nHost: rainboxprod.coop\n'))
 			reply = conn.read(1000);
 		conn.close();
 		delete v;
