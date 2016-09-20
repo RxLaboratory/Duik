@@ -108,25 +108,30 @@ preloadDuik();
 //=================================
 function checkForUpdate(version,showAlert)
 {
-var reply = '';
-//socket
-conn = new Socket;
-// se connecter a duduf.com
-if (conn.open ('www.duduf.com:80'))
-{
-// recuperer la version actuelle
-if (conn.writeln ('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '\nHost: duduf.com\n'))
-reply = conn.read(1000);
-conn.close();
-//chercher la version dans la reponse du serveur :
-var reponse = reply.lastIndexOf('version',reply.length);
-if(reponse != -1)
-{
-newVersion = reply.slice(reponse+8,reply.length+1);
-if (showAlert && version != newVersion) alert(tr("A new version of Duik is available,\ngo to http://ik.duduf.com to download it"));
-return newVersion;
-}
-}
+	var reply = '';
+	//socket
+	conn = new Socket;
+	// se connecter a duduf.com
+	if (conn.open ('rainboxprod.coop:80'))
+	{
+		// recuperer la version actuelle
+		//check AE Version
+		var reV = /^(\d+\.?\d*)/i;
+		var v = app.version.match(reV);
+		delete reV;
+		if (conn.writeln('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '_AE-' + v[0] + '\nHost: rainboxprod.coop\n'))
+			reply = conn.read(1000);
+		conn.close();
+		delete v;
+		//chercher la version dans la reponse du serveur :
+		var reponse = reply.lastIndexOf('version',reply.length);
+		if(reponse != -1)
+		{
+			newVersion = reply.slice(reponse+8,reply.length+1);
+			if (showAlert && version != newVersion) alert(tr("A new version of Duik is available,\ngo to http://rainboxprod.coop to download it"));
+			return newVersion;
+		}
+	}
 }
 
 function preloadDuik ()
@@ -145,7 +150,7 @@ updGroup.orientation = 'column';
 updGroup.alignChildren = ['center','top'];
 var updVersionBox = updGroup.add('statictext',undefined,tr("Duik current version: ") + version);
 var updNewVersionBox = updGroup.add('statictext',undefined,'temp',{multiline:true});
-updNewVersionBox.text = '- ' + tr("UPDATE AVAILABLE -\n\nA new version of Duik is available!\nVersion: ") + newV + tr("\n\nGo to http://duik.duduf.net to download it.");
+updNewVersionBox.text = '- ' + tr("UPDATE AVAILABLE -\n\nA new version of Duik is available!\nVersion: ") + newV + tr("\n\nGo to http://rainboxprod.coop to download it.");
 var updButton = updGroup.add('button',undefined,tr("Launch Duik"));
 updButton.onClick = function ()
 {
@@ -234,7 +239,7 @@ ciGroup.alignChildren = ['fill','fill'];
 var ciText = ciGroup.add('statictext',undefined,'',{multiline:true});
 ciText.minimumSize = [150,60];
 ciText.alignment = ['center','top'];
-ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://www.duduf.net to get help.") + '\n\n-----------------------------';
+ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://rainboxprod.coop to get help.") + '\n\n-----------------------------';
 ciGroup.visible = false;
 }
 
@@ -4172,7 +4177,7 @@ var bottomGroup = addHGroup(mainGroup);
 bottomGroup.alignment = ['fill','bottom'];
 if (!expertMode)
 {
-var duikURL = bottomGroup.add ('statictext',undefined,'www.duduf.net');
+var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
 duikURL.alignment = ['left','bottom'];
 }
 bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
@@ -4349,22 +4354,22 @@ selecteur.selection = eval(app.settings.getSetting('duik','pano'));
 helpPanel.alignment = ['fill','top'];
 helpPanel.alignChildren = ['fill','top'];
 helpPanel.add('image',undefined,dossierIcones + 'logo.png');
-var helpURL = helpPanel.add('statictext',undefined,'www.duduf.net');
+var helpURL = helpPanel.add('statictext',undefined,'www.rainboxprod.coop');
 helpURL.alignment = ['center','top'];
 var helpTestGroup = addVPanel(helpPanel);
 helpTestGroup.margins = 10;
-helpTestGroup.add('statictext',undefined,tr("Warning, this is a version for testing purposes only!"));
+/*helpTestGroup.add('statictext',undefined,tr("Warning, this is a version for testing purposes only!"));
 helpTestGroup.add('statictext',undefined,tr("It may or may not be shipped with a lot of bugs."));
 helpTestGroup.add('statictext',undefined,tr("A form is available at http://duiktest.duduf.net"));
-helpTestGroup.add('statictext',undefined,tr("to report bugs or make suggestions!"));
+helpTestGroup.add('statictext',undefined,tr("to report bugs or make suggestions!"));*/
 var helpLinksGroup = addVPanel(helpPanel);
 helpLinksGroup.margins = 10;
 helpLinksGroup.add('statictext',undefined,tr("If you need help using Duik,"));
 helpLinksGroup.add('statictext',undefined,tr("those resources can be useful:"));
-helpTrainingURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Duduf Training, documents and tutorials:"));
-helpTrainingURL = helpLinksGroup.add('statictext',undefined,'www.duduf.training');
-helpForumURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Duduf Forum, where you can ask your questions:"));
-helpForumURL = helpLinksGroup.add('statictext',undefined,'forum.duduf.com');
+/*helpTrainingURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Duduf Training, documents and tutorials:"));
+helpTrainingURL = helpLinksGroup.add('statictext',undefined,'www.duduf.training');*/
+helpForumURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Rainbox Forum, where you can ask your questions:"));
+helpForumURL = helpLinksGroup.add('statictext',undefined,'forum.rainboxprod.coop');
 var helpLicenseGroup = addVPanel(helpPanel);
 helpLicenseGroup.margins = 10;
 helpLicenseGroup.add('statictext',undefined,tr("License: Duik is free software,"));
