@@ -6027,6 +6027,8 @@ celOnionInOpacitySlider.onChanging = function() { celOnionInOpacityEdit.text = p
 celOnionInOpacitySlider.onChange = celOnionUpdateButtonClicked;
 celOnionInOpacityEdit.onChange = function() { celOnionInOpacitySlider.value = parseInt(celOnionInOpacityEdit.text); celOnionUpdateButtonClicked(); };
 celOnionInOpacityButton.onClick = function() {
+celOnionButton.value = false;
+celOnionUpdateButtonClicked();
 celOnionInOpacitySlider.enabled = celOnionInOpacityButton.value;
 celOnionInOpacityEdit.enabled = celOnionInOpacityButton.value;
 if (!celOnionInOpacityButton.value && !celOnionOutOpacityButton.value )
@@ -6035,7 +6037,7 @@ celOnionOutOpacityButton.value = true;
 celOnionOutOpacitySlider.enabled = true;
 celOnionOutOpacityEdit.enabled = true;
 }
-
+celOnionButton.value = true;
 celOnionUpdateButtonClicked();
 };
 
@@ -6053,6 +6055,8 @@ celOnionOutOpacitySlider.onChanging = function() { celOnionOutOpacityEdit.text =
 celOnionOutOpacitySlider.onChange = celOnionUpdateButtonClicked;
 celOnionOutOpacityEdit.onChange = function() { celOnionOutOpacitySlider.value = parseInt(celOnionOutOpacityEdit.text); celOnionUpdateButtonClicked(); };
 celOnionOutOpacityButton.onClick = function() {
+celOnionButton.value = false;
+celOnionUpdateButtonClicked();
 celOnionOutOpacitySlider.enabled = celOnionOutOpacityButton.value;
 celOnionOutOpacityEdit.enabled = celOnionOutOpacityButton.value;
 if (!celOnionInOpacityButton.value && !celOnionOutOpacityButton.value )
@@ -6061,6 +6065,7 @@ celOnionInOpacityButton.value = true;
 celOnionInOpacitySlider.enabled = true;
 celOnionInOpacityEdit.enabled = true;
 }
+celOnionButton.value = true;
 celOnionUpdateButtonClicked();
 };
 
