@@ -30,8 +30,8 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 (function (thisObj)
 {
 //=========================
-var version = '15.09';
-var developper = false;
+var version = '15.1';
+var developper = true;
 //=========================
 
 //=================================
@@ -176,7 +176,7 @@ function loadDuik()
 	if (developper) if (typeof Duik === 'object') delete Duik;
 #include 'libduik.jsxinc'
 //if pseudo effects are not installed
-if (Duik.usePresets)
+if (Duik.usePresets && !developper)
 {
 //PALETTE
 {
