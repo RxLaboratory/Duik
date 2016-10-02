@@ -30,7 +30,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 (function (thisObj)
 {
 //=========================
-var version = '15.1';
+var version = '15.11';
 var developper = false;
 //=========================
 
@@ -113,14 +113,15 @@ function checkForUpdate(version,showAlert)
 	//socket
 	conn = new Socket;
 	// se connecter a duduf.com
-	if (conn.open ('rainboxprod.coop:80'))
+	if (conn.open ('rainboxprod.net:80'))
 	{
 		// recuperer la version actuelle
 		//check AE Version
 		var reV = /^(\d+\.?\d*)/i;
 		var v = app.version.match(reV);
 		delete reV;
-		if (conn.writeln('GET /downloads/duik/version.txt  HTTP/1.0\nUser-Agent: Duik/' + version + '_AE' + v[0] + '_' + $.os.substr(0,3) + '\nHost: rainboxprod.coop\n'))
+		var userAgent = 'User-Agent: Duik/' + version + ' (' + $.os + ')' + ' AE/' + v[0];
+		if (conn.writeln('GET /duik/version.txt  HTTP/1.0\n' + userAgent + '\nHost: rainboxprod.net\n'))
 			reply = conn.read(1000);
 		conn.close();
 		delete v;
