@@ -22,19 +22,30 @@ DESCRIPTION
 			var comp = app.project.activeItem;
 			if (!(comp instanceof CompItem)) return;
 			app.beginUndoGroup("Duik - Bones");
-			if (comp.selectedLayers.length)	addBones(comp.selectedLayers);
-			else
+			var createdBones = [];
+			if (comp.selectedLayers.length)	createdBones = addBones(comp.selectedLayers);
+			
+			if (!createdBones.length)
 			{
-				num = parseInt(count.text);
+				var num = parseInt(count.text)+1;
 				var spacing = comp.width/(num+1);
 				var prevBone = null;
-				var createdBones = [];
 				var color = Duik.utils.randomColor();
+				var structureName = nameEdit.text;
 				
 				for (var i = 0 ; i < num ; i++)
 				{
-					var bone = addBone(comp,undefined,color);
-					bone.name = "Bone " + (i+1);
+					var end = i == num-1;
+					var bone = addBone(comp,undefined,color,end);
+					if (end)
+					{
+						bone.name = "EndBone " + structureName;
+					}
+					else
+					{
+						bone.name = "B " + structureName + " " + (i+1);
+					}
+					
 					if (prevBone)
 					{
 						bone.parent = prevBone;
@@ -56,7 +67,7 @@ DESCRIPTION
 			app.endUndoGroup();
 		}
 		
-		function addBone(comp,size,color)
+		function addBone(comp,size,color,end)
 		{
 			if (!size)
 			{
@@ -77,19 +88,23 @@ DESCRIPTION
 				color = [1,3.764,3.764,1];
 			}
 			
-			//======= NEW ======= CREATE BONE USING SHAPE LAYER =======
+			//======= CREATE BONE USING SHAPE LAYER =======
 			var bone = comp.layers.addShape();
 			//size effect
 			var sizeEffect = bone.Effects.addProperty('ADBE Slider Control');
 			sizeEffect.name = "Display Size";
 			sizeEffect(1).setValue(size);
 			//Link effect
-			var linkEffect = bone.Effects.addProperty('ADBE Layer Control');
-			linkEffect.name = "Link";
+			if (!end)
+			{
+				var linkEffect = bone.Effects.addProperty('ADBE Layer Control');
+				linkEffect.name = "Link";
+			}
+			
 			//bone group
 			var boneGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 			boneGroup.name = "Bone";
-			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = "//Duik.bone\nvar s = effect('Display Size')(1);\n[s,s];";
+			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = "//Duik.bone.size\nvar s = effect('Display Size')(1);\n[s,s];";
 			//target group
 			var targetGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 			targetGroup.name = "Target";
@@ -102,27 +117,29 @@ DESCRIPTION
 			targetStroke("ADBE Vector Stroke Color").setValue([0.1,0.1,0.1,1]);
 			targetStroke("ADBE Vector Stroke Width").setValue(2);
 			//end group
-			var endGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-			endGroup.name = "End";
-			var endGroupContent = endGroup.property("ADBE Vectors Group");
-			var rectangle = endGroupContent.addProperty("ADBE Vector Shape - Rect");
-			rectangle("ADBE Vector Rect Size").setValue([24.5,24.5]);
-			endFill = endGroupContent.addProperty("ADBE Vector Graphic - Fill");
-			endFill("ADBE Vector Fill Color").setValue(color);
-			endGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").setValue(45);
-			//stretchbone group
-			var stretchBoneGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-			stretchBoneGroup.name = "Stretch Bone";
-			var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
-			var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
-			star("ADBE Vector Star Type").setValue(2);
-			star("ADBE Vector Star Points").setValue(3);
-			star("ADBE Vector Star Outer Radius").setValue(20);
-			stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
-			stretchBoneFill("ADBE Vector Fill Color").setValue(color);
-			stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
-			
-			var scaExpr = "//Duik.bone\n" + 
+			if (!end)
+			{
+				var endGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+				endGroup.name = "End";
+				var endGroupContent = endGroup.property("ADBE Vectors Group");
+				var rectangle = endGroupContent.addProperty("ADBE Vector Shape - Rect");
+				rectangle("ADBE Vector Rect Size").setValue([24.5,24.5]);
+				endFill = endGroupContent.addProperty("ADBE Vector Graphic - Fill");
+				endFill("ADBE Vector Fill Color").setValue(color);
+				endGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").setValue(45);
+				//stretchbone group
+				var stretchBoneGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+				stretchBoneGroup.name = "Stretch Bone";
+				var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
+				var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
+				star("ADBE Vector Star Type").setValue(2);
+				star("ADBE Vector Star Points").setValue(3);
+				star("ADBE Vector Star Outer Radius").setValue(20);
+				stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
+				stretchBoneFill("ADBE Vector Fill Color").setValue(color);
+				stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
+				
+				var scaExpr = "//Duik.bone.stretch\n" + 
 							"var X = 100;\n" + 
 							"var Y = 60;\n" + 
 							"function isBone(layer)\n" + 
@@ -160,11 +177,9 @@ DESCRIPTION
 							"}\n" + 
 							"[X,Y*100/content('Bone').transform.scale[1]];";
 
-			stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
-
-
-			
-			var rotExpr = "//Duik.bone\n" + 
+				stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
+				
+				var rotExpr = "//Duik.bone.orientation\n" + 
 						"var R = 45;\n" + 
 						"function isBone(layer)\n" + 
 						"{\n" + 
@@ -209,7 +224,12 @@ DESCRIPTION
 						"}\n" + 
 						"R;";
 						
-			boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
+				boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
+			}
+
+
+			
+			
 			
 			bone.guideLayer = true;
 			
@@ -372,18 +392,24 @@ DESCRIPTION
 		mainPalette.alignChildren = ['fill','fill'];
 		mainPalette.margins = 5;
 		mainPalette.spacing = 2;
-		mainPalette.orientation = 'row';
+		mainPalette.orientation = 'column';
 	}
 	//__________________________
 
 
 	// ============ ADD UI CONTENT HERE =================
 	{
-		var bone = mainPalette.add('button',undefined,"Bones");
+		var createGroup = mainPalette.add('group');
+		createGroup.alignChildren = ['fill','fill'];
+		createGroup.margins = 0;
+		createGroup.spacing = 2;
+		createGroup.orientation = 'row';
+		var bone = createGroup.add('button',undefined,"Bones");
 		bone.onClick = boneClicked;
-		var count = mainPalette.add('edittext',undefined,'3');
+		var count = createGroup.add('edittext',undefined,'3');
 		count.alignment = ['right','fill'];
 		count.minimumSize = [25,25];
+		var nameEdit = mainPalette.add('edittext',undefined,"Name");
 	}
 	// ==================================================
     
