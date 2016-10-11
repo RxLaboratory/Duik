@@ -637,7 +637,9 @@ if (typeof Duik === 'object') delete Duik;
 			bezierIKLayers.push(endController.layer);
 			bezierIKLayers.push(rootController.layer);
 			
-			Duik.bezierIK(bezierIKLayers);
+			var type = 1;
+			if (!bezierIKSimple.value) type = 2;
+			Duik.bezierIK(bezierIKLayers,type);
 			
 			//add goal to endbone
 			Duik.goal(sortedLayers[sortedLayers.length-1],endController.layer);
@@ -694,6 +696,15 @@ if (typeof Duik === 'object') delete Duik;
 		IKButton.onClick = IKButtonClicked;
 		var bezierIKButton = mainPalette.add('button',undefined,"Bezier IK");
 		bezierIKButton.onClick = bezierIKButtonClicked;
+		var bezierIKGroup = mainPalette.add('group');
+		bezierIKGroup.alignChildren = ['fill','fill'];
+		bezierIKGroup.margins = 0;
+		bezierIKGroup.spacing = 2;
+		bezierIKGroup.orientation = 'row';
+		var bezierIKSimple = bezierIKGroup.add('radiobutton',undefined,"Simple");
+		bezierIKSimple.value = true;
+		var bezierIKCubic = bezierIKGroup.add('radiobutton',undefined,"Cubic");
+		
 	}
 	// ==================================================
     
