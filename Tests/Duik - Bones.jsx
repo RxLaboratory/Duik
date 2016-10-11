@@ -177,13 +177,18 @@ if (typeof Duik === 'object') delete Duik;
 						"}\n" + 
 						"}\n" + 
 						"var result = value;\n" +
+						"var layer = thisLayer;\n" +
+						"while (layer.hasParent)\n" +
+						"{\n" +
+						"layer = layer.parent;\n" +
+						"result = result - layer.rotation;\n" +
+						"}\n" +
 						"if (child)\n" + 
 						"if (child.index != index)\n" + 
 						"{\n" + 
 						"C = child.toWorld(child.anchorPoint);\n" + 
 						"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
 						"var vec = O-C;\n" +
-						
 						"var angle = Math.atan2(vec[1], vec[0]);\n" +
 						"var ik = radiansToDegrees(angle);\n" +
 						"result += (ik-90-rotation)\n" +
@@ -573,11 +578,11 @@ if (typeof Duik === 'object') delete Duik;
 			while (sortedLayers.length != layers.length)
 			{
 				//find child of the latest sorted layer
+				var found = false;
 				for (var i = 0;i < layers.length;i++)
 				{
 					var parent = sortedLayers[sortedLayers.length-1];
 					var testLayer = layers[i];
-					var found = false;
 					if (testLayer.parent == parent)
 					{
 						sortedLayers.push(testLayer);
@@ -693,23 +698,60 @@ if (typeof Duik === 'object') delete Duik;
 			
 			var layers = comp.selectedLayers;
 			
-			for (var i = 0 ; i < layers.length ; i++)
+			//sort layers
+			var sortedLayers = sortLayersByParents(layers);
+						
+			if (sortedLayers.length != layers.length)
 			{
-				var layer = layers[i];
-				
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - FK Overlap");
+			
+			//add controller
+			var controller = Duik.addController(sortedLayers[0]);
+			sortedLayers[0].parent = controller.layer;
+			
+			var globalDelayEffect = controller.layer.effect.addProperty('ADBE Slider Control');
+			globalDelayEffect.name = 'FK Overlap Delay';
+			globalDelayEffect(1).setValue(2);
+			
+			var globalMultiplierEffect = controller.layer.effect.addProperty('ADBE Slider Control');
+			globalMultiplierEffect.name = 'FK Overlap Multiplier';
+			globalMultiplierEffect(1).setValue(1.5);
+			
+			for (var i = 0 ; i < sortedLayers.length ; i++)
+			{
+				var layer = sortedLayers[i];
 				//add effect
 				var delayEffect = layer.effect.addProperty('ADBE Slider Control');
-				delayEffect.name = 'Delayed FK';
-				delayEffect(1).setValue(2);
+				delayEffect.name = 'FK Overlap Delay';
+				delayEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Delay')(1) + value;";
+				
+				var multiplierEffect = layer.effect.addProperty('ADBE Slider Control');
+				multiplierEffect.name = 'FK Overlap Multiplier';
+				multiplierEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Multiplier')(1) + value;";
 				
 				var rotExpr = "//Duik.delayedRotation\n" + 
-							"var delay = effect('Delayed FK')(1);\n" + 
+							"var delay = effect('FK Overlap Delay')(1);\n" + 
+							"var multiplier = effect('FK Overlap Multiplier')(1);\n" + 
 							"var result = value;\n" + 
-							"if (thisLayer.hasParent) result += thisLayer.parent.rotation.valueAtTime(time - framesToTime(delay));\n" + 
+							"if (thisLayer.hasParent)\n" + 
+							"{\n" + 
+							"var parentRotation = thisLayer.parent.rotation;\n" + 
+							"var parentRotationValue = parentRotation.valueAtTime(time - framesToTime(delay));\n";
+				
+				if (i == 1) rotExpr += "parentRotationValue -= parentRotation.value;\n";
+				
+				rotExpr += "result += parentRotationValue * multiplier;\n" + 
+							"}\n" + 
 							"result;";
-							
+
 				layer.rotation.expression = rotExpr;
 			}
+			
+			app.endUndoGroup();
 		}
 	}
 	//==================================================
@@ -768,7 +810,7 @@ if (typeof Duik === 'object') delete Duik;
 		var bezierIKSimple = bezierIKGroup.add('radiobutton',undefined,"Simple");
 		bezierIKSimple.value = true;
 		var bezierIKCubic = bezierIKGroup.add('radiobutton',undefined,"Cubic");
-		var delayedFKButton = mainPalette.add('button',undefined,"Delayed FK");
+		var delayedFKButton = mainPalette.add('button',undefined,"FK Overlap");
 		delayedFKButton.onClick = delayedFKButtonClicked;
 		
 	}
