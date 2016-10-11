@@ -432,6 +432,37 @@ if (typeof Duik === 'object') delete Duik;
 			}
 		}
 	
+		function duplicateLayers(layers)
+		{
+			var duplicatedLayers = [];
+			Duik.utils.deselectLayers();
+			for (var i = 0; i < layers.length ; i++)
+			{
+				var oldLayer = layers[i];
+				var newLayer = oldLayer.duplicate();
+				duplicatedLayers.push([oldLayer,newLayer]);				
+			}
+			//update parents
+			for  (var i = 0 ; i < duplicatedLayers.length;i++)
+			{
+				var oldLayer = duplicatedLayers[i][0];
+				var newLayer = duplicatedLayers[i][1];
+				newLayer.selected = true;
+				var oldParent = oldLayer.parent;
+				if (oldParent)
+				{
+					for (var j = 0;j < duplicatedLayers.length ; j++)
+					{
+						if (oldParent === duplicatedLayers[j][0])
+						{
+							newLayer.parent = duplicatedLayers[j][1];
+						}
+					}
+				}
+			}
+			return duplicatedLayers;
+		}
+	
 		function duplicateButtonClicked()
 		{
 			var comp = app.project.activeItem;
@@ -470,20 +501,8 @@ if (typeof Duik === 'object') delete Duik;
 	
 			}
 			
-			//deselect layers
-			if (duplicateChain.value)
-			{
-				Duik.utils.deselectLayers();
-			
-				//select layers
-				for (var i = 0;i<layers.length;i++)
-				{
-					layers[i].selected = true;
-				}
-			}
-			
-			//duplicate //BUGS WHEN MULTIPLE LAYERS ? //TODO duplicate function, generate two dimensionnal array with pairs old/new
-			app.executeCommand(2080);
+			//array of layers to duplicate
+			var duplicatedLayers = duplicateLayers(layers);
 			
 			//update display links, rig and name
 			var newLayers = comp.selectedLayers;
