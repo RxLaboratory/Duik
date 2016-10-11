@@ -482,14 +482,25 @@ if (typeof Duik === 'object') delete Duik;
 				}
 			}
 			
-			//duplicate //BUGS WHEN MULTIPLE LAYERS ? //TODO duplicate function, generate two dimensional array with pairs old/new
+			//duplicate //BUGS WHEN MULTIPLE LAYERS ? //TODO duplicate function, generate two dimensionnal array with pairs old/new
 			app.executeCommand(2080);
 			
-			//update display links and rig
+			//update display links, rig and name
 			var newLayers = comp.selectedLayers;
+			var structureName = nameEdit.text;
 			for (var i = 0 ; i < newLayers.length ; i++)
 			{
 				var layer = newLayers[i];
+				
+				if (layer.name.indexOf('B') == 0)
+				{
+					layer.name = "B " + structureName + " " + (i+1);
+				}
+				else if (layer.name.indexOf('EndBone') == 0)
+				{
+					layer.name = "EndBone " + structureName;
+				}
+				
 				if (layer.effect('Display Link'))
 				{
 					var childBone = findChildBone(layer);
