@@ -685,6 +685,32 @@ if (typeof Duik === 'object') delete Duik;
 			app.endUndoGroup();
 			
 		}
+	
+		function delayedFKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				
+				//add effect
+				var delayEffect = layer.effect.addProperty('ADBE Slider Control');
+				delayEffect.name = 'Delayed FK';
+				delayEffect(1).setValue(2);
+				
+				var rotExpr = "//Duik.delayedRotation\n" + 
+							"var delay = effect('Delayed FK')(1);\n" + 
+							"var result = value;\n" + 
+							"if (thisLayer.hasParent) result += thisLayer.parent.rotation.valueAtTime(time - framesToTime(delay));\n" + 
+							"result;";
+							
+				layer.rotation.expression = rotExpr;
+			}
+		}
 	}
 	//==================================================
 	
@@ -742,6 +768,8 @@ if (typeof Duik === 'object') delete Duik;
 		var bezierIKSimple = bezierIKGroup.add('radiobutton',undefined,"Simple");
 		bezierIKSimple.value = true;
 		var bezierIKCubic = bezierIKGroup.add('radiobutton',undefined,"Cubic");
+		var delayedFKButton = mainPalette.add('button',undefined,"Delayed FK");
+		delayedFKButton.onClick = delayedFKButtonClicked;
 		
 	}
 	// ==================================================
