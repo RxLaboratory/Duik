@@ -488,30 +488,112 @@ DESCRIPTION
 					if (childBone) layer.effect('Display Link')(1).setValue(childBone.index);
 				}
 				
-				if (duplicateRig.value)
+				//remove expressions in transform properties
+				for (var j = 1;j <= layer.transform.numProperties;j++)
 				{
-					
-				}
-				else
-				{
-					//remove expressions in transform properties
-					for (var j = 1;j <= layer.transform.numProperties;j++)
+					var prop = layer.transform.property(j);
+					if (prop instanceof Property)
 					{
-						var prop = layer.transform.property(j);
-						if (prop instanceof Property)
+						if (prop.canSetExpression)
 						{
-							if (prop.canSetExpression)
-							{
-								var val = prop.value;
-								//prop.expression = '';
-								//prop.setValue(val);
-							}
+							var val = prop.value;
+							prop.expression = '';
+							prop.setValue(val);
 						}
 					}
 				}
 			}
 			
 			app.endUndoGroup();
+		}
+
+		function IKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			if (layers.length <= 1)
+			{
+				alert("Please select the bones for the IK");
+				return;
+			}
+			
+			if (layers.length > 4)
+			{
+				alert("Standard IK cannot be used on more than 3 bones.\nYou may try using a Bezier IK.");
+				return;
+			}
+			
+			//assign layers
+			var rig = new IKRig();
+			rig.type = layers.length-1;
+			
+			//sort layers according to parent links
+			//find the one which has no parents in the selection, the first of the chain
+			var sortedLayers = [];
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				var parent = layer.parent;
+				var first = true;
+				for (var j = 0 ; j < layers.length ; j++)
+				{
+					if (parent == layers[j])
+					{
+						first = false;
+						break;
+					}
+				}
+				if (first)
+				{
+					sortedLayers.push(layer);
+					break;
+				}
+			}
+			//add other layers
+			while (sortedLayers.length != layers.length)
+			{
+				//find child of the latest sorted layer
+				for (var i = 0;i < layers.length;i++)
+				{
+					var parent = sortedLayers[sortedLayers.length-1];
+					var testLayer = layers[i];
+					var found = false;
+					if (testLayer.parent == parent)
+					{
+						sortedLayers.push(testLayer);
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					alert("Invalid bone chain:\nMake sure all bones are parented together.");
+					break;
+				}
+			}
+			
+			if (sortedLayers.length == layers.length)
+			{
+				app.beginUndoGroup("Duik - IK");
+				
+				//add controller
+				var controller = Duik.addController(sortedLayers[sortedLayers.length-1],false,true,true,true,false);
+				
+				//create IK
+				rig.layer1 = sortedLayers[0];
+				if (rig.type > 1) rig.layer2 = sortedLayers[1];
+				if (rig.type > 2) rig.layer3 = sortedLayers[2];
+				rig.goal = sortedLayers[rig.type];
+				rig.controller = controller.layer;
+				if (rig.type > 1) rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
+				rig.create();
+				
+				app.endUndoGroup();
+			}
+			
+			
 		}
 	}
 	//==================================================
