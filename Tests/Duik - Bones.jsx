@@ -30,42 +30,8 @@ if (typeof Duik === 'object') delete Duik;
 			
 			if (!createdBones.length)
 			{
-				var num = parseInt(count.text)+1;
-				var spacing = comp.width/(num+1);
-				var prevBone = null;
-				var color = Duik.utils.randomColor();
-				var structureName = nameEdit.text;
-				
-				for (var i = 0 ; i < num ; i++)
-				{
-					var end = i == num-1;
-					var bone = addBone(comp,undefined,color,end);
-					if (end)
-					{
-						bone.name = "EndBone " + structureName;
-					}
-					else
-					{
-						bone.name = "B " + structureName + " " + (i+1);
-					}
-					
-					if (prevBone)
-					{
-						bone.parent = prevBone;
-						bone.transform.position.setValue([spacing,0]);
-					}
-					else
-					{
-						bone.transform.position.setValue([spacing,comp.height/2]);
-					}
-					prevBone = bone;
-					createdBones.push(bone);
-				}
-				//links
-				for (var i = 0;i < createdBones.length-1 ; i++)
-				{
-					createdBones[i].effect('Display Link')(1).setValue(createdBones[i+1].index)
-				}
+				var num = parseInt(count.text);
+				addBones(comp,num);
 			}
 			app.endUndoGroup();
 		}
@@ -237,6 +203,48 @@ if (typeof Duik === 'object') delete Duik;
 			Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
 			
 			return bone;
+		}
+		
+		function addBones(comp,numBones)
+		{
+			//add endBone
+			numBones += 1;
+			var createdBones = [];
+			var spacing = comp.width/(numBones+1);
+			var prevBone = null;
+			var color = Duik.utils.randomColor();
+			var structureName = nameEdit.text;
+			
+			for (var i = 0 ; i < numBones ; i++)
+			{
+				var end = i == numBones-1;
+				var bone = addBone(comp,undefined,color,end);
+				if (end)
+				{
+					bone.name = "EndBone " + structureName;
+				}
+				else
+				{
+					bone.name = "B " + structureName + " " + (i+1);
+				}
+				
+				if (prevBone)
+				{
+					bone.parent = prevBone;
+					bone.transform.position.setValue([spacing,0]);
+				}
+				else
+				{
+					bone.transform.position.setValue([spacing,comp.height/2]);
+				}
+				prevBone = bone;
+				createdBones.push(bone);
+			}
+			//links
+			for (var i = 0;i < createdBones.length-1 ; i++)
+			{
+				createdBones[i].effect('Display Link')(1).setValue(createdBones[i+1].index)
+			}
 		}
 		
 		function addBonesToProperty(layers,placement)
