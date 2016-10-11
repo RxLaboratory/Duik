@@ -507,28 +507,8 @@ DESCRIPTION
 			app.endUndoGroup();
 		}
 
-		function IKButtonClicked()
+		function sortLayersByParents(layers)
 		{
-			var comp = app.project.activeItem;
-			if (!(comp instanceof CompItem)) return;
-			
-			var layers = comp.selectedLayers;
-			if (layers.length <= 1)
-			{
-				alert("Please select the bones for the IK");
-				return;
-			}
-			
-			if (layers.length > 4)
-			{
-				alert("Standard IK cannot be used on more than 3 bones.\nYou may try using a Bezier IK.");
-				return;
-			}
-			
-			//assign layers
-			var rig = new IKRig();
-			rig.type = layers.length-1;
-			
 			//sort layers according to parent links
 			//find the one which has no parents in the selection, the first of the chain
 			var sortedLayers = [];
@@ -569,30 +549,100 @@ DESCRIPTION
 				}
 				if (!found)
 				{
-					alert("Invalid bone chain:\nMake sure all bones are parented together.");
 					break;
 				}
 			}
 			
-			if (sortedLayers.length == layers.length)
+			return sortedLayers;
+		}
+		
+		function IKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			if (layers.length <= 1)
 			{
-				app.beginUndoGroup("Duik - IK");
-				
-				//add controller
-				var controller = Duik.addController(sortedLayers[sortedLayers.length-1],false,true,true,true,false);
-				
-				//create IK
-				rig.layer1 = sortedLayers[0];
-				if (rig.type > 1) rig.layer2 = sortedLayers[1];
-				if (rig.type > 2) rig.layer3 = sortedLayers[2];
-				rig.goal = sortedLayers[rig.type];
-				rig.controller = controller.layer;
-				if (rig.type > 1) rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
-				rig.create();
-				
-				app.endUndoGroup();
+				alert("Please select the bones for the IK");
+				return;
 			}
 			
+			if (layers.length > 4)
+			{
+				alert("Standard IK cannot be used on more than 3 bones.\nYou may try using a Bezier IK.");
+				return;
+			}
+			
+			//assign layers
+			var rig = new IKRig();
+			rig.type = layers.length-1;
+			
+			//sort layers according to parent links
+			//find the one which has no parents in the selection, the first of the chain
+			var sortedLayers = sortLayersByParents(layers);
+			
+			if (sortedLayers.length != layers.length)
+			{
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - IK");
+			
+			//add controller
+			var controller = Duik.addController(sortedLayers[sortedLayers.length-1],false,true,true,true,false);
+			
+			//create IK
+			rig.layer1 = sortedLayers[0];
+			if (rig.type > 1) rig.layer2 = sortedLayers[1];
+			if (rig.type > 2) rig.layer3 = sortedLayers[2];
+			rig.goal = sortedLayers[rig.type];
+			rig.controller = controller.layer;
+			if (rig.type > 1) rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
+			rig.create();
+			
+			app.endUndoGroup();
+		}
+	
+		function bezierIKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			//sort layers
+			var sortedLayers = sortLayersByParents(layers);
+			
+			if (sortedLayers.length != layers.length)
+			{
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - Bezier IK");
+			
+			//add controllers
+			var rootController = Duik.addController(sortedLayers[0]);
+			var endController = Duik.addController(sortedLayers[sortedLayers.length-1]);
+			
+			//array for bezier ik duik
+			var bezierIKLayers = [];
+			for (var i = sortedLayers.length-2 ; i >= 0 ; i--)
+			{
+				bezierIKLayers.push(sortedLayers[i]);
+			}
+			bezierIKLayers.push(endController.layer);
+			bezierIKLayers.push(rootController.layer);
+			
+			Duik.bezierIK(bezierIKLayers);
+			
+			//add goal to endbone
+			Duik.goal(sortedLayers[sortedLayers.length-1],endController.layer);
+			
+			app.endUndoGroup();
 			
 		}
 	}
@@ -642,6 +692,8 @@ DESCRIPTION
 		//var duplicateRig = duplicateGroup.add('checkbox',undefined,"Rig");
 		var IKButton = mainPalette.add('button',undefined,"IK");
 		IKButton.onClick = IKButtonClicked;
+		var bezierIKButton = mainPalette.add('button',undefined,"Bezier IK");
+		bezierIKButton.onClick = bezierIKButtonClicked;
 	}
 	// ==================================================
     
