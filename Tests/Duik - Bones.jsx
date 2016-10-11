@@ -6,6 +6,9 @@ DESCRIPTION
 
 */ 
 
+//dev mode, reload Duik
+if (typeof Duik === 'object') delete Duik;
+
 #include "libduik.jsxinc"
 
 //encapsulate the script in a function to avoid global variables
@@ -207,22 +210,19 @@ DESCRIPTION
 						"}\n" + 
 						"}\n" + 
 						"}\n" + 
+						"var result = value;\n" +
 						"if (child)\n" + 
+						"if (child.index != index)\n" + 
 						"{\n" + 
 						"C = child.toWorld(child.anchorPoint);\n" + 
 						"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
-						"angle = lookAt(C,O);\n" + 
-						"angle[0] > 0 ? R = angle[0]+angle[1] : R = angle[0]-angle[1];\n" + 
-						"if (angle[1]==-90 || angle[1]==90) result-=90;\n" + 
-						"if (R != 90) R = R + 90 - thisLayer.rotation;\n" + 
-						"var l = thisLayer;\n" + 
-						"while (l.hasParent)\n" + 
-						"{\n" + 
-						"l = l.parent;\n" + 
-						"R = R-l.rotation;\n" + 
+						"var vec = O-C;\n" +
+						
+						"var angle = Math.atan2(vec[1], vec[0]);\n" +
+						"var ik = radiansToDegrees(angle);\n" +
+						"result += (ik-90-rotation)\n" +
 						"}\n" + 
-						"}\n" + 
-						"R;";
+						"result;";
 						
 				boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
 			}
