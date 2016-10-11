@@ -26,7 +26,7 @@ if (typeof Duik === 'object') delete Duik;
 			if (!(comp instanceof CompItem)) return;
 			app.beginUndoGroup("Duik - Bones");
 			var createdBones = [];
-			if (comp.selectedLayers.length)	createdBones = addBones(comp.selectedLayers);
+			if (comp.selectedLayers.length)	createdBones = addBonesToProperty(comp.selectedLayers);
 			
 			if (!createdBones.length)
 			{
@@ -239,7 +239,7 @@ if (typeof Duik === 'object') delete Duik;
 			return bone;
 		}
 		
-		function addBones(layers,placement)
+		function addBonesToProperty(layers,placement)
 		{
 			if (placement == undefined) placement = Duik.settings.bonePlacement;
 			var createdBones = [];
@@ -283,7 +283,7 @@ if (typeof Duik === 'object') delete Duik;
 				//si il n'y a pas de coins selectionnes, on les prend tous
 				if (!coins.length) coins = Duik.utils.getPuppetPins(calque("Effects"));
 				//si on a vraiment rien trouve, on laisse tomber
-				if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
+				if (!coins.length) return [];
 
 				//create bones
 				var color = Duik.utils.randomColor();
