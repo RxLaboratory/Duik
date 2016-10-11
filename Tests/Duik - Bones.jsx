@@ -61,7 +61,7 @@ DESCRIPTION
 				//links
 				for (var i = 0;i < createdBones.length-1 ; i++)
 				{
-					createdBones[i].effect("Link")(1).setValue(createdBones[i+1].index)
+					createdBones[i].effect('Display Link')(1).setValue(createdBones[i+1].index)
 				}
 			}
 			app.endUndoGroup();
@@ -98,7 +98,7 @@ DESCRIPTION
 			if (!end)
 			{
 				var linkEffect = bone.Effects.addProperty('ADBE Layer Control');
-				linkEffect.name = "Link";
+				linkEffect.name = "Display Link";
 			}
 			
 			//bone group
@@ -150,7 +150,7 @@ DESCRIPTION
 							"return ok;\n" + 
 							"}\n" + 
 							"var child = null;\n" + 
-							"try { child = effect('Link')(1);}\n" + 
+							"try { child = effect('Display Link')(1);}\n" + 
 							"catch (e) {child = null;}\n" + 
 							"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 							"if (!isBone(child)) child = null;\n" + 
@@ -189,7 +189,7 @@ DESCRIPTION
 						"return ok;\n" + 
 						"}\n" + 
 						"var child = null;\n" + 
-						"try { child = effect('Link')(1);}\n" + 
+						"try { child = effect('Display Link')(1);}\n" + 
 						"catch (e) {child = null;}\n" + 
 						"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 						"if (!isBone(child)) child = null;\n" + 
@@ -371,9 +371,147 @@ DESCRIPTION
 			for (var i = 0 ; i < createdBones.length ; i++)
 			{
 				if (i != createdBones.length -1) createdBones[i].parent = createdBones[i+1];
-				if (i > 0) createdBones[i].effect("Link")(1).setValue(createdBones[i-1].index);
+				if (i > 0) createdBones[i].effect('Display Link')(1).setValue(createdBones[i-1].index);
 			}
 			return createdBones;
+		}
+	
+		function isBone(layer)
+		{
+			var bone = false;
+			if (layer.content('Bone')) bone = true;
+			return bone;
+		}
+		
+		function findChildBone(layer)
+		{
+			var comp = layer.containingComp;
+			var index = layer.index;
+			//test layer before
+			if (index > 1)
+			{
+				var testLayer = comp.layer(index-1);
+				if (testLayer.parent)
+				{
+					if (testLayer.parent.index == index)
+					{
+						if (isBone(testLayer)) return testLayer;
+					}
+				}
+			}
+			//test layer after
+			if (index < comp.numLayers)
+			{
+				var testLayer = comp.layer(index+1);
+				if (testLayer.parent)
+				{
+					if (testLayer.parent.index == index)
+					{
+						if (isBone(testLayer)) return testLayer;
+					}
+				}
+			}
+			//search for first child
+			for (var j = comp.numLayers  ; j > 0 ; j--)
+			{
+				if (comp.layer(j).parent) if (comp.layer(j).parent.index == index)
+				{
+					if (isBone(comp.layer(j)))
+					{
+						return comp.layer(j);
+					}
+				}
+			}
+		}
+	
+		function duplicateButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			app.beginUndoGroup("Duik - Duplicate Bones");
+			
+			//get layers
+			var layers = comp.selectedLayers;
+			if (duplicateChain.value)
+			{
+				for (var i = 0;i < layers.length ;i++)
+				{
+					var layer = layers[i];
+					var displayLink = layer.effect("Display Link");
+					if (displayLink)
+					{
+						var child = displayLink(1).value;
+						var childLayer = null;
+						//find child if not set
+						if (child == 0)
+						{
+							childLayer = findChildBone(layer)						
+						}
+						else if (child != layer.index)
+						{
+							if (isBone(comp.layer(child))) childLayer = comp.layer(child);
+						}
+					
+						//add to layers list
+						if (childLayer) layers.push(childLayer);
+					}
+				}
+				
+				//remove duplicates
+				Duik.js.arrayRemoveDuplicates(layers);
+	
+			}
+			
+			//deselect layers
+			if (duplicateChain.value)
+			{
+				Duik.utils.deselectLayers();
+			
+				//select layers
+				for (var i = 0;i<layers.length;i++)
+				{
+					layers[i].selected = true;
+				}
+			}
+			
+			//duplicate //BUGS WHEN MULTIPLE LAYERS ? //TODO duplicate function, generate two dimensional array with pairs old/new
+			app.executeCommand(2080);
+			
+			//update display links and rig
+			var newLayers = comp.selectedLayers;
+			for (var i = 0 ; i < newLayers.length ; i++)
+			{
+				var layer = newLayers[i];
+				if (layer.effect('Display Link'))
+				{
+					var childBone = findChildBone(layer);
+					if (childBone) layer.effect('Display Link')(1).setValue(childBone.index);
+				}
+				
+				if (duplicateRig.value)
+				{
+					
+				}
+				else
+				{
+					//remove expressions in transform properties
+					for (var j = 1;j <= layer.transform.numProperties;j++)
+					{
+						var prop = layer.transform.property(j);
+						if (prop instanceof Property)
+						{
+							if (prop.canSetExpression)
+							{
+								var val = prop.value;
+								//prop.expression = '';
+								//prop.setValue(val);
+							}
+						}
+					}
+				}
+			}
+			
+			app.endUndoGroup();
 		}
 	}
 	//==================================================
@@ -406,10 +544,22 @@ DESCRIPTION
 		createGroup.orientation = 'row';
 		var bone = createGroup.add('button',undefined,"Bones");
 		bone.onClick = boneClicked;
-		var count = createGroup.add('edittext',undefined,'3');
+		var count = createGroup.add('edittext',undefined,'2');
 		count.alignment = ['right','fill'];
 		count.minimumSize = [25,25];
 		var nameEdit = mainPalette.add('edittext',undefined,"Name");
+		var duplicateButton = mainPalette.add('button',undefined,"Duplicate");
+		duplicateButton.onClick = duplicateButtonClicked;
+		var duplicateGroup = mainPalette.add('group');
+		duplicateGroup.alignChildren = ['fill','fill'];
+		duplicateGroup.margins = 0;
+		duplicateGroup.spacing = 2;
+		duplicateGroup.orientation = 'row';
+		var duplicateChain = duplicateGroup.add('checkbox',undefined,"Chain");
+		duplicateChain.value = true;
+		//var duplicateRig = duplicateGroup.add('checkbox',undefined,"Rig");
+		var IKButton = mainPalette.add('button',undefined,"IK");
+		IKButton.onClick = IKButtonClicked;
 	}
 	// ==================================================
     
