@@ -1,58 +1,115 @@
-﻿var Dutranslator = {};
+﻿/** Duik Translator */
+var Dutranslator = {};
+
+/**
+ * The current language id (fr, en, ..)
+ */
 Dutranslator.current = '';
+
+/** 
+ * The list of availables languages 
+ * 
+ * Will be filled when executing Dutranslator.getAvailable
+ *
+ * When adding a language to this list, the translations should
+ * be added right after in Dutranslator.localizedStrings to
+ * be sure that everything related to a language is available at
+ * the same index
+ */
 Dutranslator.languages = [];
+
+/**
+ * The translated strings 
+ * 
+ * An array which contain for each language, multiples array containing
+ * the original text and the translated text
+ *
+ * The translations should be available at the same index
+ * as the language index in Dutranslator.languages
+ */
 Dutranslator.localizedStrings = [];
 
+/**
+ * Evaluate the translations file which are in the same directory.
+ */
 Dutranslator.getAvailable = function ()
 {
-thisScriptFile = new File($.fileName);
-thisFolder = new Folder(thisScriptFile.path);
-thisName = thisScriptFile.name.substring(0,thisScriptFile.name.lastIndexOf('.'));
-languageFiles = thisFolder.getFiles(thisName + '_*.jsxinc');
-for (var i = 0 ; i < languageFiles.length ; i++)
-{
-$.evalFile(languageFiles[i]);
-}
+	thisScriptFile = new File($.fileName);
+	thisFolder = new Folder(thisScriptFile.path);
+	// Get the prefix name of translators
+	thisName = thisScriptFile.name.substring(0,thisScriptFile.name.lastIndexOf('.'));
+	// Get the list of translators based on the prefix
+	languageFiles = thisFolder.getFiles(thisName + '_*.jsxinc');
+	for (var i = 0 ; i < languageFiles.length ; i++)
+	{
+		// Eval each translator
+		$.evalFile(languageFiles[i]);
+	}
 }
 
+/**
+ * Set the current language
+ * @param {string} languageId - The id of the language to set
+ */
 Dutranslator.setLanguage = function (languageId) {
-this.getAvailable();
-for (var i = 0 ; i < Dutranslator.languages.length ; i++)
-{
-if (Dutranslator.languages[i][0] == languageId)
-{
-Dutranslator.current = languageId;
-return;
-}
-}
+	this.getAvailable();
+	for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+	{
+		if (Dutranslator.languages[i][0] == languageId)
+		{
+			Dutranslator.current = languageId;
+			return;
+		}
+	}
 }
 
+/**
+ * Translate a given string based on the current seted language
+ *
+ * @param {string} s - The text to be translated
+ * @param {string} arg - The arg to be passed to the translated text, can be null
+ *
+ * @return {string} The translated text or s if nothing is set or available
+ */
 function tr(s,arg) {
+	var languageNumber = -1;
+	
+	// Get the current language index
+	for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+	{
+		if (Dutranslator.languages[i][0] == Dutranslator.current)
+		{
+			languageNumber =i;
+			break;
+		}
+	}
+	
+	// If no current language is set, return the normal text
+	if (languageNumber < 0) return s;
 
-var languageNumber = -1;
-for (var i = 0 ; i < Dutranslator.languages.length ; i++)
-{
-if (Dutranslator.languages[i][0] == Dutranslator.current)
-{
-languageNumber =i;
-break;
-}
-}
-if (languageNumber < 0) return s;
+	var stringNumber = -1;
+		
+	// Get the translation
+	for (var i = 0 ; i < Dutranslator.localizedStrings[languageNumber].length ; i++)
+	{
+		if (Dutranslator.localizedStrings[languageNumber][i][0] == s)
+		{
+			// Is arg feature working ? 
+			// TO DO: Check this block
+			if (arg) { 
+				if (Dutranslator.localizedStrings[languageNumber][i][0] == arg) stringNumber =i; 
+			}
+			else stringNumber =i;
+			break;
+		}
+	}
 
-var stringNumber = -1;
-for (var i = 0 ; i < Dutranslator.localizedStrings[languageNumber].length ; i++)
-{
-if (Dutranslator.localizedStrings[languageNumber][i][0] == s)
-{
-if (arg) { if (Dutranslator.localizedStrings[languageNumber][i][0] == arg) stringNumber =i; }
-else stringNumber =i;
-break;
-}
-}
-
-if (stringNumber < 0) return s;
-var ns = Dutranslator.localizedStrings[languageNumber][stringNumber][2];
-if (ns == '') return s;
-return ns;
+	// If no translation found, return the given string
+	if (stringNumber < 0) return s;
+	
+	var ns = Dutranslator.localizedStrings[languageNumber][stringNumber][2];
+	
+	// Return the translation if not null
+	if (ns == '') return s;
+	return ns;
 }
