@@ -69,11 +69,18 @@ Dutranslator.setLanguage = function (languageId) {
  * @param {string} s - 		The text to be translated
  * @param {int} context - 	An integer to be passed to the translated text, used to differenciate different translated texts which have the same original text (context), default is 0
  * 							If something wrong is passed, context will be initialized to -1 (which means, don't check for a specific translation)
+ * @param {string array} args -	Args to format into the translated string, default is []
+ *								For example, when calling tr("Welcome {#}", -1, "Paul"), the output will be "Welcome Paul"
+ *								If too many args are given, there are ignored
+ *								If not enough args are give, the {#} are replaced with ?
  * @return {string} The translated text or s if nothing is set or available
  */
-function tr(s, context) {
+function tr(s, context, args) {
 	// Default args
 	if(typeof(context)==='undefined' || context === parseInt(context, 10)) context = -1;
+	if(typeof(args)==='undefined') args = [];
+	if(typeof(args) === 'string' || args instanceof String) args = [args];
+		
 	var languageNumber = -1;
 	
 	// Get the current language index
@@ -86,36 +93,46 @@ function tr(s, context) {
 		}
 	}
 	
-	// If no current language is set, return the normal text
-	if (languageNumber < 0) return s;
-
-	var stringNumber = -1;
+	var res = s;
+	// If a language is set, search for the translation
+	if (languageNumber > -1){
+		var stringNumber = -1;
 		
-	// Get the translation
-	for (var i = 0 ; i < Dutranslator.localizedStrings[languageNumber].length ; i++)
-	{
-		if (Dutranslator.localizedStrings[languageNumber][i][0] == s)
+		// Get the translation
+		for (var i = 0 ; i < Dutranslator.localizedStrings[languageNumber].length ; i++)
 		{
-			// Check context
-			if (context > -1) { 
-				if (Dutranslator.localizedStrings[languageNumber][i][1] == context) {
+			if (Dutranslator.localizedStrings[languageNumber][i][0] == s)
+			{
+				// Check context
+				if (context > -1) { 
+					if (Dutranslator.localizedStrings[languageNumber][i][1] == context) {
+						stringNumber =i;
+						break;
+					}
+				}
+				else {
 					stringNumber =i;
 					break;
 				}
 			}
-			else {
-				stringNumber =i;
-				break;
-			}
 		}
+
+		// If a translation is found, set it to res
+		if (stringNumber > -1) res = Dutranslator.localizedStrings[languageNumber][stringNumber][2];
+		if (res == "") res = s; 
 	}
 
-	// If no translation found, return the given string
-	if (stringNumber < 0) return s;
 	
-	var ns = Dutranslator.localizedStrings[languageNumber][stringNumber][2];
 	
-	// Return the translation if not null
-	if (ns == '') return s;
-	return ns;
+	// Args process
+	while(res.indexOf("{#}") !== -1){ // While there is stuff to format
+		if(args.length < 1){ // If no more args, replace with ?
+			res = res.replace("{#}", "?"); // Will replace the first occurence
+		}else{
+			var arg = args.shift(); // Take the first arg and remove it
+			res = res.replace("{#}", arg);
+		}
+	}
+		
+	return res;
 }
