@@ -6,6 +6,9 @@ DESCRIPTION
 
 */ 
 
+//dev mode, reload Duik
+if (typeof Duik === 'object') delete Duik;
+
 #include "libduik.jsxinc"
 
 //encapsulate the script in a function to avoid global variables
@@ -23,46 +26,12 @@ DESCRIPTION
 			if (!(comp instanceof CompItem)) return;
 			app.beginUndoGroup("Duik - Bones");
 			var createdBones = [];
-			if (comp.selectedLayers.length)	createdBones = addBones(comp.selectedLayers);
+			if (comp.selectedLayers.length)	createdBones = addBonesToProperty(comp.selectedLayers);
 			
 			if (!createdBones.length)
 			{
-				var num = parseInt(count.text)+1;
-				var spacing = comp.width/(num+1);
-				var prevBone = null;
-				var color = Duik.utils.randomColor();
-				var structureName = nameEdit.text;
-				
-				for (var i = 0 ; i < num ; i++)
-				{
-					var end = i == num-1;
-					var bone = addBone(comp,undefined,color,end);
-					if (end)
-					{
-						bone.name = "EndBone " + structureName;
-					}
-					else
-					{
-						bone.name = "B " + structureName + " " + (i+1);
-					}
-					
-					if (prevBone)
-					{
-						bone.parent = prevBone;
-						bone.transform.position.setValue([spacing,0]);
-					}
-					else
-					{
-						bone.transform.position.setValue([spacing,comp.height/2]);
-					}
-					prevBone = bone;
-					createdBones.push(bone);
-				}
-				//links
-				for (var i = 0;i < createdBones.length-1 ; i++)
-				{
-					createdBones[i].effect("Link")(1).setValue(createdBones[i+1].index)
-				}
+				var num = parseInt(count.text);
+				addBones(comp,num);
 			}
 			app.endUndoGroup();
 		}
@@ -98,7 +67,7 @@ DESCRIPTION
 			if (!end)
 			{
 				var linkEffect = bone.Effects.addProperty('ADBE Layer Control');
-				linkEffect.name = "Link";
+				linkEffect.name = "Display Link";
 			}
 			
 			//bone group
@@ -150,7 +119,7 @@ DESCRIPTION
 							"return ok;\n" + 
 							"}\n" + 
 							"var child = null;\n" + 
-							"try { child = effect('Link')(1);}\n" + 
+							"try { child = effect('Display Link')(1);}\n" + 
 							"catch (e) {child = null;}\n" + 
 							"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 							"if (!isBone(child)) child = null;\n" + 
@@ -189,7 +158,7 @@ DESCRIPTION
 						"return ok;\n" + 
 						"}\n" + 
 						"var child = null;\n" + 
-						"try { child = effect('Link')(1);}\n" + 
+						"try { child = effect('Display Link')(1);}\n" + 
 						"catch (e) {child = null;}\n" + 
 						"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 						"if (!isBone(child)) child = null;\n" + 
@@ -207,22 +176,24 @@ DESCRIPTION
 						"}\n" + 
 						"}\n" + 
 						"}\n" + 
+						"var result = value;\n" +
+						"var layer = thisLayer;\n" +
+						"while (layer.hasParent)\n" +
+						"{\n" +
+						"layer = layer.parent;\n" +
+						"result = result - layer.rotation;\n" +
+						"}\n" +
 						"if (child)\n" + 
+						"if (child.index != index)\n" + 
 						"{\n" + 
 						"C = child.toWorld(child.anchorPoint);\n" + 
 						"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" + 
-						"angle = lookAt(C,O);\n" + 
-						"angle[0] > 0 ? R = angle[0]+angle[1] : R = angle[0]-angle[1];\n" + 
-						"if (angle[1]==-90 || angle[1]==90) result-=90;\n" + 
-						"if (R != 90) R = R + 90 - thisLayer.rotation;\n" + 
-						"var l = thisLayer;\n" + 
-						"while (l.hasParent)\n" + 
-						"{\n" + 
-						"l = l.parent;\n" + 
-						"R = R-l.rotation;\n" + 
+						"var vec = O-C;\n" +
+						"var angle = Math.atan2(vec[1], vec[0]);\n" +
+						"var ik = radiansToDegrees(angle);\n" +
+						"result += (ik-90-rotation)\n" +
 						"}\n" + 
-						"}\n" + 
-						"R;";
+						"result;";
 						
 				boneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
 			}
@@ -239,7 +210,49 @@ DESCRIPTION
 			return bone;
 		}
 		
-		function addBones(layers,placement)
+		function addBones(comp,numBones)
+		{
+			//add endBone
+			numBones += 1;
+			var createdBones = [];
+			var spacing = comp.width/(numBones+1);
+			var prevBone = null;
+			var color = Duik.utils.randomColor();
+			var structureName = nameEdit.text;
+			
+			for (var i = 0 ; i < numBones ; i++)
+			{
+				var end = i == numBones-1;
+				var bone = addBone(comp,undefined,color,end);
+				if (end)
+				{
+					bone.name = "EndBone " + structureName;
+				}
+				else
+				{
+					bone.name = "B " + structureName + " " + (i+1);
+				}
+				
+				if (prevBone)
+				{
+					bone.parent = prevBone;
+					bone.transform.position.setValue([spacing,0]);
+				}
+				else
+				{
+					bone.transform.position.setValue([spacing,comp.height/2]);
+				}
+				prevBone = bone;
+				createdBones.push(bone);
+			}
+			//links
+			for (var i = 0;i < createdBones.length-1 ; i++)
+			{
+				createdBones[i].effect('Display Link')(1).setValue(createdBones[i+1].index)
+			}
+		}
+		
+		function addBonesToProperty(layers,placement)
 		{
 			if (placement == undefined) placement = Duik.settings.bonePlacement;
 			var createdBones = [];
@@ -283,7 +296,7 @@ DESCRIPTION
 				//si il n'y a pas de coins selectionnes, on les prend tous
 				if (!coins.length) coins = Duik.utils.getPuppetPins(calque("Effects"));
 				//si on a vraiment rien trouve, on laisse tomber
-				if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
+				if (!coins.length) return [];
 
 				//create bones
 				var color = Duik.utils.randomColor();
@@ -371,9 +384,374 @@ DESCRIPTION
 			for (var i = 0 ; i < createdBones.length ; i++)
 			{
 				if (i != createdBones.length -1) createdBones[i].parent = createdBones[i+1];
-				if (i > 0) createdBones[i].effect("Link")(1).setValue(createdBones[i-1].index);
+				if (i > 0) createdBones[i].effect('Display Link')(1).setValue(createdBones[i-1].index);
 			}
 			return createdBones;
+		}
+	
+		function isBone(layer)
+		{
+			var bone = false;
+			if (layer.content('Bone')) bone = true;
+			return bone;
+		}
+		
+		function findChildBone(layer)
+		{
+			var comp = layer.containingComp;
+			var index = layer.index;
+			//test layer before
+			if (index > 1)
+			{
+				var testLayer = comp.layer(index-1);
+				if (testLayer.parent)
+				{
+					if (testLayer.parent.index == index)
+					{
+						if (isBone(testLayer)) return testLayer;
+					}
+				}
+			}
+			//test layer after
+			if (index < comp.numLayers)
+			{
+				var testLayer = comp.layer(index+1);
+				if (testLayer.parent)
+				{
+					if (testLayer.parent.index == index)
+					{
+						if (isBone(testLayer)) return testLayer;
+					}
+				}
+			}
+			//search for first child
+			for (var j = comp.numLayers  ; j > 0 ; j--)
+			{
+				if (comp.layer(j).parent) if (comp.layer(j).parent.index == index)
+				{
+					if (isBone(comp.layer(j)))
+					{
+						return comp.layer(j);
+					}
+				}
+			}
+		}
+	
+		function duplicateLayers(layers)
+		{
+			var duplicatedLayers = [];
+			Duik.utils.deselectLayers();
+			for (var i = 0; i < layers.length ; i++)
+			{
+				var oldLayer = layers[i];
+				var newLayer = oldLayer.duplicate();
+				duplicatedLayers.push([oldLayer,newLayer]);				
+			}
+			//update parents
+			for  (var i = 0 ; i < duplicatedLayers.length;i++)
+			{
+				var oldLayer = duplicatedLayers[i][0];
+				var newLayer = duplicatedLayers[i][1];
+				newLayer.selected = true;
+				var oldParent = oldLayer.parent;
+				if (oldParent)
+				{
+					for (var j = 0;j < duplicatedLayers.length ; j++)
+					{
+						if (oldParent === duplicatedLayers[j][0])
+						{
+							newLayer.parent = duplicatedLayers[j][1];
+						}
+					}
+				}
+			}
+			return duplicatedLayers;
+		}
+	
+		function duplicateButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			app.beginUndoGroup("Duik - Duplicate Bones");
+			
+			//get layers
+			var layers = comp.selectedLayers;
+			if (duplicateChain.value)
+			{
+				for (var i = 0;i < layers.length ;i++)
+				{
+					var layer = layers[i];
+					var displayLink = layer.effect("Display Link");
+					if (displayLink)
+					{
+						var child = displayLink(1).value;
+						var childLayer = null;
+						//find child if not set
+						if (child == 0)
+						{
+							childLayer = findChildBone(layer)						
+						}
+						else if (child != layer.index)
+						{
+							if (isBone(comp.layer(child))) childLayer = comp.layer(child);
+						}
+					
+						//add to layers list
+						if (childLayer) layers.push(childLayer);
+					}
+				}
+				
+				//remove duplicates
+				Duik.js.arrayRemoveDuplicates(layers);
+	
+			}
+			
+			//array of layers to duplicate
+			var duplicatedLayers = duplicateLayers(layers);
+			
+			//update display links, rig and name
+			var newLayers = comp.selectedLayers;
+			var structureName = nameEdit.text;
+			for (var i = 0 ; i < newLayers.length ; i++)
+			{
+				var layer = newLayers[i];
+				
+				if (layer.name.indexOf('B') == 0)
+				{
+					layer.name = "B " + structureName + " " + (i+1);
+				}
+				else if (layer.name.indexOf('EndBone') == 0)
+				{
+					layer.name = "EndBone " + structureName;
+				}
+				
+				if (layer.effect('Display Link'))
+				{
+					var childBone = findChildBone(layer);
+					if (childBone) layer.effect('Display Link')(1).setValue(childBone.index);
+				}
+				
+				//remove expressions in transform properties
+				for (var j = 1;j <= layer.transform.numProperties;j++)
+				{
+					var prop = layer.transform.property(j);
+					if (prop instanceof Property)
+					{
+						if (prop.canSetExpression)
+						{
+							var val = prop.value;
+							prop.expression = '';
+							prop.setValue(val);
+						}
+					}
+				}
+			}
+			
+			app.endUndoGroup();
+		}
+
+		function sortLayersByParents(layers)
+		{
+			//sort layers according to parent links
+			//find the one which has no parents in the selection, the first of the chain
+			var sortedLayers = [];
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				var layer = layers[i];
+				var parent = layer.parent;
+				var first = true;
+				for (var j = 0 ; j < layers.length ; j++)
+				{
+					if (parent == layers[j])
+					{
+						first = false;
+						break;
+					}
+				}
+				if (first)
+				{
+					sortedLayers.push(layer);
+					break;
+				}
+			}
+			//add other layers
+			while (sortedLayers.length != layers.length)
+			{
+				//find child of the latest sorted layer
+				var found = false;
+				for (var i = 0;i < layers.length;i++)
+				{
+					var parent = sortedLayers[sortedLayers.length-1];
+					var testLayer = layers[i];
+					if (testLayer.parent == parent)
+					{
+						sortedLayers.push(testLayer);
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					break;
+				}
+			}
+			
+			return sortedLayers;
+		}
+		
+		function IKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			if (layers.length <= 1)
+			{
+				alert("Please select the bones for the IK");
+				return;
+			}
+			
+			if (layers.length > 4)
+			{
+				alert("Standard IK cannot be used on more than 3 bones.\nYou may try using a Bezier IK.");
+				return;
+			}
+			
+			//assign layers
+			var rig = new IKRig();
+			rig.type = layers.length-1;
+			
+			//sort layers according to parent links
+			//find the one which has no parents in the selection, the first of the chain
+			var sortedLayers = sortLayersByParents(layers);
+			
+			if (sortedLayers.length != layers.length)
+			{
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - IK");
+			
+			//add controller
+			var controller = Duik.addController(sortedLayers[sortedLayers.length-1],false,true,true,true,false);
+			
+			//create IK
+			rig.layer1 = sortedLayers[0];
+			if (rig.type > 1) rig.layer2 = sortedLayers[1];
+			if (rig.type > 2) rig.layer3 = sortedLayers[2];
+			rig.goal = sortedLayers[rig.type];
+			rig.controller = controller.layer;
+			if (rig.type > 1) rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
+			rig.create();
+			
+			app.endUndoGroup();
+		}
+	
+		function bezierIKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			//sort layers
+			var sortedLayers = sortLayersByParents(layers);
+			
+			if (sortedLayers.length != layers.length)
+			{
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - Bezier IK");
+			
+			//add controllers
+			var rootController = Duik.addController(sortedLayers[0]);
+			var endController = Duik.addController(sortedLayers[sortedLayers.length-1]);
+			
+			//array for bezier ik duik
+			var bezierIKLayers = [];
+			for (var i = sortedLayers.length-2 ; i >= 0 ; i--)
+			{
+				bezierIKLayers.push(sortedLayers[i]);
+			}
+			bezierIKLayers.push(endController.layer);
+			bezierIKLayers.push(rootController.layer);
+			
+			var type = 1;
+			if (!bezierIKSimple.value) type = 2;
+			Duik.bezierIK(bezierIKLayers,type);
+			
+			//add goal to endbone
+			Duik.goal(sortedLayers[sortedLayers.length-1],endController.layer);
+			
+			app.endUndoGroup();
+			
+		}
+	
+		function delayedFKButtonClicked()
+		{
+			var comp = app.project.activeItem;
+			if (!(comp instanceof CompItem)) return;
+			
+			var layers = comp.selectedLayers;
+			
+			//sort layers
+			var sortedLayers = sortLayersByParents(layers);
+						
+			if (sortedLayers.length != layers.length)
+			{
+				alert("Invalid bone chain:\nMake sure all bones are parented together.");
+				return;
+			}
+			
+			app.beginUndoGroup("Duik - FK Overlap");
+			
+			//add controller
+			var controller = Duik.addController(sortedLayers[0]);
+			sortedLayers[0].parent = controller.layer;
+			
+			var globalDelayEffect = controller.layer.effect.addProperty('ADBE Slider Control');
+			globalDelayEffect.name = 'FK Overlap Delay';
+			globalDelayEffect(1).setValue(2);
+			
+			var globalMultiplierEffect = controller.layer.effect.addProperty('ADBE Slider Control');
+			globalMultiplierEffect.name = 'FK Overlap Multiplier';
+			globalMultiplierEffect(1).setValue(1.5);
+			
+			for (var i = 0 ; i < sortedLayers.length ; i++)
+			{
+				var layer = sortedLayers[i];
+				//add effect
+				var delayEffect = layer.effect.addProperty('ADBE Slider Control');
+				delayEffect.name = 'FK Overlap Delay';
+				delayEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Delay')(1) + value;";
+				
+				var multiplierEffect = layer.effect.addProperty('ADBE Slider Control');
+				multiplierEffect.name = 'FK Overlap Multiplier';
+				multiplierEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Multiplier')(1) + value;";
+				
+				var rotExpr = "//Duik.delayedRotation\n" + 
+							"var delay = effect('FK Overlap Delay')(1);\n" + 
+							"var multiplier = effect('FK Overlap Multiplier')(1);\n" + 
+							"var result = value;\n" + 
+							"if (thisLayer.hasParent)\n" + 
+							"{\n" + 
+							"var parentRotation = thisLayer.parent.rotation;\n" + 
+							"var parentRotationValue = parentRotation.valueAtTime(time - framesToTime(delay));\n";
+				
+				if (i == 1) rotExpr += "parentRotationValue -= parentRotation.value;\n";
+				
+				rotExpr += "result += parentRotationValue * multiplier;\n" + 
+							"}\n" + 
+							"result;";
+
+				layer.rotation.expression = rotExpr;
+			}
+			
+			app.endUndoGroup();
 		}
 	}
 	//==================================================
@@ -406,10 +784,35 @@ DESCRIPTION
 		createGroup.orientation = 'row';
 		var bone = createGroup.add('button',undefined,"Bones");
 		bone.onClick = boneClicked;
-		var count = createGroup.add('edittext',undefined,'3');
+		var count = createGroup.add('edittext',undefined,'2');
 		count.alignment = ['right','fill'];
 		count.minimumSize = [25,25];
 		var nameEdit = mainPalette.add('edittext',undefined,"Name");
+		var duplicateButton = mainPalette.add('button',undefined,"Duplicate");
+		duplicateButton.onClick = duplicateButtonClicked;
+		var duplicateGroup = mainPalette.add('group');
+		duplicateGroup.alignChildren = ['fill','fill'];
+		duplicateGroup.margins = 0;
+		duplicateGroup.spacing = 2;
+		duplicateGroup.orientation = 'row';
+		var duplicateChain = duplicateGroup.add('checkbox',undefined,"Chain");
+		duplicateChain.value = true;
+		//var duplicateRig = duplicateGroup.add('checkbox',undefined,"Rig");
+		var IKButton = mainPalette.add('button',undefined,"IK");
+		IKButton.onClick = IKButtonClicked;
+		var bezierIKButton = mainPalette.add('button',undefined,"Bezier IK");
+		bezierIKButton.onClick = bezierIKButtonClicked;
+		var bezierIKGroup = mainPalette.add('group');
+		bezierIKGroup.alignChildren = ['fill','fill'];
+		bezierIKGroup.margins = 0;
+		bezierIKGroup.spacing = 2;
+		bezierIKGroup.orientation = 'row';
+		var bezierIKSimple = bezierIKGroup.add('radiobutton',undefined,"Simple");
+		bezierIKSimple.value = true;
+		var bezierIKCubic = bezierIKGroup.add('radiobutton',undefined,"Cubic");
+		var delayedFKButton = mainPalette.add('button',undefined,"FK Overlap");
+		delayedFKButton.onClick = delayedFKButtonClicked;
+		
 	}
 	// ==================================================
     
