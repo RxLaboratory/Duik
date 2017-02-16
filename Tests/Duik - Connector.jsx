@@ -9,6 +9,7 @@ DESCRIPTION
 //encapsulate the script in a function to avoid global variables
 (function (thisObj) {
 	
+	// load libduik
 	#include 'libduik.jsxinc'
       
     //================
@@ -17,6 +18,14 @@ DESCRIPTION
     
     // ================ ADD FUNCTIONS HERE =============
 	{
+		/** The master property, null if none has been picked yet */
+		var masterProp = null;
+		
+		/**
+		 * Gets the selected property
+		 *
+		 * @return {Property} The selected property
+		 */
 		function getCurrentProp()
 		{
 			var comp = app.project.activeItem;
@@ -28,12 +37,31 @@ DESCRIPTION
 			return prop;
 		}
 		
-		function generateExpression()
+		/**
+		 * Generates the expression needed to connect the slave properties
+		 *
+		 * @param {bool} thisComp - 	Wether to use "thisComp" instead of "comp('name')" at the beginning of the expression, default is false
+		 *
+		 * @return {string} The expression
+		 */
+		function generateExpression(thisComp)
 		{
+			// if master prop has not been picked, stop here
+			if (!masterProp) return;
+			
+			// the expression
 			var expr = "";
-			var ctrlValue = masterEdit.text;
-			if (masterValueYButton.enabled)
-			{
+			
+			// generates the link to the master property
+			var ctrlValue = Duik.utils.getExpressionLink(masterProp);
+			
+			// replace comp('name') by thisComp
+			if (thisComp) {
+				ctrlValue = "thisComp" + ctrlValue.substr(ctrlValue.indexOf("."));
+			}
+			
+			// gets the selected axis
+			if (masterValueYButton.enabled) {
 				if (masterValueXButton.value) ctrlValue += "[0]";
 				else if (masterValueYButton.value) ctrlValue += "[1]";
 				else if (masterValueZButton.value) ctrlValue += "[2]";
@@ -109,8 +137,8 @@ DESCRIPTION
 		
 		function masterPickButtonClicked()
 		{
-			var prop = getCurrentProp();
-			var type = prop.propertyValueType;
+			masterProp = getCurrentProp();
+			var type = masterProp.propertyValueType;
 			masterValueXButton.enabled = false;
 			masterValueYButton.enabled = false;
 			masterValueZButton.enabled = false;
@@ -143,7 +171,9 @@ DESCRIPTION
 				alert("This property cannot be used as a controller.");
 				return;
 			}
-			masterEdit.text = Duik.utils.getExpressionLink(prop);
+			
+			//TODO replace with a user friendly text, like "comp name | layer name | Property name"
+			masterEdit.text = Duik.utils.getExpressionLink(masterProp);
 		}
 
 		function opacityValueButtonClicked()
@@ -151,14 +181,29 @@ DESCRIPTION
 			var expr = generateExpression();
 			opacityConnect(expr);
 		}
-			
+		
+		/**
+		 * Connects the selected properties (if any) to the master property using an expression
+		 */
 		function applyButtonClicked()
 		{
+			// if master property has not been picked, nothing to do
+			if (!masterProp) return;
+			
+			// if there's no selected layer, nothing to do
 			var comp = app.project.activeItem;
 			if (!(comp instanceof CompItem)) return;
 			if (!comp.selectedLayers.length) return;
 			var layers = comp.selectedLayers;
-			var expr = generateExpression();
+			
+			// check if the current comp is the same than the comp containing the masterProperty
+			var masterComp = Duik.utils.getPropertyComp(masterProp);
+			var thisComp = masterComp === comp;
+			
+			// generate the expression
+			var expr = generateExpression(thisComp);
+			
+			// apply expression in each selected property
 			for (var l = 0;l<comp.selectedLayers.length;l++)
 			{
 				var layer = comp.selectedLayers[l];
