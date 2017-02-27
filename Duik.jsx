@@ -343,7 +343,7 @@ return palette;
 Duik.settings.load();
 }
 
-Duik.ui.showProgressPanel(2,tr("Duik - Loading icons"));
+//Duik.ui.showProgressPanel(2,tr("Duik - Loading icons"));
 
 //=================================
 //======== LOAD ICONS =============
@@ -402,7 +402,7 @@ alert(tr("Error writing file: ") + k);
 }
 }
 
-Duik.ui.updateProgressPanel(1,tr("Duik - Loading functions"));
+//Duik.ui.updateProgressPanel(1,tr("Duik - Loading functions"));
 
 //===============================================
 //============ FUNCTIONS ========================
@@ -3858,7 +3858,7 @@ prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
 {
 //TODO renommer les elements d'UI
 
-Duik.ui.updateProgressPanel(2,tr("Duik - Creating UI"));
+//Duik.ui.updateProgressPanel(2,tr("Duik - Creating UI"));
 
 //folders and needed variables
 var dossierIcones = Folder.userData.absoluteURI  + '/Duduf/DuIK/';
@@ -6799,7 +6799,7 @@ palette.layout.resize();
 palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 if (!(thisObj instanceof Panel)) palette.show();
 
-Duik.ui.hideProgressPanel();
+//Duik.ui.hideProgressPanel();
 }
 }
 
