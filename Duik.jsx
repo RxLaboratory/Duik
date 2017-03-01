@@ -31,7 +31,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.11';
-var developper = true;
+var developper = false;
 //=========================
 
 //=================================
@@ -47,40 +47,66 @@ palette.orientation = 'stack';
 palette.alignChildren = ['fill','fill'];
 
 //=================================
-//======== APP.SETTINGS ===========
+//== SET LANGUAGE ON FIRST START ==
 //=================================
 {
-writeLn("Lang is set : " + app.settings.haveSetting('duik', 'lang'));
-if (!app.settings.haveSetting('duik', 'lang')){
-	// First launch, ask for language
-	
-	var languageDialog = (languageDialog instanceof Panel) ? languageDialog : new Window('palette', tr("Choose Duik language"), undefined, {resizeable:false});
-	languageDialog.orientation = 'stack';
-	var lDgr = languageDialog.add('group');
-	lDgr.orientation = 'column';
-	var lDtxt = lDgr.add('statictext', undefined, tr("Choose a language among availables languages to launch Duik. (This will be prompt only on the first start)"));
-	var lDdd = lDgr.add('dropdownlist', undefined);
-	lDdd.add('item', 'testitem');
-	lDdd.selection = 0;
-	languageDialog.layout.resize();
-	languageDialog.center();
-	languageDialog.show();					
-	//app.settings.saveSetting('duik','lang','en');
+	// This line in needed to load available languages 
+	Dutranslator.setLanguage('en'); // Default settings 
+
+	if (!app.settings.haveSetting('duik', 'lang')){
+		// First launch, ask for language
+		
+		// Create the window
+		var languageDialog = (languageDialog instanceof Panel) ? languageDialog : new Window('dialog', "Choose Duik language", undefined, {resizeable:false});
+		languageDialog.orientation = 'stack';
+		var lDgr = languageDialog.add('group');
+		lDgr.orientation = 'column';
+		lDgr.add('statictext', undefined, "Choose a language among available languages to launch Duik.");
+		lDgr.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
+		var lDdd = lDgr.add('dropdownlist', undefined);
+		
+		// Add languages to the list 
+		for (var i = 0 ; i < Dutranslator.languages.length ; i++){
+			lDdd.add('item', Dutranslator.languages[i][1]);
+		}
+		
+		// Show window
+		lDdd.selection = 0;
+		var lDok = lDgr.add('button', undefined, "Ok");
+		languageDialog.layout.resize();
+		languageDialog.center();
+		languageDialog.show(); // Pause the execution while the dialog is open
+		
+		// Set language based on user choice
+		var languageChoosed = lDdd.selection.text;
+		for (var i = 0 ; i < Dutranslator.languages.length ; i++){
+			if (Dutranslator.languages[i][1] == languageChoosed){
+				// Save choosed language
+				app.settings.saveSetting('duik','lang',Dutranslator.languages[i][0]);
+				break;
+			}
+		}
+	}
 }
-return;
-if (!app.settings.haveSetting('duik','version')){app.settings.saveSetting('duik','version','oui');}
-if (!app.settings.haveSetting('duik','expertMode')){app.settings.saveSetting('duik','expertMode','false');}
-if (!app.settings.haveSetting('duik', 'notes')){app.settings.saveSetting('duik','notes','');}
-if (!app.settings.haveSetting('duik', 'pano')){app.settings.saveSetting('duik','pano','0');}
-if (!app.settings.haveSetting('duik', 'stretch')){app.settings.saveSetting('duik','stretch','true');}
-if (!app.settings.haveSetting('duik', 'ikfk')){app.settings.saveSetting('duik','ikfk','true');}
-if (!app.settings.haveSetting('duik', 'dropDownSelector')){app.settings.saveSetting('duik','dropDownSelector','false');}
-if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
-if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
-if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
-//Set language
-writeLn("Current lang is " + app.settings.getSetting('duik', 'lang'));
-Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));
+
+//=================================
+//======== APP.SETTINGS ===========
+//=================================
+
+{
+	if (!app.settings.haveSetting('duik','lang')){app.settings.saveSetting('duik','lang','en');}
+	if (!app.settings.haveSetting('duik','version')){app.settings.saveSetting('duik','version','oui');}
+	if (!app.settings.haveSetting('duik','expertMode')){app.settings.saveSetting('duik','expertMode','false');}
+	if (!app.settings.haveSetting('duik', 'notes')){app.settings.saveSetting('duik','notes','');}
+	if (!app.settings.haveSetting('duik', 'pano')){app.settings.saveSetting('duik','pano','0');}
+	if (!app.settings.haveSetting('duik', 'stretch')){app.settings.saveSetting('duik','stretch','true');}
+	if (!app.settings.haveSetting('duik', 'ikfk')){app.settings.saveSetting('duik','ikfk','true');}
+	if (!app.settings.haveSetting('duik', 'dropDownSelector')){app.settings.saveSetting('duik','dropDownSelector','false');}
+	if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
+	if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
+	if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
+	
+	Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));  //Set language
 }
 
 //=================================
