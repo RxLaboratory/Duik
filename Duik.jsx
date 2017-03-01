@@ -1711,164 +1711,140 @@ app.endUndoGroup();
 
 //========== RIGGING ================================
 
-//FONCTION QUAND ON CLIQUE SUR CREER IK
+/**
+ * Function executed when the IK button is clicked
+ * 
+ * Display the IK options depending on selection and map the click to 
+ * the correct ik creation function
+ */
 function ik(){
 
-var calques = getCurrentLayers()
-if (!calques) return null;
+	var calques = getCurrentLayers();
+	if (!calques) return null;
 
-if (calques.length < 2 || calques.length > 5)
-{
-alert(tr("Select the bones and the controller before creating IK"));
-return;
-}
+	if (calques.length < 2 || calques.length > 5){
+		alert(tr("Select the bones and the controller before creating IK"));
+		return;
+	}
 
-panoik.hide();
-ikPanel.show();
+	panoik.hide();
+	ikPanel.show();
 
-//prepIK
-app.beginUndoGroup(tr("Duik - prepare IK"));
-var ikRig = Duik.utils.prepIK(calques);
-app.endUndoGroup();
-if (ikRig.type == 0) return;
+	//prepIK
+	app.beginUndoGroup(tr("Duik - prepare IK"));
+	var ikRig = Duik.utils.prepIK(calques);
+	app.endUndoGroup();
+	if (ikRig.type == 0) return;
 
-if (ikRig.type == 1 && ikRig.goal == null)
-{
-ikType1Group.show();
-ikType2Group.hide();
-ikType3Group.hide();
-ikType4Group.hide();
-ik3DGroup.hide();
-}
-else if (ikRig.type == 1 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.show();
-ikType3Group.hide();
-ikType4Group.hide();
-ik1GoalButton.value = true;
-ik2LayerButton.value = false;
-ik3DGroup.enabled = false;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-ikCWButton.show();
-ikCWButton.enabled = false;
-}
-else if (ikRig.type == 2 && ikRig.goal == null)
-{
-ikType1Group.hide();
-ikType2Group.show();
-ikType3Group.hide();
-ikType4Group.hide();
-ik1GoalButton.value = false;
-ik2LayerButton.value = true;
-ik3DGroup.enabled = true;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 2 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.show();
-ikType4Group.hide();
-ik3LayerButton.value = false;
-ik2GoalButton.value = true;
-ik3DGroup.enabled = true;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 3 && ikRig.goal == null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.show();
-ikType4Group.hide();
-ik3LayerButton.value = true;
-ik2GoalButton.value = false;
-ik3DGroup.enabled = false;
-if (ikRig.threeD)
-{
-ik3DGroup.show();
-ikFrontFacingButton.value = ikRig.frontFacing;
-ikRightFacingButton.value = !ikRig.frontFacing;
-}
-else
-{
-ik3DGroup.hide();
-}
-}
-else if (ikRig.type == 3 && ikRig.goal != null)
-{
-ikType1Group.hide();
-ikType2Group.hide();
-ikType3Group.hide();
-ikType4Group.show();
-ik3DGroup.hide();
-}
+	if (ikRig.type == 1 && ikRig.goal == null){
+		ikType1Group.show();
+		ikType2Group.hide();
+		ikType3Group.hide();
+		ikType4Group.hide();
+		ik3DGroup.hide();
+	}else if (ikRig.type == 1 && ikRig.goal != null){
+		ikType1Group.hide();
+		ikType2Group.show();
+		ikType3Group.hide();
+		ikType4Group.hide();
+		ik1GoalButton.value = true;
+		ik2LayerButton.value = false;
+		ik3DGroup.enabled = false;
+		if (ikRig.threeD){
+			ik3DGroup.show();
+			ikFrontFacingButton.value = ikRig.frontFacing;
+			ikRightFacingButton.value = !ikRig.frontFacing;
+		}else{
+			ik3DGroup.hide();
+		}
+		ikCWButton.show();
+		ikCWButton.enabled = false;
+	}else if (ikRig.type == 2 && ikRig.goal == null){
+		ikType1Group.hide();
+		ikType2Group.show();
+		ikType3Group.hide();
+		ikType4Group.hide();
+		ik1GoalButton.value = false;
+		ik2LayerButton.value = true;
+		ik3DGroup.enabled = true;
+		if (ikRig.threeD){
+			ik3DGroup.show();
+			ikFrontFacingButton.value = ikRig.frontFacing;
+			ikRightFacingButton.value = !ikRig.frontFacing;
+		}else{
+			ik3DGroup.hide();
+		}
+	}else if (ikRig.type == 2 && ikRig.goal != null){
+		ikType1Group.hide();
+		ikType2Group.hide();
+		ikType3Group.show();
+		ikType4Group.hide();
+		ik3LayerButton.value = false;
+		ik2GoalButton.value = true;
+		ik3DGroup.enabled = true;
+		if (ikRig.threeD){
+			ik3DGroup.show();
+			ikFrontFacingButton.value = ikRig.frontFacing;
+			ikRightFacingButton.value = !ikRig.frontFacing;
+		}else{
+			ik3DGroup.hide();
+		}
+	}else if (ikRig.type == 3 && ikRig.goal == null){
+		ikType1Group.hide();
+		ikType2Group.hide();
+		ikType3Group.show();
+		ikType4Group.hide();
+		ik3LayerButton.value = true;
+		ik2GoalButton.value = false;
+		ik3DGroup.enabled = false;
+		if (ikRig.threeD){
+			ik3DGroup.show();
+			ikFrontFacingButton.value = ikRig.frontFacing;
+			ikRightFacingButton.value = !ikRig.frontFacing;
+		}else{
+			ik3DGroup.hide();
+		}
+	}else if (ikRig.type == 3 && ikRig.goal != null){
+		ikType1Group.hide();
+		ikType2Group.hide();
+		ikType3Group.hide();
+		ikType4Group.show();
+		ik3DGroup.hide();
+	}
 
-ikCreateButton.onClick = function() {
-ikRig.frontFacing = ikFrontFacingButton.value;
-if (ikType2Group.visible)
-{
-if (ik2LayerButton.value && ikRig.type == 1)
-{
-ikRig.layer2 = ikRig.goal;
-ikRig.goal = null;
-ikRig.type = 2;
-}
-else if (ik1GoalButton.value && ikRig.type == 2)
-{
-ikRig.goal = ikRig.layer2;
-ikRig.layer2 = null;
-ikRig.type = 1;
-}
-}
-if (ikType3Group.visible)
-{
-if (ik3LayerButton.value && ikRig.type == 2)
-{
-ikRig.layer3 = ikRig.goal;
-ikRig.goal = null;
-ikRig.type = 3;
-}
-else if (ik2GoalButton.value && ikRig.type == 3)
-{
-ikRig.goal = ikRig.layer3;
-ikRig.layer3 = null;
-ikRig.type = 2;
-}
-}
-app.beginUndoGroup(tr("Duik - IK"));
-ikRig.create();
-app.endUndoGroup();
-ikPanel.hide();
-panoik.show();
-}
+	ikCreateButton.onClick = function() {
+		
+		ikRig.frontFacing = ikFrontFacingButton.value;
+		
+		if (ikType2Group.visible){
+			if (ik2LayerButton.value && ikRig.type == 1){
+				ikRig.layer2 = ikRig.goal;
+				ikRig.goal = null;
+				ikRig.type = 2;
+			}else if (ik1GoalButton.value && ikRig.type == 2){
+				ikRig.goal = ikRig.layer2;
+				ikRig.layer2 = null;
+				ikRig.type = 1;
+			}
+		}else if (ikType3Group.visible){
+			if (ik3LayerButton.value && ikRig.type == 2){
+				ikRig.layer3 = ikRig.goal;
+				ikRig.goal = null;
+				ikRig.type = 3;
+			}else if (ik2GoalButton.value && ikRig.type == 3){
+				ikRig.goal = ikRig.layer3;
+				ikRig.layer3 = null;
+				ikRig.type = 2;
+			}
+		}
+		
+		app.beginUndoGroup(tr("Duik - IK"));
+		ikRig.create();
+		app.endUndoGroup();
+		ikPanel.hide();
+		panoik.show();
+		writeLn("End ik create");
+	}
 }
 
 //BEZIER IK
