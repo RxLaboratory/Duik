@@ -2393,263 +2393,225 @@ return arr;
 }
 // PREP LAYERS FOR IK
 //return IKRig
-if (typeof Duik.utils.prepIK !== 'function')
-{
-Duik.utils.prepIK = function (layrs)
-{
-rig = new IKRig();
-if (layrs.length < 2) return rig;
-if (layrs.length > 5) return rig;
+if (typeof Duik.utils.prepIK !== 'function'){
 
-var layers = Duik.utils.convertCollectionToArray(layrs);
+	/**
+	 * Prepare given layers for IK creation
+	 *
+	 * @return {IKRig} the prepared rig
+	 */
+	Duik.utils.prepIK = function (layrs){
+		
+		rig = new IKRig();
+		if (layrs.length < 2) return rig;
+		if (layrs.length > 5) return rig;
+
+		var layers = Duik.utils.convertCollectionToArray(layrs);
 
 
-if (layers.length == 2)
-{
-rig.type = 1;
-rig.layer1 = layers[0];
-rig.controller = layers[1];
-}
-else
-{
-//find controller
-var found = false;
-var ctrl = null;
-for (var i = 0;i<layers.length;i++)
-{
-var l = layers[i];
-var ok = true;
-for (var j = 0;j<layers.length;j++)
-{
-if (i == j) continue;
-var ll = layers[j];
-if (l.parent != null)
-{
-if (l.parent == ll)
-{
-ok = false;
-break;
-}
-}
-if (ll.parent != null)
-{
-if (ll.parent == l)
-{
-ok = false;
-break;
-}
-}
-}
-if (ok && found)
-{
-ctrl = null;
-break;
-}
-else if (ok)
-{
-found = true;
-ctrl = l;
-}
-}
+		if (layers.length == 2){
+			rig.type = 1;
+			rig.layer1 = layers[0];
+			rig.controller = layers[1];
+		}
+		else{
+			//find controller
+			var found = false;
+			var ctrl = null;
+			for (var i = 0;i<layers.length;i++){
+				var l = layers[i];
+				var ok = true;
+				for (var j = 0;j<layers.length;j++){
+					if (i == j) continue;
+					var ll = layers[j];
+					if (l.parent != null && l.parent == ll){
+						ok = false;
+						break;
+					}
+					if (ll.parent != null && ll.parent == l){
+						ok = false;
+						break;
+					}
+				}
+				if (ok && found){
+					ctrl = null;
+					break;
+				}
+				else if (ok){
+					found = true;
+					ctrl = l;
+				}
+			}
 
-var valid = true;
-if (ctrl == null) valid = false;
-var sortedLayers = [];
-if (valid)
-{
-//sort layers
-//find the one which has no parents, will be the root (first)
-var first = null;
-for (var i = 0;i<layers.length;i++)
-{
-var l = layers[i];
-if (l == ctrl) continue;
-var ok = true;
-//search if l has a parent
-for (var j = 0;j<layers.length;j++)
-{
-if (l.parent == layers[j])
-{
-ok = false;
-break;
-}
-}
-//if a parent is found, skip
-if (!ok) continue;
-//if we haven't found it already
-if (first == null)
-{
-first = l;
-}
-//else break
-else
-{
-first = null;
-break;
-}
-}
+			var valid = true;
+			if (ctrl == null) valid = false;
+			var sortedLayers = [];
+			if (valid){
+				//sort layers
+				//find the one which has no parents, will be the root (first)
+				var first = null;
+				for (var i = 0;i<layers.length;i++){
+					var l = layers[i];
+					if (l == ctrl) continue;
+					var ok = true;
+					//search if l has a parent
+					for (var j = 0;j<layers.length;j++){
+						if (l.parent == layers[j]){
+							ok = false;
+							break;
+						}
+					}
+					//if a parent is found, skip
+					if (!ok) continue;
+					//if we haven't found it already
+					if (first == null){
+						first = l;
+					}
+					else{
+						first = null;
+						break;
+					}
+				}
 
-if (first != null)
-{
-sortedLayers.push(first);
-//find children
-while (sortedLayers.length < layers.length-1)
-{
-var found = false;
-var ok = true;
-for (var i = 0;i<layers.length;i++)
-{
-var l = layers[i];
-if (l == ctrl) continue;
-if (l.parent != null)
-{
-if (l.parent == sortedLayers[sortedLayers.length-1])
-{
-if (found)
-{
-ok = false;
-break;
-}
-else
-{
-sortedLayers.push(l);
-}
-}
-}
-}
-if (!ok) break;
-}
-}
-}
-if (sortedLayers.length != layers.length-1) valid = false;
+				if (first != null){
+					sortedLayers.push(first);
+					//find children
+					while (sortedLayers.length < layers.length-1){
+						var found = false;
+						var ok = true;
+						for (var i = 0;i<layers.length;i++){
+							var l = layers[i];
+							if (l == ctrl) continue;
+							if (l.parent != null){
+								if (l.parent == sortedLayers[sortedLayers.length-1]){
+									if (found){
+										ok = false;
+										break;
+									}
+									else{
+										sortedLayers.push(l);
+									}
+								}
+							}
+						}
+						if (!ok) break;
+					}
+				}
+			}
+			if (sortedLayers.length != layers.length-1) valid = false;
 
-if (layers.length == 3)
-{
-if (valid)
-{
-rig.layer1 = sortedLayers[0];
-rig.layer2 = sortedLayers[1];
-rig.controller = ctrl;
-}
-else
-{
-rig.layer1 = layers[1];
-rig.layer2 = layers[0];
-rig.controller = layers[2];
-}
-//2 layer or 1+goal ?
-if (Duik.utils.getDistance(rig.layer2,rig.controller) < 10)
-{
-rig.goal = rig.layer2;
-rig.layer2 = null;
-rig.type = 1;
-}
-else
-{
-rig.type = 2;
-}
-}
-else if (layers.length == 4)
-{
-if (valid)
-{
-rig.layer1 = sortedLayers[0];
-rig.layer2 = sortedLayers[1];
-rig.layer3 = sortedLayers[2];
-rig.controller = ctrl;
-}
-else
-{
-rig.layer1 = layers[2];
-rig.layer2 = layers[1];
-rig.layer3 = layers[0];
-rig.controller = layers[3];
-}
-//3 layer or 2+goal ?
-if (Duik.utils.getDistance(rig.layer3,rig.controller) < 10)
-{
-rig.goal = rig.layer3;
-rig.layer3 = null;
-rig.type = 2;
-}
-else
-{
-rig.type = 3;
-}
-}
-else if (layers.length == 5)
-{
-if (valid)
-{
-rig.layer1 = sortedLayers[0];
-rig.layer2 = sortedLayers[1];
-rig.layer3 = sortedLayers[2];
-rig.goal = sortedLayers[3];
-rig.controller = ctrl;
-rig.type = 3;
-}
-else
-{
-rig.layer1 = layers[3];
-rig.layer2 = layers[2];
-rig.layer3 = layers[1];
-rig.goal = layers[0];
-rig.controller = layers[4];
-rig.type = 3;
-}
-}
-}
+			if (layers.length == 3){
+				if (valid){
+					rig.layer1 = sortedLayers[0];
+					rig.layer2 = sortedLayers[1];
+					rig.controller = ctrl;
+				}
+				else{
+					rig.layer1 = layers[1];
+					rig.layer2 = layers[0];
+					rig.controller = layers[2];
+				}
+				//2 layer or 1+goal ?
+				if (Duik.utils.getDistance(rig.layer2,rig.controller) < 10){
+					rig.goal = rig.layer2;
+					rig.layer2 = null;
+					rig.type = 1;
+				}
+				else{
+					rig.type = 2;
+				}
+			}
+			else if (layers.length == 4){
+				if (valid){
+					rig.layer1 = sortedLayers[0];
+					rig.layer2 = sortedLayers[1];
+					rig.layer3 = sortedLayers[2];
+					rig.controller = ctrl;
+				}
+				else{
+					rig.layer1 = layers[2];
+					rig.layer2 = layers[1];
+					rig.layer3 = layers[0];
+					rig.controller = layers[3];
+				}
+				//3 layer or 2+goal ?
+				if (Duik.utils.getDistance(rig.layer3,rig.controller) < 10){
+					rig.goal = rig.layer3;
+					rig.layer3 = null;
+					rig.type = 2;
+				}
+				else{
+					rig.type = 3;
+				}
+			}
+			else if (layers.length == 5){
+				if (valid){	
+					rig.layer1 = sortedLayers[0];
+					rig.layer2 = sortedLayers[1];
+					rig.layer3 = sortedLayers[2];
+					rig.goal = sortedLayers[3];
+					rig.controller = ctrl;
+					rig.type = 3;
+				}
+				else{
+					rig.layer1 = layers[3];
+					rig.layer2 = layers[2];
+					rig.layer3 = layers[1];
+					rig.goal = layers[0];
+					rig.controller = layers[4];
+					rig.type = 3;
+				}
+			}
+		}
+	
 
-//detect 3d
-var threeD = true;
-for (var i = 0 ; i < layers.length ; i++)
-{
-if (!layers[i].threeDLayer)
-{
-threeD = false;
-break;
-}
-}
-rig.threeD = threeD;
+		//detect 3d
+		var threeD = true;
+		for (var i = 0 ; i < layers.length ; i++){
+			if (!layers[i].threeDLayer){
+				threeD = false;
+				break;
+			}
+		}
+		rig.threeD = threeD;
 
-//Detect frontFacing if 3D
-//add a point effect on the layer to get values with expressions
-if (threeD)
-{
-var tempEffect = rig.layer1.effect.addProperty("ADBE Point3D Control");
-tempEffect(1).expression = "C = thisComp.layer(\"" + rig.layer1.name + "\");\n" +
-"u = C.toWorldVec([1,0,0]);\n" +
-"v = C.toWorldVec([0,1,0]);\n" +
-"w = C.toWorldVec([0,0,1]);\n" +
-"sinb = clamp(w[0],-1,1);\n" +
-"b = Math.asin(sinb);\n" +
-"cosb = Math.cos(b);\n" +
-"if (Math.abs(cosb) > .0005){\n" +
-"c = -Math.atan2(v[0],u[0]);\n" +
-"a = -Math.atan2(w[1],w[2]);\n" +
-"}else{\n" +
-"a = Math.atan2(u[1],v[1]);\n" +
-"c = 0;\n" +
-"}\n" +
-"xValue=Math.round(radiansToDegrees(a));\n" +
-"yValue=Math.round(radiansToDegrees(b));\n" +
-"zValue=Math.round(radiansToDegrees(c));\n" +
-"[(xValue),(yValue),(zValue)]\n";
-var orientation = tempEffect(1).value;
-rig.frontFacing = false;
-if (orientation[0]%180 > 10 || orientation[1]%90 >10) rig.threeD = false;
-else if (orientation[1]%180 < 10) rig.frontFacing = true;
-tempEffect.remove();
-}
+		//Detect frontFacing if 3D
+		//add a point effect on the layer to get values with expressions
+		if (threeD){
+			var tempEffect = rig.layer1.effect.addProperty("ADBE Point3D Control");
+			tempEffect(1).expression = "C = thisComp.layer(\"" + rig.layer1.name + "\");\n" +
+				"u = C.toWorldVec([1,0,0]);\n" +
+				"v = C.toWorldVec([0,1,0]);\n" +
+				"w = C.toWorldVec([0,0,1]);\n" +
+				"sinb = clamp(w[0],-1,1);\n" +
+				"b = Math.asin(sinb);\n" +
+				"cosb = Math.cos(b);\n" +
+				"if (Math.abs(cosb) > .0005){\n" +
+				"c = -Math.atan2(v[0],u[0]);\n" +
+				"a = -Math.atan2(w[1],w[2]);\n" +
+				"}else{\n" +
+				"a = Math.atan2(u[1],v[1]);\n" +
+				"c = 0;\n" +
+				"}\n" +
+				"xValue=Math.round(radiansToDegrees(a));\n" +
+				"yValue=Math.round(radiansToDegrees(b));\n" +
+				"zValue=Math.round(radiansToDegrees(c));\n" +
+				"[(xValue),(yValue),(zValue)]\n";
+			var orientation = tempEffect(1).value;
+			rig.frontFacing = false;
+			if (orientation[0]%180 > 10 || orientation[1]%90 >10) rig.threeD = false;
+			else if (orientation[1]%180 < 10) rig.frontFacing = true;
+			tempEffect.remove();
+		}
 
-//Detect clockwise if IK is of type 2
-if (rig.type == 2 || rig.type == 3)
-{
-rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
-}
+		//Detect clockwise if IK is of type 2
+		if (rig.type == 2 || rig.type == 3){
+			rig.clockWise = Duik.utils.isIKClockwise(rig.layer1,rig.layer2,rig.controller);
+		}
 
-return rig;
-}
+		return rig;
+	
+	}
 }
 // GET CONTROLLERS
 //return Array of Controllers
