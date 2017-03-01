@@ -1843,7 +1843,6 @@ function ik(){
 		app.endUndoGroup();
 		ikPanel.hide();
 		panoik.show();
-		writeLn("End ik create");
 	}
 }
 
