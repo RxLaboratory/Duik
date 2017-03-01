@@ -51,7 +51,7 @@ palette.alignChildren = ['fill','fill'];
 //=================================
 {
 	// This line in needed to load available languages 
-	Dutranslator.setLanguage('en'); // Default settings 
+	Dutranslator.getAvailable();
 
 	if (!app.settings.haveSetting('duik', 'lang')){
 		// First launch, ask for language
@@ -3267,20 +3267,13 @@ cam.precompose(comp,tvpCamAnchorPointButton.value);
 
 //FONCTION POUR CHOISIR LA LANGUE
 function choixLangue() {
-if (boutonlangue.selection.index == 0)
-{
-Dutranslator.setLanguage('en');
-app.settings.saveSetting('duik','lang','en');
-}
-for (var i = 0 ; i < Dutranslator.languages.length ; i++)
-{
-if (Dutranslator.languages[i][1] == boutonlangue.selection.text)
-{
-Dutranslator.setLanguage(Dutranslator.languages[i][0]);
-app.settings.saveSetting('duik','lang',Dutranslator.languages[i][0]);
-break;
-}
-}
+	for (var i = 0 ; i < Dutranslator.languages.length ; i++){
+		if (Dutranslator.languages[i][1] == boutonlangue.selection.text){
+			Dutranslator.setLanguage(Dutranslator.languages[i][0]);
+			app.settings.saveSetting('duik','lang',Dutranslator.languages[i][0]);
+			break;
+		}
+	}
 }
 
 //FONCTIONS CALC
@@ -4529,21 +4522,21 @@ var groupeLangues = settingsUIGroup.add('group');
 groupeLangues.alignment = ['left','center'];
 groupeLangues.add('statictext',undefined,tr("Language :"));
 
-var availableLanguages = [tr("English")];
-for (var i = 0 ; i < Dutranslator.languages.length ; i++)
-{
-availableLanguages.push(Dutranslator.languages[i][1]);
+var availableLanguages = [];
+for (var i = 0 ; i < Dutranslator.languages.length ; i++){
+	availableLanguages.push(Dutranslator.languages[i][1]);
 }
+
 var boutonlangue = groupeLangues.add('dropdownlist',undefined,availableLanguages);
 boutonlangue.selection = 0;
-for (var i = 0 ; i < Dutranslator.languages.length ; i++)
-{
-if (Dutranslator.languages[i][0] == Dutranslator.current)
-{
-boutonlangue.selection = i+1;
-break;
+
+for (var i = 0 ; i < Dutranslator.languages.length ; i++){
+	if (Dutranslator.languages[i][0] == Dutranslator.current){
+		boutonlangue.selection = i;
+		break;
+	}
 }
-}
+
 boutonlangue.onChange = choixLangue;
 
 addSeparator(settingsUIGroup,'');
