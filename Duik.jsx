@@ -40,13 +40,6 @@ var developper = false;
 #include 'Duik_translations.jsxinc'
 
 //=================================
-//======== DUIK PALETTE ===========
-//=================================
-var palette = (thisObj instanceof Panel) ? thisObj : new Window('palette','Duik',undefined, {resizeable:true});
-palette.orientation = 'stack';
-palette.alignChildren = ['fill','fill'];
-
-//=================================
 //== SET LANGUAGE ON FIRST START ==
 //=================================
 {
@@ -57,7 +50,7 @@ palette.alignChildren = ['fill','fill'];
 		// First launch, ask for language
 		
 		// Create the window
-		var languageDialog = (languageDialog instanceof Panel) ? languageDialog : new Window('dialog', "Choose Duik language", undefined, {resizeable:false});
+		var languageDialog = new Window('dialog', "Choose Duik language", undefined, {resizeable:false});
 		languageDialog.orientation = 'stack';
 		var lDgr = languageDialog.add('group');
 		lDgr.orientation = 'column';
@@ -88,6 +81,13 @@ palette.alignChildren = ['fill','fill'];
 		}
 	}
 }
+
+//=================================
+//======== DUIK PALETTE ===========
+//=================================
+var palette = (thisObj instanceof Panel) ? thisObj : new Window('palette','Duik',undefined, {resizeable:true});
+palette.orientation = 'stack';
+palette.alignChildren = ['fill','fill'];
 
 //=================================
 //======== APP.SETTINGS ===========
