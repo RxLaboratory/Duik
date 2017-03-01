@@ -31,7 +31,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.11';
-var developper = false;
+var developper = true;
 //=========================
 
 //=================================
@@ -50,7 +50,24 @@ palette.alignChildren = ['fill','fill'];
 //======== APP.SETTINGS ===========
 //=================================
 {
-if (!app.settings.haveSetting('duik', 'lang')){app.settings.saveSetting('duik','lang','en');}
+writeLn("Lang is set : " + app.settings.haveSetting('duik', 'lang'));
+if (!app.settings.haveSetting('duik', 'lang')){
+	// First launch, ask for language
+	
+	var languageDialog = (languageDialog instanceof Panel) ? languageDialog : new Window('palette', tr("Choose Duik language"), undefined, {resizeable:false});
+	languageDialog.orientation = 'stack';
+	var lDgr = languageDialog.add('group');
+	lDgr.orientation = 'column';
+	var lDtxt = lDgr.add('statictext', undefined, tr("Choose a language among availables languages to launch Duik. (This will be prompt only on the first start)"));
+	var lDdd = lDgr.add('dropdownlist', undefined);
+	lDdd.add('item', 'testitem');
+	lDdd.selection = 0;
+	languageDialog.layout.resize();
+	languageDialog.center();
+	languageDialog.show();					
+	//app.settings.saveSetting('duik','lang','en');
+}
+return;
 if (!app.settings.haveSetting('duik','version')){app.settings.saveSetting('duik','version','oui');}
 if (!app.settings.haveSetting('duik','expertMode')){app.settings.saveSetting('duik','expertMode','false');}
 if (!app.settings.haveSetting('duik', 'notes')){app.settings.saveSetting('duik','notes','');}
@@ -62,6 +79,7 @@ if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSet
 if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
 if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
 //Set language
+writeLn("Current lang is " + app.settings.getSetting('duik', 'lang'));
 Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));
 }
 
