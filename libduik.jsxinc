@@ -4691,9 +4691,9 @@ if (typeof Duik.bezierIK !== 'function')
 if (typeof Duik.oneLayerIK !== 'function')
 {	
 	/**
-	 * Creates a one layer IK
-	 * @param {Later}	ctrl		- The controller layer.
-	 * @param {Later}	layer1 		- The layer of the IK.
+	 * Creates a one-layer IK
+	 * @param {Layer}	ctrl		- The controller layer.
+	 * @param {Layer}	layer1 		- The layer of the IK.
 	 * @returns {bool}	True if the creation worked, false if anything went wrong
 	 */
 	Duik.oneLayerIK = function (ctrl,layer1)
@@ -4761,7 +4761,7 @@ if (typeof Duik.oneLayerIK !== 'function')
 		Duik.utils.deselectLayers();
 		ctrl.selected = true;
 		
-		//add description in controller comment
+		//add description in the comment of the controller
 		ctrl.comment = ctrl.comment + "[Duik.oneLayerIK|layer:" + layer1.name + "]";
 
 		return true;
@@ -4770,308 +4770,315 @@ if (typeof Duik.oneLayerIK !== 'function')
 // ADD TWO-LAYER IK - Duik.twoLayerIK(controller,root,end,clockwise,frontFacing)
 if (typeof Duik.twoLayerIK !== 'function')
 {
-Duik.twoLayerIK = function (controller,root,end,clockWise,frontFacing)
-{
-//if there's not at least one controller and two layers, abort creation
-if (controller == undefined) throw "A controller is needed for the IK";
-if (root == undefined) throw "The first layer of the IK is missing";
-if (end == undefined) throw "The second layer of the IK is missing";
-if (frontFacing == undefined) frontFacing = false;
-threeD = controller.threeDLayer && root.threeDLayer && end.threeDLayer;
+	/**
+	 * Creates a two-layer IK. This works with 3D layers: all layers must have the 3D attribute enabled in this case, otherwise the IK will be rigged as 2 dimensonnal.
+	 * @param {Layer}	controller		- The controller layer.
+	 * @param {Layer}	root 			- The first layer of the IK.
+	 * @param {Layer}	end 			- The second layer of the IK.
+	 * @param {bool}	clockWise 		- The orientation of the IK.
+	 * @param {bool}	frontFacing 	- If the layers are 3D, true if they face the front/rear view of After Effects, false if they face the right/left view.
+	 */
+	Duik.twoLayerIK = function (controller,root,end,clockWise,frontFacing)
+	{
+		//if there's not at least one controller and two layers, abort creation
+		if (controller == undefined) throw "A controller is needed for the IK";
+		if (root == undefined) throw "The first layer of the IK is missing";
+		if (end == undefined) throw "The second layer of the IK is missing";
+		if (frontFacing == undefined) frontFacing = false;
+		threeD = controller.threeDLayer && root.threeDLayer && end.threeDLayer;
 
-//detect if shape layers are used
-var shapeLayer = false;
-if (root instanceof ShapeLayer || end instanceof ShapeLayer) shapeLayer = true;
+		//detect if shape layers are used
+		var shapeLayer = false;
+		if (root instanceof ShapeLayer || end instanceof ShapeLayer) shapeLayer = true;
 
-//check names
-Duik.utils.checkNames(controller.containingComp);
+		//check names
+		Duik.utils.checkNames(controller.containingComp);
 
-//Names
-var endName = end.name;
-var rootName = root.name;
-var controllerName = controller.name;
+		//Names
+		var endName = end.name;
+		var rootName = root.name;
+		var controllerName = controller.name;
 
-//pseudo effect
-var effect;
-effect = Duik.utils.addEffect(controller,Duik.effects.Two_Layer_IK);
-effectName = Duik.uiStrings.ik + " "  + endName;
-effect.name = effectName;
-if (clockWise) effect(1).setValue(1);
-effect(10).setValue(0);
+		//pseudo effect
+		var effect;
+		effect = Duik.utils.addEffect(controller,Duik.effects.Two_Layer_IK);
+		effectName = Duik.uiStrings.ik + " "  + endName;
+		effect.name = effectName;
+		if (clockWise) effect(1).setValue(1);
+		effect(10).setValue(0);
 
+		if (threeD) {
+			direction = controller.Effects.addProperty("ADBE Angle Control");
+			direction.name = Duik.uiStrings.ikDirection + " " + endName;
+		}
 
-if (threeD) {
-direction = controller.Effects.addProperty("ADBE Angle Control");
-direction.name = Duik.uiStrings.ikDirection + " " + endName;
-}
+		//limit
+		limit = root.Effects.addProperty("ADBE Angle Control");
+		limit.name = Duik.uiStrings.ikLimit;
 
-//limit
-limit = root.Effects.addProperty("ADBE Angle Control");
-limit.name = Duik.uiStrings.ikLimit;
+		//ZERO
+		var endZero = null;
 
-//ZERO
-var endZero = null;
+		if (shapeLayer)
+		{
+			//if shape layer, create zero
+			endZero = controller.containingComp.layers.addNull();
+			endZero.threeDLayer = true;
+			var controllerParent = controller.parent;
+			controller.parent = null;
+			endZero.position.setValue(controller.position.value);
+			endZero.name = "IK_zero " + endName.slice(-24);
+			controller.parent = controllerParent;
 
-if (shapeLayer)
-{
-//if shape layer, create zero
-endZero = controller.containingComp.layers.addNull();
-endZero.threeDLayer = true;
-var controllerParent = controller.parent;
-controller.parent = null;
-endZero.position.setValue(controller.position.value);
-endZero.name = "IK_zero " + endName.slice(-24);
-controller.parent = controllerParent;
+			//link zero
+			endZero.parent = end;
 
-//link zero
-endZero.parent = end;
+			//verrouiller et masquer le zero
+			endZero.moveToEnd();
+			endZero.guideLayer = true;
+			endZero.locked = true;
+			endZero.enabled = false;
+			endZero.shy = true;
 
-//verrouiller et masquer le zero
-endZero.moveToEnd();
-endZero.guideLayer = true;
-endZero.locked = true;
-endZero.enabled = false;
-endZero.shy = true;
+			endZeroName = endZero.name;
+		}
+		else
+		{
+			//add an effect to store the goal stretch
+			var endEffect = end.Effects.addProperty("ADBE Point Control");
+			endEffect.name = Duik.uiStrings.ikEnd;
+			//set the value of the effect and store it
+			endEffect(1).expression = "bonePos = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\nfromWorld(bonePos)";
+			var zeroValue = endEffect(1).value;
+			endEffect(1).expression = "";
+			endEffect(1).setValue(zeroValue);
+		}
 
-endZeroName = endZero.name;
-}
-else
-{
-//add an effect to store the goal stretch
-var endEffect = end.Effects.addProperty("ADBE Point Control");
-endEffect.name = Duik.uiStrings.ikEnd;
-//set the value of the effect and store it
-endEffect(1).expression = "bonePos = thisComp.layer(\"" + controllerName + "\").toWorld(thisComp.layer(\"" + controllerName + "\").anchorPoint);\nfromWorld(bonePos)";
-var zeroValue = endEffect(1).value;
-endEffect(1).expression = "";
-endEffect(1).setValue(zeroValue);
-}
+		//=========================================================
+		//EXPRESSION FOR THE END
+		var endExpression = "//Duik.twoLayerIK\r\n" +
+			"layer1 = thisComp.layer('" + rootName + "');\n" +
+			"layer2 = thisComp.layer('" + endName + "');\n" +
+			"controller = thisComp.layer('" + controllerName + "');\n";
 
+		if (shapeLayer) endExpression += "zeroName = \"" + endZeroName + "\";\n" +
+			"zero = thisComp.layer(zeroName);\n";
+		else endExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
 
+		endExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
+			"FK = ctrlEffect(5);\n" +
+			"IKFK = ctrlEffect(3) == 0;\n" +
+			"cw = ctrlEffect(1) == 1;\n" +
+			"function getWorldPos(L){\n" +
+			"return L.toWorld(L.anchorPoint);\n" +
+			"}\n" +
+			"function ik() {\n" +
+			"A = getWorldPos(layer1);\n" +
+			"B = getWorldPos(layer2);\n";
 
+		if (shapeLayer) endExpression += "C = getWorldPos(zero);\n";
+		else endExpression += "C = layer2.toWorld(endPos);\n";
 
-//=========================================================
-//EXPRESSION A INSERER SUR LE BONE BOUT
-var endExpression = "//Duik.twoLayerIK\r\n" +
-"layer1 = thisComp.layer('" + rootName + "');\n" +
-"layer2 = thisComp.layer('" + endName + "');\n" +
-"controller = thisComp.layer('" + controllerName + "');\n";
+		endExpression += "E = getWorldPos(controller);\n" +
+			"a = length(B,C);\n" +
+			"b = length(E,A);\n" +
+			"c = length(A,B);\n" +
+			"x = (b*b + c*c - a*a )/(2*b);\n" +
+			"alpha = Math.acos(clamp(x/c,-1,1));\n" +
+			"y = b - x;\n" +
+			"  gamma = Math.acos(clamp(y/a,-1,1));\n" +
+			"result = (cw ? 1 : -1)*radiansToDegrees(gamma + alpha);  V1 = B - A;\n" +
+			"  adj1 = radiansToDegrees(Math.atan2(V1[1],V1[0]));\n" +
+			"  V2 = C - B;\n" +
+			"  adj2 = radiansToDegrees(Math.atan2(V2[1],V2[0]));\n" +
+			"  IK = result +  adj1 - adj2 + value;\n" +
+			"return IK;\n" +
+			"}\n" +
+			"IKFK ? ik() : FK;";
+		//=========================================================
 
-if (shapeLayer) endExpression += "zeroName = \"" + endZeroName + "\";\n" +
-"zero = thisComp.layer(zeroName);\n";
-else endExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
-
-endExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
-"FK = ctrlEffect(5);\n" +
-"IKFK = ctrlEffect(3) == 0;\n" +
-"cw = ctrlEffect(1) == 1;\n" +
-"function getWorldPos(L){\n" +
-"return L.toWorld(L.anchorPoint);\n" +
-"}\n" +
-"function ik() {\n" +
-"A = getWorldPos(layer1);\n" +
-"B = getWorldPos(layer2);\n";
-
-if (shapeLayer) endExpression += "C = getWorldPos(zero);\n";
-else endExpression += "C = layer2.toWorld(endPos);\n";
-
-endExpression += "E = getWorldPos(controller);\n" +
-"a = length(B,C);\n" +
-"b = length(E,A);\n" +
-"c = length(A,B);\n" +
-"x = (b*b + c*c - a*a )/(2*b);\n" +
-"alpha = Math.acos(clamp(x/c,-1,1));\n" +
-"y = b - x;\n" +
-"  gamma = Math.acos(clamp(y/a,-1,1));\n" +
-"result = (cw ? 1 : -1)*radiansToDegrees(gamma + alpha);  V1 = B - A;\n" +
-"  adj1 = radiansToDegrees(Math.atan2(V1[1],V1[0]));\n" +
-"  V2 = C - B;\n" +
-"  adj2 = radiansToDegrees(Math.atan2(V2[1],V2[0]));\n" +
-"  IK = result +  adj1 - adj2 + value;\n" +
-"return IK;\n" +
-"}\n" +
-"IKFK ? ik() : FK;";
-//=========================================================
-
-if (threeD) {end.transform.zRotation.expression = endExpression; end.transform.zRotation.setValue(0);}
-else {end.transform.rotation.expression = endExpression; end.transform.rotation.setValue(0);}
+		if (threeD) {end.transform.zRotation.expression = endExpression; end.transform.zRotation.setValue(0);}
+		else {end.transform.rotation.expression = endExpression; end.transform.rotation.setValue(0);}
 
 
-//=========================================================
-//EXPRESSION A INSERER SUR LE BONE RACINE
-var rootExpression = "//Duik.twoLayerIK\n" +
-"layer1 = thisComp.layer('" + rootName + "');\n" +
-"layer2 = thisComp.layer('" + endName + "');\n" +
-"controller = thisComp.layer('" + controllerName + "');\n";
+		//=========================================================
+		//EXPRESSION FOR THE ROOT
+		var rootExpression = "//Duik.twoLayerIK\n" +
+			"layer1 = thisComp.layer('" + rootName + "');\n" +
+			"layer2 = thisComp.layer('" + endName + "');\n" +
+			"controller = thisComp.layer('" + controllerName + "');\n";
 
-if (shapeLayer) rootExpression += "zeroName = \"" + endZeroName + "\";\n" +
-"zero = thisComp.layer(zeroName);\n";
-else rootExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
+		if (shapeLayer) rootExpression += "zeroName = \"" + endZeroName + "\";\n" +
+			"zero = thisComp.layer(zeroName);\n";
+		else rootExpression += "endPos = layer2.effect(\'" + endEffect.name + "')(1);\n";
 
-rootExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
-"limit = effect('" + limit.name + "')(1);\n" +
-"FK = ctrlEffect(4);\n" +
-"IKFK = ctrlEffect(3) == 0;\n" +
-"cw = ctrlEffect(1) == 1;\n" +
-"function getWorldPos(L){\n" +
-"return L.toWorld(L.anchorPoint);\n" +
-"}\n" +
-"function ik() {\n" +
-"A = getWorldPos(layer1);\n" +
-"B = getWorldPos(layer2);\n";
+		rootExpression += "ctrlEffect = controller.effect(\"" + effectName + "\")\n" +
+			"limit = effect('" + limit.name + "')(1);\n" +
+			"FK = ctrlEffect(4);\n" +
+			"IKFK = ctrlEffect(3) == 0;\n" +
+			"cw = ctrlEffect(1) == 1;\n" +
+			"function getWorldPos(L){\n" +
+			"return L.toWorld(L.anchorPoint);\n" +
+			"}\n" +
+			"function ik() {\n" +
+			"A = getWorldPos(layer1);\n" +
+			"B = getWorldPos(layer2);\n";
 
-if (shapeLayer) rootExpression += "C = getWorldPos(zero);\n";
-else rootExpression += "C = layer2.toWorld(endPos);\n";
+		if (shapeLayer) rootExpression += "C = getWorldPos(zero);\n";
+		else rootExpression += "C = layer2.toWorld(endPos);\n";
 
-rootExpression += "E = getWorldPos(controller);\n" +
-"a = length(B,C);\n" +
-"b = length(E,A);\n" +
-"c = length(A,B);\n" +
-"x = (b*b + c*c - a*a )/(2*b);\n" +
-"alpha = Math.acos(clamp(x/c,-1,1));\n" +
-"D = E - A;\n" +
-"delta = Math.atan2(D[1],D[0]);\n" +
-"result = radiansToDegrees(delta - (cw ? 1 : -1)*alpha);\n" +
-"V = B - A;\n" +
-"adj1 = radiansToDegrees(Math.atan2(V[1],V[0]));\n" +
-"IK = result - adj1 + value;\n" +
-"if (IK < limit) IK+=360;\n" +
-"return IK;\n" +
-"}\n" +
-"IKFK ? ik() : FK;";
-//=======================================================
+		rootExpression += "E = getWorldPos(controller);\n" +
+			"a = length(B,C);\n" +
+			"b = length(E,A);\n" +
+			"c = length(A,B);\n" +
+			"x = (b*b + c*c - a*a )/(2*b);\n" +
+			"alpha = Math.acos(clamp(x/c,-1,1));\n" +
+			"D = E - A;\n" +
+			"delta = Math.atan2(D[1],D[0]);\n" +
+			"result = radiansToDegrees(delta - (cw ? 1 : -1)*alpha);\n" +
+			"V = B - A;\n" +
+			"adj1 = radiansToDegrees(Math.atan2(V[1],V[0]));\n" +
+			"IK = result - adj1 + value;\n" +
+			"if (IK < limit) IK+=360;\n" +
+			"return IK;\n" +
+			"}\n" +
+			"IKFK ? ik() : FK;";
+		//=======================================================
 
-if (threeD) {root.transform.zRotation.expression = rootExpression; root.transform.zRotation.setValue(0);}
-else {root.transform.rotation.expression = rootExpression; root.transform.rotation.setValue(0);}
+		if (threeD) {root.transform.zRotation.expression = rootExpression; root.transform.zRotation.setValue(0);}
+		else {root.transform.rotation.expression = rootExpression; root.transform.rotation.setValue(0);}
 
-if (threeD) {
-//si 3D : le zero de la jambe pour l'orientation
-//creer un zero
-var zero = app.project.activeItem.layers.addNull();
-zero.threeDLayer = true;
-var calqueparent = root.parent;
-root.parent = null;
-zero.position.setValue(root.position.value);
-zero.name = "Zero_" + rootName.slice(-24);
-//verrouiller et masquer le zero
-zero.moveToEnd();
-zero.guideLayer = true;
-zero.shy = true;
+		if (threeD) {
+			//si 3D : le zero de la jambe pour l'orientation
+			//creer un zero
+			var zero = app.project.activeItem.layers.addNull();
+			zero.threeDLayer = true;
+			var calqueparent = root.parent;
+			root.parent = null;
+			zero.position.setValue(root.position.value);
+			zero.name = "Zero_" + rootName.slice(-24);
+			//verrouiller et masquer le zero
+			zero.moveToEnd();
+			zero.guideLayer = true;
+			zero.shy = true;
 
-if (frontFacing) {
-var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
-"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" +
-"C = controleur.toWorld(controleur.anchorPoint);\n" +
-"Cx = C[0];\n" +
-"Cy = C[1];\n" +
-"Cz = C[2];\n" +
-"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-"Lx = L[0];\n" +
-"Ly = L[1];\n" +
-"Lz = L[2];" +
-"angle = lookAt([Cz,Cy,Cx],[Lz,Ly,Lx]);\n" +
-"[-angle[1]+90,-angle[0],value[2]]\n"
-} else { //front
-var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
-"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" +
-"C = controleur.toWorld(controleur.anchorPoint);\n" +
-"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-"angle = lookAt(C,L);\n" +
-"[angle[0],angle[1],value[2]]\n"
-} //else front
-zero.transform.orientation.expression = zeroExpression;
-zero.transform.xRotation.expression = "//Duik.twoLayerIK.threeD\r\n" + "thisComp.layer(\"" + controllerName + "\").effect(\"IK Direction " +  rootName.slice(-15) + "\")(1)";
+			if (frontFacing) {
+				var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
+					"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" +
+					"C = controleur.toWorld(controleur.anchorPoint);\n" +
+					"Cx = C[0];\n" +
+					"Cy = C[1];\n" +
+					"Cz = C[2];\n" +
+					"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+					"Lx = L[0];\n" +
+					"Ly = L[1];\n" +
+					"Lz = L[2];" +
+					"angle = lookAt([Cz,Cy,Cx],[Lz,Ly,Lx]);\n" +
+					"[-angle[1]+90,-angle[0],value[2]]\n"
+			} else { //front
+				var zeroExpression = "//Duik.twoLayerIK.threeD\r\n" +
+					"controleur =thisComp.layer(\"" + controllerName + "\");\n\n" +
+					"C = controleur.toWorld(controleur.anchorPoint);\n" +
+					"L =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+					"angle = lookAt(C,L);\n" +
+					"[angle[0],angle[1],value[2]]\n"
+			} //else front
+			zero.transform.orientation.expression = zeroExpression;
+			zero.transform.xRotation.expression = "//Duik.twoLayerIK.threeD\r\n" + "thisComp.layer(\"" + controllerName + "\").effect(\"IK Direction " +  rootName.slice(-15) + "\")(1)";
 
-root.parent = zero;
-//lier le zero au bone du bout
-zero.parent = calqueparent;
-zero.enabled = false;
-zero.locked = true;
-} //tridi
+			root.parent = zero;
+			//lier le zero au bone du bout
+			zero.parent = calqueparent;
+			zero.enabled = false;
+			zero.locked = true;
+		} //tridi
 
-//les expressions de stretch
-//les positions d'origine
-var posbout = end.transform.position.value.toSource();
-var poszero;
-if (shapeLayer) poszero = endZero.transform.position.value.toSource();
-else poszero = zeroValue.toSource();
-var apracine = root.transform.anchorPoint.value.toSource();
-var apbout = end.transform.anchorPoint.value.toSource();
+		//les expressions de stretch
+		//les positions d'origine
+		var posbout = end.transform.position.value.toSource();
+		var poszero;
+		if (shapeLayer) poszero = endZero.transform.position.value.toSource();
+		else poszero = zeroValue.toSource();
+		var apracine = root.transform.anchorPoint.value.toSource();
+		var apbout = end.transform.anchorPoint.value.toSource();
 
-var expressionstretchbout = "//Duik.twoLayerIK.stretch\n" +
-"layer1 = thisComp.layer('" + rootName + "');\n" +
-"controller = thisComp.layer('" + controllerName + "');\n" +
-"ctrlEffect = controller.effect('" + effectName + "');\n" +
-"stretch = ctrlEffect(9);\n" +
-"auto = ctrlEffect(8) == 1;\n" +
-"IK = ctrlEffect(3) == 0;\n" +
-"shrinkVal = ctrlEffect(10)/100;\n" +
-"function getWorldPos(L){\n" +
-"return L.toWorld(L.anchorPoint);\n" +
-"}\n" +
-"dist1 = length(" + apracine + "," + posbout + ");\n" +
-"dist2 = length(" + apbout + "," + poszero + ");\n" +
-"IKLength = dist1+dist2;\n" +
-"IKStretched = IKLength+stretch;\n" +
-"boneStretch = 0;\n" +
-"proportion = dist1/(IKLength);\n" +
-"posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(layer1);\n" +
-"distC = length(posC,posR);\n" +
-"shrinkMax = IKLength*shrinkVal;\n" +
-"shrink = 0;\n" +
-"if (distC < IKStretched && IK) shrink = 1-distC/IKStretched;\n" +
-"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
-"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
-"else boneStretch += stretch*proportion;\n" +
-"coef = 1;\n" +
-"dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;\n" +
-"(" + posbout + "-" + apracine + ")*coef+" + apracine + ";";
+		var expressionstretchbout = "//Duik.twoLayerIK.stretch\n" +
+			"layer1 = thisComp.layer('" + rootName + "');\n" +
+			"controller = thisComp.layer('" + controllerName + "');\n" +
+			"ctrlEffect = controller.effect('" + effectName + "');\n" +
+			"stretch = ctrlEffect(9);\n" +
+			"auto = ctrlEffect(8) == 1;\n" +
+			"IK = ctrlEffect(3) == 0;\n" +
+			"shrinkVal = ctrlEffect(10)/100;\n" +
+			"function getWorldPos(L){\n" +
+			"return L.toWorld(L.anchorPoint);\n" +
+			"}\n" +
+			"dist1 = length(" + apracine + "," + posbout + ");\n" +
+			"dist2 = length(" + apbout + "," + poszero + ");\n" +
+			"IKLength = dist1+dist2;\n" +
+			"IKStretched = IKLength+stretch;\n" +
+			"boneStretch = 0;\n" +
+			"proportion = dist1/(IKLength);\n" +
+			"posC = getWorldPos(controller);\n" +
+			"posR = getWorldPos(layer1);\n" +
+			"distC = length(posC,posR);\n" +
+			"shrinkMax = IKLength*shrinkVal;\n" +
+			"shrink = 0;\n" +
+			"if (distC < IKStretched && IK) shrink = 1-distC/IKStretched;\n" +
+			"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+			"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+			"else boneStretch += stretch*proportion;\n" +
+			"coef = 1;\n" +
+			"dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;\n" +
+			"(" + posbout + "-" + apracine + ")*coef+" + apracine + ";";
 
-end.transform.position.expression = expressionstretchbout;
+		end.transform.position.expression = expressionstretchbout;
 
-var expressionstretchgoal = "//Duik.twoLayerIK.stretch\n" +
-"layer1 = thisComp.layer('" + rootName + "');\n" +
-"controller = thisComp.layer('" + controllerName + "');\n" +
-"ctrlEffect = controller.effect('" + effectName + "');\n" +
-"stretch = ctrlEffect(9);\n" +
-"auto = ctrlEffect(8) == 1;\n" +
-"IK = ctrlEffect(3) == 0;\n" +
-"shrinkVal = ctrlEffect(10)/100;\n" +
-"function getWorldPos(L){\n" +
-"return L.toWorld(L.anchorPoint);\n" +
-"}\n" +
-"dist1 = length(" + apracine + "," + posbout + ");\n" +
-"dist2 = length(" + apbout + "," + poszero + ");\n" +
-"IKLength = dist1+dist2;\n" +
-"IKStretched = IKLength+stretch;\n" +
-"boneStretch = 0;\n" +
-"proportion = dist2/(IKLength);\n" +
-"posC = getWorldPos(controller);\n" +
-"posR = getWorldPos(layer1);\n" +
-"distC = length(posC,posR);\n" +
-"shrinkMax = IKLength*shrinkVal;\n" +
-"shrink = 0;\n" +
-"if (distC < IKStretched && IK) shrink = 1-distC/IKStretched;\n" +
-"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
-"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
-"else boneStretch += stretch*proportion;\n" +
-"coef = 1;\n" +
-"dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;\n" +
-"(" + poszero + "-" + apbout + ")*coef+" + apbout + ";";
+		var expressionstretchgoal = "//Duik.twoLayerIK.stretch\n" +
+			"layer1 = thisComp.layer('" + rootName + "');\n" +
+			"controller = thisComp.layer('" + controllerName + "');\n" +
+			"ctrlEffect = controller.effect('" + effectName + "');\n" +
+			"stretch = ctrlEffect(9);\n" +
+			"auto = ctrlEffect(8) == 1;\n" +
+			"IK = ctrlEffect(3) == 0;\n" +
+			"shrinkVal = ctrlEffect(10)/100;\n" +
+			"function getWorldPos(L){\n" +
+			"return L.toWorld(L.anchorPoint);\n" +
+			"}\n" +
+			"dist1 = length(" + apracine + "," + posbout + ");\n" +
+			"dist2 = length(" + apbout + "," + poszero + ");\n" +
+			"IKLength = dist1+dist2;\n" +
+			"IKStretched = IKLength+stretch;\n" +
+			"boneStretch = 0;\n" +
+			"proportion = dist2/(IKLength);\n" +
+			"posC = getWorldPos(controller);\n" +
+			"posR = getWorldPos(layer1);\n" +
+			"distC = length(posC,posR);\n" +
+			"shrinkMax = IKLength*shrinkVal;\n" +
+			"shrink = 0;\n" +
+			"if (distC < IKStretched && IK) shrink = 1-distC/IKStretched;\n" +
+			"boneStretch -= easeOut(shrink,0,shrinkMax)*proportion;\n" +
+			"if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;\n" +
+			"else boneStretch += stretch*proportion;\n" +
+			"coef = 1;\n" +
+			"dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;\n" +
+			"(" + poszero + "-" + apbout + ")*coef+" + apbout + ";";
 
-if (shapeLayer) endZero.transform.position.expression = expressionstretchgoal;
-else endEffect(1).expression = expressionstretchgoal;
+		if (shapeLayer) endZero.transform.position.expression = expressionstretchgoal;
+		else endEffect(1).expression = expressionstretchgoal;
 
-//select controller
-Duik.utils.deselectLayers();
-controller.selected = true;
+		//select controller
+		Duik.utils.deselectLayers();
+		controller.selected = true;
 
-//move the controller to avoid bugs (forces expressions evaluation)
-controller.transform.position.setValue(controller.transform.position.value);
+		//move the controller to avoid bugs (forces expressions evaluation)
+		controller.transform.position.setValue(controller.transform.position.value);
+		
+		//add description in the comment of the controller
+		controller.comment = controller.comment + "[Duik.twoLayerIK|layer1:" + root.name + "|layer2:" + end.name + "]";
 
-return endZero;
-}
+		return endZero;
+	}
 }
 // ADD THREE-LAYER IK - Duik.threeLayerIK(controller,root,middle,end,clockWise)
 if (typeof Duik.threeLayerIK !== 'function')
