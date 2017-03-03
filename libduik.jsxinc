@@ -107,74 +107,99 @@ this.transformAnims = [];
 this.masksAnims = [];
 this.effectsAnims = [];
 }
-function IKRig()
-{
-this.type = 0;
-this.layer1 = null; //root
-this.layer2 = null; //middle
-this.layer3 = null; //end
-this.goal = null;
-this.controller = null;
-this.threeD = false;
-this.frontFacing = false;
-this.clockWise = false;
-this.created = false;
-}
-IKRig.prototype.create = function ()
-{
-if (this.created) return null;
-if (this.type == 1 && this.layer1 != null && this.controller != null)
-{
-this.created = Duik.oneLayerIK(this.controller,this.layer1);
-if (!this.created) return;
-if (this.goal != null)
-{
-if (this.layer1.parent == this.goal) this.layer1.parent = null;
-this.goal.parent = this.layer1;
-Duik.goal(this.goal,this.controller);
-}
-}
-else if (this.type == 2 && this.layer1 != null && this.layer2 != null && this.controller != null)
-{
-//parents
-if (this.layer1.parent == this.layer2) this.layer1.parent = null;
-this.layer2.parent = this.layer1;
-//3d
-this.threeD = this.controller.threeDLayer && this.layer1.threeDLayer && this.layer2.threeDLayer;
-//create
-var zero = Duik.twoLayerIK(this.controller,this.layer1,this.layer2,this.clockWise,this.frontFacing);
-this.created = true;
-//goal
-if (this.goal != null)
-{
-this.goal.parent = this.layer2;
-Duik.goal(this.goal,this.controller);
-if (zero) this.goal.transform.position.expression = "thisComp.layer('" + zero.name + "').position";
-else this.goal.transform.position.expression = "thisComp.layer('" + this.layer2.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
-}
-}
-else if (this.type == 3 && this.layer1 != null && this.layer2 != null && this.layer3 != null && this.controller != null)
-{
-//parents
-if (this.layer2.parent == this.layer3) this.layer2.parent = null;
-if (this.layer1.parent == this.layer2) this.layer1.parent = null;
-this.layer3.parent = this.layer2;
-this.layer2.parent = this.layer1;
-//create
-var zero = Duik.threeLayerIK(this.controller,this.layer1,this.layer2,this.layer3,this.clockWise);
-this.created = true;
-//goal
-if (this.goal != null)
-{
-this.goal.parent = this.layer3;
-Duik.goal(this.goal,this.controller);
-if (zero) this.goal.transform.position.expression = "thisComp.layer('" + zero.name + "').position";
-else this.goal.transform.position.expression = "thisComp.layer('" + this.layer3.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
-}
-}
-//move the controller to avoid bugs
-this.controller.transform.position.setValue(this.controller.transform.position.value);
-}
+	/**
+	 * Constructs a new IKRig object
+	 * @class IKRig
+	 * @classdesc Describes an IK
+	 * @property {number}	type			- The type of IK (the number of layers controlled by the IK)
+	 * @property {Layer}	layer1			- The first layer (root) of the IK
+	 * @property {Layer}	layer2			- The second layer (middle) of the IK, or null if type is 1
+	 * @property {Layer}	layer3			- The third layer (end) of the IK, or null if type is 1 or 2
+	 * @property {Layer}	goal			- The goal of the IK, may be null
+	 * @property {Layer}	controller		- The controller of the IK
+	 * @property {bool}		threeD			- Wether the IK uses 3D Layers (works only if type is 2)
+	 * @property {bool}		frontFacing		- Wether the 3D IK is facing the "front" view of After Effects (if false, the layers face the right or left view)
+	 * @property {bool}		clockWise		- Determines the orientation
+	 * @property {bool}		created			- Wether the IK is created in After Effects or if this is still a virtual object which still needs to be created
+	 */
+	function IKRig()
+	{
+		this.type = 0;
+		this.layer1 = null; //root
+		this.layer2 = null; //middle
+		this.layer3 = null; //end
+		this.goal = null;
+		this.controller = null;
+		this.threeD = false;
+		this.frontFacing = false;
+		this.clockWise = false;
+		this.created = false;
+	}
+	/**
+	 * Creates the IK in After Effects, using the properties of the object which should already be set
+	 * Sets the IKRig.created property to true if the IK has been correctly created
+	 * @memberof IKRig
+	 * @returns {bool} Wether the IK has been correctly created
+	 */
+	IKRig.prototype.create = function ()
+	{
+		if (this.created) return false;
+		if (this.type == 1 && this.layer1 != null && this.controller != null)
+		{
+			this.created = Duik.oneLayerIK(this.controller,this.layer1);
+			if (!this.created) return false;
+			if (this.goal != null)
+			{
+				if (this.layer1.parent == this.goal) this.layer1.parent = null;
+				this.goal.parent = this.layer1;
+				Duik.goal(this.goal,this.controller);
+			}
+		}
+		else if (this.type == 2 && this.layer1 != null && this.layer2 != null && this.controller != null)
+		{
+			//parents
+			if (this.layer1.parent == this.layer2) this.layer1.parent = null;
+			this.layer2.parent = this.layer1;
+			//3d
+			this.threeD = this.controller.threeDLayer && this.layer1.threeDLayer && this.layer2.threeDLayer;
+			//create
+			var zero = Duik.twoLayerIK(this.controller,this.layer1,this.layer2,this.clockWise,this.frontFacing);
+			this.created = true;
+			//goal
+			if (this.goal != null)
+			{
+				this.goal.parent = this.layer2;
+				Duik.goal(this.goal,this.controller);
+				if (zero) this.goal.transform.position.expression = "thisComp.layer('" + zero.name + "').position";
+				else this.goal.transform.position.expression = "thisComp.layer('" + this.layer2.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
+			}
+		}
+		else if (this.type == 3 && this.layer1 != null && this.layer2 != null && this.layer3 != null && this.controller != null)
+		{
+			//parents
+			if (this.layer2.parent == this.layer3) this.layer2.parent = null;
+			if (this.layer1.parent == this.layer2) this.layer1.parent = null;
+			this.layer3.parent = this.layer2;
+			this.layer2.parent = this.layer1;
+			//create
+			var zero = Duik.threeLayerIK(this.controller,this.layer1,this.layer2,this.layer3,this.clockWise);
+			this.created = true;
+			//goal
+			if (this.goal != null)
+			{
+				this.goal.parent = this.layer3;
+				Duik.goal(this.goal,this.controller);
+				if (zero) this.goal.transform.position.expression = "thisComp.layer('" + zero.name + "').position";
+				else this.goal.transform.position.expression = "thisComp.layer('" + this.layer3.name + "').effect('" + Duik.uiStrings.ikEnd + "')(1)";
+			}
+		}
+		//move the controller to avoid bugs
+		if (this.created)
+		{
+			this.controller.transform.position.setValue(this.controller.transform.position.value);
+			return true;
+		}
+	}
 function PropertyDescription()
 {
 this.isEffect = false;
@@ -8412,4 +8437,5 @@ return true;
 }
 
 }());
+
 
