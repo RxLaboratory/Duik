@@ -93,7 +93,7 @@ DESCRIPTION
 			var comp = app.project.activeItem;
 			var ctrl = getController();
 			if (!ctrl) return;
-			
+
 			var ikEffect = getIKEffect(ctrl);
 			if (!ikEffect) return;
 			
@@ -104,7 +104,7 @@ DESCRIPTION
 				type = 'Duik.threeLayerIK';
 				threeLayer = true;
 			}
-				
+			
 			//get upper, middle, lower rot value
 			var layer1,layer2,layer3;
 			for (var i = 1 ; i < comp.numLayers ; i++)
@@ -124,21 +124,21 @@ DESCRIPTION
 							line = line.replace('controller = ','')
 							ctrlTest = evalExpressionLink(line);
 						}
-						if (line.indexOf('layer1 = ') == 0)
+						else if (line.indexOf('layer1 = ') == 0)
 						{
 							line = line.replace('layer1 = ','')
 							layer1 = evalExpressionLink(line);
 						}
-						if (line.indexOf('layer2 = ') == 0)
+						else if (line.indexOf('layer2 = ') == 0)
 						{
 							line = line.replace('layer2 = ','')
 							layer2 = evalExpressionLink(line);
 						}
-						if (line.indexOf('layer3 = ') == 0)
+						else if (line.indexOf('layer3 = ') == 0)
 						{
 							line = line.replace('layer3 = ','')
 							layer3 = evalExpressionLink(line);
-						}
+						}				
 						
 						if (ctrlTest) if (ctrlTest.index != ctrl.index)
 						{
@@ -151,7 +151,10 @@ DESCRIPTION
 						{
 							if ((layer3 && threeLayer) || !threeLayer)
 								if (layer1 && layer2)
+								{
+									found = true;
 									break;
+								}
 						}
 					}
 					if (found) break;
