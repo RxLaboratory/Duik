@@ -31,7 +31,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.11';
-var developper = false;
+var developper = true;
 //=========================
 
 //=================================
