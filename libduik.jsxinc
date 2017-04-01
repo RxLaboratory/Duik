@@ -2765,6 +2765,8 @@ if (typeof Duik.utils.getExpressionLink !== 'function')
 {
 	Duik.utils.getExpressionLink = function (prop,useThisComp)
 	{
+		if (useThisComp == undefined) useThisComp = false;
+		
 		//get compact expression from matchName, if available
 		function getCompactExpression(prop, matchName, name)
 		{
@@ -2805,45 +2807,57 @@ if (typeof Duik.utils.getExpressionLink !== 'function')
  * @memberof Duik.utils
  * @param {Property}	childProp		- The child property (the one which gets an expression).
  * @param {Property}	parentProp 		- The parent property.
- * @param {bool}		useThisComp		- Wether to begin the expression by 'thisComp' or 'comp("name")', default: false
+ * @param {bool}		useThisComp		- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
  */
 if (typeof Duik.utils.pickWhip !== 'function')
 {
 	Duik.utils.pickWhip = function (childProp,parentProp,useThisComp)
 	{
 		if (!childProp.canSetExpression) return;
-
+		
+		if (useThisComp == undefined)
+		{
+			var parentComp = Duik.utils.getPropertyComp(parentProp);
+			var childComp = Duik.utils.getPropertyComp(childProp);
+			if (parentComp.id == childComp.id) useThisComp = true;
+			else useThisComp = false;
+		}
 		childProp.expression = Duik.utils.getExpressionLink(parentProp,useThisComp);
 	}
 }
-// LINK PROPERTIES
-//returns void
+/**
+ * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)
+ * @memberof Duik.utils
+ * @param {PropertyGroup}	childProp			- The child property
+ * @param {PropertyGroup}	parentProp			- The parent property
+ * @param {bool}		useThisComp				- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ */
 if (typeof Duik.utils.linkProperties !== 'function')
 {
-Duik.utils.linkProperties = function (childProp,parentProp)
-{
-for (var p = 1 ; p <= childProp.numProperties ; p++)
-{
-if (childProp(p).propertyType == PropertyType.PROPERTY && !childProp(p).elided)
-{
-//copy paste the animation / value
-var anim = Duik.utils.getPropertyAnim(childProp(p),false,true);
-if (anim != null) Duik.utils.setPropertyAnim(parentProp(p),anim,0,true);
-//get the expression
-if (parentProp(p).canSetExpression && childProp(p).expression != "")
-{
-try { parentProp(p).expression = childProp(p).expression; }
-catch (err) {};
-}
-//set the link
-Duik.utils.pickWhip(childProp(p),parentProp(p));
-}
-else
-{
-Duik.utils.linkProperties(childProp(p),parentProp(p));
-}
-}
-}
+	Duik.utils.linkProperties = function (childProp,parentProp,useThisComp)
+	{
+		for (var p = 1 ; p <= childProp.numProperties ; p++)
+		{
+			if (childProp(p).propertyType == PropertyType.PROPERTY && !childProp(p).elided)
+			{
+				//copy paste the animation / value
+				var anim = Duik.utils.getPropertyAnim(childProp(p),false,true);
+				if (anim != null) Duik.utils.setPropertyAnim(parentProp(p),anim,0,true);
+				//get the expression
+				if (parentProp(p).canSetExpression && childProp(p).expression != "")
+				{
+					try { parentProp(p).expression = childProp(p).expression; }
+					catch (err) {};
+				}
+				//set the link
+				Duik.utils.pickWhip(childProp(p),parentProp(p),useThisComp);
+			}
+			else
+			{
+				Duik.utils.linkProperties(childProp(p),parentProp(p),useThisComp);
+			}
+		}
+	}
 }
 // SMART COMP DUPLICATE: DUPLICATE COMP
 //returns void
@@ -4285,141 +4299,144 @@ return ctrl;
 Duik.autorig.vertebrate.plantigrade.backLeg = function (femur,tibia,tarsus,claws,tiptoe,heel)
 {
 
-//checks
-if (claws && !femur) return null;
-if (claws && !tibia) return null;
-if ( !tarsus) return null;
+	//checks
+	if (claws && !femur) return null;
+	if (claws && !tibia) return null;
+	if ( !tarsus) return null;
 
-//unparent
-if (tibia && femur) tibia.parent = null;
-if (tarsus && (tibia || femur)) tarsus.parent = null;
-if (claws) claws.parent = null;
-if (tiptoe) tiptoe.parent = null;
-if (heel) heel.parent = null;
+	//unparent
+	if (tibia && femur) tibia.parent = null;
+	if (tarsus && (tibia || femur)) tarsus.parent = null;
+	if (claws) claws.parent = null;
+	if (tiptoe) tiptoe.parent = null;
+	if (heel) heel.parent = null;
 
-//detect right or left
-var right = false;
-if (claws)
-{
-var clawsPos = Duik.utils.getWorldPos(claws);
-var tarsusPos = Duik.utils.getWorldPos(tarsus);
-right = (clawsPos[0] - tarsusPos[0]) > 0;
-}
-
-
-
-
-//add nulls and controllers
-var clawsNull, footNull;
-if (claws)
-{
-//claws
-clawsNull = Duik.utils.addNullOnLayer(claws);
-clawsNull.name = "IK " + claws.name
-
-var footSize = claws.transform.position.value[0] - tarsus.transform.position.value[0];
-//tiptoe
-if (!tiptoe)
-{
-tiptoe = Duik.utils.addNullOnLayer(claws);
-tiptoe.name = "IK tiptoe " + claws.name
-tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + footSize,clawsNull.transform.position.value[1]]);
-}
-
-if (!heel)
-{
-heel = Duik.utils.addNullOnLayer(claws);
-heel.name = "IK heel " + tarsus.name
-heel.transform.position.setValue([tarsus.transform.position.value[0],clawsNull.transform.position.value[1]]);
-}
-
-//foot
-footNull = Duik.utils.addNullOnLayer(tarsus);
-footNull.name = "IK  " + tarsus.name;
-
-if (footSize > 0) clockwise = true;
-}
-//Controller
-var ctrl = Duik.addController(tarsus,true,true,true,true,false);
-Duik.addZero(ctrl.layer);
-
-//parent
-if (claws) claws.parent = tarsus;
-if (tibia) {
-tarsus.parent = tibia;
-if (femur) tibia.parent = femur;
-}
-else if (femur) tarsus.parent = femur;
-if (claws) {
-footNull.parent = clawsNull;
-clawsNull.parent = tiptoe;
-tiptoe.parent = heel;
-heel.parent = ctrl.layer;
-}
+	//detect right or left
+	var right = false;
+	if (claws)
+	{
+		var clawsPos = Duik.utils.getWorldPos(claws);
+		var tarsusPos = Duik.utils.getWorldPos(tarsus);
+		right = (clawsPos[0] - tarsusPos[0]) > 0;
+	}
 
 
 
-//IKs
-if (claws) {
-//claws
-Duik.autoIK([claws,tiptoe]);
-//leg
-Duik.autoIK([tarsus,tibia,femur,footNull]);
-//foot
-Duik.autoIK([tarsus,clawsNull]);
-}
-else {
-if (femur && tibia) Duik.autoIK([tarsus,tibia,femur,ctrl.layer]);
-else if (tibia) Duik.autoIK([tarsus,tibia,ctrl.layer]);
-else if (femur) Duik.autoIK([tarsus,femur,ctrl.layer]);
-}
 
-//Controls
-if (claws) {
+	//add nulls and controllers
+	var clawsNull, footNull;
+	if (claws)
+	{
+		//claws
+		clawsNull = Duik.utils.addNullOnLayer(claws);
+		clawsNull.name = "IK " + claws.name
 
-//add an IK effect on the controller
-var ikCtrl = Duik.utils.addEffect(ctrl.layer,Duik.effects.Two_Layer_IK);
-//the effect on the null of the foot
-var ikEffect = footNull.effect(Duik.effects.Two_Layer_IK);
-ikCtrl.name = ikEffect.name;
-//link the properties
-Duik.utils.linkProperties(ikEffect,ikCtrl);
+		var footSize = claws.transform.position.value[0] - tarsus.transform.position.value[0];
+		//tiptoe
+		if (!tiptoe)
+		{
+			tiptoe = Duik.utils.addNullOnLayer(claws);
+			tiptoe.name = "IK tiptoe " + claws.name
+			tiptoe.transform.position.setValue([clawsNull.transform.position.value[0] + footSize,clawsNull.transform.position.value[1]]);
+		}
 
-//tiptoe, heel and footroll
-var footCtrl = Duik.utils.addEffect(ctrl.layer,Duik.effects.Foot_Roll);
-footCtrl.name = tarsus.name + " Foot roll";
-tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
-var op  = right ? "<" : ">";
-heel.transform.rotation.expression = "//Duik.footRoll\n" +
-"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" +
-"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
-"roll " + op + " 0 ? roll+ctrl : ctrl;";
-op  = right ? ">" : "<";
-clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
-"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
-"ctrl " + op + " 0 ? ctrl : 0;";
-}
+		if (!heel)
+		{
+			heel = Duik.utils.addNullOnLayer(claws);
+			heel.name = "IK heel " + tarsus.name
+			heel.transform.position.setValue([tarsus.transform.position.value[0],clawsNull.transform.position.value[1]]);
+		}
 
-//hide and lock
-if (claws){
-tiptoe.enabled = false;
-tiptoe.shy = true;
-tiptoe.locked = true;
-heel.enabled = false;
-heel.shy = true;
-heel.locked = true;
-clawsNull.enabled = false;
-clawsNull.shy = true;
-clawsNull.locked = true;
-footNull.enabled = false;
-footNull.shy = true;
-footNull.locked = true;
-}
+		//foot
+		footNull = Duik.utils.addNullOnLayer(tarsus);
+		footNull.name = "IK  " + tarsus.name;
 
-//select controller
-Duik.utils.deselectLayers();
-ctrl.layer.selected = true;
-return ctrl;
+		if (footSize > 0) clockwise = true;
+	}
+	//Controller
+	var ctrl = Duik.addController(tarsus,true,true,true,true,false);
+	Duik.addZero(ctrl.layer);
+
+	//parent
+	if (claws) claws.parent = tarsus;
+	if (tibia)
+	{
+		tarsus.parent = tibia;
+		if (femur) tibia.parent = femur;
+	}
+	else if (femur) tarsus.parent = femur;
+	if (claws)
+	{
+		footNull.parent = clawsNull;
+		clawsNull.parent = tiptoe;
+		tiptoe.parent = heel;
+		heel.parent = ctrl.layer;
+	}
+
+
+
+	//IKs
+	if (claws)
+	{
+		//claws
+		Duik.autoIK([claws,tiptoe]);
+		//leg
+		Duik.autoIK([tarsus,tibia,femur,footNull]);
+		//foot
+		Duik.autoIK([tarsus,clawsNull]);
+	}
+	else {
+		if (femur && tibia) Duik.autoIK([tarsus,tibia,femur,ctrl.layer]);
+		else if (tibia) Duik.autoIK([tarsus,tibia,ctrl.layer]);
+		else if (femur) Duik.autoIK([tarsus,femur,ctrl.layer]);
+	}
+
+	//Controls
+	if (claws) {
+
+		//add an IK effect on the controller
+		var ikCtrl = Duik.utils.addEffect(ctrl.layer,Duik.effects.Two_Layer_IK);
+		//the effect on the null of the foot
+		var ikEffect = footNull.effect(Duik.effects.Two_Layer_IK);
+		ikCtrl.name = ikEffect.name;
+		//link the properties
+		Duik.utils.linkProperties(ikEffect,ikCtrl);
+
+		//tiptoe, heel and footroll
+		var footCtrl = Duik.utils.addEffect(ctrl.layer,Duik.effects.Foot_Roll);
+		footCtrl.name = tarsus.name + " Foot roll";
+		tiptoe.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
+		var op  = right ? "<" : ">";
+		heel.transform.rotation.expression = "//Duik.footRoll\n" +
+		"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" +
+		"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
+		"roll " + op + " 0 ? roll+ctrl : ctrl;";
+		op  = right ? ">" : "<";
+		clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
+		"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
+		"ctrl " + op + " 0 ? ctrl : 0;";
+	}
+
+	//hide and lock
+	if (claws){
+		tiptoe.enabled = false;
+		tiptoe.shy = true;
+		tiptoe.locked = true;
+		heel.enabled = false;
+		heel.shy = true;
+		heel.locked = true;
+		clawsNull.enabled = false;
+		clawsNull.shy = true;
+		clawsNull.locked = true;
+		footNull.enabled = false;
+		footNull.shy = true;
+		footNull.locked = true;
+	}
+
+	//select controller
+	Duik.utils.deselectLayers();
+	ctrl.layer.selected = true;
+	return ctrl;
 }
 
 Duik.autorig.vertebrate.plantigrade.spine = Duik.autorig.vertebrate.spine;
