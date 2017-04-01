@@ -30,8 +30,8 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 (function (thisObj)
 {
 //=========================
-var version = '15.11';
-var developper = true;
+var version = '15.12';
+var developper = false;
 //=========================
 
 //=================================
