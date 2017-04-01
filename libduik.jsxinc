@@ -2754,11 +2754,16 @@ controllers.push(controller);
 return controllers;
 }
 }
-// GET EXPRESSION LINK
-//returns string
+/**
+ * Gets an expression link to the property
+ * @memberof Duik.utils
+ * @param {Property}	prop			- The property 
+ * @param {bool}		useThisComp		- Wether to begin the expression by 'thisComp' or 'comp("name")', default: false
+ * @return {str}		The expression link to the property
+ */
 if (typeof Duik.utils.getExpressionLink !== 'function')
 {
-	Duik.utils.getExpressionLink = function (prop)
+	Duik.utils.getExpressionLink = function (prop,useThisComp)
 	{
 		//get compact expression from matchName, if available
 		function getCompactExpression(prop, matchName, name)
@@ -2789,20 +2794,26 @@ if (typeof Duik.utils.getExpressionLink !== 'function')
 		name = "\"" + prop.name + "\"";
 		exprCode = "layer(" + name + ")." + exprCode;
 		// Prefix the comp reference
-		exprCode = "comp(\"" + comp.name + "\")." + exprCode;
+		if (useThisComp) exprCode = "thisComp." + exprCode;
+		else exprCode = "comp(\"" + comp.name + "\")." + exprCode;
 		
 		return exprCode;
 	}
 }
-// PICKWHIP
-//returns void
+/**
+ * Adds an expression to the child property, linking it to the parent property
+ * @memberof Duik.utils
+ * @param {Property}	childProp		- The child property (the one which gets an expression).
+ * @param {Property}	parentProp 		- The parent property.
+ * @param {bool}		useThisComp		- Wether to begin the expression by 'thisComp' or 'comp("name")', default: false
+ */
 if (typeof Duik.utils.pickWhip !== 'function')
 {
-	Duik.utils.pickWhip = function (childProp,parentProp)
+	Duik.utils.pickWhip = function (childProp,parentProp,useThisComp)
 	{
 		if (!childProp.canSetExpression) return;
 
-		childProp.expression = Duik.utils.getExpressionLink(parentProp);
+		childProp.expression = Duik.utils.getExpressionLink(parentProp,useThisComp);
 	}
 }
 // LINK PROPERTIES
@@ -6188,157 +6199,153 @@ prop.expression = "expo = effect(\"" + effect.name + "\")(1);\n" +
 "valueAtTime(framesToTime( timef - timef%expo ))";
 }
 }
-/* ADD BONES - Duik.addBones(layers,placement);
-
-Adds bones to the layers, only on selected pins if any, or else on all puppet pins found on those layers.
-
-parameters
-layers | Array of AVLayer
-placement | Duik.placement.OVER_LAYER or Duik.placement.UNDER_LAYER or Duik.placement.TOP or Duik.placement.BOTTOM, default: Duik.settings.bonePlacement
-
-returns
-Array of AVLayers, the bones created
-
-*/
 if (typeof Duik.addBones !== 'function')
 {
-Duik.addBones = function (layers,placement)
-{
-if (placement == undefined) placement = Duik.settings.bonePlacement;
-var createdBones = [];
-if (layers.length == 0) { return createdBones; }
+	/**
+	 * Adds Bones 1- if found, on the selected puppet pins of the layer(s), OR 2- on the selected spatial properties, OR 3- on all puppet pins found.
+	 * @memberof Duik
+	 * @param {Array or LayerCollection}	layers			- The layers used to create bones (Array of Layer object or LayerCollection).
+	 * @param {int}							root 			- Where the bones are in the layer stack, one of Duik.placement.TOP, Duik.placement.BOTTOM, Duik.placement.OVER_LAYER, Duik.placement.UNDER_LAYER. Default: Duik.settings.bonePlacement
+	 * @return {Array}						The bones created (Array of Layer object), may be an empty array if no layer was provided
+	 */
+	Duik.addBones = function (layers,placement)
+	{
+		if (placement == undefined) placement = Duik.settings.bonePlacement;
+		var createdBones = [];
+		if (layers.length == 0) { return createdBones; }
 
-//check names
-Duik.utils.checkNames(layers[0].containingComp);
+		//check names
+		Duik.utils.checkNames(layers[0].containingComp);
 
-for (var i=0;i<layers.length;i++)
-{
-var calque = Duik.utils.getItem(layers,i);
-// les proprietes selectionnees
-var props = calque.selectedProperties;
-var coins = [];
-//lister les puppet pins
-if (props.length > 0)
-{
-for (var j=0;j<props.length;j++)
-{
-if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
-}
-}
-//if no pins were found, use every selected spatial properties
-if (!coins.length && props.length > 0)
-{
-for (var j=0;j<props.length;j++)
-{
-if (props[j].propertyType == PropertyType.PROPERTY)
-{
-if (props[j].propertyValueType == PropertyValueType.TwoD_SPATIAL || props[j].propertyValueType == PropertyValueType.ThreeD_SPATIAL)
-{
-if (props[j].canSetExpression) coins.push(props[j]);
-}
-}
-}
-}
-//si il n'y a pas de coins selectionnes, on les prend tous
-if (!coins.length) coins = Duik.utils.getPuppetPins(calque("Effects"));
-//si on a vraiment rien trouve, on laisse tomber
-if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
+		for (var i=0;i<layers.length;i++)
+		{
+			var calque = Duik.utils.getItem(layers,i);
+			// les proprietes selectionnees
+			var props = calque.selectedProperties;
+			var coins = [];
+			//lister les puppet pins
+			if (props.length > 0)
+			{
+				for (var j=0;j<props.length;j++)
+				{
+					if (props[j].matchName == "ADBE FreePin3 PosPin Atom") coins.push(props[j]);
+				}
+			}
+			//if no pins were found, use every selected spatial properties
+			if (!coins.length && props.length > 0)
+			{
+				for (var j=0;j<props.length;j++)
+				{
+					if (props[j].propertyType == PropertyType.PROPERTY)
+					{
+						if (props[j].propertyValueType == PropertyValueType.TwoD_SPATIAL || props[j].propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+						{
+							if (props[j].canSetExpression) coins.push(props[j]);
+						}
+					}
+				}
+			}
+			//si il n'y a pas de coins selectionnes, on les prend tous
+			if (!coins.length) coins = Duik.utils.getPuppetPins(calque("Effects"));
+			//si on a vraiment rien trouve, on laisse tomber
+			if (!coins.length) throw "Please select a spatial property to link it to a bone.\nYou cannot link a non-spatial property to a bone\nIt must have two or three dimensions.";
 
-for (var j=0;j<coins.length;j++)
-{
-var coin = coins[j];
+			for (var j=0;j<coins.length;j++)
+			{
+				var coin = coins[j];
 
-var position;
+				var position;
 
-if (coin.matchName == "ADBE FreePin3 PosPin Atom")
-{
-position = coin.position;
-}
-else
-{
-position = coin;
-}
+				if (coin.matchName == "ADBE FreePin3 PosPin Atom")
+				{
+					position = coin.position;
+				}
+				else
+				{
+					position = coin;
+				}
 
-//creer le bone
-var bone;
-//sa taille
-boneTaille = Duik.settings.boneSize;
-if (Duik.settings.boneSizeAuto)
-{
-if (calque instanceof ShapeLayer)
-{
-boneTaille = app.project.activeItem.height/2 + app.project.activeItem.height/2;
-}
-else
-{
-var calqueParent = calque.parent;
-calque.parent = null;
-var calqueEchelle = calque.transform.scale.value;
-calque.parent = calqueParent;
-boneTaille = calque.source.width*Math.abs(calqueEchelle[0])/130 + calque.source.height*Math.abs(calqueEchelle[1])/130;
-}
+				//creer le bone
+				var bone;
+				//sa taille
+				boneTaille = Duik.settings.boneSize;
+				if (Duik.settings.boneSizeAuto)
+				{
+					if (calque instanceof ShapeLayer)
+					{
+						boneTaille = app.project.activeItem.height/2 + app.project.activeItem.height/2;
+					}
+					else
+					{
+						var calqueParent = calque.parent;
+						calque.parent = null;
+						var calqueEchelle = calque.transform.scale.value;
+						calque.parent = calqueParent;
+						boneTaille = calque.source.width*Math.abs(calqueEchelle[0])/130 + calque.source.height*Math.abs(calqueEchelle[1])/130;
+					}
 
-if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) boneTaille = Math.floor(boneTaille/60);
-else if (Duik.settings.boneSizeHint == Duik.sizes.MEDIUM) boneTaille = Math.floor(boneTaille/40);
-else if (Duik.settings.boneSizeHint == Duik.sizes.BIG) boneTaille = Math.floor(boneTaille/20);
-}
-if (Duik.settings.boneType == Duik.layerTypes.NULL)
-{
-bone = app.project.activeItem.layers.addNull();
-bone.name = "B_" + coin.name;
-bone.source.width = boneTaille;
-bone.source.height = boneTaille;
-bone.transform.anchorPoint.setValue([bone.source.width/2,bone.source.height/2]);
-}
-else
-{
-var colorString = Duik.settings.boneColor;
-bone = app.project.activeItem.layers.addSolid(Duik.utils.hexColorToRVB(colorString),"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
-}
-if (placement == Duik.placement.OVER_LAYER) bone.moveBefore(calque);
-else if (placement == Duik.placement.UNDER_LAYER) bone.moveAfter(calque);
-else if (placement == Duik.placement.BOTTOM) bone.moveToEnd();
+					if (Duik.settings.boneSizeHint == Duik.sizes.SMALL) boneTaille = Math.floor(boneTaille/60);
+					else if (Duik.settings.boneSizeHint == Duik.sizes.MEDIUM) boneTaille = Math.floor(boneTaille/40);
+					else if (Duik.settings.boneSizeHint == Duik.sizes.BIG) boneTaille = Math.floor(boneTaille/20);
+				}
+				if (Duik.settings.boneType == Duik.layerTypes.NULL)
+				{
+					bone = app.project.activeItem.layers.addNull();
+					bone.name = "B_" + coin.name;
+					bone.source.width = boneTaille;
+					bone.source.height = boneTaille;
+					bone.transform.anchorPoint.setValue([bone.source.width/2,bone.source.height/2]);
+				}
+				else
+				{
+					var colorString = Duik.settings.boneColor;
+					bone = app.project.activeItem.layers.addSolid(Duik.utils.hexColorToRVB(colorString),"B_" + coin.name,boneTaille,boneTaille,app.project.activeItem.pixelAspect);
+				}
+				if (placement == Duik.placement.OVER_LAYER) bone.moveBefore(calque);
+				else if (placement == Duik.placement.UNDER_LAYER) bone.moveAfter(calque);
+				else if (placement == Duik.placement.BOTTOM) bone.moveToEnd();
 
-//group
-Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
+				//group
+				Duik.utils.addLayerToDuGroup(bone,Duik.uiStrings.bones);
 
-createdBones.push(bone);
+				createdBones.push(bone);
 
-//mettre le bone a la position du coin : utiliser une expression pour avoir la position en mode world du coin
-Duik.utils.pickWhip(bone.position,position);
-if (!(calque instanceof ShapeLayer))
-{
-bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(" + bone.position.expression + ")";
-}
+				//mettre le bone a la position du coin : utiliser une expression pour avoir la position en mode world du coin
+				posLink = Duik.utils.getExpressionLink(position,true);
+				
+				if (!(calque instanceof ShapeLayer))
+				{
+					bone.position.expression = "thisComp.layer(\"" + calque.name + "\").toWorld(" + posLink + ")";
+				}
 
-bone.position.setValue(bone.position.value);
-bone.position.expression = "";
-//nom du bone
-if (coin.matchName == "ADBE FreePin3 PosPin Atom")
-{
-bone.name = "B_" + coin.name;
-}
-else
-{
-var name = "B_" + coin.name + "_" + coin.parentProperty.name;
-if (name.length > 32) name = name.substr(0,32);
-bone.name = name;
-}
+				bone.position.setValue(bone.position.value);
+				bone.position.expression = "";
+				//nom du bone
+				if (coin.matchName == "ADBE FreePin3 PosPin Atom")
+				{
+					bone.name = "B_" + coin.name;
+				}
+				else
+				{
+					var name = "B_" + coin.name + "_" + coin.parentProperty.name;
+					if (name.length > 32) name = name.substr(0,32);
+					bone.name = name;
+				}
 
-bone.guideLayer = true;
-//mettre l'expression dans le coin
-if (calque instanceof ShapeLayer)
-{
-position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
-}
-else
-{
-position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
-}
-}//for coins
-}//for layers
-return createdBones;
-}
+				bone.guideLayer = true;
+				//mettre l'expression dans le coin
+				if (calque instanceof ShapeLayer)
+				{
+					position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint)";
+				}
+				else
+				{
+					position.expression = "bonePos = thisComp.layer(\"" + bone.name + "\").toWorld(thisComp.layer(\"" + bone.name + "\").anchorPoint);\nfromWorld(bonePos)";
+				}
+			}//for coins
+		}//for layers
+		return createdBones;
+	}
 }
 // ADD ZERO - Duik.addZero(layer);
 if (typeof Duik.addZero !== 'function')
