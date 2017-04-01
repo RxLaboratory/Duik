@@ -1757,8 +1757,6 @@ function ik(){
 		}else{
 			ik3DGroup.hide();
 		}
-		ikCWButton.show();
-		ikCWButton.enabled = false;
 	}else if (ikRig.type == 2 && ikRig.goal == null){
 		ikType1Group.hide();
 		ikType2Group.show();
@@ -5562,9 +5560,6 @@ expertMode ? ikType1Group.add('statictext',undefined,'1') : ik1LayerGroup.add('s
 addSeparator(ikPanel,'');
 
 var ikSettingsGroup = addHGroup(ikPanel);
-
-//var ikCWButton = ikSettingsGroup.add('checkbox',undefined,'Clockwise');
-//ikCWButton.visible = false;
 
 var ik3DGroup = addVGroup(ikSettingsGroup);
 ik3DGroup.visible = false;
