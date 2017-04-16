@@ -1,8 +1,8 @@
 /*
 
-SCRIPT NAME
-Copyright (c) 2011
-DESCRIPTION
+DUIK 16 Bones
+Copyright (c) 2017 Nicolas Dufresne
+Beta test of the new bone structures to be included in the next version of Duik (16)
 
 */ 
 
@@ -73,7 +73,7 @@ if (typeof Duik === 'object') delete Duik;
 			//bone group
 			var boneGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 			boneGroup.name = "Bone";
-			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = "//Duik.bone.size\nvar s = effect('Display Size')(1);\n[s,s];";
+			boneGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = "//Duik.bone.size\nvar s = effect(\"Display Size\")(1);\n[s,s];";
 			//target group
 			var targetGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 			targetGroup.name = "Target";
@@ -114,12 +114,12 @@ if (typeof Duik === 'object') delete Duik;
 							"function isBone(layer)\n" + 
 							"{\n" + 
 							"var ok = false;\n" + 
-							"try { layer.content('Bone'); ok = true;}\n" + 
+							"try { layer.content(\"Bone\"); ok = true;}\n" + 
 							"catch (e) { ok = false;}\n" + 
 							"return ok;\n" + 
 							"}\n" + 
 							"var child = null;\n" + 
-							"try { child = effect('Display Link')(1);}\n" + 
+							"try { child = effect(\"Display Link\")(1);}\n" + 
 							"catch (e) {child = null;}\n" + 
 							"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 							"if (!isBone(child)) child = null;\n" + 
@@ -144,7 +144,7 @@ if (typeof Duik === 'object') delete Duik;
 							"var dist = length(A,B);\n" + 
 							"Y = dist/30*100;\n" + 
 							"}\n" + 
-							"[X,Y*100/content('Bone').transform.scale[1]];";
+							"[X,Y*100/content(\"Bone\").transform.scale[1]];";
 
 				stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
 				
@@ -153,12 +153,12 @@ if (typeof Duik === 'object') delete Duik;
 						"function isBone(layer)\n" + 
 						"{\n" + 
 						"var ok = false;\n" + 
-						"try { layer.content('Bone'); ok = true;}\n" + 
+						"try { layer.content(\"Bone\"); ok = true;}\n" + 
 						"catch (e) { ok = false;}\n" + 
 						"return ok;\n" + 
 						"}\n" + 
 						"var child = null;\n" + 
-						"try { child = effect('Display Link')(1);}\n" + 
+						"try { child = effect(\"Display Link\")(1);}\n" + 
 						"catch (e) {child = null;}\n" + 
 						"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" + 
 						"if (!isBone(child)) child = null;\n" + 
@@ -727,15 +727,15 @@ if (typeof Duik === 'object') delete Duik;
 				//add effect
 				var delayEffect = layer.effect.addProperty('ADBE Slider Control');
 				delayEffect.name = 'FK Overlap Delay';
-				delayEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Delay')(1) + value;";
+				delayEffect(1).expression = "thisComp.layer(\"" + controller.layer.name + "\").effect(\"FK Overlap Delay\")(1) + value;";
 				
 				var multiplierEffect = layer.effect.addProperty('ADBE Slider Control');
 				multiplierEffect.name = 'FK Overlap Multiplier';
-				multiplierEffect(1).expression = "thisComp.layer('" + controller.layer.name + "').effect('FK Overlap Multiplier')(1) + value;";
+				multiplierEffect(1).expression = "thisComp.layer(\"" + controller.layer.name + "\").effect(\"FK Overlap Multiplier\")(1) + value;";
 				
 				var rotExpr = "//Duik.delayedRotation\n" + 
-							"var delay = effect('FK Overlap Delay')(1);\n" + 
-							"var multiplier = effect('FK Overlap Multiplier')(1);\n" + 
+							"var delay = effect(\"FK Overlap Delay\")(1);\n" + 
+							"var multiplier = effect(\"FK Overlap Multiplier\")(1);\n" + 
 							"var result = value;\n" + 
 							"if (thisLayer.hasParent)\n" + 
 							"{\n" + 
