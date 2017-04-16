@@ -4641,6 +4641,15 @@ Duik.settings.ctrlPlacement = boutonCtrlPlacement.selection.index;
 Duik.settings.save();
 };
 
+//lock and shy layers after IK Creation
+var settingsIKGroup = addBox(settingsRiggingGroup,tr("IK"));
+var settingsIKLockAndShyButton = settingsIKGroup.add('checkbox',undefined,tr("Lock and shy layers after creation"));
+settingsIKLockAndShyButton.onClick = function() {
+Duik.settings.lockAndShy = settingsIKLockAndShyButton.value;
+Duik.settings.save();
+};
+
+
 //Interpolations
 var settingsInterpolationsGroup = addBox(settingsAnimationGroup,tr("Interpolations"));
 var settingsInteractiveUpdateButton = settingsInterpolationsGroup.add('checkbox',undefined,tr("Interactive update"));
@@ -5500,82 +5509,83 @@ ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; contro
 }
 //IK PANEL
 {
-var ikTypeGroup = ikPanel.add('group');
-ikTypeGroup.orientation = 'stack';
-var ikType4Group = addHGroup(ikTypeGroup);
-ikType4Group.visible = false;
-var ikType3Group = addHGroup(ikTypeGroup);
-ikType3Group.visible = false;
-var ikType2Group = addHGroup(ikTypeGroup);
-ikType2Group.visible = false;
-var ikType1Group = addHGroup(ikTypeGroup);
-ikType1Group.visible = false;
+	var ikTypeGroup = ikPanel.add('group');
+	ikTypeGroup.orientation = 'stack';
+	var ikType4Group = addHGroup(ikTypeGroup);
+	ikType4Group.visible = false;
+	var ikType3Group = addHGroup(ikTypeGroup);
+	ikType3Group.visible = false;
+	var ikType2Group = addHGroup(ikTypeGroup);
+	ikType2Group.visible = false;
+	var ikType1Group = addHGroup(ikTypeGroup);
+	ikType1Group.visible = false;
 
-if (!expertMode)
-{
-var ik3GoalGroup = addVGroup(ikType4Group);
-ik3GoalGroup.alignChildren = ['center','top'];
-ik3GoalGroup.add('image',undefined,dossierIcones + 'btn_3layerikgoal.png');
-}
-expertMode ? ikType4Group.add('statictext',undefined,'3+1') : ik3GoalGroup.add('statictext',undefined,tr("3-Layer IK & Goal"));
+	if (!expertMode)
+	{
+		var ik3GoalGroup = addVGroup(ikType4Group);
+		ik3GoalGroup.alignChildren = ['center','top'];
+		ik3GoalGroup.add('image',undefined,dossierIcones + 'btn_3layerikgoal.png');
+	}
+	expertMode ? ikType4Group.add('statictext',undefined,'3+1') : ik3GoalGroup.add('statictext',undefined,tr("3-Layer IK & Goal"));
 
-if (!expertMode)
-{
-var ik3LayerGroup = addVGroup(ikType3Group);
-ik3LayerGroup.alignChildren = ['center','top'];
-ik3LayerGroup.add('image',undefined,dossierIcones + 'btn_3layerik.png');
-}
-var ik3LayerButton = expertMode ? ikType3Group.add('radiobutton',undefined,'3') : ik3LayerGroup.add('radiobutton',undefined,tr("3-Layer IK"));
-if (!expertMode)
-{
-var ik2GoalGroup = addVGroup(ikType3Group);
-ik2GoalGroup.alignChildren = ['center','top'];
-ik2GoalGroup.add('image',undefined,dossierIcones + 'btn_2layerikgoal.png');
-}
-var ik2GoalButton = expertMode ? ikType3Group.add('radiobutton',undefined,'2+1') : ik2GoalGroup.add('radiobutton',undefined,tr("2-Layer IK & Goal"));
+	if (!expertMode)
+	{
+		var ik3LayerGroup = addVGroup(ikType3Group);
+		ik3LayerGroup.alignChildren = ['center','top'];
+		ik3LayerGroup.add('image',undefined,dossierIcones + 'btn_3layerik.png');
+	}
+	var ik3LayerButton = expertMode ? ikType3Group.add('radiobutton',undefined,'3') : ik3LayerGroup.add('radiobutton',undefined,tr("3-Layer IK"));
+	if (!expertMode)
+	{
+		var ik2GoalGroup = addVGroup(ikType3Group);
+		ik2GoalGroup.alignChildren = ['center','top'];
+		ik2GoalGroup.add('image',undefined,dossierIcones + 'btn_2layerikgoal.png');
+	}
+	var ik2GoalButton = expertMode ? ikType3Group.add('radiobutton',undefined,'2+1') : ik2GoalGroup.add('radiobutton',undefined,tr("2-Layer IK & Goal"));
 
-if (!expertMode)
-{
-var ik1GoalGroup = addVGroup(ikType2Group);
-ik1GoalGroup.alignChildren = ['center','top'];
-ik1GoalGroup.add('image',undefined,dossierIcones + 'btn_1layerikgoal.png');
-}
-var ik1GoalButton = expertMode ? ikType2Group.add('radiobutton',undefined,'1+1') : ik1GoalGroup.add('radiobutton',undefined,tr("1-Layer IK & Goal"));
-if (!expertMode)
-{
-var ik2LayerGroup = addVGroup(ikType2Group);
-ik2LayerGroup.alignChildren = ['center','top'];
-ik2LayerGroup.add('image',undefined,dossierIcones + 'btn_2layerik.png');
-}
-var ik2LayerButton = expertMode ?  ikType2Group.add('radiobutton',undefined,'2') : ik2LayerGroup.add('radiobutton',undefined,tr("2-Layer IK"));
+	if (!expertMode)
+	{
+		var ik1GoalGroup = addVGroup(ikType2Group);
+		ik1GoalGroup.alignChildren = ['center','top'];
+		ik1GoalGroup.add('image',undefined,dossierIcones + 'btn_1layerikgoal.png');
+	}
+	var ik1GoalButton = expertMode ? ikType2Group.add('radiobutton',undefined,'1+1') : ik1GoalGroup.add('radiobutton',undefined,tr("1-Layer IK & Goal"));
+	
+	if (!expertMode)
+	{
+		var ik2LayerGroup = addVGroup(ikType2Group);
+		ik2LayerGroup.alignChildren = ['center','top'];
+		ik2LayerGroup.add('image',undefined,dossierIcones + 'btn_2layerik.png');
+	}
+	var ik2LayerButton = expertMode ?  ikType2Group.add('radiobutton',undefined,'2') : ik2LayerGroup.add('radiobutton',undefined,tr("2-Layer IK"));
 
-if (!expertMode)
-{
-var ik1LayerGroup = addVGroup(ikType1Group);
-ik1LayerGroup.alignChildren = ['center','top'];
-ik1LayerGroup.add('image',undefined,dossierIcones + 'btn_1layerik.png');
-}
-expertMode ? ikType1Group.add('statictext',undefined,'1') : ik1LayerGroup.add('statictext',undefined,tr("1-Layer IK (LookAt)"));
+	if (!expertMode)
+	{
+		var ik1LayerGroup = addVGroup(ikType1Group);
+		ik1LayerGroup.alignChildren = ['center','top'];
+		ik1LayerGroup.add('image',undefined,dossierIcones + 'btn_1layerik.png');
+	}
+	expertMode ? ikType1Group.add('statictext',undefined,'1') : ik1LayerGroup.add('statictext',undefined,tr("1-Layer IK (LookAt)"));
 
-addSeparator(ikPanel,'');
+	addSeparator(ikPanel,'');
 
-var ikSettingsGroup = addHGroup(ikPanel);
+	var ikSettingsGroup = addVGroup(ikPanel);
+	
+	var ik3DGroup = addVGroup(ikSettingsGroup);
+	ik3DGroup.visible = false;
+	var ikFrontFacingButton = ik3DGroup.add('radiobutton',undefined,tr("Front/Back view"));
+	var ikRightFacingButton = ik3DGroup.add('radiobutton',undefined,tr("Left/Right view"));
 
-var ik3DGroup = addVGroup(ikSettingsGroup);
-ik3DGroup.visible = false;
-var ikFrontFacingButton = ik3DGroup.add('radiobutton',undefined,tr("Front/Back view"));
-var ikRightFacingButton = ik3DGroup.add('radiobutton',undefined,tr("Left/Right view"));
+	ik3LayerButton.onClick = function () { ik2GoalButton.value = false; ik3DGroup.enabled = false;};
+	ik2GoalButton.onClick = function () { ik3LayerButton.value = false; ik3DGroup.enabled = true;};
 
-ik3LayerButton.onClick = function () { ik2GoalButton.value = false; ik3DGroup.enabled = false;};
-ik2GoalButton.onClick = function () { ik3LayerButton.value = false; ik3DGroup.enabled = true;};
+	ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true;};
+	ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false;};
 
-ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true;};
-ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false;};
-
-var ikButtonsGroup = addHGroup(ikPanel);
-var ikCancelButton = addIconButton(ikButtonsGroup,'btn_cancel.png',tr("Cancel"));
-ikCancelButton.onClick = function () { ikPanel.hide();panoik.show(); };
-var ikCreateButton = addIconButton(ikButtonsGroup,'btn_valid.png',tr("Create"));
+	var ikButtonsGroup = addHGroup(ikPanel);
+	var ikCancelButton = addIconButton(ikButtonsGroup,'btn_cancel.png',tr("Cancel"));
+	ikCancelButton.onClick = function () { ikPanel.hide();panoik.show(); };
+	var ikCreateButton = addIconButton(ikButtonsGroup,'btn_valid.png',tr("Create"));
 
 
 }
