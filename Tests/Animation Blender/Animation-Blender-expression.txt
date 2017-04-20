@@ -1,0 +1,119 @@
+var ctrl = APOINTERAULASSO;
+var loop = ctrl.effect("Event LoopOut")(1) == 1;
+var blendingDuration = ctrl.effect("Event Blending")(1);
+var blendingEasing = ctrl.effect("Blending Ease | Linear")(1) == 1;
+
+function findLayer(n)
+{
+var layer = null;
+for (var i = 1 ; i<= thisComp.numLayers ; i++)
+{
+if (thisComp.layer(i).name == n)
+{
+layer = thisComp.layer(i);
+break;
+}
+}
+return layer;
+}
+
+function getAnim(ind)
+{
+anim = time;
+
+var markerTime = ctrl.marker.key(ind).time;
+var markerName = ctrl.marker.key(ind).comment;
+var layer = findLayer(markerName);
+
+if (layer)
+{
+var start = layer.inPoint;
+var end = layer.outPoint;
+var dur = end-start;
+anim = linear(time, markerTime , markerTime+dur, start, end);
+
+//=========== LOOP ==========
+if (loop)
+{
+var loopNumber = Math.ceil((time-markerTime)/dur);
+if (loopNumber > 1) anim =  linear(time,markerTime+dur*(loopNumber-1), markerTime+dur*loopNumber,start,end);
+}//loop
+
+}//layer
+
+return valueAtTime(anim);
+
+}//function getAnim
+
+
+result = valueAtTime(0);
+
+if (ctrl.marker.numKeys > 0) {
+
+//find previous marker
+currentMarker = ctrl.marker.nearestKey(time).index;
+
+if (ctrl.marker.key(currentMarker).time > time) currentMarker--;
+
+animA = value;
+
+if (currentMarker > 0) {
+
+animA = getAnim(currentMarker);
+
+result = animA;
+
+
+//========== BLEND ANIMS ========
+
+if (blendingDuration != 0)
+{
+//find marker before
+var prevMarker = currentMarker -1;
+animB = value;
+if (prevMarker > 0)
+{
+	
+var markerTime = ctrl.marker.key(currentMarker).time;
+
+//if no loop, check if anim is still going on
+if (!loop)
+{
+var prevMarkerTime = ctrl.marker.key(prevMarker).time;
+var prevMarkerName = ctrl.marker.key(prevMarker).comment;
+var layer = findLayer(prevMarkerName);
+if (layer)
+{
+var prevDuration = layer.outPoint - layer.inPoint;
+var prevEndTime = prevMarkerTime+prevDuration;
+var maxBlendingDuration = prevEndTime-markerTime;
+if (maxBlendingDuration < 0) blendingDuration = 0;
+else if (maxBlendingDuration <blendingDuration) blendingDuration = maxBlendingDuration;
+}// layer
+}// !loop	
+
+if (blendingDuration != 0)
+{
+//get prev anim
+animB = getAnim(prevMarker);
+
+//blend
+if (blendingEasing) result = linear(time,markerTime , markerTime+blendingDuration, animB, animA);
+else result = ease(time,markerTime , markerTime+blendingDuration, animB, animA);
+}
+
+
+}//prevMarker
+}//blending
+
+}//currentMarker
+else //if we're before the first marker
+{
+currentMarker++;
+markerName = ctrl.marker.key(currentMarker).comment;
+var layer = findLayer(markerName);
+result = valueAtTime(layer.inPoint);
+}
+}//marker.numKeys
+
+result;
