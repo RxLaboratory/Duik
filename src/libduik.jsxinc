@@ -1499,6 +1499,270 @@ Duik.ui.hideProgressPanel = function ()
 Duik.ui.progressIterationDuration = 0;
 Duik.ui.progressPanel.hide();
 };
+
+	/**
+	 * Changes the color of the text of a ScriptUI Object
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}		text	- The ScriptUI Object
+	 * @param {Array}				color	- The new color [R,V,B,A] Array
+	 */
+	Duik.ui.setTextColor = function (text,color)
+	{
+		if (!text) throw "You must provide a ScriptUI Control to change the color of the text";
+		var g = text.graphics;
+		var textPen = g.newPen(g.PenType.SOLID_COLOR,color,1);
+		g.foregroundColor = textPen;
+	}
+	
+	/**
+	 * Creates the main panel of a script
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}		container	- The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
+	 * @return {ScriptUI Object}	The panel created, either a ScriptUI Panel or a ScriptUI Window
+	 */
+	Duik.ui.createUI = function (container, scriptName)
+	{
+		if (!scriptName) scriptName = '';
+		
+		var  myPal = null;
+		container instanceof Panel ? myPal = container : myPal = new Window('palette',scriptName,undefined, {resizeable:true});
+		
+		if (myPal == null) throw "Failed to create User Interface.";
+		
+		// Margins and alignment
+		myPal.alignChildren = ['fill','top'];
+		myPal.margins = 5;
+		myPal.spacing = 2;
+		
+		return myPal;
+	}
+	
+	/**
+	 * Resizes and shows the main panel of a script
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}		ui	- The UI created by Duik.ui.createUI
+	 */
+	Duik.ui.showUI = function (ui)
+	{
+		ui.layout.layout(true);
+		ui.layout.resize();
+		ui.onResizing = ui.onResize = function () {this.layout.resize();}
+		
+		// If it's a Window, it needs to be shown
+		if (ui instanceof Window) {
+			//ui.center();
+			ui.show();
+		}
+	}
+	
+	/**
+	 * Creates a button with an optionnal icon. Must have at least an icon or a text, or both.
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}			container		- The ScriptUI Object which will contain and display the button.
+	 * @param {string}					text			- The label of the button. Default: empty string
+	 * @param {string}					image			- The path to the icon. Default: empty string
+	 * @param {string}					helpTip			- The helptip. Default: empty string
+	 * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: empty string
+	 * @return {object}					The image button created.
+	 */
+	Duik.ui.addImageButton = function (container,text,image,helpTip,imageOver)
+	{
+		if (!text) text = '';
+		if (!image) image = '';
+		if (!helpTip) helpTip = '';
+		if (!imageOver) imageOver = '';
+		
+		if (text == '' && image == '') throw "You must provide either a text or an icon to create the button";
+		
+		var imageButton = {};
+		
+		imageButton.standardImage = image;
+		imageButton.imageOver = imageOver;
+		imageButton.onClick = function(){};
+		imageButton.image = null;
+		imageButton.label = null;
+		
+		//create a group
+		var group = container.add('group');
+		group.orientation = 'row';
+		group.margins = 0;
+		group.spacing = 2;
+		imageButton.group = group;
+
+		if (image != '')
+		{
+			var icon = group.add('image',undefined,image);
+			icon.alignment = ['center','center'];
+			icon.helpTip = helpTip;
+			imageButton.image = icon;
+		}
+		
+		if (text != '')
+		{
+			var label = group.add('statictext',undefined,text);
+			label.helpTip = helpTip;
+			label.alignment = ['left','center'];
+			imageButton.label = label;
+		}
+		
+		//events
+		imageButton.clicked = function (e)
+		{
+			imageButton.onClick();
+		}
+		
+		imageButton.mouseOver = function (e)
+		{
+			if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+			if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+		}
+		
+		imageButton.mouseOut = function (e)
+		{
+			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+			if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+		}
+		
+		//add events
+		group.addEventListener("mousedown",imageButton.clicked,true);
+		// Hack - CS6 Bug on mouseover with images
+		if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+		{
+			if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+			if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		else
+		{
+			group.addEventListener("mouseover",imageButton.mouseOver);
+			group.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		
+		
+		return imageButton;
+	}
+
+	/**
+	 * Creates a button with an optionnal icon. Must have at least an icon or a text, or both.
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}			container		- The ScriptUI Object which will contain and display the button.
+	 * @param {string}					text			- The label of the button. Default: empty string
+	 * @param {string}					image			- The path to the icon. Default: empty string
+	 * @param {string}					helpTip			- The helptip. Default: empty string
+	 * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
+	 * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
+	 * @return {object}					The image checkbox created.
+	 */
+	Duik.ui.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver)
+	{
+		if (!container) return null;
+		if (!text) text = '';
+		if (!image) image = '';
+		if (!helpTip) helpTip = '';
+		if (!imageChecked) imageChecked = '';
+		if (!imageOver) imageOver = imageChecked;
+
+		if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
+		
+		var imageButton = {};
+		
+		imageButton.standardImage = image;
+		imageButton.imageOver = imageOver;
+		imageButton.imageChecked = imageChecked;
+		imageButton.onClick = function () {};
+		imageButton.checked = false;
+		
+		var group = container.add('group');
+		group.orientation = 'row';
+		group.margins = 0;
+		group.spacing = 2;
+		imageButton.group = group;
+		
+		if (image != '')
+		{
+			var icon = group.add('image',undefined,image);
+			icon.alignment = ['center','center'];
+			icon.helpTip = helpTip;
+			imageButton.image = icon;
+		}
+		
+		if (text != '')
+		{
+			if (image != '')
+			{
+				var label = group.add('statictext',undefined,text);
+				label.helpTip = helpTip;
+				label.alignment = ['center','center'];
+				imageButton.label = label;
+			}
+			else
+			{
+				var label = group.add('checkbox',undefined,text);
+				label.helpTip = helpTip;
+				label.alignment = ['center','center'];
+				imageButton.label = label;
+			}
+			
+		}
+		
+		imageButton.setChecked = function (c)
+		{
+			imageButton.checked = c;
+			if (imageButton.imageChecked != '')
+			{
+				if (imageButton.checked)
+				{
+					if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+					if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+				}
+				else
+				{
+					if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+					if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+				}
+			}
+		}
+		
+		imageButton.clicked = function (e)
+		{
+			imageButton.setChecked(!imageButton.checked);
+			imageButton.onClick();
+		}
+		
+		imageButton.mouseOver = function (e)
+		{
+			if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+			if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+		}
+		
+		imageButton.mouseOut = function (e)
+		{
+			if (imageButton.checked)
+			{
+				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+				if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+			}
+			else
+			{
+				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+				if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+			}
+		}
+		
+		group.addEventListener("mousedown",imageButton.clicked,true);
+		// Hack - CS6 Bug on mouseover with images
+		if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+		{
+			if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+			if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		else
+		{
+			group.addEventListener("mouseover",imageButton.mouseOver);
+			group.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		
+		return imageButton;
+	}
 }
 
 //================================
