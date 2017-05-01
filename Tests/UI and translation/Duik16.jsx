@@ -10,8 +10,8 @@ blabla credits
 blabla licence
 */
 
-//gets the new functions from Duik 16
-#include libduik16.jsxinc
+//gets the Duik functions
+#include libduik.jsxinc
 
 /**
  * The whole script is encapsulated to avoid global variables
@@ -33,9 +33,11 @@ blabla licence
 		
 		var mainPanel = Duik.ui.createUI(thisObj,"Duik 16");
 		
+		//imageButton Test
 		var enabledButton = Duik.ui.addImageButton(mainPanel,'Test',imgFolder + 'btn_notes.png','',imgFolder + 'btn_calc.png');
 		enabledButton.onClick = function () { alert(Duik.aeVersion); };
 		
+		//imageCheckBox Test
 		var testCheckBox = Duik.ui.addImageCheckBox(mainPanel,'Test',imgFolder + 'btn_notes.png','test !',imgFolder + 'btn_calc.png');
 		
 		Duik.ui.showUI(mainPanel);
