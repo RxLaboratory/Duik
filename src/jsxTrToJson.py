@@ -38,10 +38,12 @@ if __name__ == '__main__':
     jsonTrs = jsonDuik["translations"]  # shortcut
 
     # Lines parsing
+    index = 0
     for line in lines:
+        index += 1
         if (not line.startswith("DutranslatorArray.push([") or
             not line.endswith("]);\n")):
-            print("Line ignored: {}".format(line))
+            print("{} - Line ignored: {}".format(index, line))
         else:
             eline = line[23:]  # remove first 23 characters
             eline = eline[:-3]  # remove last 3 charcaters
@@ -58,7 +60,7 @@ if __name__ == '__main__':
                 jsonLine["comment"] = ""
                 jsonTrs.append(jsonLine)
             except json.decoder.JSONDecodeError as detail:
-                print("Unable to parse translation, you should add it manualy (error {}):\n{}".format(detail, line))
+                print("{} - Unable to parse translation, you should add it manualy (error {}):\n{}".format(index, detail, line))
 
 
     basename = os.path.splitext(
@@ -74,7 +76,10 @@ if __name__ == '__main__':
         index += 1
 
     with open(newFile, "w") as out:
-        json.dump(jsonRes, out)
+        json.dump(jsonRes, out, 
+                indent=4, 
+                separators=(',', ': '),
+                ensure_ascii=False)
 
     print("File correctly converted, result is at {}.".format(newFile))
 
