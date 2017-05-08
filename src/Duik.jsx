@@ -3879,9 +3879,11 @@ var expertMode = eval(app.settings.getSetting('duik','expertMode'));
 
 //une fonction pour ajouter les boutons plus rapidement :
 function addIconButton(conteneur,image,text){
-var bouton = conteneur.add('iconbutton',undefined,dossierIcones + image);
-//bouton.size = [108,22];
-if (!expertMode) bouton.text = text;
+	if (expertMode) text = '';
+//var bouton = conteneur.add('iconbutton',undefined,dossierIcones + image);
+var bouton = Duik.ui.addImageButton(conteneur,text,dossierIcones + image);
+//bouton.text = text;
+bouton.group.maximumSize.height = 25;
 return bouton;
 }
 function addIconRadioButton(conteneur,image,text){
@@ -4157,17 +4159,17 @@ fenetrenotes.size = [300,300];
 
 	//HEADER
 
-	//BUTTONS ON THE RIGHT
+	//BUTTONS ON THE LEFT
 	var entete = mainGroup.add('group');
 	entete.alignChildren = ['left','center'];
 	entete.alignment = ['fill','top'];
 	entete.spacing = 2;
 	entete.margins = 0;
-	var boutonNotes = entete.add('iconbutton',undefined,dossierIcones + 'btn_notes.png');
+	var boutonNotes = addIconButton(entete,'btn_notes.png','');
 	boutonNotes.size = [22,22];
 	boutonNotes.helpTip = tr("Simple notepad, with auto-save.");
 	boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
-	var boutonCalc = entete.add('iconbutton',undefined,dossierIcones + 'btn_calc.png');
+	var boutonCalc = addIconButton(entete,'btn_calc.png','');
 	boutonCalc.size = [22,22];
 	boutonCalc.helpTip = tr("Calculator");
 	boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
@@ -4801,37 +4803,38 @@ lockButton.helpTip = tr("Locks the selected property");
 
 //Interpolation types
 var groupeInterpoClefs = addHGroup(panointerpo);
-var rovingButton = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_roving.png');
+var rovingButton = addIconButton(groupeInterpoClefs,'interpo_roving.png');
 rovingButton.size = [20,20];
 rovingButton.onClick = roving;
 rovingButton.helpTip = tr("Roving");
-var boutonLineaire = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_lineaire.png');
+var boutonLineaire = addIconButton(groupeInterpoClefs,'interpo_lineaire.png');
 boutonLineaire.size = [20,20];
 boutonLineaire.onClick = lineaire;
 boutonLineaire.helpTip = tr("Linear Interpolation");
-var boutonLissageA = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_lissagea.png');
+var boutonLissageA = addIconButton(groupeInterpoClefs,'interpo_lissagea.png');
 boutonLissageA.size = [20,20];
 boutonLissageA.onClick = lissageA;
 boutonLissageA.helpTip = tr("Ease In");
-var boutonLissageE = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_lissagee.png');
+var boutonLissageE = addIconButton(groupeInterpoClefs,'interpo_lissagee.png');
 boutonLissageE.size = [20,20];
 boutonLissageE.onClick = lissageE;
 boutonLissageE.helpTip = tr("Ease Out");
-var boutonLissage = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_bezier.png');
+var boutonLissage = addIconButton(groupeInterpoClefs,'interpo_bezier.png');
 boutonLissage.size = [20,20];
 boutonLissage.onClick = lissage;
 boutonLissage.helpTip = tr("Easy Ease");
-var boutonContinu = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_continu.png');
+var boutonContinu = addIconButton(groupeInterpoClefs,'interpo_continu.png');
 boutonContinu.size = [20,20];
 boutonContinu.onClick = continu;
 boutonContinu.helpTip = tr("Auto Bezier");
-var boutonMaintien = groupeInterpoClefs.add('iconbutton',undefined,dossierIcones + 'interpo_maintien.png');
+var boutonMaintien = addIconButton(groupeInterpoClefs,'interpo_maintien.png');
 boutonMaintien.size = [20,20];
 boutonMaintien.onClick = maintien;
 boutonMaintien.helpTip = tr("Hold");
 
 //presets
 var interpoPresetsGroup = addHGroup(panointerpo);
+interpoPresetsGroup.maximumSize.height = 25;
 var interpoPresetsList = interpoPresetsGroup.add('dropdownlist',undefined,eval(app.settings.getSetting('duik', 'interpolationPresets')));
 interpoPresetsList.selection = 0;
 interpoPresetsList.onChange = interpoPresetsListChanged;
@@ -4844,6 +4847,7 @@ interpoPresetsRemoveButton.onClick = interpoPresetsRemoveButtonClicked;
 
 //speed
 var interpoSpeedGroup = addHGroup(panointerpo);
+interpoSpeedGroup.maximumSize.height = 25;
 var interpoSpeedButtonGroupe = addIconCheckbox(interpoSpeedGroup,'btn_interpo_speed.png','');
 var interpoSpeedButton = interpoSpeedButtonGroupe.button;
 interpoSpeedButtonGroupe.alignment = ['left','center'];
@@ -4886,6 +4890,7 @@ interpoSpeedEdit.enabled = false;
 //addSeparator(panointerpo,'Interpolation influence');
 
 var interpoInGroup = addHGroup(panointerpo);
+interpoInGroup.maximumSize.height = 25;
 var boutonApprocheGroupe = addIconCheckbox(interpoInGroup,'btn_interpo_lis.png','');
 boutonApproche = boutonApprocheGroupe.button;
 boutonApproche.helpTip = tr("Ease In influence");
@@ -5016,6 +5021,7 @@ infl();
 }
 
 var groupeInterpoOut = addHGroup(panointerpo);
+groupeInterpoOut.maximumSize.height = 25;
 groupeInterpoOut.visible = false;
 var boutonEloignementGroupe = addIconCheckbox(groupeInterpoOut,'btn_interpo_out.png','');
 boutonEloignement = boutonEloignementGroupe.button,
