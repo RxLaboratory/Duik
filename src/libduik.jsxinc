@@ -757,13 +757,14 @@ this.exposure = 2;
 		Duik.colors = {};
 		Duik.colors.WHITE = [1,1,1,1];
 		Duik.colors.RED = [1,0,0,1];
+		Duik.colors.RAINBOXRED = [.925,.094,.094,1];
 		Duik.colors.GREEN = [0,1,0,1];
 		Duik.colors.BLUE = [0,0,1,1];
 		Duik.colors.CYAN = [0,1,1,1];
 		Duik.colors.MAGENTA = [1,0,1,1];
 		Duik.colors.YELLOW = [1,1,0,1];
 		Duik.colors.BLACK = [0,0,0,1];
-		Duik.colors.LIGHT_GRAY = [0.75,0.75,0.75,1];
+		Duik.colors.LIGHT_GRAY = [0.7,0.7,0.7,1];
 		Duik.colors.DARK_GRAY = [0.25,0.25,0.25,1];
 		Duik.effects = {};
 		Duik.effects.One_Layer_IK = 'PSEUDO/DUIK_One_Layer_IK';
@@ -1700,6 +1701,7 @@ Duik.ui.progressPanel.hide();
 				label.helpTip = helpTip;
 				label.alignment = ['center','center'];
 				imageButton.label = label;
+				imageButton.box = true;
 			}
 			
 		}
@@ -1712,12 +1714,12 @@ Duik.ui.progressPanel.hide();
 				if (imageButton.checked)
 				{
 					if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-					if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+					if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
 				}
 				else
 				{
 					if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-					if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+					if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
 				}
 			}
 		}
@@ -1731,7 +1733,7 @@ Duik.ui.progressPanel.hide();
 		imageButton.mouseOver = function (e)
 		{
 			if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
-			if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
 		}
 		
 		imageButton.mouseOut = function (e)
@@ -1739,12 +1741,142 @@ Duik.ui.progressPanel.hide();
 			if (imageButton.checked)
 			{
 				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-				if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
 			}
 			else
 			{
 				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-				if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+			}
+		}
+		
+		imageButton.group.addEventListener("mousedown",imageButton.clicked,true);
+		// Hack - CS6 Bug on mouseover with images
+		if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+		{
+			if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+			if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		else
+		{
+			imageButton.group.addEventListener("mouseover",imageButton.mouseOver);
+			imageButton.group.addEventListener("mouseout",imageButton.mouseOut);
+		}
+		
+		return imageButton;
+	}
+	
+	/**
+	 * Creates a radio button with an optionnal icon. Must have at least an icon or a text, or both.
+	 * As the radiobutton will be created in a group, you have to connect its state (using onClick() and setChecked(bool) methods and checked value) to other radio buttons, this is not automatic
+	 * @memberof Duik.ui
+	 * @param {ScriptUI Object}			container		- The ScriptUI Object which will contain and display the button.
+	 * @param {string}					text			- The label of the button. Default: empty string
+	 * @param {string}					image			- The path to the icon. Default: empty string
+	 * @param {string}					helpTip			- The helptip. Default: empty string
+	 * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
+	 * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
+	 * @param {bool}					showBox			- Wether to display a checkbox or only the icon. Default: true
+	 * @return {object}					The image radio button created.
+	 */
+	Duik.ui.addImageRadioButton = function (container,text,image,helpTip,imageChecked,imageOver,showBox)
+	{
+		if (!container) return null;
+		if (!text) text = '';
+		if (!image) image = '';
+		if (!helpTip) helpTip = '';
+		if (!imageChecked) imageChecked = '';
+		if (!imageOver) imageOver = imageChecked;
+		if (showBox == undefined) showBox = true;
+		
+
+		if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
+		
+		var imageButton = {};
+		
+		imageButton.standardImage = image;
+		imageButton.imageOver = imageOver;
+		imageButton.imageChecked = imageChecked;
+		imageButton.onClick = function () {};
+		imageButton.checked = false;
+		imageButton.box = false;
+		
+		var group = container.add('group');
+		group.orientation = 'row';
+		group.margins = 0;
+		group.spacing = 2;
+		imageButton.group = group;
+		
+		if (image != '')
+		{
+			var icon = group.add('image',undefined,image);
+			icon.alignment = ['center','center'];
+			icon.helpTip = helpTip;
+			imageButton.image = icon;
+		}
+		
+		if (text != '')
+		{
+			if (image != '' && !showBox)
+			{
+				var label = group.add('statictext',undefined,text);
+				label.helpTip = helpTip;
+				label.alignment = ['center','center'];
+				imageButton.label = label;
+			}
+			else
+			{
+				var label = group.add('radiobutton',undefined,text);
+				label.helpTip = helpTip;
+				label.alignment = ['center','center'];
+				imageButton.label = label;
+				imageButton.box = true;
+			}
+			
+		}
+		
+		imageButton.setChecked = function (c)
+		{
+			imageButton.checked = c;
+			if (imageButton.box) imageButton.label.value = c;
+			if (imageButton.imageChecked != '')
+			{
+				if (imageButton.checked)
+				{
+					if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+					if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+				}
+				else
+				{
+					if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+					if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+				}
+			}
+		}
+		
+		imageButton.clicked = function (e)
+		{
+			imageButton.setChecked(true);
+			imageButton.onClick();
+		}
+		
+		imageButton.mouseOver = function (e)
+		{
+			if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+		}
+		
+		imageButton.mouseOut = function (e)
+		{
+			if (imageButton.checked)
+			{
+				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+			}
+			else
+			{
+				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
 			}
 		}
 		
@@ -1763,6 +1895,8 @@ Duik.ui.progressPanel.hide();
 		
 		return imageButton;
 	}
+
+	
 }
 
 //================================
