@@ -2477,7 +2477,7 @@ app.endUndoGroup();
 //FONCTION WIGGLE
 function wiggle(){
 //regarder le nombre d'axes dans la propriete selectionnee
-var prop =  app.project.activeItem.selectedLayers[0].selectedProperties[app.project.activeItem.selectedLayers[0].selectedProperties.length-1];
+var prop =  getCurrentProp(true);
 if (prop == undefined) return;
 var dim = prop.propertyValueType ;
 
