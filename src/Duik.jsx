@@ -4307,12 +4307,14 @@ function textColor(text,color)
 	animationPanelButton.size = [22,22];
 	var camerasPanelButton = addIconButton(selectorButtons,'panels_btn_camera','',tr("Cameras"));
 	camerasPanelButton.size = [22,22];
+	var ioPanelButton = addIconButton(selectorButtons,'panels_btn_io','',tr("Import/Export"));
+	ioPanelButton.size = [22,22];
 	var settingsPanelButton = addIconButton(selectorButtons,'panels_btn_settings','',tr("Settings"));
 	settingsPanelButton.size = [22,22];
 	var helpPanelButton = addIconButton(selectorButtons,'panels_btn_help','',tr("Help!"));
 	helpPanelButton.size = [22,22];
 	//LIST
-	var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Settings"),tr("Help")]);
+	var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Import/Export"),tr("Settings"),tr("Help")]);
 	selecteur.alignment = ['right','center'];
 	selecteur.helpTip = tr("Tool boxes");
 	selecteur.items[0].image = ScriptUI.newImage(dossierIcones + 'panels_btn_rigging.png');
@@ -4323,10 +4325,12 @@ function textColor(text,color)
 	if (expertMode) selecteur.items[2].text = '';
 	selecteur.items[3].image = ScriptUI.newImage(dossierIcones + 'panels_btn_camera.png');
 	if (expertMode) selecteur.items[3].text = '';
-	selecteur.items[4].image = ScriptUI.newImage(dossierIcones + 'panels_btn_settings.png');
+	selecteur.items[4].image = ScriptUI.newImage(dossierIcones + 'panels_btn_io.png');
 	if (expertMode) selecteur.items[4].text = '';
-	selecteur.items[5].image = ScriptUI.newImage(dossierIcones + 'panels_btn_help.png');
+	selecteur.items[5].image = ScriptUI.newImage(dossierIcones + 'panels_btn_settings.png');
 	if (expertMode) selecteur.items[5].text = '';
+	selecteur.items[6].image = ScriptUI.newImage(dossierIcones + 'panels_btn_help.png');
+	if (expertMode) selecteur.items[6].text = '';
 	if (!eval(app.settings.getSetting('duik', 'dropDownSelector'))) selecteur.hide();
 	else selectorButtons.hide();
 
@@ -4374,6 +4378,8 @@ function textColor(text,color)
 	panointerpo.visible = false;
 	var panocam = addVPanel(panos);
 	panocam.visible = false;
+	var panoio = addVPanel(panos);
+	panoio.visible = false;
 	var panosettings = addVPanel(panos);
 	panosettings.visible = false;
 	var helpPanel = addVPanel(panos);
@@ -4450,65 +4456,56 @@ function textColor(text,color)
 	springPanel.hide();
 	tvpCamPanel.hide();
 	autorigPanel.hide();
-	if (selecteur.selection == 0){
-	panoik.visible = true;
-	panoanimation.visible = false;
-	panointerpo.visible = false;
-	panocam.visible = false;
-	panosettings.visible = false;
-	helpPanel.visible = false;
-	app.settings.saveSetting('duik','pano','0');
-	if (!expertMode) selectorText.text = tr("Rigging");
-	}
-	else if (selecteur.selection == 1){
-	panoik.visible = false;
-	panoanimation.visible = true;
-	panointerpo.visible = false;
-	panocam.visible = false;
-	panosettings.visible = false;
-	helpPanel.visible = false;
-	app.settings.saveSetting('duik','pano','1');
-	if (!expertMode) selectorText.text = tr("Automation");
-	}
-	else if (selecteur.selection == 2){
-	panoik.visible = false;
-	panoanimation.visible = false;
-	panointerpo.visible = true;
-	panocam.visible = false;
-	panosettings.visible = false;
-	helpPanel.visible = false;
-	app.settings.saveSetting('duik','pano','2');
-	if (!expertMode) selectorText.text = tr("Animation");
-	}
-	else if (selecteur.selection == 3){
-	panoik.visible = false;
-	panoanimation.visible = false;
-	panointerpo.visible = false;
-	panocam.visible = true;
-	panosettings.visible = false;
-	helpPanel.visible = false;
-	app.settings.saveSetting('duik','pano','3');
-	if (!expertMode) selectorText.text = tr("Cameras");
-	}
-	else if (selecteur.selection == 4){
+
 	panoik.visible = false;
 	panoanimation.visible = false;
 	panointerpo.visible = false;
 	panocam.visible = false;
-	panosettings.visible = true;
-	helpPanel.visible = false;
-	app.settings.saveSetting('duik','pano','4');
-	if (!expertMode) selectorText.text = tr("Settings");
-	}
-	else if (selecteur.selection == 5){
-	panoik.visible = false;
-	panoanimation.visible = false;
-	panointerpo.visible = false;
-	panocam.visible = false;
+	panoio.visible = false;
 	panosettings.visible = false;
-	helpPanel.visible = true;
-	app.settings.saveSetting('duik','pano','5');
-	if (!expertMode) selectorText.text = tr("Help / About");
+	helpPanel.visible = false;
+
+	if (selecteur.selection == 0)
+	{
+		panoik.visible = true;
+		app.settings.saveSetting('duik','pano','0');
+		if (!expertMode) selectorText.text = tr("Rigging");
+	}
+	else if (selecteur.selection == 1)
+	{
+		panoanimation.visible = true;
+		app.settings.saveSetting('duik','pano','1');
+		if (!expertMode) selectorText.text = tr("Automation");
+	}
+	else if (selecteur.selection == 2)
+	{
+		panointerpo.visible = true;
+		app.settings.saveSetting('duik','pano','2');
+		if (!expertMode) selectorText.text = tr("Animation");
+	}
+	else if (selecteur.selection == 3)
+	{
+		panocam.visible = true;
+		app.settings.saveSetting('duik','pano','3');
+		if (!expertMode) selectorText.text = tr("Cameras");
+	}
+	else if (selecteur.selection == 4)
+	{
+		panoio.visible = true;
+		app.settings.saveSetting('duik','pano','4');
+		if (!expertMode) selectorText.text = tr("Import/Export");
+	}
+	else if (selecteur.selection == 5)
+	{
+		panosettings.visible = true;
+		app.settings.saveSetting('duik','pano','5');
+		if (!expertMode) selectorText.text = tr("Settings");
+	}
+	else if (selecteur.selection == 6)
+	{
+		helpPanel.visible = true;
+		app.settings.saveSetting('duik','pano','6');
+		if (!expertMode) selectorText.text = tr("Help / About");
 	}
 	}
 
@@ -4516,8 +4513,9 @@ function textColor(text,color)
 	automationPanelButton.onClick = function () { selecteur.selection = 1 ; displayPanel(); };
 	animationPanelButton.onClick = function () { selecteur.selection = 2 ; displayPanel(); };
 	camerasPanelButton.onClick = function () { selecteur.selection = 3 ; displayPanel(); };
-	settingsPanelButton.onClick = function () { selecteur.selection = 4 ; displayPanel(); };
-	helpPanelButton.onClick = function () { selecteur.selection = 5 ; displayPanel(); };
+	ioPanelButton.onClick = function () { selecteur.selection = 4 ; displayPanel(); };
+	settingsPanelButton.onClick = function () { selecteur.selection = 5 ; displayPanel(); };
+	helpPanelButton.onClick = function () { selecteur.selection = 6 ; displayPanel(); };
 
 	selecteur.onChange = displayPanel;
 	selecteur.selection = eval(app.settings.getSetting('duik','pano'));
