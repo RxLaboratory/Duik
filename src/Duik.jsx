@@ -3965,6 +3965,7 @@ function addIconButton(container,image,text,helpTip)
 	if (!helpTip) helpTip = '';
 	var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
 	bouton.group.maximumSize.height = bouton.group.minimumSize.height = 24;
+	bouton.group.minimumSize.width = 24;
 	if (bouton.label)
 	{
 		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
@@ -3979,6 +3980,7 @@ function addIconRadioButton(conteneur,image,text)
 {
 	if (expertMode) text = '';
 	var g = addVGroup(conteneur);
+	g.minimumSize.height = 60;
 	g.alignChildren = ['center','fill'];
 	g.add('image',undefined,dossierIcones + image);
 	g.button = g.add('radiobutton',undefined,text);
@@ -4276,21 +4278,19 @@ function textColor(text,color)
 	entete.alignment = ['fill','top'];
 	entete.spacing = 2;
 	entete.margins = 0;
-	var boutonNotes = addIconButton(entete,'btn_notes','');
+	var boutonNotes = addIconButton(entete,'btn_notes','',tr("Simple notepad, with auto-save."));
 	boutonNotes.size = [22,22];
-	boutonNotes.helpTip = tr("Simple notepad, with auto-save.");
 	boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
-	var boutonCalc = addIconButton(entete,'btn_calc','');
+	var boutonCalc = addIconButton(entete,'btn_calc','',tr("Calculator"));
 	boutonCalc.size = [22,22];
-	boutonCalc.helpTip = tr("Calculator");
 	boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
 
 	//PANEL NAME
 	if (!expertMode)
 	{
-	var selectorText = entete.add('statictext',undefined,'');
-	selectorText.alignment = ['center','center'];
-	selectorText.size = [75,22];
+		var selectorText = entete.add('statictext',undefined,'');
+		selectorText.alignment = ['center','center'];
+		selectorText.size = [75,22];
 	}
 
 	//SELECTOR BUTTONS
@@ -4299,24 +4299,18 @@ function textColor(text,color)
 	selectorGroup.alignment = ['right','center'];
 	var selectorButtons = addHGroup(selectorGroup);
 	selectorButtons.alignChildren = ['fill','center'];
-	var riggingPanelButton = addIconButton(selectorButtons,'panels_btn_rigging','');
+	var riggingPanelButton = addIconButton(selectorButtons,'panels_btn_rigging','',tr("Rigging"));
 	riggingPanelButton.size = [22,22];
-	riggingPanelButton.helpTip = tr("Rigging");
-	var automationPanelButton = addIconButton(selectorButtons,'panels_btn_animation','');
+	var automationPanelButton = addIconButton(selectorButtons,'panels_btn_animation','',tr("Automation"));
 	automationPanelButton.size = [22,22];
-	automationPanelButton.helpTip = tr("Automation");
-	var animationPanelButton = addIconButton(selectorButtons,'panels_btn_interpo','');
+	var animationPanelButton = addIconButton(selectorButtons,'panels_btn_interpo','',tr("Animation"));
 	animationPanelButton.size = [22,22];
-	animationPanelButton.helpTip = tr("Animation");
-	var camerasPanelButton = addIconButton(selectorButtons,'panels_btn_camera','');
+	var camerasPanelButton = addIconButton(selectorButtons,'panels_btn_camera','',tr("Cameras"));
 	camerasPanelButton.size = [22,22];
-	camerasPanelButton.helpTip = tr("Cameras");
-	var settingsPanelButton = addIconButton(selectorButtons,'panels_btn_settings','');
+	var settingsPanelButton = addIconButton(selectorButtons,'panels_btn_settings','',tr("Settings"));
 	settingsPanelButton.size = [22,22];
-	settingsPanelButton.helpTip = tr("Settings");
-	var helpPanelButton = addIconButton(selectorButtons,'panels_btn_help','');
+	var helpPanelButton = addIconButton(selectorButtons,'panels_btn_help','',tr("Help!"));
 	helpPanelButton.size = [22,22];
-	helpPanelButton.helpTip = tr("Help!");
 	//LIST
 	var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Settings"),tr("Help")]);
 	selecteur.alignment = ['right','center'];
@@ -4849,61 +4843,48 @@ function textColor(text,color)
 // RIGGING
 {
 	//bouton autorig
-	var boutonautorig = addIconButton(panoik,'btn_autorig',tr("Auto-Rig")) ;
+	var boutonautorig = addIconButton(panoik,'btn_autorig',tr("Auto-Rig"),tr("Autorig")) ;
 	boutonautorig.onClick = function () {panoik.hide();autorigPanel.show();};
-	boutonautorig.helpTip = tr("Autorig");
 	//boutonautorig.helpTip = 'tip a ecrire';
 	var groupeik = addHGroup(panoik);
 	var groupeikG = addVGroup(groupeik);
 	var groupeikD = addVGroup(groupeik);
 	//bouton pour creer l'IK
-	var boutonik = addIconButton(groupeikG,'btn_create',tr("IK"));
+	var boutonik = addIconButton(groupeikG,'btn_create',tr("IK"),tr("IK"));
 	boutonik.onClick = ik;
-	boutonik.helpTip = tr("IK");
 	//bouton pour creer un goal
-	var boutongoal = addIconButton(groupeikD,'btn_goal',tr("IK Goal"));
+	var boutongoal = addIconButton(groupeikD,'btn_goal',tr("IK Goal"),tr("Selected layer will keep its orientation, despite the transformations of its parent"));
 	boutongoal.onClick = pregoal;
-	boutongoal.helpTip = tr("Selected layer will keep its orientation, despite the transformations of its parent");
 	//bezier IK button
-	var bezierIKButton = addIconButton(groupeikG,'btn_bezier',tr("Bezier IK"));
+	var bezierIKButton = addIconButton(groupeikG,'btn_bezier',tr("Bezier IK"),tr("Move layers as a Bezier curve"));
 	bezierIKButton.onClick = function() { panoik.hide(); bezierIkPanel.show();}
-	bezierIKButton.helpTip = tr("Move layers as a Bezier curve");
 	//bouton rotmorph
-	var boutonrotmorph = addIconButton(groupeikD,'btn_rotmoprh',tr("Rot Morph"));
+	var boutonrotmorph = addIconButton(groupeikD,'btn_rotmoprh',tr("Rot Morph"),tr("'Morphs' the property based on a layer rotation"));
 	boutonrotmorph.onClick = rotmorph;
-	boutonrotmorph.helpTip = tr("'Morphs' the property based on a layer rotation");
 	//bouton controleur
-	var controllerButton =  addIconButton(groupeikG,'btn_ctrl',tr("Controllers"));
+	var controllerButton =  addIconButton(groupeikG,'btn_ctrl',tr("Controllers"),tr("Controller"));
 	controllerButton.onClick = function () { controllersFromRiggingPanel = true; controllerButtonClicked(); };
-	controllerButton.helpTip = tr("Controller");
 	//bouton bone
-	var boutonbone2 = addIconButton(groupeikD,'btn_bones',tr("Bones"));
+	var boutonbone2 = addIconButton(groupeikD,'btn_bones',tr("Bones"),tr("Creates a bone on a point of an effect"));
 	boutonbone2.onClick = bone;
-	boutonbone2.helpTip = tr("Creates a bone on a point of an effect");
 	//bouton zero
-	var boutonzero2 = addIconButton(groupeikG,'btn_zero',tr("Zero"));
+	var boutonzero2 = addIconButton(groupeikG,'btn_zero',tr("Zero"),tr("Creates a \"Zero\" object on a layer"));
 	boutonzero2.onClick = zero;
-	boutonzero2.helpTip = tr("Creates a \"Zero\" object on a layer");
 	//list button
-	var listButton = addIconButton(groupeikD,'btn_list',tr("List"));
+	var listButton = addIconButton(groupeikD,'btn_list',tr("List"),tr("Adds an animation list on the property"));
 	listButton.onClick = listButtonClicked;
-	listButton.helpTip = tr("Adds an animation list on the property");
 	//bouton renommer
-	var boutonrename = addIconButton(groupeikG,'btn_rename',tr("Rename"));
+	var boutonrename = addIconButton(groupeikG,'btn_rename',tr("Rename"),tr("Rename layers"));
 	boutonrename.onClick = function() { panoik.hide(); renamePanel.show();}
-	boutonrename.helpTip = tr("Rename layers");
 	//bouton mesurer
-	var boutonmesurer = addIconButton(groupeikD,'btn_measure',tr("Measure"));
+	var boutonmesurer = addIconButton(groupeikD,'btn_measure',tr("Measure"),tr("Measure distance between two layers"));
 	boutonmesurer.onClick = function () {mesure();panoik.hide();measurePanel.show();};
-	boutonmesurer.helpTip = tr("Measure distance between two layers");
 	//replace in expressions button
-	var rieButton = addIconButton(groupeikG,'btn_replace in expr',tr("Replace"));
+	var rieButton = addIconButton(groupeikG,'btn_replace in expr',tr("Replace"),tr("Search and replace text in expressions"));
 	rieButton.onClick = function () { panoik.hide(); riePanel.show();}
-	rieButton.helpTip = tr("Search and replace text in expressions");
 	//lock button
-	var lockButton = addIconButton(groupeikD,'locks_btn_lock',tr("Lock property"));
+	var lockButton = addIconButton(groupeikD,'locks_btn_lock',tr("Lock property"),tr("Locks the selected property"));
 	lockButton.onClick = lockButtonClicked;
-	lockButton.helpTip = tr("Locks the selected property");
 }
 
 // ANIMATION
@@ -5250,9 +5231,8 @@ function textColor(text,color)
 	{
 
 		var morpherGroup = addHGroup(panointerpo);
-		var boutonMoprher = addIconButton(morpherGroup,'btn_morph',tr("Morpher"));
+		var boutonMoprher = addIconButton(morpherGroup,'btn_morph',tr("Morpher"),tr("Create Morpher"));
 		boutonMoprher.onClick = morpher;
-		boutonMoprher.helpTip = tr("Create Morpher");
 		var boutonMKey = morpherGroup.add('checkbox',undefined,tr("Keyframes"));
 		boutonMKey.value = true;
 		boutonMKey.minimumSize.width = 100;
@@ -5265,26 +5245,20 @@ function textColor(text,color)
 
 
 		//bouton Copy ANIM
-		var boutonCopyAnim = addIconButton(animationToolsGroupL,'btn_copy anim',tr("Copy anim"));
+		var boutonCopyAnim = addIconButton(animationToolsGroupL,'btn_copy anim',tr("Copy anim"),tr("Copy animation from selected layers"));
 		boutonCopyAnim.onClick = function ca() { animationSaved = copyAnim() };
-		boutonCopyAnim.helpTip = tr("Copy animation from selected layers");
 		//bouton Paste ANIM
-		var boutonPasteAnim = addIconButton(animationToolsGroupR,'btn_paste anim',tr("Paste anim"));
+		var boutonPasteAnim = addIconButton(animationToolsGroupR,'btn_paste anim',tr("Paste anim"),tr("Automatically paste animation in the comp (using layer names)"));
 		boutonPasteAnim.onClick = function pa() { pasteAnim(animationSaved) };
-		boutonPasteAnim.helpTip = tr("Automatically paste animation in the comp (using layer names)");
 		//Cel
-		var celButton = addIconButton(animationToolsGroupL,'btn_cel',tr("Cel animation"));
-		celButton.helpTip = tr("Cel animation tools");
+		var celButton = addIconButton(animationToolsGroupL,'btn_cel',tr("Cel animation"),tr("Cel animation tools"));
 		celButton.onClick = function () { panointerpo.hide(); celPanel.show(); } ;
 		//controllers
-		var controllerButton2 =  addIconButton(animationToolsGroupR,'btn_ctrl',tr("Controllers"));
+		var controllerButton2 =  addIconButton(animationToolsGroupR,'btn_ctrl',tr("Controllers"),tr("Controllers"));
 		controllerButton2.onClick = function () { controllersFromRiggingPanel = false; controllerButtonClicked(); };
-		controllerButton2.helpTip = tr("Controllers");
 
-		var importRigButton = addIconButton(panointerpo,'btn_import rig',tr("Import rig in comp"));
+		var importRigButton = addIconButton(panointerpo,'btn_import rig',tr("Import rig in comp"),tr("Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates."));
 		importRigButton.onClick = function () { panointerpo.hide(); irRigRefreshButtonClicked(); irPanel.show(); };
-		importRigButton.helpTip = tr("Automatically imports a rig in the active comp, transfering the controllers and taking care of duplicates.");
-
 	}
 
 }
@@ -5296,67 +5270,53 @@ function textColor(text,color)
 	var groupeAnimationG = addVGroup(animationMainGroup);
 	var groupeAnimationD = addVGroup(animationMainGroup);
 	//bouton wiggle
-	var boutonwiggle = addIconButton(groupeAnimationG,'btn_wiggle',tr("Wiggle"));
+	var boutonwiggle = addIconButton(groupeAnimationG,'btn_wiggle',tr("Wiggle"),tr("Create a wiggle function in a property of the selected layer"));
 	boutonwiggle.onClick = wiggle;
-	boutonwiggle.helpTip = tr("Create a wiggle function in a property of the selected layer");
 	//bouton swing
-	var boutonosc = addIconButton(groupeAnimationD,'btn_osc',tr("Swing"));
+	var boutonosc = addIconButton(groupeAnimationD,'btn_osc',tr("Swing"),tr("Create an oscillation on the selected property"));
 	boutonosc.onClick = oscillation;
-	boutonosc.helpTip = tr("Create an oscillation on the selected property");
 	//bouton spring
-	var boutonspring = addIconButton(groupeAnimationG,'btn_spring',tr("Spring"));
+	var boutonspring = addIconButton(groupeAnimationG,'btn_spring',tr("Spring"),tr("The property will automatically bounce like a spring"));
 	boutonspring.onClick = boutonspringClicked;
-	boutonspring.helpTip = tr("The property will automatically bounce like a spring");
 	//Blink
-	var blinkButton = addIconButton(groupeAnimationD,'btn_blink',tr("Blink"));
+	var blinkButton = addIconButton(groupeAnimationD,'btn_blink',tr("Blink"),tr("Makes the property blink."));
 	blinkButton.onClick = blinkButtonClicked;
-	blinkButton.helpTip = tr("Makes the property blink.");
 
 	//bouton path follow
-	var boutonpathfollow = addIconButton(groupeAnimationG,'btn_path follow',tr("Orient to path"));
+	var boutonpathfollow = addIconButton(groupeAnimationG,'btn_path follow',tr("Orient to path"),tr("Auto orientation of the layer along its path"));
 	boutonpathfollow.onClick = pathFollow;
-	boutonpathfollow.helpTip = tr("Auto orientation of the layer along its path");
 	//bouton roue
-	var boutonroue = addIconButton(groupeAnimationD,'btn_wheel',tr("Wheel"));
+	var boutonroue = addIconButton(groupeAnimationD,'btn_wheel',tr("Wheel"),tr("Automates the rotation of a wheel while moving the layer"));
 	boutonroue.onClick = function () { panoanimation.hide(); wheelPanel.show(); };
-	boutonroue.helpTip = tr("Automates the rotation of a wheel while moving the layer");
 	//bouton lentille
-	var boutonlentille = addIconButton(groupeAnimationG,'btn_lens',tr("Lens"));
+	var boutonlentille = addIconButton(groupeAnimationG,'btn_lens',tr("Lens"),tr("Creates a lens flare with selected layers"));
 	boutonlentille.onClick = lentille;
-	boutonlentille.helpTip = tr("Creates a lens flare with selected layers");
 	//MoveAway
-	var moveAwayButton = addIconButton(groupeAnimationD,'btn_moveaway',tr("Move away"));
+	var moveAwayButton = addIconButton(groupeAnimationD,'btn_moveaway',tr("Move away"),tr("A simple controller to move away a layer from its parent"));
 	moveAwayButton.onClick = moveAwayButtonClicked ;
-	moveAwayButton.helpTip = tr("A simple controller to move away a layer from its parent");
 	//bouton lien de distance
-	var boutondistance = addIconButton(groupeAnimationG,'btn_distance link',tr("Dist. link"));
+	var boutondistance = addIconButton(groupeAnimationG,'btn_distance link',tr("Dist. link"),tr("Links an effect with the distance with another layer"));
 	boutondistance.onClick = distanceLink;
-	boutondistance.helpTip = tr("Links an effect with the distance with another layer");
 
 	//bouton exposure
-	var boutonnframes = addIconButton(groupeAnimationD,'btn_expo',tr("Exposure"));
+	var boutonnframes = addIconButton(groupeAnimationD,'btn_expo',tr("Exposure"),tr("Changes the exposure of the animation on the selected property"));
 	boutonnframes.onClick = function () { panoanimation.hide(); exposurePanel.show(); } ;
-	boutonnframes.helpTip = tr("Changes the exposure of the animation on the selected property");
 
 	//Paint Rig button
-	var paintRigButton = addIconButton(groupeAnimationG,'btn_paint',tr("Paint rigging"));
+	var paintRigButton = addIconButton(groupeAnimationG,'btn_paint',tr("Paint rigging"),tr("Rig the paint effects to be able to animate all strokes as if there was only one."));
 	paintRigButton.onClick = paintRigButtonClicked;
-	paintRigButton.helpTip = tr("Rig the paint effects to be able to animate all strokes as if there was only one.");
 
 	//Paint Group
-	var paintGroupButton = addIconButton(groupeAnimationD,'btn_paint_group',tr("Paint group"));
+	var paintGroupButton = addIconButton(groupeAnimationD,'btn_paint_group',tr("Paint group"),tr("Rig the paint effects to be able to animate selected strokes as if there was only one."));
 	paintGroupButton.onClick = paintGroupButtonClicked ;
-	paintGroupButton.helpTip = tr("Rig the paint effects to be able to animate selected strokes as if there was only one.");
 
 	//randomize
-	var randButton = addIconButton(groupeAnimationG,'btn_randomize',tr("Randomize"));
+	var randButton = addIconButton(groupeAnimationG,'btn_randomize',tr("Randomize"),tr("Randomize properties and layers."));
 	randButton.onClick = function () { panoanimation.hide(); randPanel.show(); } ;
-	randButton.helpTip = tr("Randomize properties and layers.");
 
 	//Timeremap
-	var timeRemapButton = addIconButton(groupeAnimationD,'btn_timeremap',tr("Time remap"));
+	var timeRemapButton = addIconButton(groupeAnimationD,'btn_timeremap',tr("Time remap"),tr("Time remapping tools."));
 	timeRemapButton.onClick = function () { panoanimation.hide(); timeRemapPanel.show(); } ;
-	timeRemapButton.helpTip = tr("Time remapping tools.");
 }
 
 // CAMERAS
@@ -5365,15 +5325,13 @@ function textColor(text,color)
 	var groupCameraG = addVGroup(panocam);
 	var groupCameraD = addVGroup(panocam);
 	//bouton pour creer une target cam
-	var boutontcam = addIconButton(groupCameraG,'btn_ctrl cam',tr("Control Cam"));
+	var boutontcam = addIconButton(groupCameraG,'btn_ctrl cam',tr("Control Cam"),tr("Creates animation controllers for a camera"));
 	boutontcam.onClick = controlcam;
-	boutontcam.helpTip = tr("Creates animation controllers for a camera");
 	//scale Z-link button
-	var scaleZLinkButton = addIconButton(groupCameraD,'btn_scalezlink',tr("Scale Z-Link"));
+	var scaleZLinkButton = addIconButton(groupCameraD,'btn_scalezlink',tr("Scale Z-Link"),tr("Links the distance of the layer from the camera to its scale, so its apparent size won't change."));
 	scaleZLinkButton.onClick = scaleZLinkButtonClicked;
-	scaleZLinkButton.helpTip = tr("Links the distance of the layer from the camera to its scale, so its apparent size won't change.");
 	//bouton pour multiplan 2D
-	var boutontcam2d = addIconButton(groupCameraG,'btn_2D multiplane',tr("2D Multiplane"));
+	var boutontcam2d = addIconButton(groupCameraG,'btn_2D multiplane',tr("2D Multiplane"),tr("Creates multiplane controllers to use as a 2D camera"));
 	boutontcam2d.onClick = function () {
 	panocam.hide() ;
 	//get number of layers
@@ -5388,11 +5346,9 @@ function textColor(text,color)
 	}
 	multiplanePanel.show();
 	};
-	boutontcam2d.helpTip = tr("Creates multiplane controllers to use as a 2D camera");
 	//TVP Cam
-	var tvpCamButton = addIconButton(groupCameraD,'btn_TVP Cam',tr("Import TVPaint Cam"));
+	var tvpCamButton = addIconButton(groupCameraD,'btn_TVP Cam',tr("Import TVPaint Cam"),tr("Imports a camera from TVPaint."));
 	tvpCamButton.onClick = function () {panocam.hide();tvpCamPanel.show();};
-	tvpCamButton.helpTip = tr("Imports a camera from TVPaint.");
 }
 
 //---------------
@@ -5567,36 +5523,27 @@ function textColor(text,color)
 
 	//lock buttons
 	var ctrlLockButtonsGroup = addHGroup(ctrlPanel);
-	var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,'locks_btn_unlock','');
-	ctrlUnlockButton.helpTip =  tr("Unlock selected controllers\n(all controllers if none selected)");
+	var ctrlUnlockButton = addIconButton(ctrlLockButtonsGroup,'locks_btn_unlock','',tr("Unlock selected controllers\n(all controllers if none selected)"));
 	ctrlUnlockButton.onClick = ctrlUnlockButtonClicked;
-	var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,'locks_btn_lock','');
-	ctrlLockButton.helpTip =  tr("Lock selected controllers\n(all controllers if none selected)");
+	var ctrlLockButton = addIconButton(ctrlLockButtonsGroup,'locks_btn_lock','',tr("Lock selected controllers\n(all controllers if none selected)"));
 	ctrlLockButton.onClick = ctrlLockButtonClicked;
 	//hide buttons
-	var ctrlUnhideButton = addIconButton(ctrlLockButtonsGroup,'btn_unhide','');
-	ctrlUnhideButton.helpTip =  tr("Unhide selected controllers\n(all controllers if none selected)");
+	var ctrlUnhideButton = addIconButton(ctrlLockButtonsGroup,'btn_unhide','',tr("Unhide selected controllers\n(all controllers if none selected)"));
 	ctrlUnhideButton.onClick = ctrlUnhideButtonClicked;
-	var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,'btn_hide','');
-	ctrlHideButton.helpTip =  tr("Hide selected controllers\n(all controllers if none selected)");
+	var ctrlHideButton = addIconButton(ctrlLockButtonsGroup,'btn_hide','',tr("Hide selected controllers\n(all controllers if none selected)"));
 	ctrlHideButton.onClick = ctrlHideButtonClicked;
 	//reset button
-	var ctrlResetButton = addIconButton(ctrlLockButtonsGroup,'btn_zero','');
-	ctrlResetButton.helpTip =  tr("Reset selected controllers transformations");
+	var ctrlResetButton = addIconButton(ctrlLockButtonsGroup,'btn_zero','',tr("Reset selected controllers transformations"));
 	ctrlResetButton.onClick = ctrlResetButtonClicked;
 	//buttons
 	var ctrlButtonsGroup = addHGroup(ctrlPanel);
-	var ctrlCloseButton = addIconButton(ctrlButtonsGroup,'btn_cancel',tr("Back"));
-	ctrlCloseButton.alignment = ['fill','top'];
-	ctrlCloseButton.helpTip = tr("Back");
+	var ctrlCloseButton = addIconButton(ctrlButtonsGroup,'btn_cancel','',tr("Back"));
 	ctrlCloseButton.onClick = function () { ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
-	var ctrlUpdateButton = addIconButton(ctrlButtonsGroup,'btn_update',tr("Update"));
+	var ctrlUpdateButton = addIconButton(ctrlButtonsGroup,'btn_update',tr("Update"),tr("Update"));
 	ctrlUpdateButton.alignment = ['fill','top'];
-	ctrlUpdateButton.helpTip = tr("Update");
 	ctrlUpdateButton.onClick = function () { ctrlUpdateButtonClicked(); ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
-	var ctrlCreateButton = addIconButton(ctrlButtonsGroup,'btn_valid',tr("Create"));
+	var ctrlCreateButton = addIconButton(ctrlButtonsGroup,'btn_valid',tr("Create"),tr("Create"));
 	ctrlCreateButton.alignment = ['fill','top'];
-	ctrlCreateButton.helpTip = tr("Create");
 	ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; controllersFromRiggingPanel ? panoik.show() : panointerpo.show(); };
 }
 
