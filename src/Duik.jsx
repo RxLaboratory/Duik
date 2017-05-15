@@ -5330,23 +5330,60 @@ function textColor(text,color)
 	scaleZLinkButton.onClick = scaleZLinkButtonClicked;
 	//bouton pour multiplan 2D
 	var boutontcam2d = addIconButton(groupCameraG,'btn_2D multiplane',tr("2D Multiplane"),tr("Creates multiplane controllers to use as a 2D camera"));
-	boutontcam2d.onClick = function () {
-	panocam.hide() ;
-	//get number of layers
-	var comp = app.project.activeItem;
-	if (comp instanceof CompItem)
+	boutontcam2d.onClick = function ()
 	{
-	var numLayers = comp.selectedLayers.length;
-	if (numLayers) {
-	nombre.text = numLayers;
-	multiplaneSlider.value = numLayers;
-	}
-	}
-	multiplanePanel.show();
+		panocam.hide() ;
+		//get number of layers
+		var comp = app.project.activeItem;
+		if (comp instanceof CompItem)
+		{
+			var numLayers = comp.selectedLayers.length;
+			if (numLayers)
+			{
+				nombre.text = numLayers;
+				multiplaneSlider.value = numLayers;
+			}
+		}
+		multiplanePanel.show();
 	};
 	//TVP Cam
 	var tvpCamButton = addIconButton(groupCameraD,'btn_TVP Cam',tr("Import TVPaint Cam"),tr("Imports a camera from TVPaint."));
 	tvpCamButton.onClick = function () {panocam.hide();tvpCamPanel.show();};
+}
+
+// I/O
+{
+	panoio.orientation = 'row';
+	var groupIOG = addVGroup(panoio);
+	groupIOG.alignChildren = ['center','top'];
+	groupIOG.add('statictext',undefined,tr("Import"));
+	var groupIOD = addVGroup(panoio);
+	groupIOD.add('statictext',undefined,tr("Export"));
+	groupIOD.alignChildren = ['center','top'];
+
+	// IMPORT
+
+	//Duik Rig
+	var duikRigImportButton =  addIconButton(groupIOG,'btn_copy rig',tr("Rig"),tr("Imports a rig saved with Duik (JSON or XML)."));
+	duikRigImportButton.onClick = function () {};
+	//Duik Anim
+	var duikAnimImportButton =  addIconButton(groupIOG,'btn_copy anim',tr("Animation"),tr("Imports an animation saved with Duik (JSON or XML)."));
+	duikAnimImportButton.onClick = function () {};
+	//TVP Anim
+	var tvpAnimImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
+	tvpAnimImportButton.onClick = function () {};
+	//TVP Cam
+	var tvpCamButton2 = addIconButton(groupIOG,'btn_TVP Cam',tr("TVPaint Cam"),tr("Import a camera from TVPaint."));
+	tvpCamButton2.onClick = function () {panoio.hide();tvpCamPanel.show();};
+
+	// EXPORT
+
+	//Duik Rig
+	var duikRigExportButton =  addIconButton(groupIOD,'btn_paste rig',tr("Rig"),tr("Export a rig."));
+	duikRigExportButton.onClick = function () {};
+	//Duik Anim
+	var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
+	duikAnimExportButton.onClick = function () {};
 }
 
 //---------------
