@@ -4873,7 +4873,7 @@ function textColor(text,color)
 	boutonrotmorph.onClick = rotmorph;
 	boutonrotmorph.helpTip = tr("'Morphs' the property based on a layer rotation");
 	//bouton controleur
-	var controllerButton =  addIconButton(groupeikG,'btn_rotmoprh',tr("Controllers"));
+	var controllerButton =  addIconButton(groupeikG,'btn_ctrl',tr("Controllers"));
 	controllerButton.onClick = function () { controllersFromRiggingPanel = true; controllerButtonClicked(); };
 	controllerButton.helpTip = tr("Controller");
 	//bouton bone
