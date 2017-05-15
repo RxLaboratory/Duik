@@ -5366,12 +5366,15 @@ function textColor(text,color)
 	//Duik Rig
 	var duikRigImportButton =  addIconButton(groupIOG,'btn_copy rig',tr("Rig"),tr("Imports a rig saved with Duik (JSON or XML)."));
 	duikRigImportButton.onClick = function () {};
+	duikRigImportButton.group.enabled = false;
 	//Duik Anim
 	var duikAnimImportButton =  addIconButton(groupIOG,'btn_copy anim',tr("Animation"),tr("Imports an animation saved with Duik (JSON or XML)."));
 	duikAnimImportButton.onClick = function () {};
+	duikAnimImportButton.group.enabled = false;
 	//TVP Anim
 	var tvpAnimImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
 	tvpAnimImportButton.onClick = function () {};
+	tvpAnimImportButton.group.enabled = false;
 	//TVP Cam
 	var tvpCamButton2 = addIconButton(groupIOG,'btn_TVP Cam',tr("TVPaint Cam"),tr("Import a camera from TVPaint."));
 	tvpCamButton2.onClick = function () {panoio.hide();tvpCamPanel.show();};
@@ -5381,9 +5384,11 @@ function textColor(text,color)
 	//Duik Rig
 	var duikRigExportButton =  addIconButton(groupIOD,'btn_paste rig',tr("Rig"),tr("Export a rig."));
 	duikRigExportButton.onClick = function () {};
+	duikRigExportButton.group.enabled = false;
 	//Duik Anim
 	var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
 	duikAnimExportButton.onClick = function () {};
+	duikAnimExportButton.group.enabled = false;
 }
 
 //---------------
