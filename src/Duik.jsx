@@ -43,12 +43,12 @@ var developper = true;
 //== SET LANGUAGE ON FIRST START ==
 //=================================
 {
-	// This line in needed to load available languages 
+	// This line in needed to load available languages
 	Dutranslator.getAvailable();
 
 	if (!app.settings.haveSetting('duik', 'lang')){
 		// First launch, ask for language
-		
+
 		// Create the window
 		var languageDialog = new Window('dialog', "Choose Duik language", undefined, {resizeable:false});
 		languageDialog.orientation = 'stack';
@@ -57,19 +57,19 @@ var developper = true;
 		lDgr.add('statictext', undefined, "Choose a language among available languages to launch Duik.");
 		lDgr.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
 		var lDdd = lDgr.add('dropdownlist', undefined);
-		
-		// Add languages to the list 
+
+		// Add languages to the list
 		for (var i = 0 ; i < Dutranslator.languages.length ; i++){
 			lDdd.add('item', Dutranslator.languages[i][1]);
 		}
-		
+
 		// Show window
 		lDdd.selection = 0;
 		var lDok = lDgr.add('button', undefined, "Ok");
 		languageDialog.layout.resize();
 		languageDialog.center();
 		languageDialog.show(); // Pause the execution while the dialog is open
-		
+
 		// Set language based on user choice
 		var languageChoosed = lDdd.selection.text;
 		for (var i = 0 ; i < Dutranslator.languages.length ; i++){
@@ -105,7 +105,7 @@ palette.alignChildren = ['fill','fill'];
 	if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
 	if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
 	if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
-	
+
 	Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));  //Set language
 }
 
@@ -113,39 +113,39 @@ palette.alignChildren = ['fill','fill'];
 //== DUIK NEEDS TO WRITE FILES ====
 //=================================
 {
-if (app.preferences.getPrefAsLong('Main Pref Section','Pref_SCRIPTING_FILE_NETWORK_SECURITY') != 1)
-{
-function dialog_preferences_general()
-{
-//	Valide au moins depuis CS4,
-app.executeCommand(2359);
-}
+	if (app.preferences.getPrefAsLong('Main Pref Section','Pref_SCRIPTING_FILE_NETWORK_SECURITY') != 1)
+	{
+		function dialog_preferences_general()
+		{
+			//	Valide au moins depuis CS4,
+			app.executeCommand(2359);
+		}
 
-var wfGroup = palette.add('group');
-wfGroup.orientation = 'column';
-wfGroup.alignChildren = ['fill','fill'];
-var versionBox = wfGroup.add('statictext',undefined,'Duik v' + version);
-versionBox.alignment = ['center','top'];
-var warningBox = wfGroup.add('statictext',undefined,'temp',{multiline:true});
-warningBox.text = '----- ' + tr("INSTALLATION") + ' ---\n' + tr("Duik needs to be allowed to write files to display its buttons, and to access the network to check for updates.") + '\n------------------------------\n\n' + tr("Please, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.");
-warningBox.minimumSize = [150,150];
-warningBox.alignment = ['center','top'];
-var prefButton = wfGroup.add('button',undefined,tr("Open General Preferences"));
-prefButton.onClick = function ()
-{
-dialog_preferences_general();
-if (app.preferences.getPrefAsLong('Main Pref Section','Pref_SCRIPTING_FILE_NETWORK_SECURITY') == 1)
-{
-wfGroup.hide();
-preloadDuik();
-}
-}
-prefButton.alignment =  ['center','top'];
-}
-else
-{
-preloadDuik();
-}
+		var wfGroup = palette.add('group');
+		wfGroup.orientation = 'column';
+		wfGroup.alignChildren = ['fill','fill'];
+		var versionBox = wfGroup.add('statictext',undefined,'Duik v' + version);
+		versionBox.alignment = ['center','top'];
+		var warningBox = wfGroup.add('statictext',undefined,'temp',{multiline:true});
+		warningBox.text = '----- ' + tr("INSTALLATION") + ' ---\n' + tr("Duik needs to be allowed to write files to display its buttons, and to access the network to check for updates.") + '\n------------------------------\n\n' + tr("Please, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.");
+		warningBox.minimumSize = [150,150];
+		warningBox.alignment = ['center','top'];
+		var prefButton = wfGroup.add('button',undefined,tr("Open General Preferences"));
+		prefButton.onClick = function ()
+		{
+			dialog_preferences_general();
+			if (app.preferences.getPrefAsLong('Main Pref Section','Pref_SCRIPTING_FILE_NETWORK_SECURITY') == 1)
+			{
+				wfGroup.hide();
+				preloadDuik();
+			}
+		}
+		prefButton.alignment =  ['center','top'];
+	}
+	else
+	{
+		preloadDuik();
+	}
 }
 
 //=================================
@@ -219,673 +219,680 @@ function loadDuik()
 //=================================
 {
 	if (developper) if (typeof Duik === 'object') delete Duik;
-#include 'libduik.jsxinc'
-//if pseudo effects are not installed
-if (Duik.usePresets && !developper)
-{
-//PALETTE
-{
-var installGroup = palette.add('group');
-installGroup.orientation = 'column';
-installGroup.alignChildren = ['fill','fill'];
-var versionBox = installGroup.add('statictext',undefined,'Duik v' + version);
-versionBox.alignment = ['center','top'];
-var paletteContent = installGroup.add('group');
-paletteContent.orientation = 'stack';
-paletteContent.alignChildren = ['fill','fill'];
-//INSTALL COMPLETE GROUP
-var icGroup = paletteContent.add('group',undefined);
-icGroup.orientation = 'column';
-icGroup.alignChildren = ['fill','fill'];
-var icText = icGroup.add('statictext',undefined,'',{multiline:true});
-icText.minimumSize = [150,60];
-icText.alignment = ['center','top'];
-icText.text = '-- ' + tr("INSTALLATION COMPLETE") + ' --\n\n' + tr("After Effects must be restarted\n\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n") + '-----------------------------';
-icGroup.visible = false;
-//MANUAL INSTALL
-var mmGroup = paletteContent.add('group',undefined);
-mmGroup.orientation = 'column';
-mmGroup.alignChildren = ['fill','fill'];
-var mmTexts = mmGroup.add('group');
-mmTexts.orientation = 'stack';
-mmTexts.alignment = ['center','top'];
-var mmText = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText.alignment = ['center','top'];
-mmText.text = tr("It seems Duik can not automatically install the pseudo effects it needs.\n\nThe easiest way to fix this is by restarting After Effects with administrator privileges,\n\nor you can manually install the pseudo effects needed by Duik: click on the 'Next' button below.");
-var mmText2 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText2.alignment = ['center','top'];
-mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.");
-if ($.os.toLowerCase().indexOf('win') >= 0) mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.");
-mmText2.visible = false;
-var mmText3 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText3.alignment = ['center','top'];
-mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.");
-if ($.os.toLowerCase().indexOf('win') >= 0) mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.");
-mmText3.visible = false;
-var mmText4 = mmTexts.add('statictext',undefined,'',{multiline:true});
-mmText4.alignment = ['center','top'];
-mmText4.text = '• 3 - ' + tr("Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.");
-mmText4.visible = false;
-var mmNavButtons = mmGroup.add('group');
-mmNavButtons.orientation = 'row';
-mmNavButtons.alignment = ['center','top'];
-var mmPrevButton = mmNavButtons.add('button',undefined,tr("Previous"));
-mmPrevButton.alignment = ['left','top'];
-mmPrevButton.enabled = false;
-var mmNextButton = mmNavButtons.add('button',undefined,tr("Next"));
-mmNextButton.alignment = ['right','top'];
-mmContinueButton = mmGroup.add('button',undefined,tr("Finish installation now!"));
-mmContinueButton.alignment = ['center','bottom'];
-var mmXmlBox = mmGroup.add('edittext',undefined,'test',{multiline:true});
-mmXmlBox.text = Duik.setup.presetEffects;
-mmGroup.visible = false;
-//CANNOT INSTALL
-var ciGroup = paletteContent.add('group',undefined);
-ciGroup.orientation = 'column';
-ciGroup.alignChildren = ['fill','fill'];
-var ciText = ciGroup.add('statictext',undefined,'',{multiline:true});
-ciText.minimumSize = [150,60];
-ciText.alignment = ['center','top'];
-ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://rainboxprod.coop to get help.") + '\n\n-----------------------------';
-ciGroup.visible = false;
-}
+	#include 'libduik.jsxinc'
+	//if pseudo effects are not installed
+	if (Duik.usePresets && !developper)
+	{
+		//PALETTE
+		{
+			var installGroup = palette.add('group');
+			installGroup.orientation = 'column';
+			installGroup.alignChildren = ['fill','fill'];
+			var versionBox = installGroup.add('statictext',undefined,'Duik v' + version);
+			versionBox.alignment = ['center','top'];
+			var paletteContent = installGroup.add('group');
+			paletteContent.orientation = 'stack';
+			paletteContent.alignChildren = ['fill','fill'];
+			//INSTALL COMPLETE GROUP
+			var icGroup = paletteContent.add('group',undefined);
+			icGroup.orientation = 'column';
+			icGroup.alignChildren = ['fill','fill'];
+			var icText = icGroup.add('statictext',undefined,'',{multiline:true});
+			icText.minimumSize = [150,60];
+			icText.alignment = ['center','top'];
+			icText.text = '-- ' + tr("INSTALLATION COMPLETE") + ' --\n\n' + tr("After Effects must be restarted\n\nto complete the installation of Duik\n\nMay the god(s?) of animation be with you!\n\n") + '-----------------------------';
+			icGroup.visible = false;
+			//MANUAL INSTALL
+			var mmGroup = paletteContent.add('group',undefined);
+			mmGroup.orientation = 'column';
+			mmGroup.alignChildren = ['fill','fill'];
+			var mmTexts = mmGroup.add('group');
+			mmTexts.orientation = 'stack';
+			mmTexts.alignment = ['center','top'];
+			var mmText = mmTexts.add('statictext',undefined,'',{multiline:true});
+			mmText.alignment = ['center','top'];
+			mmText.text = tr("It seems Duik can not automatically install the pseudo effects it needs.\n\nThe easiest way to fix this is by restarting After Effects with administrator privileges,\n\nor you can manually install the pseudo effects needed by Duik: click on the 'Next' button below.");
+			var mmText2 = mmTexts.add('statictext',undefined,'',{multiline:true});
+			mmText2.alignment = ['center','top'];
+			mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml':\nRight click on\nApplications/Adobe After Effects/Adobe After Effects.app,\nSelect 'Show package contents', go to\nContents/Resources/PresetEffects.xml.");
+			if ($.os.toLowerCase().indexOf('win') >= 0) mmText2.text = '• 1 - ' + tr("Open the file 'presetEffects.xml' :\nC:\\Program Files\\Adobe\\Adobe After Effects\\Support Files\\PresetEffects.xml.");
+			mmText2.visible = false;
+			var mmText3 = mmTexts.add('statictext',undefined,'',{multiline:true});
+			mmText3.alignment = ['center','top'];
+			mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Cmd+A\nto select all the text,\nthen Cmd+C to copy it.");
+			if ($.os.toLowerCase().indexOf('win') >= 0) mmText3.text = '• 2 - ' + tr("Copy the content of the box below,\nhit Ctrl+A\nto select all the text,\nthen Ctrl+C to copy it.");
+			mmText3.visible = false;
+			var mmText4 = mmTexts.add('statictext',undefined,'',{multiline:true});
+			mmText4.alignment = ['center','top'];
+			mmText4.text = '• 3 - ' + tr("Paste this text in the file 'presetEffects.xml'\njust BEFORE the last line: '</effects>'.");
+			mmText4.visible = false;
+			var mmNavButtons = mmGroup.add('group');
+			mmNavButtons.orientation = 'row';
+			mmNavButtons.alignment = ['center','top'];
+			var mmPrevButton = mmNavButtons.add('button',undefined,tr("Previous"));
+			mmPrevButton.alignment = ['left','top'];
+			mmPrevButton.enabled = false;
+			var mmNextButton = mmNavButtons.add('button',undefined,tr("Next"));
+			mmNextButton.alignment = ['right','top'];
+			mmContinueButton = mmGroup.add('button',undefined,tr("Finish installation now!"));
+			mmContinueButton.alignment = ['center','bottom'];
+			var mmXmlBox = mmGroup.add('edittext',undefined,'test',{multiline:true});
+			mmXmlBox.text = Duik.setup.presetEffects;
+			mmGroup.visible = false;
+			//CANNOT INSTALL
+			var ciGroup = paletteContent.add('group',undefined);
+			ciGroup.orientation = 'column';
+			ciGroup.alignChildren = ['fill','fill'];
+			var ciText = ciGroup.add('statictext',undefined,'',{multiline:true});
+			ciText.minimumSize = [150,60];
+			ciText.alignment = ['center','top'];
+			ciText.text = '---- ' + tr("ERROR") + ' ----\n\n' + tr("Oops!\nSomething is wrong, Duik can not find pseudo effects.\n\nGo to http://rainboxprod.coop to get help.") + '\n\n-----------------------------';
+			ciGroup.visible = false;
+		}
 
-mmNextButton.onClick = function ()
-{
-if (mmText.visible)
-{
-mmText.visible = false;
-mmText2.visible = true;
-mmText3.visible = false;
-mmText4.visible = false;
-mmPrevButton.enabled = true;
-}
-else if (mmText2.visible)
-{
-mmText.visible = false;
-mmText2.visible = false;
-mmText3.visible = true;
-mmText4.visible = false;
-}
-else if (mmText3.visible)
-{
-mmText.visible = false;
-mmText2.visible = false;
-mmText3.visible = false;
-mmText4.visible = true;
-mmContinueButton.enabled = true;
-mmNextButton.enabled = false;
-}
-}
+		mmNextButton.onClick = function ()
+		{
+			if (mmText.visible)
+			{
+				mmText.visible = false;
+				mmText2.visible = true;
+				mmText3.visible = false;
+				mmText4.visible = false;
+				mmPrevButton.enabled = true;
+			}
+			else if (mmText2.visible)
+			{
+				mmText.visible = false;
+				mmText2.visible = false;
+				mmText3.visible = true;
+				mmText4.visible = false;
+			}
+			else if (mmText3.visible)
+			{
+				mmText.visible = false;
+				mmText2.visible = false;
+				mmText3.visible = false;
+				mmText4.visible = true;
+				mmContinueButton.enabled = true;
+				mmNextButton.enabled = false;
+			}
+		};
 
-mmPrevButton.onClick = function ()
-{
-if (mmText2.visible)
-{
-mmText.visible = true;
-mmText2.visible = false;
-mmText3.visible = false;
-mmText4.visible = false;
-mmPrevButton.enabled = false;
-}
-else if (mmText3.visible)
-{
-mmText.visible = false;
-mmText2.visible = true;
-mmText3.visible = false;
-mmText4.visible = false;
-}
-else if (mmText4.visible)
-{
-mmText.visible = false;
-mmText2.visible = false;
-mmText3.visible = true;
-mmText4.visible = false;
-mmContinueButton.enabled = false;
-mmNextButton.enabled = true;
-}
-}
+		mmPrevButton.onClick = function ()
+		{
+			if (mmText2.visible)
+			{
+				mmText.visible = true;
+				mmText2.visible = false;
+				mmText3.visible = false;
+				mmText4.visible = false;
+				mmPrevButton.enabled = false;
+			}
+			else if (mmText3.visible)
+			{
+				mmText.visible = false;
+				mmText2.visible = true;
+				mmText3.visible = false;
+				mmText4.visible = false;
+			}
+			else if (mmText4.visible)
+			{
+				mmText.visible = false;
+				mmText2.visible = false;
+				mmText3.visible = true;
+				mmText4.visible = false;
+				mmContinueButton.enabled = false;
+				mmNextButton.enabled = true;
+			}
+		};
 
-mmContinueButton.onClick = function ()
-{
-mmGroup.hide();
-Duik.setup.checkPresetEffectsVersion();
-if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
-{
-icGroup.show();
-}
-else
-{
-ciGroup.show();
-}
-};
+		mmContinueButton.onClick = function ()
+		{
+			mmGroup.hide();
+			Duik.setup.checkPresetEffectsVersion();
+			if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+			{
+				icGroup.show();
+			}
+			else
+			{
+				ciGroup.show();
+			}
+		};
 
-//if the version is ok, After Effects just needs to be restarted
-Duik.setup.checkPresetEffectsVersion();
-if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
-{
-icGroup.visible = true;
-}
-//if mac os
-else if ($.os.toLowerCase().indexOf('mac') >= 0)
-{
-mmGroup.visible = true;
-}
-//if win
-else
-{
-mmGroup.visible = true;
-}
+		//if the version is ok, After Effects just needs to be restarted
+		Duik.setup.checkPresetEffectsVersion();
+		if (Duik.presetEffectsInstalledVersion == Duik.versionNumber)
+		{
+			icGroup.visible = true;
+		}
+		//if mac os
+		else if ($.os.toLowerCase().indexOf('mac') >= 0)
+		{
+			mmGroup.visible = true;
+		}
+		//if win
+		else
+		{
+			mmGroup.visible = true;
+		}
 
-// On definit le layout et on redessine la fenetre quand elle est resizee
-palette.layout.layout(true);
-palette.layout.resize();
-palette.onResizing = palette.onResize = function () { this.layout.resize(); };
-return palette;
+		// On definit le layout et on redessine la fenetre quand elle est resizee
+		palette.layout.layout(true);
+		palette.layout.resize();
+		palette.onResizing = palette.onResize = function () { this.layout.resize(); };
+		return palette;
 
-}
-Duik.settings.load();
-}
+	}
 
-//Duik.ui.showProgressPanel(2,tr("Duik - Loading icons"));
+	Duik.settings.load();
+}
 
 //=================================
 //======== LOAD ICONS =============
 //=================================
 {
-function checkFile(name, content)
-{
-var file = new File(name);
-var fileContent = '';
-if (file.exists)
-{
-file.encoding = 'BINARY';
-if (file.open('r', 'TEXT', '????'))
-{
-fileContent = file.read();
+	function checkFile(name, content)
+	{
+		var file = new File(name);
+		var fileContent = '';
+		if (file.exists)
+		{
+			file.encoding = 'BINARY';
+			if (file.open('r', 'TEXT', '????'))
+			{
+				fileContent = file.read();
 
-file.close();
-}
-}
-else
-{
-var folder = new Folder(file.path);
-if (!folder.exists)
-{
-folder.create();
-}
-}
-var success = fileContent == content;
-if (!success)
-{
-file.encoding = 'BINARY';
-if (file.open('w'))
-{
-success = file.write(content);
+				file.close();
+			}
+		}
+		else
+		{
+			var folder = new Folder(file.path);
+			if (!folder.exists)
+			{
+				folder.create();
+			}
+		}
+		var success = fileContent == content;
+		if (!success)
+		{
+			file.encoding = 'BINARY';
+			if (file.open('w'))
+			{
+				success = file.write(content);
+				file.close();
+			}
+		}
+		return success;
+	}
 
-file.close();
-}
-}
-return success;
-}
+	#include 'Duik_images.jsxinc'
 
-#include 'Duik_images.jsxinc'
-
-var duFolder = new Folder(Folder.userData.fsName + '/Duduf');
-if (!duFolder.exists) duFolder.create();
-var imgFolder = new Folder(duFolder.fsName + '/DuIK').fsName;
-for (var k in scriptMng.files)
-{
-if (scriptMng.files.hasOwnProperty(k))
-{
-if (!checkFile(imgFolder + k, scriptMng.files[k]))
-{
-alert(tr("Error writing file: ") + k);
+	var duFolder = new Folder(Folder.userData.fsName + '/Duduf');
+	if (!duFolder.exists) duFolder.create();
+	var imgFolder = new Folder(duFolder.fsName + '/DuIK').fsName;
+	for (var k in scriptMng.files)
+	{
+		if (scriptMng.files.hasOwnProperty(k))
+		{
+			if (!checkFile(imgFolder + k, scriptMng.files[k]))
+			{
+				alert(tr("Error writing file: ") + k);
+			}
+		}
+	}
 }
-}
-}
-}
-
-//Duik.ui.updateProgressPanel(1,tr("Duik - Loading functions"));
 
 //===============================================
 //============ FUNCTIONS ========================
 //===============================================
 {
-//TODO renommer les fonctions (onButtonBonesClick() par exemple), et clarifier le code
-//=================== UTILS =========================
+	//TODO renommer les fonctions (onButtonBonesClick() par exemple), et clarifier le code
 
-//FONCTION CARRE
-function carre(nombre) {
-return nombre*nombre;
-}
+	//=================== UTILS =========================
 
-//FUNCTION TO GET CURRENT COMP OR ALERT IF NO CURRENT CompItem
-function getCurrentComp() {
-var comp = app.project.activeItem;
-if (comp instanceof CompItem) return comp;
-else
-{
-alert(tr("Active composition not found.\nPlease select a composition or activate the composition panel."));
-return null;
-}
-}
+	//FONCTION CARRE
+	function carre(nombre)
+	{
+		return nombre*nombre;
+	}
 
-//FUNCTION TO GET CURRENT Layers
-function getCurrentLayers() {
-var comp = getCurrentComp();
-if (!comp) return null;
-var layers = comp.selectedLayers;
-if (!layers.length)
-{
-alert(tr("No selected layer.\nPlease select a layer/property."));
-return null;
-}
-return layers;
-}
+	//FUNCTION TO GET CURRENT COMP OR ALERT IF NO CURRENT CompItem
+	function getCurrentComp()
+	{
+		var comp = app.project.activeItem;
+		if (comp instanceof CompItem) return comp;
+		else
+		{
+			alert(tr("Active composition not found.\nPlease select a composition or activate the composition panel."));
+			return null;
+		}
+	}
 
-//FUNCTION TO GET ALL Layers
-function getLayers() {
-var comp = getCurrentComp();
-if (!comp) return null;
-var layrs = comp.layers;
-layers = Duik.utils.convertCollectionToArray(layrs);
-if (!layers.length)
-{
-alert(tr("No layer in this comp.\nPlease select a composition with layers."));
-return null;
-}
-return layers;
-}
+	//FUNCTION TO GET CURRENT Layers
+	function getCurrentLayers()
+	{
+		var comp = getCurrentComp();
+		if (!comp) return null;
+		var layers = comp.selectedLayers;
+		if (!layers.length)
+		{
+			alert(tr("No selected layer.\nPlease select a layer/property."));
+			return null;
+		}
+		return layers;
+	}
 
-//FUNCTION TO GET CURRENT Items
-function getCurrentItems() {
-var items = app.project.selection;
-if (!items.length)
-{
-alert(tr("No selected item.\nPlease select an item."));
-return null;
-}
-return items;
-}
+	//FUNCTION TO GET ALL Layers
+	function getLayers()
+	{
+		var comp = getCurrentComp();
+		if (!comp) return null;
+		var layrs = comp.layers;
+		layers = Duik.utils.convertCollectionToArray(layrs);
+		if (!layers.length)
+		{
+			alert(tr("No layer in this comp.\nPlease select a composition with layers."));
+			return null;
+		}
+		return layers;
+	}
 
-//FUNCTION TO GET CURRENT Props
-function getCurrentProps() {
-var layers = getCurrentLayers()
-if (!layers) return null;
-var props = layers[0].selectedProperties;
-if (!props.length)
-{
-alert(tr("No selected property.\nPlease select a property."));
-return null;
-}
-return props;
-}
+	//FUNCTION TO GET CURRENT Items
+	function getCurrentItems()
+	{
+		var items = app.project.selection;
+		if (!items.length)
+		{
+			alert(tr("No selected item.\nPlease select an item."));
+			return null;
+		}
+		return items;
+	}
 
-//FUNCTION TO GET CURRENT Prop
-function getCurrentProp(canSetExpression) {
-if (canSetExpression == undefined) canSetExpression = true;
-var props = getCurrentProps();
-if (!props) return null;
-var prop = props.pop();
-if (canSetExpression && !prop.canSetExpression)
-{
-alert(tr("Selected property cannot get any expression, it cannot be rigged, sorry."));
-return null;
-}
+	//FUNCTION TO GET CURRENT Props
+	function getCurrentProps()
+	{
+		var layers = getCurrentLayers()
+		if (!layers) return null;
+		var props = layers[0].selectedProperties;
+		if (!props.length)
+		{
+			alert(tr("No selected property.\nPlease select a property."));
+			return null;
+		}
+		return props;
+	}
 
-return prop;
-}
+	//FUNCTION TO GET CURRENT Prop
+	function getCurrentProp(canSetExpression)
+	{
+		if (canSetExpression == undefined) canSetExpression = true;
+		var props = getCurrentProps();
+		if (!props) return null;
+		var prop = props.pop();
+		if (canSetExpression && !prop.canSetExpression)
+		{
+			alert(tr("Selected property cannot get any expression, it cannot be rigged, sorry."));
+			return null;
+		}
+
+		return prop;
+	}
 
 //====================== AUTORIG ======================
 
 {
-var autorig = {};
-autorig.RFL = {};
-autorig.RFL.shoulder = null;
-autorig.RFL.humerus = null;
-autorig.RFL.radius = null;
-autorig.RFL.carpus = null;
-autorig.RFL.claws = null;
-autorig.RFL.tip = null;
-autorig.RFL.heel = null;
-autorig.LFL = {};
-autorig.LFL.shoulder = null;
-autorig.LFL.humerus = null;
-autorig.LFL.radius = null;
-autorig.LFL.carpus = null;
-autorig.LFL.claws = null;
-autorig.LFL.tip = null;
-autorig.LFL.heel = null;
-autorig.RBL = {};
-autorig.RBL.femur = null;
-autorig.RBL.tibia = null;
-autorig.RBL.tarsus = null;
-autorig.RBL.claws = null;
-autorig.RBL.tip = null;
-autorig.RBL.heel = null;
-autorig.LBL = {};
-autorig.LBL.femur = null;
-autorig.LBL.tibia = null;
-autorig.LBL.tarsus = null;
-autorig.LBL.claws = null;
-autorig.LBL.tip = null;
-autorig.LBL.heel = null;
-autorig.spine = {};
-autorig.spine.head = null;
-autorig.spine.spine = null;
-autorig.spine.neck = null;
-autorig.spine.hips = null;
-autorig.tail = {};
-autorig.tail.hips = null;
-autorig.tail.tail = null;
+	var autorig = {};
+	autorig.RFL = {};
+	autorig.RFL.shoulder = null;
+	autorig.RFL.humerus = null;
+	autorig.RFL.radius = null;
+	autorig.RFL.carpus = null;
+	autorig.RFL.claws = null;
+	autorig.RFL.tip = null;
+	autorig.RFL.heel = null;
+	autorig.LFL = {};
+	autorig.LFL.shoulder = null;
+	autorig.LFL.humerus = null;
+	autorig.LFL.radius = null;
+	autorig.LFL.carpus = null;
+	autorig.LFL.claws = null;
+	autorig.LFL.tip = null;
+	autorig.LFL.heel = null;
+	autorig.RBL = {};
+	autorig.RBL.femur = null;
+	autorig.RBL.tibia = null;
+	autorig.RBL.tarsus = null;
+	autorig.RBL.claws = null;
+	autorig.RBL.tip = null;
+	autorig.RBL.heel = null;
+	autorig.LBL = {};
+	autorig.LBL.femur = null;
+	autorig.LBL.tibia = null;
+	autorig.LBL.tarsus = null;
+	autorig.LBL.claws = null;
+	autorig.LBL.tip = null;
+	autorig.LBL.heel = null;
+	autorig.spine = {};
+	autorig.spine.head = null;
+	autorig.spine.spine = null;
+	autorig.spine.neck = null;
+	autorig.spine.hips = null;
+	autorig.tail = {};
+	autorig.tail.hips = null;
+	autorig.tail.tail = null;
+
+	// FRONT LEG
+	{
+		function populateFrontLeg(searchPrefix)
+		{
+			var compo = app.project.activeItem;
+			if (!(compo instanceof CompItem)) return;
+
+			Duik.utils.checkNames();
+
+			//1 - parcourir tous les calques et les ranger
+
+			var layers = [];
+
+			//si rien de selectionne, on charge les calques de toute la compo
+			if (compo.selectedLayers.length == 0) layers = compo.layers;
+			else layers = compo.selectedLayers;
+
+			var shoulder = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("shoulder blade"),searchPrefix + tr("blade"),searchPrefix + tr("clavicle"),searchPrefix + tr("shoulder")]);
+			var humerus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("humerus"),searchPrefix + tr("arm"),searchPrefix  +tr("shoulder")]);
+			var radius = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("ulna"),searchPrefix + tr("radius"),searchPrefix  + tr("forearm"),searchPrefix + tr("elbow")]);
+			var carpus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("carpus"),searchPrefix + tr("palm"),searchPrefix + tr("hand")]);
+			var claws = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("claws"),searchPrefix + tr("hoof"),searchPrefix + tr("finger")]);
+			var tip = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tip"),searchPrefix + tr("tiptoe")]);
+			var heel = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("heel"),searchPrefix + tr("back"),searchPrefix + tr("contact"),searchPrefix + tr("palm")]);
+
+			searchPrefix = searchPrefix.replace('_',' ');
+
+			if (!shoulder) shoulder = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("femur"),searchPrefix + tr("thigh")]);
+			if (!humerus) humerus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tibia"),searchPrefix + tr("fibula"),searchPrefix + tr("calf"),searchPrefix + tr("knee")]);
+			if (!radius) radius = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("ulna"),searchPrefix + tr("radius"),searchPrefix  + tr("forearm"),searchPrefix + tr("elbow")]);
+			if (!carpus) carpus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("carpus"),searchPrefix + tr("palm"),searchPrefix + tr("hand")]);
+			if (!claws) claws = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("claws"),searchPrefix + tr("hoof"),searchPrefix + tr("finger")]);
+			if (!tip) tip = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tip"),searchPrefix + tr("tiptoe")]);
+			if (!heel) heel = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("heel"),searchPrefix + tr("back"),searchPrefix + tr("contact"),searchPrefix + tr("palm")]);
+
+			//get layer list
+			var layersList = Duik.utils.getLayersReadableList(layers);
+			layersList.unshift(tr("None"));
+
+			//ajouter les listes de calques
+			frontLegShoulderButton.removeAll();
+			frontLegHumerusButton.removeAll();
+			frontLegRadiusButton.removeAll();
+			frontLegCarpusButton.removeAll();
+			frontLegClawsButton.removeAll();
+			frontLegTipButton.removeAll();
+			frontLegHeelButton.removeAll();
+
+			for (i = 0;i<layersList.length;i++)
+			{
+				frontLegShoulderButton.add('item',layersList[i]);
+				frontLegHumerusButton.add('item',layersList[i]);
+				frontLegRadiusButton.add('item',layersList[i]);
+				frontLegCarpusButton.add('item',layersList[i]);
+				frontLegClawsButton.add('item',layersList[i]);
+				frontLegTipButton.add('item',layersList[i]);
+				frontLegHeelButton.add('item',layersList[i]);
+			}
+
+			//preselectionner
+			if (shoulder) frontLegShoulderButton.selection = Duik.js.arrayIndexOf(layersList,shoulder.index + ' - ' + shoulder.name);
+			if (humerus) frontLegHumerusButton.selection = Duik.js.arrayIndexOf(layersList,humerus.index + ' - ' + humerus.name);
+			if (radius) frontLegRadiusButton.selection = Duik.js.arrayIndexOf(layersList,radius.index + ' - ' + radius.name);
+			if (carpus) frontLegCarpusButton.selection = Duik.js.arrayIndexOf(layersList,carpus.index + ' - ' + carpus.name);
+			if (claws) frontLegClawsButton.selection = Duik.js.arrayIndexOf(layersList,claws.index + ' - ' + claws.name);
+			if (tip) frontLegTipButton.selection = Duik.js.arrayIndexOf(layersList,tip.index + ' - ' + tip.name);
+			if (heel) frontLegHeelButton.selection = Duik.js.arrayIndexOf(layersList,heel.index + ' - ' + heel.name);
+
+			frontLegDialog.layout.layout(true);
+			frontLegDialog.layout.resize();
+		}
+
+		function getFrontLegSelection()
+		{
+			var compo = app.project.activeItem;
+			if (!(compo instanceof CompItem)) return false;
+			var shoulder, humerus, radius, carpus, tip, heel;
+
+			if (frontLegShoulderButton.selection == null) frontLegShoulderButton.selection = 0;
+			if (frontLegHumerusButton.selection == null) frontLegHumerusButton.selection = 0;
+			if (frontLegRadiusButton.selection == null) frontLegRadiusButton.selection = 0;
+			if (frontLegCarpusButton.selection == null) frontLegCarpusButton.selection = 0;
+			if (frontLegClawsButton.selection == null) frontLegClawsButton.selection = 0;
+			if (frontLegTipButton.selection == null) frontLegTipButton.selection = 0;
+			if (frontLegHeelButton.selection == null) frontLegHeelButton.selection = 0;
+
+			frontLegShoulderButton.selection.index == 0 ? shoulder = null : shoulder = compo.layers[frontLegShoulderButton.selection.text.split(' - ')[0]];
+			frontLegHumerusButton.selection.index == 0 ? humerus = null : humerus = compo.layers[frontLegHumerusButton.selection.text.split(' - ')[0]];
+			frontLegRadiusButton.selection.index == 0 ? radius = null : radius = compo.layers[frontLegRadiusButton.selection.text.split(' - ')[0]];
+			frontLegCarpusButton.selection.index == 0 ? carpus = null : carpus = compo.layers[frontLegCarpusButton.selection.text.split(' - ')[0]];
+			frontLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[frontLegClawsButton.selection.text.split(' - ')[0]];
+			frontLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[frontLegTipButton.selection.text.split(' - ')[0]];
+			frontLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[frontLegHeelButton.selection.text.split(' - ')[0]];
+
+			//verifier qu'il n'y a pas deux calques assignes au meme element
+			var indexUtilises = [];
+			if (shoulder) indexUtilises.push(shoulder.index);
+			if (humerus) indexUtilises.push(humerus.index);
+			if (radius) indexUtilises.push(radius.index);
+			if (carpus) indexUtilises.push(carpus.index);
+			if (claws) indexUtilises.push(claws.index);
+			if (tip && (autorigDigitigradeButton.value || autorigPlantigradeButton.value)) indexUtilises.push(tip.index);
+			if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
+
+			//verif duplicates de l'array
+			if (Duik.js.arrayHasDuplicates(indexUtilises))
+			{
+				var dup = Duik.js.arrayGetDuplicates(indexUtilises);
+				var dupNames = [];
+				for (var i = 0 ; i< dup.length;i++)
+				{
+					dupNames.push(dup[i] + ' - ' + compo.layer(dup[i]).name);
+				}
+					alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n") + dupNames.join('\n')) ;
+					return false;
+			}
+
+			//verifier qu'il ne manque rien d'indispensable (mains)
+			var calquesManquants = [];
+			if (!carpus) calquesManquants.push(tr("Carpus"));
+			if (claws && !humerus) calquesManquants.push(tr("Humerus"));
+			if (claws && !radius) calquesManquants.push(tr("Radius"));
+
+			if (!shoulder && !humerus && !radius && !carpus && !claws && !tip && !heel) calquesManquants = [];
+
+			if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
+
+			//verifier si 3D
+			var tridi = false;
+			if (shoulder) if (shoulder.threeDLayer) tridi = true;
+			if (humerus) if (humerus.threeDLayer) tridi = true;
+			if (radius) if (radius.threeDLayer) tridi = true;
+			if (carpus) if (carpus.threeDLayer) tridi = true;
+			if (claws) if (claws.threeDLayer) tridi = true;
+			if (tip) if (tip.threeDLayer) tridi = true;
+			if (heel) if (heel.threeDLayer) tridi = true;
 
 
+			if (tridi) { alert (tr("The autorig does not work with 3D Layers")); return false; }
 
-// FRONT LEG
-{
-function populateFrontLeg(searchPrefix) {
+			frontLegDialog.shoulder = shoulder;
+			frontLegDialog.humerus = humerus;
+			frontLegDialog.radius = radius;
+			frontLegDialog.carpus = carpus;
+			frontLegDialog.claws = claws;
+			frontLegDialog.tip = tip;
+			frontLegDialog.heel = heel;
 
-var compo = app.project.activeItem;
-if (!(compo instanceof CompItem)) return;
+			return true;
+		}
 
-Duik.utils.checkNames();
+		function frontLegShow()
+		{
+			var compo = app.project.activeItem;
+			if (!(compo instanceof CompItem)) return;
 
-//1 - parcourir tous les calques et les ranger
+			frontLegDigiImage.visible = autorigDigitigradeButton.value;
+			frontLegPlantiImage.visible = autorigPlantigradeButton.value;
+			frontLegUnguImage.visible = autorigUngulateButton.value;
 
-var layers = [];
-
-//si rien de selectionne, on charge les calques de toute la compo
-if (compo.selectedLayers.length == 0) layers = compo.layers;
-else layers = compo.selectedLayers;
-
-var shoulder = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("shoulder blade"),searchPrefix + tr("blade"),searchPrefix + tr("clavicle"),searchPrefix + tr("shoulder")]);
-var humerus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("humerus"),searchPrefix + tr("arm"),searchPrefix  +tr("shoulder")]);
-var radius = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("ulna"),searchPrefix + tr("radius"),searchPrefix  + tr("forearm"),searchPrefix + tr("elbow")]);
-var carpus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("carpus"),searchPrefix + tr("palm"),searchPrefix + tr("hand")]);
-var claws = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("claws"),searchPrefix + tr("hoof"),searchPrefix + tr("finger")]);
-var tip = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tip"),searchPrefix + tr("tiptoe")]);
-var heel = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("heel"),searchPrefix + tr("back"),searchPrefix + tr("contact"),searchPrefix + tr("palm")]);
-
-searchPrefix = searchPrefix.replace('_',' ');
-
-if (!shoulder) shoulder = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("femur"),searchPrefix + tr("thigh")]);
-if (!humerus) humerus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tibia"),searchPrefix + tr("fibula"),searchPrefix + tr("calf"),searchPrefix + tr("knee")]);
-if (!radius) radius = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("ulna"),searchPrefix + tr("radius"),searchPrefix  + tr("forearm"),searchPrefix + tr("elbow")]);
-if (!carpus) carpus = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("carpus"),searchPrefix + tr("palm"),searchPrefix + tr("hand")]);
-if (!claws) claws = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("claws"),searchPrefix + tr("hoof"),searchPrefix + tr("finger")]);
-if (!tip) tip = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("tip"),searchPrefix + tr("tiptoe")]);
-if (!heel) heel = Duik.utils.getLayerByNames(layers,[searchPrefix + tr("heel"),searchPrefix + tr("back"),searchPrefix + tr("contact"),searchPrefix + tr("palm")]);
-
-//get layer list
-var layersList = Duik.utils.getLayersReadableList(layers);
-layersList.unshift(tr("None"));
-
-//ajouter les listes de calques
-frontLegShoulderButton.removeAll();
-frontLegHumerusButton.removeAll();
-frontLegRadiusButton.removeAll();
-frontLegCarpusButton.removeAll();
-frontLegClawsButton.removeAll();
-frontLegTipButton.removeAll();
-frontLegHeelButton.removeAll();
-
-for (i = 0;i<layersList.length;i++) {
-frontLegShoulderButton.add('item',layersList[i]);
-frontLegHumerusButton.add('item',layersList[i]);
-frontLegRadiusButton.add('item',layersList[i]);
-frontLegCarpusButton.add('item',layersList[i]);
-frontLegClawsButton.add('item',layersList[i]);
-frontLegTipButton.add('item',layersList[i]);
-frontLegHeelButton.add('item',layersList[i]);
-}
-
-//preselectionner
-if (shoulder) frontLegShoulderButton.selection = Duik.js.arrayIndexOf(layersList,shoulder.index + ' - ' + shoulder.name);
-if (humerus) frontLegHumerusButton.selection = Duik.js.arrayIndexOf(layersList,humerus.index + ' - ' + humerus.name);
-if (radius) frontLegRadiusButton.selection = Duik.js.arrayIndexOf(layersList,radius.index + ' - ' + radius.name);
-if (carpus) frontLegCarpusButton.selection = Duik.js.arrayIndexOf(layersList,carpus.index + ' - ' + carpus.name);
-if (claws) frontLegClawsButton.selection = Duik.js.arrayIndexOf(layersList,claws.index + ' - ' + claws.name);
-if (tip) frontLegTipButton.selection = Duik.js.arrayIndexOf(layersList,tip.index + ' - ' + tip.name);
-if (heel) frontLegHeelButton.selection = Duik.js.arrayIndexOf(layersList,heel.index + ' - ' + heel.name);
-
-frontLegDialog.layout.layout(true);
-frontLegDialog.layout.resize();
-}
-
-function getFrontLegSelection() {
-var compo = app.project.activeItem;
-if (!(compo instanceof CompItem)) return false;
-var shoulder, humerus, radius, carpus, tip, heel;
-
-if (frontLegShoulderButton.selection == null) frontLegShoulderButton.selection = 0;
-if (frontLegHumerusButton.selection == null) frontLegHumerusButton.selection = 0;
-if (frontLegRadiusButton.selection == null) frontLegRadiusButton.selection = 0;
-if (frontLegCarpusButton.selection == null) frontLegCarpusButton.selection = 0;
-if (frontLegClawsButton.selection == null) frontLegClawsButton.selection = 0;
-if (frontLegTipButton.selection == null) frontLegTipButton.selection = 0;
-if (frontLegHeelButton.selection == null) frontLegHeelButton.selection = 0;
-
-frontLegShoulderButton.selection.index == 0 ? shoulder = null : shoulder = compo.layers[frontLegShoulderButton.selection.text.split(' - ')[0]];
-frontLegHumerusButton.selection.index == 0 ? humerus = null : humerus = compo.layers[frontLegHumerusButton.selection.text.split(' - ')[0]];
-frontLegRadiusButton.selection.index == 0 ? radius = null : radius = compo.layers[frontLegRadiusButton.selection.text.split(' - ')[0]];
-frontLegCarpusButton.selection.index == 0 ? carpus = null : carpus = compo.layers[frontLegCarpusButton.selection.text.split(' - ')[0]];
-frontLegClawsButton.selection.index == 0 ? claws = null : claws = compo.layers[frontLegClawsButton.selection.text.split(' - ')[0]];
-frontLegTipButton.selection.index == 0 ? tip = null : tip = compo.layers[frontLegTipButton.selection.text.split(' - ')[0]];
-frontLegHeelButton.selection.index == 0 ? heel = null : heel = compo.layers[frontLegHeelButton.selection.text.split(' - ')[0]];
-
-//verifier qu'il n'y a pas deux calques assignes au meme element
-var indexUtilises = [];
-if (shoulder) indexUtilises.push(shoulder.index);
-if (humerus) indexUtilises.push(humerus.index);
-if (radius) indexUtilises.push(radius.index);
-if (carpus) indexUtilises.push(carpus.index);
-if (claws) indexUtilises.push(claws.index);
-if (tip && (autorigDigitigradeButton.value || autorigPlantigradeButton.value)) indexUtilises.push(tip.index);
-if (heel && autorigPlantigradeButton.value) indexUtilises.push(heel.index);
-
-//verif duplicates de l'array
-if (Duik.js.arrayHasDuplicates(indexUtilises)) {
-var dup = Duik.js.arrayGetDuplicates(indexUtilises);
-var dupNames = [];
-for (var i = 0 ; i< dup.length;i++)
-{
-dupNames.push(dup[i] + ' - ' + compo.layer(dup[i]).name);
-}
-alert (tr("Be careful not to assign twice the same layer\n\nLayers assigned twice:\n\n") + dupNames.join('\n')) ;
-return false;
-}
-
-//verifier qu'il ne manque rien d'indispensable (mains)
-var calquesManquants = [];
-if (!carpus) calquesManquants.push(tr("Carpus"));
-if (claws && !humerus) calquesManquants.push(tr("Humerus"));
-if (claws && !radius) calquesManquants.push(tr("Radius"));
-
-if (!shoulder && !humerus && !radius && !carpus && !claws && !tip && !heel) calquesManquants = [];
-
-if (calquesManquants.length > 0) { alert (tr("Those layers are needed:\n\n") + calquesManquants.join('\n')); return false; }
-
-//verifier si 3D
-var tridi = false;
-if (shoulder) if (shoulder.threeDLayer) tridi = true;
-if (humerus) if (humerus.threeDLayer) tridi = true;
-if (radius) if (radius.threeDLayer) tridi = true;
-if (carpus) if (carpus.threeDLayer) tridi = true;
-if (claws) if (claws.threeDLayer) tridi = true;
-if (tip) if (tip.threeDLayer) tridi = true;
-if (heel) if (heel.threeDLayer) tridi = true;
+			if (autorigDigitigradeButton.value)
+			{
+				frontLegTipGroup.visible = true;
+				frontLegHeelGroup.visible = false;
+				frontLegNullsLabel.visible = true;
+			}
+			if (autorigPlantigradeButton.value)
+			{
+				frontLegTipGroup.visible = true;
+				frontLegHeelGroup.visible = true;
+				frontLegNullsLabel.visible = true;
+			}
+			if (autorigUngulateButton.value)
+			{
+				frontLegTipGroup.visible = false;
+				frontLegHeelGroup.visible = false;
+				frontLegNullsLabel.visible = false;
+			}
 
 
-if (tridi) { alert (tr("The autorig does not work with 3D Layers")); return false; }
+			var searchPrefix = '';
 
-frontLegDialog.shoulder = shoulder;
-frontLegDialog.humerus = humerus;
-frontLegDialog.radius = radius;
-frontLegDialog.carpus = carpus;
-frontLegDialog.claws = claws;
-frontLegDialog.tip = tip;
-frontLegDialog.heel = heel;
+			if (frontLegDialog.right)
+			{
+				frontLegTypeLabel.text = tr("Right Arm / Front leg");
+				textColor(frontLegTypeLabel,col.trueRed);
+				frontLegNext.show();
+				frontLegPrev.show();
+				frontLegOK.hide();
+				searchPrefix = tr("R_");
+			}
+			else if (frontLegDialog.left)
+			{
+				frontLegTypeLabel.text = tr("Left Arm / Front leg");
+				textColor(frontLegTypeLabel,col.trueGreen);
+				frontLegNext.show();
+				frontLegPrev.show();
+				frontLegOK.hide();
+				searchPrefix = tr("L_");
+			}
+			else
+			{
+				frontLegTypeLabel.hide();
+				frontLegNext.hide();
+				frontLegPrev.hide();
+				frontLegOK.show();
+			}
 
-return true;
-}
+			frontLegDialog.shoulder = null;
+			frontLegDialog.humerus = null;
+			frontLegDialog.radius = null;
+			frontLegDialog.carpus = null;
+			frontLegDialog.claws = null;
+			frontLegDialog.tip = null;
+			frontLegDialog.heel = null;
 
-function frontLegShow() {
+			populateFrontLeg(searchPrefix);
 
-var compo = app.project.activeItem;
-if (!(compo instanceof CompItem)) return;
+			frontLegDialog.show();
+		}
 
-frontLegDigiImage.visible = autorigDigitigradeButton.value;
-frontLegPlantiImage.visible = autorigPlantigradeButton.value;
-frontLegUnguImage.visible = autorigUngulateButton.value;
+		function frontLegOKClicked()
+		{
+			if (autorigDigitigradeButton.value)
+			{
+				//get the user selection of layers
+				if (getFrontLegSelection())
+				{
+					app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
+					Duik.autorig.vertebrate.digitigrade.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws,frontLegDialog.tip);
+					app.endUndoGroup();
+					frontLegDialog.hide();
+				}
+			}
+			else if (autorigPlantigradeButton.value)
+			{
+				//get the user selection of layers
+				if (getFrontLegSelection())
+				{
+					app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
+					Duik.autorig.vertebrate.plantigrade.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws,frontLegDialog.tip,frontLegDialog.heel);
+					app.endUndoGroup();
+					frontLegDialog.hide();
+				}
+			}
+			else if (autorigUngulateButton.value)
+			{
+				//get the user selection of layers
+				if (getFrontLegSelection())
+				{
+					app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
+					Duik.autorig.vertebrate.ungulate.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws);
+					app.endUndoGroup();
+					frontLegDialog.hide();
+				}
+			}
+		}
 
-if (autorigDigitigradeButton.value)
-{
-frontLegTipGroup.visible = true;
-frontLegHeelGroup.visible = false;
-frontLegNullsLabel.visible = true;
-}
-if (autorigPlantigradeButton.value)
-{
-frontLegTipGroup.visible = true;
-frontLegHeelGroup.visible = true;
-frontLegNullsLabel.visible = true;
-}
-if (autorigUngulateButton.value)
-{
-frontLegTipGroup.visible = false;
-frontLegHeelGroup.visible = false;
-frontLegNullsLabel.visible = false;
-}
+		function frontLegNextClicked()
+		{
+			if (!getFrontLegSelection()) return;
 
+			if (frontLegDialog.left)
+			{
+				frontLegDialog.hide();
+				autorig.LFL.shoulder = frontLegDialog.shoulder;
+				autorig.LFL.humerus = frontLegDialog.humerus;
+				autorig.LFL.radius = frontLegDialog.radius;
+				autorig.LFL.carpus = frontLegDialog.carpus;
+				autorig.LFL.claws = frontLegDialog.claws;
+				autorig.LFL.tip = frontLegDialog.tip;
+				autorig.LFL.heel = frontLegDialog.heel;
+				frontLegDialog.left = false;
+				frontLegDialog.right = true;
+				frontLegShow();
+			}
+			else if (frontLegDialog.right)
+			{
+				frontLegDialog.hide();
+				autorig.RFL.shoulder = frontLegDialog.shoulder;
+				autorig.RFL.humerus = frontLegDialog.humerus;
+				autorig.RFL.radius = frontLegDialog.radius;
+				autorig.RFL.carpus = frontLegDialog.carpus;
+				autorig.RFL.claws = frontLegDialog.claws;
+				autorig.RFL.tip = frontLegDialog.tip;
+				autorig.RFL.heel = frontLegDialog.heel;
+				spineDialog.fullCharacter = true;
+				spineShow();
+			}
+		}
 
-var searchPrefix = '';
-
-if (frontLegDialog.right) {
-frontLegTypeLabel.text = tr("Right Arm / Front leg");
-textColor(frontLegTypeLabel,col.trueRed);
-frontLegNext.show();
-frontLegPrev.show();
-frontLegOK.hide();
-searchPrefix = tr("R_");
-}
-else if (frontLegDialog.left) {
-frontLegTypeLabel.text = tr("Left Arm / Front leg");
-textColor(frontLegTypeLabel,col.trueGreen);
-frontLegNext.show();
-frontLegPrev.show();
-frontLegOK.hide();
-searchPrefix = tr("L_");
-}
-else {
-frontLegTypeLabel.hide();
-frontLegNext.hide();
-frontLegPrev.hide();
-frontLegOK.show();$
-}
-
-frontLegDialog.shoulder = null;
-frontLegDialog.humerus = null;
-frontLegDialog.radius = null;
-frontLegDialog.carpus = null;
-frontLegDialog.claws = null;
-frontLegDialog.tip = null;
-frontLegDialog.heel = null;
-
-populateFrontLeg(searchPrefix);
-
-frontLegDialog.show();
-
-}
-
-function frontLegOKClicked() {
-if (autorigDigitigradeButton.value)
-{
-//get the user selection of layers
-if (getFrontLegSelection())
-{
-app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
-Duik.autorig.vertebrate.digitigrade.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws,frontLegDialog.tip);
-app.endUndoGroup();
-frontLegDialog.hide();
-}
-}
-else if (autorigPlantigradeButton.value)
-{
-//get the user selection of layers
-if (getFrontLegSelection())
-{
-app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
-Duik.autorig.vertebrate.plantigrade.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws,frontLegDialog.tip,frontLegDialog.heel);
-app.endUndoGroup();
-frontLegDialog.hide();
-}
-}
-else if (autorigUngulateButton.value)
-{
-//get the user selection of layers
-if (getFrontLegSelection())
-{
-app.beginUndoGroup(tr("Duik - Front Leg Autorig"));
-Duik.autorig.vertebrate.ungulate.frontLeg(frontLegDialog.shoulder,frontLegDialog.humerus,frontLegDialog.radius,frontLegDialog.carpus,frontLegDialog.claws);
-app.endUndoGroup();
-frontLegDialog.hide();
-}
-}
-}
-
-function frontLegNextClicked(){
-
-if (!getFrontLegSelection()) return;
-
-if (frontLegDialog.left)
-{
-frontLegDialog.hide();
-autorig.LFL.shoulder = frontLegDialog.shoulder;
-autorig.LFL.humerus = frontLegDialog.humerus;
-autorig.LFL.radius = frontLegDialog.radius;
-autorig.LFL.carpus = frontLegDialog.carpus;
-autorig.LFL.claws = frontLegDialog.claws;
-autorig.LFL.tip = frontLegDialog.tip;
-autorig.LFL.heel = frontLegDialog.heel;
-frontLegDialog.left = false;
-frontLegDialog.right = true;
-frontLegShow();
-}
-else if (frontLegDialog.right)
-{
-frontLegDialog.hide();
-autorig.RFL.shoulder = frontLegDialog.shoulder;
-autorig.RFL.humerus = frontLegDialog.humerus;
-autorig.RFL.radius = frontLegDialog.radius;
-autorig.RFL.carpus = frontLegDialog.carpus;
-autorig.RFL.claws = frontLegDialog.claws;
-autorig.RFL.tip = frontLegDialog.tip;
-autorig.RFL.heel = frontLegDialog.heel;
-spineDialog.fullCharacter = true;
-spineShow();
-}
-}
-
-function frontLegPrevClicked(){
-
-if (frontLegDialog.left)
-{
-frontLegDialog.hide();
-backLegDialog.left = false;
-backLegDialog.right = true;
-backLegShow();
-}
-if (frontLegDialog.right)
-{
-frontLegDialog.hide();
-frontLegDialog.left = true;
-frontLegDialog.right = false;
-frontLegShow();
-}
-}
-
-}
+		function frontLegPrevClicked()
+		{
+			if (frontLegDialog.left)
+			{
+				frontLegDialog.hide();
+				backLegDialog.left = false;
+				backLegDialog.right = true;
+				backLegShow();
+			}
+			if (frontLegDialog.right)
+			{
+				frontLegDialog.hide();
+				frontLegDialog.left = true;
+				frontLegDialog.right = false;
+				frontLegShow();
+			}
+		}
+	}
 
 // BACK LEG
 {
@@ -1713,8 +1720,8 @@ app.endUndoGroup();
 
 /**
  * Function executed when the IK button is clicked
- * 
- * Display the IK options depending on selection and map the click to 
+ *
+ * Display the IK options depending on selection and map the click to
  * the correct ik creation function
  */
 function ik(){
@@ -1811,9 +1818,9 @@ function ik(){
 	}
 
 	ikCreateButton.onClick = function() {
-		
+
 		ikRig.frontFacing = ikFrontFacingButton.value;
-		
+
 		if (ikType2Group.visible){
 			if (ik2LayerButton.value && ikRig.type == 1){
 				ikRig.layer2 = ikRig.goal;
@@ -1835,7 +1842,7 @@ function ik(){
 				ikRig.type = 2;
 			}
 		}
-		
+
 		app.beginUndoGroup(tr("Duik - IK"));
 		ikRig.create();
 		app.endUndoGroup();
@@ -3272,7 +3279,7 @@ function lineaire() {
 	var layers = comp.selectedLayers;
 
 	app.beginUndoGroup('Duik - ' + tr("Linear Interpolation"));
-	
+
 	//if no selected keys, add key on selected properties
 	if (!Duik.utils.layersHaveSelectedKeys(layers))
 	{
@@ -3310,7 +3317,7 @@ function lineaire() {
 			}
 		}
 	}
-	
+
 	app.endUndoGroup();
 }
 
@@ -3327,7 +3334,7 @@ function lissageA() {
 	var comp = app.project.activeItem;
 	if (comp.selectedLayers.length == 0) return;
 	var layers = comp.selectedLayers;
-	
+
 	app.beginUndoGroup('Duik - ' + tr("Ease In"));
 
 	//if no selected keys, add key on selected properties
@@ -3400,7 +3407,7 @@ function lissageE() {
 	var comp = app.project.activeItem;
 	if (comp.selectedLayers.length == 0) return;
 	var layers = comp.selectedLayers;
-	
+
 	app.beginUndoGroup('Duik - ' + tr("Ease Out"));
 
 	//if no selected keys, add key on selected properties
@@ -4255,7 +4262,7 @@ fenetrenotes.size = [300,300];
 	bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
 	var duikText = bottomGroup.add ('statictext',undefined,'Duik ' + version);
 	duikText.alignment = ['right','bottom'];
-	
+
 	//Dev tools
 	if (developper) {
 		mainGroup.add('statictext',undefined,'/!\\ Developper version /!\\');
@@ -5567,7 +5574,7 @@ ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; contro
 		ik1GoalGroup.add('image',undefined,dossierIcones + 'btn_1layerikgoal.png');
 	}
 	var ik1GoalButton = expertMode ? ikType2Group.add('radiobutton',undefined,'1+1') : ik1GoalGroup.add('radiobutton',undefined,tr("1-Layer IK & Goal"));
-	
+
 	if (!expertMode)
 	{
 		var ik2LayerGroup = addVGroup(ikType2Group);
@@ -5587,7 +5594,7 @@ ctrlCreateButton.onClick = function () { controleur(); ctrlPanel.hide() ; contro
 	addSeparator(ikPanel,'');
 
 	var ikSettingsGroup = addVGroup(ikPanel);
-	
+
 	var ik3DGroup = addVGroup(ikSettingsGroup);
 	ik3DGroup.visible = false;
 	var ikFrontFacingButton = ik3DGroup.add('radiobutton',undefined,tr("Front/Back view"));
@@ -6844,8 +6851,5 @@ palette.onResizing = palette.onResize = function () { this.layout.resize(); }
 if (!(thisObj instanceof Panel)) palette.show();
 
 
-})(this);
-
-
-
-
+}
+)(this);
