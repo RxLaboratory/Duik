@@ -3708,8 +3708,8 @@ function loadDuik()
 		var outVal = parseInt(interpoOutEdit.text);
 		var speedVal = parseFloat(interpoSpeedEdit.text);
 
-		if (boutonEloignement.value && !outVal) return;
-		if (boutonApproche.value && !inVal) return;
+		if (boutonEloignement.checked && !outVal) return;
+		if (boutonApproche.checked && !inVal) return;
 
 		app.beginUndoGroup(tr("Duik - Interpolation"));
 
@@ -3719,24 +3719,24 @@ function loadDuik()
 		for (var k=0;k<app.project.activeItem.selectedLayers[i].selectedProperties[j].selectedKeys.length;k++) {
 		var prop = app.project.activeItem.selectedLayers[i].selectedProperties[j];
 		if (!prop.isSpatial && prop.value.length == 3) {
-		var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-		var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-		var easeIn3 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
-		var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-		var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
-		var easeOut3 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
+		var easeIn1 =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeIn2 =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+		var easeIn3 =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[2].influence);
+		var easeOut1 = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeOut2 = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+		var easeOut3 = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[2].influence);
 		prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2,easeIn3],[easeOut1,easeOut2,easeOut3]);
 		}
 		else if (!prop.isSpatial && prop.value.length == 2) {
-		var easeIn1 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-		var easeIn2 =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
-		var easeOut1 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
-		var easeOut2 = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
+		var easeIn1 =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeIn2 =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[1].influence);
+		var easeOut1 = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeOut2 = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[1].influence);
 		prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn1,easeIn2],[easeOut1,easeOut2]);
 		}
 		else {
-		var easeIn =  new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.value ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
-		var easeOut = new KeyframeEase(interpoSpeedButton.value ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.value ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeIn =  new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].speed,boutonApproche.checked ? inVal : prop.keyInTemporalEase(prop.selectedKeys[k])[0].influence);
+		var easeOut = new KeyframeEase(interpoSpeedButton.checked ? speedVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].speed,boutonEloignement.checked ? outVal : prop.keyOutTemporalEase(prop.selectedKeys[k])[0].influence);
 		prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeIn],[easeOut]);
 		}
 		}
@@ -3763,7 +3763,7 @@ function loadDuik()
 		interpoOutEdit.text = vals[3];
 		if (interpoInSlider.value != interpoOutSlider.value)
 		{
-		interpoLockInfluencesButton.value = false;
+		interpoLockInfluencesButton.checked = false;
 		boutonApproche.enabled = true;
 		groupeInterpoOut.visible = true;
 		}
@@ -3827,7 +3827,7 @@ function loadDuik()
 		interpoSpeedSlider.value = speed;
 		if (interpoInSlider.value != interpoOutSlider.value)
 		{
-		interpoLockInfluencesButton.value = false;
+		interpoLockInfluencesButton.checked = false;
 		boutonApproche.enabled = true;
 		groupeInterpoOut.enabled = true;
 		}
@@ -3959,17 +3959,18 @@ var expertMode = eval(app.settings.getSetting('duik','expertMode'));
  * @param {string}				text		- The text of the buttons
  * @return {object}				- The Image Button
  */
-function addIconButton(container,image,text)
+function addIconButton(container,image,text,helpTip)
 {
 	if (expertMode) text = '';
-	var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png','',dossierIcones + image + '_o.png');
-	bouton.group.maximumSize.height = 24;
-	if (text != '')
+	if (!helpTip) helpTip = '';
+	var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
+	bouton.group.maximumSize.height = bouton.group.minimumSize.height = 24;
+	if (bouton.label)
 	{
 		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
-		bouton.image.minimumSize.width = 38;
+		bouton.image.size = [38,18];
 		bouton.image.alignment = ['left','fill'];
-		if (bouton.label) bouton.label.alignment = ['left','fill'];
+		bouton.label.alignment = ['left','fill'];
 	}
 	return bouton;
 }
@@ -3984,14 +3985,16 @@ function addIconRadioButton(conteneur,image,text)
 	return g;
 }
 
-function addIconCheckbox(conteneur,image,text)
+function addIconCheckbox(container,image,text,helpTip)
 {
 	if (expertMode) text = '';
-	var g = addHGroup(conteneur);
+	var bouton = Duik.ui.addImageCheckBox(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
+	bouton.group.minimumSize.width = bouton.group.maximumSize.width = 38;
+	/*var g = addHGroup(container);
 	g.alignChildren = ['left','center'];
 	g.button = g.add('checkbox',undefined,text);
-	g.img = g.add('image',undefined,dossierIcones + image);
-	return g;
+	g.img = g.add('image',undefined,dossierIcones + image);*/
+	return bouton;
 }
 
 function addButton(conteneur,texte)
@@ -4908,86 +4911,68 @@ function textColor(text,color)
 
 	// INTERPOLATIONS
 	{
-
 		//Interpolation types
 		var groupeInterpoClefs = addHGroup(panointerpo);
-		var rovingButton = addIconButton(groupeInterpoClefs,'interpo_btn_roving');
-		rovingButton.size = [20,20];
+		var rovingButton = addIconButton(groupeInterpoClefs,'interpo_btn_roving','',tr("Roving"));
 		rovingButton.onClick = roving;
-		rovingButton.helpTip = tr("Roving");
-		var boutonLineaire = addIconButton(groupeInterpoClefs,'interpo_btn_linear');
-		boutonLineaire.size = [20,20];
+		var boutonLineaire = addIconButton(groupeInterpoClefs,'interpo_btn_linear','',tr("Linear Interpolation"));
 		boutonLineaire.onClick = lineaire;
-		boutonLineaire.helpTip = tr("Linear Interpolation");
-		var boutonLissageA = addIconButton(groupeInterpoClefs,'interpo_btn_ease in linear out');
-		boutonLissageA.size = [20,20];
+		var boutonLissageA = addIconButton(groupeInterpoClefs,'interpo_btn_ease in linear out','',tr("Ease In"));
 		boutonLissageA.onClick = lissageA;
-		boutonLissageA.helpTip = tr("Ease In");
-		var boutonLissageE = addIconButton(groupeInterpoClefs,'interpo_btn_linear in ease out');
-		boutonLissageE.size = [20,20];
+		var boutonLissageE = addIconButton(groupeInterpoClefs,'interpo_btn_linear in ease out','',tr("Ease Out"));
 		boutonLissageE.onClick = lissageE;
-		boutonLissageE.helpTip = tr("Ease Out");
-		var boutonLissage = addIconButton(groupeInterpoClefs,'interpo_btn_easy ease');
-		boutonLissage.size = [20,20];
+		var boutonLissage = addIconButton(groupeInterpoClefs,'interpo_btn_easy ease','',tr("Easy Ease"));
 		boutonLissage.onClick = lissage;
-		boutonLissage.helpTip = tr("Easy Ease");
-		var boutonContinu = addIconButton(groupeInterpoClefs,'interpo_btn_continuous');
-		boutonContinu.size = [20,20];
+		var boutonContinu = addIconButton(groupeInterpoClefs,'interpo_btn_continuous','',tr("Auto Bezier"));
 		boutonContinu.onClick = continu;
-		boutonContinu.helpTip = tr("Auto Bezier");
-		var boutonMaintien = addIconButton(groupeInterpoClefs,'interpo_btn_hold');
-		boutonMaintien.size = [20,20];
+		var boutonMaintien = addIconButton(groupeInterpoClefs,'interpo_btn_hold','',tr("Hold"));
 		boutonMaintien.onClick = maintien;
-		boutonMaintien.helpTip = tr("Hold");
 
 		//presets
 		var interpoPresetsGroup = addHGroup(panointerpo);
-		interpoPresetsGroup.maximumSize.height = 25;
+		interpoPresetsGroup.maximumSize.height = 24;
 		var interpoPresetsList = interpoPresetsGroup.add('dropdownlist',undefined,eval(app.settings.getSetting('duik', 'interpolationPresets')));
 		interpoPresetsList.selection = 0;
 		interpoPresetsList.onChange = interpoPresetsListChanged;
-		var interpoPresetsAddButton = addIconButton(interpoPresetsGroup,'btn_add','');
+		var interpoPresetsAddButton = addIconButton(interpoPresetsGroup,'btn_add');
 		interpoPresetsAddButton.alignment = ['right','fill'];
 		interpoPresetsAddButton.onClick = interpoPresetsAddButtonClicked;
-		var interpoPresetsRemoveButton = addIconButton(interpoPresetsGroup,'btn_remove','');
+		var interpoPresetsRemoveButton = addIconButton(interpoPresetsGroup,'btn_remove');
 		interpoPresetsRemoveButton.alignment = ['right','fill'];
 		interpoPresetsRemoveButton.onClick = interpoPresetsRemoveButtonClicked;
 
 		//speed
 		var interpoSpeedGroup = addHGroup(panointerpo);
-		interpoSpeedGroup.maximumSize.height = 25;
-		var interpoSpeedButtonGroupe = addIconCheckbox(interpoSpeedGroup,'btn_interpo_speed.png','');
-		var interpoSpeedButton = interpoSpeedButtonGroupe.button;
-		interpoSpeedButtonGroupe.alignment = ['left','center'];
-		interpoSpeedButton.helpTip = tr("Speed");
-		interpoSpeedButtonGroupe.size = [40,10];
+		interpoSpeedGroup.maximumSize.height = 24;
+		var interpoSpeedButton = addIconCheckbox(interpoSpeedGroup,'btn_interpo_speed','',tr("Speed"));
 		interpoSpeedButton.onClick = function ()
 		{
-		interpoSpeedSlider.enabled = interpoSpeedButton.value;
-		interpoSpeedEdit.enabled = interpoSpeedButton.value;
+			interpoSpeedSlider.enabled = interpoSpeedButton.checked;
+			interpoSpeedEdit.enabled = interpoSpeedButton.checked;
 		}
 		var interpoSpeedSlider = interpoSpeedGroup.add('slider',undefined,0,-1000,1000);
 		interpoSpeedSlider.alignment = ['fill','center'];
 		interpoSpeedSlider.onChanging = function ()
 		{
-		var val = Math.round(interpoSpeedSlider.value);
-		interpoSpeedEdit.text = val;
-		if (settingsInteractiveUpdateButton.value) infl();
+			var val = Math.round(interpoSpeedSlider.value);
+			interpoSpeedEdit.text = val;
+			if (settingsInteractiveUpdateButton.value) infl();
 		}
 		interpoSpeedSlider.onChange = function ()
 		{
-		interpoPresetsList.selection = 0;
-		infl();
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 		var interpoSpeedEdit = interpoSpeedGroup.add('edittext',undefined,'0');
 		interpoSpeedEdit.minimumSize = [30,10];
 		interpoSpeedEdit.alignment = ['right','fill'];
-		interpoSpeedEdit.onChanging = function () {
-		var val = parseInt(interpoSpeedEdit.text);
-		if (!val) return;
-		interpoSpeedSlider.value = val;
-		interpoPresetsList.selection = 0;
-		infl();
+		interpoSpeedEdit.onChanging = function ()
+		{
+			var val = parseInt(interpoSpeedEdit.text);
+			if (!val) return;
+			interpoSpeedSlider.value = val;
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 		interpoSpeedEdit.onChange = infl;
 
@@ -4995,21 +4980,16 @@ function textColor(text,color)
 		interpoSpeedEdit.enabled = false;
 
 		//interpolation influences
-		//addSeparator(panointerpo,'Interpolation influence');
 
 		var interpoInGroup = addHGroup(panointerpo);
-		interpoInGroup.maximumSize.height = 25;
-		var boutonApprocheGroupe = addIconCheckbox(interpoInGroup,'btn_interpo_ease.png','');
-		boutonApproche = boutonApprocheGroupe.button;
-		boutonApproche.helpTip = tr("Ease In influence");
-		boutonApprocheGroupe.alignment = ['left','center'];
-		boutonApprocheGroupe.size = [40,10];
-		boutonApproche.value = true;
+		interpoInGroup.maximumSize.height = 24;
+		var boutonApproche = addIconCheckbox(interpoInGroup,'btn_interpo_ease','',tr("Ease In influence"));
+		boutonApproche.setChecked(true);
 		boutonApproche.enabled = false;
 		boutonApproche.onClick = function ()
 		{
-		interpoInSlider.enabled = boutonApproche.value;
-		interpoInEdit.enabled = boutonApproche.value;
+			interpoInSlider.enabled = boutonApproche.checked;
+			interpoInEdit.enabled = boutonApproche.checked;
 		}
 		var interpoInSliderGroup = addHGroup(interpoInGroup);
 		interpoInSliderGroup.orientation = 'stack';
@@ -5017,97 +4997,97 @@ function textColor(text,color)
 		interpoInSlider.alignment = ['fill','center'];
 		interpoInSlider.onChanging = function ()
 		{
-		var val = Math.round(interpoInSlider.value);
-		interpoInEdit.text = val;
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutSlider.value = val;
-		interpoOutEdit.text = val;
-		}
-		if (settingsInteractiveUpdateButton.value) infl();
+			var val = Math.round(interpoInSlider.value);
+			interpoInEdit.text = val;
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutSlider.value = val;
+				interpoOutEdit.text = val;
+			}
+			if (settingsInteractiveUpdateButton.value) infl();
 		}
 		interpoInSlider.onChange = function ()
 		{
-		interpoPresetsList.selection = 0;
-		infl();
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 		var interpoInSliderButtonsGroup = addHGroup(interpoInSliderGroup);
 		var interpoIn1 = interpoInSliderButtonsGroup.add('button',undefined,"1");
 		interpoIn1.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "1";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "1";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "1";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "1";
+			}
+			infl();
 		}
 		var interpoIn10 = interpoInSliderButtonsGroup.add('button',undefined,"10");
 		interpoIn10.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "10";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "10";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "10";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "10";
+			}
+			infl();
 		}
 		var interpoIn25 = interpoInSliderButtonsGroup.add('button',undefined,"25");
 		interpoIn25.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "25";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "25";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "25";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "25";
+			}
+			infl();
 		}
 		var interpoIn50 = interpoInSliderButtonsGroup.add('button',undefined,"50");
 		interpoIn50.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "50";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "50";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "50";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "50";
+			}
+			infl();
 		}
 		var interpoIn75 = interpoInSliderButtonsGroup.add('button',undefined,"75");
 		interpoIn75.onClick = function ()
-		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "75";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "75";
-		}
-		infl();
+			{
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "75";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "75";
+			}
+			infl();
 		}
 		var interpoIn90 = interpoInSliderButtonsGroup.add('button',undefined,"90");
 		interpoIn90.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "90";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "90";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "90";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "90";
+			}
+			infl();
 		}
 		var interpoIn100 = interpoInSliderButtonsGroup.add('button',undefined,"100");
 		interpoIn100.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoInEdit.text = "100";
-		if (interpoLockInfluencesButton.value)
-		{
-		interpoOutEdit.text = "100";
-		}
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoInEdit.text = "100";
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutEdit.text = "100";
+			}
+			infl();
 		}
 		if (eval(app.settings.getSetting('duik','interpolationSliders'))) interpoInSliderButtonsGroup.hide();
 		else interpoInSlider.hide();
@@ -5115,32 +5095,29 @@ function textColor(text,color)
 		var interpoInEdit = interpoInGroup.add('edittext',undefined,'33');
 		interpoInEdit.minimumSize = [30,10];
 		interpoInEdit.alignment = ['right','fill'];
-		interpoInEdit.onChanging = function () {
-		var val = parseInt(interpoInEdit.text);
-		if (!val) return;
-		interpoInSlider.value = val;
-		if (interpoLockInfluencesButton.value)
+		interpoInEdit.onChanging = function ()
 		{
-		interpoOutSlider.value = val;
-		interpoOutEdit.text = val;
-		}
-		interpoPresetsList.selection = 0;
-		infl();
+			var val = parseInt(interpoInEdit.text);
+			if (!val) return;
+			interpoInSlider.value = val;
+			if (interpoLockInfluencesButton.checked)
+			{
+				interpoOutSlider.value = val;
+				interpoOutEdit.text = val;
+			}
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 
 		var groupeInterpoOut = addHGroup(panointerpo);
-		groupeInterpoOut.maximumSize.height = 25;
+		groupeInterpoOut.maximumSize.height = 24;
 		groupeInterpoOut.visible = false;
-		var boutonEloignementGroupe = addIconCheckbox(groupeInterpoOut,'btn_interpo_out.png','');
-		boutonEloignement = boutonEloignementGroupe.button,
-		boutonEloignement.helpTip = tr("Ease Out influence");
-		boutonEloignementGroupe.alignment = ['left','center'];
-		boutonEloignementGroupe.size = [40,10];
-		boutonEloignement.value = true;
+		var boutonEloignement = addIconCheckbox(groupeInterpoOut,'btn_interpo_out','',tr("Ease Out influence"));
+		boutonEloignement.setChecked(true);
 		boutonEloignement.onClick = function ()
 		{
-		interpoOutSlider.enabled = boutonEloignement.value;
-		interpoOutEdit.enabled = boutonEloignement.value;
+			interpoOutSlider.enabled = boutonEloignement.checked;
+			interpoOutEdit.enabled = boutonEloignement.checked;
 		}
 		var interpoOutSliderGroup = addHGroup(groupeInterpoOut);
 		interpoOutSliderGroup.orientation = 'stack';
@@ -5148,64 +5125,64 @@ function textColor(text,color)
 		interpoOutSlider.alignment = ['fill','center'];
 		interpoOutSlider.onChanging = function()
 		{
-		var val = Math.round(interpoOutSlider.value);
-		interpoOutEdit.text = val;
-		if (settingsInteractiveUpdateButton.value) infl();
+			var val = Math.round(interpoOutSlider.value);
+			interpoOutEdit.text = val;
+			if (settingsInteractiveUpdateButton.value) infl();
 		}
 		interpoOutSlider.onChange = function ()
 		{
-		interpoPresetsList.selection = 0;
-		infl();
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 		var interpoOutSliderButtonsGroup = addHGroup(interpoOutSliderGroup);
 		var interpoOut1 = interpoOutSliderButtonsGroup.add('button',undefined,"1");
 		interpoOut1.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "1";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "1";
+			infl();
 		}
 		var interpoOut10 = interpoOutSliderButtonsGroup.add('button',undefined,"10");
 		interpoOut10.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "10";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "10";
+			infl();
 		}
 		var interpoOut25 = interpoOutSliderButtonsGroup.add('button',undefined,"25");
 		interpoOut25.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "25";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "25";
+			infl();
 		}
 		var interpoOut50 = interpoOutSliderButtonsGroup.add('button',undefined,"50");
 		interpoOut50.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "50";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "50";
+			infl();
 		}
 		var interpoOut75 = interpoOutSliderButtonsGroup.add('button',undefined,"75");
 		interpoOut75.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "75";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "75";
+			infl();
 		}
 		var interpoOut90 = interpoOutSliderButtonsGroup.add('button',undefined,"90");
 		interpoOut90.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "90";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "90";
+			infl();
 		}
 		var interpoOut100 = interpoOutSliderButtonsGroup.add('button',undefined,"100");
 		interpoOut100.onClick = function ()
 		{
-		interpoPresetsList.selection = 0;
-		interpoOutEdit.text = "100";
-		infl();
+			interpoPresetsList.selection = 0;
+			interpoOutEdit.text = "100";
+			infl();
 		}
 		if (eval(app.settings.getSetting('duik','interpolationSliders'))) interpoOutSliderButtonsGroup.hide();
 		else interpoOutSlider.hide();
@@ -5213,42 +5190,42 @@ function textColor(text,color)
 		var interpoOutEdit = groupeInterpoOut.add('edittext',undefined,'33');
 		interpoOutEdit.alignment = ['right','fill'];
 		interpoOutEdit.minimumSize = [30,10];
-		interpoOutEdit.onChanging = function () {
-		var val = parseInt(interpoOutEdit.text);
-		if (!val) return;
-		interpoOutSlider.value = val;
-		interpoPresetsList.selection = 0;
-		infl();
+		interpoOutEdit.onChanging = function ()
+		{
+			var val = parseInt(interpoOutEdit.text);
+			if (!val) return;
+			interpoOutSlider.value = val;
+			interpoPresetsList.selection = 0;
+			infl();
 		}
 
 
 		var interoInfluTopGroup = addHGroup(panointerpo);
-		interpoLockInfluencesButtonGroup = addIconCheckbox(interoInfluTopGroup,'btn_interpo_lock.png','');
-		interpoLockInfluencesButton = interpoLockInfluencesButtonGroup.button;
-		interpoLockInfluencesButton.alignment = ['left','bottom'];
-		interpoLockInfluencesButton.value = true;
+		interoInfluTopGroup.maximumSize.height = 24;
+		interpoLockInfluencesButton = addIconCheckbox(interoInfluTopGroup,'btn_interpo_lock');
+		interpoLockInfluencesButton.setChecked(true);
 		interpoLockInfluencesButton.onClick = function ()
 		{
-		if (interpoLockInfluencesButton.value)
-		{
-		boutonApproche.value = true;
-		boutonApproche.enabled = false;
-		boutonEloignement.value = true;
-		interpoInSlider.enabled = true;
-		interpoInEdit.enabled = true;
-		groupeInterpoOut.visible = false;
-		interpoOutSlider.value = parseInt(interpoInEdit.text);
-		interpoOutEdit.text = parseInt(interpoInEdit.text);$
-		boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lis.png');
-		interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lock.png');
-		}
-		else
-		{
-		boutonApproche.enabled = true;
-		groupeInterpoOut.visible = true;
-		boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_in.png');
-		interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_unlock.png');
-		}
+			if (interpoLockInfluencesButton.checked)
+			{
+				boutonApproche.checked = true;
+				boutonApproche.enabled = false;
+				boutonEloignement.checked = true;
+				interpoInSlider.enabled = true;
+				interpoInEdit.enabled = true;
+				groupeInterpoOut.visible = false;
+				interpoOutSlider.value = parseInt(interpoInEdit.text);
+				interpoOutEdit.text = parseInt(interpoInEdit.text);$
+				//boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lis.png');
+				//interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_lock.png');
+			}
+			else
+			{
+				boutonApproche.enabled = true;
+				groupeInterpoOut.visible = true;
+				//boutonApprocheGroupe.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_in.png');
+				//interpoLockInfluencesButtonGroup.img.image = ScriptUI.newImage(dossierIcones + 'btn_interpo_unlock.png');
+			}
 		}
 		var interpoGetInflButton = addIconButton(interoInfluTopGroup,'btn_get key',tr("Get"));
 		interpoGetInflButton.size = [30,22];
@@ -5278,6 +5255,7 @@ function textColor(text,color)
 		boutonMoprher.helpTip = tr("Create Morpher");
 		var boutonMKey = morpherGroup.add('checkbox',undefined,tr("Keyframes"));
 		boutonMKey.value = true;
+		boutonMKey.minimumSize.width = 100;
 		boutonMKey.alignment = ['fill','center'];
 
 		animationToolsGroup = addHGroup(panointerpo);
