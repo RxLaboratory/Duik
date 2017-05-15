@@ -3887,7 +3887,14 @@ var expertMode = eval(app.settings.getSetting('duik','expertMode'));
 function addIconButton(container,image,text){
 	if (expertMode) text = '';
 	var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png','',dossierIcones + image + '_o.png');
-	bouton.group.maximumSize.height = 25;
+	bouton.group.maximumSize.height = 24;
+	if (text != '')
+	{
+		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
+		bouton.image.minimumSize.width = 38;
+		bouton.image.alignment = ['left','fill'];
+		if (bouton.label) bouton.label.alignment = ['left','fill'];
+	}
 	return bouton;
 }
 function addIconRadioButton(conteneur,image,text){
