@@ -1,11 +1,9 @@
+
 /**
  * The whole script is encapsulated to avoid global variables
  * @property {object}	obj		- The 'this' of the script itself, either a ScriptUI Panel or undefined
  */
 (function (obj) {
-
-	#include libduik.jsxinc
-
 	// ============================= INIT =============================================
 	var version = "1.1";
 
