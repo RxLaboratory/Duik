@@ -2164,6 +2164,19 @@ http://www.duduf.net
 		 */
 		Duik.bridge.tvPaint = {};
 
+		if (typeof Duik.bridge.tvPaint.importClip !== 'function')
+		{
+			/**
+			 * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
+			 * @memberof Duik.Bridge.TVPaint
+			 * @param {File}		clipFile		The camera to parse
+			 */
+			Duik.bridge.tvPaint.importClip = function (clipFile)
+			{
+				//TODO
+			}
+		}
+
 		if (typeof Duik.bridge.tvPaint.parseCam !== 'function')
 		{
 			/**
@@ -2280,6 +2293,37 @@ http://www.duduf.net
 			}
 		}
 
+		if (typeof Duik.bridge.tvPaint.setBlendingMode !== 'function')
+		{
+			/**
+			 * Sets the blending mode of an AE Layer based on the TVPaint blend mode name
+			 * @memberof Duik.Bridge.TVPaint
+			 * @param {AVLayer}		layer		The layer
+			 * @param {string}		blendName	The TVPaint blending mode name
+			 */
+			Duik.bridge.tvPaint.setBlendingMode = function (layer,blendName)
+			{
+				switch (blendName)
+				{
+					case "Color":
+						layer.blendingMode = BlendingMode.NORMAL;
+						break;
+					case "Add":
+						layer.blendingMode =  BlendingMode.ADD;
+					case "Screen":
+						layer.blendingMode =  BlendingMode.SCREEN;
+						break;
+					case "Multiply":
+						layer.blendingMode =  BlendingMode.MULTIPLY;
+						break;
+					case "Overlay":
+						layer.blendingMode =  BlendingMode.OVERLAY;
+						break;
+					default:
+						layer.blendingMode = BlendingMode.NORMAL;
+				}
+			}
+		}
 	}
 
 	//================================
@@ -6665,6 +6709,34 @@ http://www.duduf.net
 		"expo == 0 ? expo = 1 : Math.abs(expo);\n" +
 		"timef = timeToFrames(time);\n" +
 		"valueAtTime(framesToTime( timef - timef%expo ))";
+		}
+	}
+	if (typeof Duik.getPrecompExposure !== 'function')
+	{
+		/**
+		 * Adds a slider on a precomposition layer, with keyframes representing the exposure of the layers inside the precomposition
+		 * @memberof Duik
+		 * @param {LayerItem}	precomp		- The layer of the precomposition
+		 */
+		Duik.getPrecompExposure = function (precomp)
+		{
+			//get source comp
+			var comp = precomp.source;
+
+			//if not a precomp, skip
+			if (!(comp instanceof CompItem)) throw "The layer must be a precomposition.";
+
+			//add slider
+			var slider = precompLayer.Effects.addProperty("ADBE Slider Control");
+			slider.name = "Detected Exposure";
+
+			//detect exposure
+			for (var i = 1 ; i <= comp.numLayers ; i++)
+			{
+				var layer = comp.layer(i);
+				slider(1).setValueAtTime(precompLayer.startTime + layer.inPoint,layer.inPoint);
+				slider(1).setInterpolationTypeAtKey(slider(1).numKeys,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+			}
 		}
 	}
 	if (typeof Duik.addBones !== 'function')
