@@ -3934,6 +3934,13 @@ function loadDuik()
 		}
 	}
 
+	//============= I/O ======================
+
+	{
+		tvpFile = File.openDialog("Select clipinfo.txt",'txt files:*.txt',false);
+		if (!tvpFile) return;
+		Duik.bridge.tvPaint.importClip(tvpFile);
+	}
 }
 
 
@@ -5372,9 +5379,7 @@ function loadDuik()
 		duikAnimImportButton.onClick = function () {};
 		duikAnimImportButton.group.enabled = false;
 		//TVP Anim
-		var tvpAnimImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
-		tvpAnimImportButton.onClick = function () {};
-		tvpAnimImportButton.group.enabled = false;
+		var tvpClipImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
 		//TVP Cam
 		var tvpCamButton2 = addIconButton(groupIOG,'btn_TVP Cam',tr("TVPaint Cam"),tr("Import a camera from TVPaint."));
 		tvpCamButton2.onClick = function () {panoio.hide();tvpCamPanel.show();};
