@@ -43,7 +43,7 @@ var developper = true;
 //== SET LANGUAGE ON FIRST START ==
 //=================================
 {
-	// This line in needed to load available languages
+	// This line is needed to load available languages
 	Dutranslator.getAvailable();
 
 	if (!app.settings.haveSetting('duik', 'lang')){
