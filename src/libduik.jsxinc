@@ -2185,13 +2185,25 @@ http://www.duduf.net
 		if (typeof Duik.bridge.exportAnimToJson !== 'function')
 		{
 			/**
-			 * Exports the animation from
-			 * @memberof Duik.Bridge.TVPaint
-			 * @param {File}		clipInfo		The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+			 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to a Json file.
+			 * @memberof Duik
+			 * @param {File}	file				The file to save the data
+			 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
+			 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
+			 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
+			 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
+			 * @return {Array}	An array of LayerAnim
 			 */
-			Duik.bridge.tvPaint.importClip = function (clipInfo)
+			Duik.bridge.exportAnimToJson = function (file,layers,selectedKeysOnly,startTime,endTime)
 			{
-
+				//copy the animation
+				var data  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
+				//stringify data
+				data = JSON.stringify(data);
+				//save to file
+				file.open('w');
+				file.write(data);
+				file.close();
 			}
 		}
 
@@ -7893,53 +7905,53 @@ http://www.duduf.net
 		 */
 		Duik.copyAnim = function (layers,selectedKeysOnly,startTime,endTime)
 		{
-		if (layers.length == 0)
-		{
-		return null;
-		}
+			if (layers.length == 0)
+			{
+				return null;
+			}
 
-		var comp = Duik.utils.getItem(layers,0).containingComp
+			var comp = Duik.utils.getItem(layers,0).containingComp;
 
-		if (selectedKeysOnly == undefined) selectedKeysOnly = false;
-		if (startTime == undefined) startTime = comp.workAreaStart;
-		if (endTime == undefined) endTime = comp.workAreaDuration + comp.workAreaStart;
+			if (selectedKeysOnly == undefined) selectedKeysOnly = false;
+			if (startTime == undefined) startTime = comp.workAreaStart;
+			if (endTime == undefined) endTime = comp.workAreaDuration + comp.workAreaStart;
 
-		Duik.copiedAnim = [];
+			Duik.copiedAnim = [];
 
-		//parcourir tous les calques a la recherche des anims a sauvegarder
-		for (var layerIndex = 0; layerIndex < layers.length ; layerIndex++)
-		{
-		var layerAnim = new LayerAnim();
-		var l = Duik.utils.getItem(layers,layerIndex);
-		layerAnim.name = l.name;
-		layerAnim.index = l.index;
+			//for each layer
+			for (var layerIndex = 0; layerIndex < layers.length ; layerIndex++)
+			{
+				var layerAnim = new LayerAnim();
+				var l = Duik.utils.getItem(layers,layerIndex);
+				layerAnim.name = l.name;
+				layerAnim.index = l.index;
 
-		// 1 - sauver l'anim des transformations
-		layerAnim.transformAnims = Duik.utils.getPropertyAnims(l.transform,selectedKeysOnly,false,startTime,endTime);
+				// 1 - sauver l'anim des transformations
+				layerAnim.transformAnims = Duik.utils.getPropertyAnims(l.transform,selectedKeysOnly,false,startTime,endTime);
 
-		// 2 - les masques
-		for (var maskIndex=1;maskIndex<=l("Masks").numProperties;maskIndex++)
-		{
-		var maskAnim = new MaskAnim();
-		maskAnim.name = l("Masks")(maskIndex).name;
-		maskAnim.anims = Duik.utils.getPropertyAnims(l("Masks")(maskIndex),selectedKeysOnly,false,startTime,endTime);
-		if (maskAnim.anims.length >=1) layerAnim.masksAnims.push(maskAnim);
-		}
+				// 2 - les masques
+				for (var maskIndex=1;maskIndex<=l("Masks").numProperties;maskIndex++)
+				{
+					var maskAnim = new MaskAnim();
+					maskAnim.name = l("Masks")(maskIndex).name;
+					maskAnim.anims = Duik.utils.getPropertyAnims(l("Masks")(maskIndex),selectedKeysOnly,false,startTime,endTime);
+					if (maskAnim.anims.length >=1) layerAnim.masksAnims.push(maskAnim);
+				}
 
-		// 3 - les effets
-		for (var effectIndex=1;effectIndex<=l("Effects").numProperties;effectIndex++)
-		{
-		var effectAnim = new EffectAnim();
-		effectAnim.name = l("Effects")(effectIndex).name;
-		effectAnim.matchName = l("Effects")(effectIndex).matchName;
-		effectAnim.anims = Duik.utils.getPropertyAnims(l("Effects")(effectIndex),selectedKeysOnly,false,startTime,endTime);
-		if (effectAnim.anims.length >=1) layerAnim.effectsAnims.push(effectAnim);
-		}
+				// 3 - les effets
+				for (var effectIndex=1;effectIndex<=l("Effects").numProperties;effectIndex++)
+				{
+					var effectAnim = new EffectAnim();
+					effectAnim.name = l("Effects")(effectIndex).name;
+					effectAnim.matchName = l("Effects")(effectIndex).matchName;
+					effectAnim.anims = Duik.utils.getPropertyAnims(l("Effects")(effectIndex),selectedKeysOnly,false,startTime,endTime);
+					if (effectAnim.anims.length >=1) layerAnim.effectsAnims.push(effectAnim);
+				}
 
-		Duik.copiedAnim.push(layerAnim);
+				Duik.copiedAnim.push(layerAnim);
 
-		}
-		return Duik.copiedAnim;
+			}
+			return Duik.copiedAnim;
 		}
 	}
 	/* PASTE ANIM - Duik.pasteAnim(layers,layerAnims,startTime,getLayerMethod);
