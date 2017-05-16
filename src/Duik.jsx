@@ -3112,7 +3112,7 @@ function loadDuik()
 		{
 		selected = Duik.utils.hasSelectedKeys(layers[i]);
 		if (selected) break;
-		selected = Duik.utils.hasSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAFX
+		selected = Duik.utils.hasSelectedKeys(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAE
 		if (selected) break;
 		}
 
@@ -3124,7 +3124,7 @@ function loadDuik()
 		{
 		var testTime = Duik.utils.getFirstKeyTime(layers[i]);
 		if (testTime < startTime) startTime = testTime;
-		testTime = Duik.utils.getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAFX
+		testTime = Duik.utils.getFirstKeyTime(layers[i].transform); //faut recommencer sur les transformations, c'est pas des proprietes comme les autres pour after... #StupidAE
 		if (testTime < startTime) startTime = testTime;
 		}
 		}
@@ -3941,6 +3941,57 @@ function loadDuik()
 		tvpFile = File.openDialog("Select clipinfo.txt",'txt files:*.txt',false);
 		if (!tvpFile) return;
 		Duik.bridge.tvPaint.importClip(tvpFile);
+	}
+
+	function exportAnimToJson()
+	{
+		var layers = app.project.activeItem.selectedLayers;
+		if (layers.length == 0)
+		{
+			alert(tr("Please select the layers from which you want to save animation"));
+			return;
+		}
+
+		//Asks for a save file
+		var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"JSON: *.json");
+		if (!saveFile) return;
+
+		//wether to store only selected keys if there are any
+		var selected = false;
+		//start time of the animation to store
+		var startTime = 86339;
+		//end time of the animation to store
+		var endTime = app.project.activeItem.workAreaDuration + app.project.activeItem.workAreaStart;
+
+		//check if there are selected keys
+		for (var i = 0; i < layers.length ; i++)
+		{
+			selected = Duik.utils.hasSelectedKeys(layers[i]);
+			if (selected) break;
+			//need to check transforms too... #StupidAE
+			selected = Duik.utils.hasSelectedKeys(layers[i].transform);
+			if (selected) break;
+		}
+
+		// If there are selected keys, look for the time of the first one
+		if (selected)
+		{
+			for (var i = 0; i < layers.length ; i++)
+			{
+				var testTime = Duik.utils.getFirstKeyTime(layers[i]);
+				if (testTime < startTime) startTime = testTime;
+				//need to check transforms too... #StupidAE
+				testTime = Duik.utils.getFirstKeyTime(layers[i].transform);
+				if (testTime < startTime) startTime = testTime;
+			}
+		}
+		//or the work area
+		else
+		{
+			startTime = app.project.activeItem.workAreaStart;
+		}
+
+		Duik.bridge.exportAnimToJson(saveFile,layers,selected,startTime,endTime);
 	}
 }
 
@@ -5394,8 +5445,7 @@ function loadDuik()
 		duikRigExportButton.group.enabled = false;
 		//Duik Anim
 		var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
-		duikAnimExportButton.onClick = function () {};
-		duikAnimExportButton.group.enabled = false;
+		duikAnimExportButton.onClick = exportAnimToJson;
 	}
 
 	//---------------
