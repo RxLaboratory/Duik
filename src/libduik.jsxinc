@@ -2193,11 +2193,230 @@ http://www.duduf.net
 			/**
 			 * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
 			 * @memberof Duik.Bridge.TVPaint
-			 * @param {File}		clipFile		The camera to parse
+			 * @param {File}		clipInfo		The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
 			 */
-			Duik.bridge.tvPaint.importClip = function (clipFile)
+			Duik.bridge.tvPaint.importClip = function (clipInfo)
 			{
-				//TODO
+				if (!clipInfo) throw "You must provide the clipInfo file.";
+				if (typeof clipInfo == 'string') clipInfo = File(clipInfo);
+				if (!(clipInfo instanceof File)) throw "clipInfo must be a File or a string path.";
+				if (!clipInfo.exists) throw "clipInfo does not exist."
+
+				/**
+				 * Gets the number of a frame from an image sequence
+				 * The number must be right before the extension
+				 * @param {string}	path	- The path of the frame
+				 */
+				function filepath_getNumber(path)
+				{
+					var string_noExt = path.substring(0,path.lastIndexOf('.'));
+					var numberi = 0;
+					var namei = 0;
+					for(var i = string_noExt.length-1;i>=0;i--)
+					{
+						if(isNaN(parseInt(string_noExt.charAt(i))))
+						{
+							numberi = i+1;
+							break;
+						}
+					}
+					number = string_noExt.substring(numberi,string_noExt.length);
+					return number;
+				}
+
+
+				//get path
+				clipFolder = clipInfo.parent;
+
+				//get infos
+				clipInfoData = [];
+				clipInfo.open('r');
+				while(!clipInfo.eof)
+				{
+					clipInfoData.push(clipInfo.readln());
+				}
+				clipInfo.close();
+				var framerate,clipDuration,bgColor;
+				for (var i = 0 ; i < clipInfoData.length ; i++)
+				{
+					var data = clipInfoData[i].split(';');
+					if (data[0].toLowerCase() == 'framerate')
+					{
+						framerate = data[1];
+					}
+					else if (data[0].toLowerCase() == 'duration')
+					{
+						clipDuration = data[1];
+					}
+					else if (data[0].toLowerCase() == 'bgcolor')
+					{
+						bgColor = data[1].split(',');
+					}
+				}
+
+				if (!framerate || !clipDuration || !bgColor) throw "Invalid clipInfo file. Please re-export from TVPaint."
+
+				//get layers
+				projClipFolder = app.project.items.addFolder(clipFolder.displayName);
+				myNewCompositions = new Array();
+				var folders = clipFolder.getFiles(Duik.js.foldersFilter);
+				for(var i = 0; i < folders.length; i++)
+				{
+					var curLayerFolder = folders[i];
+					var folderName = curLayerFolder.displayName;
+					var itemArray = curLayerFolder.getFiles("*.png");
+					if(itemArray.length > 0)
+					{
+						itemArray.sort();
+					}
+
+					projLayerFolder = app.project.items.addFolder(folderName);
+					projLayerFolder.parentFolder = projClipFolder;
+					projFramesFolder = app.project.items.addFolder(folderName + "_frames");
+					projFramesFolder.parentFolder = projLayerFolder;
+
+
+
+					//Importing
+					var footage = new Array();
+					var files = new Array();
+					for(var j = 0; j < itemArray.length;j++)
+					{
+						var curFile = new File(itemArray[j]);
+						var ioRef = new ImportOptions(curFile);
+						ioRef.importAs = ImportAsType.FOOTAGE;
+						var footageRef = app.project.importFile(ioRef);
+						footageRef.parentFolder = projFramesFolder;
+
+						footage[j] = footageRef;
+					}
+
+					// read layerinfo
+					layerInfopath= curLayerFolder.absoluteURI+"/layerinfo.txt";
+					layerInfo = new File(layerInfopath);
+
+					if (layerInfo.exists)
+					{
+					   layerInfo.open();
+
+						var layerIN = layerInfo.readln();
+						layerIN = layerIN.split(";");
+						layerIN = layerIN[1];
+
+						 var layerOUT = layerInfo.readln();
+						layerOUT = layerOUT.split(";");
+						layerOUT = layerOUT[1];
+
+						var layerBlendmode = layerInfo.readln();
+						layerBlendmode = layerBlendmode.split(";");
+						layerBlendmode = layerBlendmode[1];
+
+						var layerOpacity = layerInfo.readln();
+							layerOpacity = layerOpacity.split(";");
+							layerOpacity = layerOpacity[1];
+						try
+						{
+							var layerLabel = layerInfo.readln();
+							layerLabel = layerLabel.split(";");
+							layerLabel = layerLabel[1]*1;
+						}
+						catch(e)
+						{
+							layerLabel = 0;
+						}
+
+
+						layerInfo.close();
+					}
+					else
+					{
+						layerIN = 1
+						layerOUT = layerIN+clipDuration
+						layerBlendmode ="COLOR";
+					}
+
+					layerDuration = layerOUT-layerIN+1
+					layerDuration=layerDuration*(1/framerate)
+
+					//Creating Composition
+					curComp = app.project.items.addComp(folderName,footageRef.width,footageRef.height,1,layerDuration,framerate);
+					curComp.parentFolder = projLayerFolder;
+					var compStats=new Array(curComp,layerIN,layerOUT,layerBlendmode,layerOpacity,layerLabel);
+					myNewCompositions.push(compStats);
+
+					//Timing layers
+					for(k=0;k<footage.length;k++)
+					{
+						curImage = footage[k];
+						path = curImage.file.absoluteURI;
+						imageNUM =  filepath_getNumber(path)*1;
+
+						//frame duration
+						var imageIN = imageNUM/framerate-layerIN/framerate;
+
+						if(k==footage.length-1)
+						{
+							var imageDuration =  curComp.duration-imageIN;
+						}
+						else
+						{
+							nextImage = footage[k+1];
+							path = nextImage.file.absoluteURI;
+							nextNUM =  filepath_getNumber(path)*1;
+							var deltaFrame = nextNUM-imageNUM;
+							var imageDuration = deltaFrame/framerate;
+						}
+
+						//finding file
+						try
+						{
+							mylayers = curComp.layers.add(curImage);
+							mylayers.inPoint = imageIN;
+							mylayers.outPoint = imageIN+imageDuration;
+						}
+						catch(e)
+						{
+							alert("Cant Add Frame "+xsht_file+"\nof "+nameMain+"\n Probably because the footage wasnt imported because there is a write failue in the File");
+						}
+					}
+				}
+
+				//collect Layers In animation Comp
+				var collectComp = app.project.items.addComp(clipFolder.displayName,myNewCompositions[0][0].width,myNewCompositions[0][0].height,1,clipDuration/framerate,framerate);
+				collectComp.parentFolder = projClipFolder;
+
+				collectComp.bgColor =bgColor;
+				for(var p = myNewCompositions.length;p>0 ;p--)
+				{
+					var curCompStats = myNewCompositions[p-1];
+					var curComp=curCompStats[0];
+					var curIN=curCompStats[1];
+					var curOUT=curCompStats[2];
+					var curBLEND=curCompStats[3];
+					var curOPACITY=curCompStats[4];
+					var curLABEL=curCompStats[5];
+					var curLayer = collectComp.layers.add(curComp);
+					Duik.bridge.tvPaint.setBlendingMode(curLayer,curBLEND);
+					curLayer.startTime =(curIN-1)/framerate;
+					curLayer.opacity.setValue(curOPACITY);
+
+					try
+					{
+							curLayer.label=curLABEL*1;
+					}
+					catch(e)
+					{
+							curLayer.label=15;
+					}
+				}
+
+				//detect exposure in precomps
+				for (var j = 1;j<= collectComp.numLayers;j++)
+				{
+					//get layer
+					precompLayer = collectComp.layer(j);
+					Duik.getPrecompExposure(precompLayer);
+				}
 			}
 		}
 
