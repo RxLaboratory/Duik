@@ -3936,6 +3936,7 @@ function loadDuik()
 
 	//============= I/O ======================
 
+	function tvpClipImportButtonClicked()
 	{
 		tvpFile = File.openDialog("Select clipinfo.txt",'txt files:*.txt',false);
 		if (!tvpFile) return;
@@ -5380,6 +5381,7 @@ function loadDuik()
 		duikAnimImportButton.group.enabled = false;
 		//TVP Anim
 		var tvpClipImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
+		tvpClipImportButton.onClick = tvpClipImportButtonClicked;
 		//TVP Cam
 		var tvpCamButton2 = addIconButton(groupIOG,'btn_TVP Cam',tr("TVPaint Cam"),tr("Import a camera from TVPaint."));
 		tvpCamButton2.onClick = function () {panoio.hide();tvpCamPanel.show();};
