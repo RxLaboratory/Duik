@@ -1,3 +1,4 @@
+#include libduik.jsxinc
 
 /**
  * The whole script is encapsulated to avoid global variables
