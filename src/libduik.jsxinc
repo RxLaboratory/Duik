@@ -8236,7 +8236,9 @@ http://www.duduf.net
 	/**
 	 * Links the distance of the layer from the camera to its scale so its apparent size won't change.
 	 * If multiple cameras, include the camera used in the array
-	 * 
+	 *	 
+	 * If the layer is already linked, then the link is removed, it acts as a toggle. 
+	 *
 	 * SCALE Z-LINK - Duik.scaleZLink(layers);
 	 *
 	 * @param {LayerCollection} layrs		- The layers to scale-link
@@ -8287,25 +8289,47 @@ http://www.duduf.net
 			var currentDistance = Duik.utils.getDistance(layer,camera);
 			if (currentDistance == 0) currentDistance = 1;
 			var currentScale = layer.transform.scale.value;
+			
+			var alreadyLinked = false;
+			
+			{
+				var expr = layer.transform.scale.expression;
+				if(expr.startsWith("//Duik.scaleZLink\n")) alreadyLinked = true;
+			}
+			
+			if(alreadyLinked)
+			{
+				var scale = layer.transform.scale; 
+				layer.transform.scale.expression = "";
+				
+				var prop = layer.Effects.property(Duik.uiStrings.scale);
+				if(prop != null) prop.remove();				
+				layer.transform.scale = scale;
+			}
+			else
+			{
+				
+				var effect = layer.Effects.addProperty("ADBE Slider Control");
+				effect.name = Duik.uiStrings.scale;
+				
+			
+				effect(1).setValue(currentScale[0]);
 
-			var effect = layer.Effects.addProperty("ADBE Slider Control");
-			effect.name = Duik.uiStrings.scale;
-		
-			effect(1).setValue(currentScale[0]);
-
-			layer.transform.scale.expression = "//Duik.scaleZLink\n" +
-				"var sca = effect(\"" + effect.name + "\")(1);\n" +
-				"var C = thisComp.layer(\"" + camera.name + "\").position;\n" +
-				"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-				"var oDist = " + currentDistance + ";\n" +
-				"if (sca != 0) {\n" +
-				"var factor = oDist / sca;\n" +
-				"var dist = length(C,O);\n" +
-				"var result = dist/factor;\n" +
-				"result = [result,result,result];\n" +
-				"result = result ;\n" +
-				"result;\n" +
-				"} else [0,0,0];";
+				layer.transform.scale.expression = "//Duik.scaleZLink\n" +
+					"var sca = effect(\"" + effect.name + "\")(1);\n" +
+					"var C = thisComp.layer(\"" + camera.name + "\").position;\n" +
+					"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+					"var oDist = " + currentDistance + ";\n" +
+					"if (sca != 0) {\n" +
+					"var factor = oDist / sca;\n" +
+					"var dist = length(C,O);\n" +
+					"var result = dist/factor;\n" +
+					"result = [result,result,result];\n" +
+					"result = result ;\n" +
+					"result;\n" +
+					"} else [0,0,0];";
+			}
+			
 		}
 	}
 }
