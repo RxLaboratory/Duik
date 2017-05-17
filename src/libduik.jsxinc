@@ -7787,113 +7787,115 @@ http://www.duduf.net
 		"} else value;";
 		}
 	}
-	/* MULTIPLANE - Duik.multiplane(numLayers);
+	
 
-	Creates null objects rigged to easily animate a 2D multiplane camera.
-
-	parameters
-	numLayers | int, number of layers to create, default: 3
-
-	returns
-	void
-
-	*/
 	if (typeof Duik.multiplane !== 'function')
 	{
-		Duik.multiplane = function (nbre)
-		{
-		if (nbre == undefined) nbre = 3;
-		//la couche camera
-		camNbre = Math.ceil(nbre/2);
+        
+        /**
+            * MULTIPLANE - Duik.multiplane(numLayers);
+            * Creates null objects rigged to easily animate a 2D multiplane camera.
+            *
+            * @param {number} numLayers         - The number of layers to create, 3 by default
+            */
+        Duik.multiplane = function (nbre)
+        {
+            if (nbre == undefined) nbre = 3;
+            //la couche camera
+            camNbre = Math.ceil(nbre/2);
 
-		var calqueCam;
+            var calqueCam;
 
-		for (var i=1;i<=nbre;i++)
-		{
-		var numero = "L00";
-		i < 10 ? numero = "L0" + i : numero = "L" + i ;
-		//creer les nuls et leurs zeros
+            for (var i=1;i<=nbre;i++)
+            {
+                var numero = "L00";
+                i < 10 ? numero = "L0" + i : numero = "L" + i ;
+                //creer les nuls et leurs zeros
 
-		if (i == camNbre)
-		{
-		if (Duik.settings.controllerType == Duik.layerTypes.VECTOR)
-		{
-		var cam = Duik.addController();
-		cam.camera = true;
-		cam.update();
-		calqueCam = cam.layer;
-		}
-		else
-		{
-		var calqueCam = app.project.activeItem.layers.addNull();
-		}
+                if (i == camNbre)
+                {
+                    if (Duik.settings.controllerType == Duik.layerTypes.VECTOR)
+                    {
+                        var cam = Duik.addController();
+                        cam.camera = true;
+                        cam.update();
+                        calqueCam = cam.layer;
+                    }
+                    else
+                    {
+                        var calqueCam = app.project.activeItem.layers.addNull();
+                    }
 
-		//Creer un ctrl cam
-		calqueCam.name = numero + " cam";
-		//ajouter un zero
-		Duik.addZero(calqueCam);
-		}
-		else
-		{
-		var calque = app.project.activeItem.layers.addNull() ;
-		calque.name = numero;
-		//ajouter un zero
-		Duik.addZero(calque);
-		}
-		}
+                    //Creer un ctrl cam
+                    calqueCam.name = numero + " cam";
+                    //ajouter un zero
+                    Duik.addZero(calqueCam);
+                }
+                else
+                {
+                    var calque = app.project.activeItem.layers.addNull() ;
+                    calque.name = numero;
+                    //ajouter un zero
+                    Duik.addZero(calque);
+                }
+            }
 
-		//cam effect
-		var effect;
-		effect = Duik.utils.addEffect(calqueCam,Duik.effects.Multiplane);
-		effect.name = Duik.uiStrings.multiplane;
+            //cam effect
+            var effect;
+            effect = Duik.utils.addEffect(calqueCam,Duik.effects.Multiplane);
+            effect.name = Duik.uiStrings.multiplane;
 
-		//cam rig
-		var camZero = calqueCam.parent;
-		//tilt
-		camZero.transform.rotation.expression = "//Duik.multiplane\n" +
-		"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
-		//zoom & truck in/out
-		camZero.transform.scale.expression = "//Duik.multiplane\n" +
-		"var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" +
-		"var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" +
-		"value + [zoom,zoom] + [truck,truck];";
-		//pan
-		camZero.transform.position.expression = "//Duik.multiplane\n" +
-		"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
+            //cam rig
+            var camZero = calqueCam.parent;
+            //tilt
+            camZero.transform.rotation.expression = "//Duik.multiplane\n" +
+            "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
+            //zoom & truck in/out
+            camZero.transform.scale.expression = "//Duik.multiplane\n" +
+            "var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" +
+            "var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" +
+            "value + [zoom,zoom] + [truck,truck];";
+            //pan
+            camZero.transform.position.expression = "//Duik.multiplane\n" +
+            "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
 
-		//ajouter les expressions et curseurs
-		for (var i=1;i<=nbre;i++)
-		{
-		//si on n'est pas sur le calque cam (dont on differencie le numero si il est pair ou impair)
-		if (i != camNbre-nbre%2+1 )
-		{
-		var calque = app.project.activeItem.layer(i);
-		var zero = calque.parent;
-		//add position expression
-		var curseur = calque.Effects.addProperty("ADBE Slider Control");
-		curseur.name = Duik.uiStrings.camInfluence;
-		(i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
-		delete curseur;
-		calque.transform.position.expression = "//Duik.multiplane\nthisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"" + curseur.name + "\")(1)";
-		//rig the zero
-		//tilt
-		zero.transform.rotation.expression = "//Duik.multiplane\n" +
-		"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
-		//zoom & truck in/out
-		zero.transform.scale.expression = "//Duik.multiplane\n" +
-		"var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" +
-		"var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" +
-		"var infl = thisComp.layer(\"" + calque.name + "\").effect(\"" + curseur.name + "\")(1);\n" +
-		"value + [zoom,zoom] + [truck,truck]*infl;";
-		//pan
-		zero.transform.position.expression = "//Duik.multiplane\n" +
-		"thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
-		}
-		}
+            //ajouter les expressions et curseurs
+            for (var i=1;i<=nbre;i++)
+            {
+                //si on n'est pas sur le calque cam (dont on differencie le numero si il est pair ou impair)
+                if (i != camNbre-nbre%2+1 )
+                {
+                    var calque = app.project.activeItem.layer(i);
+                    var zero = calque.parent;
+                    
+                    //add position expression
+                    var curseur = calque.Effects.addProperty("ADBE Slider Control");
+                    curseur.name = Duik.uiStrings.camInfluence;
+                    (i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
+                    delete curseur;
+                    calque.transform.position.expression = "//Duik.multiplane\nthisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"" + curseur.name + "\")(1)";
+                    
+                    //rig the zero
+                    //tilt
+                    zero.transform.rotation.expression = "//Duik.multiplane\n" +
+                    "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
+                    
+                    //zoom & truck in/out
+                    zero.transform.scale.expression = "//Duik.multiplane\n" +
+                    "var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" +
+                    "var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" +
+                    "var infl = thisComp.layer(\"" + calque.name + "\").effect(\"" + curseur.name + "\")(1);\n" +
+                    "value + [zoom,zoom] + [truck,truck]*infl;";
+                    
+                    //pan
+                    zero.transform.position.expression = "//Duik.multiplane\n" +
+                    "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
+                }
+            }
 
-		Duik.utils.deselectLayers();
-		calqueCam.selected = true;
-		}
+            Duik.utils.deselectLayers();
+            calqueCam.selected = true;
+        }
 	}
 	if (typeof Duik.copyAnim !== 'function')
 	{
