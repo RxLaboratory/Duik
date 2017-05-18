@@ -3991,7 +3991,7 @@ function loadDuik()
 			startTime = app.project.activeItem.workAreaStart;
 		}
 
-		Duik.bridge.exportAnimToJson(saveFile,layers,selected,startTime,endTime);
+		Duik.bridge.json.exportAnim(saveFile,layers,selected,startTime,endTime);
 	}
 
 	function importAnimFromJson()
@@ -4007,7 +4007,7 @@ function loadDuik()
 		var openFile = File.openDialog(tr("Please select the animation file."),"JSON: *.json");
 		if (!openFile) return;
 
-		Duik.bridge.importAnimFromJson(openFile);
+		Duik.bridge.json.importAnim(openFile);
 
 		app.beginUndoGroup(tr("Duik - Import JSON Anim"));
 		var totalPasted = 0;
