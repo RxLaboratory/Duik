@@ -3996,11 +3996,16 @@ function loadDuik()
 
 	function importAnimFromJson()
 	{
-		var layers = app.project.activeItem.selectedLayers;
+		var comp = getCurrentComp();
+		if (!comp) return null;
+		var layers = comp.selectedLayers;
 		if (layers.length == 0)
 		{
-			alert(tr("Please select the layers where you want to load the animation"));
-			return;
+			layers = comp.layers;
+		}
+		if (layers.length == 0)
+		{
+			alert(tr("There are no layers in this composition.\nAnimation must be imported on already existing layers."));
 		}
 
 		//Asks for the file
@@ -4011,13 +4016,14 @@ function loadDuik()
 
 		app.beginUndoGroup(tr("Duik - Import JSON Anim"));
 		var totalPasted = 0;
+
 		if (Duik.settings.getLayersMethod == Duik.getLayers.SELECTION_INDEX)
 		{
-			totalPasted = Duik.pasteAnim(app.project.activeItem.selectedLayers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+			totalPasted = Duik.pasteAnim(layers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
 		}
 		else
 		{
-			totalPasted = Duik.pasteAnim(app.project.activeItem.layers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+			totalPasted = Duik.pasteAnim(layers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
 		}
 		app.endUndoGroup();
 		if (totalPasted != Duik.copiedAnim.length) alert(tr("Pasted animation on ") + totalPasted + ' ' + tr("layers") + '.\n\n' + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
