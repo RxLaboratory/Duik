@@ -3993,6 +3993,35 @@ function loadDuik()
 
 		Duik.bridge.exportAnimToJson(saveFile,layers,selected,startTime,endTime);
 	}
+
+	function importAnimFromJson()
+	{
+		var layers = app.project.activeItem.selectedLayers;
+		if (layers.length == 0)
+		{
+			alert(tr("Please select the layers where you want to load the animation"));
+			return;
+		}
+
+		//Asks for the file
+		var openFile = File.openDialog(tr("Please select the animation file."),"JSON: *.json");
+		if (!openFile) return;
+
+		Duik.bridge.importAnimFromJson(openFile);
+
+		app.beginUndoGroup(tr("Duik - Import JSON Anim"));
+		var totalPasted = 0;
+		if (Duik.settings.getLayersMethod == Duik.getLayers.SELECTION_INDEX)
+		{
+			totalPasted = Duik.pasteAnim(app.project.activeItem.selectedLayers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+		}
+		else
+		{
+			totalPasted = Duik.pasteAnim(app.project.activeItem.layers,Duik.copiedAnim,app.project.activeItem.time,Duik.settings.getLayersMethod);
+		}
+		app.endUndoGroup();
+		if (totalPasted != Duik.copiedAnim.length) alert(tr("Pasted animation on ") + totalPasted + ' ' + tr("layers") + '.\n\n' + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
+	}
 }
 
 
@@ -5428,8 +5457,7 @@ function loadDuik()
 		duikRigImportButton.group.enabled = false;
 		//Duik Anim
 		var duikAnimImportButton =  addIconButton(groupIOG,'btn_copy anim',tr("Animation"),tr("Imports an animation saved with Duik (JSON or XML)."));
-		duikAnimImportButton.onClick = function () {};
-		duikAnimImportButton.group.enabled = false;
+		duikAnimImportButton.onClick = importAnimFromJson;
 		//TVP Anim
 		var tvpClipImportButton =  addIconButton(groupIOG,'btn_TVP Anim',tr("TVPaint Clip"),tr("Import a clip from TVPaint."));
 		tvpClipImportButton.onClick = tvpClipImportButtonClicked;

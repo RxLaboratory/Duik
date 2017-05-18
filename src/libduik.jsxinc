@@ -2184,6 +2184,95 @@ http://www.duduf.net
 		 */
 		Duik.bridge = {};
 
+		if (typeof Duik.bridge.keyframeInterpolationTypeToName !== 'function')
+		{
+			/**
+			 * Gets the name of an After Effects interpolation type
+			 * @param {KeyframeInterpolationType}	type	The After Effects interpolation type
+			 * @return {string}	The interpolation name or empty string if not found
+			 */
+			Duik.bridge.keyframeInterpolationTypeToName = function (type)
+			{
+				if (type == KeyframeInterpolationType.LINEAR) return 'linear';
+				if (type == KeyframeInterpolationType.BEZIER) return 'bezier';
+				if (type == KeyframeInterpolationType.HOLD) return 'hold';
+				else return '';
+			}
+		}
+
+		if (typeof Duik.bridge.keyframeInterpolationNameToType !== 'function')
+		{
+			/**
+			 * Gets the After Effects interpolation type with its name
+			 * @param {string}	name	The interpolation name
+			 * @return {KeyframeInterpolationType}	The interpolation type or null if not found
+			 */
+			Duik.bridge.keyframeInterpolationNameToType = function (name)
+			{
+				if (name.toLowerCase() == 'linear') return KeyframeInterpolationType.LINEAR;
+				if (name.toLowerCase() == 'bezier') return KeyframeInterpolationType.BEZIER;
+				if (name.toLowerCase() == 'hold') return KeyframeInterpolationType.HOLD;
+				else return null;
+			}
+		}
+
+		if (typeof Duik.bridge.cleanAnimExportData !== 'function')
+		{
+			/**
+			 * Cleans data from an After Effects animation before exporting it
+			 * @param {object}	data	The animation
+			 * @return {object}	The data cleaned
+			 */
+			Duik.bridge.cleanAnimExportData = function (data)
+			{
+				var newData = data;
+				for (var i = 0 ; i < newData.length ; i++)
+				{
+					var layer = newData[i];
+					for (var j = 0 ; j < layer.transformAnims.length ; j++)
+					{
+						var prop = layer.transformAnims[j];
+						for (var k = 0 ; k < prop.keys.length ; k++)
+						{
+							var key = prop.keys[k];
+							key.inInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key.inInterpolationType);
+							key.outInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key.outInterpolationType);
+						}
+					}
+				}
+				return newData;
+			}
+		}
+
+		if (typeof Duik.bridge.cleanAnimImportData !== 'function')
+		{
+			/**
+			 * Cleans data from an After Effects animation before importing it
+			 * @param {object}	data	The animation
+			 * @return {object}	The data cleaned
+			 */
+			Duik.bridge.cleanAnimImportData = function (data)
+			{
+				var newData = data;
+				for (var i = 0 ; i < newData.length ; i++)
+				{
+					var layer = newData[i];
+					for (var j = 0 ; j < layer.transformAnims.length ; j++)
+					{
+						var prop = layer.transformAnims[j];
+						for (var k = 0 ; k < prop.keys.length ; k++)
+						{
+							var key = prop.keys[k];
+							key.inInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key.inInterpolationType);
+							key.outInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key.outInterpolationType);
+							alert(key.inInterpolationType);
+						}
+					}
+				}
+				return newData;
+			}
+		}
+
 		if (typeof Duik.bridge.exportAnimToJson !== 'function')
 		{
 			/**
@@ -2200,6 +2289,8 @@ http://www.duduf.net
 			{
 				//copy the animation
 				var data  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
+				//clean data
+				data = Duik.bridge.cleanAnimExportData(data);
 				//stringify data
 				data = JSON.stringify(data);
 				//save to file
@@ -2226,6 +2317,8 @@ http://www.duduf.net
 				file.close();
 				//parse data
 				var anim  = JSON.parse(data);
+				//clean data
+				anim  = Duik.bridge.cleanAnimImportData(anim);
 				//copy the animation
 				Duik.copiedAnim = anim;
 				return anim
