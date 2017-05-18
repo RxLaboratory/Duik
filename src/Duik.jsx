@@ -3951,6 +3951,7 @@ function loadDuik()
 	function exportAnimToJson()
 	{
 		var layers = getCurrentLayers();
+		if (!layers) return;
 		if (layers.length == 0)
 		{
 			alert(tr("Please select the layers from which you want to save animation"));
