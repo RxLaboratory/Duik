@@ -3944,7 +3944,7 @@ function loadDuik()
 	}
 
 	/**
-	 * Exports an animation as JSON
+	 * Exports an animation as JSON or XML
 	 * Shows an save file dialog then exports the animation of the selected layers
 	 * Only the selected keyframes are exported if there were selected keyframes, or all the keyframes otherwise.
 	 */
@@ -3958,8 +3958,11 @@ function loadDuik()
 		}
 
 		//Asks for a save file
-		var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"JSON: *.json");
+		var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"JSON: *.json,XML: *.xml");
 		if (!saveFile) return;
+
+		var xml = false;
+		if (saveFile.name.substring(saveFile.name.lastIndexOf(".xml"))) xml = true;
 
 		//wether to store only selected keys if there are any
 		var selected = false;
@@ -3996,7 +3999,8 @@ function loadDuik()
 			startTime = app.project.activeItem.workAreaStart;
 		}
 
-		Duik.bridge.json.exportAnim(saveFile,layers,selected,startTime,endTime);
+		if (xml) Duik.bridge.xml.exportAnim(saveFile,layers,selected,startTime,endTime);
+		else Duik.bridge.json.exportAnim(saveFile,layers,selected,startTime,endTime);
 	}
 
 	/**
@@ -4037,6 +4041,7 @@ function loadDuik()
 		app.endUndoGroup();
 		if (totalPasted != Duik.copiedAnim.length) alert(tr("Pasted animation on ") + totalPasted + ' ' + tr("layers") + '.\n\n' + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
 	}
+
 }
 
 
