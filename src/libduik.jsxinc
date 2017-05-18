@@ -7787,11 +7787,11 @@ http://www.duduf.net
 		"} else value;";
 		}
 	}
-	
+
 
 	if (typeof Duik.multiplane !== 'function')
 	{
-        
+
         /**
             * MULTIPLANE - Duik.multiplane(numLayers);
             * Creates null objects rigged to easily animate a 2D multiplane camera.
@@ -7867,26 +7867,26 @@ http://www.duduf.net
                 {
                     var calque = app.project.activeItem.layer(i);
                     var zero = calque.parent;
-                    
+
                     //add position expression
                     var curseur = calque.Effects.addProperty("ADBE Slider Control");
                     curseur.name = Duik.uiStrings.camInfluence;
                     (i<camNbre+1) ? curseur(1).setValue(Math.abs(i-camNbre-2)-nbre%2) : curseur(1).setValue((1/camNbre)*Math.abs(i-nbre-1)) ;
                     delete curseur;
                     calque.transform.position.expression = "//Duik.multiplane\nthisComp.layer(\"L0" + camNbre + " cam\").position * effect(\"" + curseur.name + "\")(1)";
-                    
+
                     //rig the zero
                     //tilt
                     zero.transform.rotation.expression = "//Duik.multiplane\n" +
                     "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(4);";
-                    
+
                     //zoom & truck in/out
                     zero.transform.scale.expression = "//Duik.multiplane\n" +
                     "var zoom = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(2);\n" +
                     "var truck = thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(3);\n" +
                     "var infl = thisComp.layer(\"" + calque.name + "\").effect(\"" + curseur.name + "\")(1);\n" +
                     "value + [zoom,zoom] + [truck,truck]*infl;";
-                    
+
                     //pan
                     zero.transform.position.expression = "//Duik.multiplane\n" +
                     "thisComp.layer(\"L0" + camNbre + " cam\").effect(\"" + Duik.uiStrings.multiplane + "\")(1);";
@@ -8234,107 +8234,107 @@ http://www.duduf.net
 		}
 	}
 	if (typeof Duik.scaleZLink !== 'function')
-{
-	/**
-	 * Links the distance of the layer from the camera to its scale so its apparent size won't change.
-	 * If multiple cameras, include the camera used in the array
-	 *	 
-	 * If the layer is already linked, then the link is removed, it acts as a toggle. 
-	 *
-	 * SCALE Z-LINK - Duik.scaleZLink(layers);
-	 *
-	 * @param {LayerCollection} layrs		- The layers to scale-link
-	*/
-	Duik.scaleZLink = function (layrs)
 	{
-		if (layrs == undefined) return;
-		if (layrs.length == 0) return;
-	
-		var camera = null;
-		//find camera
-		var layers = Duik.utils.convertCollectionToArray(layrs);
-		
-		for (i = 0 ; i <layers.length;i++)
+	/**
+		 * Links the distance of the layer from the camera to its scale so its apparent size won't change.
+		 * If multiple cameras, include the camera used in the array
+		 *
+		 * If the layer is already linked, then the link is removed, it acts as a toggle.
+		 *
+		 * SCALE Z-LINK - Duik.scaleZLink(layers);
+		 *
+		 * @param {LayerCollection} layrs		- The layers to scale-link
+		*/
+		Duik.scaleZLink = function (layrs)
 		{
-			var l = layers[i];
-			if (l instanceof CameraLayer)
+			if (layrs == undefined) return;
+			if (layrs.length == 0) return;
+
+			var camera = null;
+			//find camera
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+
+			for (i = 0 ; i <layers.length;i++)
 			{
-				camera = l;
-				break;
-			}
-		}
-		
-		if (camera == null)
-		{
-			var comp = layers[0].containingComp;
-			
-			for (var i = 1;i<=comp.layers.length;i++)
-			{
-				var l = comp.layers[i];
+				var l = layers[i];
 				if (l instanceof CameraLayer)
 				{
 					camera = l;
 					break;
 				}
 			}
-		}
-		
-		if (camera == null) return;
 
-		//go!
-		var layers = Duik.utils.convertCollectionToArray(layrs);
-		for (i = 0 ; i <layers.length;i++)
-		{
-			var layer = layers[i];
-			layer.threeDLayer = true;
-			if (!layer.threeDLayer) continue;
-			var currentDistance = Duik.utils.getDistance(layer,camera);
-			if (currentDistance == 0) currentDistance = 1;
-			var currentScale = layer.transform.scale.value;
-			
-			var alreadyLinked = false;
-			
+			if (camera == null)
 			{
-				var expr = layer.transform.scale.expression;
-				if(expr.lastIndexOf("//Duik.scaleZLink\n", 0) === 0) alreadyLinked = true;
-			}
-			
-			if(alreadyLinked)
-			{
-				var scale = layer.transform.scale.value; 
-				layer.transform.scale.expression = "";
-				
-				var prop = layer.Effects.property(Duik.uiStrings.scale);
-				if(prop != null) prop.remove();				
-				layer.transform.scale.setValue(scale);
-			}
-			else
-			{
-				
-				var effect = layer.Effects.addProperty("ADBE Slider Control");
-				effect.name = Duik.uiStrings.scale;
-				
-			
-				effect(1).setValue(currentScale[0]);
+				var comp = layers[0].containingComp;
 
-				layer.transform.scale.expression = "//Duik.scaleZLink\n" +
-					"var sca = effect(\"" + effect.name + "\")(1);\n" +
-					"var C = thisComp.layer(\"" + camera.name + "\").position;\n" +
-					"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-					"var oDist = " + currentDistance + ";\n" +
-					"if (sca != 0) {\n" +
-					"var factor = oDist / sca;\n" +
-					"var dist = length(C,O);\n" +
-					"var result = dist/factor;\n" +
-					"result = [result,result,result];\n" +
-					"result = result ;\n" +
-					"result;\n" +
-					"} else [0,0,0];";
+				for (var i = 1;i<=comp.layers.length;i++)
+				{
+					var l = comp.layers[i];
+					if (l instanceof CameraLayer)
+					{
+						camera = l;
+						break;
+					}
+				}
 			}
-			
+
+			if (camera == null) return;
+
+			//go!
+			var layers = Duik.utils.convertCollectionToArray(layrs);
+			for (i = 0 ; i <layers.length;i++)
+			{
+				var layer = layers[i];
+				layer.threeDLayer = true;
+				if (!layer.threeDLayer) continue;
+				var currentDistance = Duik.utils.getDistance(layer,camera);
+				if (currentDistance == 0) currentDistance = 1;
+				var currentScale = layer.transform.scale.value;
+
+				var alreadyLinked = false;
+
+				{
+					var expr = layer.transform.scale.expression;
+					if(expr.lastIndexOf("//Duik.scaleZLink\n", 0) === 0) alreadyLinked = true;
+				}
+
+				if(alreadyLinked)
+				{
+					var scale = layer.transform.scale.value;
+					layer.transform.scale.expression = "";
+
+					var prop = layer.Effects.property(Duik.uiStrings.scale);
+					if(prop != null) prop.remove();
+					layer.transform.scale.setValue(scale);
+				}
+				else
+				{
+
+					var effect = layer.Effects.addProperty("ADBE Slider Control");
+					effect.name = Duik.uiStrings.scale;
+
+
+					effect(1).setValue(currentScale[0]);
+
+					layer.transform.scale.expression = "//Duik.scaleZLink\n" +
+						"var sca = effect(\"" + effect.name + "\")(1);\n" +
+						"var C = thisComp.layer(\"" + camera.name + "\").position;\n" +
+						"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+						"var oDist = " + currentDistance + ";\n" +
+						"if (sca != 0) {\n" +
+						"var factor = oDist / sca;\n" +
+						"var dist = length(C,O);\n" +
+						"var result = dist/factor;\n" +
+						"result = [result,result,result];\n" +
+						"result = result ;\n" +
+						"result;\n" +
+						"} else [0,0,0];";
+				}
+
+			}
 		}
 	}
-}
 	/* SMART TIME REMAP - Duik.timeRemap(layers);
 
 	Activates the time remapping of the layers, extending them to the length of the comp and
