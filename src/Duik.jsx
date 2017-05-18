@@ -3943,6 +3943,11 @@ function loadDuik()
 		Duik.bridge.tvPaint.importClip(tvpFile);
 	}
 
+	/**
+	 * Exports an animation as JSON
+	 * Shows an save file dialog then exports the animation of the selected layers
+	 * Only the selected keyframes are exported if there were selected keyframes, or all the keyframes otherwise.
+	 */
 	function exportAnimToJson()
 	{
 		var layers = app.project.activeItem.selectedLayers;
@@ -3994,6 +3999,10 @@ function loadDuik()
 		Duik.bridge.json.exportAnim(saveFile,layers,selected,startTime,endTime);
 	}
 
+	/**
+	 * Imports an animation previously exported as JSON
+	 * Shows an open file dialog then imports the animation on the selected layers or all the layers of the comp if none were selected
+	 */
 	function importAnimFromJson()
 	{
 		var comp = getCurrentComp();
