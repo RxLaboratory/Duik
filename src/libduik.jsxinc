@@ -57,6 +57,7 @@ http://www.duduf.net
  */
 {
 	#include json2.jsxinc
+	#include xml2json.jsxinc
 
 	if (typeof Duik !== 'object'){
 		Duik = {};
@@ -2312,6 +2313,7 @@ http://www.duduf.net
 				//stringify data
 				data = JSON.stringify(data);
 				//save to file
+				file.encoding = 'UTF-8';
 				file.open('w');
 				file.write(data);
 				file.close();
@@ -2330,6 +2332,7 @@ http://www.duduf.net
 			Duik.bridge.json.importAnim = function (file)
 			{
 				//open and load file
+				file.encoding = 'UTF-8';
 				file.open('r');
 				var data = file.read();
 				file.close();
@@ -2343,7 +2346,104 @@ http://www.duduf.net
 			}
 		}
 
+		/**
+		 * Contains import and export methods for XML
+		 * @class Xml
+		 * @memberof Duik.bridge
+		 * @classdesc Contains import and export methods for XML
+		 */
+		Duik.bridge.xml = {};
 
+		if (typeof Duik.bridge.xml.exportAnim !== 'function')
+		{
+			/**
+			 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to an XML file.
+			 * @memberof Duik.bridge.json
+			 * @param {File}	file				The file to save the data
+			 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
+			 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
+			 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
+			 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
+			 * @return {Array}	An array of LayerAnim
+			 */
+			Duik.bridge.xml.exportAnim = function (file,layers,selectedKeysOnly,startTime,endTime)
+			{
+				//copy the animation
+				var data  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
+				//clean data
+				data = Duik.bridge.cleanAnimExportData(data);
+				var x2js = new X2JS();
+				var xml = x2js.json2xml_str(data);
+
+				//convert to xml
+				/*var xml = '<?xml version="1.0" encoding="UTF-8" ?>\n';
+				for (var l = 0; l < data.length ; l++)
+				{
+					var layer = data[l];
+					xml = xml + '<layer>\n' +
+						'\t<name>' + layer.name + '</name>\n' +
+						'\t<index>' + layer.index + '</index>\n' +
+						'\t<transformAnims>\n';
+					for (var a = 0 ; a < layer.transformAnims.length ; a++)
+					{
+						var anim = layer.transformAnims[a];
+						xml = xml + '\t\t<anim>\n' +
+							'\t\t\t<name>' + anim.name + '</name>\n' +
+							'\t\t\t<matchName>' + anim.matchName + '</matchName>\n' +
+							'\t\t\t<startValue>' + anim.startValue.toString() + '</startValue>\n' +
+							'\t\t\t<keys>\n';
+						for (var k = 0 ; k < anim.keys.length ; k++)
+						{
+							var key = anim.keys[a];
+							xml = xml + '\t\t\t\t<key>\n' +
+								'\t\t\t\t\t<time>' + key.time + '</time>\n' +
+								'\t\t\t\t\t<value>' + key.value.toString() + '</value>\n' +
+								'\t\t\t\t\t<inInterpolationType>' + key.inInterpolationType + '</inInterpolationType>\n' +
+								'\t\t\t\t\t<outInterpolationType>' + key.outInterpolationType + '</outInterpolationType>\n' +
+								'\t\t\t\t\t<spatial>' + key.spatial.toString() + '</spatial>\n' +
+								'\t\t\t\t\t<spatialProperties>\n' +
+								'\t\t\t\t\t<inTangents>\n';
+								for(var t = 0 ; t < key.spatialProperties.inTangent.length ; t++)
+								{
+									xml = xml + '\t\t\t\t\t\t<inTangent>' + key.spatialProperties.inTangent[0] + '</inTangents>\n';
+								}
+							xml = xml + '\t\t\t\t\t</inTangents>\n' +
+								'\t\t\t\t\t<outTangents>\n';
+								for(var t = 0 ; t < key.spatialProperties.outTangent.length ; t++)
+								{
+									xml = xml + '\t\t\t\t\t\t<outTangent>' + key.spatialProperties.outTangent[0] + '</outTangent>\n';
+								}
+							xml = xml + '\t\t\t\t\t</outTangents>\n' +
+								'\t\t\t\t\t<continuous>' + key.spatialProperties.continuous.toString() + '</continuous>\n' +
+								'\t\t\t\t\t<autoBezier>' + key.spatialProperties.autoBezier.toString() + '</autoBezier>\n' +
+								'\t\t\t\t\t<roving>' + key.spatialProperties.roving.toString() + '</roving>\n' +
+								'\t\t\t\t\t</spatialProperties>\n' +
+								'\t\t\t\t\t<inEase>\n' +//TODO Bug, this is an Array not an object
+								'\t\t\t\t\t\t<influence>' + key.inEase.influence + '</influence>\n' +
+								'\t\t\t\t\t\t<speed>' + key.inEase.speed + '</speed>\n' +
+								'\t\t\t\t\t</inEase>\n' +
+								'\t\t\t\t\t<outEase>\n' +//TODO Bug, this is an Array not an object
+								'\t\t\t\t\t\t<influence>' + key.outEase.influence + '</influence>\n' +
+								'\t\t\t\t\t\t<speed>' + key.outEase.speed + '</speed>\n' +
+								'\t\t\t\t\t</outEase>\n' +
+								'\t\t\t\t\t<continuous>' + key.continuous.toString() + '</continuous>\n' +
+								'\t\t\t\t\t<autoBezier>' + key.autoBezier.toString() + '</autoBezier>\n' +
+								'\t\t\t\t</key>';
+						}
+						xml = xml + '\t\t\t</keys>\n';
+						xml = xml + '\t\t</anim>\n';
+					}
+					xml = xml + '\t</transformAnims>\n';
+					xml = xml + '</layer>\n';
+				}*/
+
+				//save to file
+				file.encoding = 'UTF-8';
+				file.open('w');
+				file.write(xml);
+				file.close();
+			}
+		}
 
 		/**
 		 * Contains import and export methods for TVPaint files and exports
