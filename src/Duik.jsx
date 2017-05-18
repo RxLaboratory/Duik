@@ -3948,7 +3948,7 @@ function loadDuik()
 	 * Shows an save file dialog then exports the animation of the selected layers
 	 * Only the selected keyframes are exported if there were selected keyframes, or all the keyframes otherwise.
 	 */
-	function exportAnimToJson()
+	function exportAnim()
 	{
 		var layers = getCurrentLayers();
 		if (!layers) return;
@@ -3963,7 +3963,7 @@ function loadDuik()
 		if (!saveFile) return;
 
 		var xml = false;
-		if (saveFile.name.substring(saveFile.name.lastIndexOf(".xml"))) xml = true;
+		if (saveFile.name.lastIndexOf(".xml") == saveFile.name.length - 4) xml = true;
 
 		//wether to store only selected keys if there are any
 		var selected = false;
@@ -5494,7 +5494,7 @@ function loadDuik()
 		duikRigExportButton.group.enabled = false;
 		//Duik Anim
 		var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
-		duikAnimExportButton.onClick = exportAnimToJson;
+		duikAnimExportButton.onClick = exportAnim;
 	}
 
 	//---------------
