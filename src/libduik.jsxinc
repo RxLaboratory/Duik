@@ -79,8 +79,8 @@ http://www.duduf.net
 		this.outInterpolationType = KeyframeInterpolationType.LINEAR;
 		this.spatial = false;
 		this.spatialProperties = new KeySpatialProperties();
-		this.inEase = 0;
-		this.outEase = 0;
+		this.inEase = null;
+		this.outEase = null;
 		this.continuous = false;
 		this.autoBezier = false;
 	}
@@ -2275,8 +2275,6 @@ http://www.duduf.net
 								key.inEase[ease] = new KeyframeEase(key.inEase[ease].speed, key.inEase[ease].influence);
 								key.outEase[ease] = new KeyframeEase(key.outEase[ease].speed, key.outEase[ease].influence);
 							}
-
-
 						}
 					}
 				}
@@ -2353,6 +2351,61 @@ http://www.duduf.net
 		 * @classdesc Contains import and export methods for XML
 		 */
 		Duik.bridge.xml = {};
+
+		if (typeof Duik.bridge.xml.getXMLValue !== 'function')
+		{
+			/**
+			 * Parses the value of the XML object
+			 * If this object length is not 1, an Array is returned
+			 * @memberof Duik.bridge.json
+			 * @param {XML}		xml		The xml to parse
+			 * @param {string}	type	The type, one of 'string', 'bool', 'int' or 'float'. Default: 'string'
+			 * @return {Array}	The value or an Array of values
+			 */
+			Duik.bridge.xml.getXMLValue = function (xml,type)
+			{
+				if (!type) type = 'string';
+				var value;
+				if(xml.length() > 1)
+				{
+					value = [];
+					for (var i = 0 ; i < xml.length() ; i++)
+					{
+						var val = getXMLValue(xml[i],type);
+						value.push(val);
+					}
+				}
+				else
+				{
+					var xmlString = xml.toString();
+					if (type.toLowerCase() == 'float')
+					{
+						value = parseFloat(xmlString);
+					}
+					else if (type.toLowerCase() == 'int' || type.toLowerCase() == 'integer')
+					{
+						value = parseInt(xmlString);
+					}
+					else if (type.toLowerCase() == 'boolean' || type.toLowerCase() == 'bool')
+					{
+						if (xmlString == '0' || xmlString == '-1' || xmlString.toLowerCase() == 'false')
+						{
+							value = false;
+						}
+						else
+						{
+							value = true;
+						}
+					}
+					else
+					{
+						value = xmlString;
+					}
+				}
+
+				return value;
+			}
+		}
 
 		if (typeof Duik.bridge.xml.exportAnim !== 'function')
 		{
@@ -2452,6 +2505,108 @@ http://www.duduf.net
 				file.open('w');
 				file.write(xml);
 				file.close();
+			}
+		}
+
+		if (typeof Duik.bridge.xml.importAnim !== 'function')
+		{
+			/**
+			 * Imports the animation from an XML file, store them in Duik.copiedAnim, and returns them.
+			 * Just run Duik.pasteAnim to actually load the animation on some layers
+			 * @memberof Duik.bridge.json
+			 * @param {File}	file	The file to import
+			 * @return {Array}	An array of LayerAnim
+			 */
+			Duik.bridge.xml.importAnim = function (file)
+			{
+				//open and load file
+			    file.encoding = 'UTF-8';
+			    file.open('r');
+			    var data = file.read();
+			    file.close();
+			    //parse data
+			    var xml = new XML(data);
+			    var anim = [];
+			    for (var i = 0;i<xml.layers.length();i++)
+			    {
+			        var layer = xml.layers[i];
+			        var layerAnim = new LayerAnim();
+			        layerAnim.name = Duik.bridge.xml.getXMLValue(layer.name);
+			        layerAnim.index = Duik.bridge.xml.getXMLValue(layer.index,'int');
+					layerAnim.transformAnims = [];
+			        //transformAnims
+			        for (var j = 0 ; j < layer.transformAnims.length();j++)
+			        {
+			            var prop = layer.transformAnims[j];
+			            var propertyAnim = new PropertyAnim();
+			            propertyAnim.name = Duik.bridge.xml.getXMLValue(prop.name);
+			            propertyAnim.matchName = Duik.bridge.xml.getXMLValue(prop.matchName);
+			            propertyAnim.startValue = Duik.bridge.xml.getXMLValue(prop.startValue,'float');
+						propertyAnim.keys = [];
+						//only if there are keyframes
+						if (prop.keys.hasComplexContent())
+						{
+							for (var k = 0 ; k < prop.keys.length() ; k++)
+				            {
+				                var key = prop.keys[k];
+				                var keyFrame = new KeyFrame();
+				                keyFrame.time = Duik.bridge.xml.getXMLValue(key.time,'float');
+				                keyFrame.value = Duik.bridge.xml.getXMLValue(key.value,'float');
+				                keyFrame.inInterpolationType = Duik.bridge.xml.getXMLValue(key.inInterpolationType);
+				                keyFrame.outInterpolationType = Duik.bridge.xml.getXMLValue(key.outInterpolationType);
+				                keyFrame.spatial = Duik.bridge.xml.getXMLValue(key.spatial,'bool');
+				                keyFrame.inEase = [];
+				                keyFrame.outEase = [];
+				                for (var l = 0 ; l < key.inEase.length() ; l++)
+				                {
+				                    var inEase = {};
+				                    var outEase = {};
+				                    inEase.influence = Duik.bridge.xml.getXMLValue(key.inEase[l].influence,'float');
+				                    inEase.speed = Duik.bridge.xml.getXMLValue(key.inEase[l].speed,'float');
+				                    outEase.influence = Duik.bridge.xml.getXMLValue(key.outEase[l].influence,'float');
+				                    outEase.speed = Duik.bridge.xml.getXMLValue(key.outEase[l].speed,'float');
+				                    keyFrame.inEase.push(inEase);
+				                    keyFrame.outEase.push(outEase);
+				                }
+				                keyFrame.continuous = Duik.bridge.xml.getXMLValue(key.continuous,'bool');
+				                keyFrame.autoBezier = Duik.bridge.xml.getXMLValue(key.autoBezier,'bool');
+				                if (keyFrame.spatial)
+				                {
+				                    keyFrame.spatialProperties.inTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.inTangent,'float');
+				                    keyFrame.spatialProperties.outTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.outTangent,'float');
+				                    keyFrame.spatialProperties.continuous = Duik.bridge.xml.getXMLValue(key.spatialProperties.continuous,'bool');
+				                    keyFrame.spatialProperties.autoBezier = Duik.bridge.xml.getXMLValue(key.spatialProperties.autoBezier,'bool');
+				                    keyFrame.spatialProperties.roving = Duik.bridge.xml.getXMLValue(key.spatialProperties.roving,'bool');
+				                }
+
+								propertyAnim.keys.push(keyFrame);
+				            }
+						}
+
+			            layerAnim.transformAnims.push(propertyAnim);
+			        }
+			        //masksAnims
+
+			        //effectsAnims
+
+					anim.push(layerAnim);
+			    }
+			    //clean data
+			    anim  = Duik.bridge.cleanAnimImportData(anim);
+			    //copy the animation
+			    Duik.copiedAnim = anim;
+
+				//debug
+				var debugFile = new File('E:/DEV SRC/Duik/Tests/IO/debug.json');
+				//stringify data
+				var data = JSON.stringify(anim);
+				//save to file
+				debugFile.encoding = 'UTF-8';
+				debugFile.open('w');
+				debugFile.write(data);
+				debugFile.close();
+
+				return anim;
 			}
 		}
 
@@ -3356,7 +3511,9 @@ http://www.duduf.net
 						prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
 						prop.setInterpolationTypeAtKey(index,key.inInterpolationType,key.outInterpolationType);
 					}
-					catch(err){}
+					catch(err){
+						alert(err.description);
+					}
 
 				}
 				catch (err)
@@ -5597,8 +5754,6 @@ http://www.duduf.net
 	//================================
 	//========= METHODS ==============
 	//================================
-
-	//TODO, instead of returning true or false, functions should return the effect created
 
 	/*	ADD IK - Duik.autoIK(layers,frontFacing)
 	adds an IK to the layers
