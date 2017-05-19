@@ -119,8 +119,6 @@ https://rainboxprod.coop
 		throw new SyntaxError("JSON.parse");};}}());
 	}
 
-	#include xml2json.jsxinc
-
 	if (typeof Duik !== 'object'){
 		Duik = {};
 		Duik.versionNumber = 0.0;
@@ -2147,8 +2145,22 @@ https://rainboxprod.coop
 			return string.replace(re, replace);
 			}
 		}
-		// RANDOM
 
+		if (typeof Duik.js.endsWith !== 'function')
+		{
+			/**
+			 * Checks if a string ends with a given suffix
+			 * @param {string}	str 	The string to check
+			 * @param {string}	suffix	The suffix
+			 * @return {bool}	Wether the string ends with the given suffix or not
+			 */
+			Duik.js.endsWith = 	function (str, suffix)
+			{
+				return str.indexOf(suffix, str.length - suffix.length) !== -1;
+			}
+		}
+
+		// RANDOM
 		!function(a,b){function c(c,j,k){var n=[];j=1==j?{entropy:!0}:j||{};var s=g(f(j.entropy?[c,i(a)]:null==c?h():c,3),n),t=new d(n),u=function(){for(var a=t.g(m),b=p,c=0;q>a;)a=(a+c)*l,b*=l,c=t.g(1);for(;a>=r;)a/=2,b/=2,c>>>=1;return(a+c)/b};return u.int32=function(){return 0|t.g(4)},u.quick=function(){return t.g(4)/4294967296},u["double"]=u,g(i(t.S),a),(j.pass||k||function(a,c,d,f){return f&&(f.S&&e(f,t),a.state=function(){return e(t,{})}),d?(b[o]=a,c):a})(u,s,"global"in j?j.global:this==b,j.state)}function d(a){var b,c=a.length,d=this,e=0,f=d.i=d.j=0,g=d.S=[];for(c||(a=[c++]);l>e;)g[e]=e++;for(e=0;l>e;e++)g[e]=g[f=s&f+a[e%c]+(b=g[e])],g[f]=b;(d.g=function(a){for(var b,c=0,e=d.i,f=d.j,g=d.S;a--;)b=g[e=s&e+1],c=c*l+g[s&(g[e]=g[f=s&f+b])+(g[f]=b)];return d.i=e,d.j=f,c})(l)}function e(a,b){return b.i=a.i,b.j=a.j,b.S=a.S.slice(),b}function f(a,b){var c,d=[],e=typeof a;if(b&&"object"==e)for(c in a)try{d.push(f(a[c],b-1))}catch(g){}return d.length?d:"string"==e?a:a+"\0"}function g(a,b){for(var c,d=a+"",e=0;e<d.length;)b[s&e]=s&(c^=19*b[s&e])+d.charCodeAt(e++);return i(b)}function h(){try{if(j)return i(j.randomBytes(l));var b=new Uint8Array(l);return(k.crypto||k.msCrypto).getRandomValues(b),i(b)}catch(c){var d=k.navigator,e=d&&d.plugins;return[+new Date,k,e,k.screen,i(a)]}}function i(a){return String.fromCharCode.apply(0,a)}var j,k=this,l=256,m=6,n=52,o="random",p=b.pow(l,m),q=b.pow(2,n),r=2*q,s=l-1;if(b["seed"+o]=c,g(b.random(),a),"object"==typeof module&&module.exports){module.exports=c;try{j=require("crypto")}catch(t){}}else"function"==typeof define&&define.amd&&define(function(){return c})}([],Math);
 
 		if (typeof Duik.js.random !== 'function')
@@ -2426,6 +2438,250 @@ https://rainboxprod.coop
 		 */
 		Duik.bridge.xml = {};
 
+		if (typeof Duik.bridge.xml.toXmlString !== 'function')
+		{
+			/**
+			 * Parses a javascript object to an XML string
+			 * This method includes some parts of x2js
+	 		 * Copyright 2011-2013 Abdulla Abdurakhmanov
+	 		 * Original sources are available at https://code.google.com/p/x2js/
+	 		 * Licensed under the Apache License, Version 2.0
+			 * @memberof Duik.bridge.xml
+			 * @param {object}		obj		The object to parse
+			 * @return {string}		The XML string
+			 */
+			Duik.bridge.xml.toXmlString = function (obj)
+			{
+				config = {};
+				config.escapeMode = true;
+				config.attributePrefix = "_";
+				config.arrayAccessForm = "none";
+				config.useDoubleQuotes = false;
+				config.jsonPropertiesFilter = [];
+
+				function jsonXmlSpecialElem ( jsonObj, jsonObjField )
+				{
+					if((config.arrayAccessForm=="property" && Duik.js.endsWith(jsonObjField.toString(),("_asArray")))
+							|| jsonObjField.toString().indexOf(config.attributePrefix)==0
+							|| jsonObjField.toString().indexOf("__")==0
+							|| (jsonObj[jsonObjField] instanceof Function) )
+						return true;
+					else
+						return false;
+				}
+
+				function jsonXmlElemCount ( jsonObj )
+				{
+					var elementsCnt = 0;
+					if(jsonObj instanceof Object ) {
+						for( var it in jsonObj  ) {
+							if(jsonXmlSpecialElem ( jsonObj, it) )
+								continue;
+							elementsCnt++;
+						}
+					}
+					return elementsCnt;
+				}
+
+				function checkJsonObjPropertiesFilter(jsonObj, propertyName, jsonObjPath)
+				{
+					return config.jsonPropertiesFilter.length == 0
+						|| jsonObjPath==""
+						|| checkInStdFiltersArrayForm(config.jsonPropertiesFilter, jsonObj, propertyName, jsonObjPath);
+				}
+
+				function checkInStdFiltersArrayForm(stdFiltersArrayForm, obj, name, path)
+				{
+					var idx = 0;
+					for(; idx < stdFiltersArrayForm.length; idx++) {
+						var filterPath = stdFiltersArrayForm[idx];
+						if( typeof filterPath === "string" ) {
+							if(filterPath == path)
+								break;
+						}
+						else
+						if( filterPath instanceof RegExp) {
+							if(filterPath.test(path))
+								break;
+						}
+						else
+						if( typeof filterPath === "function") {
+							if(filterPath(obj, name, path))
+								break;
+						}
+					}
+					return idx!=stdFiltersArrayForm.length;
+				}
+
+				function getJsonPropertyPath(jsonObjPath, jsonPropName)
+				{
+					if (jsonObjPath==="") {
+						return jsonPropName;
+					}
+					else
+						return jsonObjPath+"."+jsonPropName;
+				}
+
+				function parseJSONAttributes ( jsonObj )
+				{
+					var attrList = [];
+					if(jsonObj instanceof Object ) {
+						for( var ait in jsonObj  ) {
+							if(ait.toString().indexOf("__")== -1 && ait.toString().indexOf(config.attributePrefix)==0) {
+								attrList.push(ait);
+							}
+						}
+					}
+					return attrList;
+				}
+
+				function escapeXmlChars(str)
+				{
+					if(typeof(str) == "string")
+						return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+					else
+						return str;
+				}
+
+				function parseJSONTextAttrs ( jsonTxtObj )
+				{
+					var result ="";
+
+					if(jsonTxtObj.__cdata!=null) {
+						result+="<![CDATA["+jsonTxtObj.__cdata+"]]>";
+					}
+
+					if(jsonTxtObj.__text!=null) {
+						if(config.escapeMode)
+							result+=escapeXmlChars(jsonTxtObj.__text);
+						else
+							result+=jsonTxtObj.__text;
+					}
+					return result;
+				}
+
+				function parseJSONTextObject ( jsonTxtObj )
+				{
+					var result ="";
+
+					if( jsonTxtObj instanceof Object ) {
+						result+=parseJSONTextAttrs ( jsonTxtObj );
+					}
+					else
+						if(jsonTxtObj!=null) {
+							if(config.escapeMode)
+								result+=escapeXmlChars(jsonTxtObj);
+							else
+								result+=jsonTxtObj;
+						}
+
+					return result;
+				}
+
+				function parseJSONArray ( jsonArrRoot, jsonArrObj, attrList, jsonObjPath )
+				{
+					var result = "";
+					if(jsonArrRoot.length == 0) {
+						result+=startTag(jsonArrRoot, jsonArrObj, attrList, true);
+					}
+					else {
+		                //result += startTag(jsonArrRoot, jsonArrObj, attrList, false);
+						for(var arIdx = 0; arIdx < jsonArrRoot.length; arIdx++) {
+							result+=startTag(jsonArrRoot[arIdx], jsonArrObj, parseJSONAttributes(jsonArrRoot[arIdx]), false);
+							result+=parseJSONObject(jsonArrRoot[arIdx], getJsonPropertyPath(jsonObjPath,jsonArrObj));
+							result+="\n" + endTag(jsonArrRoot[arIdx], jsonArrObj);
+						}
+		                //result+="\n" + endTag(jsonArrRoot,jsonArrObj);
+					}
+					return result;
+				}
+
+				function startTag(jsonObj, element, attrList, closed)
+				{
+					var resultStr = "\n<"+ ( (jsonObj!=null && jsonObj.__prefix!=null)? (jsonObj.__prefix+":"):"") + element;
+					if(attrList!=null) {
+						for(var aidx = 0; aidx < attrList.length; aidx++) {
+							var attrName = attrList[aidx];
+							var attrVal = jsonObj[attrName];
+							if(config.escapeMode)
+								attrVal=escapeXmlChars(attrVal);
+							resultStr+=" "+attrName.substr(config.attributePrefix.length)+"=";
+							if(config.useDoubleQuotes)
+								resultStr+='"'+attrVal+'"';
+							else
+								resultStr+="'"+attrVal+"'";
+						}
+					}
+					if(!closed)
+						resultStr+=">";
+					else
+						resultStr+="/>";
+					return resultStr;
+				}
+
+				function endTag(jsonObj,elementName)
+				{
+					return "</"+ (jsonObj.__prefix!=null? (jsonObj.__prefix+":"):"")+elementName+">";
+				}
+
+				function parseJSONObject ( jsonObj, jsonObjPath )
+				{
+					var result = "";
+
+					var elementsCnt = jsonXmlElemCount ( jsonObj );
+
+					if(elementsCnt > 0) {
+						for( var it in jsonObj ) {
+
+							if(jsonXmlSpecialElem ( jsonObj, it) || (jsonObjPath!="" && !checkJsonObjPropertiesFilter(jsonObj, it, getJsonPropertyPath(jsonObjPath,it))) )
+								continue;
+
+							var subObj = jsonObj[it];
+
+							var attrList = parseJSONAttributes( subObj )
+
+							if(subObj == null || subObj == undefined) {
+								result+=startTag(subObj, it, attrList, true);
+							}
+							else
+							if(subObj instanceof Object) {
+
+								if(subObj instanceof Array) {
+									result+=parseJSONArray( subObj, it, attrList, jsonObjPath );
+								}
+								else if(subObj instanceof Date) {
+									result+=startTag(subObj, it, attrList, false);
+									result+=subObj.toISOString();
+									result+=endTag(subObj,it);
+								}
+								else {
+									var subObjElementsCnt = jsonXmlElemCount ( subObj );
+									if(subObjElementsCnt > 0 || subObj.__text!=null || subObj.__cdata!=null) {
+										result+=startTag(subObj, it, attrList, false);
+										result+=parseJSONObject(subObj, getJsonPropertyPath(jsonObjPath,it));
+										result+="\n" + endTag(subObj,it);
+									}
+									else {
+										result+=startTag(subObj, it, attrList, true);
+									}
+								}
+							}
+							else {
+								result+=startTag(subObj, it, attrList, false);
+								result+=parseJSONTextObject(subObj);
+								result+=endTag(subObj,it);
+							}
+						}
+					}
+					result+=parseJSONTextObject(jsonObj);
+
+					return result;
+				}
+
+				return parseJSONObject ( obj, "" );
+			}
+		}
+
 		if (typeof Duik.bridge.xml.getXMLValue !== 'function')
 		{
 			/**
@@ -2506,7 +2762,7 @@ https://rainboxprod.coop
 				data.AE_Animation.layers = anim;
 				//convert using x2js
 				var x2js = new X2JS();
-				var xml = x2js.json2xml_str(data);
+				var xml = Duik.bridge.xml.toXmlString(data);
 				//better printing using XML from Adobe
 				XML.prettyPrinting = true;
 				xml = '<?xml version="1.0" encoding="UTF-8" ?>\n' + XML(xml).toString();
