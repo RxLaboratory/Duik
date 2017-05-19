@@ -3936,6 +3936,10 @@ function loadDuik()
 
 	//============= I/O ======================
 
+	/**
+	 * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
+	 * Shows an open file dialog then imports the selected clip
+	 */
 	function tvpClipImportButtonClicked()
 	{
 		tvpFile = File.openDialog("Select clipinfo.txt",'txt files:*.txt',false);
