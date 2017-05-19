@@ -2445,7 +2445,7 @@ http://www.duduf.net
 			}
 		}
 
-		if (typeof Duik.bridge.xml.parseXmlAnim !== 'function')
+		if (typeof Duik.bridge.xml.parseXmlLayerAnim !== 'function')
 		{
 			/**
 			 * Parses the animation of a layer from an XML object
@@ -2453,7 +2453,7 @@ http://www.duduf.net
 			 * @param {XML}			xml		The XML object of the animation
 			 * @return {LayerAnim}	The animation
 			 */
-			Duik.bridge.xml.parseXmlAnim = function (xml)
+			Duik.bridge.xml.parseXmlLayerAnim = function (xml)
 			{
 				var layerAnim = new LayerAnim();
 				layerAnim.name = Duik.bridge.xml.getXMLValue(xml.name);
@@ -2463,51 +2463,7 @@ http://www.duduf.net
 				for (var j = 0 ; j < xml.transformAnims.length();j++)
 				{
 					var prop = xml.transformAnims[j];
-					var propertyAnim = new PropertyAnim();
-					propertyAnim.name = Duik.bridge.xml.getXMLValue(prop.name);
-					propertyAnim.matchName = Duik.bridge.xml.getXMLValue(prop.matchName);
-					propertyAnim.startValue = Duik.bridge.xml.getXMLValue(prop.startValue,'float');
-					propertyAnim.keys = [];
-					//only if there are keyframes
-					if (prop.keys.hasComplexContent())
-					{
-						for (var k = 0 ; k < prop.keys.length() ; k++)
-						{
-							var key = prop.keys[k];
-							var keyFrame = new KeyFrame();
-							keyFrame.time = Duik.bridge.xml.getXMLValue(key.time,'float');
-							keyFrame.value = Duik.bridge.xml.getXMLValue(key.value,'float');
-							keyFrame.inInterpolationType = Duik.bridge.xml.getXMLValue(key.inInterpolationType);
-							keyFrame.outInterpolationType = Duik.bridge.xml.getXMLValue(key.outInterpolationType);
-							keyFrame.spatial = Duik.bridge.xml.getXMLValue(key.spatial,'bool');
-							keyFrame.inEase = [];
-							keyFrame.outEase = [];
-							for (var l = 0 ; l < key.inEase.length() ; l++)
-							{
-								var inEase = {};
-								var outEase = {};
-								inEase.influence = Duik.bridge.xml.getXMLValue(key.inEase[l].influence,'float');
-								inEase.speed = Duik.bridge.xml.getXMLValue(key.inEase[l].speed,'float');
-								outEase.influence = Duik.bridge.xml.getXMLValue(key.outEase[l].influence,'float');
-								outEase.speed = Duik.bridge.xml.getXMLValue(key.outEase[l].speed,'float');
-								keyFrame.inEase.push(inEase);
-								keyFrame.outEase.push(outEase);
-							}
-							keyFrame.continuous = Duik.bridge.xml.getXMLValue(key.continuous,'bool');
-							keyFrame.autoBezier = Duik.bridge.xml.getXMLValue(key.autoBezier,'bool');
-							if (keyFrame.spatial)
-							{
-								keyFrame.spatialProperties.inTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.inTangent,'float');
-								keyFrame.spatialProperties.outTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.outTangent,'float');
-								keyFrame.spatialProperties.continuous = Duik.bridge.xml.getXMLValue(key.spatialProperties.continuous,'bool');
-								keyFrame.spatialProperties.autoBezier = Duik.bridge.xml.getXMLValue(key.spatialProperties.autoBezier,'bool');
-								keyFrame.spatialProperties.roving = Duik.bridge.xml.getXMLValue(key.spatialProperties.roving,'bool');
-							}
-
-							propertyAnim.keys.push(keyFrame);
-						}
-					}
-
+					var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(prop);
 					layerAnim.transformAnims.push(propertyAnim);
 				}
 				//masksAnims
@@ -2515,6 +2471,65 @@ http://www.duduf.net
 				//effectsAnims
 
 				return layerAnim;
+			}
+		}
+
+		if (typeof Duik.bridge.xml.parseXmlPropertyAnim !== 'function')
+		{
+			/**
+			 * Parses the animation of a property from an XML object
+			 * @memberof Duik.bridge.xml
+			 * @param {XML}				xml		The XML object of the animation
+			 * @return {PropertyAnim}	The animation
+			 */
+			Duik.bridge.xml.parseXmlPropertyAnim = function (xml)
+			{
+				var propertyAnim = new PropertyAnim();
+				propertyAnim.name = Duik.bridge.xml.getXMLValue(xml.name);
+				propertyAnim.matchName = Duik.bridge.xml.getXMLValue(xml.matchName);
+				propertyAnim.startValue = Duik.bridge.xml.getXMLValue(xml.startValue,'float');
+				propertyAnim.keys = [];
+				//only if there are keyframes
+				if (xml.keys.hasComplexContent())
+				{
+					for (var k = 0 ; k < xml.keys.length() ; k++)
+					{
+						var key = xml.keys[k];
+						var keyFrame = new KeyFrame();
+						keyFrame.time = Duik.bridge.xml.getXMLValue(key.time,'float');
+						keyFrame.value = Duik.bridge.xml.getXMLValue(key.value,'float');
+						keyFrame.inInterpolationType = Duik.bridge.xml.getXMLValue(key.inInterpolationType);
+						keyFrame.outInterpolationType = Duik.bridge.xml.getXMLValue(key.outInterpolationType);
+						keyFrame.spatial = Duik.bridge.xml.getXMLValue(key.spatial,'bool');
+						keyFrame.inEase = [];
+						keyFrame.outEase = [];
+						for (var l = 0 ; l < key.inEase.length() ; l++)
+						{
+							var inEase = {};
+							var outEase = {};
+							inEase.influence = Duik.bridge.xml.getXMLValue(key.inEase[l].influence,'float');
+							inEase.speed = Duik.bridge.xml.getXMLValue(key.inEase[l].speed,'float');
+							outEase.influence = Duik.bridge.xml.getXMLValue(key.outEase[l].influence,'float');
+							outEase.speed = Duik.bridge.xml.getXMLValue(key.outEase[l].speed,'float');
+							keyFrame.inEase.push(inEase);
+							keyFrame.outEase.push(outEase);
+						}
+						keyFrame.continuous = Duik.bridge.xml.getXMLValue(key.continuous,'bool');
+						keyFrame.autoBezier = Duik.bridge.xml.getXMLValue(key.autoBezier,'bool');
+						if (keyFrame.spatial)
+						{
+							keyFrame.spatialProperties.inTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.inTangent,'float');
+							keyFrame.spatialProperties.outTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.outTangent,'float');
+							keyFrame.spatialProperties.continuous = Duik.bridge.xml.getXMLValue(key.spatialProperties.continuous,'bool');
+							keyFrame.spatialProperties.autoBezier = Duik.bridge.xml.getXMLValue(key.spatialProperties.autoBezier,'bool');
+							keyFrame.spatialProperties.roving = Duik.bridge.xml.getXMLValue(key.spatialProperties.roving,'bool');
+						}
+
+						propertyAnim.keys.push(keyFrame);
+					}
+				}
+
+				return propertyAnim;
 			}
 		}
 
@@ -2540,7 +2555,7 @@ http://www.duduf.net
 			    for (var i = 0;i<xml.layers.length();i++)
 			    {
 			        var layer = xml.layers[i];
-			        var layerAnim = Duik.bridge.xml.parseXmlAnim(layer);
+			        var layerAnim = Duik.bridge.xml.parseXmlLayerAnim(layer);
 					anim.push(layerAnim);
 			    }
 			    //clean data
