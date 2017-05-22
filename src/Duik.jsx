@@ -5475,7 +5475,7 @@ function loadDuik()
 		//Duik Rig
 		var duikRigImportButton =  addIconButton(groupIOG,'btn_copy rig',tr("Rig"),tr("Imports a rig saved with Duik (JSON or XML)."));
 		duikRigImportButton.onClick = function () {};
-		duikRigImportButton.group.enabled = false;
+		duikRigImportButton.group.visible = false;
 		//Duik Anim
 		var duikAnimImportButton =  addIconButton(groupIOG,'btn_copy anim',tr("Animation"),tr("Imports an animation saved with Duik (JSON or XML)."));
 		duikAnimImportButton.onClick = importAnim;
@@ -5491,10 +5491,12 @@ function loadDuik()
 		//Duik Rig
 		var duikRigExportButton =  addIconButton(groupIOD,'btn_paste rig',tr("Rig"),tr("Export a rig."));
 		duikRigExportButton.onClick = function () {};
-		duikRigExportButton.group.enabled = false;
+		duikRigExportButton.group.visible = false;
 		//Duik Anim
 		var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
 		duikAnimExportButton.onClick = exportAnim;
+		//Audition
+		var auditionExportButton = addIconButton(groupIOD,'btn_audition','Audition',tr("Export composition to Adobe Audition"));
 	}
 
 	//---------------
