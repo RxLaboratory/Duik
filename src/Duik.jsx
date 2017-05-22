@@ -4043,6 +4043,26 @@ function loadDuik()
 		if (totalPasted != Duik.copiedAnim.length) alert(tr("Pasted animation on ") + totalPasted + ' ' + tr("layers") + '.\n\n' + (Duik.copiedAnim.length-totalPasted) + " layers not found.");
 	}
 
+	/**
+	 * Exports audio layers to an Audition session
+	 * Shows a save file dialog then exports the layers, depending on the options selected in the UI
+	 */
+	function exportAudition()
+	{
+		var audioActiveOnly = auditionAudioActiveOnlyButton.value;
+		var sampling = parseInt(auditionSamplingRateButton.selection.text);
+		var bitrate = parseInt(auditionBitrateRateButton.selection.text);
+		var master = auditionMasterButton.selection.text;
+		var execute = auditionExecuteButton.value;
+
+		var comp = getCurrentComp();
+		if (!comp) return null;
+
+		var saveFile = File.saveDialog(tr("Where do you want to save the Audition session?"),"Audition: *.sesx");
+		if (!saveFile) return;
+
+		Duik.bridge.audition.exportComp(saveFile,comp,audioActiveOnly,sampling,bitrate,master,execute);
+	}
 }
 
 
@@ -4545,7 +4565,9 @@ function loadDuik()
 		var autorigPanel = addVPanel(panos);
 		autorigPanel.visible = false;
 		autorigPanel.alignChildren = ['fill','top'];
-
+		var auditionPanel = addVPanel(panos);
+		auditionPanel.visible = false;
+		auditionPanel.alignChildren = ['fill','top'];
 
 		function displayPanel() {
 		ctrlPanel.hide();
@@ -4565,6 +4587,7 @@ function loadDuik()
 		springPanel.hide();
 		tvpCamPanel.hide();
 		autorigPanel.hide();
+		auditionPanel.hide();
 
 		panoik.visible = false;
 		panoanimation.visible = false;
@@ -5496,12 +5519,43 @@ function loadDuik()
 		var duikAnimExportButton =  addIconButton(groupIOD,'btn_paste anim',tr("Animation"),tr("Export an animation."));
 		duikAnimExportButton.onClick = exportAnim;
 		//Audition
-		var auditionExportButton = addIconButton(groupIOD,'btn_audition','Audition',tr("Export composition to Adobe Audition"));
+		var auditionOptionsButton = addIconButton(groupIOD,'btn_audition','Audition',tr("Export composition to Adobe Audition"));
+		auditionOptionsButton.onClick = function () {panoio.hide();auditionPanel.show();};
 	}
 
 	//---------------
 	// DIALOGS
 	//---------------
+
+
+	//AUDITION PANEL
+	{
+		var auditionAudioActiveOnlyButton = auditionPanel.add('checkbox',undefined,tr("Audio Active only"));
+
+		var auditionSamplingGroup = addHGroup(auditionPanel);
+		auditionSamplingGroup.add('statictext',undefined,tr("Audio sampling rate:")).alignment = ['left','fill'];
+		var auditionSamplingRateButton = auditionSamplingGroup.add('dropdownlist',undefined,['192000','176400','96000','88200','64000','48000','44100','32000','22050','16000','11025','8000','6000']);
+		auditionSamplingRateButton.selection = 5;
+
+		var auditionBitrateGroup = addHGroup(auditionPanel);
+		auditionBitrateGroup.add('statictext',undefined,tr("Audio bitrate:")).alignment = ['left','fill'];
+		var auditionBitrateRateButton = auditionBitrateGroup.add('dropdownlist',undefined,['32','24','16']);
+		auditionBitrateRateButton.selection = 0;
+
+		var auditionMasterGroup = addHGroup(auditionPanel);
+		auditionMasterGroup.add('statictext',undefined,tr("Master:")).alignment = ['left','fill'];
+		var auditionMasterButton = auditionMasterGroup.add('dropdownlist',undefined,['mono','stereo','5.1']);
+		auditionMasterButton.selection = 1;
+
+		var auditionExecuteButton = auditionPanel.add('checkbox',undefined,tr("Open session in Audtion"));
+
+		var auditionButtonsGroup = addHGroup(auditionPanel);
+		var auditionCloseButton = addIconButton(auditionButtonsGroup,'btn_cancel',tr("Cancel"),tr("Cancel"));
+		auditionCloseButton.onClick = function () { auditionPanel.hide() ; panoio.show() };
+		var auditionExportButton = addIconButton(auditionButtonsGroup,'btn_valid',tr("Export"),tr("Export to Adobe Audition"));
+		auditionExportButton.onClick = exportAudition;
+
+	}
 
 	//CONTROLLERS PANEL
 	{
