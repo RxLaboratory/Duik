@@ -4072,8 +4072,6 @@ function loadDuik()
 //================ UI ===========================
 //===============================================
 {
-	//TODO renommer les elements d'UI
-
 	//Duik.ui.updateProgressPanel(2,tr("Duik - Creating UI"));
 
 	//folders and needed variables
@@ -5532,7 +5530,7 @@ function loadDuik()
 
 	//AUDITION PANEL
 	{
-		var auditionAudioActiveOnlyButton = auditionPanel.add('checkbox',undefined,tr("Audio Active only"));
+		var auditionAudioActiveOnlyButton = auditionPanel.add('checkbox',undefined,tr("Layers with audio active only"));
 
 		var auditionSamplingGroup = addHGroup(auditionPanel);
 		auditionSamplingGroup.add('statictext',undefined,tr("Audio sampling rate:")).alignment = ['left','fill'];
@@ -5549,7 +5547,17 @@ function loadDuik()
 		var auditionMasterButton = auditionMasterGroup.add('dropdownlist',undefined,['mono','stereo','5.1']);
 		auditionMasterButton.selection = 1;
 
+		var auditionTranscodeButton = auditionPanel.add('checkbox',undefined,tr("Transcode and conform media"),tr("Will transcode audio to ensure Audition compatibility"));
+		auditionTranscodeButton.onClick = function () {
+			auditionExecuteButton.enabled = !auditionTranscodeButton.value;
+			if (auditionTranscodeButton.value) auditionExecuteButton.value = false;
+		};
+
 		var auditionExecuteButton = auditionPanel.add('checkbox',undefined,tr("Open session in Audtion"));
+		auditionExecuteButton.onClick = function () {
+			auditionTranscodeButton.enabled = !auditionExecuteButton.value;
+			if (auditionExecuteButton.value) auditionTranscodeButton.value = false;
+		};
 
 		var auditionButtonsGroup = addHGroup(auditionPanel);
 		var auditionCloseButton = addIconButton(auditionButtonsGroup,'btn_cancel',tr("Cancel"),tr("Cancel"));
