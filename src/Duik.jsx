@@ -4482,14 +4482,28 @@ function loadDuik()
 		if (!expertMode) panos.minimumSize = [250,250];
 		else panos.minimumSize = [100,100];
 
+		//bottom infos
 		var bottomGroup = addHGroup(mainGroup);
 		bottomGroup.alignment = ['fill','bottom'];
+
+		//the method to display webpage when clicked
+		function urlClicked()
+		{
+			if (!Duik.allowedToWriteFiles) return;
+			if(Duik.mac) system.callSystem('open https://rainboxprod.coop');
+			else system.callSystem('explorer https://rainboxprod.coop');
+		}
+
+		bottomGroup.addEventListener('mousedown',urlClicked,true);
+
 		if (!expertMode)
 		{
 			var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
 			duikURL.alignment = ['left','bottom'];
+			duikURL.addEventListener('mousedown',urlClicked,true);
 		}
-		bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
+		var duikImage = bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
+		duikImage.addEventListener('mousedown',urlClicked,true);
 		var duikText = bottomGroup.add ('statictext',undefined,'Duik ' + version);
 		duikText.alignment = ['right','bottom'];
 
