@@ -4055,6 +4055,8 @@ function loadDuik()
 		var master = auditionMasterButton.selection.text;
 		var execute = auditionExecuteButton.value;
 
+		if (master == '5.1') master = 'fivePointOne';
+
 		var comp = getCurrentComp();
 		if (!comp) return null;
 
