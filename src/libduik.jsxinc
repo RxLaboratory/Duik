@@ -3404,7 +3404,7 @@ https://rainboxprod.coop
 			/**
 		     * Creates an XML clip for an Audition session
 			 * @memberof Duik.Bridge.Audition
-			 * @param {File}    file                The audio file
+			 * @param {string}  clipName            The clip name
 		     * @param {int}     sourceId            The corresponding source file id
 			 * @param {int}     id		            A unique id for this clip
 		     * @param {float}   sourceInPoint       The audio source in point
@@ -3413,10 +3413,9 @@ https://rainboxprod.coop
 		     * @param {float}   endPoint            The clip end point in the track
 		     * @return {XML}  	The clip
 		     */
-			Duik.bridge.audition.createClip = function (file,sourceId,id,sourceInPoint,sourceOutPoint,startPoint,endPoint)
+			Duik.bridge.audition.createClip = function (clipName,sourceId,id,sourceInPoint,sourceOutPoint,startPoint,endPoint)
 			{
-				var name = file.name.substring(0,file.name.lastIndexOf('.'));
-		        var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + name + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">' +
+		        var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + clipName + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">' +
 		            '<fadeIn crossFadeLinkType="linkedAsymmetric" endPoint="0" shape="0" startPoint="0" type="cosine"/>' +
 		            '<fadeOut crossFadeLinkType="linkedAsymmetric" endPoint="' + (endPoint-startPoint) + '" shape="0" startPoint="' + (endPoint-startPoint) + '" type="cosine"/>' +
 		            '<channelMap>' +
@@ -3516,7 +3515,8 @@ https://rainboxprod.coop
 			        var trackx = Duik.bridge.audition.createTrack('Track ' + index,10001+i,index,trackChannelType);
 
 			        //get the source file
-			        var clipFile = layer.source.mainSource.file;
+					var sourceItem = layer.source;
+			        var clipFile = sourceItem.mainSource.file;
 					//check if it already exists and gets the id
 					var sourceId = -1;
 					for (var j = 0;j < sourceFiles.length ; j++)
@@ -3543,7 +3543,11 @@ https://rainboxprod.coop
 			        var sourceOutPoint = (layer.outPoint - layer.startTime) * sampling;
 
 					//create clip
-			        var clipx = Duik.bridge.audition.createClip(clipFile,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
+					var clipName = '';
+					if (Duik.mac) clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('/')+1,clipFile.fsName.lastIndexOf('.'));
+					else clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('\\')+1,clipFile.fsName.lastIndexOf('.'));
+					if (sourceItem.hasVideo) clipName = clipName + '_audio';
+			        var clipx = Duik.bridge.audition.createClip(clipName,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
 
 			        //add track and clipFile
 			        trackx = trackx.appendChild(clipx[0]);
