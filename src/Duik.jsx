@@ -5045,13 +5045,14 @@ function loadDuik()
 			var interpoPresetsGroup = addHGroup(panointerpo);
 			interpoPresetsGroup.maximumSize.height = 24;
 			var interpoPresetsList = interpoPresetsGroup.add('dropdownlist',undefined,eval(app.settings.getSetting('duik', 'interpolationPresets')));
+			interpoPresetsList.alignment = ['left','fill'];
 			interpoPresetsList.selection = 0;
 			interpoPresetsList.onChange = interpoPresetsListChanged;
 			var interpoPresetsAddButton = addIconButton(interpoPresetsGroup,'btn_add');
-			interpoPresetsAddButton.alignment = ['right','fill'];
+			interpoPresetsAddButton.alignment = ['left','fill'];
 			interpoPresetsAddButton.onClick = interpoPresetsAddButtonClicked;
 			var interpoPresetsRemoveButton = addIconButton(interpoPresetsGroup,'btn_remove');
-			interpoPresetsRemoveButton.alignment = ['right','fill'];
+			interpoPresetsRemoveButton.alignment = ['left','fill'];
 			interpoPresetsRemoveButton.onClick = interpoPresetsRemoveButtonClicked;
 
 			//speed
