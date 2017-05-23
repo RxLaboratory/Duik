@@ -5533,19 +5533,21 @@ function loadDuik()
 	{
 		var auditionAudioActiveOnlyButton = auditionPanel.add('checkbox',undefined,tr("Layers with audio active only"));
 
-		var auditionSamplingGroup = addHGroup(auditionPanel);
-		auditionSamplingGroup.add('statictext',undefined,tr("Audio sampling rate:")).alignment = ['left','fill'];
-		var auditionSamplingRateButton = auditionSamplingGroup.add('dropdownlist',undefined,['192000','176400','96000','88200','64000','48000','44100','32000','22050','16000','11025','8000','6000']);
+		var auditionOptionsGroup = addHGroup(auditionPanel);
+
+		var auditionLabelsGroup = addVGroup(auditionOptionsGroup);
+		auditionLabelsGroup.alignment = ['left','fill'];
+		auditionLabelsGroup.add('statictext',undefined,tr("Audio sampling rate:"));
+		auditionLabelsGroup.add('statictext',undefined,tr("Audio bitrate:"));
+		auditionLabelsGroup.add('statictext',undefined,tr("Master:")).alignment = ['left','fill'];
+
+		var auditionOptionsButtonsGroup = addVGroup(auditionOptionsGroup);
+		auditionOptionsButtonsGroup.alignment = ['left','fill'];
+		var auditionSamplingRateButton = auditionOptionsButtonsGroup.add('dropdownlist',undefined,['192000','176400','96000','88200','64000','48000','44100','32000','22050','16000','11025','8000','6000']);
 		auditionSamplingRateButton.selection = 5;
-
-		var auditionBitrateGroup = addHGroup(auditionPanel);
-		auditionBitrateGroup.add('statictext',undefined,tr("Audio bitrate:")).alignment = ['left','fill'];
-		var auditionBitrateRateButton = auditionBitrateGroup.add('dropdownlist',undefined,['32','24','16']);
+		var auditionBitrateRateButton = auditionOptionsButtonsGroup.add('dropdownlist',undefined,['32','24','16']);
 		auditionBitrateRateButton.selection = 0;
-
-		var auditionMasterGroup = addHGroup(auditionPanel);
-		auditionMasterGroup.add('statictext',undefined,tr("Master:")).alignment = ['left','fill'];
-		var auditionMasterButton = auditionMasterGroup.add('dropdownlist',undefined,['mono','stereo','5.1']);
+		var auditionMasterButton = auditionOptionsButtonsGroup.add('dropdownlist',undefined,['mono','stereo','5.1']);
 		auditionMasterButton.selection = 1;
 
 		var auditionTranscodeButton = auditionPanel.add('checkbox',undefined,tr("Transcode and conform media"),tr("Will transcode audio to ensure Audition compatibility"));
