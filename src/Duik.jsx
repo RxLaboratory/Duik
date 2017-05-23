@@ -768,26 +768,26 @@ function loadDuik()
 				{
 					frontLegTypeLabel.text = tr("Right Arm / Front leg");
 					textColor(frontLegTypeLabel,col.trueRed);
-					frontLegNext.show();
-					frontLegPrev.show();
-					frontLegOK.hide();
+					frontLegNext.group.show();
+					frontLegPrev.group.show();
+					frontLegOK.group.hide();
 					searchPrefix = tr("R_");
 				}
 				else if (frontLegDialog.left)
 				{
 					frontLegTypeLabel.text = tr("Left Arm / Front leg");
 					textColor(frontLegTypeLabel,col.trueGreen);
-					frontLegNext.show();
-					frontLegPrev.show();
-					frontLegOK.hide();
+					frontLegNext.group.show();
+					frontLegPrev.group.show();
+					frontLegOK.group.hide();
 					searchPrefix = tr("L_");
 				}
 				else
 				{
 					frontLegTypeLabel.hide();
-					frontLegNext.hide();
-					frontLegPrev.hide();
-					frontLegOK.show();
+					frontLegNext.group.hide();
+					frontLegPrev.group.hide();
+					frontLegOK.group.show();
 				}
 
 				frontLegDialog.shoulder = null;
@@ -1062,24 +1062,24 @@ function loadDuik()
 			if (backLegDialog.right) {
 			backLegTypeLabel.text = tr("Right leg");
 			textColor(backLegTypeLabel,col.trueRed);
-			backLegNext.show();
-			backLegPrev.show();
-			backLegOK.hide();
+			backLegNext.group.show();
+			backLegPrev.group.show();
+			backLegOK.group.hide();
 			searchPrefix = tr("R_");
 			}
 			else if (backLegDialog.left) {
 			backLegTypeLabel.text = tr("Left leg");
 			textColor(backLegTypeLabel,col.trueGreen);
-			backLegNext.show();
-			backLegPrev.hide();
-			backLegOK.hide();
+			backLegNext.group.show();
+			backLegPrev.group.hide();
+			backLegOK.group.hide();
 			searchPrefix = tr("L_");
 			}
 			else {
 			backLegTypeLabel.hide();
-			backLegNext.hide();
-			backLegPrev.hide();
-			backLegOK.show();
+			backLegNext.group.hide();
+			backLegPrev.group.hide();
+			backLegOK.group.show();
 			}
 
 			backLegDialog.femur = null;
@@ -1348,14 +1348,14 @@ function loadDuik()
 			if (!(compo instanceof CompItem)) return;
 
 			if (spineDialog.fullCharacter) {
-			spineNext.show();
-			spinePrev.show();
-			spineOK.hide();
+			spineNext.group.show();
+			spinePrev.group.show();
+			spineOK.group.hide();
 			}
 			else {
-			spineNext.hide();
-			spinePrev.hide();
-			spineOK.show();
+			spineNext.group.hide();
+			spinePrev.group.hide();
+			spineOK.group.show();
 			}
 
 			spineDialog.head = null;
@@ -1528,10 +1528,10 @@ function loadDuik()
 			if (!(compo instanceof CompItem)) return;
 
 			if (tailDialog.fullCharacter) {
-			tailPrev.show();
+			tailPrev.group.show();
 			}
 			else {
-			tailPrev.hide();
+			tailPrev.group.hide();
 			}
 
 
@@ -6222,6 +6222,8 @@ function loadDuik()
 		exposureLayerLabel.alignment = ['left','fill'];
 		}
 		var exposureLayerList = exposureLayerGroup.add('dropdownlist');
+		exposureLayerList.alignment = ['left','fill'];
+		exposureLayerList.minimumSize.width = 100;
 		var exposureLayerRefreshButton = addIconButton(exposureLayerGroup,'btn_refresh','');
 		exposureLayerRefreshButton.alignment = ['right','fill'];
 		exposureLayerRefreshButton.onClick = exposureLayerRefreshButtonClicked;
@@ -6423,8 +6425,10 @@ function loadDuik()
 		irPanel.add('statictext',undefined,tr("Rigged composition to import:"));
 		var irRigGroup = addHGroup(irPanel);
 		var irRigButton = irRigGroup.add('dropdownlist',undefined);
+		irRigButton.alignment = ['left','fill'];
+		irRigButton.minimumSize.width = 100;
 		var irRigRefreshButton = addIconButton(irRigGroup,'btn_refresh','');
-		irRigRefreshButton.alignment = ['right','fill'];
+		irRigRefreshButton.alignment = ['left','fill'];
 		irRigRefreshButton.onClick = irRigRefreshButtonClicked;
 		irPanel.add('statictext',undefined,tr("Name of this instance:"));
 		irNameText = irPanel.add('edittext',undefined,tr("Must be unique!"));
