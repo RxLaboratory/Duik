@@ -30,7 +30,7 @@ __Thanks to:__
 __Duik makes use of:__
 
     • x2js
-    Copyright 2011-2013 Abdulla Abdurakhmanov
+    Copyright (c) 2011-2013 Abdulla Abdurakhmanov
     Original sources are available at https://code.google.com/p/x2js/
     Licensed under the Apache License, Version 2.0
 
@@ -39,8 +39,16 @@ __Duik makes use of:__
     Public Domain
 
     • seedRandom
-    Copyright David Bau
+    Copyright (c) David Bau
     Licensed under the MIT license
+
+    • FFMpeg
+    See http://ffmpeg.org
+
+    • DuFFMpeg
+    Copyright (c) 2017 Nicolas Dufresne and Rainbox Productions
+    Sources available at https://github.com/Rainbox-dev/DuFFMpeg
+    Licensed under the GNU General Public License v3
 
 This file is part of Duik.
 
