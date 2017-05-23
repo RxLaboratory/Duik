@@ -4697,6 +4697,7 @@ function loadDuik()
 		panosettings.alignment = ['fill','top'];
 		panosettings.alignChildren = ['fill','top'];
 		var settingsDropdown = panosettings.add('dropdownlist',undefined,[tr("General"),tr("Rigging"),tr("Animation")]);
+		settingsDropdown.alignment = ['center','top'];
 		var settingsGroup = addVPanel(panosettings);
 		settingsGroup.orientation = 'stack';
 		settingsGroup.alignChildren = ['center','top'];
