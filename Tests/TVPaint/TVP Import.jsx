@@ -71,9 +71,9 @@
 	versionGroup.spacing = 2;
 	versionGroup.alignChildren = ['fill','bottom'];
 	var tvpVersionLabel = versionGroup.add('statictext',undefined,"TVP Import v" + version);
-	tvpVersionLabel.addEventListener('mousdown',labelClicked,true);
+	tvpVersionLabel.addEventListener('mousedown',labelClicked,true);
 	var duikVersionLabel = versionGroup.add('statictext',undefined,"libDuik v" + Duik.versionNumber);
-	duikVersionLabel.addEventListener('mousdown',labelClicked,true);
+	duikVersionLabel.addEventListener('mousedown',labelClicked,true);
 	var urlLabel = versionGroup.add('statictext',undefined,"https://rainboxprod.coop");
 
 	versionGroup.alignment = ['fill','bottom'];
