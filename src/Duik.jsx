@@ -4121,7 +4121,14 @@ function loadDuik()
 	{
 		if (expertMode) text = '';
 		var bouton = Duik.ui.addImageCheckBox(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
-		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 38;
+		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 24;
+		if (bouton.label)
+		{
+			bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
+			bouton.image.size = [38,18];
+			bouton.image.alignment = ['left','fill'];
+			bouton.label.alignment = ['left','fill'];
+		}
 		/*var g = addHGroup(container);
 		g.alignChildren = ['left','center'];
 		g.button = g.add('checkbox',undefined,text);
@@ -4416,12 +4423,12 @@ function loadDuik()
 		boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
 
 		//PANEL NAME
-		if (!expertMode)
+		/*if (!expertMode)
 		{
 			var selectorText = entete.add('statictext',undefined,'');
 			selectorText.alignment = ['center','center'];
 			selectorText.size = [75,22];
-		}
+		}*/
 
 		//SELECTOR BUTTONS
 		var selectorGroup = addVGroup(entete);
@@ -4429,19 +4436,19 @@ function loadDuik()
 		selectorGroup.alignment = ['right','center'];
 		var selectorButtons = addHGroup(selectorGroup);
 		selectorButtons.alignChildren = ['fill','center'];
-		var riggingPanelButton = addIconButton(selectorButtons,'panels_btn_rigging','',tr("Rigging"));
+		var riggingPanelButton = addIconCheckbox(selectorButtons,'panels_btn_rigging','',tr("Rigging"));
 		riggingPanelButton.size = [22,22];
-		var automationPanelButton = addIconButton(selectorButtons,'panels_btn_animation','',tr("Automation"));
+		var automationPanelButton = addIconCheckbox(selectorButtons,'panels_btn_animation','',tr("Automation"));
 		automationPanelButton.size = [22,22];
-		var animationPanelButton = addIconButton(selectorButtons,'panels_btn_interpo','',tr("Animation"));
+		var animationPanelButton = addIconCheckbox(selectorButtons,'panels_btn_interpo','',tr("Animation"));
 		animationPanelButton.size = [22,22];
-		var camerasPanelButton = addIconButton(selectorButtons,'panels_btn_camera','',tr("Cameras"));
+		var camerasPanelButton = addIconCheckbox(selectorButtons,'panels_btn_camera','',tr("Cameras"));
 		camerasPanelButton.size = [22,22];
-		var ioPanelButton = addIconButton(selectorButtons,'panels_btn_io','',tr("Import/Export"));
+		var ioPanelButton = addIconCheckbox(selectorButtons,'panels_btn_io','',tr("Import/Export"));
 		ioPanelButton.size = [22,22];
-		var settingsPanelButton = addIconButton(selectorButtons,'panels_btn_settings','',tr("Settings"));
+		var settingsPanelButton = addIconCheckbox(selectorButtons,'panels_btn_settings','',tr("Settings"));
 		settingsPanelButton.size = [22,22];
-		var helpPanelButton = addIconButton(selectorButtons,'panels_btn_help','',tr("Help!"));
+		var helpPanelButton = addIconCheckbox(selectorButtons,'panels_btn_help','',tr("Help!"));
 		helpPanelButton.size = [22,22];
 		//LIST
 		var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Import/Export"),tr("Settings"),tr("Help")]);
@@ -4477,8 +4484,8 @@ function loadDuik()
 		bottomGroup.alignment = ['fill','bottom'];
 		if (!expertMode)
 		{
-		var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
-		duikURL.alignment = ['left','bottom'];
+			var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
+			duikURL.alignment = ['left','bottom'];
 		}
 		bottomGroup.add('image',undefined,dossierIcones + 'small_logo.png');
 		var duikText = bottomGroup.add ('statictext',undefined,'Duik ' + version);
@@ -4571,75 +4578,83 @@ function loadDuik()
 		auditionPanel.alignChildren = ['fill','top'];
 
 		function displayPanel() {
-		ctrlPanel.hide();
-		ikPanel.hide();
-		bezierIkPanel.hide();
-		renamePanel.hide();
-		riePanel.hide();
-		measurePanel.hide();
-		timeRemapPanel.hide();
-		exposurePanel.hide();
-		celPanel.hide();
-		wigglePanel.hide();
-		irPanel.hide();
-		randPanel.hide();
-		multiplanePanel.hide();
-		wheelPanel.hide();
-		springPanel.hide();
-		tvpCamPanel.hide();
-		autorigPanel.hide();
-		auditionPanel.hide();
+			ctrlPanel.hide();
+			ikPanel.hide();
+			bezierIkPanel.hide();
+			renamePanel.hide();
+			riePanel.hide();
+			measurePanel.hide();
+			timeRemapPanel.hide();
+			exposurePanel.hide();
+			celPanel.hide();
+			wigglePanel.hide();
+			irPanel.hide();
+			randPanel.hide();
+			multiplanePanel.hide();
+			wheelPanel.hide();
+			springPanel.hide();
+			tvpCamPanel.hide();
+			autorigPanel.hide();
+			auditionPanel.hide();
 
-		panoik.visible = false;
-		panoanimation.visible = false;
-		panointerpo.visible = false;
-		panocam.visible = false;
-		panoio.visible = false;
-		panosettings.visible = false;
-		helpPanel.visible = false;
+			panoik.visible = false;
+			panoanimation.visible = false;
+			panointerpo.visible = false;
+			panocam.visible = false;
+			panoio.visible = false;
+			panosettings.visible = false;
+			helpPanel.visible = false;
 
-		if (selecteur.selection == 0)
-		{
-			panoik.visible = true;
-			app.settings.saveSetting('duik','pano','0');
-			if (!expertMode) selectorText.text = tr("Rigging");
-		}
-		else if (selecteur.selection == 1)
-		{
-			panoanimation.visible = true;
-			app.settings.saveSetting('duik','pano','1');
-			if (!expertMode) selectorText.text = tr("Automation");
-		}
-		else if (selecteur.selection == 2)
-		{
-			panointerpo.visible = true;
-			app.settings.saveSetting('duik','pano','2');
-			if (!expertMode) selectorText.text = tr("Animation");
-		}
-		else if (selecteur.selection == 3)
-		{
-			panocam.visible = true;
-			app.settings.saveSetting('duik','pano','3');
-			if (!expertMode) selectorText.text = tr("Cameras");
-		}
-		else if (selecteur.selection == 4)
-		{
-			panoio.visible = true;
-			app.settings.saveSetting('duik','pano','4');
-			if (!expertMode) selectorText.text = tr("Import/Export");
-		}
-		else if (selecteur.selection == 5)
-		{
-			panosettings.visible = true;
-			app.settings.saveSetting('duik','pano','5');
-			if (!expertMode) selectorText.text = tr("Settings");
-		}
-		else if (selecteur.selection == 6)
-		{
-			helpPanel.visible = true;
-			app.settings.saveSetting('duik','pano','6');
-			if (!expertMode) selectorText.text = tr("Help / About");
-		}
+			riggingPanelButton.setChecked(false);
+			automationPanelButton.setChecked(false);
+			animationPanelButton.setChecked(false);
+			camerasPanelButton.setChecked(false);
+			ioPanelButton.setChecked(false);
+			settingsPanelButton.setChecked(false);
+			helpPanelButton.setChecked(false);
+
+			if (selecteur.selection == 0)
+			{
+				panoik.visible = true;
+				riggingPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','0');
+			}
+			else if (selecteur.selection == 1)
+			{
+				panoanimation.visible = true;
+				automationPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','1');
+			}
+			else if (selecteur.selection == 2)
+			{
+				panointerpo.visible = true;
+				animationPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','2');
+			}
+			else if (selecteur.selection == 3)
+			{
+				panocam.visible = true;
+				camerasPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','3');
+			}
+			else if (selecteur.selection == 4)
+			{
+				panoio.visible = true;
+				ioPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','4');
+			}
+			else if (selecteur.selection == 5)
+			{
+				panosettings.visible = true;
+				settingsPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','5');
+			}
+			else if (selecteur.selection == 6)
+			{
+				helpPanel.visible = true;
+				helpPanelButton.setChecked(true);
+				app.settings.saveSetting('duik','pano','6');
+			}
 		}
 
 		riggingPanelButton.onClick = function () { selecteur.selection = 0 ; displayPanel(); };
