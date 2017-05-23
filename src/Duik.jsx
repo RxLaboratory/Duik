@@ -4054,6 +4054,7 @@ function loadDuik()
 		var bitrate = parseInt(auditionBitrateRateButton.selection.text);
 		var master = auditionMasterButton.selection.text;
 		var execute = auditionExecuteButton.value;
+		var transcode = auditionTranscodeButton.value;
 
 		if (master == '5.1') master = 'fivePointOne';
 
@@ -4063,7 +4064,7 @@ function loadDuik()
 		var saveFile = File.saveDialog(tr("Where do you want to save the Audition session?"),"Audition: *.sesx");
 		if (!saveFile) return;
 
-		Duik.bridge.audition.exportComp(saveFile,comp,audioActiveOnly,sampling,bitrate,master,execute);
+		Duik.bridge.audition.exportComp(saveFile,comp,audioActiveOnly,sampling,bitrate,master,execute,transcode);
 	}
 }
 
@@ -5548,16 +5549,16 @@ function loadDuik()
 		auditionMasterButton.selection = 1;
 
 		var auditionTranscodeButton = auditionPanel.add('checkbox',undefined,tr("Transcode and conform media"),tr("Will transcode audio to ensure Audition compatibility"));
-		auditionTranscodeButton.onClick = function () {
+		/*auditionTranscodeButton.onClick = function () {
 			auditionExecuteButton.enabled = !auditionTranscodeButton.value;
 			if (auditionTranscodeButton.value) auditionExecuteButton.value = false;
-		};
+		};*/
 
 		var auditionExecuteButton = auditionPanel.add('checkbox',undefined,tr("Open session in Audtion"));
-		auditionExecuteButton.onClick = function () {
+		/*auditionExecuteButton.onClick = function () {
 			auditionTranscodeButton.enabled = !auditionExecuteButton.value;
 			if (auditionExecuteButton.value) auditionTranscodeButton.value = false;
-		};
+		};*/
 
 		var auditionButtonsGroup = addHGroup(auditionPanel);
 		var auditionCloseButton = addIconButton(auditionButtonsGroup,'btn_cancel',tr("Cancel"),tr("Cancel"));

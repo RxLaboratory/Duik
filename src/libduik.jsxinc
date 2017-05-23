@@ -158,9 +158,7 @@ https://rainboxprod.coop
 
 		    if (ffmpegFile.exists) this.ffmpegPath = ffmpegFile.fsName;
 
-		    alert(ffmpegFile.fsName);
-
-		    this.options = '-stats';
+		    this.options = options;
 		    this.queue = [];
 		}
 
@@ -195,7 +193,6 @@ https://rainboxprod.coop
 		    }
 
 		    //launch!
-		    alert(cmd);
 		    system.callSystem(cmd);
 		}
 
@@ -216,7 +213,7 @@ https://rainboxprod.coop
 		    this.inputPath = inputFile.fsName;
 
 		    if (!options) options = '';
-		    this.options = '';
+		    this.options = options;
 		}
 
 		/**
@@ -241,7 +238,7 @@ https://rainboxprod.coop
 		    this.outputPath = outputFile.fsName;
 
 		    if (!options) options = '';
-		    this.options = '';
+		    this.options = options;
 		}
 
 		/**
@@ -262,7 +259,6 @@ https://rainboxprod.coop
 
 		    this.outputs = outputs;
 		}
-
 	}
 
 	/*JSON PARSER
@@ -3640,10 +3636,11 @@ https://rainboxprod.coop
 			 * @param {bool}   		audioActiveOnly     Wether to export only layers with the audio enabled, or all layers with audio. Default: false
 			 * @param {int}  		sampling      		The audio sampling, in Hz. Default: 48000
 			 * @param {int}   		bits          		The audio definition, in bits. One of: 16, 24 or 32. Default: 32
-			 * @param {string}	channelType	The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
+			 * @param {string}		channelType			The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
 			 * @param {bool}   		execute            	Wether to open the exported session in Audition once export is done. Default: false
+			 * @param {bool}   		transcode           Wether to extract and transcore audio from video files. Default: true
 			 */
-			Duik.bridge.audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bits,channelType,execute)
+			Duik.bridge.audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bits,channelType,execute,transcode)
 			{
 				if (!sesxFile) throw "Needs an export file";
 				if (!(sesxFile instanceof File)) throw "Session file is not a valid File object";
@@ -3655,6 +3652,7 @@ https://rainboxprod.coop
 				if (!channelType) channelType = 'stereo';
 				if (channelType == '') channelType = 'stereo';
 				if (execute == undefined) execute = false;
+				if (transcode == undefined) transcode = true;
 
 			    //get all layers with audio
 			    var audioLayers = Duik.utils.getAudioLayers(comp.layers,audioActiveOnly);
@@ -3678,10 +3676,17 @@ https://rainboxprod.coop
 			    var sesx = new XML(xmlString);
 
 				//create tracks and clips
+
 				//the highest layer index
 			    var lastIndex = 0;
 				// the source files list, to keep only one instance of each file
 				var sourceFiles = [];
+				// the transcoder
+				if (transcode)
+				{
+					var ffmpeg = new FFMpeg('-y -stats');
+					var importedFolder = new Folder(sesxFile.parent.absoluteURI + '/Imported Files/');
+				}
 			    //add clips to xml
 			    for (i = 0 ; i < audioLayers.length ; i++)
 			    {
@@ -3702,7 +3707,13 @@ https://rainboxprod.coop
 					var sourceId = -1;
 					for (var j = 0;j < sourceFiles.length ; j++)
 					{
-						if (sourceFiles[j][0] == clipFile.fsName)
+						var pathCheck = clipFile.absoluteURI;
+						if (sourceItem.hasVideo && transcode)
+						{
+							var name = pathCheck.substring(pathCheck.lastIndexOf('/')+1,pathCheck.lastIndexOf('.')) + "_audio.wav";
+							pathCheck = importedFolder.absoluteURI + '/' + name;
+						}
+						if (sourceFiles[j][0].absoluteURI == pathCheck)
 						{
 							sourceId = sourceFiles[j][1];
 							break;
@@ -3712,9 +3723,24 @@ https://rainboxprod.coop
 					if (sourceId == -1)
 					{
 						sourceId = i;
-						var filex = Duik.bridge.audition.createSourceFile(clipFile,sourceId);
+						var sourceFile = clipFile;
+						if (sourceItem.hasVideo && transcode)
+						{
+							var name = clipFile.name.substring(0,clipFile.name.lastIndexOf('.')) + "_audio.wav";
+							sourceFile = new File(importedFolder.absoluteURI + '/' + name);
+							//add source to the transcoding queue
+							var input = new FFMpegInputModule(clipFile.fsName);
+							var codec = 'pcm_f32le';
+							if (bits == 16) codec = 'pcm_s16le';
+							else if (bits == 24) codec = 'pcm_s24le';
+							var output = new FFMpegOutputModule(codec,sourceFile.fsName,'-ar ' + sampling + ' -vn');
+							var item = new FFMpegQueueItem(input,[output]);
+							//add the item to the render queue
+							ffmpeg.queue.push(item);
+						}
+						var filex = Duik.bridge.audition.createSourceFile(sourceFile,sourceId);
 						sesx.files.appendChild(filex);
-						sourceFiles.push([clipFile.fsName,sourceId])
+						sourceFiles.push([sourceFile,sourceId])
 					}
 
 			        //gets cue points
@@ -3728,6 +3754,7 @@ https://rainboxprod.coop
 					if (Duik.mac) clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('/')+1,clipFile.fsName.lastIndexOf('.'));
 					else clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('\\')+1,clipFile.fsName.lastIndexOf('.'));
 					if (sourceItem.hasVideo) clipName = clipName + '_audio';
+
 			        var clipx = Duik.bridge.audition.createClip(clipName,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
 
 			        //add track and clipFile
@@ -3749,6 +3776,11 @@ https://rainboxprod.coop
 			    sesxFile.write(xml);
 			    sesxFile.close();
 
+				if (transcode)
+				{
+					importedFolder.create();
+					ffmpeg.launch();
+				}
 			    if (execute) sesxFile.execute();
 			}
 		}
