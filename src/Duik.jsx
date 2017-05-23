@@ -3961,11 +3961,12 @@ function loadDuik()
 		}
 
 		//Asks for a save file
-		var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"JSON: *.json,XML: *.xml");
+		var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"JSON: *.duikjs;*.json,XML: *.duikx;*.xml");
 		if (!saveFile) return;
 
 		var xml = false;
 		if (saveFile.name.lastIndexOf(".xml") == saveFile.name.length - 4) xml = true;
+		if (saveFile.name.lastIndexOf(".duikx") == saveFile.name.length - 6) xml = true;
 
 		//wether to store only selected keys if there are any
 		var selected = false;
@@ -4025,11 +4026,12 @@ function loadDuik()
 		}
 
 		//Asks for the file
-		var openFile = File.openDialog(tr("Please select the animation file."),"JSON: *.json,XML: *.xml");
+		var openFile = File.openDialog(tr("Please select the animation file."),"JSON: *.duikjs;*.json,XML: *.duikx;*.xml");
 		if (!openFile) return;
 
 		var xml = false;
 		if (openFile.name.lastIndexOf(".xml") == openFile.name.length - 4) xml = true;
+		if (openFile.name.lastIndexOf(".duikx") == openFile.name.length - 6) xml = true;
 
 		if (xml) Duik.bridge.xml.importAnim(openFile);
 		else Duik.bridge.json.importAnim(openFile);
