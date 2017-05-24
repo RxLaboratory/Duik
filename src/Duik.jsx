@@ -2972,26 +2972,27 @@ function loadDuik()
 
 	function celOnionUpdateButtonClicked()
 	{
-		var comp = app.project.activeItem;
-		if (comp == null) return;
-		if (!(comp instanceof CompItem)) return;
+		var comp = getCurrentComp();
+		if (!comp) return;
 
 		var layer = null;
 		if (comp.selectedLayers.length == 0)
 		{
-		for (var i = 1 ; i <= comp.layers.length ; i++)
-		{
-		if (comp.layer(i).name.indexOf(tr("Cel")) >= 0)
-		{
-		layer = comp.layer(i);
-		break;
-		}
-		}
+			for (var i = 1 ; i <= comp.layers.length ; i++)
+			{
+				if (comp.layer(i).name.indexOf(tr("Cel")) >= 0)
+				{
+					layer = comp.layer(i);
+					break;
+				}
+			}
 		}
 		else
 		{
-		layer = comp.selectedLayers[0];
+			layer = comp.selectedLayers[0];
 		}
+
+		if (!layer) return;
 
 
 		app.beginUndoGroup(tr("Duik - Update Onion Skin"));
@@ -3011,18 +3012,16 @@ function loadDuik()
 
 	function celPreviousButtonClicked()
 	{
-		var comp = app.project.activeItem;
-		if (comp == null) return;
-		if (!(comp instanceof CompItem)) return;
+		var comp = getCurrentComp();
+		if (!comp) return;
 		comp.time = comp.time - comp.frameDuration*parseInt(celExposureEdit.text);
 		celOnionUpdateButtonClicked();
 	}
 
 	function celNextButtonClicked()
 	{
-		var comp = app.project.activeItem;
-		if (comp == null) return;
-		if (!(comp instanceof CompItem)) return;
+		var comp = getCurrentComp();
+		if (!comp) return;
 		comp.time = comp.time + comp.frameDuration*parseInt(celExposureEdit.text);
 		celOnionUpdateButtonClicked();
 	}
