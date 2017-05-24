@@ -3234,19 +3234,9 @@ function loadDuik()
 		if (!comp) return;
 		//debut du groupe d'annulation
 		app.beginUndoGroup(tr("Duik - Multiplane"));
-		var layers = [];
-		layers = comp.selectedLayers;
-		layers = Duik.utils.sortLayersByIndex(layers);
+		var layers = comp.selectedLayers;
 
-		Duik.multiplane(parseInt(nombre.text));
-
-		if (layers.length == parseInt(nombre.text))
-		{
-			for (var i = 0 ; i<layers.length;i++)
-			{
-				layers[i].parent = comp.layer(i+1);
-			}
-		}
+		Duik.multiplane(comp,parseInt(nombre.text),undefined,layers);
 
 		//fin du groupe d'annulation
 		app.endUndoGroup();
