@@ -7612,8 +7612,13 @@ https://rainboxprod.coop
 		{
 			//pour ne pas bouger, il faut recuperer la rotation d'origine
 			var ancienneRot = 0;
-			if (layer.threeDLayer) ancienneRot = layer.transform.zRotation.value;
-			else ancienneRot = layer.transform.rotation.value;
+
+			var rotation = layer.transform.rotation;
+			if (layer.threeDLayer) rotation = layer.transform.zRotation;
+			rotation.expression = '';
+
+			if (rotation.numKeys == 0) ancienneRot = rotation.value;
+			else ancienneRot = rotation.keyValue(1);
 
 			//check names
 			Duik.utils.checkNames(layer.containingComp);
@@ -7641,8 +7646,7 @@ https://rainboxprod.coop
 				"}\r\n" +
 				"result;";
 
-				if (layer.threeDLayer) layer.transform.zRotation.expression = expr;
-				else layer.transform.rotation.expression = expr;
+				rotation.expression = expr;
 			}
 			else
 			{
@@ -7651,7 +7655,7 @@ https://rainboxprod.coop
 				effetGoal.name = "Goal";
 				effetGoal(1).setValue(true);
 				//ajouter l'expression dans le calque
-				layer.transform.rotation.expression = "//Duik.goal\r\n" +
+				rotation.expression = "//Duik.goal\r\n" +
 				"var goal = thisLayer.effect(\"" + effetGoal.name + "\")(1);\r\n" +
 				"var result = value;\r\n" +
 				"if (goal == 1)\r\n" +
@@ -7668,11 +7672,24 @@ https://rainboxprod.coop
 
 			//et remettre la bonne rotation pour pas bouger
 			var nouvelleRot = 0;
-			if (layer.threeDLayer) nouvelleRot = layer.transform.zRotation.value;
-			else nouvelleRot = layer.transform.rotation.value;
 
-			if (layer.threeDLayer) layer.transform.zRotation.setValue(2*ancienneRot-nouvelleRot);
-			else layer.transform.rotation.setValue(2*ancienneRot-nouvelleRot);
+			if (rotation.numKeys > 0)
+			{
+				nouvelleRot = rotation.valueAtTime(rotation.keyTime(1),false);
+				//offset all keyframes
+				var firstKeyRot = 2*ancienneRot-nouvelleRot;
+				var offset = firstKeyRot - rotation.keyValue(1);
+				for (var i = 1; i <= rotation.numKeys ; i++)
+				{
+					rotation.setValueAtKey(i,rotation.keyValue(i)+offset);
+				}
+			}
+			else
+			{
+				nouvelleRot = rotation.value;
+				rotation.setValue(2*ancienneRot-nouvelleRot);
+			}
+
 
 			//select controller
 			if (controller != undefined)
