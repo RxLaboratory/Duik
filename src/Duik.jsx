@@ -3234,9 +3234,17 @@ function loadDuik()
 		if (!comp) return;
 		//debut du groupe d'annulation
 		app.beginUndoGroup(tr("Duik - Multiplane"));
-		var layers = comp.selectedLayers;
 
-		Duik.multiplane(comp,parseInt(nombre.text),undefined,layers);
+		var layers = [];
+		if (multiplaneLinkSelectedLayersButton.value) layers = comp.selectedLayers;
+
+		var camIndex = parseInt(multiplaneCameraIndex.text);
+		if (isNaN(camIndex)) camIndex = -1;
+
+		var numLayers = parseInt(nombre.text);
+		if (isNaN(numLayers)) numLayers = -1;
+
+		Duik.multiplane(comp,numLayers,camIndex,layers);
 
 		//fin du groupe d'annulation
 		app.endUndoGroup();
@@ -5495,6 +5503,16 @@ function loadDuik()
 				{
 					nombre.text = numLayers;
 					multiplaneSlider.value = numLayers;
+					multiplaneCameraIndex.text = Math.ceil(numLayers/2);
+					multiplaneLinkSelectedLayersButton.value = true;
+					multiplaneSetNumberButton.value = false;
+					multiplaneNumberGroup.enabled = false;
+				}
+				else
+				{
+					multiplaneSetNumberButton.value = true;
+					multiplaneLinkSelectedLayersButton.value = false;
+					multiplaneNumberGroup.enabled = true;
 				}
 			}
 			multiplanePanel.show();
@@ -6572,16 +6590,41 @@ function loadDuik()
 
 	//MULTIPLANE PANEL
 	{
-		var nombreGroupe = addHGroup(multiplanePanel);
-		nombreGroupe.add('statictext',undefined,tr("Layers:"));
-		var nombre = nombreGroupe.add('edittext',undefined,'05');
-		var multiplaneSlider = multiplanePanel.add('slider',undefined,5,1,10);
+		var multiplaneLinkSelectedLayersButton = multiplanePanel.add('checkbox',undefined,tr("Link selected layers"));
+		multiplaneLinkSelectedLayersButton.onClick = function () {
+			multiplaneNumberGroup.enabled = !multiplaneLinkSelectedLayersButton.value;
+			multiplaneSetNumberButton.value = !multiplaneLinkSelectedLayersButton.value;
+		}
+
+		addSeparator(multiplanePanel,'');
+
+		var multiplaneSetNumberButton = multiplanePanel.add('checkbox',undefined,tr("Set the number of layers"));
+		multiplaneSetNumberButton.onClick = function () {
+			multiplaneNumberGroup.enabled = multiplaneSetNumberButton.value;
+			multiplaneLinkSelectedLayersButton.value = !multiplaneSetNumberButton.value;
+		}
+
+		var multiplaneNumberGroup = addHGroup(multiplanePanel);
+		multiplaneNumberGroup.alignment = ['left','top'];
+		var multiplaneSlider = multiplaneNumberGroup.add('slider',undefined,5,1,10);
+		multiplaneSlider.maximumSize.height = 24;
+		var nombre = multiplaneNumberGroup.add('edittext',undefined,'05');
+		nombre.alignment = ['left','fill'];
+
 		multiplaneSlider.onChanging = function () {
-		nombre.text = Math.round(multiplaneSlider.value);
+			nombre.text = Math.round(multiplaneSlider.value);
 		}
 		nombre.onChanging = function () {
-		multiplaneSlider.value = parseInt(nombre.text);
+			multiplaneSlider.value = parseInt(nombre.text);
 		}
+
+		addSeparator(multiplanePanel,'');
+
+		var multiplaneCameraIndexGroup = addHGroup(multiplanePanel);
+		multiplaneCameraIndexGroup.alignment = ['left','top'];
+		multiplaneCameraIndexGroup.add('statictext',undefined,tr("Camera index:"));
+		var multiplaneCameraIndex = multiplaneCameraIndexGroup.add('edittext',undefined,'03');
+		multiplaneCameraIndex.alignment = ['left','fill'];
 
 		var multiplaneButtonsGroup = addHGroup(multiplanePanel);
 		var multiplaneCancelButton = addIconButton(multiplaneButtonsGroup,'btn_cancel',tr("Cancel"));
