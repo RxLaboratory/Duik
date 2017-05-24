@@ -3230,24 +3230,22 @@ function loadDuik()
 	//FONCTION MULTIPLAN
 	function multiplan()
 	{
+		var comp = getCurrentComp();
+		if (!comp) return;
 		//debut du groupe d'annulation
 		app.beginUndoGroup(tr("Duik - Multiplane"));
-		var comp = app.project.activeItem;
 		var layers = [];
-		if (comp instanceof CompItem)
-		{
 		layers = comp.selectedLayers;
 		layers = Duik.utils.sortLayersByIndex(layers);
-		}
 
 		Duik.multiplane(parseInt(nombre.text));
 
 		if (layers.length == parseInt(nombre.text))
 		{
-		for (var i = 0 ; i<layers.length;i++)
-		{
-		layers[i].parent = comp.layer(i+1);
-		}
+			for (var i = 0 ; i<layers.length;i++)
+			{
+				layers[i].parent = comp.layer(i+1);
+			}
 		}
 
 		//fin du groupe d'annulation
