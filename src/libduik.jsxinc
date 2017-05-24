@@ -106,8 +106,8 @@ https://rainboxprod.coop
 	*/
 	{
 		/**
-		 * Constructs a new FFMpeg encoder
-		 * The constructor will try to find the ffmpeg binary in the same folder as libDuik, or an (ffmpeg) subfolder, or in the scripts folder of After Effects
+		 * Constructs a new FFMpeg encoder.
+		 * The constructor will try to find the ffmpeg binary in the same folder as libDuik, or an (ffmpeg) subfolder, or in the scripts folder of After Effects.
 		 * If ffmpeg is not in one of those, the property ffmpegPath will be an empty string, and it has to be set by the user.
 		 * @class FFMpeg
 		 * @classdesc A class used to easily encode medias with ffmpeg
@@ -117,43 +117,45 @@ https://rainboxprod.coop
 		 */
 		function FFMpeg(options)
 		{
-		    if (options == undefined) options = '-stats';
+		    //detect os
+		    var mac = $.os.toLowerCase().indexOf("mac") >= 0;
+		    this.mac = mac;
+		    this.win = !mac;
 
-		    //TODO mac version
+		    if (options == undefined) options = '-stats';
 
 		    this.ffmpegPath = '';
 
 		    //try to detect the ffmpeg path
+		    var ffmpegBinName = '';
+		    if (this.win) ffmpegBinName = 'ffmpeg.exe';
+		    else ffmpegBinName = 'ffmpeg';
 		    //first, in the same dir
-		    var ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/ffmpeg.exe');
+		    var ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/' + ffmpegBinName);
 		    //in an (ffmpeg) subfolder
 		    if (!ffmpegFile.exists)
 		    {
-		        ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(ffmpeg)/ffmpeg.exe');
+		        ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(ffmpeg)/' + ffmpegBinName);
 		    }
 		    //in AE Scripts folder
 		    if (!ffmpegFile.exists)
 		    {
-		        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts' + '/ffmpeg.exe');
-		        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts' + '/ffmpeg.exe');
+		        ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/' + ffmpegBinName);
 		    }
 		    //in AE Scripts/(ffmpeg) folder
 		    if (!ffmpegFile.exists)
 		    {
-		        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(ffmpeg)' + '/ffmpeg.exe');
-		        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/(ffmpeg)' + '/ffmpeg.exe');
+		        ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(ffmpeg)/' + ffmpegBinName);
 		    }
 		    //in AE ScriptUI Panels
 		    if (!ffmpegFile.exists)
 		    {
-		        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels' + '/ffmpeg.exe');
-		        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/ScriptUI Panels' + '/ffmpeg.exe');
+		        ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + ffmpegBinName);
 		    }
 		    //in AE ScriptUI Panels/(ffmpeg)
 		    if (!ffmpegFile.exists)
 		    {
-		        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(ffmpeg)' + '/ffmpeg.exe');
-		        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/ScriptUI Panels/(ffmpeg)' + '/(ffmpeg)/ffmpeg.exe');
+		        ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(ffmpeg)/' + ffmpegBinName);
 		    }
 
 		    if (ffmpegFile.exists) this.ffmpegPath = ffmpegFile.fsName;
@@ -165,13 +167,17 @@ https://rainboxprod.coop
 		/**
 		 * Launches encoding
 		 * @memberof FFMpeg
+		 * @return {string} The text returned by ffmpeg (currently works on win only, empty string on mac)
 		 */
 		FFMpeg.prototype.launch = function ()
 		{
-		    //TODO mac version
-
 		    var cmd = '';
-		    if (Duik.win) cmd += '"' + this.ffmpegPath + '"';
+		    if (this.win) cmd += '"' + this.ffmpegPath + '"';
+		    else
+		    {
+		      var ffmpegFile = new File(this.ffmpegPath);
+		      cmd += '"' + ffmpegFile.parent.fsName + '"/./' + ffmpegFile.name;
+		    }
 
 		    //add options
 		    cmd += ' ' + this.options;
@@ -193,6 +199,11 @@ https://rainboxprod.coop
 		    }
 
 		    //launch!
+
+		    //hack mac, do not wait for ffmpeg to end as it freezes AE
+		    if (this.mac) cmd = cmd + "&";
+
+		    //launch
 		    system.callSystem(cmd);
 		}
 
@@ -231,8 +242,8 @@ https://rainboxprod.coop
 
 		    this.codec = codec;
 
-		    if (!outputPath) throw "No output file set";
-		    if (outputPath == '') throw "No output file set";
+		    //f (!outputPath) throw "No output file set";
+		    //if (outputPath == '') throw "No output file set";
 
 		    var outputFile = new File(outputPath);
 		    this.outputPath = outputFile.fsName;
