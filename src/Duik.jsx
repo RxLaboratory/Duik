@@ -2530,7 +2530,8 @@ function loadDuik()
 	//FONCTION QUI MESURE LE RAYON D'UNE ROUE
 	function mesurer()
 	{
-
+		var comp = getCurrentComp();
+		if (!comp) return;
 		//verifions qu'il y a deux calques selectionnes
 		if (app.project.activeItem.selectedLayers.length == 2){
 
@@ -2547,16 +2548,17 @@ function loadDuik()
 	{
 		OA = parseFloat(rayonbouton.text);
 
-		if (OA != 0 && OA != NaN) {
+		if (OA != 0 && OA != NaN)
+		{
+			var layers = getCurrentLayers();
+			if (!layers) return;
+			//  debut de groupe d'annulation
+			app.beginUndoGroup(tr("Wheel"));
 
-		//  debut de groupe d'annulation
-		app.beginUndoGroup(tr("Wheel"));
+			Duik.wheel(layers[0],OA,roueC.value);
 
-		Duik.wheel(app.project.activeItem.selectedLayers[0],OA,roueC.value);
-
-		//  fin de groupe d'annulation
-		app.endUndoGroup();
-
+			//  fin de groupe d'annulation
+			app.endUndoGroup();
 		} else { alert (tr("Invalid Radius"),tr("What is the radius of the wheel?"),true); }
 	}
 
