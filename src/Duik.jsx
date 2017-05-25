@@ -4082,38 +4082,36 @@ function loadDuik()
 		if (expertMode) text = '';
 		if (!helpTip) helpTip = '';
 		var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
-		bouton.group.maximumSize.height = bouton.group.minimumSize.height = 24;
-		bouton.group.minimumSize.width = 24;
 		if (bouton.label)
 		{
-			bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
-			bouton.image.size = [38,18];
 			bouton.image.alignment = ['left','fill'];
 			bouton.label.alignment = ['left','fill'];
 		}
 		return bouton;
 	}
 
-	function addIconRadioButton(conteneur,image,text)
+	function addIconRadioButton(container,image,text,helpTip)
 	{
 		if (expertMode) text = '';
-		var g = addVGroup(conteneur);
-		g.minimumSize.height = 60;
-		g.alignChildren = ['center','fill'];
-		g.add('image',undefined,dossierIcones + image);
-		g.button = g.add('radiobutton',undefined,text);
-		return g;
+		var bouton = Duik.ui.addImageRadioButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png',undefined,false);
+		if (bouton.label)
+		{
+			bouton.image.alignment = ['left','fill'];
+			bouton.label.alignment = ['left','fill'];
+		}
+		/*var g = addHGroup(container);
+		g.alignChildren = ['left','center'];
+		g.button = g.add('checkbox',undefined,text);
+		g.img = g.add('image',undefined,dossierIcones + image);*/
+		return bouton;
 	}
 
 	function addIconCheckbox(container,image,text,helpTip)
 	{
 		if (expertMode) text = '';
 		var bouton = Duik.ui.addImageCheckBox(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
-		bouton.group.minimumSize.width = bouton.group.maximumSize.width = 24;
 		if (bouton.label)
 		{
-			bouton.group.minimumSize.width = bouton.group.maximumSize.width = 110;
-			bouton.image.size = [38,18];
 			bouton.image.alignment = ['left','fill'];
 			bouton.label.alignment = ['left','fill'];
 		}
@@ -4136,11 +4134,11 @@ function loadDuik()
 	{
 		var groupe = conteneur.add('group');
 		groupe.orientation = 'column';
-		groupe.alignChildren = ['fill','fill'];
+		groupe.alignment = ['center','top'];
+		groupe.alignChildren = ['fill','top'];
 		groupe.spacing = 2;
 		groupe.margins = 1;
 		//expertMode ? groupe.alignment = ['left','top'] : groupe.alignment = ['center','top'];
-		groupe.alignment = ['fill','fill'];
 		return groupe;
 	}
 
@@ -4403,11 +4401,11 @@ function loadDuik()
 		entete.alignment = ['fill','top'];
 		entete.spacing = 2;
 		entete.margins = 0;
-		var boutonNotes = addIconButton(entete,'btn_notes','',tr("Simple notepad, with auto-save."));
-		boutonNotes.size = [22,22];
+		var boutonNotes = addIconButton(entete,'panels_btn_notes','',tr("Simple notepad, with auto-save."));
+		boutonNotes.group.alignment = ['left','top'];
 		boutonNotes.onClick = function () { if (fenetrenotes.visible) fenetrenotes.hide(); else fenetrenotes.show(); };
-		var boutonCalc = addIconButton(entete,'btn_calc','',tr("Calculator"));
-		boutonCalc.size = [22,22];
+		var boutonCalc = addIconButton(entete,'panels_btn_calc','',tr("Calculator"));
+		boutonCalc.group.alignment = ['left','top'];
 		boutonCalc.onClick = function () { if (fenetrecalc.visible) fenetrecalc.hide(); else fenetrecalc.show(); };
 
 		//PANEL NAME
@@ -4421,26 +4419,19 @@ function loadDuik()
 		//SELECTOR BUTTONS
 		var selectorGroup = addVGroup(entete);
 		selectorGroup.orientation = 'stack';
-		selectorGroup.alignment = ['right','center'];
+		selectorGroup.alignment = ['right','top'];
 		var selectorButtons = addHGroup(selectorGroup);
-		selectorButtons.alignChildren = ['fill','center'];
+		selectorButtons.alignChildren = ['right','top'];
 		var riggingPanelButton = addIconCheckbox(selectorButtons,'panels_btn_rigging','',tr("Rigging"));
-		riggingPanelButton.size = [22,22];
 		var automationPanelButton = addIconCheckbox(selectorButtons,'panels_btn_animation','',tr("Automation"));
-		automationPanelButton.size = [22,22];
 		var animationPanelButton = addIconCheckbox(selectorButtons,'panels_btn_interpo','',tr("Animation"));
-		animationPanelButton.size = [22,22];
 		var camerasPanelButton = addIconCheckbox(selectorButtons,'panels_btn_camera','',tr("Cameras"));
-		camerasPanelButton.size = [22,22];
 		var ioPanelButton = addIconCheckbox(selectorButtons,'panels_btn_io','',tr("Import/Export"));
-		ioPanelButton.size = [22,22];
 		var settingsPanelButton = addIconCheckbox(selectorButtons,'panels_btn_settings','',tr("Settings"));
-		settingsPanelButton.size = [22,22];
 		var helpPanelButton = addIconCheckbox(selectorButtons,'panels_btn_help','',tr("Help!"));
-		helpPanelButton.size = [22,22];
 		//LIST
 		var selecteur = selectorGroup.add('dropdownlist',undefined,[tr("Rigging"),tr("Automation"),tr("Animation"),tr("Cameras"),tr("Import/Export"),tr("Settings"),tr("Help")]);
-		selecteur.alignment = ['right','center'];
+		selecteur.alignment = ['right','top'];
 		selecteur.helpTip = tr("Tool boxes");
 		selecteur.items[0].image = ScriptUI.newImage(dossierIcones + 'panels_btn_rigging.png');
 		if (expertMode) selecteur.items[0].text = '';
@@ -4465,8 +4456,6 @@ function loadDuik()
 		panos.orientation = 'stack';
 		panos.alignChildren = ['fill','fill'];
 		panos.maximumSize = [500,500];
-		if (!expertMode) panos.minimumSize = [250,250];
-		else panos.minimumSize = [100,100];
 
 		//bottom infos
 		var bottomGroup = addHGroup(mainGroup);
@@ -4484,7 +4473,7 @@ function loadDuik()
 
 		if (!expertMode)
 		{
-			var duikURL = bottomGroup.add ('statictext',undefined,'www.rainboxprod.coop');
+			var duikURL = bottomGroup.add ('statictext',undefined,'rainboxprod.coop');
 			duikURL.alignment = ['left','bottom'];
 			duikURL.addEventListener('mousedown',urlClicked,true);
 		}
@@ -4526,58 +4515,40 @@ function loadDuik()
 
 		var ctrlPanel = addVPanel(panos);
 		ctrlPanel.visible = false;
-		ctrlPanel.alignChildren = ['fill','top'];
 		var ikPanel = addVPanel(panos);
 		ikPanel.visible = false;
-		ikPanel.alignChildren = ['fill','top'];
 		var bezierIkPanel = addVPanel(panos);
 		bezierIkPanel.visible = false;
-		bezierIkPanel.alignChildren = ['fill','top'];
 		var renamePanel = addVPanel(panos);
 		renamePanel.visible = false;
-		renamePanel.alignChildren = ['fill','top'];
 		var riePanel = addVPanel(panos);
 		riePanel.visible = false;
-		riePanel.alignChildren = ['fill','top'];
 		var measurePanel = addVPanel(panos);
 		measurePanel.visible = false;
-		measurePanel.alignChildren = ['fill','top'];
 		var timeRemapPanel = addVPanel(panos);
 		timeRemapPanel.visible = false;
-		timeRemapPanel.alignChildren = ['fill','top'];
 		var exposurePanel = addVPanel(panos);
 		exposurePanel.visible = false;
-		exposurePanel.alignChildren = ['fill','top'];
 		var celPanel = addVPanel(panos);
 		celPanel.visible = false;
-		celPanel.alignChildren = ['fill','top'];
 		var wigglePanel = addVPanel(panos);
 		wigglePanel.visible = false;
-		wigglePanel.alignChildren = ['fill','top'];
 		var irPanel = addVPanel(panos);
 		irPanel.visible = false;
-		irPanel.alignChildren = ['fill','top'];
 		var randPanel = addVPanel(panos);
 		randPanel.visible = false;
-		randPanel.alignChildren = ['fill','top'];
 		var multiplanePanel = addVPanel(panos);
 		multiplanePanel.visible = false;
-		multiplanePanel.alignChildren = ['fill','top'];
 		var wheelPanel = addVPanel(panos);
 		wheelPanel.visible = false;
-		wheelPanel.alignChildren = ['fill','top'];
 		var springPanel = addVPanel(panos);
 		springPanel.visible = false;
-		springPanel.alignChildren = ['fill','top'];
 		var tvpCamPanel = addVPanel(panos);
 		tvpCamPanel.visible = false;
-		tvpCamPanel.alignChildren = ['fill','top'];
 		var autorigPanel = addVPanel(panos);
 		autorigPanel.visible = false;
-		autorigPanel.alignChildren = ['fill','top'];
 		var auditionPanel = addVPanel(panos);
 		auditionPanel.visible = false;
-		auditionPanel.alignChildren = ['fill','top'];
 
 		function displayPanel() {
 			ctrlPanel.hide();
@@ -4690,23 +4661,17 @@ function loadDuik()
 		helpTestGroup.add('statictext',undefined,tr("to report bugs or make suggestions!"));*/
 		var helpLinksGroup = addVPanel(helpPanel);
 		helpLinksGroup.margins = 10;
-		helpLinksGroup.add('statictext',undefined,tr("If you need help using Duik,"));
-		helpLinksGroup.add('statictext',undefined,tr("those resources can be useful:"));
+		helpLinksGroup.add('statictext',undefined,tr("If you need help using Duik,") + tr("those resources can be useful:"),{multiline:true});
+		helpLinksGroup.add('statictext',undefined,);
 		/*helpTrainingURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Duduf Training, documents and tutorials:"));
 		helpTrainingURL = helpLinksGroup.add('statictext',undefined,'www.duduf.training');*/
-		helpForumURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Rainbox Forum, where you can ask your questions:"));
+		helpForumURL = helpLinksGroup.add('statictext',undefined,'• ' + tr("Rainbox Forum, where you can ask your questions:"),{multiline:true});
 		helpForumURL = helpLinksGroup.add('statictext',undefined,'forum.rainboxprod.coop');
 		var helpLicenseGroup = addVPanel(helpPanel);
-		helpLicenseGroup.margins = 10;
+		helpLicenseGroup.alignChildren = ['center','top'];
 		helpLicenseGroup.add('statictext',undefined,tr("License: Duik is free software,"));
 		helpLicenseGroup.add('statictext',undefined,tr("released under the GNU-GPL v3"));
-		var helpCreditsGroup = addVPanel(helpPanel);
-		helpCreditsGroup.margins = 10;
-		helpCreditsGroup.add('statictext',undefined,tr("Credits:"));
-		helpCreditsGroup.add('statictext',undefined,tr("Nicolas Dufresne - Lead developper") );
-		helpCreditsGroup.add('statictext',undefined,tr("Kevin Schires - Including images in the script") );
-		helpCreditsGroup.add('statictext',undefined,tr("Eric Epstein - IK with 3D Layers"));
-		helpCreditsGroup.add('statictext',undefined,tr("Zeg - UI designer"));
+
 	}
 
 	// SETTINGS
@@ -4983,7 +4948,8 @@ function loadDuik()
 	// RIGGING
 	{
 		//bouton autorig
-		var boutonautorig = addIconButton(panoik,'btn_autorig',tr("Auto-Rig"),tr("Autorig")) ;
+		var boutonautorig = addIconButton(panoik,'btn_autorig',tr("Auto-Rig"),tr("Autorig"));
+		boutonautorig.group.alignment = ['center','top'];
 		boutonautorig.onClick = function () {panoik.hide();autorigPanel.show();};
 		//boutonautorig.helpTip = 'tip a ecrire';
 		var groupeik = addHGroup(panoik);
@@ -5023,7 +4989,7 @@ function loadDuik()
 		var rieButton = addIconButton(groupeikG,'btn_replace in expr',tr("Replace"),tr("Search and replace text in expressions"));
 		rieButton.onClick = function () { panoik.hide(); riePanel.show();}
 		//lock button
-		var lockButton = addIconButton(groupeikD,'locks_btn_lock',tr("Lock property"),tr("Locks the selected property"));
+		var lockButton = addIconButton(groupeikD,'btn_lock',tr("Lock property"),tr("Locks the selected property"));
 		lockButton.onClick = lockButtonClicked;
 	}
 
@@ -5034,6 +5000,7 @@ function loadDuik()
 		{
 			//Interpolation types
 			var groupeInterpoClefs = addHGroup(panointerpo);
+			groupeInterpoClefs.spacing = 4;
 			var rovingButton = addIconButton(groupeInterpoClefs,'interpo_btn_roving','',tr("Roving"));
 			rovingButton.onClick = roving;
 			var boutonLineaire = addIconButton(groupeInterpoClefs,'interpo_btn_linear','',tr("Linear Interpolation"));
@@ -5053,20 +5020,21 @@ function loadDuik()
 			var interpoPresetsGroup = addHGroup(panointerpo);
 			interpoPresetsGroup.maximumSize.height = 24;
 			var interpoPresetsList = interpoPresetsGroup.add('dropdownlist',undefined,eval(app.settings.getSetting('duik', 'interpolationPresets')));
-			interpoPresetsList.alignment = ['left','fill'];
+			interpoPresetsList.alignment = ['fill','fill'];
 			interpoPresetsList.selection = 0;
 			interpoPresetsList.onChange = interpoPresetsListChanged;
 			var interpoPresetsAddButton = addIconButton(interpoPresetsGroup,'btn_add');
-			interpoPresetsAddButton.alignment = ['left','fill'];
+			interpoPresetsAddButton.alignment = ['right','fill'];
 			interpoPresetsAddButton.onClick = interpoPresetsAddButtonClicked;
 			var interpoPresetsRemoveButton = addIconButton(interpoPresetsGroup,'btn_remove');
-			interpoPresetsRemoveButton.alignment = ['left','fill'];
+			interpoPresetsRemoveButton.alignment = ['right','fill'];
 			interpoPresetsRemoveButton.onClick = interpoPresetsRemoveButtonClicked;
 
 			//speed
 			var interpoSpeedGroup = addHGroup(panointerpo);
 			interpoSpeedGroup.maximumSize.height = 24;
 			var interpoSpeedButton = addIconCheckbox(interpoSpeedGroup,'btn_interpo_speed','',tr("Speed"));
+			interpoSpeedButton.alignment = ['left','center'];
 			interpoSpeedButton.onClick = function ()
 			{
 				interpoSpeedSlider.enabled = interpoSpeedButton.checked;
@@ -5106,6 +5074,7 @@ function loadDuik()
 			var interpoInGroup = addHGroup(panointerpo);
 			interpoInGroup.maximumSize.height = 24;
 			var boutonApproche = addIconCheckbox(interpoInGroup,'btn_interpo_ease','',tr("Ease In influence"));
+			boutonApproche.alignment = ['left','center'];
 			boutonApproche.setChecked(true);
 			boutonApproche.enabled = false;
 			boutonApproche.onClick = function ()
@@ -5134,18 +5103,8 @@ function loadDuik()
 				infl();
 			}
 			var interpoInSliderButtonsGroup = addHGroup(interpoInSliderGroup);
-			var interpoIn1 = interpoInSliderButtonsGroup.add('button',undefined,"1");
-			interpoIn1.onClick = function ()
-			{
-				interpoPresetsList.selection = 0;
-				interpoInEdit.text = "1";
-				if (interpoLockInfluencesButton.checked)
-				{
-					interpoOutEdit.text = "1";
-				}
-				infl();
-			}
 			var interpoIn10 = interpoInSliderButtonsGroup.add('button',undefined,"10");
+			interpoIn10.maximumSize.width = 20;
 			interpoIn10.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5157,6 +5116,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoIn25 = interpoInSliderButtonsGroup.add('button',undefined,"25");
+			interpoIn25.maximumSize.width = 20;
 			interpoIn25.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5168,6 +5128,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoIn50 = interpoInSliderButtonsGroup.add('button',undefined,"50");
+			interpoIn50.maximumSize.width = 20;
 			interpoIn50.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5179,6 +5140,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoIn75 = interpoInSliderButtonsGroup.add('button',undefined,"75");
+			interpoIn75.maximumSize.width = 20;
 			interpoIn75.onClick = function ()
 				{
 				interpoPresetsList.selection = 0;
@@ -5190,6 +5152,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoIn90 = interpoInSliderButtonsGroup.add('button',undefined,"90");
+			interpoIn90.maximumSize.width = 20;
 			interpoIn90.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5201,6 +5164,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoIn100 = interpoInSliderButtonsGroup.add('button',undefined,"100");
+			interpoIn100.maximumSize.width = 20;
 			interpoIn100.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5235,6 +5199,7 @@ function loadDuik()
 			groupeInterpoOut.maximumSize.height = 24;
 			groupeInterpoOut.visible = false;
 			var boutonEloignement = addIconCheckbox(groupeInterpoOut,'btn_interpo_out','',tr("Ease Out influence"));
+			boutonEloignement.alignment = ['left','center'];
 			boutonEloignement.setChecked(true);
 			boutonEloignement.onClick = function ()
 			{
@@ -5257,14 +5222,8 @@ function loadDuik()
 				infl();
 			}
 			var interpoOutSliderButtonsGroup = addHGroup(interpoOutSliderGroup);
-			var interpoOut1 = interpoOutSliderButtonsGroup.add('button',undefined,"1");
-			interpoOut1.onClick = function ()
-			{
-				interpoPresetsList.selection = 0;
-				interpoOutEdit.text = "1";
-				infl();
-			}
 			var interpoOut10 = interpoOutSliderButtonsGroup.add('button',undefined,"10");
+			interpoOut10.maximumSize.width = 20;
 			interpoOut10.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5272,6 +5231,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoOut25 = interpoOutSliderButtonsGroup.add('button',undefined,"25");
+			interpoOut25.maximumSize.width = 20;
 			interpoOut25.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5279,6 +5239,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoOut50 = interpoOutSliderButtonsGroup.add('button',undefined,"50");
+			interpoOut50.maximumSize.width = 20;
 			interpoOut50.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5286,6 +5247,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoOut75 = interpoOutSliderButtonsGroup.add('button',undefined,"75");
+			interpoOut75.maximumSize.width = 20;
 			interpoOut75.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5293,6 +5255,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoOut90 = interpoOutSliderButtonsGroup.add('button',undefined,"90");
+			interpoOut90.maximumSize.width = 20;
 			interpoOut90.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5300,6 +5263,7 @@ function loadDuik()
 				infl();
 			}
 			var interpoOut100 = interpoOutSliderButtonsGroup.add('button',undefined,"100");
+			interpoOut100.maximumSize.width = 20;
 			interpoOut100.onClick = function ()
 			{
 				interpoPresetsList.selection = 0;
@@ -5462,17 +5426,17 @@ function loadDuik()
 
 	// CAMERAS
 	{
-		panocam.orientation = 'row';
-		var groupCameraG = addVGroup(panocam);
-		var groupCameraD = addVGroup(panocam);
+		//panocam.orientation = 'row';
+		//var groupCameraG = addVGroup(panocam);
+		//var groupCameraD = addVGroup(panocam);
 		//bouton pour creer une target cam
-		var boutontcam = addIconButton(groupCameraG,'btn_ctrl cam',tr("Control Cam"),tr("Creates animation controllers for a camera"));
+		var boutontcam = addIconButton(panocam,'btn_ctrl cam',tr("Control Cam"),tr("Creates animation controllers for a camera"));
 		boutontcam.onClick = controlcam;
 		//scale Z-link button
-		var scaleZLinkButton = addIconButton(groupCameraD,'btn_scalezlink',tr("Scale Z-Link"),tr("Links the distance of the layer from the camera to its scale, so its apparent size won't change."));
+		var scaleZLinkButton = addIconButton(panocam,'btn_scalezlink',tr("Scale Z-Link"),tr("Links the distance of the layer from the camera to its scale, so its apparent size won't change."));
 		scaleZLinkButton.onClick = scaleZLinkButtonClicked;
 		//bouton pour multiplan 2D
-		var boutontcam2d = addIconButton(groupCameraG,'btn_2D multiplane',tr("2D Multiplane"),tr("Creates multiplane controllers to use as a 2D camera"));
+		var boutontcam2d = addIconButton(panocam,'btn_2D multiplane',tr("2D Multiplane"),tr("Creates multiplane controllers to use as a 2D camera"));
 		boutontcam2d.onClick = function ()
 		{
 			panocam.hide() ;
@@ -5500,7 +5464,7 @@ function loadDuik()
 			multiplanePanel.show();
 		};
 		//TVP Cam
-		var tvpCamButton = addIconButton(groupCameraD,'btn_TVP Cam',tr("Import TVPaint Cam"),tr("Imports a camera from TVPaint."));
+		var tvpCamButton = addIconButton(panocam,'btn_TVP Cam',tr("Import TVPaint Cam"),tr("Imports a camera from TVPaint."));
 		tvpCamButton.onClick = function () {panocam.hide();tvpCamPanel.show();};
 	}
 
@@ -6437,10 +6401,9 @@ function loadDuik()
 
 	//WIGGLE PANEL
 	{
-		var wiggleSeparateGroup = addHGroup(wigglePanel);
 		//separer ou toutes
-		var wiggleSeparate = wiggleSeparateGroup.add('radiobutton',undefined,tr("Separate Dimensions"));
-		var wiggleTous = wiggleSeparateGroup.add('radiobutton',undefined,tr("All Dimensions"));
+		var wiggleSeparate = wigglePanel.add('radiobutton',undefined,tr("Separate Dimensions"));
+		var wiggleTous = wigglePanel.add('radiobutton',undefined,tr("All Dimensions"));
 		wiggleTous.value = true;
 		var wiggleButtonsGroup = addHGroup(wigglePanel);
 		var wiggleCancelButton = addIconButton(wiggleButtonsGroup,'btn_cancel',tr("Cancel"));
@@ -6547,28 +6510,40 @@ function loadDuik()
 		randXLabel.alignment = ['center','center'];
 		var randMaxXValueEdit = randXValueGroup.add('edittext',undefined,tr("Max"));
 		var randMaxXSlider = randXValueGroup.add('slider',undefined,0,-100,100);
+		randMaxXSlider.maximumSize.width = 70;
+		randMaxXSlider.maximumSize.height = 18;
 		randMaxXSlider.onChanging = function () {randMaxXValueEdit.text = Math.round(randMaxXSlider.value);};
 		var randMinXValueEdit = randXValueGroup.add('edittext',undefined,tr("Min"));
 		var randMinXSlider = randXValueGroup.add('slider',undefined,0,-100,100);
 		randMinXSlider.onChanging = function () {randMinXValueEdit.text = Math.round(randMinXSlider.value);};
+		randMinXSlider.maximumSize.width = 70;
+		randMinXSlider.maximumSize.height = 18;
 		var randYValueGroup = addVGroup(randValuesGroup);
 		var randYLabel = randYValueGroup.add('statictext',undefined,'Y');
 		randYLabel.alignment = ['center','center'];
 		var randMaxYValueEdit = randYValueGroup.add('edittext',undefined,tr("Max"));
 		var randMaxYSlider = randYValueGroup.add('slider',undefined,0,-100,100);
 		randMaxYSlider.onChanging = function () {randMaxYValueEdit.text = Math.round(randMaxYSlider.value);};
+		randMaxYSlider.maximumSize.width = 70;
+		randMaxYSlider.maximumSize.height = 18;
 		var randMinYValueEdit = randYValueGroup.add('edittext',undefined,tr("Min"));
 		var randMinYSlider = randYValueGroup.add('slider',undefined,0,-100,100);
 		randMinYSlider.onChanging = function () {randMinYValueEdit.text = Math.round(randMinYSlider.value);};
+		randMinYSlider.maximumSize.width = 70;
+		randMinYSlider.maximumSize.height = 18;
 		var randZValueGroup = addVGroup(randValuesGroup);
 		var randZLabel = randZValueGroup.add('statictext',undefined,'Z');
 		randZLabel.alignment = ['center','center'];
 		var randMaxZValueEdit = randZValueGroup.add('edittext',undefined,tr("Max"));
 		var randMaxZSlider = randZValueGroup.add('slider',undefined,0,-100,100);
 		randMaxZSlider.onChanging = function () {randMaxZValueEdit.text = Math.round(randMaxZSlider.value);};
+		randMaxZSlider.maximumSize.width = 70;
+		randMaxZSlider.maximumSize.height = 18;
 		var randMinZValueEdit = randZValueGroup.add('edittext',undefined,tr("Min"));
 		var randMinZSlider = randZValueGroup.add('slider',undefined,0,-100,100);
 		randMinZSlider.onChanging = function () {randMinZValueEdit.text = Math.round(randMinZSlider.value);};
+		randMinZSlider.maximumSize.width = 70;
+		randMinZSlider.maximumSize.height = 18;
 
 		var randFromValueButton = randPanel.add('checkbox',undefined,tr("From current value"));
 		randFromValueButton.value = true;
@@ -6607,9 +6582,11 @@ function loadDuik()
 
 		multiplaneSlider.onChanging = function () {
 			nombre.text = Math.round(multiplaneSlider.value);
+			multiplaneCameraIndex.text = Math.ceil(multiplaneSlider.value/2);
 		}
 		nombre.onChanging = function () {
 			multiplaneSlider.value = parseInt(nombre.text);
+			multiplaneCameraIndex.text = Math.ceil(multiplaneSlider.value/2);
 		}
 
 		addSeparator(multiplanePanel,'');
@@ -6637,7 +6614,7 @@ function loadDuik()
 		//champ de saisie
 		rayonGroupeRayon.add('statictext',undefined,tr("Radius:"));
 		var rayonbouton = rayonGroupeRayon.add ('edittext', undefined);
-		rayonbouton.size = ['100','20'];
+		rayonbouton.maximumSize.width = rayonbouton.minimumSize.width = 50;
 		rayonbouton.helpTip = tr("Radius of the wheel, pixels");
 		wheelPanel.add('statictext',undefined,tr("Movement:"));
 		//bouton mesurer
@@ -6689,7 +6666,6 @@ function loadDuik()
 
 	//TVPAINT CAM PANEL
 	{
-		var tvpCamNullGroup = addHGroup(tvpCamPanel);
 		var tvpCamNullButton = tvpCamPanel.add('radiobutton',undefined,tr("Use a Null Object"));
 		var tvpCamPrecompButton = tvpCamPanel.add('radiobutton',undefined,tr("Precompose layers"));
 		var tvpCamLayerButton = tvpCamPanel.add('radiobutton',undefined,tr("Use selected layer"));
@@ -6710,9 +6686,8 @@ function loadDuik()
 
 		addSeparator(tvpCamPanel,'');
 
-		var tvpCamMoveGroup = addHGroup(tvpCamPanel);
-		var tvpCamPositionButton = tvpCamMoveGroup.add('radiobutton',undefined,tr("Animate position"));
-		var tvpCamAnchorPointButton = tvpCamMoveGroup.add('radiobutton',undefined,tr("Animate anchor point"));
+		var tvpCamPositionButton = tvpCamPanel.add('radiobutton',undefined,tr("Animate position"));
+		var tvpCamAnchorPointButton = tvpCamPanel.add('radiobutton',undefined,tr("Animate anchor point"));
 		tvpCamPositionButton.value = true;
 
 		var tvpCamButtonsGroup = addHGroup(tvpCamPanel);
@@ -6726,28 +6701,24 @@ function loadDuik()
 
 	//AUTORIG PANEL
 	{
-		autorigPanel.alignment = ['fill','fill'];
-		autorigPanel.alignChildren = ['fill','fill'];
+		//var autorigTypeGroup = addHGroup(autorigPanel);
+		//autorigTypeGroup.alignChildren = ['fill','top'];
+		var autorigUngulateButton = addIconRadioButton(autorigPanel,'autorig_btn_ungulate',tr("Ungulate"),tr("Horses, cattles, girafes, pigs, deers, camels, hippopotamuses..."));
+		autorigUngulateButton.group.alignment = ['center','top'];
+		var autorigDigitigradeButton = addIconRadioButton(autorigPanel,'autorig_btn_digitigrade',tr("Digitigrade"),tr("Dogs, cats, dinosaurs, walking birds..."));
+		autorigDigitigradeButton.group.alignment = ['center','top'];
+		var autorigPlantigradeButton = addIconRadioButton(autorigPanel,'autorig_btn_plantigrade',tr("Plantigrade"),tr("Bears, humans and primates, rabbits..."));
+		autorigPlantigradeButton.group.alignment = ['center','top'];
 
-		var autorigTypeGroup = addHGroup(autorigPanel);
-		autorigTypeGroup.alignment = ['fill','top'];
-		autorigTypeGroup.alignChildren = ['fill','top'];
-		var autorigUngulateGroup = addIconRadioButton(autorigTypeGroup,'autorig_btn_ungulate.png',tr("Ungulate"));
-		var autorigUngulateButton = autorigUngulateGroup.button;
-		autorigUngulateButton.helpTip = tr("Horses, cattles, girafes, pigs, deers, camels, hippopotamuses...");
-		var autorigDigitigradeGroup = addIconRadioButton(autorigTypeGroup,'autorig_btn_digitigrade.png',tr("Digitigrade"));
-		var autorigDigitigradeButton = autorigDigitigradeGroup.button;
-		autorigDigitigradeButton.helpTip = tr("Dogs, cats, dinosaurs, walking birds...");
-		var autorigPlantigradeGroup = addIconRadioButton(autorigTypeGroup,'autorig_btn_plantigrade.png',tr("Plantigrade"));
-		var autorigPlantigradeButton = autorigPlantigradeGroup.button;
-		autorigPlantigradeButton.helpTip = tr("Bears, humans and primates, rabbits...");
+		addSeparator(autorigPanel,'');
 
-		autorigUngulateButton.onClick = function () { autorigDigitigradeButton.value = false; autorigPlantigradeButton.value = false; };
-		autorigDigitigradeButton.onClick = function () { autorigUngulateButton.value = false; autorigPlantigradeButton.value = false; };
-		autorigPlantigradeButton.onClick = function () { autorigUngulateButton.value = false; autorigDigitigradeButton.value = false; };
-		autorigPlantigradeButton.value = true;
+		autorigUngulateButton.onClick = function () { autorigDigitigradeButton.setChecked(false); autorigPlantigradeButton.setChecked(false); };
+		autorigDigitigradeButton.onClick = function () { autorigUngulateButton.setChecked(false); autorigPlantigradeButton.setChecked(false); };
+		autorigPlantigradeButton.onClick = function () { autorigUngulateButton.setChecked(false); autorigDigitigradeButton.setChecked(false); };
+		autorigPlantigradeButton.setChecked(true);
 
 		var autorigCharacterButton = addIconButton(autorigPanel,'btn_autorig',tr("Full character"));
+		autorigCharacterButton.group.alignment = ['center','top'];
 		autorigCharacterButton.onClick = function () {
 		backLegDialog.right = false;
 		backLegDialog.left = true;
@@ -6780,6 +6751,8 @@ function loadDuik()
 		tailDialog.fullCharacter = false;
 		tailShow();
 		};
+
+		addSeparator(autorigPanel,'');
 
 		var autorigCancelButton = addIconButton(autorigPanel,'btn_cancel',tr("Cancel"));
 		autorigCancelButton.onClick = function () { autorigPanel.hide();panoik.show();};
