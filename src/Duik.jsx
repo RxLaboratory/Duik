@@ -1844,7 +1844,7 @@ function loadDuik()
 			}
 
 			app.beginUndoGroup(tr("Duik - IK"));
-			ikRig.create();
+			ikRig.create(ikLockAndShyButton.value);
 			app.endUndoGroup();
 			ikPanel.hide();
 			panoik.show();
@@ -4070,8 +4070,6 @@ function loadDuik()
 //================ UI ===========================
 //===============================================
 {
-	//Duik.ui.updateProgressPanel(2,tr("Duik - Creating UI"));
-
 	//folders and needed variables
 	var dossierIcones = Folder.userData.absoluteURI  + '/Duduf/DuIK/';
 	var animationSaved = [];
@@ -4905,15 +4903,6 @@ function loadDuik()
 		Duik.settings.ctrlPlacement = boutonCtrlPlacement.selection.index;
 		Duik.settings.save();
 		};
-
-		//lock and shy layers after IK Creation
-		var settingsIKGroup = addBox(settingsRiggingGroup,tr("IK"));
-		var settingsIKLockAndShyButton = settingsIKGroup.add('checkbox',undefined,tr("Lock and shy layers after creation"));
-		settingsIKLockAndShyButton.onClick = function() {
-		Duik.settings.lockAndShy = settingsIKLockAndShyButton.value;
-		Duik.settings.save();
-		};
-
 
 		//Interpolations
 		var settingsInterpolationsGroup = addBox(settingsAnimationGroup,tr("Interpolations"));
@@ -5877,6 +5866,16 @@ function loadDuik()
 
 		addSeparator(ikPanel,'');
 
+		var ikLockAndShyButton = ikPanel.add('checkbox',undefined,tr("Lock and shy layers after creation"));
+		ikLockAndShyButton.alignment = ['center','top'];
+		ikLockAndShyButton.onClick = function() {
+			Duik.settings.lockAndShy = ikLockAndShyButton.value;
+			Duik.settings.save();
+		};
+		ikLockAndShyButton.value = Duik.settings.lockAndShy;
+
+		addSeparator(ikPanel,'');
+
 		var ikSettingsGroup = addVGroup(ikPanel);
 
 		var ik3DGroup = addVGroup(ikSettingsGroup);
@@ -5889,6 +5888,8 @@ function loadDuik()
 
 		ik2LayerButton.onClick = function () { ik1GoalButton.value = false; ik3DGroup.enabled = true;};
 		ik1GoalButton.onClick = function () { ik2LayerButton.value = false; ik3DGroup.enabled = false;};
+
+		addSeparator(ikPanel,'');
 
 		var ikButtonsGroup = addHGroup(ikPanel);
 		var ikCancelButton = addIconButton(ikButtonsGroup,'btn_cancel',tr("Cancel"));
