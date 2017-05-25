@@ -5168,19 +5168,23 @@ https://rainboxprod.coop
 			app.endSuppressDialogs(false);
 			}
 		}
-		// GET PROP LAYER
+		/**
+		 * Gets the layer containing a given property
+		 * @param {PropertyBase}	prop	The Property
+		 * @return	{Layer}			The containing layer
+		 */
 		if (typeof Duik.utils.getPropertyLayer !== 'function')
 		{
 			Duik.utils.getPropertyLayer = function (prop)
 			{
-			if (prop == undefined) return null;
-			var parentProp = prop;
-			while (parentProp.parentProperty !== null)
-			{
-			// Traverse up the property tree
-			parentProp = parentProp.parentProperty;
-			}
-			return parentProp;
+				if (prop == undefined) return null;
+				var parentProp = prop;
+				while (parentProp.parentProperty !== null)
+				{
+					// Traverse up the property tree
+					parentProp = parentProp.parentProperty;
+				}
+				return parentProp;
 			}
 		}
 		// GET PROP COMP
@@ -7909,14 +7913,14 @@ https://rainboxprod.coop
 		/**
 		 * Adds a wiggle to a property
 		 * @memberof Duik
-		 * @param {Layer}		layer				- The layer containing the property.
 		 * @param {Property}	prop 				- The property.
 		 * @param {bool}		separateDimensions 	- Wether to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal, default: false
 		 * @return {bool}		True if successfull, false otherwise
 		 */
-		Duik.wiggle = function (layer,prop,separateDimensions)
+		Duik.wiggle = function (prop,separateDimensions)
 		{
-			if (!prop.canSetExpression) return false;
+			if (!prop) throw "Missing Param 1: wiggle needs a Property";
+			if (!prop.canSetExpression) throw "This property can not set expressions";
 
 			if (separateDimensions == undefined) separateDimensions = false;
 
@@ -7926,9 +7930,9 @@ https://rainboxprod.coop
 
 			var ok = false;
 
-			if (dimensions == 3) ok = Duik.threeDWiggle(layer,prop);
-			else if (dimensions == 2) ok = Duik.twoDWiggle(layer,prop);
-			else ok = Duik.oneDWiggle(layer,prop);
+			if (dimensions == 3) ok = Duik.threeDWiggle(prop);
+			else if (dimensions == 2) ok = Duik.twoDWiggle(prop);
+			else ok = Duik.oneDWiggle(prop);
 
 			return ok;
 		}
@@ -7938,12 +7942,14 @@ https://rainboxprod.coop
 		/**
 		 * Adds a 3-dimensionnal wiggle to a property
 		 * @memberof Duik
-		 * @param {Layer}		layer				- The layer containing the property.
-		 * @param {Property}	prop 				- The property.
+		 * @param {Property}	prop 	- The property.
 		 * @return {bool}		True if successfull, false otherwise
 		 */
-		Duik.threeDWiggle = function (layer,prop)
+		Duik.threeDWiggle = function (prop)
 		{
+			if (!prop) throw "Missing Param 1: wiggle needs a Property";
+			if (!prop.canSetExpression) throw "This property can not set expressions";
+			var layer = Duik.utils.getPropertyLayer(prop);
 			var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.ThreeD_Wiggle);
 			var effect = prep[0];
 			prop = prep[1];
@@ -7975,61 +7981,76 @@ https://rainboxprod.coop
 			return true;
 		}
 	}
-	// ADD 2D WIGGLE - Duik.twoDWiggle(layer,property)
 	if (typeof Duik.twoDWiggle !== 'function')
 	{
-		Duik.twoDWiggle = function (layer,prop)
+		/**
+		 * Adds a 2-dimensionnal wiggle to a property
+		 * @memberof Duik
+		 * @param {Property}	prop 	- The property.
+		 * @return {bool}		True if successfull, false otherwise
+		 */
+		Duik.twoDWiggle = function (prop)
 		{
-		var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.TwoD_Wiggle);
-		var effect = prep[0];
-		prop = prep[1];
-		if (effect == null) return false;
-		Duik.utils.renameEffect(effect,prop.name + " " + Duik.uiStrings.wiggle);
-		effect(9).setValue(layer.containingComp.duration);
+			if (!prop) throw "Missing Param 1: wiggle needs a Property";
+			if (!prop.canSetExpression) throw "This property can not set expressions";
+			var layer = Duik.utils.getPropertyLayer(prop);
+			var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.TwoD_Wiggle);
+			var effect = prep[0];
+			prop = prep[1];
+			if (effect == null) return false;
+			Duik.utils.renameEffect(effect,prop.name + " " + Duik.uiStrings.wiggle);
+			effect(9).setValue(layer.containingComp.duration);
 
-		prop.expression = "//Duik.2DWiggle\n" +
-		"Xfreq = effect(\"" + effect.name + "\")(6);\n" +
-		"Yfreq = effect(\"" + effect.name + "\")(7);\n" +
-		"Xamp = effect(\"" + effect.name + "\")(2);\n" +
-		"Yamp = effect(\"" + effect.name + "\")(3);\n" +
-		"loop = effect(\"" + effect.name + "\")(9);\n" +
-		"if (loop == 0) loop = thisComp.duration;\n" +
-		"t = (time % loop)-loop;\n" +
-		"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" +
-		"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" +
-		"w1 = [X1[0],Y1[1]];\n" +
-		"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" +
-		"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" +
-		"w2 = [X2[0],Y2[1]];\n" +
-		"w = ease(t, -loop,  0, w1, w2);\n" +
-		"w + value - valueAtTime(0)";
-		return true;
+			prop.expression = "//Duik.2DWiggle\n" +
+			"Xfreq = effect(\"" + effect.name + "\")(6);\n" +
+			"Yfreq = effect(\"" + effect.name + "\")(7);\n" +
+			"Xamp = effect(\"" + effect.name + "\")(2);\n" +
+			"Yamp = effect(\"" + effect.name + "\")(3);\n" +
+			"loop = effect(\"" + effect.name + "\")(9);\n" +
+			"if (loop == 0) loop = thisComp.duration;\n" +
+			"t = (time % loop)-loop;\n" +
+			"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" +
+			"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" +
+			"w1 = [X1[0],Y1[1]];\n" +
+			"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" +
+			"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" +
+			"w2 = [X2[0],Y2[1]];\n" +
+			"w = ease(t, -loop,  0, w1, w2);\n" +
+			"w + value - valueAtTime(0)";
+			return true;
 		}
 	}
-	// ADD 1D WIGGLE - Duik.1DWiggle(layer,property)
 	if (typeof Duik.oneDWiggle !== 'function')
 	{
-		Duik.oneDWiggle = function (layer,prop)
+		/**
+		 * Adds a 1-dimensionnal wiggle to a property
+		 * @memberof Duik
+		 * @param {Property}	prop 	- The property.
+		 * @return {bool}		True if successfull, false otherwise
+		 */
+		Duik.oneDWiggle = function (prop)
 		{
-		var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.OneD_Wiggle);
-		var effect = prep[0];
-		prop = prep[1];
-		if (effect == null) return false;
-		Duik.utils.renameEffect(effect,prop.name + " " + Duik.uiStrings.wiggle);
-		effect(3).setValue(layer.containingComp.duration);
+			if (!prop) throw "Missing Param 1: wiggle needs a Property";
+			if (!prop.canSetExpression) throw "This property can not set expressions";
+			var layer = Duik.utils.getPropertyLayer(prop);
+			var prep = Duik.utils.rigProperty(layer,prop,Duik.effects.OneD_Wiggle);
+			var effect = prep[0];
+			prop = prep[1];
+			if (effect == null) return false;
+			Duik.utils.renameEffect(effect,prop.name + " " + Duik.uiStrings.wiggle);
+			effect(3).setValue(layer.containingComp.duration);
 
-		prop.expression = "//Duik.1DWiggle\n" +
-		"freq = effect(\"" + effect.name + "\")(2);\n" +
-		"amp = effect(\"" + effect.name + "\")(1);\n" +
-		"loop = effect(\"" + effect.name + "\")(3);\n" +
-		"if (loop == 0) loop = thisComp.duration;\n" +
-		"t = (time % loop)-loop;\n" +
-		"w1 = wiggle(freq,amp, 1, 0.5, t);\n" +
-		"w2 = wiggle(freq,amp, 1, 0.5, t - loop);\n" +
-		"w = ease(t, -loop,  0, w1, w2);\n" +
-		"w + value - valueAtTime(0)";
-		return true;
-
+			prop.expression = "//Duik.1DWiggle\n" +
+			"freq = effect(\"" + effect.name + "\")(2);\n" +
+			"amp = effect(\"" + effect.name + "\")(1);\n" +
+			"loop = effect(\"" + effect.name + "\")(3);\n" +
+			"if (loop == 0) loop = thisComp.duration;\n" +
+			"t = (time % loop)-loop;\n" +
+			"w1 = wiggle(freq,amp, 1, 0.5, t);\n" +
+			"w2 = wiggle(freq,amp, 1, 0.5, t - loop);\n" +
+			"w = ease(t, -loop,  0, w1, w2);\n" +
+			"w + value - valueAtTime(0)";
+			return true;
 		}
 	}
 	/* ADAPTATIVE EXPOSURE - Duik.adaptativeExposure(layers,precision,minExp,maxExp,sync,layerSync);

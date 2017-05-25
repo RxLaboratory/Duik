@@ -2491,23 +2491,17 @@ function loadDuik()
 	function wiggleOKButtonClicked()
 	{
 
-		//verifions qu'il n'y a qu'un calque selectionne
-		if (app.project.activeItem.selectedLayers[0].selectedProperties.length > 0)
-		{
+		// get property
+		var prop = getCurrentProp();
+		if (!prop) return;
 
 		//  debut de groupe d'annulation
 		app.beginUndoGroup(tr("Duik - Wiggle"));
-
-		//le calque
-		var calque = app.project.activeItem.selectedLayers[0];
-		//la prop
-		var prop = calque.selectedProperties.pop();
-		Duik.wiggle(calque,prop,wiggleSeparate.value);
+		Duik.wiggle(prop,wiggleSeparate.value);
 
 		//fin du groupe d'annulation
 		app.endUndoGroup();
 
-		} else { alert(tr("Select the property where to apply the \"wiggle\" function")); }
 	}
 
 	//FONCTION WIGGLE
@@ -2527,7 +2521,7 @@ function loadDuik()
 		}
 		else
 		{
-		Duik.wiggle(app.project.activeItem.selectedLayers[0],prop);
+		Duik.wiggle(prop);
 		}
 
 		app.endUndoGroup();
@@ -2623,11 +2617,8 @@ function loadDuik()
 	//Spring
 	function boutonspringClicked()
 	{
-		var comp = app.project.activeItem;
-		if (!(comp instanceof CompItem)) return;
-		if (!comp.selectedLayers.length) return;
-		var layer = comp.selectedLayers[0];
-		var prop = layer.selectedProperties.pop();
+		var prop = getCurrentProp();
+		if (!prop) return;
 		if (prop.matchName != 'ADBE Position')
 		{
 		//  debut de groupe d'annulation
