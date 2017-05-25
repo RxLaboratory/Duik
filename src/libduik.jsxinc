@@ -2533,9 +2533,11 @@ https://rainboxprod.coop
 			 */
 			Duik.bridge.keyframeInterpolationNameToType = function (name)
 			{
-				if (name.toLowerCase() == 'linear') return KeyframeInterpolationType.LINEAR;
-				if (name.toLowerCase() == 'bezier') return KeyframeInterpolationType.BEZIER;
-				if (name.toLowerCase() == 'hold') return KeyframeInterpolationType.HOLD;
+				if (!name) return KeyframeInterpolationType.LINEAR;
+				name = name.toString();
+				if (name.toLowerCase() == 'linear' || name == '6612') return KeyframeInterpolationType.LINEAR;
+				else if (name.toLowerCase() == 'bezier' || name == '6613') return KeyframeInterpolationType.BEZIER;
+				else if (name.toLowerCase() == 'hold' || name == '6614') return KeyframeInterpolationType.HOLD;
 				else return null;
 			}
 		}
@@ -2550,17 +2552,41 @@ https://rainboxprod.coop
 			Duik.bridge.cleanAnimExportData = function (data)
 			{
 				var newData = data;
+
+				// a function to clean a property
+				function cleanProp(propData)
+				{
+					var newPropData = propData;
+					for (var k = 0 ; k < newPropData.keys.length ; k++)
+					{
+						var key = newPropData.keys[k];
+						key._inInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key._inInterpolationType);
+						key._outInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key._outInterpolationType);
+					}
+					return newPropData;
+				}
+
 				for (var i = 0 ; i < newData.length ; i++)
 				{
 					var layer = newData[i];
 					for (var j = 0 ; j < layer.transformAnims.length ; j++)
 					{
-						var prop = layer.transformAnims[j];
-						for (var k = 0 ; k < prop.keys.length ; k++)
+						layer.transformAnims[j] = cleanProp(layer.transformAnims[j]);
+					}
+					for (var j = 0 ; j < layer.effectsAnims.length ; j++)
+					{
+						var effect = layer.effectsAnims[j];
+						for (var e = 0 ; e < effect.anims.length ; e++)
 						{
-							var key = prop.keys[k];
-							key._inInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key._inInterpolationType);
-							key._outInterpolationType = Duik.bridge.keyframeInterpolationTypeToName(key._outInterpolationType);
+							effect.anims[e] = cleanProp( effect.anims[e]);
+						}
+					}
+					for (var j = 0 ; j < layer.masksAnims.length ; j++)
+					{
+						var mask = layer.masksAnims[j];
+						for (var e = 0 ; e < mask.anims.length ; e++)
+						{
+							mask.anims[e] = cleanProp( mask.anims[e]);
 						}
 					}
 				}
@@ -2578,24 +2604,48 @@ https://rainboxprod.coop
 			Duik.bridge.cleanAnimImportData = function (data)
 			{
 				var newData = data;
+
+				// a function to clean a property
+				function cleanProp(propData)
+				{
+					var newPropData = propData;
+					for (var k = 0 ; k < newPropData.keys.length ; k++)
+					{
+						var key = newPropData.keys[k];
+						//interpolation
+						key._inInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._inInterpolationType);
+						key._outInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._outInterpolationType);
+						//ease
+						for (var ease = 0 ; ease < key.inEase.length ; ease++)
+						{
+							key.inEase[ease] = new KeyframeEase(key.inEase[ease].speed, key.inEase[ease].influence);
+							key.outEase[ease] = new KeyframeEase(key.outEase[ease].speed, key.outEase[ease].influence);
+						}
+					}
+					return newPropData;
+				}
+
 				for (var i = 0 ; i < newData.length ; i++)
 				{
 					var layer = newData[i];
 					for (var j = 0 ; j < layer.transformAnims.length ; j++)
 					{
-						var prop = layer.transformAnims[j];
-						for (var k = 0 ; k < prop.keys.length ; k++)
+						layer.transformAnims[j] = cleanProp(layer.transformAnims[j])
+					}
+					for (var j = 0 ; j < layer.effectsAnims.length ; j++)
+					{
+						var effect = layer.effectsAnims[j];
+						for (var e = 0 ; e < effect.anims.length ; e++)
 						{
-							var key = prop.keys[k];
-							//interpolation
-							key._inInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._inInterpolationType);
-							key._outInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._outInterpolationType);
-							//ease
-							for (var ease = 0 ; ease < key.inEase.length ; ease++)
-							{
-								key.inEase[ease] = new KeyframeEase(key.inEase[ease].speed, key.inEase[ease].influence);
-								key.outEase[ease] = new KeyframeEase(key.outEase[ease].speed, key.outEase[ease].influence);
-							}
+							effect.anims[e] = cleanProp(effect.anims[e])
+						}
+					}
+					for (var j = 0 ; j < layer.masksAnims.length ; j++)
+					{
+						var mask = layer.masksAnims[j];
+						for (var e = 0 ; e < mask.anims.length ; e++)
+						{
+							mask.anims[e] = cleanProp(mask.anims[e])
 						}
 					}
 				}
@@ -2840,6 +2890,7 @@ https://rainboxprod.coop
 
 				function startTag(jsonObj, element, attrList, closed)
 				{
+					if (!isNaN(parseInt(element))) element = 'item' + element;
 					var resultStr = "\n<"+ ( (jsonObj!=null && jsonObj.__prefix!=null)? (jsonObj.__prefix+":"):"") + element;
 					if(attrList!=null) {
 						for(var aidx = 0; aidx < attrList.length; aidx++) {
@@ -2863,6 +2914,7 @@ https://rainboxprod.coop
 
 				function endTag(jsonObj,elementName)
 				{
+					if (!isNaN(parseInt(elementName))) elementName = 'item' + elementName;
 					return "</"+ (jsonObj.__prefix!=null? (jsonObj.__prefix+":"):"")+elementName+">";
 				}
 
@@ -3012,7 +3064,7 @@ https://rainboxprod.coop
 						maskAnim._matchName = Duik.bridge.xml.getXMLValue(mask.@matchName);
 						for (var j = 0 ; j < mask.anims.length() ; j++)
 						{
-							var anim = mask.anims[i];
+							var anim = mask.anims[j];
 							var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
 							maskAnim.anims.push(propertyAnim);
 						}
@@ -3031,11 +3083,11 @@ https://rainboxprod.coop
 						effectAnim._matchName = Duik.bridge.xml.getXMLValue(effect.@matchName);
 						for (var j = 0 ; j < effect.anims.length() ; j++)
 						{
-							var anim = effect.anims[i];
+							var anim = effect.anims[j];
 							var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
 							effectAnim.anims.push(propertyAnim);
 						}
-						layerAnim.effectsAnims.push(maskAnim);
+						layerAnim.effectsAnims.push(effectAnim);
 					}
 				}
 
@@ -4220,6 +4272,7 @@ https://rainboxprod.coop
 			Duik.utils.getPropertyAnim = function (prop,selectedKeysOnly,allKeys,startTime,endTime)
 			{
 				if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
+				if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
 
 				if (startTime == undefined) startTime = 0;
 				if (endTime == undefined) endTime = 23000;
@@ -9301,9 +9354,7 @@ https://rainboxprod.coop
 					effectAnim.anims = Duik.utils.getPropertyAnims(l("Effects")(effectIndex),selectedKeysOnly,false,startTime,endTime);
 					if (effectAnim.anims.length >=1) layerAnim.effectsAnims.push(effectAnim);
 				}
-
 				Duik.copiedAnim.push(layerAnim);
-
 			}
 			return Duik.copiedAnim;
 		}
