@@ -8637,46 +8637,49 @@ https://rainboxprod.coop
 	{
 		Duik.wheel = function (layer,radius,curved)
 		{
-		if (radius == undefined) radius = 100;
-		else if (! (radius > 0)) radius = 100;
-		if (curved == undefined) curved = false;
-		var prep = Duik.utils.rigProperty(layer,layer.transform.rotation,Duik.effects.Wheel);
-		var effect = prep[0];
-		if (effect == null) return false;
-		Duik.utils.renameEffect(effect,Duik.uiStrings.wheel);
-		effect(1).setValue(radius);
+			if (!layer) throw "Missing Param 1: Wheel needs a Layer";
+			if (radius == undefined) radius = 100;
+			else if (! (radius > 0)) radius = 100;
+			if (curved == undefined) curved = false;
+			var rotation = layer.transform.rotation;
+			if (layer.threeDLayer) rotation = layer.transform.zRotation;
+			var prep = Duik.utils.rigProperty(layer,rotation,Duik.effects.Wheel);
+			var effect = prep[0];
+			if (effect == null) return false;
+			Duik.utils.renameEffect(effect,Duik.uiStrings.wheel);
+			effect(1).setValue(radius);
 
-		if (!curved) layer.transform.rotation.expression = "//Duik.Wheel\r\n" +
-		"O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-		"R = thisLayer.effect(\"" + effect.name + "\")(1);\n" +
-		"Rev = thisLayer.effect(\"" + effect.name + "\")(2);\n" +
-		"result = 0;\n" +
-		"R > 0 ? result = radiansToDegrees(O[0]/R) : result = 0 ;" +
-		"Rev == 1 ? value - result : value + result;";
-		else layer.transform.rotation.expression = "//Duik.Wheel\r\n" +
-		"R = thisLayer.effect(\"" + effect.name + "\")(1);\n" +
-		"Rev = thisLayer.effect(\"" + effect.name + "\")(2);\n" +
-		"var precision = 1;\n" +
-		"function pos(frame)\n" +
-		"{\n" +
-		"return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n" +
-		"}\n" +
-		"function roue()\n" +
-		"{\n" +
-		"if (R<=0) return value;\n" +
-		"var distance = 0;\n" +
-		"var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n" +
-		"var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n" +
-		"for(i=start;i<end;i+=precision)\n" +
-		"{\n" +
-		"if (pos(i+precision)[0] - pos(i)[0] > 0) distance += length(pos(i+precision),pos(i));\n" +
-		"else distance -= length(pos(i+precision),pos(i));\n" +
-		"}\n" +
-		"return radiansToDegrees(distance/R) ;\n" +
-		"}\n" +
-		"Rev == 1 ? value - roue() : value + roue();";
+			if (!curved) rotation.expression = "//Duik.Wheel\r\n" +
+			"O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+			"R = thisLayer.effect(\"" + effect.name + "\")(1);\n" +
+			"Rev = thisLayer.effect(\"" + effect.name + "\")(2);\n" +
+			"result = 0;\n" +
+			"R > 0 ? result = radiansToDegrees(O[0]/R) : result = 0 ;" +
+			"Rev == 1 ? value - result : value + result;";
+			else rotation.expression = "//Duik.Wheel\r\n" +
+			"R = thisLayer.effect(\"" + effect.name + "\")(1);\n" +
+			"Rev = thisLayer.effect(\"" + effect.name + "\")(2);\n" +
+			"var precision = 1;\n" +
+			"function pos(frame)\n" +
+			"{\n" +
+			"return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n" +
+			"}\n" +
+			"function roue()\n" +
+			"{\n" +
+			"if (R<=0) return value;\n" +
+			"var distance = 0;\n" +
+			"var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n" +
+			"var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n" +
+			"for(i=start;i<end;i+=precision)\n" +
+			"{\n" +
+			"if (pos(i+precision)[0] - pos(i)[0] > 0) distance += length(pos(i+precision),pos(i));\n" +
+			"else distance -= length(pos(i+precision),pos(i));\n" +
+			"}\n" +
+			"return radiansToDegrees(distance/R) ;\n" +
+			"}\n" +
+			"Rev == 1 ? value - roue() : value + roue();";
 
-		return true;
+			return true;
 		}
 	}
 	/* MORPHER - Duik.morpher(layers);
