@@ -5628,25 +5628,25 @@ function loadDuik()
 			var ctrlSettingsSizeLabels = ctrlSettingsLabelsGroup.add('statictext',undefined,tr("Size"));
 			ctrlSettingsSizeLabels.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
 			var ctrlSettingsCustomSizeLabels = ctrlSettingsLabelsGroup.add('statictext',undefined,tr("Custom size"));
-			ctrlSettingsCustomSizeLabels.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+			ctrlSettingsCustomSizeLabels.minimumSize.height = ctrlSettingsCustomSizeLabels.maximumSize.height = 24;
 			var ctrlSettingsColorLabels = ctrlSettingsLabelsGroup.add('statictext',undefined,tr("Color"));
-			ctrlSettingsColorLabels.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+			ctrlSettingsColorLabels.minimumSize.height = ctrlSettingsColorLabels.maximumSize.height = 24;
 			var ctrlSettingsCustomColorLabels = ctrlSettingsLabelsGroup.add('statictext',undefined,tr("Custom color"));
-			ctrlSettingsCustomColorLabels.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+			ctrlSettingsCustomColorLabels.minimumSize.height = ctrlSettingsCustomColorLabels.maximumSize.height = 24;
 		}
 
 		ctrlSettingsButtonsGroup = addVGroup(ctrlSettingsGroup);
 
 		//size hint controllers
 		var ctrlSizeAutoList = ctrlSettingsButtonsGroup.add('dropdownlist',undefined,[tr("Small"),tr("Medium"),tr("Big"),tr("Custom")]);
-		ctrlSizeAutoList.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+		ctrlSizeAutoList.minimumSize.height = ctrlSizeAutoList.maximumSize.height = 24;
 		ctrlSizeAutoList.selection = Duik.settings.controllerSizeHint;
 		if (!Duik.settings.controllerSizeAuto) ctrlSizeAutoList.selection = 3;
 		ctrlSizeAutoList.helpTip = tr("Auto-size");
 
 		//custom size
 		var ctrlSizeEdit = ctrlSettingsButtonsGroup.add('edittext',undefined,app.settings.getSetting('duik', 'ctrlSize'));
-		ctrlSizeEdit.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+		ctrlSizeEdit.minimumSize.height = ctrlSizeEdit.maximumSize.height = 24;
 		ctrlSizeEdit.helpTip = tr("Custom size");
 		ctrlSizeEdit.text = Duik.settings.controllerSize;
 		ctrlSizeEdit.enabled = !Duik.settings.controllerSizeAuto ;
@@ -5673,7 +5673,7 @@ function loadDuik()
 
 		//color
 		var ctrlColorList = ctrlSettingsButtonsGroup.add('dropdownlist',undefined,[tr("Red"),tr("Green"),tr("Blue"),tr("Cyan"),tr("Magenta"),tr("Yellow"),tr("White"),tr("Light Gray"),tr("Dark Gray"),tr("Black"),tr("Custom")]);
-		ctrlColorList.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+		ctrlColorList.minimumSize.height = ctrlColorList.maximumSize.height = 24;
 		ctrlColorList.helpTip = tr("Color");
 
 		if (Duik.settings.controllerColor.toSource() == Duik.colors.RED.toSource()) ctrlColorList.selection = 0;
@@ -5690,7 +5690,7 @@ function loadDuik()
 
 		// custom color
 		ctrlCustomColorGroup = addHGroup(ctrlSettingsButtonsGroup);
-		ctrlCustomColorGroup.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+		ctrlCustomColorGroup.minimumSize.height = ctrlCustomColorGroup.maximumSize.height = 24;
 		var ctrlCustomColorSharp = ctrlCustomColorGroup.add('statictext',undefined,'#');
 		ctrlCustomColorSharp.alignment = ['left','fill'];
 		var ctrlCustomColorEdit = ctrlCustomColorGroup.add('edittext',undefined,Duik.utils.rvbColorToHex(Duik.settings.controllerColor));
@@ -5725,7 +5725,7 @@ function loadDuik()
 
 		//autolock
 		var ctrlAutoLockButton = ctrlSettingsButtonsGroup.add('checkbox',undefined,tr("Auto Lock"));
-		ctrlAutoLockButton.minimumSize.height = ctrlSettingsSizeLabels.maximumSize.height = 24;
+		ctrlAutoLockButton.minimumSize.height = ctrlAutoLockButton.maximumSize.height = 24;
 		ctrlAutoLockButton.alignment = ['fill','bottom'];
 		ctrlAutoLockButton.helpTip = tr("Warning! When controllers are locked,\nthey should be unlocked before parenting.");
 		if (!expertMode)
