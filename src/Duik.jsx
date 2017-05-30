@@ -31,7 +31,7 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.5';
-var developper = false;
+var developer = false;
 //=========================
 
 //=================================
@@ -182,7 +182,7 @@ function checkForUpdate(version,showAlert)
 
 function preloadDuik ()
 {
-	if (app.settings.getSetting('duik','version') == 'oui' && !developper)
+	if (app.settings.getSetting('duik','version') == 'oui' && !developer)
 	{
 		var newV = checkForUpdate(version,false);
 		if ( version == newV || newV == undefined)
@@ -218,10 +218,10 @@ function loadDuik()
 //========== LOAD libDuik =========
 //=================================
 {
-	if (developper) if (typeof Duik === 'object') delete Duik;
+	if (developer) if (typeof Duik === 'object') delete Duik;
 	#include 'libduik.jsxinc'
 	//if pseudo effects are not installed
-	if (Duik.usePresets && !developper)
+	if (Duik.usePresets && !developer)
 	{
 		//PALETTE
 		{
@@ -4081,7 +4081,7 @@ function loadDuik()
 	{
 		if (expertMode) text = '';
 		if (!helpTip) helpTip = '';
-		var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
+		var bouton = Duik.ui.addImageButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png',developer);
 		if (bouton.label)
 		{
 			bouton.image.alignment = ['left','fill'];
@@ -4093,7 +4093,7 @@ function loadDuik()
 	function addIconRadioButton(container,image,text,helpTip)
 	{
 		if (expertMode) text = '';
-		var bouton = Duik.ui.addImageRadioButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png',undefined,false);
+		var bouton = Duik.ui.addImageRadioButton(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png',undefined,false,developer);
 		if (bouton.label)
 		{
 			bouton.image.alignment = ['left','fill'];
@@ -4109,7 +4109,7 @@ function loadDuik()
 	function addIconCheckbox(container,image,text,helpTip)
 	{
 		if (expertMode) text = '';
-		var bouton = Duik.ui.addImageCheckBox(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png');
+		var bouton = Duik.ui.addImageCheckBox(container,text,dossierIcones + image + '.png',helpTip,dossierIcones + image + '_o.png',undefined,developer);
 		if (bouton.label)
 		{
 			bouton.image.alignment = ['left','fill'];
@@ -4483,8 +4483,8 @@ function loadDuik()
 		duikText.alignment = ['right','bottom'];
 
 		//Dev tools
-		if (developper) {
-			mainGroup.add('statictext',undefined,'/!\\ Developper version /!\\');
+		if (developer) {
+			mainGroup.add('statictext',undefined,'/!\\ developer version /!\\');
 			/*var reloadLibDuikButton = mainGroup.add('button',undefined,'libDuik reload');
 			reloadLibDuikButton.onClick = function(){
 				if (typeof Duik === 'object') delete Duik;
