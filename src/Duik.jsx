@@ -31,7 +31,6 @@ along with Duik. If not, see <http://www.gnu.org/licenses/>.
 {
 //=========================
 var version = '15.51';
-var developer = false;
 //=========================
 
 //=================================
@@ -105,6 +104,9 @@ palette.alignChildren = ['fill','fill'];
 	if (!app.settings.haveSetting('duik', 'interactiveUpdate')){app.settings.saveSetting('duik','interactiveUpdate','false');}
 	if (!app.settings.haveSetting('duik', 'interpolationPresets')){app.settings.saveSetting('duik','interpolationPresets','[\'Presets\',\'0 - 33/33\',\'0 - 50/50\',\'0 - 80/80\',\'0 - 25/75\',\'0 - 15/85\']');}
 	if (!app.settings.haveSetting('duik', 'interpolationSliders')){app.settings.saveSetting('duik','interpolationSliders','true');}
+	if (!app.settings.haveSetting('duik', 'developer')){app.settings.saveSetting('duik','developer','false');}
+
+	developer = eval(app.settings.getSetting('duik', 'developer'));
 
 	Dutranslator.setLanguage(app.settings.getSetting('duik', 'lang'));  //Set language
 }
@@ -4778,7 +4780,13 @@ function loadDuik()
 		}
 		var boutonMAJ = settingsUpdatesGroup.add('button',undefined,tr("Check for updates"));
 		boutonMAJ.onClick = function() {
-		if (version == checkForUpdate(version,true)) { alert(tr("Duik is up-to-date")); };
+			if (version == checkForUpdate(version,true)) { alert(tr("Duik is up-to-date")); };
+		}
+		var settingsDevGroup = addBox(settingsgeneralGroup,tr("Danger Zone"));
+		var settingsDeveloperButton = settingsDevGroup.add('checkbox',undefined,tr("Dev mode"),{multiline:true});
+		settingsDeveloperButton.value = developer;
+		settingsDeveloperButton.onClick = function(){
+			app.settings.saveSetting('duik','developer',settingsDeveloperButton.value);
 		}
 
 		//boutons options bones et controleurs
