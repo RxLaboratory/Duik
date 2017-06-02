@@ -220,7 +220,7 @@ function loadDuik()
 //========== LOAD libDuik =========
 //=================================
 {
-	if (developer) if (typeof Duik === 'object') delete Duik;
+	if (typeof Duik === 'object') delete Duik;
 	#include 'libduik.jsxinc'
 	//if pseudo effects are not installed
 	if (Duik.usePresets && !developer)
