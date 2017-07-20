@@ -3,14 +3,17 @@
 
     function setSelectedKeys(prop)
     {
+        if (prop.elided) return;
+
         if (prop.propertyType == PropertyType.PROPERTY)
         {
-            if (prop.PropertyValueType != PropertyValueType.NO_VALUE)
+
+            if (prop.PropertyValueType == PropertyValueType.NO_VALUE) return;
+            if (!prop.canVaryOverTime) return;
+            if (!prop.numKeys) return;
+            for (var i = 1 ; i <= prop.numKeys ; i++)
             {
-                for (var i = 1 ; i <= prop.numKeys ; i++)
-                {
-                    prop.setSelectedAtKey(i,true);
-                }
+                prop.setSelectedAtKey(i,true);
             }
         }
         else if (prop.numProperties > 0)
