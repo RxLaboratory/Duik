@@ -150,8 +150,65 @@ DESCRIPTION
             }
         }
 
-        app.endUndoGroup();
-    }
+        function autoFix()
+        {
+            var comp = app.project.activeItem;
+            if (!comp) return;
+            if (!(comp instanceof CompItem)) return;
+
+            var layers = comp.selectedLayers;
+            if (!layers.length) return;
+
+            app.beginUndoGroup("Auto-Fix");
+
+            for (var i=0;i<layers.length;i++) {
+                var layer = layers[i];
+                var props = layer.selectedProperties;
+                if (!props.length) continue;
+
+                for (var j=0;j<props.length;j++) {
+                    var prop = props[j];
+                    if (!prop.isSpatial) continue;
+                    if (!prop.canVaryOverTime) continue;
+
+                    var keyIndices = prop.selectedKeys;
+                    if (keyIndices.length < 2) continue;
+
+                    for (var k=0;k<keyIndices.length-1;k++) {
+                        var key = keyIndices[k];
+                        var nextKey = keyIndices[k+1]
+                        //get this key value
+                        var keyValue = prop.valueAtTime(prop.keyTime(key),true);
+                        //get next key value
+                        var nextKeyValue = prop.valueAtTime(prop.keyTime(key+1),true);
+
+                        //compare and set
+                        if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+                        {
+                            if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1] && keyValue[2] == nextKeyValue[2])
+                            {
+                                prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0,0]);
+                                prop.setSpatialTangentsAtKey(nextKey,[0,0,0],prop.keyOutSpatialTangent(nextKey));
+                            }
+                        }
+                        else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+                        {
+                            if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1])
+                            {
+                                prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0]);
+                                prop.setSpatialTangentsAtKey(nextKey,[0,0],prop.keyOutSpatialTangent(nextKey));
+                            }
+                        }
+                    } // for keys
+                } // for props
+            } // for layers
+            app.endUndoGroup();
+        } // function autoFix()
+
+
+
+    } //FUNCTIONS
+
     //==================================================
 
     // _______ UI SETUP _______
@@ -187,6 +244,9 @@ DESCRIPTION
         linBezButton.onClick = lienarBezier;
         var bezLinButton = line2.add('button',undefined,'Bez/Lin');
         bezLinButton.onClick = bezierLinear;
+
+        var autoFixButton = mainPalette.add('button',undefined,'Auto-Fix');
+        autoFixButton.onClick = autoFix;
     }
     // ==================================================
 
