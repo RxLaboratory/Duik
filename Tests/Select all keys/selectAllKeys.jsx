@@ -11,10 +11,15 @@
             if (prop.PropertyValueType == PropertyValueType.NO_VALUE) return;
             if (!prop.canVaryOverTime) return;
             if (!prop.numKeys) return;
-            for (var i = 1 ; i <= prop.numKeys ; i++)
+            try
             {
-                prop.setSelectedAtKey(i,true);
+                for (var i = 1 ; i <= prop.numKeys ; i++)
+                {
+                    prop.setSelectedAtKey(i,true);
+                }
             }
+            catch (e) {}
+
         }
         else if (prop.numProperties > 0)
         {
