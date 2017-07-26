@@ -2109,49 +2109,41 @@
 	 */
 	Duik.bridge = {};
 
-	if (typeof Duik.bridge.keyframeInterpolationTypeToName !== 'function')
+	/**
+	 * Gets the name of an After Effects interpolation type
+	 * @param {KeyframeInterpolationType}	type	The After Effects interpolation type
+	 * @return {string}	The interpolation name or empty string if not found
+	 */
+	Duik.bridge.keyframeInterpolationTypeToName = function (type)
 	{
-		/**
-		 * Gets the name of an After Effects interpolation type
-		 * @param {KeyframeInterpolationType}	type	The After Effects interpolation type
-		 * @return {string}	The interpolation name or empty string if not found
-		 */
-		Duik.bridge.keyframeInterpolationTypeToName = function (type)
-		{
-			if (type == KeyframeInterpolationType.LINEAR) return 'linear';
-			if (type == KeyframeInterpolationType.BEZIER) return 'bezier';
-			if (type == KeyframeInterpolationType.HOLD) return 'hold';
-			else return '';
-		}
+		if (type == KeyframeInterpolationType.LINEAR) return 'linear';
+		if (type == KeyframeInterpolationType.BEZIER) return 'bezier';
+		if (type == KeyframeInterpolationType.HOLD) return 'hold';
+		else return '';
 	}
 
-	if (typeof Duik.bridge.keyframeInterpolationNameToType !== 'function')
+	/**
+	 * Gets the After Effects interpolation type with its name
+	 * @param {string}	name	The interpolation name
+	 * @return {KeyframeInterpolationType}	The interpolation type or null if not found
+	 */
+	Duik.bridge.keyframeInterpolationNameToType = function (name)
 	{
-		/**
-		 * Gets the After Effects interpolation type with its name
-		 * @param {string}	name	The interpolation name
-		 * @return {KeyframeInterpolationType}	The interpolation type or null if not found
-		 */
-		Duik.bridge.keyframeInterpolationNameToType = function (name)
-		{
-			if (!name) return KeyframeInterpolationType.LINEAR;
-			name = name.toString();
-			if (name.toLowerCase() == 'linear' || name == '6612') return KeyframeInterpolationType.LINEAR;
-			else if (name.toLowerCase() == 'bezier' || name == '6613') return KeyframeInterpolationType.BEZIER;
-			else if (name.toLowerCase() == 'hold' || name == '6614') return KeyframeInterpolationType.HOLD;
-			else return null;
-		}
+		if (!name) return KeyframeInterpolationType.LINEAR;
+		name = name.toString();
+		if (name.toLowerCase() == 'linear' || name == '6612') return KeyframeInterpolationType.LINEAR;
+		else if (name.toLowerCase() == 'bezier' || name == '6613') return KeyframeInterpolationType.BEZIER;
+		else if (name.toLowerCase() == 'hold' || name == '6614') return KeyframeInterpolationType.HOLD;
+		else return null;
 	}
 
-	if (typeof Duik.bridge.cleanAnimExportData !== 'function')
+	/**
+	 * Cleans data from an After Effects animation before exporting it
+	 * @param {object}	data	The animation
+	 * @return {object}	The data cleaned
+	 */
+	Duik.bridge.cleanAnimExportData = function (data)
 	{
-		/**
-		 * Cleans data from an After Effects animation before exporting it
-		 * @param {object}	data	The animation
-		 * @return {object}	The data cleaned
-		 */
-		Duik.bridge.cleanAnimExportData = function (data)
-		{
 			var newData = data;
 
 			// a function to clean a property
@@ -2193,65 +2185,61 @@
 			}
 			return newData;
 		}
-	}
 
-	if (typeof Duik.bridge.cleanAnimImportData !== 'function')
+	/**
+	 * Cleans data from an After Effects animation before importing it
+	 * @param {object}	data	The animation
+	 * @return {object}	The data cleaned
+	 */
+	Duik.bridge.cleanAnimImportData = function (data)
 	{
-		/**
-		 * Cleans data from an After Effects animation before importing it
-		 * @param {object}	data	The animation
-		 * @return {object}	The data cleaned
-		 */
-		Duik.bridge.cleanAnimImportData = function (data)
+		var newData = data;
+
+		// a function to clean a property
+		function cleanProp(propData)
 		{
-			var newData = data;
-
-			// a function to clean a property
-			function cleanProp(propData)
+			var newPropData = propData;
+			for (var k = 0 ; k < newPropData.keys.length ; k++)
 			{
-				var newPropData = propData;
-				for (var k = 0 ; k < newPropData.keys.length ; k++)
+				var key = newPropData.keys[k];
+				//interpolation
+				key._inInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._inInterpolationType);
+				key._outInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._outInterpolationType);
+				//ease
+				for (var ease = 0 ; ease < key.inEase.length ; ease++)
 				{
-					var key = newPropData.keys[k];
-					//interpolation
-					key._inInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._inInterpolationType);
-					key._outInterpolationType = Duik.bridge.keyframeInterpolationNameToType(key._outInterpolationType);
-					//ease
-					for (var ease = 0 ; ease < key.inEase.length ; ease++)
-					{
-						key.inEase[ease] = new KeyframeEase(key.inEase[ease].speed, key.inEase[ease].influence);
-						key.outEase[ease] = new KeyframeEase(key.outEase[ease].speed, key.outEase[ease].influence);
-					}
-				}
-				return newPropData;
-			}
-
-			for (var i = 0 ; i < newData.length ; i++)
-			{
-				var layer = newData[i];
-				for (var j = 0 ; j < layer.transformAnims.length ; j++)
-				{
-					layer.transformAnims[j] = cleanProp(layer.transformAnims[j])
-				}
-				for (var j = 0 ; j < layer.effectsAnims.length ; j++)
-				{
-					var effect = layer.effectsAnims[j];
-					for (var e = 0 ; e < effect.anims.length ; e++)
-					{
-						effect.anims[e] = cleanProp(effect.anims[e])
-					}
-				}
-				for (var j = 0 ; j < layer.masksAnims.length ; j++)
-				{
-					var mask = layer.masksAnims[j];
-					for (var e = 0 ; e < mask.anims.length ; e++)
-					{
-						mask.anims[e] = cleanProp(mask.anims[e])
-					}
+					key.inEase[ease] = new KeyframeEase(key.inEase[ease].speed, key.inEase[ease].influence);
+					key.outEase[ease] = new KeyframeEase(key.outEase[ease].speed, key.outEase[ease].influence);
 				}
 			}
-			return newData;
+			return newPropData;
 		}
+
+		for (var i = 0 ; i < newData.length ; i++)
+		{
+			var layer = newData[i];
+			for (var j = 0 ; j < layer.transformAnims.length ; j++)
+			{
+				layer.transformAnims[j] = cleanProp(layer.transformAnims[j])
+			}
+			for (var j = 0 ; j < layer.effectsAnims.length ; j++)
+			{
+				var effect = layer.effectsAnims[j];
+				for (var e = 0 ; e < effect.anims.length ; e++)
+				{
+					effect.anims[e] = cleanProp(effect.anims[e])
+				}
+			}
+			for (var j = 0 ; j < layer.masksAnims.length ; j++)
+			{
+				var mask = layer.masksAnims[j];
+				for (var e = 0 ; e < mask.anims.length ; e++)
+				{
+					mask.anims[e] = cleanProp(mask.anims[e])
+				}
+			}
+		}
+		return newData;
 	}
 
 	/**
@@ -2262,65 +2250,60 @@
 	 */
 	Duik.bridge.json = {};
 
-	if (typeof Duik.bridge.json.exportAnim !== 'function')
+
+	/**
+	 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to a Json file.
+	 * @memberof Duik.bridge.json
+	 * @param {File}	file				The file to save the data
+	 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
+	 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
+	 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
+	 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
+	 * @return {Array}	An array of LayerAnim
+	 */
+	Duik.bridge.json.exportAnim = function (file,layers,selectedKeysOnly,startTime,endTime)
 	{
-		/**
-		 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to a Json file.
-		 * @memberof Duik.bridge.json
-		 * @param {File}	file				The file to save the data
-		 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
-		 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
-		 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
-		 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
-		 * @return {Array}	An array of LayerAnim
-		 */
-		Duik.bridge.json.exportAnim = function (file,layers,selectedKeysOnly,startTime,endTime)
-		{
-			var data = {};
-			data.duik = {};
-			data.duik.version = Duik.version;
-			data.duik.animation = true;
-			data.duik.rig = false;
-			data.layers = [];
-			//copy the animation
-			var anims  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
-			//clean data
-			anims = Duik.bridge.cleanAnimExportData(anims);
-			//stringify data
-			data.layers = anims;
-			data = JSON.stringify(data);
-			//save to file
-			file.encoding = 'UTF-8';
-			file.open('w');
-			file.write(data);
-			file.close();
-		}
+		var data = {};
+		data.duik = {};
+		data.duik.version = Duik.version;
+		data.duik.animation = true;
+		data.duik.rig = false;
+		data.layers = [];
+		//copy the animation
+		var anims  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
+		//clean data
+		anims = Duik.bridge.cleanAnimExportData(anims);
+		//stringify data
+		data.layers = anims;
+		data = JSON.stringify(data);
+		//save to file
+		file.encoding = 'UTF-8';
+		file.open('w');
+		file.write(data);
+		file.close();
 	}
 
-	if (typeof Duik.bridge.json.importAnim !== 'function')
+	/**
+	 * Imports the animation from a JSON file, store them in Duik.copiedAnim, and returns them.
+	 * Just run Duik.pasteAnim to actually load the animation on some layers
+	 * @memberof Duik.bridge.json
+	 * @param {File}	file	The file to import
+	 * @return {Array}	An array of LayerAnim
+	 */
+	Duik.bridge.json.importAnim = function (file)
 	{
-		/**
-		 * Imports the animation from a JSON file, store them in Duik.copiedAnim, and returns them.
-		 * Just run Duik.pasteAnim to actually load the animation on some layers
-		 * @memberof Duik.bridge.json
-		 * @param {File}	file	The file to import
-		 * @return {Array}	An array of LayerAnim
-		 */
-		Duik.bridge.json.importAnim = function (file)
-		{
-			//open and load file
-			file.encoding = 'UTF-8';
-			file.open('r');
-			var data = file.read();
-			file.close();
-			//parse data
-			var anim  = JSON.parse(data).layers;
-			//clean data
-			anim  = Duik.bridge.cleanAnimImportData(anim);
-			//copy the animation
-			Duik.copiedAnim = anim;
-			return anim
-		}
+		//open and load file
+		file.encoding = 'UTF-8';
+		file.open('r');
+		var data = file.read();
+		file.close();
+		//parse data
+		var anim  = JSON.parse(data).layers;
+		//clean data
+		anim  = Duik.bridge.cleanAnimImportData(anim);
+		//copy the animation
+		Duik.copiedAnim = anim;
+		return anim
 	}
 
 	/**
@@ -2331,502 +2314,484 @@
 	 */
 	Duik.bridge.xml = {};
 
-	if (typeof Duik.bridge.xml.toXmlString !== 'function')
+	/**
+	 * Parses a javascript object to an XML string
+	 * This method includes some parts of x2js
+		 * Copyright 2011-2013 Abdulla Abdurakhmanov
+		 * Original sources are available at https://code.google.com/p/x2js/
+		 * Licensed under the Apache License, Version 2.0
+	 * @memberof Duik.bridge.xml
+	 * @param {object}		obj		The object to parse
+	 * @return {string}		The XML string
+	 */
+	Duik.bridge.xml.toXmlString = function (obj)
 	{
-		/**
-		 * Parses a javascript object to an XML string
-		 * This method includes some parts of x2js
- 		 * Copyright 2011-2013 Abdulla Abdurakhmanov
- 		 * Original sources are available at https://code.google.com/p/x2js/
- 		 * Licensed under the Apache License, Version 2.0
-		 * @memberof Duik.bridge.xml
-		 * @param {object}		obj		The object to parse
-		 * @return {string}		The XML string
-		 */
-		Duik.bridge.xml.toXmlString = function (obj)
+		config = {};
+		config.escapeMode = true;
+		config.attributePrefix = "_";
+		config.arrayAccessForm = "none";
+		config.useDoubleQuotes = false;
+		config.jsonPropertiesFilter = [];
+
+		function jsonXmlSpecialElem ( jsonObj, jsonObjField )
 		{
-			config = {};
-			config.escapeMode = true;
-			config.attributePrefix = "_";
-			config.arrayAccessForm = "none";
-			config.useDoubleQuotes = false;
-			config.jsonPropertiesFilter = [];
+			if((config.arrayAccessForm=="property" && Duik.js.string.endsWith(jsonObjField.toString(),("_asArray")))
+					|| jsonObjField.toString().indexOf(config.attributePrefix)==0
+					|| jsonObjField.toString().indexOf("__")==0
+					|| (jsonObj[jsonObjField] instanceof Function) )
+				return true;
+			else
+				return false;
+		}
 
-			function jsonXmlSpecialElem ( jsonObj, jsonObjField )
-			{
-				if((config.arrayAccessForm=="property" && Duik.js.string.endsWith(jsonObjField.toString(),("_asArray")))
-						|| jsonObjField.toString().indexOf(config.attributePrefix)==0
-						|| jsonObjField.toString().indexOf("__")==0
-						|| (jsonObj[jsonObjField] instanceof Function) )
-					return true;
-				else
-					return false;
-			}
-
-			function jsonXmlElemCount ( jsonObj )
-			{
-				var elementsCnt = 0;
-				if(jsonObj instanceof Object ) {
-					for( var it in jsonObj  ) {
-						if(jsonXmlSpecialElem ( jsonObj, it) )
-							continue;
-						elementsCnt++;
-					}
+		function jsonXmlElemCount ( jsonObj )
+		{
+			var elementsCnt = 0;
+			if(jsonObj instanceof Object ) {
+				for( var it in jsonObj  ) {
+					if(jsonXmlSpecialElem ( jsonObj, it) )
+						continue;
+					elementsCnt++;
 				}
-				return elementsCnt;
 			}
+			return elementsCnt;
+		}
 
-			function checkJsonObjPropertiesFilter(jsonObj, propertyName, jsonObjPath)
-			{
-				return config.jsonPropertiesFilter.length == 0
-					|| jsonObjPath==""
-					|| checkInStdFiltersArrayForm(config.jsonPropertiesFilter, jsonObj, propertyName, jsonObjPath);
-			}
+		function checkJsonObjPropertiesFilter(jsonObj, propertyName, jsonObjPath)
+		{
+			return config.jsonPropertiesFilter.length == 0
+				|| jsonObjPath==""
+				|| checkInStdFiltersArrayForm(config.jsonPropertiesFilter, jsonObj, propertyName, jsonObjPath);
+		}
 
-			function checkInStdFiltersArrayForm(stdFiltersArrayForm, obj, name, path)
-			{
-				var idx = 0;
-				for(; idx < stdFiltersArrayForm.length; idx++) {
-					var filterPath = stdFiltersArrayForm[idx];
-					if( typeof filterPath === "string" ) {
-						if(filterPath == path)
-							break;
-					}
-					else
-					if( filterPath instanceof RegExp) {
-						if(filterPath.test(path))
-							break;
-					}
-					else
-					if( typeof filterPath === "function") {
-						if(filterPath(obj, name, path))
-							break;
-					}
-				}
-				return idx!=stdFiltersArrayForm.length;
-			}
-
-			function getJsonPropertyPath(jsonObjPath, jsonPropName)
-			{
-				if (jsonObjPath==="") {
-					return jsonPropName;
+		function checkInStdFiltersArrayForm(stdFiltersArrayForm, obj, name, path)
+		{
+			var idx = 0;
+			for(; idx < stdFiltersArrayForm.length; idx++) {
+				var filterPath = stdFiltersArrayForm[idx];
+				if( typeof filterPath === "string" ) {
+					if(filterPath == path)
+						break;
 				}
 				else
-					return jsonObjPath+"."+jsonPropName;
+				if( filterPath instanceof RegExp) {
+					if(filterPath.test(path))
+						break;
+				}
+				else
+				if( typeof filterPath === "function") {
+					if(filterPath(obj, name, path))
+						break;
+				}
 			}
+			return idx!=stdFiltersArrayForm.length;
+		}
 
-			function parseJSONAttributes ( jsonObj )
-			{
-				var attrList = [];
-				if(jsonObj instanceof Object ) {
-					for( var ait in jsonObj  ) {
-						if(ait.toString().indexOf("__")== -1 && ait.toString().indexOf(config.attributePrefix)==0) {
-							attrList.push(ait);
-						}
+		function getJsonPropertyPath(jsonObjPath, jsonPropName)
+		{
+			if (jsonObjPath==="") {
+				return jsonPropName;
+			}
+			else
+				return jsonObjPath+"."+jsonPropName;
+		}
+
+		function parseJSONAttributes ( jsonObj )
+		{
+			var attrList = [];
+			if(jsonObj instanceof Object ) {
+				for( var ait in jsonObj  ) {
+					if(ait.toString().indexOf("__")== -1 && ait.toString().indexOf(config.attributePrefix)==0) {
+						attrList.push(ait);
 					}
 				}
-				return attrList;
+			}
+			return attrList;
+		}
+
+		function escapeXmlChars(str)
+		{
+			if(typeof(str) == "string")
+				return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+			else
+				return str;
+		}
+
+		function parseJSONTextAttrs ( jsonTxtObj )
+		{
+			var result ="";
+
+			if(jsonTxtObj.__cdata!=null) {
+				result+="<![CDATA["+jsonTxtObj.__cdata+"]]>";
 			}
 
-			function escapeXmlChars(str)
-			{
-				if(typeof(str) == "string")
-					return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+			if(jsonTxtObj.__text!=null) {
+				if(config.escapeMode)
+					result+=escapeXmlChars(jsonTxtObj.__text);
 				else
-					return str;
+					result+=jsonTxtObj.__text;
 			}
+			return result;
+		}
 
-			function parseJSONTextAttrs ( jsonTxtObj )
-			{
-				var result ="";
+		function parseJSONTextObject ( jsonTxtObj )
+		{
+			var result ="";
 
-				if(jsonTxtObj.__cdata!=null) {
-					result+="<![CDATA["+jsonTxtObj.__cdata+"]]>";
-				}
-
-				if(jsonTxtObj.__text!=null) {
+			if( jsonTxtObj instanceof Object ) {
+				result+=parseJSONTextAttrs ( jsonTxtObj );
+			}
+			else
+				if(jsonTxtObj!=null) {
 					if(config.escapeMode)
-						result+=escapeXmlChars(jsonTxtObj.__text);
+						result+=escapeXmlChars(jsonTxtObj);
 					else
-						result+=jsonTxtObj.__text;
+						result+=jsonTxtObj;
 				}
-				return result;
+
+			return result;
+		}
+
+		function parseJSONArray ( jsonArrRoot, jsonArrObj, attrList, jsonObjPath )
+		{
+			var result = "";
+			if(jsonArrRoot.length == 0) {
+				result+=startTag(jsonArrRoot, jsonArrObj, attrList, true);
 			}
-
-			function parseJSONTextObject ( jsonTxtObj )
-			{
-				var result ="";
-
-				if( jsonTxtObj instanceof Object ) {
-					result+=parseJSONTextAttrs ( jsonTxtObj );
+			else {
+				//result += startTag(jsonArrRoot, jsonArrObj, attrList, false);
+				for(var arIdx = 0; arIdx < jsonArrRoot.length; arIdx++) {
+					result+=startTag(jsonArrRoot[arIdx], jsonArrObj, parseJSONAttributes(jsonArrRoot[arIdx]), false);
+					result+=parseJSONObject(jsonArrRoot[arIdx], getJsonPropertyPath(jsonObjPath,jsonArrObj));
+					result+="\n" + endTag(jsonArrRoot[arIdx], jsonArrObj);
 				}
-				else
-					if(jsonTxtObj!=null) {
-						if(config.escapeMode)
-							result+=escapeXmlChars(jsonTxtObj);
-						else
-							result+=jsonTxtObj;
+				//result+="\n" + endTag(jsonArrRoot,jsonArrObj);
+			}
+			return result;
+		}
+
+		function startTag(jsonObj, element, attrList, closed)
+		{
+			if (!isNaN(parseInt(element))) element = 'item' + element;
+			var resultStr = "\n<"+ ( (jsonObj!=null && jsonObj.__prefix!=null)? (jsonObj.__prefix+":"):"") + element;
+			if(attrList!=null) {
+				for(var aidx = 0; aidx < attrList.length; aidx++) {
+					var attrName = attrList[aidx];
+					var attrVal = jsonObj[attrName];
+					if(config.escapeMode)
+						attrVal=escapeXmlChars(attrVal);
+					resultStr+=" "+attrName.substr(config.attributePrefix.length)+"=";
+					if(config.useDoubleQuotes)
+						resultStr+='"'+attrVal+'"';
+					else
+						resultStr+="'"+attrVal+"'";
+				}
+			}
+			if(!closed)
+				resultStr+=">";
+			else
+				resultStr+="/>";
+			return resultStr;
+		}
+
+		function endTag(jsonObj,elementName)
+		{
+			if (!isNaN(parseInt(elementName))) elementName = 'item' + elementName;
+			return "</"+ (jsonObj.__prefix!=null? (jsonObj.__prefix+":"):"")+elementName+">";
+		}
+
+		function parseJSONObject ( jsonObj, jsonObjPath )
+		{
+			var result = "";
+
+			var elementsCnt = jsonXmlElemCount ( jsonObj );
+
+			if(elementsCnt > 0) {
+				for( var it in jsonObj ) {
+
+					if(jsonXmlSpecialElem ( jsonObj, it) || (jsonObjPath!="" && !checkJsonObjPropertiesFilter(jsonObj, it, getJsonPropertyPath(jsonObjPath,it))) )
+						continue;
+
+					var subObj = jsonObj[it];
+
+					var attrList = parseJSONAttributes( subObj )
+
+					if(subObj == null || subObj == undefined) {
+						result+=startTag(subObj, it, attrList, true);
 					}
+					else
+					if(subObj instanceof Object) {
 
-				return result;
-			}
-
-			function parseJSONArray ( jsonArrRoot, jsonArrObj, attrList, jsonObjPath )
-			{
-				var result = "";
-				if(jsonArrRoot.length == 0) {
-					result+=startTag(jsonArrRoot, jsonArrObj, attrList, true);
-				}
-				else {
-					//result += startTag(jsonArrRoot, jsonArrObj, attrList, false);
-					for(var arIdx = 0; arIdx < jsonArrRoot.length; arIdx++) {
-						result+=startTag(jsonArrRoot[arIdx], jsonArrObj, parseJSONAttributes(jsonArrRoot[arIdx]), false);
-						result+=parseJSONObject(jsonArrRoot[arIdx], getJsonPropertyPath(jsonObjPath,jsonArrObj));
-						result+="\n" + endTag(jsonArrRoot[arIdx], jsonArrObj);
-					}
-					//result+="\n" + endTag(jsonArrRoot,jsonArrObj);
-				}
-				return result;
-			}
-
-			function startTag(jsonObj, element, attrList, closed)
-			{
-				if (!isNaN(parseInt(element))) element = 'item' + element;
-				var resultStr = "\n<"+ ( (jsonObj!=null && jsonObj.__prefix!=null)? (jsonObj.__prefix+":"):"") + element;
-				if(attrList!=null) {
-					for(var aidx = 0; aidx < attrList.length; aidx++) {
-						var attrName = attrList[aidx];
-						var attrVal = jsonObj[attrName];
-						if(config.escapeMode)
-							attrVal=escapeXmlChars(attrVal);
-						resultStr+=" "+attrName.substr(config.attributePrefix.length)+"=";
-						if(config.useDoubleQuotes)
-							resultStr+='"'+attrVal+'"';
-						else
-							resultStr+="'"+attrVal+"'";
-					}
-				}
-				if(!closed)
-					resultStr+=">";
-				else
-					resultStr+="/>";
-				return resultStr;
-			}
-
-			function endTag(jsonObj,elementName)
-			{
-				if (!isNaN(parseInt(elementName))) elementName = 'item' + elementName;
-				return "</"+ (jsonObj.__prefix!=null? (jsonObj.__prefix+":"):"")+elementName+">";
-			}
-
-			function parseJSONObject ( jsonObj, jsonObjPath )
-			{
-				var result = "";
-
-				var elementsCnt = jsonXmlElemCount ( jsonObj );
-
-				if(elementsCnt > 0) {
-					for( var it in jsonObj ) {
-
-						if(jsonXmlSpecialElem ( jsonObj, it) || (jsonObjPath!="" && !checkJsonObjPropertiesFilter(jsonObj, it, getJsonPropertyPath(jsonObjPath,it))) )
-							continue;
-
-						var subObj = jsonObj[it];
-
-						var attrList = parseJSONAttributes( subObj )
-
-						if(subObj == null || subObj == undefined) {
-							result+=startTag(subObj, it, attrList, true);
+						if(subObj instanceof Array) {
+							result+=parseJSONArray( subObj, it, attrList, jsonObjPath );
 						}
-						else
-						if(subObj instanceof Object) {
-
-							if(subObj instanceof Array) {
-								result+=parseJSONArray( subObj, it, attrList, jsonObjPath );
-							}
-							else if(subObj instanceof Date) {
-								result+=startTag(subObj, it, attrList, false);
-								result+=subObj.toISOString();
-								result+=endTag(subObj,it);
-							}
-							else {
-								var subObjElementsCnt = jsonXmlElemCount ( subObj );
-								if(subObjElementsCnt > 0 || subObj.__text!=null || subObj.__cdata!=null) {
-									result+=startTag(subObj, it, attrList, false);
-									result+=parseJSONObject(subObj, getJsonPropertyPath(jsonObjPath,it));
-									result+="\n" + endTag(subObj,it);
-								}
-								else {
-									result+=startTag(subObj, it, attrList, true);
-								}
-							}
-						}
-						else {
+						else if(subObj instanceof Date) {
 							result+=startTag(subObj, it, attrList, false);
-							result+=parseJSONTextObject(subObj);
+							result+=subObj.toISOString();
 							result+=endTag(subObj,it);
 						}
+						else {
+							var subObjElementsCnt = jsonXmlElemCount ( subObj );
+							if(subObjElementsCnt > 0 || subObj.__text!=null || subObj.__cdata!=null) {
+								result+=startTag(subObj, it, attrList, false);
+								result+=parseJSONObject(subObj, getJsonPropertyPath(jsonObjPath,it));
+								result+="\n" + endTag(subObj,it);
+							}
+							else {
+								result+=startTag(subObj, it, attrList, true);
+							}
+						}
+					}
+					else {
+						result+=startTag(subObj, it, attrList, false);
+						result+=parseJSONTextObject(subObj);
+						result+=endTag(subObj,it);
 					}
 				}
-				result+=parseJSONTextObject(jsonObj);
-
-				return result;
 			}
+			result+=parseJSONTextObject(jsonObj);
 
-			return parseJSONObject ( obj, "" );
+			return result;
 		}
+
+		return parseJSONObject ( obj, "" );
 	}
 
-	if (typeof Duik.bridge.xml.getXMLValue !== 'function')
+	/**
+	 * Parses the value of the XML object
+	 * If this object length is not 1, an Array is returned
+	 * @memberof Duik.bridge.xml
+	 * @param {XML}		xml		The xml to parse
+	 * @param {string}	type	The type, one of 'string', 'bool', 'int' or 'float'. Default: 'string'
+	 * @return {Array}	The value or an Array of values
+	 */
+	Duik.bridge.xml.getXMLValue = function (xml,type)
 	{
-		/**
-		 * Parses the value of the XML object
-		 * If this object length is not 1, an Array is returned
-		 * @memberof Duik.bridge.xml
-		 * @param {XML}		xml		The xml to parse
-		 * @param {string}	type	The type, one of 'string', 'bool', 'int' or 'float'. Default: 'string'
-		 * @return {Array}	The value or an Array of values
-		 */
-		Duik.bridge.xml.getXMLValue = function (xml,type)
+		if (!type) type = 'string';
+		var value;
+		if(xml.length() > 1)
 		{
-			if (!type) type = 'string';
-			var value;
-			if(xml.length() > 1)
+			value = [];
+			for (var i = 0 ; i < xml.length() ; i++)
 			{
-				value = [];
-				for (var i = 0 ; i < xml.length() ; i++)
+				var val = Duik.bridge.xml.getXMLValue(xml[i],type);
+				value.push(val);
+			}
+		}
+		else
+		{
+			var xmlString = xml.toString();
+			if (type.toLowerCase() == 'float')
+			{
+				value = parseFloat(xmlString);
+			}
+			else if (type.toLowerCase() == 'int' || type.toLowerCase() == 'integer')
+			{
+				value = parseInt(xmlString);
+			}
+			else if (type.toLowerCase() == 'boolean' || type.toLowerCase() == 'bool')
+			{
+				if (xmlString == '0' || xmlString == '-1' || xmlString.toLowerCase() == 'false')
 				{
-					var val = Duik.bridge.xml.getXMLValue(xml[i],type);
-					value.push(val);
+					value = false;
+				}
+				else
+				{
+					value = true;
 				}
 			}
 			else
 			{
-				var xmlString = xml.toString();
-				if (type.toLowerCase() == 'float')
-				{
-					value = parseFloat(xmlString);
-				}
-				else if (type.toLowerCase() == 'int' || type.toLowerCase() == 'integer')
-				{
-					value = parseInt(xmlString);
-				}
-				else if (type.toLowerCase() == 'boolean' || type.toLowerCase() == 'bool')
-				{
-					if (xmlString == '0' || xmlString == '-1' || xmlString.toLowerCase() == 'false')
-					{
-						value = false;
-					}
-					else
-					{
-						value = true;
-					}
-				}
-				else
-				{
-					value = xmlString;
-				}
+				value = xmlString;
 			}
-
-			return value;
 		}
+
+		return value;
 	}
 
-	if (typeof Duik.bridge.xml.parseXmlLayerAnim !== 'function')
+	/**
+	 * Parses the animation of a layer from an XML object
+	 * @memberof Duik.bridge.xml
+	 * @param {XML}			xml		The XML object of the animation
+	 * @return {LayerAnim}	The animation
+	 */
+	Duik.bridge.xml.parseXmlLayerAnim = function (xml)
 	{
-		/**
-		 * Parses the animation of a layer from an XML object
-		 * @memberof Duik.bridge.xml
-		 * @param {XML}			xml		The XML object of the animation
-		 * @return {LayerAnim}	The animation
-		 */
-		Duik.bridge.xml.parseXmlLayerAnim = function (xml)
+		var layerAnim = new LayerAnim();
+		layerAnim._name = Duik.bridge.xml.getXMLValue(xml.@name);
+		layerAnim._index = Duik.bridge.xml.getXMLValue(xml.@name,'int');
+
+		//transformAnims
+		for (var i = 0 ; i < xml.transformAnims.length();i++)
 		{
-			var layerAnim = new LayerAnim();
-			layerAnim._name = Duik.bridge.xml.getXMLValue(xml.@name);
-			layerAnim._index = Duik.bridge.xml.getXMLValue(xml.@name,'int');
-
-			//transformAnims
-			for (var i = 0 ; i < xml.transformAnims.length();i++)
-			{
-				var prop = xml.transformAnims[i];
-				var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(prop);
-				layerAnim.transformAnims.push(propertyAnim);
-			}
-
-			//masksAnims
-			if (xml.masksAnims.hasComplexContent())
-			{
-				for (var i = 0 ; i < xml.masksAnims.length() ; i++)
-				{
-					var mask = xml.masksAnims[i];
-					var maskAnim = new MaskAnim();
-					maskAnim._name = Duik.bridge.xml.getXMLValue(mask.@name);
-					maskAnim._matchName = Duik.bridge.xml.getXMLValue(mask.@matchName);
-					for (var j = 0 ; j < mask.anims.length() ; j++)
-					{
-						var anim = mask.anims[j];
-						var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
-						maskAnim.anims.push(propertyAnim);
-					}
-					layerAnim.masksAnims.push(maskAnim);
-				}
-			}
-
-			//effectsAnims
-			if (xml.effectsAnims.hasComplexContent())
-			{
-				for (var i = 0 ; i < xml.effectsAnims.length() ; i++)
-				{
-					var effect = xml.effectsAnims[i];
-					var effectAnim = new EffectAnim();
-					effectAnim._name = Duik.bridge.xml.getXMLValue(effect.@name);
-					effectAnim._matchName = Duik.bridge.xml.getXMLValue(effect.@matchName);
-					for (var j = 0 ; j < effect.anims.length() ; j++)
-					{
-						var anim = effect.anims[j];
-						var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
-						effectAnim.anims.push(propertyAnim);
-					}
-					layerAnim.effectsAnims.push(effectAnim);
-				}
-			}
-
-			return layerAnim;
+			var prop = xml.transformAnims[i];
+			var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(prop);
+			layerAnim.transformAnims.push(propertyAnim);
 		}
+
+		//masksAnims
+		if (xml.masksAnims.hasComplexContent())
+		{
+			for (var i = 0 ; i < xml.masksAnims.length() ; i++)
+			{
+				var mask = xml.masksAnims[i];
+				var maskAnim = new MaskAnim();
+				maskAnim._name = Duik.bridge.xml.getXMLValue(mask.@name);
+				maskAnim._matchName = Duik.bridge.xml.getXMLValue(mask.@matchName);
+				for (var j = 0 ; j < mask.anims.length() ; j++)
+				{
+					var anim = mask.anims[j];
+					var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
+					maskAnim.anims.push(propertyAnim);
+				}
+				layerAnim.masksAnims.push(maskAnim);
+			}
+		}
+
+		//effectsAnims
+		if (xml.effectsAnims.hasComplexContent())
+		{
+			for (var i = 0 ; i < xml.effectsAnims.length() ; i++)
+			{
+				var effect = xml.effectsAnims[i];
+				var effectAnim = new EffectAnim();
+				effectAnim._name = Duik.bridge.xml.getXMLValue(effect.@name);
+				effectAnim._matchName = Duik.bridge.xml.getXMLValue(effect.@matchName);
+				for (var j = 0 ; j < effect.anims.length() ; j++)
+				{
+					var anim = effect.anims[j];
+					var propertyAnim = Duik.bridge.xml.parseXmlPropertyAnim(anim);
+					effectAnim.anims.push(propertyAnim);
+				}
+				layerAnim.effectsAnims.push(effectAnim);
+			}
+		}
+
+		return layerAnim;
 	}
 
-	if (typeof Duik.bridge.xml.parseXmlPropertyAnim !== 'function')
+	/**
+	 * Parses the animation of a property from an XML object
+	 * @memberof Duik.bridge.xml
+	 * @param {XML}				xml		The XML object of the animation
+	 * @return {PropertyAnim}	The animation
+	 */
+	Duik.bridge.xml.parseXmlPropertyAnim = function (xml)
 	{
-		/**
-		 * Parses the animation of a property from an XML object
-		 * @memberof Duik.bridge.xml
-		 * @param {XML}				xml		The XML object of the animation
-		 * @return {PropertyAnim}	The animation
-		 */
-		Duik.bridge.xml.parseXmlPropertyAnim = function (xml)
+		var propertyAnim = new PropertyAnim();
+		propertyAnim._name = Duik.bridge.xml.getXMLValue(xml.@name);
+		propertyAnim._matchName = Duik.bridge.xml.getXMLValue(xml.@matchName);
+		propertyAnim.startValue = Duik.bridge.xml.getXMLValue(xml.startValue,'float');
+		propertyAnim.keys = [];
+		//only if there are keyframes
+		if (xml.keys.hasComplexContent())
 		{
-			var propertyAnim = new PropertyAnim();
-			propertyAnim._name = Duik.bridge.xml.getXMLValue(xml.@name);
-			propertyAnim._matchName = Duik.bridge.xml.getXMLValue(xml.@matchName);
-			propertyAnim.startValue = Duik.bridge.xml.getXMLValue(xml.startValue,'float');
-			propertyAnim.keys = [];
-			//only if there are keyframes
-			if (xml.keys.hasComplexContent())
+			for (var i = 0 ; i < xml.keys.length() ; i++)
 			{
-				for (var i = 0 ; i < xml.keys.length() ; i++)
+				var key = xml.keys[i];
+				var keyFrame = new KeyFrame();
+				keyFrame._time = Duik.bridge.xml.getXMLValue(key.@time,'float');
+				keyFrame.value = Duik.bridge.xml.getXMLValue(key.value,'float');
+				keyFrame._inInterpolationType = Duik.bridge.xml.getXMLValue(key.@inInterpolationType);
+				keyFrame._outInterpolationType = Duik.bridge.xml.getXMLValue(key.@outInterpolationType);
+				keyFrame._spatial = Duik.bridge.xml.getXMLValue(key.@spatial,'bool');
+				if (keyFrame._spatial)
 				{
-					var key = xml.keys[i];
-					var keyFrame = new KeyFrame();
-					keyFrame._time = Duik.bridge.xml.getXMLValue(key.@time,'float');
-					keyFrame.value = Duik.bridge.xml.getXMLValue(key.value,'float');
-					keyFrame._inInterpolationType = Duik.bridge.xml.getXMLValue(key.@inInterpolationType);
-					keyFrame._outInterpolationType = Duik.bridge.xml.getXMLValue(key.@outInterpolationType);
-					keyFrame._spatial = Duik.bridge.xml.getXMLValue(key.@spatial,'bool');
-					if (keyFrame._spatial)
-					{
-						keyFrame.spatialProperties.inTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.inTangent,'float');
-						keyFrame.spatialProperties.outTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.outTangent,'float');
-						keyFrame.spatialProperties._continuous = Duik.bridge.xml.getXMLValue(key.spatialProperties.@continuous,'bool');
-						keyFrame.spatialProperties._autoBezier = Duik.bridge.xml.getXMLValue(key.spatialProperties.@autoBezier,'bool');
-						keyFrame.spatialProperties._roving = Duik.bridge.xml.getXMLValue(key.spatialProperties.@roving,'bool');
-					}
-					keyFrame.inEase = [];
-					keyFrame.outEase = [];
-					for (var j = 0 ; j < key.inEase.length() ; j++)
-					{
-						var inEase = {};
-						var outEase = {};
-						inEase.influence = Duik.bridge.xml.getXMLValue(key.inEase[j].influence,'float');
-						inEase.speed = Duik.bridge.xml.getXMLValue(key.inEase[j].speed,'float');
-						outEase.influence = Duik.bridge.xml.getXMLValue(key.outEase[j].influence,'float');
-						outEase.speed = Duik.bridge.xml.getXMLValue(key.outEase[j].speed,'float');
-						keyFrame.inEase.push(inEase);
-						keyFrame.outEase.push(outEase);
-					}
-					keyFrame._continuous = Duik.bridge.xml.getXMLValue(key.@continuous,'bool');
-					keyFrame._autoBezier = Duik.bridge.xml.getXMLValue(key.@autoBezier,'bool');
-
-					propertyAnim.keys.push(keyFrame);
+					keyFrame.spatialProperties.inTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.inTangent,'float');
+					keyFrame.spatialProperties.outTangent = Duik.bridge.xml.getXMLValue(key.spatialProperties.outTangent,'float');
+					keyFrame.spatialProperties._continuous = Duik.bridge.xml.getXMLValue(key.spatialProperties.@continuous,'bool');
+					keyFrame.spatialProperties._autoBezier = Duik.bridge.xml.getXMLValue(key.spatialProperties.@autoBezier,'bool');
+					keyFrame.spatialProperties._roving = Duik.bridge.xml.getXMLValue(key.spatialProperties.@roving,'bool');
 				}
-			}
+				keyFrame.inEase = [];
+				keyFrame.outEase = [];
+				for (var j = 0 ; j < key.inEase.length() ; j++)
+				{
+					var inEase = {};
+					var outEase = {};
+					inEase.influence = Duik.bridge.xml.getXMLValue(key.inEase[j].influence,'float');
+					inEase.speed = Duik.bridge.xml.getXMLValue(key.inEase[j].speed,'float');
+					outEase.influence = Duik.bridge.xml.getXMLValue(key.outEase[j].influence,'float');
+					outEase.speed = Duik.bridge.xml.getXMLValue(key.outEase[j].speed,'float');
+					keyFrame.inEase.push(inEase);
+					keyFrame.outEase.push(outEase);
+				}
+				keyFrame._continuous = Duik.bridge.xml.getXMLValue(key.@continuous,'bool');
+				keyFrame._autoBezier = Duik.bridge.xml.getXMLValue(key.@autoBezier,'bool');
 
-			return propertyAnim;
+				propertyAnim.keys.push(keyFrame);
+			}
 		}
+
+		return propertyAnim;
 	}
 
-	if (typeof Duik.bridge.xml.exportAnim !== 'function')
+	/**
+	 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to an XML file.
+	 * @memberof Duik.bridge.xml
+	 * @param {File}	file				The file to save the data
+	 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
+	 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
+	 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
+	 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
+	 * @return {Array}	An array of LayerAnim
+	 */
+	Duik.bridge.xml.exportAnim = function (file,layers,selectedKeysOnly,startTime,endTime)
 	{
-		/**
-		 * Copies all the animations (except expressions) on selected layers, store them in Duik.copiedAnim, and saves them to an XML file.
-		 * @memberof Duik.bridge.xml
-		 * @param {File}	file				The file to save the data
-		 * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
-		 * @param {boolean}	selectedKeysOnly	Wether to copy only selected keys or not
-		 * @param {float}	startTime			The start time of the anim to copy. Default: Composition start time
-		 * @param {float}	endTime				The end time of the anim to copy. Default: Composition end time
-		 * @return {Array}	An array of LayerAnim
-		 */
-		Duik.bridge.xml.exportAnim = function (file,layers,selectedKeysOnly,startTime,endTime)
-		{
-			//copy the animation
-			var anim  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
-			//clean data
-			anim = Duik.bridge.cleanAnimExportData(anim);
+		//copy the animation
+		var anim  = Duik.copyAnim(layers,selectedKeysOnly,startTime,endTime);
+		//clean data
+		anim = Duik.bridge.cleanAnimExportData(anim);
 
-			//convert to XML
-			var data = {};
-			data.Duik = {};
-			data.Duik.layers = anim;
-			data.Duik._version = Duik.version;
-			data.Duik._animation = true;
-			data.Duik._rig = false;
-			//convert using x2js
-			var xml = Duik.bridge.xml.toXmlString(data);
-			//better printing using XML from Adobe
-			XML.prettyPrinting = true;
-			xml = '<?xml version="1.0" encoding="UTF-8" ?>\n<!DOCTYPE duikx>\n' + XML(xml).toString();
+		//convert to XML
+		var data = {};
+		data.Duik = {};
+		data.Duik.layers = anim;
+		data.Duik._version = Duik.version;
+		data.Duik._animation = true;
+		data.Duik._rig = false;
+		//convert using x2js
+		var xml = Duik.bridge.xml.toXmlString(data);
+		//better printing using XML from Adobe
+		XML.prettyPrinting = true;
+		xml = '<?xml version="1.0" encoding="UTF-8" ?>\n<!DOCTYPE duikx>\n' + XML(xml).toString();
 
-			//save to file
-			file.encoding = 'UTF-8';
-			file.open('w');
-			file.write(xml);
-			file.close();
-		}
+		//save to file
+		file.encoding = 'UTF-8';
+		file.open('w');
+		file.write(xml);
+		file.close();
 	}
 
-	if (typeof Duik.bridge.xml.importAnim !== 'function')
+	/**
+	 * Imports the animation from an XML file, store them in Duik.copiedAnim, and returns them.
+	 * Just run Duik.pasteAnim to actually load the animation on some layers
+	 * @memberof Duik.bridge.json
+	 * @param {File}	file	The file to import
+	 * @return {Array}	An array of LayerAnim
+	 */
+	Duik.bridge.xml.importAnim = function (file)
 	{
-		/**
-		 * Imports the animation from an XML file, store them in Duik.copiedAnim, and returns them.
-		 * Just run Duik.pasteAnim to actually load the animation on some layers
-		 * @memberof Duik.bridge.json
-		 * @param {File}	file	The file to import
-		 * @return {Array}	An array of LayerAnim
-		 */
-		Duik.bridge.xml.importAnim = function (file)
+		//open and load file
+		file.encoding = 'UTF-8';
+		file.open('r');
+		var data = file.read();
+		file.close();
+		//parse data
+		var xml = new XML(data);
+		var anim = [];
+		for (var i = 0;i<xml.layers.length();i++)
 		{
-			//open and load file
-			file.encoding = 'UTF-8';
-			file.open('r');
-			var data = file.read();
-			file.close();
-			//parse data
-			var xml = new XML(data);
-			var anim = [];
-			for (var i = 0;i<xml.layers.length();i++)
-			{
-				var layer = xml.layers[i];
-				var layerAnim = Duik.bridge.xml.parseXmlLayerAnim(layer);
-				anim.push(layerAnim);
-			}
-			//clean data
-			anim  = Duik.bridge.cleanAnimImportData(anim);
-			//copy the animation
-			Duik.copiedAnim = anim;
-
-			return anim;
+			var layer = xml.layers[i];
+			var layerAnim = Duik.bridge.xml.parseXmlLayerAnim(layer);
+			anim.push(layerAnim);
 		}
+		//clean data
+		anim  = Duik.bridge.cleanAnimImportData(anim);
+		//copy the animation
+		Duik.copiedAnim = anim;
+
+		return anim;
 	}
 
 	/**
@@ -2837,383 +2802,371 @@
 	 */
 	Duik.bridge.tvPaint = {};
 
-	if (typeof Duik.bridge.tvPaint.importClip !== 'function')
+	/**
+	 * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
+	 * @memberof Duik.Bridge.TVPaint
+	 * @param {File}		clipInfo		The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+	 */
+	Duik.bridge.tvPaint.importClip = function (clipInfo)
 	{
+		if (!clipInfo) throw "You must provide the clipInfo file.";
+		if (typeof clipInfo == 'string') clipInfo = File(clipInfo);
+		if (!(clipInfo instanceof File)) throw "clipInfo must be a File or a string path.";
+		if (!clipInfo.exists) throw "clipInfo does not exist."
+
 		/**
-		 * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
-		 * @memberof Duik.Bridge.TVPaint
-		 * @param {File}		clipInfo		The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+		 * Gets the number of a frame from an image sequence
+		 * The number must be right before the extension
+		 * @param {string}	path	- The path of the frame
 		 */
-		Duik.bridge.tvPaint.importClip = function (clipInfo)
+		function filepath_getNumber(path)
 		{
-			if (!clipInfo) throw "You must provide the clipInfo file.";
-			if (typeof clipInfo == 'string') clipInfo = File(clipInfo);
-			if (!(clipInfo instanceof File)) throw "clipInfo must be a File or a string path.";
-			if (!clipInfo.exists) throw "clipInfo does not exist."
-
-			/**
-			 * Gets the number of a frame from an image sequence
-			 * The number must be right before the extension
-			 * @param {string}	path	- The path of the frame
-			 */
-			function filepath_getNumber(path)
+			var string_noExt = path.substring(0,path.lastIndexOf('.'));
+			var numberi = 0;
+			var namei = 0;
+			for(var i = string_noExt.length-1;i>=0;i--)
 			{
-				var string_noExt = path.substring(0,path.lastIndexOf('.'));
-				var numberi = 0;
-				var namei = 0;
-				for(var i = string_noExt.length-1;i>=0;i--)
+				if(isNaN(parseInt(string_noExt.charAt(i))))
 				{
-					if(isNaN(parseInt(string_noExt.charAt(i))))
-					{
-						numberi = i+1;
-						break;
-					}
-				}
-				number = string_noExt.substring(numberi,string_noExt.length);
-				return number;
-			}
-
-
-			//get path
-			clipFolder = clipInfo.parent;
-
-			//get infos
-			clipInfoData = [];
-			clipInfo.open('r');
-			while(!clipInfo.eof)
-			{
-				clipInfoData.push(clipInfo.readln());
-			}
-			clipInfo.close();
-			var framerate,clipDuration,bgColor;
-			for (var i = 0 ; i < clipInfoData.length ; i++)
-			{
-				var data = clipInfoData[i].split(';');
-				if (data[0].toLowerCase() == 'framerate')
-				{
-					framerate = data[1];
-				}
-				else if (data[0].toLowerCase() == 'duration')
-				{
-					clipDuration = data[1];
-				}
-				else if (data[0].toLowerCase() == 'bgcolor')
-				{
-					bgColor = data[1].split(',');
+					numberi = i+1;
+					break;
 				}
 			}
+			number = string_noExt.substring(numberi,string_noExt.length);
+			return number;
+		}
 
-			if (!framerate || !clipDuration || !bgColor) throw "Invalid clipInfo file. Please re-export from TVPaint."
 
-			//get layers
-			projClipFolder = app.project.items.addFolder(clipFolder.displayName);
-			myNewCompositions = new Array();
-			var folders = clipFolder.getFiles(Duik.js.file.foldersFilter);
-			for(var i = 0; i < folders.length; i++)
+		//get path
+		clipFolder = clipInfo.parent;
+
+		//get infos
+		clipInfoData = [];
+		clipInfo.open('r');
+		while(!clipInfo.eof)
+		{
+			clipInfoData.push(clipInfo.readln());
+		}
+		clipInfo.close();
+		var framerate,clipDuration,bgColor;
+		for (var i = 0 ; i < clipInfoData.length ; i++)
+		{
+			var data = clipInfoData[i].split(';');
+			if (data[0].toLowerCase() == 'framerate')
 			{
-				var curLayerFolder = folders[i];
-				var folderName = curLayerFolder.displayName;
-				var itemArray = curLayerFolder.getFiles("*.png");
-				if(itemArray.length > 0)
-				{
-					itemArray.sort();
-				}
+				framerate = data[1];
+			}
+			else if (data[0].toLowerCase() == 'duration')
+			{
+				clipDuration = data[1];
+			}
+			else if (data[0].toLowerCase() == 'bgcolor')
+			{
+				bgColor = data[1].split(',');
+			}
+		}
 
-				projLayerFolder = app.project.items.addFolder(folderName);
-				projLayerFolder.parentFolder = projClipFolder;
-				projFramesFolder = app.project.items.addFolder(folderName + "_frames");
-				projFramesFolder.parentFolder = projLayerFolder;
+		if (!framerate || !clipDuration || !bgColor) throw "Invalid clipInfo file. Please re-export from TVPaint."
 
-
-
-				//Importing
-				var footage = new Array();
-				var files = new Array();
-				for(var j = 0; j < itemArray.length;j++)
-				{
-					var curFile = new File(itemArray[j]);
-					var ioRef = new ImportOptions(curFile);
-					ioRef.importAs = ImportAsType.FOOTAGE;
-					var footageRef = app.project.importFile(ioRef);
-					footageRef.parentFolder = projFramesFolder;
-
-					footage[j] = footageRef;
-				}
-
-				// read layerinfo
-				layerInfopath= curLayerFolder.absoluteURI+"/layerinfo.txt";
-				layerInfo = new File(layerInfopath);
-
-				if (layerInfo.exists)
-				{
-				   layerInfo.open();
-
-					var layerIN = layerInfo.readln();
-					layerIN = layerIN.split(";");
-					layerIN = layerIN[1];
-
-					 var layerOUT = layerInfo.readln();
-					layerOUT = layerOUT.split(";");
-					layerOUT = layerOUT[1];
-
-					var layerBlendmode = layerInfo.readln();
-					layerBlendmode = layerBlendmode.split(";");
-					layerBlendmode = layerBlendmode[1];
-
-					var layerOpacity = layerInfo.readln();
-						layerOpacity = layerOpacity.split(";");
-						layerOpacity = layerOpacity[1];
-					try
-					{
-						var layerLabel = layerInfo.readln();
-						layerLabel = layerLabel.split(";");
-						layerLabel = layerLabel[1]*1;
-					}
-					catch(e)
-					{
-						layerLabel = 0;
-					}
-
-
-					layerInfo.close();
-				}
-				else
-				{
-					layerIN = 1
-					layerOUT = layerIN+clipDuration
-					layerBlendmode ="COLOR";
-				}
-
-				layerDuration = layerOUT-layerIN+1
-				layerDuration=layerDuration*(1/framerate)
-
-				//Creating Composition
-				curComp = app.project.items.addComp(folderName,footageRef.width,footageRef.height,1,layerDuration,framerate);
-				curComp.parentFolder = projLayerFolder;
-				var compStats=new Array(curComp,layerIN,layerOUT,layerBlendmode,layerOpacity,layerLabel);
-				myNewCompositions.push(compStats);
-
-				//Timing layers
-				for(k=0;k<footage.length;k++)
-				{
-					curImage = footage[k];
-					path = curImage.file.absoluteURI;
-					imageNUM =  filepath_getNumber(path)*1;
-
-					//frame duration
-					var imageIN = imageNUM/framerate-layerIN/framerate;
-
-					if(k==footage.length-1)
-					{
-						var imageDuration =  curComp.duration-imageIN;
-					}
-					else
-					{
-						nextImage = footage[k+1];
-						path = nextImage.file.absoluteURI;
-						nextNUM =  filepath_getNumber(path)*1;
-						var deltaFrame = nextNUM-imageNUM;
-						var imageDuration = deltaFrame/framerate;
-					}
-
-					//finding file
-					try
-					{
-						mylayers = curComp.layers.add(curImage);
-						mylayers.inPoint = imageIN;
-						mylayers.outPoint = imageIN+imageDuration;
-					}
-					catch(e)
-					{
-						alert("Cant Add Frame "+xsht_file+"\nof "+nameMain+"\n Probably because the footage wasnt imported because there is a write failue in the File");
-					}
-				}
+		//get layers
+		projClipFolder = app.project.items.addFolder(clipFolder.displayName);
+		myNewCompositions = new Array();
+		var folders = clipFolder.getFiles(Duik.js.file.foldersFilter);
+		for(var i = 0; i < folders.length; i++)
+		{
+			var curLayerFolder = folders[i];
+			var folderName = curLayerFolder.displayName;
+			var itemArray = curLayerFolder.getFiles("*.png");
+			if(itemArray.length > 0)
+			{
+				itemArray.sort();
 			}
 
-			//collect Layers In animation Comp
-			var collectComp = app.project.items.addComp(clipFolder.displayName,myNewCompositions[0][0].width,myNewCompositions[0][0].height,1,clipDuration/framerate,framerate);
-			collectComp.parentFolder = projClipFolder;
+			projLayerFolder = app.project.items.addFolder(folderName);
+			projLayerFolder.parentFolder = projClipFolder;
+			projFramesFolder = app.project.items.addFolder(folderName + "_frames");
+			projFramesFolder.parentFolder = projLayerFolder;
 
-			collectComp.bgColor =bgColor;
-			for(var p = myNewCompositions.length;p>0 ;p--)
+
+
+			//Importing
+			var footage = new Array();
+			var files = new Array();
+			for(var j = 0; j < itemArray.length;j++)
 			{
-				var curCompStats = myNewCompositions[p-1];
-				var curComp=curCompStats[0];
-				var curIN=curCompStats[1];
-				var curOUT=curCompStats[2];
-				var curBLEND=curCompStats[3];
-				var curOPACITY=curCompStats[4];
-				var curLABEL=curCompStats[5];
-				var curLayer = collectComp.layers.add(curComp);
-				Duik.bridge.tvPaint.setBlendingMode(curLayer,curBLEND);
-				curLayer.startTime =(curIN-1)/framerate;
-				curLayer.opacity.setValue(curOPACITY);
+				var curFile = new File(itemArray[j]);
+				var ioRef = new ImportOptions(curFile);
+				ioRef.importAs = ImportAsType.FOOTAGE;
+				var footageRef = app.project.importFile(ioRef);
+				footageRef.parentFolder = projFramesFolder;
 
+				footage[j] = footageRef;
+			}
+
+			// read layerinfo
+			layerInfopath= curLayerFolder.absoluteURI+"/layerinfo.txt";
+			layerInfo = new File(layerInfopath);
+
+			if (layerInfo.exists)
+			{
+			   layerInfo.open();
+
+				var layerIN = layerInfo.readln();
+				layerIN = layerIN.split(";");
+				layerIN = layerIN[1];
+
+				 var layerOUT = layerInfo.readln();
+				layerOUT = layerOUT.split(";");
+				layerOUT = layerOUT[1];
+
+				var layerBlendmode = layerInfo.readln();
+				layerBlendmode = layerBlendmode.split(";");
+				layerBlendmode = layerBlendmode[1];
+
+				var layerOpacity = layerInfo.readln();
+					layerOpacity = layerOpacity.split(";");
+					layerOpacity = layerOpacity[1];
 				try
 				{
-						curLayer.label=curLABEL*1;
+					var layerLabel = layerInfo.readln();
+					layerLabel = layerLabel.split(";");
+					layerLabel = layerLabel[1]*1;
 				}
 				catch(e)
 				{
-						curLayer.label=15;
+					layerLabel = 0;
+				}
+
+
+				layerInfo.close();
+			}
+			else
+			{
+				layerIN = 1
+				layerOUT = layerIN+clipDuration
+				layerBlendmode ="COLOR";
+			}
+
+			layerDuration = layerOUT-layerIN+1
+			layerDuration=layerDuration*(1/framerate)
+
+			//Creating Composition
+			curComp = app.project.items.addComp(folderName,footageRef.width,footageRef.height,1,layerDuration,framerate);
+			curComp.parentFolder = projLayerFolder;
+			var compStats=new Array(curComp,layerIN,layerOUT,layerBlendmode,layerOpacity,layerLabel);
+			myNewCompositions.push(compStats);
+
+			//Timing layers
+			for(k=0;k<footage.length;k++)
+			{
+				curImage = footage[k];
+				path = curImage.file.absoluteURI;
+				imageNUM =  filepath_getNumber(path)*1;
+
+				//frame duration
+				var imageIN = imageNUM/framerate-layerIN/framerate;
+
+				if(k==footage.length-1)
+				{
+					var imageDuration =  curComp.duration-imageIN;
+				}
+				else
+				{
+					nextImage = footage[k+1];
+					path = nextImage.file.absoluteURI;
+					nextNUM =  filepath_getNumber(path)*1;
+					var deltaFrame = nextNUM-imageNUM;
+					var imageDuration = deltaFrame/framerate;
+				}
+
+				//finding file
+				try
+				{
+					mylayers = curComp.layers.add(curImage);
+					mylayers.inPoint = imageIN;
+					mylayers.outPoint = imageIN+imageDuration;
+				}
+				catch(e)
+				{
+					alert("Cant Add Frame "+xsht_file+"\nof "+nameMain+"\n Probably because the footage wasnt imported because there is a write failue in the File");
 				}
 			}
+		}
 
-			//detect exposure in precomps
-			for (var j = 1;j<= collectComp.numLayers;j++)
+		//collect Layers In animation Comp
+		var collectComp = app.project.items.addComp(clipFolder.displayName,myNewCompositions[0][0].width,myNewCompositions[0][0].height,1,clipDuration/framerate,framerate);
+		collectComp.parentFolder = projClipFolder;
+
+		collectComp.bgColor =bgColor;
+		for(var p = myNewCompositions.length;p>0 ;p--)
+		{
+			var curCompStats = myNewCompositions[p-1];
+			var curComp=curCompStats[0];
+			var curIN=curCompStats[1];
+			var curOUT=curCompStats[2];
+			var curBLEND=curCompStats[3];
+			var curOPACITY=curCompStats[4];
+			var curLABEL=curCompStats[5];
+			var curLayer = collectComp.layers.add(curComp);
+			Duik.bridge.tvPaint.setBlendingMode(curLayer,curBLEND);
+			curLayer.startTime =(curIN-1)/framerate;
+			curLayer.opacity.setValue(curOPACITY);
+
+			try
 			{
-				//get layer
-				precompLayer = collectComp.layer(j);
-				Duik.getPrecompExposure(precompLayer);
+					curLayer.label=curLABEL*1;
 			}
+			catch(e)
+			{
+					curLayer.label=15;
+			}
+		}
+
+		//detect exposure in precomps
+		for (var j = 1;j<= collectComp.numLayers;j++)
+		{
+			//get layer
+			precompLayer = collectComp.layer(j);
+			Duik.getPrecompExposure(precompLayer);
 		}
 	}
 
-	if (typeof Duik.bridge.tvPaint.parseCam !== 'function')
+	/**
+	 * Parses a string representing camera exported from TVPaint
+	 * @memberof Duik.Bridge.TVPaint
+	 * @param {string}		camString	The camera to parse
+	 * @return {TVPCamera}	The TVPaint Camera object
+	 */
+	Duik.bridge.tvPaint.parseCam = function (camString)
 	{
-		/**
-		 * Parses a string representing camera exported from TVPaint
-		 * @memberof Duik.Bridge.TVPaint
-		 * @param {string}		camString	The camera to parse
-		 * @return {TVPCamera}	The TVPaint Camera object
-		 */
-		Duik.bridge.tvPaint.parseCam = function (camString)
+		var camera = new TVPCamera();
+
+		var lines = camString.split("\n");
+
+		var reXPoint = /point\.(\d+)\.x=(-?\d+\.?\d*)/i;
+		var reYPoint = /point\.(\d+)\.y=(-?\d+\.?\d*)/i;
+		var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
+		var reRPoint = /point\.(\d+)\.rotation=(-?\d+\.?\d*)/i;
+		var reLinear = /profileprof_linear=([01])/i;
+		var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
+		var rePointCout = /pointcount=(\d+)/i;
+		var reProfPointCount = /profileprof_numpoint=(\d+)/i;
+		for (var i=0;i<lines.length;i++ )
 		{
-			var camera = new TVPCamera();
-
-			var lines = camString.split("\n");
-
-			var reXPoint = /point\.(\d+)\.x=(-?\d+\.?\d*)/i;
-			var reYPoint = /point\.(\d+)\.y=(-?\d+\.?\d*)/i;
-			var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
-			var reRPoint = /point\.(\d+)\.rotation=(-?\d+\.?\d*)/i;
-			var reLinear = /profileprof_linear=([01])/i;
-			var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
-			var rePointCout = /pointcount=(\d+)/i;
-			var reProfPointCount = /profileprof_numpoint=(\d+)/i;
-			for (var i=0;i<lines.length;i++ )
-			{
-			var line = lines[i];
-			var count = line.match(rePointCout);
-			if (count != null)
-			{
-			camera.pointCount = parseInt(count[1]);
-			}
-			var xPoint = line.match(reXPoint);
-			if (xPoint != null)
-			{
-			var index = parseInt(xPoint[1]);
-			var value = parseFloat(xPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = new TVPCameraPoint();
-			point.x = value ;
-			camera.points[index] = point;
-			}
-			var yPoint = line.match(reYPoint);
-			if (yPoint != null)
-			{
-			var index = parseInt(yPoint[1]);
-			var value = parseFloat(yPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = new TVPCameraPoint();
-			point.y = value ;
-			camera.points[index] = point;
-			}
-			var zPoint = line.match(reZPoint);
-			if (zPoint != null)
-			{
-			var index = parseInt(zPoint[1]);
-			var value = parseFloat(zPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = new TVPCameraPoint();
-			point.zoom = value ;
-			camera.points[index] = point;
-			}
-			var rPoint = line.match(reRPoint);
-			if (rPoint != null)
-			{
-			var index = parseInt(rPoint[1]);
-			var value = parseFloat(rPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = new TVPCameraPoint();
-			point.rotation = value ;
-			camera.points[index] = point;
-			}
-			var linear = line.match(reLinear);
-			if (linear != null)
-			{
-			var lin = parseInt(linear[1]);
-			camera.profileprof.linear = (lin == 1);
-			}
-			var profPoint = line.match(reProfPoint);
-			if (profPoint != null)
-			{
-			var index = parseInt(profPoint[1]);
-			var u = parseFloat(profPoint[2]);
-			var v = parseFloat(profPoint[3]);
-			var point = new TVPProfileprofPoint();
-			point.u = u;
-			point.v = v;
-			camera.profileprof.points[index] = point;
-			}
-			var profCount = line.match(reProfPointCount);
-			if (profCount != null)
-			{
-			camera.profileprof.pointCount = parseInt(profCount[1]);
-			}
-			}
-
-			return camera;
+		var line = lines[i];
+		var count = line.match(rePointCout);
+		if (count != null)
+		{
+		camera.pointCount = parseInt(count[1]);
 		}
+		var xPoint = line.match(reXPoint);
+		if (xPoint != null)
+		{
+		var index = parseInt(xPoint[1]);
+		var value = parseFloat(xPoint[2]);
+		var point = camera.points[index];
+		if (point == undefined) point = new TVPCameraPoint();
+		point.x = value ;
+		camera.points[index] = point;
+		}
+		var yPoint = line.match(reYPoint);
+		if (yPoint != null)
+		{
+		var index = parseInt(yPoint[1]);
+		var value = parseFloat(yPoint[2]);
+		var point = camera.points[index];
+		if (point == undefined) point = new TVPCameraPoint();
+		point.y = value ;
+		camera.points[index] = point;
+		}
+		var zPoint = line.match(reZPoint);
+		if (zPoint != null)
+		{
+		var index = parseInt(zPoint[1]);
+		var value = parseFloat(zPoint[2]);
+		var point = camera.points[index];
+		if (point == undefined) point = new TVPCameraPoint();
+		point.zoom = value ;
+		camera.points[index] = point;
+		}
+		var rPoint = line.match(reRPoint);
+		if (rPoint != null)
+		{
+		var index = parseInt(rPoint[1]);
+		var value = parseFloat(rPoint[2]);
+		var point = camera.points[index];
+		if (point == undefined) point = new TVPCameraPoint();
+		point.rotation = value ;
+		camera.points[index] = point;
+		}
+		var linear = line.match(reLinear);
+		if (linear != null)
+		{
+		var lin = parseInt(linear[1]);
+		camera.profileprof.linear = (lin == 1);
+		}
+		var profPoint = line.match(reProfPoint);
+		if (profPoint != null)
+		{
+		var index = parseInt(profPoint[1]);
+		var u = parseFloat(profPoint[2]);
+		var v = parseFloat(profPoint[3]);
+		var point = new TVPProfileprofPoint();
+		point.u = u;
+		point.v = v;
+		camera.profileprof.points[index] = point;
+		}
+		var profCount = line.match(reProfPointCount);
+		if (profCount != null)
+		{
+		camera.profileprof.pointCount = parseInt(profCount[1]);
+		}
+		}
+
+		return camera;
 	}
 
-	if (typeof Duik.bridge.tvPaint.loadCamFile !== 'function')
+	/**
+	 * Loads and parses a file reprensenting a camera exported from TVPaint
+	 * @memberof Duik.Bridge.TVPaint
+	 * @param {File}		camFile		The camera to parse
+	 * @return {TVPCamera}	The TVPaint Camera object
+	 */
+	Duik.bridge.tvPaint.loadCamFile = function (camFile)
 	{
-		/**
-		 * Loads and parses a file reprensenting a camera exported from TVPaint
-		 * @memberof Duik.Bridge.TVPaint
-		 * @param {File}		camFile		The camera to parse
-		 * @return {TVPCamera}	The TVPaint Camera object
-		 */
-		Duik.bridge.tvPaint.loadCamFile = function (camFile)
-		{
-			camFile.open("r");
-			var camString = camFile.read();
-			camFile.close();
-			var tvpCam = Duik.bridge.tvPaint.parseCam(camString);
-			return tvpCam;
-		}
+		camFile.open("r");
+		var camString = camFile.read();
+		camFile.close();
+		var tvpCam = Duik.bridge.tvPaint.parseCam(camString);
+		return tvpCam;
 	}
 
-	if (typeof Duik.bridge.tvPaint.setBlendingMode !== 'function')
+	/**
+	 * Sets the blending mode of an AE Layer based on the TVPaint blend mode name
+	 * @memberof Duik.Bridge.TVPaint
+	 * @param {AVLayer}		layer		The layer
+	 * @param {string}		blendName	The TVPaint blending mode name
+	 */
+	Duik.bridge.tvPaint.setBlendingMode = function (layer,blendName)
 	{
-		/**
-		 * Sets the blending mode of an AE Layer based on the TVPaint blend mode name
-		 * @memberof Duik.Bridge.TVPaint
-		 * @param {AVLayer}		layer		The layer
-		 * @param {string}		blendName	The TVPaint blending mode name
-		 */
-		Duik.bridge.tvPaint.setBlendingMode = function (layer,blendName)
+		switch (blendName)
 		{
-			switch (blendName)
-			{
-				case "Color":
-					layer.blendingMode = BlendingMode.NORMAL;
-					break;
-				case "Add":
-					layer.blendingMode =  BlendingMode.ADD;
-				case "Screen":
-					layer.blendingMode =  BlendingMode.SCREEN;
-					break;
-				case "Multiply":
-					layer.blendingMode =  BlendingMode.MULTIPLY;
-					break;
-				case "Overlay":
-					layer.blendingMode =  BlendingMode.OVERLAY;
-					break;
-				default:
-					layer.blendingMode = BlendingMode.NORMAL;
-			}
+			case "Color":
+				layer.blendingMode = BlendingMode.NORMAL;
+				break;
+			case "Add":
+				layer.blendingMode =  BlendingMode.ADD;
+			case "Screen":
+				layer.blendingMode =  BlendingMode.SCREEN;
+				break;
+			case "Multiply":
+				layer.blendingMode =  BlendingMode.MULTIPLY;
+				break;
+			case "Overlay":
+				layer.blendingMode =  BlendingMode.OVERLAY;
+				break;
+			default:
+				layer.blendingMode = BlendingMode.NORMAL;
 		}
 	}
 
@@ -3225,274 +3178,259 @@
 	 */
 	Duik.bridge.audition = {};
 
-	if (typeof Duik.bridge.audition.createMasterTrack !== 'function')
+	/**
+	 * Creates an XML master track for an Audition session
+	 * @memberof Duik.Bridge.Audition
+	 * @param {string}  name		The track name
+	 * @param {int}	 id	  	A unique id for this track
+	 * @param {int}	 index   	The index of the track
+	 * @param {string}	channelType	The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
+	 * @return {XML}	The track
+	 */
+	Duik.bridge.audition.createMasterTrack = function (name,id,index,channelType)
 	{
-		/**
-		 * Creates an XML master track for an Audition session
-		 * @memberof Duik.Bridge.Audition
-		 * @param {string}  name		The track name
-		 * @param {int}	 id	  	A unique id for this track
-		 * @param {int}	 index   	The index of the track
-		 * @param {string}	channelType	The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
-		 * @return {XML}	The track
-		 */
-		Duik.bridge.audition.createMasterTrack = function (name,id,index,channelType)
-		{
-			if (!channelType) channelType = 'stereo';
-			if (channelType == '') channelType = 'stereo';
-			var xmlString = '<masterTrack automationLaneOpenState="false" id="' + id + '" index="' + index + '" select="false" visible="true">' +
-				'<trackParameters trackHeight="134" trackHue="-1" trackMinimized="false">' +
-				'<name>' + name + '</name>' +
-				'</trackParameters>' +
-				'<trackAudioParameters audioChannelType="' + channelType + '" automationMode="1" monitoring="false" recordArmed="false" solo="false" soloSafe="true">' +
-				'<trackOutput outputID="1" type="hardwareOutput"/>' +
-				'<trackInput inputID="-1"/>' +
-				'</trackAudioParameters>' +
-				'<editParameter parameterIndex="0" slotIndex="4294967280"/>' +
-				'</masterTrack>';
-			var trackx = new XML(xmlString);
-			return trackx;
-		}
+		if (!channelType) channelType = 'stereo';
+		if (channelType == '') channelType = 'stereo';
+		var xmlString = '<masterTrack automationLaneOpenState="false" id="' + id + '" index="' + index + '" select="false" visible="true">' +
+			'<trackParameters trackHeight="134" trackHue="-1" trackMinimized="false">' +
+			'<name>' + name + '</name>' +
+			'</trackParameters>' +
+			'<trackAudioParameters audioChannelType="' + channelType + '" automationMode="1" monitoring="false" recordArmed="false" solo="false" soloSafe="true">' +
+			'<trackOutput outputID="1" type="hardwareOutput"/>' +
+			'<trackInput inputID="-1"/>' +
+			'</trackAudioParameters>' +
+			'<editParameter parameterIndex="0" slotIndex="4294967280"/>' +
+			'</masterTrack>';
+		var trackx = new XML(xmlString);
+		return trackx;
 	}
 
-	if (typeof Duik.bridge.audition.createTrack !== 'function')
+	/**
+	 * Creates an XML track for an Audition session
+	 * @memberof Duik.Bridge.Audition
+	 * @param {string}  name	The track name
+	 * @param {int}	 id	  A unique id for this track
+	 * @param {int}	 index   The index of the track
+	 * @param {string}	channelType	The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
+	 * @return {XML}	The track
+	 */
+	Duik.bridge.audition.createTrack = function (name,id,index,channelType)
 	{
-		/**
-		 * Creates an XML track for an Audition session
-		 * @memberof Duik.Bridge.Audition
-		 * @param {string}  name	The track name
-		 * @param {int}	 id	  A unique id for this track
-		 * @param {int}	 index   The index of the track
-		 * @param {string}	channelType	The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
-		 * @return {XML}	The track
-		 */
-		Duik.bridge.audition.createTrack = function (name,id,index,channelType)
-		{
-			if (!channelType) channelType = 'stereo';
-			if (channelType == '') channelType = 'stereo';
+		if (!channelType) channelType = 'stereo';
+		if (channelType == '') channelType = 'stereo';
 
-			var xmlString = '<audioTrack automationLaneOpenState="false" id="' + id + '" index="' + index + '" select="true" visible="true">' +
-				'<trackParameters trackHeight="134" trackHue="-1" trackMinimized="false">' +
-				'<name>' + name + '</name>' +
-				'</trackParameters>' +
-				'<trackAudioParameters audioChannelType="' + channelType + '" automationMode="1" monitoring="false" recordArmed="false" solo="false" soloSafe="false">' +
-				'<trackOutput outputID="10000" type="trackID"/>' +
-				'<trackInput inputID="1"/>' +
-				'</trackAudioParameters>' +
-				'</audioTrack>';
-			var trackx = new XML(xmlString);
-			return trackx;
-		}
+		var xmlString = '<audioTrack automationLaneOpenState="false" id="' + id + '" index="' + index + '" select="true" visible="true">' +
+			'<trackParameters trackHeight="134" trackHue="-1" trackMinimized="false">' +
+			'<name>' + name + '</name>' +
+			'</trackParameters>' +
+			'<trackAudioParameters audioChannelType="' + channelType + '" automationMode="1" monitoring="false" recordArmed="false" solo="false" soloSafe="false">' +
+			'<trackOutput outputID="10000" type="trackID"/>' +
+			'<trackInput inputID="1"/>' +
+			'</trackAudioParameters>' +
+			'</audioTrack>';
+		var trackx = new XML(xmlString);
+		return trackx;
 	}
 
-	if (typeof Duik.bridge.audition.createClip !== 'function')
+	/**
+	 * Creates an XML clip for an Audition session
+	 * @memberof Duik.Bridge.Audition
+	 * @param {string}  clipName			The clip name
+	 * @param {int}	 sourceId			The corresponding source file id
+	 * @param {int}	 id					A unique id for this clip
+	 * @param {float}   sourceInPoint	   The audio source in point
+	 * @param {float}   sourceOutPoint	  The audio source out point
+	 * @param {float}   startPoint		  The clip start point in the track
+	 * @param {float}   endPoint			The clip end point in the track
+	 * @return {XML}  	The clip
+	 */
+	Duik.bridge.audition.createClip = function (clipName,sourceId,id,sourceInPoint,sourceOutPoint,startPoint,endPoint)
 	{
-		/**
-		 * Creates an XML clip for an Audition session
-		 * @memberof Duik.Bridge.Audition
-		 * @param {string}  clipName			The clip name
-		 * @param {int}	 sourceId			The corresponding source file id
-		 * @param {int}	 id					A unique id for this clip
-		 * @param {float}   sourceInPoint	   The audio source in point
-		 * @param {float}   sourceOutPoint	  The audio source out point
-		 * @param {float}   startPoint		  The clip start point in the track
-		 * @param {float}   endPoint			The clip end point in the track
-		 * @return {XML}  	The clip
-		 */
-		Duik.bridge.audition.createClip = function (clipName,sourceId,id,sourceInPoint,sourceOutPoint,startPoint,endPoint)
-		{
-			var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + clipName + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">' +
-				'<fadeIn crossFadeLinkType="linkedAsymmetric" endPoint="0" shape="0" startPoint="0" type="cosine"/>' +
-				'<fadeOut crossFadeLinkType="linkedAsymmetric" endPoint="' + (endPoint-startPoint) + '" shape="0" startPoint="' + (endPoint-startPoint) + '" type="cosine"/>' +
-				'<channelMap>' +
-				'<channel index="0" sourceIndex="0"/>' +
-				'<channel index="1" sourceIndex="1"/>' +
-				'</channelMap>' +
-				'</audioClip>';
-			var clipx = new XML(xmlString);
+		var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + clipName + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">' +
+			'<fadeIn crossFadeLinkType="linkedAsymmetric" endPoint="0" shape="0" startPoint="0" type="cosine"/>' +
+			'<fadeOut crossFadeLinkType="linkedAsymmetric" endPoint="' + (endPoint-startPoint) + '" shape="0" startPoint="' + (endPoint-startPoint) + '" type="cosine"/>' +
+			'<channelMap>' +
+			'<channel index="0" sourceIndex="0"/>' +
+			'<channel index="1" sourceIndex="1"/>' +
+			'</channelMap>' +
+			'</audioClip>';
+		var clipx = new XML(xmlString);
 
-			return clipx;
-		}
+		return clipx;
 	}
 
-	if (typeof Duik.bridge.audition.createSourceFile !== 'function')
+	/**
+	 * Creates an XML source file for an Audition session
+	 * @memberof Duik.Bridge.Audition
+	 * @param {File}	file				The audio file
+	 * @param {int}	 id				  A unique id for this file
+	 * @return {XML}  	The file
+	 */
+	Duik.bridge.audition.createSourceFile = function (file,id)
 	{
-		/**
-		 * Creates an XML source file for an Audition session
-		 * @memberof Duik.Bridge.Audition
-		 * @param {File}	file				The audio file
-		 * @param {int}	 id				  A unique id for this file
-		 * @return {XML}  	The file
-		 */
-		Duik.bridge.audition.createSourceFile = function (file,id)
-		{
-			var name = file.name.substring(0,file.name.lastIndexOf('.'));
+		var name = file.name.substring(0,file.name.lastIndexOf('.'));
 
-			xmlString = '<file absolutePath="' + file.fsName + '" id="' + id + '" mediaHandler="AmioWav"/>';
-			var filex = new XML(xmlString);
+		xmlString = '<file absolutePath="' + file.fsName + '" id="' + id + '" mediaHandler="AmioWav"/>';
+		var filex = new XML(xmlString);
 
-			return filex;
-		}
+		return filex;
 	}
 
-	if (typeof Duik.bridge.audition.exportComp !== 'function')
+	/**
+	 * Creates an XML Audition session file, exported from comp
+	 * @memberof Duik.Bridge.Audition
+	 * @param {File}		sesxFile			The Audition session XML File to save
+	 * @param {CompItem}	comp				The composition to export
+	 * @param {bool}   		audioActiveOnly	 Wether to export only layers with the audio enabled, or all layers with audio. Default: false
+	 * @param {int}  		sampling	  		The audio sampling, in Hz. Default: 48000
+	 * @param {int}   		bits		  		The audio definition, in bits. One of: 16, 24 or 32. Default: 32
+	 * @param {string}		channelType			The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
+	 * @param {bool}   		execute				Wether to open the exported session in Audition once export is done. Default: false
+	 * @param {bool}   		transcode		   Wether to extract and transcore audio from video files. Default: true
+	 */
+	Duik.bridge.audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bits,channelType,execute,transcode)
 	{
-		/**
-		 * Creates an XML Audition session file, exported from comp
-		 * @memberof Duik.Bridge.Audition
-		 * @param {File}		sesxFile			The Audition session XML File to save
-		 * @param {CompItem}	comp				The composition to export
-		 * @param {bool}   		audioActiveOnly	 Wether to export only layers with the audio enabled, or all layers with audio. Default: false
-		 * @param {int}  		sampling	  		The audio sampling, in Hz. Default: 48000
-		 * @param {int}   		bits		  		The audio definition, in bits. One of: 16, 24 or 32. Default: 32
-		 * @param {string}		channelType			The audio chanel type, one of 'mono', 'stereo' or 'fivePointOne'. Default: 'stereo'
-		 * @param {bool}   		execute				Wether to open the exported session in Audition once export is done. Default: false
-		 * @param {bool}   		transcode		   Wether to extract and transcore audio from video files. Default: true
-		 */
-		Duik.bridge.audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bits,channelType,execute,transcode)
+		if (!sesxFile) throw "Needs an export file";
+		if (!(sesxFile instanceof File)) throw "Session file is not a valid File object";
+		if (!comp) throw "Needs a composition to export";
+		if (!(comp instanceof CompItem)) throw "Composition is not a valid CompItem";
+		if (audioActiveOnly == undefined) audioActiveOnly = false;
+		if (!sampling) sampling = 48000;
+		if (!bits) bits = 32;
+		if (!channelType) channelType = 'stereo';
+		if (channelType == '') channelType = 'stereo';
+		if (execute == undefined) execute = false;
+		if (transcode == undefined) transcode = true;
+
+		//get all layers with audio
+		var audioLayers = Duik.utils.getAudioLayers(comp.layers,audioActiveOnly);
+
+		//build xml
+		var xmlString = '<sesx version="1.4">' +
+			'<session appBuild="10.1.0.174" appVersion="10.1" audioChannelType="' + channelType + '" bitDepth="' + bits + '" duration="' + (comp.duration * sampling) + '" sampleRate="' + sampling + '">' +
+			'<name>' + sesxFile.name + '</name>' +
+			'<tracks/>' +
+			'<sessionState ctiPosition="0" smpteStart="0">' +
+			'<selectionState selectionDuration="0" selectionStart="0"/>' +
+			'<viewState horizontalViewDuration="0" horizontalViewStart="0" trackControlsWidth="0" verticalScrollOffset="0"/>' +
+			'<timeFormatState beatsPerBar="4" beatsPerMinute="120" customFrameRate="12" linkToDefaultTimeSettings="true" noteLength="4" subdivisions="16" timeCodeDropFrame="false" timeCodeFrameRate="30" timeCodeNTSC="false" timeFormat="timeFormatDecimal"/>' +
+			'<mixingOptionState defaultPanModeLogarithmic="false" panPower="-3"/>' +
+			'</sessionState>' +
+			'<clipGroups/>' +
+			'<properties/>' +
+			'</session>' +
+			'<files/>' +
+			'</sesx>';
+		var sesx = new XML(xmlString);
+
+		//create tracks and clips
+
+		// the source files list, to keep only one instance of each file
+		var sourceFiles = [];
+		// the transcoder
+		if (transcode)
 		{
-			if (!sesxFile) throw "Needs an export file";
-			if (!(sesxFile instanceof File)) throw "Session file is not a valid File object";
-			if (!comp) throw "Needs a composition to export";
-			if (!(comp instanceof CompItem)) throw "Composition is not a valid CompItem";
-			if (audioActiveOnly == undefined) audioActiveOnly = false;
-			if (!sampling) sampling = 48000;
-			if (!bits) bits = 32;
-			if (!channelType) channelType = 'stereo';
-			if (channelType == '') channelType = 'stereo';
-			if (execute == undefined) execute = false;
-			if (transcode == undefined) transcode = true;
+			var ffmpeg = new FFMpeg('-y -stats');
+			var importedFolder = new Folder(sesxFile.parent.absoluteURI + '/Imported Files/');
+		}
 
-			//get all layers with audio
-			var audioLayers = Duik.utils.getAudioLayers(comp.layers,audioActiveOnly);
+		//add clips and tracks to xml
 
-			//build xml
-			var xmlString = '<sesx version="1.4">' +
-				'<session appBuild="10.1.0.174" appVersion="10.1" audioChannelType="' + channelType + '" bitDepth="' + bits + '" duration="' + (comp.duration * sampling) + '" sampleRate="' + sampling + '">' +
-				'<name>' + sesxFile.name + '</name>' +
-				'<tracks/>' +
-				'<sessionState ctiPosition="0" smpteStart="0">' +
-				'<selectionState selectionDuration="0" selectionStart="0"/>' +
-				'<viewState horizontalViewDuration="0" horizontalViewStart="0" trackControlsWidth="0" verticalScrollOffset="0"/>' +
-				'<timeFormatState beatsPerBar="4" beatsPerMinute="120" customFrameRate="12" linkToDefaultTimeSettings="true" noteLength="4" subdivisions="16" timeCodeDropFrame="false" timeCodeFrameRate="30" timeCodeNTSC="false" timeFormat="timeFormatDecimal"/>' +
-				'<mixingOptionState defaultPanModeLogarithmic="false" panPower="-3"/>' +
-				'</sessionState>' +
-				'<clipGroups/>' +
-				'<properties/>' +
-				'</session>' +
-				'<files/>' +
-				'</sesx>';
-			var sesx = new XML(xmlString);
+		var numTracks = 1;
+		for (i = 0 ; i < audioLayers.length ; i++)
+		{
+			var layer = audioLayers[i];
+			var index = layer.index;
 
-			//create tracks and clips
+			//create a new track for this clip
+			var trackChannelType = channelType;
+			//in 5.1, tracks are stereo anyway by default in Audition
+			if (trackChannelType == 'fivePointOne') trackChannelType = 'stereo';
+			var trackx = Duik.bridge.audition.createTrack('Track ' + index,10001+i,numTracks,trackChannelType);
 
-			// the source files list, to keep only one instance of each file
-			var sourceFiles = [];
-			// the transcoder
-			if (transcode)
+			//get the source file
+			var sourceItem = layer.source;
+			var clipFile = sourceItem.mainSource.file;
+			//check if it already exists and gets the id
+			var sourceId = -1;
+			for (var j = 0;j < sourceFiles.length ; j++)
 			{
-				var ffmpeg = new FFMpeg('-y -stats');
-				var importedFolder = new Folder(sesxFile.parent.absoluteURI + '/Imported Files/');
-			}
-
-			//add clips and tracks to xml
-
-			var numTracks = 1;
-			for (i = 0 ; i < audioLayers.length ; i++)
-			{
-				var layer = audioLayers[i];
-				var index = layer.index;
-
-				//create a new track for this clip
-				var trackChannelType = channelType;
-				//in 5.1, tracks are stereo anyway by default in Audition
-				if (trackChannelType == 'fivePointOne') trackChannelType = 'stereo';
-				var trackx = Duik.bridge.audition.createTrack('Track ' + index,10001+i,numTracks,trackChannelType);
-
-				//get the source file
-				var sourceItem = layer.source;
-				var clipFile = sourceItem.mainSource.file;
-				//check if it already exists and gets the id
-				var sourceId = -1;
-				for (var j = 0;j < sourceFiles.length ; j++)
+				var pathCheck = clipFile.absoluteURI;
+				if (sourceItem.hasVideo && transcode)
 				{
-					var pathCheck = clipFile.absoluteURI;
-					if (sourceItem.hasVideo && transcode)
-					{
-						var name = pathCheck.substring(pathCheck.lastIndexOf('/')+1,pathCheck.lastIndexOf('.')) + "_audio.wav";
-						pathCheck = importedFolder.absoluteURI + '/' + name;
-					}
-					if (sourceFiles[j][0].absoluteURI == pathCheck)
-					{
-						sourceId = sourceFiles[j][1];
-						break;
-					}
+					var name = pathCheck.substring(pathCheck.lastIndexOf('/')+1,pathCheck.lastIndexOf('.')) + "_audio.wav";
+					pathCheck = importedFolder.absoluteURI + '/' + name;
 				}
-				//create a source file
-				if (sourceId == -1)
+				if (sourceFiles[j][0].absoluteURI == pathCheck)
 				{
-					sourceId = i;
-					var sourceFile = clipFile;
-					if (sourceItem.hasVideo && transcode)
-					{
-						var name = clipFile.name.substring(0,clipFile.name.lastIndexOf('.')) + "_audio.wav";
-						sourceFile = new File(importedFolder.absoluteURI + '/' + name);
-						//add source to the transcoding queue
-						var input = new FFMpegInputModule(clipFile.fsName);
-						var codec = 'pcm_f32le';
-						if (bits == 16) codec = 'pcm_s16le';
-						else if (bits == 24) codec = 'pcm_s24le';
-						var output = new FFMpegOutputModule(codec,sourceFile.fsName,'-ar ' + sampling + ' -vn');
-						var item = new FFMpegQueueItem(input,[output]);
-						//add the item to the render queue
-						ffmpeg.queue.push(item);
-					}
-					var filex = Duik.bridge.audition.createSourceFile(sourceFile,sourceId);
-					sesx.files.appendChild(filex);
-					sourceFiles.push([sourceFile,sourceId])
+					sourceId = sourceFiles[j][1];
+					break;
 				}
-
-				//gets cue points
-				var startPoint = layer.inPoint * sampling;
-				var endPoint = layer.outPoint * sampling;
-				var sourceInPoint = (layer.inPoint - layer.startTime) * sampling;
-				var sourceOutPoint = (layer.outPoint - layer.startTime) * sampling;
-
-				//create clip
-				var clipName = '';
-				if (Duik.mac) clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('/')+1,clipFile.fsName.lastIndexOf('.'));
-				else clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('\\')+1,clipFile.fsName.lastIndexOf('.'));
-				if (sourceItem.hasVideo) clipName = clipName + '_audio';
-
-				var clipx = Duik.bridge.audition.createClip(clipName,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
-
-				//add track and clipFile
-				trackx = trackx.appendChild(clipx[0]);
-				sesx.session.tracks = sesx.session.tracks.appendChild(trackx);
-				numTracks++;
 			}
-
-			//add the master track
-			var masterTrackx = Duik.bridge.audition.createMasterTrack('Main',10000,numTracks,channelType);
-			sesx.session.tracks = sesx.session.tracks.appendChild(masterTrackx);
-
-
-			//to string with header and doctype
-			XML.prettyPrinting = true;
-			var xml = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n<!DOCTYPE sesx>\n' + XML(sesx).toString();
-
-			//save file
-			sesxFile.open('w');
-			sesxFile.write(xml);
-			sesxFile.close();
-
-			if (transcode)
+			//create a source file
+			if (sourceId == -1)
 			{
-				importedFolder.create();
-				ffmpeg.launch();
+				sourceId = i;
+				var sourceFile = clipFile;
+				if (sourceItem.hasVideo && transcode)
+				{
+					var name = clipFile.name.substring(0,clipFile.name.lastIndexOf('.')) + "_audio.wav";
+					sourceFile = new File(importedFolder.absoluteURI + '/' + name);
+					//add source to the transcoding queue
+					var input = new FFMpegInputModule(clipFile.fsName);
+					var codec = 'pcm_f32le';
+					if (bits == 16) codec = 'pcm_s16le';
+					else if (bits == 24) codec = 'pcm_s24le';
+					var output = new FFMpegOutputModule(codec,sourceFile.fsName,'-ar ' + sampling + ' -vn');
+					var item = new FFMpegQueueItem(input,[output]);
+					//add the item to the render queue
+					ffmpeg.queue.push(item);
+				}
+				var filex = Duik.bridge.audition.createSourceFile(sourceFile,sourceId);
+				sesx.files.appendChild(filex);
+				sourceFiles.push([sourceFile,sourceId])
 			}
-			if (execute) sesxFile.execute();
+
+			//gets cue points
+			var startPoint = layer.inPoint * sampling;
+			var endPoint = layer.outPoint * sampling;
+			var sourceInPoint = (layer.inPoint - layer.startTime) * sampling;
+			var sourceOutPoint = (layer.outPoint - layer.startTime) * sampling;
+
+			//create clip
+			var clipName = '';
+			if (Duik.mac) clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('/')+1,clipFile.fsName.lastIndexOf('.'));
+			else clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('\\')+1,clipFile.fsName.lastIndexOf('.'));
+			if (sourceItem.hasVideo) clipName = clipName + '_audio';
+
+			var clipx = Duik.bridge.audition.createClip(clipName,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
+
+			//add track and clipFile
+			trackx = trackx.appendChild(clipx[0]);
+			sesx.session.tracks = sesx.session.tracks.appendChild(trackx);
+			numTracks++;
 		}
+
+		//add the master track
+		var masterTrackx = Duik.bridge.audition.createMasterTrack('Main',10000,numTracks,channelType);
+		sesx.session.tracks = sesx.session.tracks.appendChild(masterTrackx);
+
+
+		//to string with header and doctype
+		XML.prettyPrinting = true;
+		var xml = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n<!DOCTYPE sesx>\n' + XML(sesx).toString();
+
+		//save file
+		sesxFile.open('w');
+		sesxFile.write(xml);
+		sesxFile.close();
+
+		if (transcode)
+		{
+			importedFolder.create();
+			ffmpeg.launch();
+		}
+		if (execute) sesxFile.execute();
 	}
 }
 
