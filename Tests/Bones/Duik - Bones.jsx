@@ -88,7 +88,10 @@ if (typeof Duik === 'object') delete Duik;
 			//end group
 			if (!end)
 			{
-				var endGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+				var displayGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+				displayGroup.name = "Display";
+				displayGroup("ADBE Vector Transform Group").property("ADBE Vector Opacity").setValue(50);
+				var endGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 				endGroup.name = "End";
 				var endGroupContent = endGroup.property("ADBE Vectors Group");
 				var rectangle = endGroupContent.addProperty("ADBE Vector Shape - Rect");
@@ -97,7 +100,7 @@ if (typeof Duik === 'object') delete Duik;
 				endFill("ADBE Vector Fill Color").setValue(color);
 				endGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").setValue(45);
 				//stretchbone group
-				var stretchBoneGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+				var stretchBoneGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 				stretchBoneGroup.name = "Stretch Bone";
 				var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
 				var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
