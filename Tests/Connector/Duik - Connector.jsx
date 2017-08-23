@@ -59,6 +59,7 @@ DESCRIPTION
 			if (thisComp) {
 				//TODO WARNING This won't work if comp name includes a .
 				//needs to use regexp here to find comp("name") and remove it
+				//this regexp: (comp *\(.+\)) to find comp()
 				ctrlValue = "thisComp" + ctrlValue.substr(ctrlValue.indexOf("."));
 			}
 			
