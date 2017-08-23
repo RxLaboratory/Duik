@@ -57,6 +57,8 @@ DESCRIPTION
 			
 			// replace comp('name') by thisComp
 			if (thisComp) {
+				//TODO WARNING This won't work if comp name includes a .
+				//needs to use regexp here to find comp("name") and remove it
 				ctrlValue = "thisComp" + ctrlValue.substr(ctrlValue.indexOf("."));
 			}
 			
