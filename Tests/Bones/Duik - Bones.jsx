@@ -90,7 +90,7 @@ if (typeof Duik === 'object') delete Duik;
 			{
 				var displayGroup = boneGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 				displayGroup.name = "Display";
-				displayGroup("ADBE Vector Transform Group").property("ADBE Vector Opacity").setValue(50);
+				displayGroup.property("ADBE Vector Transform Group").property("ADBE Vector Group Opacity").setValue(50);
 				var endGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 				endGroup.name = "End";
 				var endGroupContent = endGroup.property("ADBE Vectors Group");
