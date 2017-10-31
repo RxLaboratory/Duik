@@ -1,0 +1,128 @@
+/*
+	DuProcessLib
+  Library of tools to run command line tools and processes from After Effects scripts
+	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+	https://rainboxprod.coop
+
+	_Contributors:_
+		Nicolas Dufresne - Lead developer
+
+	This file is part of DuAEF.
+
+	DuAEF is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	DuAEF is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * Constructs a new DuProcess instance
+ * @class DuProcess
+ * @classdesc A class used to easily compress png files using pngquant
+ * @property {string}	  processPath     - The path to the process executable binary
+ * @property {array}    args            - The arguments used to run the process.
+ * @property {int}      timeout         - Waiting timeout after process start, in ms, 0 to avoid waiting, -1 for infinite. If the process times out, process will not be killed, the script will just stop waiting. Default: 0
+ */
+function DuProcess(processPath,args,timeout)
+{
+  //detect OS
+  var mac = $.os.toLowerCase().indexOf("mac") >= 0;
+  this.mac = mac;
+  this.win = !mac;
+
+  if (processPath === undefined) processPath = "";
+  this.processPath = processPath;
+  if (args === undefined) args = [];
+  this.args = args;
+  if (timeout === undefined) timeout = 0;
+  this.timeout = timeout;
+}
+
+/**
+ * Starts the process
+ * @memberof DuProcess
+ * @param {Array}  args  - Args to append to DuProcess.args before starting
+ * @return {string}   - The output of the process read on stdout
+ */
+DuProcess.prototype.start = function (args)
+{
+  var output = '';
+
+  //build command
+  //make sure to use fsName
+  var processFile = new File(this.processPath);
+  this.processPath = processFile.fsName;
+  var cmd = '"' + this.processPath  + '"';
+
+  //args
+  for (var i = 0 ; i < this.args.length ; i++)
+  {
+    var arg = this.args[i];
+    if (arg.indexOf(' ') > 0)
+    {
+      arg = '"' + arg + '"';
+    }
+    cmd += ' ' + arg;
+  }
+  for (var i = 0 ; i < args.length ; i++)
+  {
+    var arg = args[i];
+    if (arg.indexOf(' ') > 0)
+    {
+      arg = '"' + arg + '"';
+    }
+    cmd += ' ' + arg;
+  }
+
+
+  //Start
+  if (this.mac)
+  {
+    //add ' &' at the end to start detached
+    cmd += ' &';
+    system.callSystem(cmd);
+  }
+  if (this.win)
+  {
+    //create batch file
+    var bat = new File(Folder.myDocuments.absoluteURI + '/DuProcess.bat');
+    bat.open('w');
+    bat.write(cmd);
+    bat.close();
+    bat.execute();
+    bat.remove();
+  }
+
+  //wait
+  var wait = true;
+  var currentDate = new Date();
+  var timeout = currentDate.getTime() + this.timeout;
+  var checkTime = new Date();
+
+  var checkCmd = '';
+  var processName = new File(this.processPath).name;
+  if (this.mac) checkCmd = 'ps -A | grep "' + processName + '"';
+  if (this.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
+
+  //wait
+  while(wait)
+  {
+		var test = system.callSystem(cmd);
+		if (test.indexOf(processName) < 0) break;
+		$.sleep(100);
+		checkTime = new Date();
+
+    if (this.timeout >= 0)
+    {
+      wait = checkTime.getTime() < timeout;
+    }
+  }
+}

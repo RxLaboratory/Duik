@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: DuFFMpegLib.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: DuFFMpegLib.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+	DuFFMpeg
+	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+	https://rainboxprod.coop
+
+	_Contributors:_
+		Nicolas Dufresne - Lead developer
+
+	_DuFFMpeg makes use of:_
+
+		• FFMpeg
+		http://ffmpeg.org
+
+	This file is part of DuFFMpeg.
+
+	DuFFMpeg is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	DuFFMpeg is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with DuFFMpeg. If not, see &lt;http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+ * Constructs a new FFMpeg encoder
+ * The constructor will try to find the ffmpeg binary in the same folder as libDuik, or an (ffmpeg) subfolder, or in the scripts folder of After Effects
+ * If ffmpeg is not in one of those, the property ffmpegPath will be an empty string, and it has to be set by the user.
+ * @class FFMpeg
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}      ffmpegPath	    - The path to the FFMpeg binary.
+ * @property {string}	   options	        - The options of the encoder. Default: '-stats'
+ * @property {Array}	   queue            - An Array of FFMpegQueueItem
+ */
+function FFMpeg(options)
+{
+    if (options == undefined) options = '-stats';
+
+    //TODO mac version
+
+    this.ffmpegPath = '';
+
+    //try to detect the ffmpeg path
+    //first, in the same dir
+    var ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/ffmpeg.exe');
+    //in an (ffmpeg) subfolder
+    if (!ffmpegFile.exists)
+    {
+        ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(ffmpeg)/ffmpeg.exe');
+    }
+    //in AE Scripts folder
+    if (!ffmpegFile.exists)
+    {
+        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts' + '/ffmpeg.exe');
+        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts' + '/ffmpeg.exe');
+    }
+    //in AE Scripts/(ffmpeg) folder
+    if (!ffmpegFile.exists)
+    {
+        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(ffmpeg)' + '/ffmpeg.exe');
+        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/(ffmpeg)' + '/ffmpeg.exe');
+    }
+    //in AE ScriptUI Panels
+    if (!ffmpegFile.exists)
+    {
+        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels' + '/ffmpeg.exe');
+        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/ScriptUI Panels' + '/ffmpeg.exe');
+    }
+    //in AE ScriptUI Panels/(ffmpeg)
+    if (!ffmpegFile.exists)
+    {
+        if (Duik.win) ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(ffmpeg)' + '/ffmpeg.exe');
+        //else ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Contents/Resources/Scripts/ScriptUI Panels/(ffmpeg)' + '/(ffmpeg)/ffmpeg.exe');
+    }
+
+    if (ffmpegFile.exists) this.ffmpegPath = ffmpegFile.fsName;
+
+    alert(ffmpegFile.fsName);
+
+    this.options = '-stats';
+    this.queue = [];
+}
+
+/**
+ * Launches encoding
+ * @memberof FFMpeg
+ */
+FFMpeg.prototype.launch = function ()
+{
+    //TODO mac version
+
+    var cmd = '';
+    if (Duik.win) cmd += '"' + this.ffmpegPath + '"';
+
+    //add options
+    cmd += ' ' + this.options;
+
+    //add RenderItems
+    for (var i = 0 ; i &lt; this.queue.length ; i++)
+    {
+        var item = this.queue[i];
+        cmd += ' ' + item.input.options;
+        cmd += ' -i "' + item.input.inputPath + '"';
+        //add outputs
+        for (var j = 0 ; j &lt; item.outputs.length ; j++)
+        {
+            var output = item.outputs[j];
+            cmd += ' -c ' + output.codec;
+            cmd += ' ' + output.options;
+            cmd += ' "' + output.outputPath + '"';
+        }
+    }
+
+    //launch!
+    alert(cmd);
+    system.callSystem(cmd);
+}
+
+/**
+ * Constructs a new FFMpegInputModule module
+ * @class FFMpegInputModule
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}	inputPath	    - The path to the input file.
+ * @property {string}	options	        - The options for the input file. Default: ''
+ */
+function FFMpegInputModule(inputPath,options)
+{
+    if (!inputPath) throw "No input file set";
+    if (inputPath == '') throw "No input file set";
+    var inputFile = new File(inputPath);
+    if (!inputFile.exists) throw "The input file does not exist";
+
+    this.inputPath = inputFile.fsName;
+
+    if (!options) options = '';
+    this.options = '';
+}
+
+/**
+ * Constructs a new FFMpegOutputModule module
+ * @class FFMpegOutputModule
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}	codec	        - The codec used for transcoding.
+ * @property {string}	outputPath	    - The path to the output file.
+ * @property {string}	options	        - The options for the output file (other than setting the codec). Default: ''
+ */
+function FFMpegOutputModule(codec,outputPath,options)
+{
+    if (!codec) throw "No codec set";
+    if (codec == '') throw "No codec set";
+
+    this.codec = codec;
+
+    if (!outputPath) throw "No output file set";
+    if (outputPath == '') throw "No output file set";
+
+    var outputFile = new File(outputPath);
+    this.outputPath = outputFile.fsName;
+
+    if (!options) options = '';
+    this.options = '';
+}
+
+/**
+ * Constructs a new FFMpegQueueItem
+ * @class FFMpegQueueItem
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {FFMpegInputModule}	input      - The input module.
+ * @property {Array}	            outputs	   - An Array of FFMpegOutputModule. The output modules
+ */
+function FFMpegQueueItem(input,outputs)
+{
+    if (!input) throw "No input set";
+
+    this.input = input;
+
+    if (!outputs) throw "No output set";
+    if (outputs.length &lt; 1) throw "Empty outputs";
+
+    this.outputs = outputs;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="FFMpeg.html">FFMpeg</a></li><li><a href="FFMpegInputModule.html">FFMpegInputModule</a></li><li><a href="FFMpegOutputModule.html">FFMpegOutputModule</a></li><li><a href="FFMpegQueueItem.html">FFMpegQueueItem</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue May 23 2017 15:14:41 GMT+0200 (Paris, Madrid (heure d’été))
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

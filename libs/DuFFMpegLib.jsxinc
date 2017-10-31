@@ -1,0 +1,216 @@
+﻿/*
+	DuFFMpeg
+	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+	https://rainboxprod.coop
+
+	_Contributors:_
+		Nicolas Dufresne - Lead developer
+
+	_DuFFMpeg makes use of:_
+
+		• FFMpeg
+		http://ffmpeg.org
+
+	This file is part of DuFFMpeg.
+
+	DuFFMpeg is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	DuFFMpeg is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with DuFFMpeg. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+//TODO Use DuProcessLib
+//#include DuProcessLib.jsxinc
+
+/**
+ * Constructs a new FFMpeg encoder.
+ * The constructor will try to find the ffmpeg binary in the same folder as DuFFMpeg, or an (ffmpeg) subfolder, or in the scripts folder of After Effects.
+ * If ffmpeg is not in one of those, the property ffmpegPath will be an empty string, and it has to be set by the user.
+ * @class FFMpeg
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}	  ffmpegPath		- The path to the FFMpeg binary.
+ * @property {string}	   options			- The options of the encoder. Default: '-stats'
+ * @property {Array}	   queue			- An Array of FFMpegQueueItem
+ */
+function FFMpeg(options)
+{
+	//detect os
+	var mac = $.os.toLowerCase().indexOf("mac") >= 0;
+	this.mac = mac;
+	this.win = !mac;
+
+	if (options == undefined) options = '-stats';
+
+	this.ffmpegPath = '';
+
+	//try to detect the ffmpeg path
+	var ffmpegBinName = '';
+	if (this.win) ffmpegBinName = 'ffmpeg.exe';
+	else ffmpegBinName = 'ffmpeg';
+	//first, in the same dir
+	var ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/' + ffmpegBinName);
+	//in an (ffmpeg) subfolder
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(ffmpeg)/' + ffmpegBinName);
+	}
+	//in AE Scripts folder
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/' + ffmpegBinName);
+	}
+	//in AE Scripts/(ffmpeg) folder
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(ffmpeg)/' + ffmpegBinName);
+	}
+	//in AE ScriptUI Panels
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + ffmpegBinName);
+	}
+	//in AE ScriptUI Panels/(ffmpeg)
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(ffmpeg)/' + ffmpegBinName);
+	}
+
+	if (ffmpegFile.exists) this.ffmpegPath = ffmpegFile.fsName;
+
+	this.options = options;
+	this.queue = [];
+}
+
+/**
+ * Launches encoding
+ * @memberof FFMpeg
+ * @return {string} The text returned by ffmpeg (currently works on win only, empty string on mac)
+ */
+FFMpeg.prototype.launch = function ()
+{
+	var cmd = '';
+	if (this.win) cmd += '"' + this.ffmpegPath + '"';
+	else
+	{
+	  var ffmpegFile = new File(this.ffmpegPath);
+	  cmd += '"' + ffmpegFile.parent.fsName + '"/./' + ffmpegFile.name;
+	}
+
+	//add options
+	cmd += ' ' + this.options;
+
+	//add RenderItems
+	for (var i = 0 ; i < this.queue.length ; i++)
+	{
+		var item = this.queue[i];
+		cmd += ' ' + item.input.options;
+		cmd += ' -i "' + item.input.inputPath + '"';
+		//add outputs
+		for (var j = 0 ; j < item.outputs.length ; j++)
+		{
+			var output = item.outputs[j];
+			cmd += ' -c ' + output.codec;
+			cmd += ' ' + output.options;
+			cmd += ' "' + output.outputPath + '"';
+		}
+	}
+
+	//launch!
+
+	// mac hack, do not wait for ffmpeg as it freezes AE
+	if (this.mac) cmd = cmd + ' &';
+
+	system.callSystem(cmd);
+
+	// mac hack, but let's wait anyway
+	if (this.mac)
+	{
+	  //timeout
+	  var currentDate = new Date();
+	  var timeout = currentDate.getTime() + 30000;
+	  var checkTime = new Date();
+
+	  var cmd = 'ps -A | grep "[f]fmpeg"';
+
+	  //wait
+	  while(checkTime.getTime() < timeout)
+	  {
+			var test = system.callSystem(cmd);
+			if (test == '') break;
+			$.sleep(300);
+			checkTime = new Date();
+	  }
+	}
+}
+
+/**
+ * Constructs a new FFMpegInputModule module
+ * @class FFMpegInputModule
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}	inputPath		- The path to the input file.
+ * @property {string}	options			- The options for the input file. Default: ''
+ */
+function FFMpegInputModule(inputPath,options)
+{
+	if (!inputPath) throw "No input file set";
+	if (inputPath == '') throw "No input file set";
+	var inputFile = new File(inputPath);
+	if (!inputFile.exists) throw "The input file does not exist";
+
+	this.inputPath = inputFile.fsName;
+
+	if (!options) options = '';
+	this.options = options;
+}
+
+/**
+ * Constructs a new FFMpegOutputModule module
+ * @class FFMpegOutputModule
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {string}	codec			- The codec used for transcoding.
+ * @property {string}	outputPath		- The path to the output file.
+ * @property {string}	options			- The options for the output file (other than setting the codec). Default: ''
+ */
+function FFMpegOutputModule(codec,outputPath,options)
+{
+	if (!codec) throw "No codec set";
+	if (codec == '') throw "No codec set";
+
+	this.codec = codec;
+
+	//f (!outputPath) throw "No output file set";
+	//if (outputPath == '') throw "No output file set";
+
+	var outputFile = new File(outputPath);
+	this.outputPath = outputFile.fsName;
+
+	if (!options) options = '';
+	this.options = options;
+}
+
+/**
+ * Constructs a new FFMpegQueueItem
+ * @class FFMpegQueueItem
+ * @classdesc A class used to easily encode medias with ffmpeg
+ * @property {FFMpegInputModule}	input	  - The input module.
+ * @property {Array}				outputs	   - An Array of FFMpegOutputModule. The output modules
+ */
+function FFMpegQueueItem(input,outputs)
+{
+	if (!input) throw "No input set";
+
+	this.input = input;
+
+	if (!outputs) throw "No output set";
+	if (outputs.length < 1) throw "Empty outputs";
+
+	this.outputs = outputs;
+}
