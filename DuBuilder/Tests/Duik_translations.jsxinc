@@ -1,0 +1,146 @@
+﻿/** Duik Translator */
+var Dutranslator = {};
+
+/**
+ * The current language id (fr, en, ..)
+ */
+Dutranslator.current = '';
+
+/** 
+ * The list of availables languages 
+ * 
+ * Will be filled when executing Dutranslator.getAvailable
+ *
+ * When adding a language to this list, the translations should
+ * be added right after in Dutranslator.localizedStrings to
+ * be sure that everything related to a language is available at
+ * the same index
+ */
+Dutranslator.languages = [];
+
+/**
+ * The translated strings 
+ * 
+ * An array which contain for each language, multiples array containing
+ * the original text and the translated text
+ *
+ * The translations should be available at the same index
+ * as the language index in Dutranslator.languages
+ */
+Dutranslator.localizedStrings = [];
+
+/**
+ * Evaluate the translations file which are in the same directory.
+ */
+Dutranslator.getAvailable = function ()
+{
+	// Default language 
+	// Needed to make args feature of tr work
+	Dutranslator.languages.push(['en','English']);
+	Dutranslator.localizedStrings.push([]); // No translation required
+
+	
+	thisScriptFile = new File($.fileName);
+	thisFolder = new Folder(thisScriptFile.path);
+	// Get the prefix name of translators
+	thisName = thisScriptFile.name.substring(0,thisScriptFile.name.lastIndexOf('.'));
+	// Get the list of translators based on the prefix
+	languageFiles = thisFolder.getFiles(thisName + '_*.jsxinc');
+	for (var i = 0 ; i < languageFiles.length ; i++)
+	{
+		// Eval each translator
+		$.evalFile(languageFiles[i]);
+	}
+
+	
+
+}
+
+/**
+ * Set the current language
+ * @param {string} languageId - The id of the language to set
+ */
+Dutranslator.setLanguage = function (languageId) {
+	for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+	{
+		if (Dutranslator.languages[i][0] == languageId)
+		{
+			Dutranslator.current = languageId;
+			return;
+		}
+	}
+}
+
+/**
+ * Translate a given string based on the current seted language
+ *
+ * @param {string} s - 		The text to be translated
+ * @param {int} context - 	An integer to be passed to the translated text, used to differenciate different translated texts which have the same original text (context), default is 0
+ * 							If something wrong is passed, context will be initialized to -1 (which means, don't check for a specific translation)
+ * @param {string array} args -	Args to format into the translated string, default is []
+ *								For example, when calling tr("Welcome {#}", -1, "Paul"), the output will be "Welcome Paul"
+ *								If too many args are given, there are ignored
+ *								If not enough args are give, the {#} are replaced with ?
+ * @return {string} The translated text or s if nothing is set or available
+ */
+function tr(s, context, args) {
+	// Default args
+	if(typeof(context)==='undefined' || context === parseInt(context, 10)) context = -1;
+	if(typeof(args)==='undefined') args = [];
+	if(typeof(args) === 'string' || args instanceof String) args = [args];
+		
+	var languageNumber = -1;
+	
+	// Get the current language index
+	for (var i = 0 ; i < Dutranslator.languages.length ; i++)
+	{
+		if (Dutranslator.languages[i][0] == Dutranslator.current)
+		{
+			languageNumber =i;
+			break;
+		}
+	}
+	
+	var res = s;
+	// If a language is set, search for the translation
+	if (languageNumber > -1){
+		var stringNumber = -1;
+		
+		// Get the translation
+		for (var i = 0 ; i < Dutranslator.localizedStrings[languageNumber].length ; i++)
+		{
+			if (Dutranslator.localizedStrings[languageNumber][i][0] == s)
+			{
+				// Check context
+				if (context > -1) { 
+					if (Dutranslator.localizedStrings[languageNumber][i][1] == context) {
+						stringNumber =i;
+						break;
+					}
+				}
+				else {
+					stringNumber =i;
+					break;
+				}
+			}
+		}
+
+		// If a translation is found, set it to res
+		if (stringNumber > -1) res = Dutranslator.localizedStrings[languageNumber][stringNumber][2];
+		if (res == "") res = s; 
+	}
+
+	
+	
+	// Args process
+	while(res.indexOf("{#}") !== -1){ // While there is stuff to format
+		if(args.length < 1){ // If no more args, replace with ?
+			res = res.replace("{#}", "?"); // Will replace the first occurence
+		}else{
+			var arg = args.shift(); // Take the first arg and remove it
+			res = res.replace("{#}", arg);
+		}
+	}
+		
+	return res;
+}
