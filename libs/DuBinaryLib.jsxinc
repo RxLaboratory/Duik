@@ -23,7 +23,6 @@
 	along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include JSON.jsxinc
 #include DuJSLib.jsxinc
 
 /**
@@ -36,42 +35,44 @@ var DuBinary = {};
 /**
  * Creates a file from a DuBinaryFile object representation
  * @memberof DuBinary
- * @param {DuBinaryFile}  duBinaryFile  - The DuBinaryFile object containing the string representation
+ * @param {DuBinaryFile}	duBinaryFile  	- The DuBinaryFile object containing the string representation
+ * @param {string}			outputFileName	- The output filename. Default: Folder.userData/DuAEF/category/binaryfilename
  * @return {File} The file created
  */
-DuBinary.toFile = function(duBinaryFile)
+DuBinary.toFile = function(duBinaryFile,outputFileName)
 {
-		var file = new File(Folder.userData.absoluteURI + '/DuAEF/' + category + '/' + duBinaryFile.fileName);
-		var fileContent = '';
-		if (file.exists)
+	if (outputFileName === undefined) outputFileName = Folder.userData.absoluteURI + '/DuAEF/' + category + '/' + duBinaryFile.fileName;
+	var file = new File(outputFileName);
+	var fileContent = '';
+	if (file.exists)
+	{
+		file.encoding = 'BINARY';
+		if (file.open('r', 'TEXT', '????'))
 		{
-			file.encoding = 'BINARY';
-			if (file.open('r', 'TEXT', '????'))
-			{
-				fileContent = file.read();
+			fileContent = file.read();
 
-				file.close();
-			}
+			file.close();
 		}
-		else
+	}
+	else
+	{
+		var folder = new Folder(file.path);
+		if (!folder.exists)
 		{
-			var folder = new Folder(file.path);
-			if (!folder.exists)
-			{
-				folder.create();
-			}
+			folder.create();
 		}
-		var success = fileContent == duBinaryFile.binAsString;
-		if (!success)
+	}
+	var success = fileContent == duBinaryFile.binAsString;
+	if (!success)
+	{
+		file.encoding = 'BINARY';
+		if (file.open('w'))
 		{
-			file.encoding = 'BINARY';
-			if (file.open('w'))
-			{
-				success = file.write(duBinaryFile.binAsString);
-				file.close();
-			}
+			success = file.write(duBinaryFile.binAsString);
+			file.close();
 		}
-		return file;
+	}
+	return file;
 }
 
 /**
@@ -100,31 +101,6 @@ DuBinary.toObj = function(binaryFile,category)
 }
 
 /**
- * Creates a JSON String representation of a binary file
- * @memberof DuBinary
- * @param {File}    file      - The File to convert
- * @param {string}  category  - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
- * @return {string} The string representation of a DuBinaryFile
- */
-DuBinary.toJsonString = function(binaryFile,category)
-{
-  var obj = this.toObj(binaryFile,category);
-  return JSON.stringify(obj);
-}
-
-/**
- * Creates a file from a JSON string representation
- * @memberof DuBinary
- * @param {string}  duBinaryFile  - The DuBinaryFile object containing the string representation
- * @return {File} The file created
- */
-DuBinary.fromJsonString = function(jsonString)
-{
-  var obj = JSON.parse(jsonString);
-  return this.toFile(obj);
-}
-
-/**
  * Converts a binary file to a jsxinc file
  * @memberof DuBinary
  * @param {File}    binaryFile      - The binary file to convert
@@ -135,34 +111,34 @@ DuBinary.fromJsonString = function(jsonString)
  */
 DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName)
 {
-  if (outputFileName === undefined) outputFileName = binaryFile.absoluteURI + '.json';
+	if (outputFileName === undefined) outputFileName = binaryFile.absoluteURI + '.json';
 	if (varName === undefined) varName = binaryFile.name.replace(/\..+/,'');
 	varName = DuJS.string.replace(varName,'%20','_');
-	var jsonString = 'var ' + varName + ' = ';
-  jsonString += this.toJsonString(binaryFile,category);
-  var outputFile = new File(outputFileName);
-  if (outputFile.open("w"))
-  {
-    outputFile.write(jsonString);
-    outputFile.close();
-  }
+	var duBinary = this.toObj(binaryFile,category);
+	var jsString = 'var ' + varName + ' = ';
+	jsString += '{"binAsString":"' + duBinary.binAsString + '","fileName":"' + duBinary.fileName + '","category":"' + duBinary.category + '"}'
+	jsString += ';\r\n';
+	jsString += varName + ';';
+	var outputFile = new File(outputFileName);
+	outputFile.encoding = 'UTF8';
+	if (outputFile.open("w", "TEXT", "????"))
+	{
+		outputFile.write(jsString);
+		outputFile.close();
+	}
 }
 
 /**
- * Converts a JSON file to a binary file
+ * Converts a JS file to a binary file
  * @memberof DuBinary
- * @param {File}    jsonFile        - The JSON file to convert
+ * @param {File}    jsFile        - The JS file to convert
  * @return {File} The binary file created, or null if failed
  */
-DuBinary.convertToBinaryFile = function(jsonFile)
+DuBinary.convertToBinaryFile = function(jsFile)
 {
-  if (jsonFile.open('r'))
-  {
-    var jsonString = jsonFile.read();
-    jsonFile.close();
-    return this.fromJsonString(jsonString);
-  }
-  return null;
+	//TODO parse instead of eval
+	var obj = $.eval(jsFile);
+	return this.toFile(obj);
 }
 
 /**
@@ -171,7 +147,7 @@ DuBinary.convertToBinaryFile = function(jsonFile)
  * @classdesc Represents a binary file as a string and a filename.
  * @property {string}	  binAsString	   - The string representation.
  * @property {string}	  fileName  	   - The name of the original file
- * @property {string}   category       - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
+ * @property {string}		category       - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  */
 function DuBinaryFile(binAsString,fileName,category)
 {
