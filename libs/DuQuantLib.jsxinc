@@ -29,6 +29,7 @@
 */
 
 #include DuProcessLib.jsxinc
+#include DuBinaryLib.jsxinc
 
 /**
  * Constructs a new PNGQuant instance
@@ -36,15 +37,13 @@
  * If pngquant is not in one of those, the property pngquantPath will be an empty string, and it has to be set by the user.
  * @class DuQuant
  * @classdesc A class used to easily compress png files using pngquant
- * @property {string}	  pngquantPath		- The path to the pngquant binary. Will try to auto find it if not set
+ * @property {string}	  pngquantPath		- The path to the pngquant binary. Will try to extract or auto find it if not set
  * @property {string}   suffix          - The suffix added to compressed files. Using an empty string will overwrite input files. Default: "_DuQuant".
  * @property {int}			quality					- range 0 (worst) to 100 (perfect), similar to JPEG. pngquant will use the least amount of colors required to meet or exceed the quality. Default: 85
  * @property {bool}     waitForFinished - Does the script have to wait for the process to end or start it in another thread and let it live its own life. default: true
  */
 function DuQuant(pngquantPath,suffix,quality,waitForFinished)
 {
-  //TODO include bin in jsx and extract if not found
-
   //detect os
 	this.mac = $.os.toLowerCase().indexOf("mac") >= 0;
 	this.win = !this.mac;
@@ -61,41 +60,6 @@ function DuQuant(pngquantPath,suffix,quality,waitForFinished)
 	this.pngquantPath = '';
 
   //find pngquant
-  var pngquantFile = new File(pngquantPath);
-  var pngquantBinName = '';
-  if (this.win) pngquantBinName = 'pngquant.exe';
-  else pngquantBinName = 'pngquant';
-  //first, in the same dir
-  if (!pngquantFile.exists)
-	{
-	   pngquantFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/' + pngquantBinName);
-  }
-	//in an (ffmpeg) subfolder
-	if (!pngquantFile.exists)
-	{
-		pngquantFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(pngquant)/' + pngquantBinName);
-	}
-	//in AE Scripts folder
-	if (!pngquantFile.exists)
-	{
-		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/' + pngquantBinName);
-	}
-	//in AE Scripts/(ffmpeg) folder
-	if (!pngquantFile.exists)
-	{
-		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(pngquant)/' + pngquantBinName);
-	}
-	//in AE ScriptUI Panels
-	if (!pngquantFile.exists)
-	{
-		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + pngquantBinName);
-	}
-	//in AE ScriptUI Panels/(ffmpeg)
-	if (!pngquantFile.exists)
-	{
-		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(pngquant)/' + pngquantBinName);
-	}
-
 	this.setPngquantPath(pngquantFile.fsName);
 }
 
@@ -142,6 +106,46 @@ DuQuant.prototype.compressFolder = function (path)
 DuQuant.prototype.setPngquantPath = function (pngquantPath)
 {
 	var pngquantFile = new File(pngquantPath);
+	var pngquantBinName = '';
+	if (this.win) pngquantBinName = 'pngquant.exe';
+	else pngquantBinName = 'pngquant';
+	//extract
+	if(!pngquantFile.exists)
+	{
+		#include "bin/pngquant.exe.jsxinc"
+		pngquantFile = DuBinary.toFile(pngquant);
+	}
+	//first, in the same dir
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/' + pngquantBinName);
+	}
+	//in an (ffmpeg) subfolder
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(pngquant)/' + pngquantBinName);
+	}
+	//in AE Scripts folder
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/' + pngquantBinName);
+	}
+	//in AE Scripts/(ffmpeg) folder
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/(pngquant)/' + pngquantBinName);
+	}
+	//in AE ScriptUI Panels
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + pngquantBinName);
+	}
+	//in AE ScriptUI Panels/(ffmpeg)
+	if (!pngquantFile.exists)
+	{
+		pngquantFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(pngquant)/' + pngquantBinName);
+	}
+
 
 	if (pngquantFile.exists)
 	{
