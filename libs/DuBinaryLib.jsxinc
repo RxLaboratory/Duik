@@ -24,19 +24,14 @@
 */
 
 #include JSON.jsxinc
+#include DuJSLib.jsxinc
 
 /**
  * Constructs a new DuBinary.
  * @class DuBinary
  * @classdesc Tools to create/extract json or javascript string/object representations of binary files.
- * @property {string}	  ffmpegPath		- The path to the FFMpeg binary.
- * @property {string}	   options			- The options of the encoder. Default: '-stats'
- * @property {Array}	   queue			- An Array of FFMpegQueueItem
  */
-function DuBinary()
-{
-  //nothing
-}
+var DuBinary = {};
 
 /**
  * Creates a file from a DuBinaryFile object representation
@@ -44,7 +39,7 @@ function DuBinary()
  * @param {DuBinaryFile}  duBinaryFile  - The DuBinaryFile object containing the string representation
  * @return {File} The file created
  */
-DuBinary.prototype.toFile = function(duBinaryFile)
+DuBinary.toFile = function(duBinaryFile)
 {
 		var file = new File(Folder.userData.absoluteURI + '/DuAEF/' + category + '/' + duBinaryFile.fileName);
 		var fileContent = '';
@@ -86,7 +81,7 @@ DuBinary.prototype.toFile = function(duBinaryFile)
  * @param {string}  category  - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @return {DuBinaryFile} The DuBinaryFile object containing the file as a string
  */
-DuBinary.prototype.toObj = function(binaryFile,category)
+DuBinary.toObj = function(binaryFile,category)
 {
   var content = '';
 
@@ -111,7 +106,7 @@ DuBinary.prototype.toObj = function(binaryFile,category)
  * @param {string}  category  - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @return {string} The string representation of a DuBinaryFile
  */
-DuBinary.prototype.toJsonString = function(binaryFile,category)
+DuBinary.toJsonString = function(binaryFile,category)
 {
   var obj = this.toObj(binaryFile,category);
   return JSON.stringify(obj);
@@ -123,24 +118,28 @@ DuBinary.prototype.toJsonString = function(binaryFile,category)
  * @param {string}  duBinaryFile  - The DuBinaryFile object containing the string representation
  * @return {File} The file created
  */
-DuBinary.prototype.fromJsonString = function(jsonString)
+DuBinary.fromJsonString = function(jsonString)
 {
   var obj = JSON.parse(jsonString);
   return this.toFile(obj);
 }
 
 /**
- * Converts a binary file to a Json file
+ * Converts a binary file to a jsxinc file
  * @memberof DuBinary
  * @param {File}    binaryFile      - The binary file to convert
  * @param {string}  category        - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @param {string}  outputFileName  - The file name for the output. Default: same folder, same name with .json extension
+ * @param {string}	varName					- The name of the variable used to store the javascript object. Default: the file name without extension.
  * @return {File} The json file created
  */
-DuBinary.prototype.convertToJsonFile = function(binaryFile,category,outputFileName)
+DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName)
 {
   if (outputFileName === undefined) outputFileName = binaryFile.absoluteURI + '.json';
-  var jsonString = this.toJsonString(binaryFile,category);
+	if (varName === undefined) varName = binaryFile.name.replace(/\..+/,'');
+	varName = DuJS.string.replace(varName,'%20','_');
+	var jsonString = 'var ' + varName + ' = ';
+  jsonString += this.toJsonString(binaryFile,category);
   var outputFile = new File(outputFileName);
   if (outputFile.open("w"))
   {
@@ -155,7 +154,7 @@ DuBinary.prototype.convertToJsonFile = function(binaryFile,category,outputFileNa
  * @param {File}    jsonFile        - The JSON file to convert
  * @return {File} The binary file created, or null if failed
  */
-DuBinary.prototype.convertToBinaryFile = function(jsonFile)
+DuBinary.convertToBinaryFile = function(jsonFile)
 {
   if (jsonFile.open('r'))
   {
@@ -177,7 +176,8 @@ DuBinary.prototype.convertToBinaryFile = function(jsonFile)
 function DuBinaryFile(binAsString,fileName,category)
 {
   this.binAsString = binAsString;
-  this.fileName = fileName;
+	fileName = DuJS.string.replace(fileName,'%20','_');
+	this.fileName = fileName;
   if (category === undefined) category = '';
   this.category = category;
 }
