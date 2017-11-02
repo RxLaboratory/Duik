@@ -28,8 +28,10 @@
  * @class DuProcess
  * @classdesc A class used to easily compress png files using pngquant
  * @property {string}	  processPath     - The path to the process executable binary
- * @property {array}    args            - The arguments used to run the process.
+ * @property {array}    args            - The common arguments used to run the process. You can append arguments each time you run the process with start(args)
  * @property {int}      timeout         - Waiting timeout after process start, in ms, 0 to avoid waiting, -1 for infinite. If the process times out, process will not be killed, the script will just stop waiting. Default: 0
+ * @property {Array}	queue			- An Array of arguments array. Arrays of arguments in the queue will be processed one after each other. Update the Array and launch the queue with startQueue()
+ * @property {string}	latestCommand	- The latest command which has been run.
  */
 function DuProcess(processPath,args,timeout)
 {
@@ -44,85 +46,149 @@ function DuProcess(processPath,args,timeout)
   this.args = args;
   if (timeout === undefined) timeout = 0;
   this.timeout = timeout;
+
+  this.queue = [];
+
+  this.latestCommand = '';
 }
 
 /**
  * Starts the process
  * @memberof DuProcess
  * @param {Array}  args  - Args to append to DuProcess.args before starting
- * @return {string}   - The output of the process read on stdout
+ * @param {int}		timeout 	- Optionnal. Overrides the default timeout set with the constructor.
  */
-DuProcess.prototype.start = function (args)
+DuProcess.prototype.start = function (args,timeout)
 {
-  var output = '';
+	if (timeout === undefined) timeout = this.timeout;
 
-  //build command
-  //make sure to use fsName
-  var processFile = new File(this.processPath);
-  this.processPath = processFile.fsName;
-  var cmd = '"' + this.processPath  + '"';
+	var cmd = this.buildCmd(ags);
+	this.startCmd(cmd);
+	this.latestCommand = cmd;
 
-  //args
-  for (var i = 0 ; i < this.args.length ; i++)
-  {
-    var arg = this.args[i];
-    if (arg.indexOf(' ') > 0)
+	this.waitForFinished(timeout);
+}
+
+/**
+ * Starts the queue
+ * @memberof DuProcess
+ * @param {int}		timeout 	- Optionnal. Overrides the default timeout set with the constructor.
+ */
+DuProcess.prototype.startQueue = function (timeout)
+{
+	if (timeout === undefined) timeout = this.timeout;
+
+	var cmd = '';
+
+	for (var i = 0 ; i < this.queue.length ; i++)
+	{
+		if (i > 0)
+		{
+			if (this.mac) cmd += ' && ';
+			if (this.win) cmd += '\r\n';
+		}
+		cmd += this.buildCmd(queue[i]);
+	}
+
+	this.startCmd(cmd);
+	this.latestCommand = cmd;
+
+	this.waitForFinished(timeout);
+}
+
+/**
+ * Waits for the process to finish
+ * @memberof DuProcess
+ * @param {int}		timeout 	- Optionnal. Overrides the default timeout set with the constructor.
+ */
+DuProcess.prototype.waitForFinished = function (timeout)
+{
+	if (timeout === undefined) timeout = this.timeout;
+	//wait
+    var wait = true;
+    var currentDate = new Date();
+    var timeout = currentDate.getTime() + timeout;
+    var checkTime = new Date();
+
+    var checkCmd = '';
+    var processName = new File(this.processPath).name;
+    if (this.mac) checkCmd = 'ps -A | grep "' + processName + '"';
+    if (this.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
+
+    //wait
+    while(wait)
     {
-      arg = '"' + arg + '"';
+  		var test = system.callSystem(cmd);
+  		if (test.indexOf(processName) < 0) break;
+  		$.sleep(100);
+  		checkTime = new Date();
+
+      if (this.timeout >= 0)
+      {
+        wait = checkTime.getTime() < timeout;
+      }
     }
-    cmd += ' ' + arg;
-  }
-  for (var i = 0 ; i < args.length ; i++)
-  {
-    var arg = args[i];
-    if (arg.indexOf(' ') > 0)
+}
+
+/**
+ * Buidls and returns the command line
+ * @memberof DuProcess
+ * @param {Array}  args  - Args to append to DuProcess.args before starting
+ * @return {string}	The command
+ */
+DuProcess.prototype.buildCmd = function (args)
+{
+	//build command
+    //make sure to use fsName
+    var processFile = new File(this.processPath);
+    this.processPath = processFile.fsName;
+    var cmd = '"' + this.processPath  + '"';
+
+    //args
+    for (var i = 0 ; i < this.args.length ; i++)
     {
-      arg = '"' + arg + '"';
+      var arg = this.args[i];
+      if (arg.indexOf(' ') > 0)
+      {
+        arg = '"' + arg + '"';
+      }
+      cmd += ' ' + arg;
     }
-    cmd += ' ' + arg;
-  }
-
-
-  //Start
-  if (this.mac)
-  {
-    //add ' &' at the end to start detached
-    cmd += ' &';
-    system.callSystem(cmd);
-  }
-  if (this.win)
-  {
-    //create batch file
-    var bat = new File(Folder.myDocuments.absoluteURI + '/DuProcess.bat');
-    bat.open('w');
-    bat.write(cmd);
-    bat.close();
-    bat.execute();
-    bat.remove();
-  }
-
-  //wait
-  var wait = true;
-  var currentDate = new Date();
-  var timeout = currentDate.getTime() + this.timeout;
-  var checkTime = new Date();
-
-  var checkCmd = '';
-  var processName = new File(this.processPath).name;
-  if (this.mac) checkCmd = 'ps -A | grep "' + processName + '"';
-  if (this.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
-
-  //wait
-  while(wait)
-  {
-		var test = system.callSystem(cmd);
-		if (test.indexOf(processName) < 0) break;
-		$.sleep(100);
-		checkTime = new Date();
-
-    if (this.timeout >= 0)
+    for (var i = 0 ; i < args.length ; i++)
     {
-      wait = checkTime.getTime() < timeout;
+      var arg = args[i];
+      if (arg.indexOf(' ') > 0)
+      {
+        arg = '"' + arg + '"';
+      }
+      cmd += ' ' + arg;
     }
-  }
+
+	return cmd;
+}
+
+/**
+ * Starts a command (in another thread)
+ * @memberof DuProcess
+ * @param {string}  cmd  - The command to start
+ */
+DuProcess.prototype.startCmd = function (cmd)
+{
+	//Start
+	if (this.mac)
+	{
+	  //add ' &' at the end to start detached
+	  cmd += ' &';
+	  system.callSystem(cmd);
+	}
+	if (this.win)
+	{
+	  //create batch file
+	  var bat = new File(Folder.myDocuments.absoluteURI + '/DuProcess.bat');
+	  bat.open('w');
+	  bat.write(cmd);
+	  bat.close();
+	  bat.execute();
+	  bat.remove();
+	}
 }
