@@ -23,6 +23,8 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include DuAECoreLib.jsxinc
+
 /**
 * Constructs a new DuProcess instance
 * @class DuProcess
@@ -35,11 +37,6 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 function DuProcess(processPath,args,timeout)
 {
-	//detect OS
-	var mac = $.os.toLowerCase().indexOf("mac") >= 0;
-	this.mac = mac;
-	this.win = !mac;
-
 	if (processPath === undefined) processPath = "";
 	this.processPath = processPath;
 	if (args === undefined) args = [];
@@ -78,20 +75,11 @@ DuProcess.prototype.startQueue = function (timeout)
 {
 	if (timeout === undefined) timeout = this.timeout;
 
-	var cmd = '';
-
-	for (var i = 0 ; i < this.queue.length ; i++)
-	{
-		if (i > 0)
-		{
-			if (this.mac) cmd += ' && ';
-			if (this.win) cmd += '\r\n';
-		}
-		cmd += this.buildCmd(this.queue[i]);
-	}
+	var cmd = this.buildQueueCmd();
 
 	this.startCmd(cmd);
 	this.latestCommand = cmd;
+	this.queue = [];
 
 	this.waitForFinished(timeout);
 }
@@ -112,8 +100,8 @@ DuProcess.prototype.waitForFinished = function (timeout)
 
 	var checkCmd = '';
 	var processName = new File(this.processPath).name;
-	if (this.mac) checkCmd = 'ps -A | grep "' + processName + '"';
-	if (this.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
+	if (DuAEF.mac) checkCmd = 'ps -A | grep "' + processName + '"';
+	if (DuAEF.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
 
 	//wait
 	while(wait)
@@ -138,11 +126,19 @@ DuProcess.prototype.waitForFinished = function (timeout)
 */
 DuProcess.prototype.buildCmd = function (args)
 {
+	if (args === undefined) args = [];
 	//build command
 	//make sure to use fsName
-	var processFile = new File(this.processPath);
-	this.processPath = processFile.fsName;
-	var cmd = '"' + this.processPath  + '"';
+	if(this.processPath.indexOf('/') >= 0 || this.processPath.indexOf('\\') >= 0)
+	{
+		var processFile = new File(this.processPath);
+		this.processPath = processFile.fsName;
+		if (this.processPath.indexOf(' ') > 0)
+		{
+			this.processPath = '"' + this.processPath + '"';
+		}
+	}
+	var cmd = this.processPath;
 
 	//args
 	for (var a = 0 ; a < this.args.length ; a++)
@@ -168,6 +164,32 @@ DuProcess.prototype.buildCmd = function (args)
 }
 
 /**
+* Builds and returns the command line
+* @memberof DuProcess
+* @return {string}	The command
+*/
+DuProcess.prototype.buildQueueCmd = function ()
+{
+	var cmd = '';
+
+	if (this.queue.length == 0)
+	{
+		return this.buildCmd();
+	}
+
+	for (var i = 0 ; i < this.queue.length ; i++)
+	{
+		if (i > 0)
+		{
+			if (DuAEF.mac) cmd += ' && ';
+			if (DuAEF.win) cmd += '\r\n';
+		}
+		cmd += this.buildCmd(this.queue[i]);
+	}
+	return cmd;
+}
+
+/**
 * Starts a command (in another thread).
 * @memberof DuProcess
 * @param {string}  cmd  - The command to start
@@ -175,13 +197,13 @@ DuProcess.prototype.buildCmd = function (args)
 DuProcess.prototype.startCmd = function (cmd)
 {
 	//Start
-	if (this.mac)
+	if (DuAEF.mac)
 	{
 		//add ' &' at the end to start detached
 		cmd += ' &';
 		system.callSystem(cmd);
 	}
-	if (this.win)
+	if (DuAEF.win)
 	{
 		//create batch file
 		var bat = new File(Folder.userData.absoluteURI + '/DuAEF/DuProcess.bat');
@@ -190,4 +212,37 @@ DuProcess.prototype.startCmd = function (cmd)
 		bat.close();
 		bat.execute();
 	}
+}
+
+/**
+* Constructs a queue of different processes
+* @class DuProcessQueue
+* @classdesc A class to launch several processes
+* @property {Array}	  processes     - The DuProcess Array
+*/
+function DuProcessQueue(processes)
+{
+	this.processes = processes;
+}
+
+/**
+* Starts the processes
+* @memberof DuProcessQueue
+*/
+DuProcessQueue.prototype.start = function ()
+{
+	if(!this.processes.length) return;
+	var cmd = '';
+	for (var i = 0 ; i < this.processes.length ; i++)
+	{
+		var p = this.processes[i];
+		if (i > 0)
+		{
+			if (DuAEF.mac) cmd += ' && ';
+			if (DuAEF.win) cmd += '\r\n';
+		}
+		cmd += p.buildQueueCmd();
+		p.queue = [];
+	}
+	this.processes[0].startCmd(cmd);
 }
