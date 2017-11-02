@@ -40,16 +40,13 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 * @property {string}	  pngquantPath		- The path to the pngquant binary. Will try to extract or auto find it if not set
 * @property {string}   suffix          - The suffix added to compressed files. Using an empty string will overwrite input files. Default: "_DuQuant".
 * @property {int}			quality					- range 0 (worst) to 100 (perfect), similar to JPEG. pngquant will use the least amount of colors required to meet or exceed the quality. Default: 85
-* @property {bool}     waitForFinished - Does the script have to wait for the process to end or start it in another thread and let it live its own life. default: true
+* @property {Arrqy}		queue			- An Array of File objects to compress.
 */
-function DuQuant(suffix,quality,waitForFinished,pngquantPath)
+function DuQuant(suffix,quality,pngquantPath)
 {
 	//detect os
 	this.mac = $.os.toLowerCase().indexOf("mac") >= 0;
 	this.win = !this.mac;
-
-	if (waitForFinished === undefined) this.waitForFinished = false;
-	else this.waitForFinished = true;
 
 	if (quality === undefined) this.quality = 85;
 	else this.quality = quality;
@@ -60,8 +57,22 @@ function DuQuant(suffix,quality,waitForFinished,pngquantPath)
 	this.pngquantPath = '';
 	this.process = null;
 
+	this.queue = [];
+
 	//find pngquant
 	this.setPngquantPath(pngquantPath);
+}
+
+/**
+* Adds a folder to the queue.
+* @memberof DuQuant
+* @param {string}  path  - The path to the folder containing files
+*/
+DuQuant.prototype.addFolder = function (path)
+{
+	var folder = new Folder(path);
+	var pngs = folder.getFiles("*.png");
+	this.queue = this.queue.concat(pngs);
 }
 
 /**
@@ -76,6 +87,19 @@ DuQuant.prototype.compressFolder = function (path)
 	//get PNG files in folder
 	var pngs = folder.getFiles("*.png");
 	if (pngs.length == 0) return;
+
+	this.compressFiles(pngs);
+}
+
+/**
+* Launches compression on files
+* @memberof DuQuant
+* @param {Arrqy}  files  - The File objects to compress. Default: DuQuant.queue
+*/
+DuQuant.prototype.compressFiles = function (files)
+{
+	if (files === undefined) files = this.queue;
+	else if (!files.length) files = this.queue;
 
 	var args = [];
 
@@ -93,8 +117,9 @@ DuQuant.prototype.compressFolder = function (path)
 
 	for (var i = 0 ; i < pngs.length ; i++)
 	{
-		this.process.start(args.concat(pngs[i].fsName));
+		this.process.queue.push(args.concat(pngs[i].fsName));
 	}
+	this.process.startQueue();
 }
 
 /**
@@ -152,7 +177,6 @@ DuQuant.prototype.setPngquantPath = function (pngquantPath)
 		this.pngquantPath = pngquantFile.fsName;
 		//create process
 		var timeout = 0;
-		if (this.waitForFinished) timeout = -1;
 		var commonArgs = ['--force','--skip-if-larger'];
 		this.process = new DuProcess(this.pngquantPath,commonArgs,timeout);
 	}
