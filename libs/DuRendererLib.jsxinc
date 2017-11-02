@@ -23,7 +23,6 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include DuProcessLib.jsxinc
 #include DuQuantLib.jsxinc
 
 /**
@@ -55,6 +54,16 @@ function DuRenderer(defaultOutputTemplate,defaultPostRenderAction,pngquant)
 	this.items = [];
 
 	this.rqItemsEnabled = [];
+
+	// get aerender
+	var aerenderBinName = "aerender";
+	if (DuAEF.win) aerenderBinName += ".exe";
+	this.aerender = new DuProcess(Folder.appPackage.absoluteURI + "/" + aerenderBinName,['-continueOnMissingFootage']);
+
+	//get pngquant-batch
+	#include "bin/pngquant_batch.exe.jsxinc"
+	pngquantbatchFile = DuBinary.toFile(pngquant_batch);
+	this.pngquantbatch = new DuProcess(pngquantbatchFile.fsName,['--force','--skip-if-larger','--ext=.png','--quality','0-85','*.png']);
 }
 
 /**
@@ -94,6 +103,55 @@ DuRenderer.prototype.addItemToAEQueue = function (item)
 	//set post render action
 	outputModule.postRenderAction = item.postRenderAction;
 	return rqItem;
+}
+
+/**
+* Renders a comp in background using aerender.exe
+* Automatically manages the existing After Effects render queue to leave it untouched.
+* The project will be saved.
+* @memberof DuRenderer
+* @param {CompItem}          comp              - The Composition to render
+* @param {string}            outputPath        - The output file path
+* @param {string}            outputTemplate    - Optionnal. Overrides Durenderer.defaultOutputTemplate
+* @param {PostRenderAction}  postRenderAction  - Optionnal. Overrides DuRenderer.defaultPostRenderAction
+* @property {bool}				pngquant		- Optionnal. Overrides DuRenderer.pngquant
+*/
+DuRenderer.prototype.backgroundRenderComp = function(comp,outputPath,outputTemplate,postRenderAction,pngquant)
+{
+	if (outputTemplate === undefined) outputTemplate = this.defaultOutputTemplate;
+	if (postRenderAction === undefined) postRenderAction = this.defaultPostRenderAction;
+	if (pngquant === undefined) pngquant = this.pngquant;
+
+	//disable existing items
+	this.disableRqItems();
+	if (!app.project.file) app.project.save();
+	//launch
+	var rqItem = this.addItemToAEQueue(new DuRendererItem(comp,outputPath,outputTemplate,postRenderAction));
+	app.project.save();
+	var newProjectName = app.project.file.fsName.replace(/\.aep$/gi,"") + "_Durenderer.aep";
+	//copy the project as a new file
+	app.project.file.copy(newProjectName);
+
+	//launch aerender.exe
+	this.aerender.queue.push(['-project',newProjectName]);
+	//pngquant
+	if (pngquant)
+	{
+		var cdProcess = new DuProcess('cd',[rqItem.outputModule(1).file.parent.fsName]);
+		//launch
+		var queue = new DuProcessQueue([this.aerender,cdProcess,this.pngquantbatch]);
+		queue.start();
+	}
+	else
+	{
+		this.aerender.startQueue;
+	}
+
+
+
+	rqItem.remove();
+	this.enableRqItems();
+	app.project.save();
 }
 
 /**
