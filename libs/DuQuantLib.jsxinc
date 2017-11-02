@@ -42,7 +42,7 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 * @property {int}			quality					- range 0 (worst) to 100 (perfect), similar to JPEG. pngquant will use the least amount of colors required to meet or exceed the quality. Default: 85
 * @property {bool}     waitForFinished - Does the script have to wait for the process to end or start it in another thread and let it live its own life. default: true
 */
-function DuQuant(pngquantPath,suffix,quality,waitForFinished)
+function DuQuant(suffix,quality,waitForFinished,pngquantPath)
 {
 	//detect os
 	this.mac = $.os.toLowerCase().indexOf("mac") >= 0;
@@ -58,6 +58,7 @@ function DuQuant(pngquantPath,suffix,quality,waitForFinished)
 	else this.suffix = suffix;
 
 	this.pngquantPath = '';
+	this.process = null;
 
 	//find pngquant
 	this.setPngquantPath(pngquantPath);
@@ -70,31 +71,29 @@ function DuQuant(pngquantPath,suffix,quality,waitForFinished)
 */
 DuQuant.prototype.compressFolder = function (path)
 {
+	if (this.process === null) throw 'pngquant not found, cannot compress folder. You should set pngquant path with DuQuant.setPngquantPath()'
 	var folder = new Folder(path);
 	//get PNG files in folder
 	var pngs = folder.getFiles("*.png");
 	if (pngs.length == 0) return;
 
+	var args = [];
+
+	if (this.suffix != '')
+	{
+		args.push('--ext');
+		args.push(this.suffix + '.png');
+	}
+	else
+	{
+		args.push('--ext=.png');
+	}
+	args.push('--quality');
+	args.push('0-' + this.quality);
+
 	for (var i = 0 ; i < pngs.length ; i++)
 	{
-		var args = [];
-
-		if (this.suffix != '')
-		{
-			args.push('--ext');
-			args.push(this.suffix + '.png');
-		}
-		else
-		{
-			args.push('--ext=.png');
-		}
-
-		args.push('--quality');
-		args.push('0-' + this.quality);
-
-		args.push(pngs[i].fsName);
-
-		this.process.start(args);
+		this.process.start(args.concat(pngs[i].fsName));
 	}
 }
 
