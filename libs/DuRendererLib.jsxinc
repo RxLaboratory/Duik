@@ -70,7 +70,7 @@ DuRenderer.prototype.addComp = function(comp,outputPath,outputTemplate,postRende
 {
 	if (outputTemplate === undefined) outputTemplate = this.defaultOutputTemplate;
 	if (postRenderAction === undefined) postRenderAction = this.defaultPostRenderAction;
-	var item = new DuRendererItem(comp,outputTemplate,postRenderAction);
+	var item = new DuRendererItem(comp,outputPath,outputTemplate,postRenderAction);
 	this.items.push(item);
 }
 
@@ -87,6 +87,7 @@ DuRenderer.prototype.addItemToAEQueue = function (item)
 	var outputModule = rqItem.outputModule(1);
 	//set output format
 	outputModule.applyTemplate(item.outputTemplate);
+
 	//set output file
 	var outputFile = new File(item.outputPath);
 	outputModule.file = outputFile;
@@ -143,22 +144,25 @@ DuRenderer.prototype.render = function()
 	//disable existing items
 	this.disableRqItems();
 	var rqItems = [];
-	for (var i = 0 ; i < items.length ; i++)
+	for (var i = 0 ; i < this.items.length ; i++)
 	{
-		var item = items[i];
+		var item = this.items[i];
 		//add comp to render queue
-		var rqItem = this.addItemToAEQueue(new DuRendererItem(comp,outputPath,outputTemplate,postRenderAction));
+		var rqItem = this.addItemToAEQueue(item);
 		//pngquant queue
-		if (rqItem.file.name.toLowerCase().lastIndexOf(".png") == rqItem.file.name.length-4 && pngquant)
+		if (rqItem.file.name.toLowerCase().lastIndexOf(".png") == rqItem.file.name.length-4 && this.pngquant)
 		{
 			//go!
 			this.pngquantProcess.addFolder(rqItem.file.parent.fsName);
 		}
 		rqItems.push(rqItem);
 	}
+	alert(rqItems.length);
 	//render
 	app.project.renderQueue.render();
 	this.pngquantProcess.compressFiles();
+
+	this.items = [];
 
 	//remove items
 	for (var i = rqItems.length -1 ; i>=0  ; i--)
