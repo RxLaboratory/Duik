@@ -30,6 +30,7 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 
 #include DuProcessLib.jsxinc
 #include DuBinaryLib.jsxinc
+#include DuJSLib.jsxinc
 
 /**
 * Constructs a new PNGQuant instance
@@ -40,7 +41,7 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 * @property {string}	  pngquantPath		- The path to the pngquant binary. Will try to extract or auto find it if not set
 * @property {string}   suffix          - The suffix added to compressed files. Using an empty string will overwrite input files. Default: "_DuQuant".
 * @property {int}			quality					- range 0 (worst) to 100 (perfect), similar to JPEG. pngquant will use the least amount of colors required to meet or exceed the quality. Default: 85
-* @property {Arrqy}		queue			- An Array of File objects to compress.
+* @property {Array}		queue			- An Array of File or Folder objects to compress.
 */
 function DuQuant(suffix,quality,pngquantPath)
 {
@@ -58,21 +59,10 @@ function DuQuant(suffix,quality,pngquantPath)
 	this.process = null;
 
 	this.queue = [];
+	this.folders = [];
 
 	//find pngquant
 	this.setPngquantPath(pngquantPath);
-}
-
-/**
-* Adds a folder to the queue.
-* @memberof DuQuant
-* @param {string}  path  - The path to the folder containing files
-*/
-DuQuant.prototype.addFolder = function (path)
-{
-	var folder = new Folder(path);
-	var pngs = folder.getFiles("*.png");
-	this.queue = this.queue.concat(pngs);
 }
 
 /**
@@ -85,21 +75,22 @@ DuQuant.prototype.compressFolder = function (path)
 	if (this.process === null) throw 'pngquant not found, cannot compress folder. You should set pngquant path with DuQuant.setPngquantPath()'
 	var folder = new Folder(path);
 	//get PNG files in folder
-	var pngs = folder.getFiles("*.png");
+	var pngs = DuJS.fs.getFilesInFolder(folder,"*.png");
 	if (pngs.length == 0) return;
 
 	this.compressFiles(pngs);
 }
 
 /**
-* Launches compression on files
+* Launches compression on queue
 * @memberof DuQuant
-* @param {Arrqy}  files  - The File objects to compress. Default: DuQuant.queue
+* @param {Arrqy}  files  - The File or Folder objects to compress. Default: DuQuant.queue
 */
-DuQuant.prototype.compressFiles = function (files)
+DuQuant.prototype.compress = function (files)
 {
 	if (files === undefined) files = this.queue;
 	else if (!files.length) files = this.queue;
+	if (!files.length) return;
 
 	var args = [];
 
@@ -115,9 +106,23 @@ DuQuant.prototype.compressFiles = function (files)
 	args.push('--quality');
 	args.push('0-' + this.quality);
 
-	for (var i = 0 ; i < pngs.length ; i++)
+	for (var i = 0 ; i < files.length ; i++)
 	{
-		this.process.queue.push(args.concat(pngs[i].fsName));
+		var file = files[i];
+		//if folder, get qll files inside
+		if (DuJS.fs.isFolder(file))
+		{
+			var filesInFolder = DuJS.fs.getFilesInFolder(file,"*.png");
+			for (var j = 0 ; j < filesInFolder.length  ; j++)
+			{
+				this.process.queue.push(args.concat(filesInFolder[j].fsName));
+			}
+		}
+		//if file, add it
+		else
+		{
+			this.process.queue.push(args.concat(file.fsName));
+		}
 	}
 	this.process.startQueue();
 }
