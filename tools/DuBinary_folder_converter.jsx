@@ -8,7 +8,7 @@
 (function ()
 {
 
-  #include "libs/DuBinaryLib.jsxinc"
+  #include "../libs/DuBinaryLib.jsxinc"
 
   var folder = Folder.selectDialog ("Select Folder");
   if (!folder) return;

@@ -8,7 +8,7 @@
 (function ()
 {
 
-  #include "libs/DuBinaryLib.jsxinc"
+  #include "../libs/DuBinaryLib.jsxinc"
 
   var file = File.openDialog ("Select File");
   if (!file) return;

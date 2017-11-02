@@ -7,7 +7,7 @@
 
 (function ()
 {
-	#include "libs/DuBinaryLib.jsxinc"
+	#include "../libs/DuBinaryLib.jsxinc"
 
 	var file = File.openDialog("Open include file.","Javascript files: *.jsx;*.jsxinc");
 	if (!file) return;
