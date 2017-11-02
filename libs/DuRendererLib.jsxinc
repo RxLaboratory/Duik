@@ -144,10 +144,8 @@ DuRenderer.prototype.backgroundRenderComp = function(comp,outputPath,outputTempl
 	}
 	else
 	{
-		this.aerender.startQueue;
+		this.aerender.startQueue();
 	}
-
-
 
 	rqItem.remove();
 	this.enableRqItems();
@@ -190,6 +188,66 @@ DuRenderer.prototype.renderComp = function(comp,outputPath,outputTemplate,postRe
 	//enable existing items
 	this.enableRqItems();
 
+}
+
+/**
+* Renders the queue in background using aerender.exe
+* Automatically manages the existing After Effects render queue to leave it untouched.
+* The project will be saved.
+* @memberof DuRenderer
+*/
+DuRenderer.prototype.backgroundRender = function()
+{
+	//disable existing items
+	this.disableRqItems();
+	if (!app.project.file) app.project.save();
+
+	var rqItems = [];
+	var postProcesses = [];
+	for (var i = 0 ; i < this.items.length ; i++)
+	{
+		var item = this.items[i];
+		//add comp to render queue
+		var rqItem = this.addItemToAEQueue(item);
+		//pngquant queue
+		var outputFile = rqItem.outputModule(1).file;
+		if (this.pngquant)
+		{
+			var cdProcess = new DuProcess('cd',[rqItem.outputModule(1).file.parent.fsName]);
+			postProcesses.push(cdProcess);
+			postProcesses.push(this.pngquantbatch);
+		}
+		rqItems.push(rqItem);
+	}
+
+	app.project.save();
+	var newProjectName = app.project.file.fsName.replace(/\.aep$/gi,"") + "_Durenderer.aep";
+	//copy the project as a new file
+	app.project.file.copy(newProjectName);
+	this.aerender.queue.push(['-project',newProjectName]);
+
+	if (this.pngquant)
+	{
+		var queueProcesses = [this.aerender];
+		var queue = new DuProcessQueue(queueProcesses.concat(postProcesses));
+		queue.start();
+	}
+	else
+	{
+		this.aerender.startQueue();
+	}
+
+	this.items = [];
+
+	//remove items
+	for (var i = rqItems.length -1 ; i>=0  ; i--)
+	{
+		rqItems[i].remove();
+	}
+
+	//enable existing items
+	this.enableRqItems();
+	app.project.save();
 }
 
 /**
