@@ -24,6 +24,7 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include DuProcessLib.jsxinc
+#include DuQuantLib.jsxinc
 
 /**
 * Constructs a new DuRenderer instance
@@ -31,14 +32,25 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 * @classdesc A class used to easily manage After Effects Renderer/RenderQueue
 * @property {string}             defaultOutputTemplate       - The default output module template name to use when adding comp to the queue. Empty string to let default AE OM defaultOutputTemplate. Default: ""
 * @property {PostRenderAction}   defaultPostRenderAction     - The default PostRenderAction. Default: PostRenderAction.NONE
+* @property {bool}				pngquant					- Compress PNG Sequences using pngquant after render. Default: false
 * @property {Array}              items                       - The DuRendererItems in the queue
 */
-function DuRenderer(defaultOutputTemplate,defaultPostRenderAction)
+function DuRenderer(defaultOutputTemplate,defaultPostRenderAction,pngquant)
 {
 	if (defaultOutputTemplate === undefined) defaultOutputTemplate = '';
 	this.defaultOutputTemplate = defaultOutputTemplate;
 	if (defaultPostRenderAction === undefined) defaultPostRenderAction = PostRenderAction.NONE;;
 	this.defaultPostRenderAction = defaultPostRenderAction;
+	if (pngquant === undefined) pngquant = false;
+	this.pngquant = pngquant;
+
+	//create pngquant process
+	var suffix = '';
+	this.pngquantProcess = new DuQuant(suffix);
+	if (this.pngquantProcess.pngquantPath == '')
+	{
+		this.pngquant = false;
+	}
 
 	this.items = [];
 
@@ -49,10 +61,12 @@ function DuRenderer(defaultOutputTemplate,defaultPostRenderAction)
 * Adds a comp to the render queue
 * @memberof DuRenderer
 * @param {CompItem}          comp              - The Composition to add
+* @param {string}            outputPath        - The output file path
 * @param {string}            outputTemplate    - The output module template, Default: Durenderer.defaultOutputTemplate
 * @param {PostRenderAction}  postRenderAction  - The PostRenderAction, Default: DuRenderer.defaultPostRenderAction
+* @param {}
 */
-DuRenderer.prototype.addComp = function(comp,outputTemplate,postRenderAction)
+DuRenderer.prototype.addComp = function(comp,outputPath,outputTemplate,postRenderAction)
 {
 	if (outputTemplate === undefined) outputTemplate = this.defaultOutputTemplate;
 	if (postRenderAction === undefined) postRenderAction = this.defaultPostRenderAction;
@@ -61,36 +75,98 @@ DuRenderer.prototype.addComp = function(comp,outputTemplate,postRenderAction)
 }
 
 /**
-* Renders a comp
+* Adds a DuRendererItem to the After Effects renderQueue
+* @memberof DuRenderer
+* @param {DuRendererItem}          item              - The Item to add.
+* @return {RenderQueueItem}		The item created.
+*/
+DuRenderer.prototype.addItemToAEQueue = function (item)
+{
+	//add comp to render queue
+	var rqItem = app.project.renderQueue.items.add(item.comp);
+	var outputModule = rqItem.outputModule(1);
+	//set output format
+	outputModule.applyTemplate(item.outputTemplate);
+	//set output file
+	var outputFile = new File(item.outputPath);
+	outputModule.file = outputFile;
+	//set post render action
+	outputModule.postRenderAction = item.postRenderAction;
+	return rqItem;
+}
+
+/**
+* Renders a comp in After Effects
+* Automatically manages the existing After Effects render queue to leave it untouched.
 * @memberof DuRenderer
 * @param {CompItem}          comp              - The Composition to render
 * @param {string}            outputPath        - The output file path
-* @param {string}            outputTemplate    - The output module template, Default: Durenderer.defaultOutputTemplate
-* @param {PostRenderAction}  postRenderAction  - The PostRenderAction, Default: DuRenderer.defaultPostRenderAction
+* @param {string}            outputTemplate    - Optionnal. Overrides Durenderer.defaultOutputTemplate
+* @param {PostRenderAction}  postRenderAction  - Optionnal. Overrides DuRenderer.defaultPostRenderAction
+* @property {bool}				pngquant		- Optionnal. Overrides DuRenderer.pngquant
 */
-DuRenderer.prototype.renderComp = function(comp,outputPath,outputTemplate,postRenderAction)
+DuRenderer.prototype.renderComp = function(comp,outputPath,outputTemplate,postRenderAction,pngquant)
 {
 	if (outputTemplate === undefined) outputTemplate = this.defaultOutputTemplate;
 	if (postRenderAction === undefined) postRenderAction = this.defaultPostRenderAction;
+	if (pngquant === undefined) pngquant = this.pngquant;
 
-	//TODO option to use aerender.exe
-
+	//disable existing items
 	this.disableRqItems();
-	//add comp to render queue
-	var rqItem = app.project.renderQueue.items.add(comp);
-	var outputModule = rqItem.outputModule(1);
-	//set output format
-	outputModule.applyTemplate(outputTemplate);
-	//set output file
-	outputModule.file = new File(outputPath);
-	//set post render action
-	outputModule.postRenderAction = postRenderAction;
+
 	//launch
+	var rqItem = this.addItemToAEQueue(new DuRendererItem(comp,outputPath,outputTemplate,postRenderAction));
 	app.project.renderQueue.render();
+
+	//pngquant
+	if (rqItem.file.name.toLowerCase().lastIndexOf(".png") == rqItem.file.name.length-4 && pngquant)
+	{
+		//go!
+		this.pngquantProcess.compressFolder(rqItem.file.parent.fsName);
+	}
 
 	//remove item after render
 	rqItem.remove();
 
+	//enable existing items
+	this.enableRqItems();
+
+}
+
+/**
+* Renders the queue in After Effects
+* Automatically manages the existing After Effects render queue to leave it untouched.
+* @memberof DuRenderer
+*/
+DuRenderer.prototype.render = function()
+{
+	//disable existing items
+	this.disableRqItems();
+	var rqItems = [];
+	for (var i = 0 ; i < items.length ; i++)
+	{
+		var item = items[i];
+		//add comp to render queue
+		var rqItem = this.addItemToAEQueue(new DuRendererItem(comp,outputPath,outputTemplate,postRenderAction));
+		//pngquant queue
+		if (rqItem.file.name.toLowerCase().lastIndexOf(".png") == rqItem.file.name.length-4 && pngquant)
+		{
+			//go!
+			this.pngquantProcess.addFolder(rqItem.file.parent.fsName);
+		}
+		rqItems.push(rqItem);
+	}
+	//render
+	app.project.renderQueue.render();
+	this.pngquantProcess.compressFiles();
+
+	//remove items
+	for (var i = rqItems.length -1 ; i>=0  ; i--)
+	{
+		rqItems[i].remove();
+	}
+
+	//enable existing items
 	this.enableRqItems();
 }
 
@@ -124,10 +200,14 @@ DuRenderer.prototype.enableRqItems = function ()
 * Constructs a new item to render
 * @class DuRendererItem
 * @classdesc An item in the Durenderer queue
+* @property {string}             outputTemplate       - The output module template name to use when adding comp to the queue. Empty string to let default AE OM defaultOutputTemplate.
+* @property {PostRenderAction}   postRenderAction     - The PostRenderAction.
+* @property {string}			outputPath			- The output file path.
 */
-function DuRendererItem(comp,outputTemplate,postRenderAction)
+function DuRendererItem(comp,outputPath,outputTemplate,postRenderAction)
 {
 	this.comp = comp;
+	this.outputPath = outputPath;
 	this.outputTemplate = outputTemplate;
 	this.postRenderAction = postRenderAction;
 }
