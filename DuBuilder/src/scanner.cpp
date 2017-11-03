@@ -4,14 +4,14 @@
 
 Scanner::Scanner()
 {
-    script = new Script();
+    script = nullptr;
     currentId = 0;
 }
 
 void Scanner::setFile(QString fileName)
 {
-    delete script;
-    script = new Script(fileName);
+    script = new Script(fileName,-1);
+    script->moveToThread(QApplication::instance()->thread());
 }
 
 void Scanner::setRecursive(bool r)
@@ -26,10 +26,16 @@ void Scanner::run()
 
 bool Scanner::scan(Script *s)
 {
-    QFile *scriptFile = s->getFile();
+    if (s == nullptr) return false;
+
+
+#ifdef QT_DEBUG
+    qDebug() << "Scanning ===== " + s->name();
+#endif
+
+    QFile *scriptFile = s->file();
     currentId++;
     s->setId(currentId);
-
 
     //Check script file integrity
     if (!scriptFile->exists())
@@ -49,44 +55,31 @@ bool Scanner::scan(Script *s)
 
     //get includes
     int lineNumber = 0;
+    QRegularExpression reInclude("#include +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
+    qDebug() << reInclude.pattern() ;
+    QRegularExpression reIncludePath("#includepath +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
+
     while (!scriptFile->atEnd())
     {
         QString line = scriptFile->readLine();
         lineNumber++;
-        line = line.trimmed();
 
-        QRegularExpression reInclude("^#include +");
-        QRegularExpression reIncludePath("^#includepath +");
-
-        //#include
-        if (reInclude.match(line).hasMatch())
+        QRegularExpressionMatch matchInclude = reInclude.match(line);
+        if (matchInclude.hasMatch())
         {
-            QRegularExpression reIncludeDouble("^#include +\"(.+)\"$");
-            QRegularExpressionMatch matchInclude = reIncludeDouble.match(line);
-            if (!matchInclude.hasMatch())
+            currentId++;
+            QString name = matchInclude.captured(2);
+            qDebug() << "=== MATCH ===" << name ;
+            QString path = checkIncludePath(name,includePaths,s);
+            Script *includedScript = new Script(name,path,lineNumber);
+            includedScript->setId(currentId);
+            s->addInclude(includedScript);
+            //if recursive
+            if (recursive && includedScript->exists())
             {
-                QRegularExpression reIncludeSingle("^#include +'(.+)'$");
-                matchInclude = reIncludeSingle.match(line);
+                scan(includedScript);
             }
-            if (matchInclude.hasMatch())
-            {
-                currentId++;
-                QString name = matchInclude.captured(1);
-                QString path = checkIncludePath(name,includePaths);
-                Script *includedScript = new Script(name,path,lineNumber);
-                includedScript->setId(currentId);
-                s->addInclude(includedScript);
-                //if recursive
-                if (recursive && includedScript->exists())
-                {
-                    scan(includedScript);
-                }
-            }
-        }
-        //#includepath
-        else if (reIncludePath.match(line).hasMatch())
-        {
-            //TODO Get paths
+            continue;
         }
     }
 
@@ -96,9 +89,9 @@ bool Scanner::scan(Script *s)
     return true;
 }
 
-QString Scanner::checkIncludePath(QString name, QStringList includePaths)
+QString Scanner::checkIncludePath(QString name, QStringList includePaths,Script *s)
 {
-    QFile *scriptFile = script->getFile();
+    QFile *scriptFile = s->file();
     QString scriptPath = QFileInfo(*scriptFile).absolutePath();
 
 

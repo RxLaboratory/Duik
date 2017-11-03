@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QRegularExpressionMatch>
 #include <QThread>
+#include <QApplication>
 
 #include "script.h"
 
@@ -26,7 +27,7 @@ signals:
 private:
     Script *script;
     bool recursive;
-    QString checkIncludePath(QString path, QStringList includePaths);
+    QString checkIncludePath(QString path, QStringList includePaths, Script *s);
     QString addPathSlash(QString path);
     bool scan(Script *s);
     int currentId;
