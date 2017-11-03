@@ -11,6 +11,7 @@
 #include "builder.h"
 #include "scriptwidget.h"
 #include "toolbarspacer.h"
+#include "rainboxui.h"
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
@@ -54,17 +55,19 @@ private:
      * This is the file where it will be written in the built() slot
      */
     QString savePath;
+    /**
+     * @brief scanningItem The item being scanned. nullptr if root
+     */
+    QTreeWidgetItem *scanningItem;
 
 
     //METHODS
 
     void mapEvents();
-    bool updatePath(int id, Script *script, QString path);
+    bool updateScript(Script *containingScript, Script *newScript);
     QTreeWidgetItem *createIncludeItem(Script *script);
 
     //UI
-
-    void updateCSS(QString cssFileName);
 #ifndef Q_OS_MAC
     QPushButton *maximizeButton;
     QPushButton *minimizeButton;

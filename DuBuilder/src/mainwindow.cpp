@@ -31,7 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     mainToolBar->installEventFilter(this);
 
     //set style
-    updateCSS(":/styles/default");
+    QString css = RainboxUI::loadCSS(":/styles/default");
+    qApp->setStyleSheet(css);
 
     //hide tree when nothing is opened
     treeWidget->hide();
@@ -40,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
     scanner = new Scanner();
     builder = new Builder();
     savePath = "";
+    scanningItem = nullptr;
+    currentScript = nullptr;
 
     //connexions
     mapEvents();
@@ -70,6 +73,7 @@ void MainWindow::on_actionOpen_Script_triggered()
     if (scriptPath.isNull() || scriptPath.isEmpty()) return;
 
     //scan
+    scanningItem = nullptr;
     scanner->setFile(scriptPath);
     scanner->setRecursive(true);
     scanner->start();
@@ -85,7 +89,8 @@ void MainWindow::on_actionRe_scan_script_triggered()
     this->setWindowTitle("Builder");
     this->repaint();
 
-    scanner->setFile(currentScript->getFile()->fileName());
+    scanningItem = nullptr;
+    scanner->setFile(currentScript->file()->fileName());
     scanner->setRecursive(true);
     scanner->start();
 }
@@ -94,18 +99,14 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
 {
     //open file
     QString newPath = QFileDialog::getOpenFileName(this,"Where is " + item->text(2) + "?");
-#ifdef QT_DEBUG
-    qDebug() << "Update Script path ===== " + newPath;
-#endif
+
     if (newPath.isNull() || newPath.isEmpty()) return;
 
-    //TODO scan file
-
-    item->setText(3,newPath);
-    item->setText(0,"OK");
-    //update data
-    int id = item->data(0,Qt::UserRole).toInt();
-    updatePath(id,currentScript,newPath);
+    //scan file
+    scanningItem = item;
+    scanner->setFile(newPath);
+    scanner->setRecursive(true);
+    scanner->start();
 
 }
 
@@ -123,24 +124,58 @@ void MainWindow::on_actionBuild_triggered()
 
 void MainWindow::scanned(Script *script)
 {
-    currentScript = script;
-    //empty tree
-    treeWidget->clear();
+#ifdef QT_DEBUG
+    qDebug() << "Got new script ===== " + script->name();
+#endif
 
-    //main script
-    this->setWindowTitle(script->getName());
-
-    foreach(Script *script,script->getIncludes())
+    if (scanningItem == nullptr)
     {
-        treeWidget->addTopLevelItem(createIncludeItem(script));
+        delete currentScript;
+        currentScript = script;
+        currentScript->setParent(this);
+        //empty tree
+        treeWidget->clear();
+
+        //main script
+        this->setWindowTitle(script->name());
+
+        foreach(Script *s,script->includes())
+        {
+            treeWidget->addTopLevelItem(createIncludeItem(s));
+        }
+
+        //ready!
+        actionRe_scan_script->setEnabled(true);
+        actionBuild->setEnabled(true);
+        actionCollect_Files->setEnabled(true);
+
+        setWaiting(false);
+    }
+    else
+    {
+        //update display of item
+        scanningItem->setText(3,script->file()->fileName());
+        scanningItem->setText(0,"OK");
+        //remove old childs
+        QList<QTreeWidgetItem *> items = scanningItem->takeChildren();
+        while(items.count() > 0)
+        {
+            QTreeWidgetItem *item = items.takeAt(0);
+            delete item;
+        }
+        //update includes list of currentScript
+        script->setId(scanningItem->data(0,Qt::UserRole).toInt());
+        script->setLine(scanningItem->text(1).toInt());
+
+        updateScript(currentScript,script);
+
+        foreach(Script *s,script->includes())
+        {
+            scanningItem->addChild(createIncludeItem(s));
+        }
+        setWaiting(false);
     }
 
-    //ready!
-    actionRe_scan_script->setEnabled(true);
-    actionBuild->setEnabled(true);
-    actionCollect_Files->setEnabled(true);
-
-    setWaiting(false);
 }
 
 void MainWindow::built(QString builtScript)
@@ -175,16 +210,16 @@ QTreeWidgetItem *MainWindow::createIncludeItem(Script *script)
     if (script->exists()) status = "OK";
 
     //path
-    QFile *scriptFile = script->getFile();
+    QFile *scriptFile = script->file();
     QString path = QFileInfo(*scriptFile).absoluteFilePath();
 
-    attributes << status << QString::number(script->getLine()) << script->getName() << path;
+    attributes << status << QString::number(script->line()) << script->name() << path;
 
     QTreeWidgetItem *scriptItem = new QTreeWidgetItem(attributes);
-    scriptItem->setData(0,Qt::UserRole,script->getId());
+    scriptItem->setData(0,Qt::UserRole,script->id());
 
     //add children
-    foreach(Script *s,script->getIncludes())
+    foreach(Script *s,script->includes())
     {
         scriptItem->addChild(createIncludeItem(s));
     }
@@ -192,41 +227,33 @@ QTreeWidgetItem *MainWindow::createIncludeItem(Script *script)
     return scriptItem;
 }
 
-bool MainWindow::updatePath(int id, Script *script, QString path)
+bool MainWindow::updateScript(Script *containingScript, Script *newScript)
 {
-    //test this script
-    if (script->getId() == id)
+
+    for( int i = 0 ; i <  containingScript->includes().count() ; i++)
     {
-        script->setFileName(path);
-        return true;
-    }
-    //test includes
-    foreach(Script *s,script->getIncludes())
-    {
-        if (updatePath(id, s, path)) return true;
+        Script *s = containingScript->includes().at(i);
+        if (s == nullptr) continue;
+        if (s->id() == newScript->id())
+        {
+            Script *oldScript = containingScript->takeInclude(i);
+            delete oldScript;
+            containingScript->addInclude(newScript);
+            return true;
+        }
+        else
+        {
+            if (updateScript(s,newScript)) return true;
+        }
     }
     return false;
 }
 
 // UI
 
-void MainWindow::updateCSS(QString cssFileName)
-{
-    QString css = "";
-
-    QFile cssFile(cssFileName);
-    if (cssFile.exists())
-    {
-        cssFile.open(QFile::ReadOnly);
-        css = QString(cssFile.readAll());
-        cssFile.close();
-    }
-
-    qApp->setStyleSheet(css);
-}
-
 void MainWindow::setWaiting(bool wait)
 {
+
     if (wait)
     {
         setCursor(Qt::BusyCursor);
