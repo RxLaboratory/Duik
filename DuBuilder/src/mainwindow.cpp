@@ -155,7 +155,7 @@ void MainWindow::scanned(Script *script)
     {
         //update display of item
         scanningItem->setText(3,script->file()->fileName());
-        scanningItem->setText(0,"OK");
+        scanningItem->setIcon(0,QIcon(":/icons/ok"));
         //remove old childs
         QList<QTreeWidgetItem *> items = scanningItem->takeChildren();
         while(items.count() > 0)
@@ -205,17 +205,15 @@ QTreeWidgetItem *MainWindow::createIncludeItem(Script *script)
 {
     QStringList attributes;
 
-    //status
-    QString status = "MISSING";
-    if (script->exists()) status = "OK";
-
     //path
     QFile *scriptFile = script->file();
     QString path = QFileInfo(*scriptFile).absoluteFilePath();
 
-    attributes << status << QString::number(script->line()) << script->name() << path;
+    attributes << "" << QString::number(script->line()) << script->name() << path;
 
     QTreeWidgetItem *scriptItem = new QTreeWidgetItem(attributes);
+    if (script->exists()) scriptItem->setIcon(0,QIcon(":/icons/ok"));
+    else scriptItem->setIcon(0,QIcon(":/icons/warning"));
     scriptItem->setData(0,Qt::UserRole,script->id());
 
     //add children
