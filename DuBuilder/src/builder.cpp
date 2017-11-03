@@ -1,8 +1,9 @@
 #include "builder.h"
+#include <QtDebug>
 
 Builder::Builder()
 {
-    script = new Script();
+    script = nullptr;
 
 }
 
@@ -15,14 +16,15 @@ void Builder::run()
 {
     QString builtScript = build(script);
 
-    emit built(builtScript);
+    if (builtScript != "") emit built(builtScript);
 }
 
 QString Builder::build(Script *s)
 {
+    if (script == nullptr) return "";
     QString builtScript = "";
 
-    QFile *scriptFile = s->getFile();
+    QFile *scriptFile = s->file();
 
     //Check script file integrity
     if (!scriptFile->exists())
@@ -37,7 +39,7 @@ QString Builder::build(Script *s)
 
     //go with data
     int lineNumber = 0;
-    QList<Script*> includedScripts = s->getIncludes();
+    QList<Script*> includedScripts = s->includes();
     while (!scriptFile->atEnd())
     {
         QString line = scriptFile->readLine();
@@ -45,17 +47,20 @@ QString Builder::build(Script *s)
         QString trimmedLine = line.trimmed();
 
         //check if there's an include
-        QRegularExpression reInclude("^#include +");
-        QRegularExpression reIncludePath("^#includepath +");
+        QRegularExpression reInclude("#include +");
+        QRegularExpression reIncludePath("#includepath +");
 
         //if #include
         if (reInclude.match(trimmedLine).hasMatch())
         {
+            qDebug() << "=== MATCH ===" << line ;
             //get the included script using line number
             QString includedBuild = "";
             foreach(Script *is,includedScripts)
             {
-                if (is->getLine() == lineNumber)
+                qDebug() << lineNumber ;
+                qDebug() << is->name() << is->line();
+                if (is->line() == lineNumber)
                 {
                     //build the script
                     includedBuild = build(is);
