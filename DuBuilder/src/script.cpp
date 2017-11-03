@@ -4,102 +4,112 @@
 #include <QtDebug>
 #endif
 
-Script::Script()
+Script::Script(QObject *parent) :
+    QObject(parent)
 {
-    file = new QFile();
-    name = "";
-    existing = false;
-    line = -1;
-    id = 0;
+    _file = new QFile();
+    _name = "";
+    _existing = false;
+    _line = -1;
+    _id = 0;
 }
 
-Script::Script(QString n, QString path, int l)
+Script::Script(QString n, QString path, int l, QObject *parent) :
+    QObject(parent)
 {
-    file = new QFile(path);
-    name = n;
-    existing = file->exists();
-    line = l;
+    _file = new QFile(path);
+    _name = n;
+    _existing = _file->exists();
+    _line = l;
 }
 
-Script::Script(QString fileName, int l)
+Script::Script(QString fileName, int l, QObject *parent) :
+    QObject(parent)
 {
-    file = new QFile(fileName);
-    QFileInfo info(*file);
-    name = info.completeBaseName();
-    existing = file->exists();
-    line = l;
+    _file = new QFile(fileName);
+    QFileInfo info(*_file);
+    _name = info.completeBaseName();
+    _existing = _file->exists();
+    _line = l;
 }
 
 Script::~Script()
 {
     //empty includes
-    while(includes.count() > 0)
+    while(_includes.count() > 0)
     {
-        Script *s = includes.takeAt(0);
+        Script *s = _includes.takeAt(0);
         delete s;
     }
 }
 
 void Script::setFileName(QString fileName)
 {
-    file->setFileName(fileName);
-    QFileInfo info(*file);
-    name = info.completeBaseName();
-    existing = file->exists();
+    _file->setFileName(fileName);
+    QFileInfo info(*_file);
+    _name = info.completeBaseName();
+    _existing = _file->exists();
 }
 
 void Script::setName(QString n)
 {
-    name = n;
+    _name = n;
 }
 
 void Script::setPath(QString path)
 {
-    file->setFileName(path);
-    existing = file->exists();
+    _file->setFileName(path);
+    _existing = _file->exists();
 }
 
 void Script::setLine(int l)
 {
-    line = l;
+    _line = l;
 }
 
 void Script::setId(int i)
 {
-    id = i;
+    _id = i;
 }
 
-int Script::getLine()
+int Script::line()
 {
-    return line;
+    return _line;
 }
 
-QString Script::getName()
+QString Script::name()
 {
-    return name;
+    return _name;
 }
 
-QFile* Script::getFile()
+QFile* Script::file()
 {
-    return file;
+    return _file;
 }
 
-int Script::getId()
+int Script::id()
 {
-    return id;
+    return _id;
 }
 
 bool Script::exists()
 {
-    return existing;
+    return _existing;
 }
 
-QList<Script *> Script::getIncludes()
+QList<Script *> Script::includes()
 {
-    return includes;
+    return _includes;
 }
 
 void Script::addInclude(Script *s)
 {
-    includes << s;
+    s->moveToThread(QApplication::instance()->thread());
+    s->setParent(this);
+    _includes << s;
+}
+
+Script *Script::takeInclude(int i)
+{
+    return _includes.takeAt(i);
 }
