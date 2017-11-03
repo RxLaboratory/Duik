@@ -18,14 +18,18 @@ SOURCES += main.cpp\
     script.cpp \
     scriptwidget.cpp \
     toolbarspacer.cpp \
-    builder.cpp
+    builder.cpp \
+    frameless.cpp \
+    rainboxui.cpp
 
 HEADERS  += mainwindow.h \
     scanner.h \
     script.h \
     scriptwidget.h \
     toolbarspacer.h \
-    builder.h
+    builder.h \
+    frameless.h \
+    rainboxui.h
 
 FORMS    += mainwindow.ui \
     scriptwidget.ui \
