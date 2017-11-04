@@ -114,7 +114,7 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
 
 void MainWindow::on_actionBuild_triggered()
 {
-    savePath = QFileDialog::getSaveFileName(this,"Select script",value("latestsavepath").toString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
+    savePath = QFileDialog::getSaveFileName(this,"Select script",settings.value("latestsavepath").toString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
     if (savePath.isNull() || savePath.isEmpty()) return;
     settings.setValue("latestsavepath",QFileInfo(savePath).path());
 
