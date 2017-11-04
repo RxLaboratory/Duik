@@ -1,7 +1,7 @@
 
 # DuAEF Libraries
 
-Documentation and examples for the libraries are available in the corresponding subfolder.
+Documentation and examples for the libraries are available in the corresponding subfolder. The source code is fully documented too.  
 To use any library in your script:
 
     #include libraryLib.jsxinc
