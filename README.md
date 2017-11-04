@@ -24,7 +24,7 @@ You can [download the latest (windows-only) version here](https://rainboxprod.co
 
 ## Libraries
 
-All libraries and usage examples are in the [libs](libs) subfolder. An html documentation is available in the [Doc](Doc) folder, [click here to view it](http://htmlpreview.github.io/?https://github.com/Rainbox-dev/DuAEF/blob/master/Doc/index.html).
+All libraries are in the [libs](libs) subfolder, the source code is fully documented. You can find simple documentation with examples in the [doc](folder) and the framework reference is available in the [doc_html](doc_html) folder, [click here to view it](http://htmlpreview.github.io/?https://github.com/Rainbox-dev/DuAEF/blob/master/Doc/index.html).
 
 - [DuAECore](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuAECoreLib.jsxinc) contains After Effects related objects and methods.
 - [DuBinary](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuBinaryLib.jsxinc) provides tools to include and extract binary files directly in your script files, allowing to deploy only one .jsx files containing any needed image, preset or executable.
