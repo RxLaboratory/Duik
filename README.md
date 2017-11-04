@@ -24,6 +24,8 @@ You can [download the latest (windows-only) version here](https://rainboxprod.co
 
 ## Libraries
 
+All libraries and their documentation are in the [libs](libs) subfolder.
+
 - [DuAECore](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuAECoreLib.jsxinc) contains After Effects related objects and methods.
 - [DuBinary](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuBinaryLib.jsxinc) provides tools to include and extract binary files directly in your script files, allowing to deploy only one .jsx files containing any needed image, preset or executable.
 - [DuFFMpeg](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuFFMpegLib.jsxinc) provides tools to transcode medias using ffmpeg, all in ExtendScript. It includes the FFmpeg binary executable file.
