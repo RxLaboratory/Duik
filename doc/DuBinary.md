@@ -45,5 +45,7 @@ var button = somePanel.add('iconbutton',undefined,icon.binAsString);
 
 ```javascript
 var stringFile = new File("C:\test\image.jpg.jsxinc");
-var jpgFile = DuBinary.convertToBinaryFile(stringFile); // Warning, this method uses `$.eval()` which is a bad security issue. This will be changed in the future, but for now, do not use this method for anything else than debugging and testing.
+var jpgFile = DuBinary.convertToBinaryFile(stringFile);
+// Warning, this method uses `$.eval()` which is a bad security issue.
+//This will be changed in the future, but for now, do not use this method for anything else than debugging and testing.
 ```
