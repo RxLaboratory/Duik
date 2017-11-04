@@ -69,8 +69,9 @@ void MainWindow::mapEvents()
 void MainWindow::on_actionOpen_Script_triggered()
 {
     //open file
-    QString scriptPath = QFileDialog::getOpenFileName(this,"Select script",QString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
+    QString scriptPath = QFileDialog::getOpenFileName(this,"Select script",settings.value("latestopenpath").toString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
     if (scriptPath.isNull() || scriptPath.isEmpty()) return;
+    settings.setValue("latestopenpath",QFileInfo(scriptPath).path());
 
     //scan
     scanningItem = nullptr;
@@ -98,9 +99,10 @@ void MainWindow::on_actionRe_scan_script_triggered()
 void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     //open file
-    QString newPath = QFileDialog::getOpenFileName(this,"Where is " + item->text(2) + "?");
+    QString newPath = QFileDialog::getOpenFileName(this,"Where is " + item->text(2) + "?",settings.value("latestincludepath").toString());
 
     if (newPath.isNull() || newPath.isEmpty()) return;
+    settings.setValue("latestincludepath",QFileInfo(newPath).path());
 
     //scan file
     scanningItem = item;
@@ -112,8 +114,9 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
 
 void MainWindow::on_actionBuild_triggered()
 {
-    savePath = QFileDialog::getSaveFileName(this,"Select script",QString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
+    savePath = QFileDialog::getSaveFileName(this,"Select script",value("latestsavepath").toString(),"All scripts (*.jsx *.jsxinc *.js);;ExtendScript (*.jsx *.jsxinc);;JavaScript (*.js);;Text (*.txt);;All Files (*.*)");
     if (savePath.isNull() || savePath.isEmpty()) return;
+    settings.setValue("latestsavepath",QFileInfo(savePath).path());
 
     //build
     builder->setScript(currentScript);

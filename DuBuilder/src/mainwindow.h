@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QMouseEvent>
+#include <QSettings>
 
 #include "scanner.h"
 #include "builder.h"
@@ -59,6 +60,10 @@ private:
      * @brief scanningItem The item being scanned. nullptr if root
      */
     QTreeWidgetItem *scanningItem;
+    /**
+     * @brief settings Application settings
+     */
+    QSettings settings;
 
 
     //METHODS
