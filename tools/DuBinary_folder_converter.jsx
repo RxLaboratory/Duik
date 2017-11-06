@@ -1,4 +1,4 @@
-/*
+﻿/*
 	DuBinary Converter
   Small tool to convert binary files in a folder (and subfolders) to include files .jsxinc
 	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
@@ -8,7 +8,7 @@
 (function ()
 {
 
-  #include "../libs/DuBinaryLib.jsxinc"
+  #include "../DuAEF.jsxinc"
 
   var folder = Folder.selectDialog ("Select Folder");
   if (!folder) return;
@@ -29,7 +29,7 @@
         var outputFileName = folder.absoluteURI + '/' + file.name + '.jsxinc';
         var category = '';
         if (folder !== f) category = f.name;
-        DuBinary.convertToIncludeFile(file,f.name,outputFileName);
+        DuAEF.DuBinary.convertToIncludeFile(file,f.name,outputFileName);
       }
     }
   }
