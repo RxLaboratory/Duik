@@ -213,6 +213,33 @@ DuAEF.DuAE.App.askFilesAndNetworkAccess = function(showAlert,message)
 		return DuAEF.DuAE.App.hasFilesAndNetworkAccess;
 	}
 }
+
+/**
+* Gets the public name of a version of After Effects (like CC2015.3 for version 13.8)
+* @param {float}	[versionAsFloat]	- The version as a float. If not provided, will default to the current version of the running instance of After Effects.
+* @return {string}	The version name.
+*/
+DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
+{
+	if (versionAsFloat === undefined) versionAsFloat = DuAEF.DuAE.App.version;
+	if (versionAsFloat < 8) return "" + versionAsFloat;
+	if (versionAsFloat >= 8 && versionAsFloat < 9) return "CS3";
+	if (versionAsFloat >= 9 && versionAsFloat < 10) return "CS4";
+	if (versionAsFloat >= 10 && versionAsFloat < 10.5) return "CS5";
+	if (versionAsFloat >= 10.5 && versionAsFloat < 11) return "CS5.5";
+	if (versionAsFloat >= 11 && versionAsFloat < 12) return "CS6";
+	if (versionAsFloat >= 12 && versionAsFloat < 13) return "CC";
+	if (versionAsFloat >= 13 && versionAsFloat < 13.1) return "CC2014";
+	if (versionAsFloat >= 13.1 && versionAsFloat < 13.2) return "CC2014.1";
+	if (versionAsFloat >= 13.2 && versionAsFloat < 13.5) return "CC2014.2";
+	if (versionAsFloat >= 13.5 && versionAsFloat < 13.6) return "CC2015";
+	if (versionAsFloat >= 13.6 && versionAsFloat < 13.7) return "CC2015.1";
+	if (versionAsFloat >= 13.7 && versionAsFloat < 13.8) return "CC2015.2";
+	if (versionAsFloat >= 13.8 && versionAsFloat < 14) return "CC2015.3";
+	if (versionAsFloat >= 14 && versionAsFloat < 15) return "CC2017";
+	if (versionAsFloat >= 15 && versionAsFloat < 16) return "CC2018";
+	else return "Unknown";
+}
 /*
 	DuBinaryLib
   Library to create/extract json representations of binary files
@@ -356,7 +383,7 @@ DuAEF.DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileNam
 	var jsString = 'var ' + varName + ' = ';
 	jsString += '{"binAsString":"' + duBinary.binAsString + '","fileName":"' + duBinary.fileName + '","category":"' + duBinary.category + '"}'
 	jsString += ';\r\n';
-	jsString += varName + ';';
+	jsString += varName + ';\r\n';
 	var outputFile = new File(outputFileName);
 	outputFile.encoding = 'UTF8';
 	if (outputFile.open("w", "TEXT", "????"))
@@ -1709,6 +1736,46 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 DuAEF.DuScriptUI = {};
 
+//initilization
+(function ()
+{
+	/**
+	* The default alignment of children of containers with "column" orientation
+	* @memberof DuAEF.DuScriptUI
+	* @type {String[]}
+	* @default ["fill","top"]
+	*/
+	DuAEF.DuScriptUI.defaultColumnAlignment = ["fill","top"];
+	/**
+	* The default alignment of children of containers with "row" orientation
+	* @memberof DuAEF.DuScriptUI
+	* @type {String[]}
+	* @default ["left","center"]
+	*/
+	DuAEF.DuScriptUI.defaultRowAlignment = ["left","center"];
+	/**
+	* The default alignment of children of containers with "stack" orientation
+	* @memberof DuAEF.DuScriptUI
+	* @type {String[]}
+	* @default ["fill","top"]
+	*/
+	DuAEF.DuScriptUI.defaultStackAlignment = ["fill","top"];
+	/**
+	* The default spacing of containers
+	* @memberof DuAEF.DuScriptUI
+	* @type {int}
+	* @default 2
+	*/
+	DuAEF.DuScriptUI.defaultSpacing = 2;
+	/**
+	* The default mqrgins of containers
+	* @memberof DuAEF.DuScriptUI
+	* @type {int}
+	* @default 2
+	*/
+	DuAEF.DuScriptUI.defaultMargins = 2;
+})();
+
 /**
  * Changes the color of the text of a ScriptUI Object
  * @memberof DuAEF.DuScriptUI
@@ -1739,9 +1806,9 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 	if (myPal == null) throw "Failed to create User Interface.";
 
 	// Margins and alignment
-	myPal.margins = 3;
-	myPal.spacing = 2;
-	myPal.alignChildren = ["fill","top"];
+	myPal.margins = DuAEF.DuScriptUI.defaultMargins;
+	myPal.spacing = DuAEF.DuScriptUI.defaultSpacing;
+	myPal.alignChildren = DuAEF.DuScriptUI.defaultColumnAlignment;
 	myPal.orientation = "column";
 
 	return myPal;
@@ -1763,4 +1830,33 @@ DuAEF.DuScriptUI.showUI = function (ui)
 		//ui.center();
 		ui.show();
 	}
+}
+
+/**
+ * Adds a group in a container, using  DuAEF.DuScriptUI default alignments, and DuAEF.DuScriptUI.defaultSpacing. Margins are set to 0.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}		container	- Where to create the group
+ * @param {string}					[orientation] - The orientation to use. One of "column", "row" or "stack". By default, "column" if added in a row, "row" if added in a column.
+ * @return {Group}	The group created
+ */
+DuAEF.DuScriptUI.addGroup = function (container,orientation)
+{
+	var group = container.add("group");
+	group.spacing = 2;
+	group.margins = 0;
+	if (orientation !== undefined) group.orientation = orientation;
+	if(group.orientation === "row")
+	{
+		group.alignChildren = DuAEF.DuScriptUI.defaultRowAlignment;
+	}
+	else if (group.orientation === "column")
+	{
+		group.alignChildren = DuAEF.DuScriptUI.defaultColumnAlignment;
+	}
+	else
+	{
+		group.alignChildren = DuAEF.DuScriptUI.defaultStackAlignment;
+	}
+
+	return group;
 }
