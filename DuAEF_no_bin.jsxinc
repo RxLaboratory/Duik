@@ -164,7 +164,7 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 DuAEF.DuAE = {};
 
 /**
-* Applciation related methods
+* Application related methods
 * @namespace
 * @memberof DuAEF.DuAE
 */
@@ -239,6 +239,351 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 	if (versionAsFloat >= 14 && versionAsFloat < 15) return "CC2017";
 	if (versionAsFloat >= 15 && versionAsFloat < 16) return "CC2018";
 	else return "Unknown";
+}
+
+/**
+* After Effects project methods
+* @namespace
+* @memberof DuAEF.DuAE
+*/
+DuAEF.DuAE.Project = {};
+
+/**
+* Gets the After Effects current composition
+* @return {CompItem|null} The current composition or null if there's no current comp
+*/
+DuAEF.DuAE.Project.getActiveComp = function()
+{
+	var comp = app.project.activeItem;
+	if (!comp) return null;
+	if (!(comp instanceof CompItem)) return null;
+	return comp;
+}
+
+/**
+* After Effects composition methods
+* @namespace
+* @memberof DuAEF.DuAE
+*/
+DuAEF.DuAE.Comp = {};
+
+/**
+* Gets the After Effects selected properties in the current comp
+* @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
+* A function which take one PropertyBase as argument can be used to filter the properties: the Property will be returned if the function returns true.
+* @param {boolean}	[strict=false]	- If a string filter is provided, wether to search for the exact name/matchName or if it contains the filter.
+* @param {boolean}	[caseSensitive=true]	- If a string filter is provided, and not strict is false, does the search have to be case sensitive?
+* @return {PropertyBase[]} The selected properties, an empty Array if nothing active or selected
+*/
+DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
+{
+	var props = [];
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return props;
+	var layers = comp.selectedLayers;
+	if (layers.length === 0) return props;
+
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		props = props.concat(DuAEF.DuAE.Layer.getSelectedProps(layers[i],filter,strict,caseSensitive));
+	}
+	return props;
+}
+
+/**
+* After Effects layer methods
+* @namespace
+* @memberof DuAEF.DuAE
+*/
+DuAEF.DuAE.Layer = {};
+
+/**
+* Gets the After Effects selected properties in the layer
+* @param {Layer}	layer	- The layer
+* @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
+* A function which take one PropertyBase as argument can be used to filter the properties: the Property will be returned if the function returns true.
+* @param {boolean}	[strict=false]	- If a string filter is provided, wether to search for the exact name/matchName or if it contains the filter.
+* @param {boolean}	[caseSensitive=true]	- If a string filter is provided, and not strict is false, does the search have to be case sensitive?
+* @return {PropertyBase[]} The selected properties, an empty Array if nothing active or selected
+*/
+DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
+{
+	if (strict === undefined) strict = false;
+	if (caseSensitive === undefined) caseSensitive = true;
+
+	var props = [];
+
+	if (!caseSensitive && typeof filter === "string") filter = filter.toLowerCase();
+
+	var selectedProps = layer.selectedProperties;
+	if (filter === undefined)
+	{
+		props = props.concat(selectedProps);
+	}
+	else
+	{
+		for (var j = 0 ; j < selectedProps.length ; j++)
+		{
+			var prop = selectedProps[j];
+
+			var name = prop.name;
+			var matchName = prop.matchName;
+			if (!caseSensitive)
+			{
+				name = name.toLowerCase();
+				matchName = matchName.toLowerCase();
+			}
+
+			if (strict && name === filter) props.push(prop);
+			else if (strict && matchName === filter) props.push(prop);
+			else if (typeof filter === "string")
+			{
+				if (name.indexOf(filter) >= 0) props.push(prop);
+				else if (matchName.indexOf(filter) >= 0) props.push(prop);
+			}
+			else if (prop.propertyType == PropertyType.PROPERTY) if (prop.propertyValueType == filter) props.push(prop);
+			else if (prop.propertyType == filter) props.push(prop);
+			else if (typeof filter === "function") if (filter(prop)) props.push(prop);
+		}
+	}
+
+	return props;
+}
+
+/**
+* After Effects properties methods
+* @namespace
+* @memberof DuAEF.DuAE
+*/
+DuAEF.DuAE.Property = {};
+
+/**
+* Gets the layer containing the property
+* @param {Property}	prop	- The After Effects Property
+* @return {Layer}	The layer
+*/
+DuAEF.DuAE.Property.getPropertyLayer = function (prop)
+{
+	if (prop === undefined) throw "You must provide a property.";
+	var parentProp = prop;
+	while (parentProp.parentProperty !== null)
+	{
+		// Traverse up the property tree
+		parentProp = parentProp.parentProperty;
+	}
+	return parentProp;
+}
+
+/**
+* Gets the composition containing the property
+* @param {Property}	prop	- The After Effects Property
+* @return {CompItem}	The composition
+*/
+DuAEF.DuAE.Property.getPropertyComp = function (prop)
+{
+	var layer = DuAEF.DuAE.Property.getPropertyLayer(prop);
+	return layer.containingComp;
+}
+
+/**
+* Bezier Paths methods
+* @namespace
+* @memberof DuAEF.DuAE.Property
+*/
+DuAEF.DuAE.Property.Shape = {};
+
+/**
+* Makes a horizontal symetry transformation on the path.
+* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
+*/
+DuAEF.DuAE.Property.Shape.horizontalSymetry = function(pathProperty)
+{
+	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
+	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
+
+	var shape = pathProperty.value;
+	var vertices = shape.vertices;
+	var inTangents = shape.inTangents;
+	var outTangents = shape.outTangents;
+
+	//get the horizontal center.
+	var center = 0;
+	for (var i = 0 ; i < vertices.length; i++)
+	{
+		center += vertices[i][0];
+	}
+	center = center / vertices.length;
+
+	//twice the value for computing symetry
+	center = center*2;
+
+	//compute
+	for (var i = 0 ; i < vertices.length; i++)
+	{
+		vertices[i][0] = center - vertices[i][0];
+		inTangents[i][0] = -inTangents[i][0];
+		outTangents[i][0] = -outTangents[i][0];
+	}
+
+	//set
+	shape.vertices = vertices;
+	shape.inTangents = inTangents;
+	shape.outTangents = outTangents;
+	if (pathProperty.numKeys > 0)
+	{
+		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
+	}
+	else
+	{
+		pathProperty.setValue(shape);
+	}
+}
+
+/**
+* Makes a horizontal symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
+* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
+*/
+DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
+{
+	var shapes = [];
+	//get shapes and center
+	var center = 0;
+	var verticesCount = 0;
+	for (var i = 0 ; i < pathProperties.length ; i++)
+	{
+		var shape = pathProperties[i].value;
+		shapes.push(shape);
+		for (var j = 0 ; j < shape.vertices.length; j++)
+		{
+			verticesCount++;
+			center += shape.vertices[j][0];
+		}
+	}
+	center = center / verticesCount;
+	center = center *2;
+
+	//compute
+	for (var i = 0 ; i < shapes.length; i++)
+	{
+		var shape = shapes[i];
+		var vertices = shape.vertices;
+		var inTangents = shape.inTangents;
+		var outTangents = shape.outTangents;
+		for (var j = 0 ; j < shape.vertices.length ; j++)
+		{
+			vertices[j][0] = center - vertices[j][0];
+			inTangents[j][0] = -inTangents[j][0];
+			outTangents[j][0] = -outTangents[j][0];
+		}
+		shape.vertices = vertices;
+		shape.inTangents = inTangents;
+		shape.outTangents = outTangents;
+		if (pathProperties[i].numKeys > 0)
+		{
+			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+		}
+		else
+		{
+			pathProperties[i].setValue(shape);
+		}
+	}
+}
+
+/**
+* Makes a vertical symetry transformation on the path.
+* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
+*/
+DuAEF.DuAE.Property.Shape.verticalSymetry = function(pathProperty)
+{
+	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
+	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
+
+	var shape = pathProperty.value;
+	var vertices = shape.vertices;
+	var inTangents = shape.inTangents;
+	var outTangents = shape.outTangents;
+
+	//get the horizontal center.
+	var center = 0;
+	for (var i = 0 ; i < vertices.length; i++)
+	{
+		center += vertices[i][1];
+	}
+	center = center / vertices.length;
+
+	//twice the value for computing symetry
+	center = center*2;
+
+	//compute
+	for (var i = 0 ; i < vertices.length; i++)
+	{
+		vertices[i][1] = center - vertices[i][1];
+		inTangents[i][1] = -inTangents[i][1];
+		outTangents[i][1] = -outTangents[i][1];
+	}
+
+	//set
+	shape.vertices = vertices;
+	shape.inTangents = inTangents;
+	shape.outTangents = outTangents;
+	if (pathProperty.numKeys > 0)
+	{
+		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
+	}
+	else
+	{
+		pathProperty.setValue(shape);
+	}
+}
+
+/**
+* Makes a vertical symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
+* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
+*/
+DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
+{
+	var shapes = [];
+	//get shapes and center
+	var center = 0;
+	var verticesCount = 0;
+	for (var i = 0 ; i < pathProperties.length ; i++)
+	{
+		var shape = pathProperties[i].value;
+		shapes.push(shape);
+		for (var j = 0 ; j < shape.vertices.length; j++)
+		{
+			verticesCount++;
+			center += shape.vertices[j][1];
+		}
+	}
+	center = center / verticesCount;
+	center = center *2;
+
+	//compute
+	for (var i = 0 ; i < shapes.length; i++)
+	{
+		var shape = shapes[i];
+		var vertices = shape.vertices;
+		var inTangents = shape.inTangents;
+		var outTangents = shape.outTangents;
+		for (var j = 0 ; j < shape.vertices.length ; j++)
+		{
+			vertices[j][1] = center - vertices[j][1];
+			inTangents[j][1] = -inTangents[j][1];
+			outTangents[j][1] = -outTangents[j][1];
+		}
+		shape.vertices = vertices;
+		shape.inTangents = inTangents;
+		shape.outTangents = outTangents;
+		if (pathProperties[i].numKeys > 0)
+		{
+			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+		}
+		else
+		{
+			pathProperties[i].setValue(shape);
+		}
+	}
 }
 /*
 	DuBinaryLib
