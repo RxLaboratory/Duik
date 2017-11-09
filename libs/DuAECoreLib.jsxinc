@@ -24,11 +24,141 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+* Constructs a new KeySpatialProperty
+* @class KeySpatialProperties
+* @classdesc Spatial properties of a {@linkcode KeyFrame}.
+* @property {float[]|null}	  [inTangent=null]     - The incoming spatial tangent
+* @property {float[]|null}    [outTangent=null]            -  The outgoing spatial tangent
+* @property {boolean}      [_continuous=true]         - true if the specified keyframe has spatial continuity
+* @property {boolean}	[_autoBezier=false]			- true if the specified keyframe has temporal auto-Bezier interpolation
+* @property {boolean}	[_roving=false]	- true if the specified keyframe is roving
+*/
+function KeySpatialProperties (){
+	this.inTangent = null;
+	this.outTangent = null;
+	this._continuous = true;
+	this._autoBezier = false;
+	this._roving = false;
+}
+
+/**
+* Constructs a new KeyFrame
+* @class KeyFrame
+* @classdesc Properties of an After Effects Keyframe, as returned by {@linkcode DuAEF.DuAE.Property.getKeyFrames} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtIndex} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtTime}.
+* @property {float}	  [_time=0]     - The keyframe time
+* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}    [value=null]  -  The keyframe value
+* @property {KeyframeInterpolationType}   [_inInterpolationType=KeyframeInterpolationType.LINEAR]  - The incoming temporal interpolation type
+* @property {KeyframeInterpolationType}	[_outInterpolationType=KeyframeInterpolationType.LINEAR]		- The outgoing temporal interpolation type
+* @property {boolean}	[_spatial=false]	- true if this keyframe has a spatial value
+* @property {KeySpatialProperties}	[spatialProperties=new KeySpatialProperties()]	- the spatial properties {@linkcode KeySpatialProperties} of this keyframe
+* @property {KeyframeEase[]}	[inEase=null]	- The incoming temporal ease. The number of objects in the Array depends on the value type
+* @property {KeyframeEase[]}	[outEase=null]	- The outgoing temporal ease. The number of objects in the Array depends on the value type
+* @property {boolean}	[_continuous=false]	- true if the keyframe has temporal continuity
+* @property {boolean}	[_autoBezier=false]	- true if the keyframe has temporal auto-Bezier interpolation
+* @property {int}		[_index=0]	- The index of the keyFrame. Warning: not updated when another key frame is added on the property some time before this key._time!
+*/
+function KeyFrame(){
+	this._time = 0;
+	this.value = null;
+	this._inInterpolationType = KeyframeInterpolationType.LINEAR;
+	this._outInterpolationType = KeyframeInterpolationType.LINEAR;
+	this._spatial = false;
+	this.spatialProperties = new KeySpatialProperties();
+	this.inEase = null;
+	this.outEase = null;
+	this._continuous = false;
+	this._autoBezier = false;
+	this._index = 0;
+}
+
+/**
+* Constructs a new animation
+* @class PropertyAnim
+* @classdesc Describes the animation of an After Effects property
+* @property {string}	  [_name=""]     - The property name
+* @property {string}    [_matchName=""]  - The property matchName
+* @property {KeyFrame[]}   [keys=[]]  - The keyframes of the animation
+* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}	[startValue=null]		- The value at the beginning of the animation
+* @property {string}   [type="anim"]  - Read Only.
+*/
+function PropertyAnim(){
+	this._name = "";
+	this._matchName = "";
+	this.keys = [];
+	this.startValue = null;
+	this.type = "anim";
+}
+
+/**
+* Constructs a new group animation
+* @class PropertyGroupAnim
+* @classdesc Contains all PropertyAnim from an After Effects PropertyGroup
+* @property {string}	  [_name=""]     - The property name
+* @property {string}    [_matchName=""]  - The property matchName
+* @property {PropertyAnim[]|PropertyGroupAnim[]}   [anims=[]]  - The animations in the group
+* @property {string}   [type="group"]  - Read Only.
+*/
+function PropertyGroupAnim(){
+	this._name = "";
+	this._matchName = "";
+	this.anims = [];
+	this.type = "group";
+}
+
+/**
+* Constructs a new layer animation
+* @class LayerAnim
+* @classdesc Contains all PropertyGroupAnim from an After Effects Layer
+* @property {string}	  [_name=""]     - The property name
+* @property {int}    [_index=""]  - The index of the layer
+* @property {PropertyGroupAnim}   transform  - The transform animations
+* @property {PropertyGroupAnim}	masks 	- The masks animations
+* @property {PropertyGroupAnim}	effects	- The effects animations
+* @todo add other propertygroups
+*/
+function LayerAnim(){
+	this._name = "";
+	this._index = 0;
+	this.transform = new PropertyGroupAnim();
+	this.transform._name = "Transform";
+	this.transform._matchName = "ADBE Transform Group";
+	this.masks = new PropertyGroupAnim();
+	this.masks._name = "Masks";
+	this.masks._matchName = "ADBE Mask Parade";
+	this.effects = new PropertyGroupAnim();
+	this.effects._name = "Effects";
+	this.effects._matchName = "ADBE Effect Parade";
+}
+
+/**
 * After Effects tools
 * @namespace
 * @memberof DuAEF
 */
 DuAEF.DuAE = {};
+
+/**
+* Converts an After Effects collection to an array.
+* @memberof DuAEF.DuAE
+* @param {Collection|Array}	collection	- The Collection to convert. If an array is provided, a copy is returned.
+* @return {Item[]|Layer[]|OutputModule[]|RenderQueueItem[]}	The values from the collection in an Array
+*/
+DuAEF.DuAE.convertCollectionToArray = function (collection)
+{
+	var arr = [];
+	if (collection instanceof ItemCollection || collection instanceof LayerCollection || collection instanceof OMCollection || collection instanceof RQItemCollection)
+	{
+		for (var i = 1;i<=collection.length;i++)
+		{
+			arr.push(collection[i]);
+		}
+	}
+	else
+	{
+		arr = collection;
+	}
+	return arr;
+}
 
 /**
 * Application related methods
@@ -61,7 +191,7 @@ DuAEF.DuAE.App = {};
 /**
 * Asks the user to check the file and network security pref if not already set.
 * Opens the general prefrences of After Effects.
-* @memberof DuAEF.DuJS.Array
+* @memberof DuAEF.DuAE.App
 * @param {boolean}	[showAlert=true]	- Wether to display an alert before opening the preferences
 * @param {string}	[message=The Duduf After Effects scripting framework needs to be allowed to write files\nPlease, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.]	- The message to display in the alert.
 * @return {boolean}	Wether the preference has been set
@@ -147,6 +277,13 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 	var props = [];
 	var comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return props;
+
+	//if no filter, get all using AE native API
+	if (filter === undefined)
+	{
+		return comp.selectedProperties;
+	}
+
 	var layers = comp.selectedLayers;
 	if (layers.length === 0) return props;
 
@@ -155,6 +292,18 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 		props = props.concat(DuAEF.DuAE.Layer.getSelectedProps(layers[i],filter,strict,caseSensitive));
 	}
 	return props;
+}
+
+/**
+* Deselects all properties in the current composition
+*/
+DuAEF.DuAE.Comp.unselectProperties = function()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	for (var i = 0; i < props.length ; i++)
+	{
+		props[i].selected = false;
+	}
 }
 
 /**
@@ -218,6 +367,25 @@ DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 }
 
 /**
+* Gets all animations on the layer in the whole timeline or in the time range<br />
+* The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* @param {Layer}	prop	- The layer.
+* @param {boolean}	[selected=false]	- true to get only selected keyframes.
+* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @return {LayerAnim}	The animations. A PropertyAnim if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
+* @todo implement!
+*/
+DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
+{
+	var anim = new LayerAnim();
+	anim.name = layer.name;
+	anim.index = layer.index;
+	anim.transform = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Transform Group"));
+	anim.masks = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Mask Parade"));
+	anim.effects = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Effect Parade"));
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -250,6 +418,177 @@ DuAEF.DuAE.Property.getPropertyComp = function (prop)
 {
 	var layer = DuAEF.DuAE.Property.getPropertyLayer(prop);
 	return layer.containingComp;
+}
+
+/**
+* Gets the key at a given index on a property
+* @param {Property}	prop	- The property.
+* @param {int}	keyIndex	- The index of the key to retrieve. If the index is negative, it is counted from the end i.e. to retrieve the keyframe before the last one, use -2 (-1 is the last)
+* @return {KeyFrame}	The keyframe, or null if incorrect index
+*/
+DuAEF.DuAE.Property.getKeyFrameAtIndex = function (prop,keyIndex)
+{
+	if (Math.abs(keyIndex) > prop.numKeys || keyIndex == 0)
+	{
+		return null;
+	}
+	if (keyIndex < 0)
+	{
+		keyIndex = prop.numKeys - keyIndex + 1;
+	}
+
+	var key = new KeyFrame();
+	key._time = prop.keyTime(keyIndex);
+	key.value = prop.keyValue(keyIndex);
+	key._inInterpolationType = prop.keyInInterpolationType(keyIndex);
+	key._outInterpolationType = prop.keyOutInterpolationType(keyIndex);
+	if ( prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL )
+	{
+		key._spatial = true;
+		key.spatialProperties.inTangent = prop.keyInSpatialTangent(keyIndex);
+		key.spatialProperties.outTangent  = prop.keyOutSpatialTangent(keyIndex);
+		key.spatialProperties._continuous = prop.keySpatialContinuous(keyIndex);
+		key.spatialProperties._autoBezier = prop.keySpatialAutoBezier(keyIndex);
+		key.spatialProperties._roving = prop.keyRoving(keyIndex);
+	}
+	key.inEase = prop.keyInTemporalEase(keyIndex);
+	key.outEase = prop.keyOutTemporalEase(keyIndex);
+	key._continuous = prop.keyTemporalContinuous(keyIndex);
+	key._autoBezier = prop.keyTemporalAutoBezier(keyIndex);
+	key._index = keyIndex;
+
+	return key;
+}
+
+/**
+* Gets the nearest key at a given time on a property
+* @param {Property}	prop	- The property.
+* @param {float}	time	- The time of the key to retrieve.
+* @return {KeyFrame}	The keyframe, or null if incorrect time or not found
+*/
+DuAEF.DuAE.Property.getNearestKeyFrameAtTime = function (prop,time)
+{
+	return DuAEF.DuAE.Property.getKeyFrameAtIndex(prop.nearestKeyIndex(time));
+}
+
+/**
+* Gets the key at an exactly given time on a property
+* @param {Property}	prop	- The property.
+* @param {float}	time	- The time of the key to retrieve.
+* @return {KeyFrame}	The keyframe, or null if incorrect time
+*/
+DuAEF.DuAE.Property.getKeyFrameAtTime = function (prop,time)
+{
+	if (!prop.canVaryOverTime) return null;
+	if (prop.numKeys == 0) return null;
+	var key = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,prop.nearestKeyIndex(time));
+	if (key === null) return key;
+	if (key._time == time) return key;
+	else return null;
+}
+
+/**
+* Gets the property keyframes in the whole timeline or in the time range<br />
+* The KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* @param {Property}	prop	- The property.
+* @param {boolean}	[selected=false]	- true to get only selected keyframes.
+* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @return {KeyFrame[]}	The keyframes, or null of this property is of type PropertyValueType.NO_VALUE or PropertyValueType.CUSTOM_VALUE
+*/
+DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
+{
+	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
+	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
+
+	if (timeRange === undefined) timeRange = [0,23000];
+	if (selected === undefined) selected = false;
+
+	var keyFrames = [];
+
+	if (prop.elided) return keyFrames;
+
+	if (prop.isTimeVarying)
+	{
+		if (selected)
+		{
+			for (var keyIndex = 0; keyIndex < prop.selectedKeys.length ; keyIndex++)
+			{
+				var key = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,prop.selectedKeys[keyIndex]);
+				if (key._time >= timeRange[0] && key._time <= timeRange[1])
+				{
+					key._time = key._time - timeRange[0];
+					keyFrames.push(key);
+				}
+			}
+		}
+		else if (prop.numKeys > 0)
+		{
+			for (var keyIndex = 1; keyIndex <= prop.numKeys ; keyIndex++)
+			{
+				var key = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,keyIndex);
+				if (key._time >= timeRange[0] && key._time <= timeRange[1])
+				{
+					key._time = key._time - timeRange[0];
+					keyFrames.push(key);
+				}
+			}
+		}
+	}
+	return keyFrames;
+}
+
+/**
+* Gets the property animation in the whole timeline or in the time range<br />
+* The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* @param {Property}	prop	- The property.
+* @param {boolean}	[selected=false]	- true to get only selected keyframes.
+* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @return {KeyFrame[]}	The keyframes, or null of this property is of type PropertyValueType.NO_VALUE or PropertyValueType.CUSTOM_VALUE
+*/
+DuAEF.DuAE.Property.getPropertyAnim = function (prop,selected,timeRange)
+{
+	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
+	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
+
+	if (timeRange === undefined) timeRange = [0,23000];
+
+	var anim = new PropertyAnim();
+	anim._name = prop.name;
+	anim._matchName = prop.matchName;
+	anim.startValue = prop.valueAtTime(timeRange[0],true);
+	anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
+	return anim;
+}
+
+/**
+* Gets all animations in the group in the whole timeline or in the time range<br />
+* The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* @param {PropertyGroup}	prop	- The property.
+* @param {boolean}	[selected=false]	- true to get only selected keyframes.
+* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @return {PropertyGroupAnim|PropertyAnim}	The animations. A PropertyAnim if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
+*/
+DuAEF.DuAE.Property.getPropertyGroupAnim = function (prop,selected,timeRange)
+{
+	if (prop.propertyType === PropertyType.PROPERTY)
+	{
+		return DuAEF.DuAE.Property.getPropertyAnim(prop,selected,timeRange);
+	}
+	else if (prop.numProperties > 0)
+	{
+		var groupAnim = new PropertyGroupAnim();
+		groupAnim._name = prop.name;
+		groupAnim._matchName = prop.matchName;
+
+		for (var propIndex = 1;propIndex <= prop.numProperties;propIndex++)
+		{
+			var anim = DuAEF.DuAE.Property.getPropertyGroupAnim(prop.property(propIndex),selected,timeRange);
+			if (anim !== null) groupAnim.anims.push(anim);
+		}
+
+		return groupAnim;
+	}
+	return null;
 }
 
 /**
