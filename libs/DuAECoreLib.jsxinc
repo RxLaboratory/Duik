@@ -198,8 +198,8 @@ DuAEF.DuAE.App = {};
 */
 DuAEF.DuAE.App.askFilesAndNetworkAccess = function(showAlert,message)
 {
-	if (showAlert === undefined) alert = true;
-	if (message === undefined ) message = "The Duduf After Effects scripting framework needs to be allowed to write files\nPlease, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.";
+	if (showAlert == undefined) alert = true;
+	if (message == undefined ) message = "The Duduf After Effects scripting framework needs to be allowed to write files\nPlease, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.";
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 
@@ -218,7 +218,7 @@ DuAEF.DuAE.App.askFilesAndNetworkAccess = function(showAlert,message)
 */
 DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 {
-	if (versionAsFloat === undefined) versionAsFloat = DuAEF.DuAE.App.version;
+	if (versionAsFloat == undefined) versionAsFloat = DuAEF.DuAE.App.version;
 	if (versionAsFloat < 8) return "" + versionAsFloat;
 	if (versionAsFloat >= 8 && versionAsFloat < 9) return "CS3";
 	if (versionAsFloat >= 9 && versionAsFloat < 10) return "CS4";
@@ -279,7 +279,7 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 	if (!comp) return props;
 
 	//if no filter, get all using AE native API
-	if (filter === undefined)
+	if (filter == undefined)
 	{
 		return comp.selectedProperties;
 	}
@@ -324,15 +324,15 @@ DuAEF.DuAE.Layer = {};
 */
 DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 {
-	if (strict === undefined) strict = false;
-	if (caseSensitive === undefined) caseSensitive = true;
+	if (strict == undefined) strict = false;
+	if (caseSensitive == undefined) caseSensitive = true;
 
 	var props = [];
 
 	if (!caseSensitive && typeof filter === "string") filter = filter.toLowerCase();
 
 	var selectedProps = layer.selectedProperties;
-	if (filter === undefined)
+	if (filter == undefined)
 	{
 		props = props.concat(selectedProps);
 	}
@@ -378,11 +378,35 @@ DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 {
 	var anim = new LayerAnim();
-	anim.name = layer.name;
-	anim.index = layer.index;
-	anim.transform = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Transform Group"));
-	anim.masks = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Mask Parade"));
-	anim.effects = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Effect Parade"));
+	anim._name = layer.name;
+	anim._index = layer.index;
+	anim.transform = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Transform Group"),selected,timeRange);
+	anim.masks = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Mask Parade"),selected,timeRange);
+	anim.effects = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Effect Parade"),selected,timeRange);
+	return anim;
+}
+
+/**
+* Sets the property animation on the property
+* @param {Layer}	layer	- The property.
+* @param {PropertyAnim} anims	- The animation
+* @param {float}	[time=comp.time]	- The time where to begin the animation
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @return {boolean} true if the anim was actually set.
+*/
+DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName)
+{
+	if (time == undefined) time = layer.containingComp.time;
+	if (ignoreName == undefined) ignoreName = false;
+
+	var matchName = anim._matchName;
+	var name = anim._name;
+
+	var ok = false;
+
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Transform Group"),anim.transform,time,true);
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Mask Parade"),anim.masks,time,ignoreName);
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Effect Parade"),anim.effects,time,ignoreName);
 }
 
 /**
@@ -399,7 +423,7 @@ DuAEF.DuAE.Property = {};
 */
 DuAEF.DuAE.Property.getPropertyLayer = function (prop)
 {
-	if (prop === undefined) throw "You must provide a property.";
+	if (prop == undefined) throw "You must provide a property.";
 	var parentProp = prop;
 	while (parentProp.parentProperty !== null)
 	{
@@ -500,8 +524,8 @@ DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
 	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
 	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
 
-	if (timeRange === undefined) timeRange = [0,23000];
-	if (selected === undefined) selected = false;
+	if (timeRange == undefined) timeRange = [0,23000];
+	if (selected == undefined) selected = false;
 
 	var keyFrames = [];
 
@@ -550,7 +574,7 @@ DuAEF.DuAE.Property.getPropertyAnim = function (prop,selected,timeRange)
 	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
 	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
 
-	if (timeRange === undefined) timeRange = [0,23000];
+	if (timeRange == undefined) timeRange = [0,23000];
 
 	var anim = new PropertyAnim();
 	anim._name = prop.name;
@@ -589,6 +613,173 @@ DuAEF.DuAE.Property.getPropertyGroupAnim = function (prop,selected,timeRange)
 		return groupAnim;
 	}
 	return null;
+}
+
+/**
+* Sets a {@linkcode KeyFrame} on a property
+* @param {Property}	prop	- The property.
+* @param {KeyFrame}	key	- The KeyFrame.
+* @param {float}	[timeOffset=comp.time]	- The time offset (added to KeyFrame._time) where to add the key frame.
+*/
+DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
+{
+	if (prop.elided) return;
+	if (!prop.propertyType === PropertyType.PROPERTY) throw "Can not set a key on a group property";
+	if (!prop.canVaryOverTime) return;
+
+	if (timeOffset == undefined) timeOffset = DuAEF.DuAE.Property.getPropertyComp(prop).time;
+	var time = key._time + timeOffset;
+
+	try
+	{
+		var val = key.value;
+		var dimensions = val.length;
+
+		//get Value
+		if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+		{
+			if (dimensions == 2) val = [val[0],val[1],0];
+			if (dimensions == 1) val = [val[0],0,0];
+		}
+		else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
+		{
+			if (dimensions == 3) val = [val[0],val[1]];
+			if (dimensions == 1) val = [val[0],0];
+		}
+		else
+		{
+			if (dimensions > 1) val = val[0];
+		}
+		prop.setValueAtTime(time,val);
+
+		//get the index of the created key
+		var index = prop.nearestKeyIndex(time);
+
+		//set interpolations
+		if (key._spatial && (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL))
+		{
+			try{
+				prop.setSpatialContinuousAtKey(index,key.spatialProperties._continuous);
+				prop.setSpatialAutoBezierAtKey(index,key.spatialProperties._autoBezier);
+				prop.setRovingAtKey(index,key.spatialProperties._roving);
+				prop.setSpatialTangentsAtKey(index,key.spatialProperties.inTangent,key.spatialProperties.outTangent);
+			}
+			catch(err)
+			{
+				alert(err.description);
+			};
+		}
+
+		try
+		{
+			prop.setTemporalContinuousAtKey(index,key._continuous);
+			prop.setTemporalAutoBezierAtKey(index,key._autoBezier);
+			prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
+			prop.setInterpolationTypeAtKey(index,key._inInterpolationType,key._outInterpolationType);
+		}
+		catch(err)
+		{
+			alert(err.description);
+		}
+
+	}
+	catch (err)
+	{}
+}
+
+/**
+* Sets the property animation on the property
+* @param {Property}	prop	- The property.
+* @param {PropertyAnim} anims	- The animation
+* @param {float}	[time=comp.time]	- The time where to begin the animation
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @return {boolean} true if the anim was actually set.
+*/
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName)
+{
+	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
+	if (ignoreName == undefined) ignoreName = false;
+
+	var matchName = anim._matchName;
+	var name = anim._name;
+
+	var ok = false;
+
+	if (anim == null) return true;
+
+	//find the property with the same name and matchname
+	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
+	{
+		if (prop.matchName == matchName && (!ignoreName && prop.name == name || ignoreName))
+		{
+			//if there are keys, set them
+			if (anim.keys.length > 0)
+			{
+				for (var iclef = 0; iclef < anim.keys.length;iclef++)
+				{
+					DuAEF.DuAE.Property.setKey(prop,anim.keys[iclef],time);
+					ok = true;
+				}
+			}
+			else //set the start value
+			{
+				try
+				{
+					if (anim.startValue != null) prop.setValue(anim.startValue);
+					ok = true;
+				} catch (err) {};
+			}
+		}
+	}
+	else if (prop.numProperties != undefined)
+	{
+		if (prop.numProperties > 0)
+		{
+			for (var pi = 1;pi <= prop.numProperties;pi++)
+			{
+				ok = (DuAEF.DuAE.Property.setAnim(prop.property(pi),anim,time));
+			}
+		}
+	}
+	return ok;
+}
+
+/**
+* Sets all animations from a property group
+* @param {PropertyGroup}	prop	- The property group.
+* @param {PropertyAnim} anims	- The animation
+* @param {float}	[time=comp.time]	- The time where to begin the animation
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @return {boolean} true if the anim was actually set.
+*/
+DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName)
+{
+	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
+	if (ignoreName == undefined) ignoreName = false;
+
+	var ok = false;
+
+	if (anim == null) return true;
+	
+	if (prop.matchName == anim._matchName && (!ignoreName && prop.name == anim._name || ignoreName))
+	{
+		for (var i = 0 ; i < anim.anims.length ; i++)
+		{
+			var propAnim = anim.anims[i];
+			//find the property with the same name and matchname
+			for (var j = 1 ; j <= prop.numProperties ; j++)
+			{
+				var subProp = prop.property(j);
+				if (subProp.matchName == propAnim._matchName && (!ignoreName && subProp.name == propAnim._name || ignoreName))
+				{
+					if (propAnim.type == "group") ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName);
+					else ok = DuAEF.DuAE.Property.setAnim(subProp,propAnim,time,ignoreName);
+					break;
+				}
+			}
+		}
+	}
+	return ok;
 }
 
 /**
