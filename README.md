@@ -4,7 +4,7 @@ Duduf After Effects ExtendScript Framework
 ## What's this?
 
 ***DuAEF*** is a set of **classes**, **methods** and **tools** to ease the scripting process in **After Effects**, as long as adding features (like [pngquant](https://pngquant.org/), [ffmpeg](https://ffmpeg.org/), or [json](http://json.org/)) not available in After Effects/ExtendScript.
-It is very easy to use and **[documented](http://htmlpreview.github.io/?https://github.com/Rainbox-dev/DuAEF/blob/master/doc_html/index.html)**.
+It is very easy to use and **[documented](https://rainbox-dev.github.io/DuAEF/)**.
 
 ## How to use the framework in an After Effects script?
 
@@ -20,7 +20,7 @@ As you can see, you can either use only the "DuAEF_full.jsxinc" file which conta
 
 ## Comprehensive reference
 
-The framework reference is available in the [doc_html](doc_html) folder, **[click here to view it](http://htmlpreview.github.io/?https://github.com/Rainbox-dev/DuAEF/blob/master/doc_html/index.html)**.
+The framework reference is available in the [docs](docs) folder, **[click here to view it](https://rainbox-dev.github.io/DuAEF/)**.
     
 ## Other tools
 
