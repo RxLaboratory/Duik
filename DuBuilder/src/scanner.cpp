@@ -55,14 +55,23 @@ bool Scanner::scan(Script *s)
 
     //get includes
     int lineNumber = 0;
-    QRegularExpression reInclude("#include +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
+    QRegularExpression reInclude("^(?!.*\\/\\/)(?!.*\\/\\*).*#include +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
     qDebug() << reInclude.pattern() ;
-    QRegularExpression reIncludePath("#includepath +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
+    QRegularExpression reIncludePath("^(?!.*\\/\\/)(?!.*\\/\\*).*#includepath +([\"']?)([^\"'\\r\\n\\t]+)\\1 *$");
+
+    bool comment = false;
 
     while (!scriptFile->atEnd())
     {
         QString line = scriptFile->readLine();
         lineNumber++;
+
+        if (comment)
+        {
+            if (line.contains("*/")) comment = false;
+        }
+
+        if (comment) continue;
 
         QRegularExpressionMatch matchInclude = reInclude.match(line);
         if (matchInclude.hasMatch())
@@ -81,6 +90,8 @@ bool Scanner::scan(Script *s)
             }
             continue;
         }
+
+        if (line.contains("/*")) comment = true;
     }
 
     //close file
