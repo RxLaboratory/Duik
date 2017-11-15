@@ -154,3 +154,215 @@ DuAEF.DuScriptUI.addGroup = function (container,orientation)
 
 	return group;
 }
+
+/**
+ * Creates a button with an optionnal icon. Must have at least an icon or a text, or both.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}			container	- The ScriptUI Object which will contain and display the button.
+ * @param {string}					text		- The label of the button. Default: empty string
+ * @param {string}					image		- The path to the icon. Default: empty string
+ * @param {string}					helpTip		- The helptip. Default: empty string
+ * @param {string}					imageOver	- The path to an icon displayed when the mouse is over the button. Default: empty string
+ * @param {bool}					debug		- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
+ * @return {ImageButton}			The image button created.
+ */
+DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOver,debug)
+{
+	if (!text) text = '';
+	if (!image) image = '';
+	if (!helpTip) helpTip = '';
+	if (!imageOver) imageOver = '';
+
+	if (text == '' && image == '') throw "You must provide either a text or an icon to create the button";
+
+	var imageButton = {};
+
+	imageButton.standardImage = image;
+	imageButton.imageOver = imageOver;
+	imageButton.onClick = function(){};
+	imageButton.image = null;
+	imageButton.label = null;
+
+	//create a group
+	var group = container.add('group');
+	group.orientation = 'row';
+	group.margins = 0;
+	group.spacing = 2;
+	imageButton.group = group;
+
+	if (image != '')
+	{
+		var icon = group.add('image',undefined,image);
+		icon.alignment = ['center','center'];
+		icon.helpTip = helpTip;
+		imageButton.image = icon;
+	}
+
+	if (text != '')
+	{
+		var label = group.add('statictext',undefined,text);
+		label.helpTip = helpTip;
+		label.alignment = ['left','center'];
+		imageButton.label = label;
+	}
+
+	//events
+	imageButton.clicked = function (e)
+	{
+		try { imageButton.onClick(); } catch (e) { if (debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
+	}
+
+	imageButton.mouseOver = function (e)
+	{
+		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+		if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+	}
+
+	imageButton.mouseOut = function (e)
+	{
+		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+		if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+	}
+
+	//add events
+	group.addEventListener("mousedown",imageButton.clicked,true);
+	// Hack - CS6 Bug on mouseover with images
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
+	{
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+	}
+	else
+	{
+		group.addEventListener("mouseover",imageButton.mouseOver);
+		group.addEventListener("mouseout",imageButton.mouseOut);
+	}
+
+
+	return imageButton;
+}
+
+/**
+ * Creates a checkbox with an optionnal icon. Must have at least an icon or a text, or both.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}			container		- The ScriptUI Object which will contain and display the button.
+ * @param {string}					text			- The label of the button. Default: empty string
+ * @param {string}					image			- The path to the icon. Default: empty string
+ * @param {string}					helpTip			- The helptip. Default: empty string
+ * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
+ * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
+ * @param {bool}						debug			- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
+ * @return {object}					The image checkbox created.
+ */
+DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,debug)
+{
+	if (!container) return null;
+	if (!text) text = '';
+	if (!image) image = '';
+	if (!helpTip) helpTip = '';
+	if (!imageChecked) imageChecked = '';
+	if (!imageOver) imageOver = imageChecked;
+
+	if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
+
+	var imageButton = {};
+
+	imageButton.standardImage = image;
+	imageButton.imageOver = imageOver;
+	imageButton.imageChecked = imageChecked;
+	imageButton.onClick = function () {};
+	imageButton.checked = imageButton.value = false;
+
+	var group = container.add('group');
+	group.orientation = 'row';
+	group.margins = 0;
+	group.spacing = 2;
+	imageButton.group = group;
+
+	if (image != '')
+	{
+		var icon = group.add('image',undefined,image);
+		icon.alignment = ['center','center'];
+		icon.helpTip = helpTip;
+		imageButton.image = icon;
+	}
+
+	if (text != '')
+	{
+		if (image != '')
+		{
+			var label = group.add('statictext',undefined,text);
+			label.helpTip = helpTip;
+			label.alignment = ['center','center'];
+			imageButton.label = label;
+		}
+		else
+		{
+			var label = group.add('checkbox',undefined,text);
+			label.helpTip = helpTip;
+			label.alignment = ['center','center'];
+			imageButton.label = label;
+			imageButton.box = true;
+		}
+
+	}
+
+	imageButton.setChecked = function (c)
+	{
+		imageButton.checked = imageButton.value = c;
+		if (imageButton.imageChecked != '')
+		{
+			if (imageButton.checked)
+			{
+				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+			}
+			else
+			{
+				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+			}
+		}
+	}
+
+	imageButton.clicked = function (e)
+	{
+		imageButton.setChecked(!imageButton.checked);
+		try { imageButton.onClick(); } catch (e) { if (debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
+	}
+
+	imageButton.mouseOver = function (e)
+	{
+		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+		if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+	}
+
+	imageButton.mouseOut = function (e)
+	{
+		if (imageButton.checked)
+		{
+			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+		}
+		else
+		{
+			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+		}
+	}
+
+	imageButton.group.addEventListener("mousedown",imageButton.clicked,true);
+	// Hack - CS6 Bug on mouseover with images
+	if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+	{
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+	}
+	else
+	{
+		imageButton.group.addEventListener("mouseover",imageButton.mouseOver);
+		imageButton.group.addEventListener("mouseout",imageButton.mouseOut);
+	}
+
+	return imageButton;
+}
