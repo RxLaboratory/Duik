@@ -1,0 +1,62 @@
+
+
+//=================== UI =========================
+var notes_ui_palette = DuAEF.DuScriptUI.createUI(null,"Notes");
+notes_ui_palette.alignChildren = ['fill','fill'];
+
+var notes_ui_text = notes_ui_palette.add ('edittext', undefined,'',{multiline: true});
+if (DuAEF.win) notes_ui_text.helpTip = "New line : CTRL + Enter";
+else notes_ui_text.helpTip = "New line : Cmd + Enter";
+
+var notes_ui_bottomGroup = DuAEF.DuScriptUI.addGroup(notes_ui_palette);
+notes_ui_bottomGroup.alignment = ['fill','bottom'];
+notes_ui_bottomGroup.alignChildren = ['fill','fill'];
+var notes_ui_fileButton = DuAEF.DuScriptUI.addImageButton(notes_ui_bottomGroup,"File...",'E:/DEV SRC/RainboxUI/Icons/18w/save_l.png',"Select the file where to save the notes.",'E:/DEV SRC/RainboxUI/Icons/18w/save_r.png');
+notes_ui_fileButton.group.alignment = ['left','fill'];
+var notes_ui_closeButton = DuAEF.DuScriptUI.addImageButton(notes_ui_bottomGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/close_l.png',"Close this window.",'E:/DEV SRC/RainboxUI/Icons/18w/close_r.png');
+notes_ui_closeButton.group.alignment = ['right','fill'];
+
+//================== INIT ===================
+
+//get back the saved text
+var notes_file;
+if (settings.data.notesFile != undefined) notes_file = new File(settings.data.notesFile);
+else
+{
+	var path = Folder.myDocuments.absoluteURI + "/Duik_notes"
+	if (DuAEF.win) path += ".txt";
+	notes_file = new File(path);
+	settings.data.notesFile = path;
+	settings.saveSettings();
+}
+if (notes_file.open('r'))
+{
+	notes_ui_text.text = notes_file.read();
+	notes_file.close();
+}
+
+//============== EVENTS ==========================
+
+//when text edited
+notes_ui_text.onChange = function ()
+{
+	notes_file.open('w')
+	{
+		notes_file.write(notes_ui_text.text);
+		notes_file.close();
+	}
+};
+
+notes_ui_closeButton.onClick = function(){notes_ui_palette.hide();};
+
+notes_ui_fileButton.onClick = function()
+{
+	//Ask
+	var file = notes_file.saveDlg("Where do you want to save the notes?","Text Files:*.txt,All files:*.*");
+	if (file != null)
+	{
+		notes_file = file;
+		settings.data.notesFile = notes_file.absoluteURI;
+		settings.saveSettings();
+	}
+}
