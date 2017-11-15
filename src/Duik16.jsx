@@ -77,8 +77,11 @@
 	#include DuAEF.jsxinc
 
 	//=========== SETTINGS ===========
-	var settings = new DuSettings("Duik");
-	//TODO gets the version of Duik, update settings if changed
+	//get file
+	var settingsFile;
+	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
+	var settings = new DuSettings("Duik",settingsFile);
+	//TODO get the version of Duik, update settings if changed
 	settings.data.duikVersion = version;
 
 	//========== MODULES =============
@@ -87,9 +90,29 @@
 	//Calculator
 	#include Duik16_calc.jsxinc
 
+	//=========== FUNCTIONS ==========
+	function setCurrentPanel(panel)
+	{
+		if (panel == undefined)
+		{
+			//get setting
+			panel = settings.data.currentPanel;
+			if (panel == undefined) panel = 1;
+		}
+
+		ui_settingsGroup.visible = panel == 1;
+		ui_settingsButton.setChecked(ui_settingsGroup.visible);
+		ui_helpGroup.visible = panel == 0;
+		ui_helpButton.setChecked(ui_helpGroup.visible);
+
+		//save settings
+		settings.data.currentPanel = panel;
+		settings.save();
+	}
 
 	//=========== EVENTS =============
 
+	//TOOLS
 	function ui_notesButton_clicked()
 	{
 		if(!notes_ui_palette.visible) DuAEF.DuScriptUI.showUI(notes_ui_palette);
@@ -116,22 +139,32 @@
 
 	//layout
 	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
+	DuAEF.DuScriptUI.addSeparator(ui_palette);
+	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
+	ui_mainGroup.alignment = ['center','top'];
 	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
 	ui_bottomGroup.alignment = ['fill','bottom'];
 
 	//=== TOP LEFT TOOLS ===
+
 	var ui_notesButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/notes_l.png',"Simple notepad, with auto-save.",'E:/DEV SRC/RainboxUI/Icons/18w/notes_r.png');
 	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/calc_l.png',"Calculator",'E:/DEV SRC/RainboxUI/Icons/18w/calc_r.png');
 
 	//=== TOP RIGHT TOOLS ===
+
 	var ui_tabsGroup = DuAEF.DuScriptUI.addGroup(ui_topGroup,'row');
 	ui_tabsGroup.alignment = ['right','center'];
 	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/settings_l.png',"Settings",'E:/DEV SRC/RainboxUI/Icons/18w/settings_r.png');
 	var ui_helpButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/help_l.png',"Help | About",'E:/DEV SRC/RainboxUI/Icons/18w/help_r.png');
 
 	//=== BOTTOM ===
+
 	var ui_rainboxURL = ui_bottomGroup.add ('statictext',undefined,'rainboxprod.coop');
 	ui_rainboxURL.alignment = ['left','bottom'];
+
+	//=== PANELS ===
+	#include Duik16_settings.jsxinc
+	#include Duik16_help.jsxinc
 
 	//=== CONNECT EVENTS ===
 
@@ -139,10 +172,14 @@
 	ui_notesButton.onClick = ui_notesButton_clicked;
 	ui_calcButton.onClick = ui_calcButton_clicked;
 	//tabs
+	ui_settingsButton.onClick = function(){setCurrentPanel(1)};
+	ui_helpButton.onClick = function(){setCurrentPanel(0)};
 
 	//bottom
 	ui_bottomGroup.addEventListener('mousedown',ui_bottomGroup_clicked,true);
 
+	//=== INIT ===
+	setCurrentPanel();
 	DuAEF.DuScriptUI.showUI(ui_palette);
 
 })(this);
