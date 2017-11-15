@@ -100,6 +100,14 @@
 			if (panel == undefined) panel = 1;
 		}
 
+		ui_riggingGroup.visible = panel == 5;
+		ui_riggingButton.setChecked(ui_riggingGroup.visible);
+		ui_animationGroup.visible = panel == 4;
+		ui_animationButton.setChecked(ui_animationGroup.visible);
+		ui_cameraGroup.visible = panel == 3;
+		ui_cameraButton.setChecked(ui_cameraGroup.visible);
+		ui_ioGroup.visible = panel == 2;
+		ui_ioButton.setChecked(ui_ioGroup.visible);
 		ui_settingsGroup.visible = panel == 1;
 		ui_settingsButton.setChecked(ui_settingsGroup.visible);
 		ui_helpGroup.visible = panel == 0;
@@ -141,19 +149,23 @@
 	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
 	DuAEF.DuScriptUI.addSeparator(ui_palette);
 	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
-	ui_mainGroup.alignment = ['center','top'];
+	ui_mainGroup.alignment = ['fill','top'];
 	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
 	ui_bottomGroup.alignment = ['fill','bottom'];
 
 	//=== TOP LEFT TOOLS ===
 
 	var ui_notesButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/notes_l.png',"Simple notepad, with auto-save.",'E:/DEV SRC/RainboxUI/Icons/18w/notes_r.png');
-	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/calc_l.png',"Calculator",'E:/DEV SRC/RainboxUI/Icons/18w/calc_r.png');
+	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/smallcalc_l.png',"Calculator",'E:/DEV SRC/RainboxUI/Icons/18w/smallcalc_r.png');
 
 	//=== TOP RIGHT TOOLS ===
 
 	var ui_tabsGroup = DuAEF.DuScriptUI.addGroup(ui_topGroup,'row');
 	ui_tabsGroup.alignment = ['right','center'];
+	var ui_riggingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/rig_l.png',"Rigging",'E:/DEV SRC/RainboxUI/Icons/18w/rig_r.png');
+	var ui_animationButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/kbez_l.png',"Animation",'E:/DEV SRC/RainboxUI/Icons/18w/kbez_r.png');
+	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/camera_l.png',"Camera",'E:/DEV SRC/RainboxUI/Icons/18w/camera_r.png');
+	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/io_l.png',"I/O Tools",'E:/DEV SRC/RainboxUI/Icons/18w/io_r.png');
 	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/settings_l.png',"Settings",'E:/DEV SRC/RainboxUI/Icons/18w/settings_r.png');
 	var ui_helpButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/help_l.png',"Help | About",'E:/DEV SRC/RainboxUI/Icons/18w/help_r.png');
 
@@ -163,6 +175,10 @@
 	ui_rainboxURL.alignment = ['left','bottom'];
 
 	//=== PANELS ===
+	#include Duik16_rigging.jsxinc
+	#include Duik16_animation.jsxinc
+	#include Duik16_camera.jsxinc
+	#include Duik16_io.jsxinc
 	#include Duik16_settings.jsxinc
 	#include Duik16_help.jsxinc
 
@@ -172,6 +188,10 @@
 	ui_notesButton.onClick = ui_notesButton_clicked;
 	ui_calcButton.onClick = ui_calcButton_clicked;
 	//tabs
+	ui_riggingButton.onClick = function(){setCurrentPanel(5)};
+	ui_animationButton.onClick = function(){setCurrentPanel(4)};
+	ui_cameraButton.onClick = function(){setCurrentPanel(3)};
+	ui_ioButton.onClick = function(){setCurrentPanel(2)};
 	ui_settingsButton.onClick = function(){setCurrentPanel(1)};
 	ui_helpButton.onClick = function(){setCurrentPanel(0)};
 
