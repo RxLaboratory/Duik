@@ -212,6 +212,7 @@ function KeyFrame(){
 * @property {string}    [_matchName=""]  - The property matchName
 * @property {KeyFrame[]}   [keys=[]]  - The keyframes of the animation
 * @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}	[startValue=null]		- The value at the beginning of the animation
+* @property {string}	[expression=""]		- The expression on the property, if any.
 * @property {string}   [type="anim"]  - Read Only.
 */
 function PropertyAnim(){
@@ -220,6 +221,7 @@ function PropertyAnim(){
 	this.keys = [];
 	this.startValue = null;
 	this.type = "anim";
+	this.expression = "";
 }
 
 /**
@@ -525,21 +527,23 @@ DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[setExpression=false]	- Set the expression on the property
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName)
+DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 {
 	if (time == undefined) time = layer.containingComp.time;
 	if (ignoreName == undefined) ignoreName = false;
+	if (setExpression == undefined) setExpression = false;
 
 	var matchName = anim._matchName;
 	var name = anim._name;
 
 	var ok = false;
 
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Transform Group"),anim.transform,time,true);
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Mask Parade"),anim.masks,time,ignoreName);
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Effect Parade"),anim.effects,time,ignoreName);
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Transform Group"),anim.transform,time,true,setExpression);
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Mask Parade"),anim.masks,time,ignoreName,setExpression);
+	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Effect Parade"),anim.effects,time,ignoreName,setExpression);
 }
 
 /**
@@ -714,6 +718,7 @@ DuAEF.DuAE.Property.getPropertyAnim = function (prop,selected,timeRange)
 	anim._matchName = prop.matchName;
 	anim.startValue = prop.valueAtTime(timeRange[0],true);
 	anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
+	if (prop.canSetExpression) anim.expression = prop.expression;
 	return anim;
 }
 
@@ -826,12 +831,14 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[setExpression=false]	- Sets the expression too
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName)
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression)
 {
 	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
 	if (ignoreName == undefined) ignoreName = false;
+	if (setExpression == undefined) setExpression = false;
 
 	var matchName = anim._matchName;
 	var name = anim._name;
@@ -862,6 +869,11 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName)
 					ok = true;
 				} catch (err) {};
 			}
+			//set the expression
+			if (prop.canSetExpression && setExpression)
+			{
+				prop.expression = anim.expression;
+			}
 		}
 	}
 	else if (prop.numProperties != undefined)
@@ -870,7 +882,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName)
 		{
 			for (var pi = 1;pi <= prop.numProperties;pi++)
 			{
-				ok = (DuAEF.DuAE.Property.setAnim(prop.property(pi),anim,time));
+				ok = (DuAEF.DuAE.Property.setAnim(prop.property(pi),anim,time,ignorName,setExpression));
 			}
 		}
 	}
@@ -883,12 +895,14 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName)
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[setExpression=false]	- Sets the expression too
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName)
+DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpression)
 {
 	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
 	if (ignoreName == undefined) ignoreName = false;
+	if (setExpression == undefined) setExpression = false;
 
 	var ok = false;
 
@@ -905,8 +919,8 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName)
 				var subProp = prop.property(j);
 				if (subProp.matchName == propAnim._matchName && (!ignoreName && subProp.name == propAnim._name || ignoreName))
 				{
-					if (propAnim.type == "group") ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName);
-					else ok = DuAEF.DuAE.Property.setAnim(subProp,propAnim,time,ignoreName);
+					if (propAnim.type == "group") ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName,setExpression);
+					else ok = DuAEF.DuAE.Property.setAnim(subProp,propAnim,time,ignoreName,setExpression);
 					break;
 				}
 			}
@@ -2734,4 +2748,216 @@ DuAEF.DuScriptUI.addGroup = function (container,orientation)
 	}
 
 	return group;
+}
+
+/**
+ * Creates a button with an optionnal icon. Must have at least an icon or a text, or both.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}			container	- The ScriptUI Object which will contain and display the button.
+ * @param {string}					text		- The label of the button. Default: empty string
+ * @param {string}					image		- The path to the icon. Default: empty string
+ * @param {string}					helpTip		- The helptip. Default: empty string
+ * @param {string}					imageOver	- The path to an icon displayed when the mouse is over the button. Default: empty string
+ * @param {bool}					debug		- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
+ * @return {ImageButton}			The image button created.
+ */
+DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOver,debug)
+{
+	if (!text) text = '';
+	if (!image) image = '';
+	if (!helpTip) helpTip = '';
+	if (!imageOver) imageOver = '';
+
+	if (text == '' && image == '') throw "You must provide either a text or an icon to create the button";
+
+	var imageButton = {};
+
+	imageButton.standardImage = image;
+	imageButton.imageOver = imageOver;
+	imageButton.onClick = function(){};
+	imageButton.image = null;
+	imageButton.label = null;
+
+	//create a group
+	var group = container.add('group');
+	group.orientation = 'row';
+	group.margins = 0;
+	group.spacing = 2;
+	imageButton.group = group;
+
+	if (image != '')
+	{
+		var icon = group.add('image',undefined,image);
+		icon.alignment = ['center','center'];
+		icon.helpTip = helpTip;
+		imageButton.image = icon;
+	}
+
+	if (text != '')
+	{
+		var label = group.add('statictext',undefined,text);
+		label.helpTip = helpTip;
+		label.alignment = ['left','center'];
+		imageButton.label = label;
+	}
+
+	//events
+	imageButton.clicked = function (e)
+	{
+		try { imageButton.onClick(); } catch (e) { if (debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
+	}
+
+	imageButton.mouseOver = function (e)
+	{
+		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+		if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+	}
+
+	imageButton.mouseOut = function (e)
+	{
+		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+		if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+	}
+
+	//add events
+	group.addEventListener("mousedown",imageButton.clicked,true);
+	// Hack - CS6 Bug on mouseover with images
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
+	{
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+	}
+	else
+	{
+		group.addEventListener("mouseover",imageButton.mouseOver);
+		group.addEventListener("mouseout",imageButton.mouseOut);
+	}
+
+
+	return imageButton;
+}
+
+/**
+ * Creates a checkbox with an optionnal icon. Must have at least an icon or a text, or both.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}			container		- The ScriptUI Object which will contain and display the button.
+ * @param {string}					text			- The label of the button. Default: empty string
+ * @param {string}					image			- The path to the icon. Default: empty string
+ * @param {string}					helpTip			- The helptip. Default: empty string
+ * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
+ * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
+ * @param {bool}						debug			- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
+ * @return {object}					The image checkbox created.
+ */
+DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,debug)
+{
+	if (!container) return null;
+	if (!text) text = '';
+	if (!image) image = '';
+	if (!helpTip) helpTip = '';
+	if (!imageChecked) imageChecked = '';
+	if (!imageOver) imageOver = imageChecked;
+
+	if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
+
+	var imageButton = {};
+
+	imageButton.standardImage = image;
+	imageButton.imageOver = imageOver;
+	imageButton.imageChecked = imageChecked;
+	imageButton.onClick = function () {};
+	imageButton.checked = imageButton.value = false;
+
+	var group = container.add('group');
+	group.orientation = 'row';
+	group.margins = 0;
+	group.spacing = 2;
+	imageButton.group = group;
+
+	if (image != '')
+	{
+		var icon = group.add('image',undefined,image);
+		icon.alignment = ['center','center'];
+		icon.helpTip = helpTip;
+		imageButton.image = icon;
+	}
+
+	if (text != '')
+	{
+		if (image != '')
+		{
+			var label = group.add('statictext',undefined,text);
+			label.helpTip = helpTip;
+			label.alignment = ['center','center'];
+			imageButton.label = label;
+		}
+		else
+		{
+			var label = group.add('checkbox',undefined,text);
+			label.helpTip = helpTip;
+			label.alignment = ['center','center'];
+			imageButton.label = label;
+			imageButton.box = true;
+		}
+
+	}
+
+	imageButton.setChecked = function (c)
+	{
+		imageButton.checked = imageButton.value = c;
+		if (imageButton.imageChecked != '')
+		{
+			if (imageButton.checked)
+			{
+				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+			}
+			else
+			{
+				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+			}
+		}
+	}
+
+	imageButton.clicked = function (e)
+	{
+		imageButton.setChecked(!imageButton.checked);
+		try { imageButton.onClick(); } catch (e) { if (debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
+	}
+
+	imageButton.mouseOver = function (e)
+	{
+		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
+		if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+	}
+
+	imageButton.mouseOut = function (e)
+	{
+		if (imageButton.checked)
+		{
+			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+		}
+		else
+		{
+			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+		}
+	}
+
+	imageButton.group.addEventListener("mousedown",imageButton.clicked,true);
+	// Hack - CS6 Bug on mouseover with images
+	if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+	{
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
+		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+	}
+	else
+	{
+		imageButton.group.addEventListener("mouseover",imageButton.mouseOver);
+		imageButton.group.addEventListener("mouseout",imageButton.mouseOut);
+	}
+
+	return imageButton;
 }
