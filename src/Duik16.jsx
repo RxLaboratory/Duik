@@ -83,6 +83,9 @@
 	var settings = new DuSettings("Duik",settingsFile);
 	//TODO get the version of Duik, update settings if changed
 	settings.data.duikVersion = version;
+	//set settings if new
+	if (settings.data.expert == undefined) settings.data.expert = false;
+
 
 	//========== MODULES =============
 	//Notes
