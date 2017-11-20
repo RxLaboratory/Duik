@@ -1,0 +1,343 @@
+/*
+DuikLib
+Library with Duik tools.
+Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* Duik tools
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.Duik = {};
+
+/**
+* A Structure
+* @typedef {Object} Structure
+* @property {Layer[]} elements - The elements of the structure, sorted by their parenting, root at 0
+*/
+
+//Initialize
+(function ()
+{
+	/**
+	 * The pseudo effects needed by Duik<br />
+	 * Accessible by name.
+	 * @example
+	 * DuAEF.Duik.pseudoEffects["structure"];
+	 * @type {File[]}
+	 */
+	DuAEF.Duik.pseudoEffects = [];
+	#include "pseudo_effects/structure.ffx.jsxinc"
+	DuAEF.Duik.pseudoEffects["structure"] = DuAEF.DuBinary.toFile(structure);
+})();
+
+
+/**
+ * Creates a structure in a composition
+ * @memberof DuAEF.Duik
+ * @param {int}		num	- The number of elements of the structure
+ * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
+ * @return {Structure|null}	The Structure or null if there is no active composition
+ */
+DuAEF.Duik.addStructure = function (num,comp,name)
+{
+	if (name === undefined) name = "Name";
+
+	//end
+	num++;
+
+	//structure
+	var structure = {};
+	structure.elements = [];
+
+	//elements length
+	var length = comp.width/(num+1);
+
+	var prevElement = null;
+	var color = DuAEF.DuJS.Color.random();
+
+	for (var i = 0 ; i < num ; i++)
+	{
+		var end = i == num-1;
+		var element = DuAEF.Duik.addStructureElement(comp,color,end);
+		if (end)
+		{
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("Structure " + name, comp);
+		}
+		else
+		{
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S " + name, comp);
+		}
+
+		if (prevElement)
+		{
+			element.parent = prevElement;
+			element.transform.position.setValue([length,0]);
+		}
+		else
+		{
+			element.transform.position.setValue([length,comp.height/2]);
+		}
+		prevElement = element;
+		structure.elements.push(element);
+	}
+	//links
+	for (var i = 0;i < structure.elements.length-1 ; i++)
+	{
+		structure.elements[i].effect("Structure")(3).setValue(structure.elements[i+1].index)
+	}
+}
+
+/**
+ * Creates an element for a structure in a composition
+ * @memberof DuAEF.Duik
+ * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {float[]}	[color=[1,0.764,0.764,1]]		- The color of the element, [R,G,B,A] Array from 0.0 to 1.0
+ * @param {boolean}	[end=false]	- Wether the element is the end target of a structure or a regular element
+ * @param {float}	[size] 		- The element size, un percent. By default, will adjust automatically depending on comp size
+ * @return {ShapeLayer}	The element
+ */
+DuAEF.Duik.addStructureElement = function (comp,color,end,size)
+{
+	if (size == undefined)
+	{
+		size = comp.width/2 + comp.height/2;
+		size = Math.floor(size/14);
+	}
+
+	if (end == undefined) end = false;
+
+	if (!color)
+	{
+		color = [1,0.764,0.764,1];
+	}
+
+
+	//======= CREATE ELEMENT USING SHAPE LAYER =======
+	var element = comp.layers.addShape();
+	//add effect
+
+	element.applyPreset(DuAEF.Duik.pseudoEffects["structure"]);
+	element.effect("Structure")(2).setValue(size);
+
+	//bone group
+	var elementGroup = element("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	elementGroup.name = "Structure Element";
+	elementGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = '//Duik.structure.size\nif(!enabled) value;\nelse\n{\nvar s = effect("Structure")(2);\n[s,s];\n}';
+	//target group
+	var targetGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	targetGroup.name = "Target";
+	var targetGroupContent = targetGroup.property("ADBE Vectors Group");
+	var ellipse = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
+	ellipse("ADBE Vector Ellipse Size").setValue([15,15]);
+	var ellipse2 = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
+	ellipse2("ADBE Vector Ellipse Size").setValue([1,1]);
+	var targetStroke = targetGroupContent.addProperty("ADBE Vector Graphic - Stroke");
+	targetStroke("ADBE Vector Stroke Color").setValue([0.1,0.1,0.1,1]);
+	targetStroke("ADBE Vector Stroke Width").setValue(2);
+
+	//end group
+	if (!end)
+	{
+		var displayGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+		displayGroup.name = "Display";
+		displayGroup.property("ADBE Vector Transform Group").property("ADBE Vector Group Opacity").setValue(50);
+		//stretch group
+		var stretchBoneGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+		stretchBoneGroup.name = "Link";
+		var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
+		var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
+		star("ADBE Vector Star Type").setValue(2);
+		star("ADBE Vector Star Points").setValue(3);
+		star("ADBE Vector Star Outer Radius").setValue(20);
+		star("ADBE Vector Star Outer Roundess").setValue(100);
+
+		var roundExp = '//Duik.structure.roundness\n' +
+					'if(!enabled) value;\n' +
+					'else\n' +
+					'{\n' +
+					'function isBone(layer)\n' +
+					'{\n' +
+					'var ok = false;\n' +
+					'try { layer.content("Structure Element"); ok = true;}\n' +
+					'catch (e) { ok = false;}\n' +
+					'return ok;\n' +
+					'}\n' +
+					'var child = null;\n' +
+					'try { child = effect("Structure")(3);}\n' +
+					'catch (e) {child = null;}\n' +
+					'if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n' +
+					'if (!isBone(child)) child = null;\n' +
+					'if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n' +
+					'if (!isBone(child)) child = null;\n' +
+					'if (!child)\n' +
+					'{\n' +
+					'for (var i = thisComp.numLayers  ; i > 0 ; i--)\n' +
+					'{\n' +
+					'if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n' +
+					'{\n' +
+					'child = thisComp.layer(i);\n' +
+					'if (!isBone(child)) child = null;\n' +
+					'if (child) break;\n' +
+					'}\n' +
+					'}\n' +
+					'}\n' +
+					'if (child)\n' +
+					'{\n' +
+					'var A = child.toWorld(child.anchorPoint);\n' +
+					'var B = thisLayer.toWorld(thisLayer.anchorPoint);\n' +
+					'var dist = length(A,B);\n' +
+					'if (dist < 20) dist = 20;\n' +
+					'var s = content("Structure Element").transform.scale[0];\n' +
+					'value/(dist/60)*s/80;\n' +
+					'}\n' +
+					'else value;\n' +
+					'}';
+
+		star("ADBE Vector Star Outer Roundess").expression = roundExp;
+
+		stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
+		stretchBoneFill("ADBE Vector Fill Color").setValue(color);
+		stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
+
+		var scaExpr = "//Duik.structure.stretch\n" +
+					'if(!enabled) value;\n' +
+					'else\n' +
+					'{\n' +
+					"var X = 100;\n" +
+					"var Y = 60;\n" +
+					"function isBone(layer)\n" +
+					"{\n" +
+					"var ok = false;\n" +
+					"try { layer.content(\"Structure Element\"); ok = true;}\n" +
+					"catch (e) { ok = false;}\n" +
+					"return ok;\n" +
+					"}\n" +
+					"var child = null;\n" +
+					'try { child = effect("Structure")(3);}\n' +
+					"catch (e) {child = null;}\n" +
+					"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
+					"if (!isBone(child)) child = null;\n" +
+					"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
+					"if (!isBone(child)) child = null;\n" +
+					"if (!child)\n" +
+					"{\n" +
+					"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
+					"{\n" +
+					"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
+					"{\n" +
+					"child = thisComp.layer(i);\n" +
+					"if (!isBone(child)) child = null;\n" +
+					"if (child) break;\n" +
+					"}\n" +
+					"}\n" +
+					"}\n" +
+					"if (child)\n" +
+					"{\n" +
+					"var A = child.toWorld(child.anchorPoint);\n" +
+					"var B = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+					"var dist = length(A,B);\n" +
+					"Y = dist/30*100;\n" +
+					"}\n" +
+					"[X,Y*100/content(\"Structure Element\").transform.scale[1]];\n" +
+					'}';
+
+		stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
+
+		var rotExpr = "//Duik.structure.orientation\n" +
+				'if(!enabled) value;\n' +
+				'else\n' +
+				'{\n' +
+				"var R = 45;\n" +
+				"function isBone(layer)\n" +
+				"{\n" +
+				"var ok = false;\n" +
+				"try { layer.content(\"Structure Element\"); ok = true;}\n" +
+				"catch (e) { ok = false;}\n" +
+				"return ok;\n" +
+				"}\n" +
+				"var child = null;\n" +
+				'try { child = effect("Structure")(3);}\n' +
+				"catch (e) {child = null;}\n" +
+				"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (!child)\n" +
+				"{\n" +
+				"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
+				"{\n" +
+				"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
+				"{\n" +
+				"child = thisComp.layer(i);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (child) break;\n" +
+				"}\n" +
+				"}\n" +
+				"}\n" +
+				"var result = value;\n" +
+				"var layer = thisLayer;\n" +
+				"while (layer.hasParent)\n" +
+				"{\n" +
+				"layer = layer.parent;\n" +
+				"result = result - layer.rotation;\n" +
+				"}\n" +
+				"if (child)\n" +
+				"if (child.index != index)\n" +
+				"{\n" +
+				"C = child.toWorld(child.anchorPoint);\n" +
+				"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+				"var vec = O-C;\n" +
+				"var angle = Math.atan2(vec[1], vec[0]);\n" +
+				"var ik = radiansToDegrees(angle);\n" +
+				"result += (ik-90-rotation)\n" +
+				"}\n" +
+				"result;\n" +
+				"}";
+
+		elementGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
+	}
+
+	element.guideLayer = true;
+
+	//group
+	DuAEF.Dugr.addLayerToGroup(element,"Structures");
+
+	return element;
+}
