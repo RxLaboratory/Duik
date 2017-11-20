@@ -1,10 +1,42 @@
+//========== FU?CTIONS ==============
+function setCurrentStructuresPanel(panel)
+{
+	if (panel == undefined) panel = 0;
 
+	ui_structuresMainPanelGroup.visible = panel == 0;
+	ui_structuresCustomGroup.visible = panel == 1;
+}
 
+// ============= EVENTS =============
+function ui_structuresCustomNameEdit_activated()
+{
+	if (ui_structuresCustomNameEdit.text == "Name") ui_structuresCustomNameEdit.text = '';
+}
+
+function ui_structuresCustomNameEdit_Deactivated()
+{
+	if (ui_structuresCustomNameEdit.text == '') ui_structuresCustomNameEdit.text = "Name";
+}
+
+function ui_structuresCustomValidButton_clicked()
+{
+	//get current comp
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	var num = parseInt(ui_structuresCustomNumberEdit.text);
+	app.beginUndoGroup('Duik | ' + "Create structure");
+	DuAEF.Duik.addStructure(num,comp,ui_structuresCustomNameEdit.text);
+	app.endUndoGroup();
+}
 
 // ============= UI =================
 
-var ui_structuresMainGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
-var ui_structuresGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,settings.data.expert ? 'row' : 'column');
+var ui_structuresMainGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
+
+//MAIN
+var ui_structuresMainPanelGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+
+var ui_structuresGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,settings.data.expert ? 'row' : 'column');
 ui_structuresGroup.alignment = ['center','top'];
 ui_structuresGroup.alignChildren = ['left','top'];
 var ui_armGroup = DuAEF.DuScriptUI.addGroup(ui_structuresGroup,settings.data.expert ? 'column' : 'row');
@@ -21,8 +53,8 @@ var ui_tailButton = DuAEF.DuScriptUI.addImageButton(ui_tailGroup,settings.data.e
 var ui_tailOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_tailGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Tail options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 var ui_customStructureButton = DuAEF.DuScriptUI.addImageButton(ui_structuresGroup,settings.data.expert ? '' : "Custom...",'E:/DEV SRC/RainboxUI/Icons/32w/bone_l.png',"Add a structure",'E:/DEV SRC/RainboxUI/Icons/32w/bone_r.png');
 
-DuAEF.DuScriptUI.addSeparator(ui_structuresMainGroup);
-var ui_structuresIKGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,settings.data.expert ? 'row' : 'column');
+DuAEF.DuScriptUI.addSeparator(ui_structuresMainPanelGroup);
+var ui_structuresIKGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,settings.data.expert ? 'row' : 'column');
 ui_structuresIKGroup.alignment = ['center','top'];
 ui_structuresIKGroup.alignChildren = ['left','top'];
 var ui_autorigStructureButton = DuAEF.DuScriptUI.addImageButton(ui_structuresIKGroup,settings.data.expert ? '' : "Auto-rig",'E:/DEV SRC/RainboxUI/Icons/32w/autorig_l.png',"Automatically rig structures",'E:/DEV SRC/RainboxUI/Icons/32w/autorig_r.png');
@@ -32,3 +64,34 @@ var ui_IKStructureOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_IKStructure
 var ui_bezierIKStructureGroup = DuAEF.DuScriptUI.addGroup(ui_structuresIKGroup,settings.data.expert ? 'column' : 'row');
 var ui_bezierIKStructureButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKStructureGroup,settings.data.expert ? '' : "Bezier IK",'E:/DEV SRC/RainboxUI/Icons/18w/bezierik_l.png',"Add an IK to the selected structure",'E:/DEV SRC/RainboxUI/Icons/18w/bezierik_r.png');
 var ui_bezierIKStructureOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKStructureGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Bezier IK options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
+
+
+//CUSTOM
+var ui_structuresCustomGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+ui_structuresCustomGroup.alignment = ['center','top'];
+ui_structuresCustomGroup.alignChildren = ['fill','top'];
+var ui_structuresCustomNumberGroup = DuAEF.DuScriptUI.addGroup(ui_structuresCustomGroup);
+ui_structuresCustomNumberGroup.add('statictext',undefined,"Number of elements")
+var ui_structuresCustomNumberEdit = ui_structuresCustomNumberGroup.add('edittext',undefined,"3");
+var ui_structuresCustomNameEdit = ui_structuresCustomGroup.add('edittext',undefined,"Name");
+//TODO option for bones color
+//TODO option for bones size
+//-> go to edit mode automatically after creation
+
+var ui_structuresValidGroup = DuAEF.DuScriptUI.addGroup(ui_structuresCustomGroup);
+var ui_structuresCustomCancelButton = DuAEF.DuScriptUI.addImageButton(ui_structuresValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_structuresCustomValidButton = DuAEF.DuScriptUI.addImageButton(ui_structuresValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+//============== INIT ===================
+
+setCurrentStructuresPanel();
+
+// ========= CONNECT EVENTS ===================
+
+//CUSTOM STRUCTURES
+ui_customStructureButton.onClick = function() { setCurrentStructuresPanel(1); };
+
+ui_structuresCustomNameEdit.onActivate = ui_structuresCustomNameEdit_activated;
+ui_structuresCustomNameEdit.onDeactivate = ui_structuresCustomNameEdit_Deactivated;
+ui_structuresCustomCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
+ui_structuresCustomValidButton.onClick = ui_structuresCustomValidButton_clicked;
