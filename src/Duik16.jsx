@@ -85,7 +85,7 @@
 	settings.data.duikVersion = version;
 	//set settings if new
 	if (settings.data.expert == undefined) settings.data.expert = false;
-
+	if (settings.data.debug == undefined) settings.data.debug = false;
 
 	//========== MODULES =============
 	//Notes
