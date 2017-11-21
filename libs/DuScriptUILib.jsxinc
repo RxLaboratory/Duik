@@ -61,6 +61,16 @@ DuAEF.DuScriptUI = {};
 * @property {Group} buttons - The right vertical group
 */
 
+/**
+* A nice Edit Text
+* @typedef {Object} NiceEditText
+* @property {string} text - The text displayed
+* @property {event} onActivate - Function to execute when activated
+* @property {event} onDeactivate - Function to execute when deactivated
+* @property {event} onChange - Function to execute when text changed
+* @property {method} setText - Call this method to change the text
+*/
+
 //initilization
 (function ()
 {
@@ -461,6 +471,7 @@ DuAEF.DuScriptUI.addForm = function (container)
 
 	return mainGroup;
 }
+
 /**
  * Adds a field to a form
  * example: Duik.ui.addFormField(form,'Composition:','dropdownlist',['Composition1','Composition2'],'Select a composition')
@@ -496,4 +507,74 @@ DuAEF.DuScriptUI.addFormField = function (form,label,type,value,helpTip)
 
 	l.minimumSize.height = l.maximumSize.height = height;
 	return [l,control];
+}
+
+/**
+ * Creates a nice edittext where the edit box is shown only on click.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group}	container		- The ScriptUI Object which will contain and display the form.
+ * @return {NiceEditText}	The custom Group containing the edit text.
+ * @todo implement helpTip
+ */
+DuAEF.DuScriptUI.addNiceEditText = function(container,text)
+{
+	var niceEditText = container.add('group');
+	niceEditText.orientation = 'stack';
+	niceEditText.margins = 0;
+	niceEditText.alignChildren = ['fill','fill'];
+	niceEditText.static = niceEditText.add('statictext',undefined,text);
+	niceEditText.static.alignment = ['fill','center'];
+	DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.AFTER_EFFECTS_BLUE);
+	niceEditText.edit = niceEditText.add('edittext',undefined,text);
+	niceEditText.edit.visible = false;
+
+	niceEditText.text = text;
+	niceEditText.editing = false;
+
+	niceEditText.onActivate = function(){};
+	niceEditText.onDeactivate = function(){};
+	niceEditText.onChange = function(){};
+
+	niceEditText.clicked = function()
+	{
+		if (niceEditText.editing) return;
+		else
+		{
+			niceEditText.static.visible = false;
+			niceEditText.edit.visible = true;
+			niceEditText.editing = true;
+			niceEditText.edit.active = true;
+		}
+	}
+
+	niceEditText.changed = function()
+	{
+		niceEditText.editing = false;
+		niceEditText.static.text = niceEditText.edit.text;
+		niceEditText.text = niceEditText.edit.text ;
+		niceEditText.edit.visible = false;
+		niceEditText.static.visible = true;
+		niceEditText.edit.active = false;
+		niceEditText.onChange();
+	}
+
+	niceEditText.setText = function (text)
+	{
+		niceEditText.static.text = niceEditText.edit.text = niceEditText.text = text;
+	}
+
+
+	niceEditText.edit.onActivate = function()
+	{
+		niceEditText.onActivate();
+	}
+	niceEditText.edit.onDeactivate = function ()
+	{
+		niceEditText.changed();
+		niceEditText.onDeactivate();
+	}
+	niceEditText.edit.onChange = niceEditText.changed;
+	niceEditText.addEventListener("mousedown",niceEditText.clicked,true);
+
+	return niceEditText;
 }
