@@ -39,33 +39,209 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+* Constructs a Structure
+* @class Structure
+* @classdesc A Structure.
+* @property {Layer[]} elements - The elements of the structure, sorted by their parenting, root at 0
+*/
+function Structure()
+{
+	this.elements = [];
+	this.editModeRegExp = / \|StructureElementChildren:([\d,]*)\|/;
+}
+
+/**
+* Sets a new display size for the structure
+* @memberof Structure
+* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
+*/
+Structure.prototype.setSize = function (size)
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+	if (size == undefined)
+	{
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
+	}
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(2).setValue(size);
+	}
+}
+
+/**
+* Sets a new display color for the structure
+* @memberof Structure
+* @param {float[]} color - The color
+*/
+Structure.prototype.setColor = function (color)
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(color);
+	}
+}
+
+/**
+* Toggles the edit mode
+* @memberof Structure
+*/
+Structure.prototype.toggleEditMode = function (color)
+{
+	if (this.elements.length == 0) return;
+
+	var setEditMode = !this.editModeRegExp.test(this.elements[0].comment);
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		this.toggleElementEditMode(layer,setEditMode)
+	}
+}
+
+//low level undocumented function
+Structure.prototype.toggleElementEditMode = function (element,setEditMode)
+{
+	var comp = element.containingComp;
+	var already = this.editModeRegExp.test(element.comment);
+
+	if (setEditMode && !already)
+	{
+		var children = DuAEF.DuAE.Layer.getChildren(element);
+		element.comment = element.comment + ' |StructureElementChildren:';
+		for (var j = 0 ; j < children.length ; j++)
+		{
+			var child = children[j];
+			element.comment = element.comment + child.index;
+			if (j < children.length -1) element.comment = element.comment + ',';
+			child.parent = null;
+		}
+		element.comment = element.comment + "|";
+	}
+	else if (already)
+	{
+		var match = this.editModeRegExp.exec(element.comment);
+		if (match.length == 2)
+		{
+			var indices = match[1].split(',');
+			//reparent
+			if (indices.length > 0)
+			{
+				for (var i = 0 ; i < indices.length ; i++)
+				{
+					var index = parseInt(indices[i]);
+					if (isNaN(index)) continue;
+					comp.layer(index).parent = element;
+				}
+			}
+			//remove comment
+			element.comment = element.comment.replace(match[0],'');
+		}
+	}
+}
+
+/**
+* Toggles visibility of the structure
+* @memberof Structure
+*/
+Structure.prototype.showHide = function ()
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+	var show = !this.elements[0].enabled;
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		this.elements[i].enabled = show;
+	}
+}
+
+/**
 * Duik tools
 * @namespace
 * @memberof DuAEF
 */
 DuAEF.Duik = {};
 
-/**
-* A Structure
-* @typedef {Object} Structure
-* @property {Layer[]} elements - The elements of the structure, sorted by their parenting, root at 0
-*/
-
 //Initialize
 (function ()
 {
-	/**
-	 * The pseudo effects needed by Duik<br />
-	 * Accessible by name.
-	 * @example
-	 * DuAEF.Duik.pseudoEffects["structure"];
-	 * @type {File[]}
-	 */
-	DuAEF.Duik.pseudoEffects = [];
 	#include "pseudo_effects/duik_structure.ffx.jsxinc"
-	DuAEF.Duik.pseudoEffects["structure"] = DuAEF.DuBinary.toFile(duik_structure);
-})();
+	/**
+	 * The pseudo effects needed by Duik
+	 * @enum {File}
+	 * @readonly
+	 */
+	DuAEF.Duik.pseudoEffects =
+	{
+		STRUCTURE_ELEMENT: DuAEF.DuBinary.toFile(duik_structure)
+	};
 
+	/**
+	 * The pseudo effects match names
+	 * @enum {string}
+	 * @readonly
+	 */
+	DuAEF.Duik.pseudoEffectsMatchNames =
+	{
+		STRUCTURE_ELEMENT: "Pseudo/DUIK structure"
+	};
+
+	/**
+	 * Predefined sizes
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.sizes =
+	{
+		SMALL: 0,
+		MEDIUM: 1,
+		LARGE: 2,
+		CUSTOM: 3
+	};
+
+	/**
+	 * How to get structures depending on selection<br />
+	 * All structure, only children elements, or only selected element
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.structureSelectionMode =
+	{
+		STRUCTURE: 0,
+		CHILDREN: 1,
+		ELEMENT: 2
+	}
+
+	/**
+	* Size hint of structure elements
+	* @type {int}
+	* @default DuAEF.Duik.sizes.SMALL
+	*/
+	DuAEF.Duik.structureSizeHint = DuAEF.Duik.sizes.SMALL;
+	/**
+	* The default size for new structures if structureSizeHint is DuAEF.Duik.sizes.CUSTOM
+	* @type {int}
+	* @default 100
+	*/
+	DuAEF.Duik.structureSize = 100;
+	/**
+	* The default color for new structures
+	* @type {float[]}
+	* @default DuAEF.DuJS.Color.Colors.RANDOM
+	*/
+	DuAEF.Duik.structureColor = DuAEF.DuJS.Color.Colors.RANDOM
+
+})();
 
 /**
  * Creates a structure in a composition
@@ -90,7 +266,11 @@ DuAEF.Duik.addStructure = function (num,comp,name)
 	var length = comp.width/(num+1);
 
 	var prevElement = null;
-	var color = DuAEF.DuJS.Color.random();
+	var color = DuAEF.Duik.structureColor;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
 
 	for (var i = 0 ; i < num ; i++)
 	{
@@ -138,7 +318,7 @@ DuAEF.Duik.addStructure = function (num,comp,name)
  * @memberof DuAEF.Duik
  * @param {CompItem}	comp	- The composition where to create the Structure
  * @param {float[]}	[color=[1,0.764,0.764,1]]		- The color of the element, [R,G,B,A] Array from 0.0 to 1.0
- * @param {float}	[size] 		- The element size, un percent. By default, will adjust automatically depending on comp size
+ * @param {float}	[size] 		- The element size, un percent. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
  * @return {ShapeLayer}	The element
  */
 DuAEF.Duik.addStructureElement = function (comp,color,size)
@@ -146,12 +326,19 @@ DuAEF.Duik.addStructureElement = function (comp,color,size)
 	if (size == undefined)
 	{
 		size = comp.width/2 + comp.height/2;
-		size = Math.floor(size/14);
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
 	}
 
 	if (!color)
 	{
-		color = [1,0.764,0.764,1];
+		color = DuAEF.Duik.structureColor;
+		if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+		{
+			color = DuAEF.DuJS.Color.random();
+		}
 	}
 
 
@@ -159,8 +346,9 @@ DuAEF.Duik.addStructureElement = function (comp,color,size)
 	var element = comp.layers.addShape();
 	//add effect
 
-	element.applyPreset(DuAEF.Duik.pseudoEffects["structure"]);
+	element.applyPreset(DuAEF.Duik.pseudoEffects.STRUCTURE_ELEMENT);
 	element.effect("Structure")(2).setValue(size);
+	element.effect("Structure")(4).setValue(color);
 
 	//bone group
 	var elementGroup = element("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -237,8 +425,8 @@ DuAEF.Duik.addStructureElement = function (comp,color,size)
 
 	star("ADBE Vector Star Outer Roundess").expression = roundExp;
 
-	stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
-	stretchBoneFill("ADBE Vector Fill Color").setValue(color);
+	var stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
+	stretchBoneFill("ADBE Vector Fill Color").expression = '//Duik.structure.color\neffect("Structure")(4);';
 	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
 
 	var scaExpr = "//Duik.structure.stretch\n" +
@@ -340,6 +528,23 @@ DuAEF.Duik.addStructureElement = function (comp,color,size)
 
 	elementGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
 
+	var editModeGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	editModeGroup.name = "Edit Mode";
+	var editModeContent = editModeGroup.property("ADBE Vectors Group");
+	var circle = editModeContent.addProperty("ADBE Vector Shape - Ellipse");
+	circle("ADBE Vector Ellipse Size").setValue([70,70]);
+
+	var editModeExpr = '//Duik.structure.editMode\n' +
+					'var child = null;\n' +
+					'if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n' +
+					'if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n' +
+					'if (child) [0,0];\n' +
+					'else value;';
+
+	circle("ADBE Vector Ellipse Size").expression = editModeExpr;
+
+	var editModeFill = editModeContent.addProperty("ADBE Vector Graphic - Fill");
+	editModeFill("ADBE Vector Fill Color").setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 
 	element.guideLayer = true;
 
@@ -347,4 +552,128 @@ DuAEF.Duik.addStructureElement = function (comp,color,size)
 	DuAEF.Dugr.addLayerToGroup(element,"Structures");
 
 	return element;
+}
+
+//Low-level undocumented function
+DuAEF.Duik.isStructure = function (layer)
+{
+	var structureEffect = layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT);
+	if (structureEffect) return true;
+	else return false;
+}
+
+/**
+ * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
+ * @memberof DuAEF.Duik
+ * @param {CompItem}	comp	- The composition where to get the structures
+ * @param {DuAEF.Duik.structureSelectionMode} structureSelectionMode	- The selection mode
+ * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.structureSelectionMode.ELEMENT, will be one structure with all elements found
+ */
+DuAEF.Duik.getStructures = function (comp,selectionMode)
+{
+	if (selectionMode == undefined) selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+	var layers = comp.selectedLayers;
+	var i = 0;
+	var m = layers.length-1;
+	if (layers.length == 0)
+	{
+		layers = comp.layers;
+		selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+		i = 1;
+		m = layers.length;
+	}
+
+	var structures = [];
+	var indexed = [];
+
+	var structure = new Structure();
+
+	for ( i ; i <= m ; i++)
+	{
+		var layer = layers[i];
+		if (!DuAEF.Duik.isStructure(layer)) continue;
+		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) continue;
+
+		indexed.push(layer.index);
+
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT)
+		{
+			structure.elements.push(layer);
+			continue;
+		}
+		var structure = new Structure();
+		structure.elements.push(layer);
+		//get children
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.CHILDREN || selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		{
+			//for all layers in the comp, get child
+			var childLayer = layer;
+			while (childLayer != null)
+			{
+				var childIndex = childLayer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				if (childIndex == childLayer.index) break;
+				var currentIndex = childLayer.index;
+				childLayer = null;
+				//get child
+				if (childIndex != 0)
+				{
+					var child = comp.layer(childIndex);
+					//check if it's a structure element
+					if (DuAEF.Duik.isStructure(child))
+					{
+						structure.elements.push(child);
+						childLayer = child;
+						indexed.push(child.index);
+						continue;
+					}
+				}
+				//search child
+				for (var j = 1 ; j <= comp.layers.length ; j++)
+				{
+					var child = comp.layer(j);
+					if (child.parent == null) continue;
+					if (DuAEF.Duik.isStructure(child) && child.parent.index == currentIndex)
+					{
+						structure.elements.push(child);
+						childLayer = child;
+						indexed.push(child.index);
+						break;
+					}
+				}
+			}
+		}
+
+		//get parents
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		{
+			var parentLayer = layer;
+			while (parentLayer != null)
+			{
+				var testParent = parentLayer.parent;
+				var childIndex = parentLayer.index;
+
+				if (testParent == null) break;
+				else if (!DuAEF.Duik.isStructure(testParent)) break;
+
+				var testIndex = testParent.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+
+				parentLayer = null;
+
+				if (testIndex == testParent.index) break;
+				else if (testIndex == 0 || testIndex == childIndex)
+				{
+					structure.elements.unshift(testParent);
+					parentLayer = testParent;
+					indexed.push(testParent.index);
+				}
+			}
+		}
+
+		structures.push(structure);
+
+	}
+
+	if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT) structures.push(structure);
+
+	return structures;
 }
