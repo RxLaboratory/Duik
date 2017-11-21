@@ -442,6 +442,22 @@ DuAEF.DuAE.Comp.unselectProperties = function()
 }
 
 /**
+* Generates a new unique name for a layer
+* @param {string} newName	- The wanted new name
+* @param {CompItem} comp 	- The comp
+* @return {string}	The unique name, with a new number at the end if needed.
+*/
+DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp)
+{
+	var layerNames = [];
+	for (var i = 1 ; i <= comp.layers.length ; i++)
+	{
+		layerNames.push(comp.layer(i).name);
+	}
+	return DuAEF.DuJS.String.generateUnique(newName,layerNames);
+}
+
+/**
 * After Effects layer methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -523,7 +539,7 @@ DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 
 /**
 * Sets the property animation on the property
-* @param {Layer}	layer	- The property.
+* @param {Layer}	layer	- The layer.
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
@@ -544,6 +560,25 @@ DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Transform Group"),anim.transform,time,true,setExpression);
 	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Mask Parade"),anim.masks,time,ignoreName,setExpression);
 	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Effect Parade"),anim.effects,time,ignoreName,setExpression);
+}
+
+/**
+* Gets the children of a layer
+* @param {Layer}	layer	- The layer.
+* @return {Layer[]} All the children of the layer
+*/
+DuAEF.DuAE.Layer.getChildren = function(layer)
+{
+	var comp = layer.containingComp;
+	var children = [];
+	for (var i = 1 ; i <= comp.layers.length ; i++)
+	{
+		var l = comp.layer(i);
+		if (l.index == layer.index) continue;
+		if (l.parent == null) continue;
+		if (l.parent.index == layer.index) children.push(l);
+	}
+	return children;
 }
 
 /**
@@ -1745,8 +1780,8 @@ DuAEF.DuJS.Math = {};
 /**
 * Generates a random integer between minimum and maximum
 * @memberof DuAEF.DuJS.Math
-* @param {int}	min	- The minimum value
-* @param {int}	max	- The maximum value
+* @param {int}	[min=0]	- The minimum value
+* @param {int}	[max=1]	- The maximum value
 * @return {int}	The randomly generated integer
 */
 DuAEF.DuJS.Math.random = function (min, max)
@@ -1814,6 +1849,174 @@ DuAEF.DuJS.String.replace = function (string, find, replace, caseSensitive)
 DuAEF.DuJS.String.endsWith = function (str, suffix)
 {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+/**
+ * Generates a new unique string (numbered)
+ * @param {string} newString	- The wanted new string
+ * @param {string[]} stringList 	- The list of strings where the new one must be generateUnique
+ * @return {string}	The unique string, with a new number at the end if needed.
+ */
+DuAEF.DuJS.String.generateUnique = function ( newString , stringList )
+{
+    //detect digits
+    var reg = "( *)(\\d+)([.,]?\\d*)$";
+    //clean input
+    var regexClean = new RegExp(reg);
+    newString = newString.replace(regexClean,"");
+    //go!
+    var regex = new RegExp( newString + reg);
+    //The greatest number found
+    var greatestNumber = 0;
+    //The number of digits for the number as string
+    var numDigits = 0;
+    var spaceString = "";
+    for ( var i =0 ; i < stringList.length ; i ++)
+    {
+        var currentNumberMatch = stringList[i].match(regex);
+        if (stringList[i] === newString && greatestNumber == 0) greatestNumber++;
+        else if (currentNumberMatch !== null)
+        {
+            //if its a decimal number, keep only the integer part
+            var numberAsString = currentNumberMatch[2];
+            //convert to int
+            var numberAsInt = parseInt(currentNumberMatch[2],10);
+            if(numberAsInt >= greatestNumber ){
+                greatestNumber = numberAsInt  + 1;
+                spaceString = currentNumberMatch[1];
+            }
+            //check if there are zeroes before the number, count the digits
+            if(numberAsInt.toString().length < numberAsString.length && numDigits < numberAsString.length) numDigits = numberAsString.length;
+        }
+    }
+
+    //add leading 0 if needed
+    if (greatestNumber > 0)
+    {
+            //convert to string with leading zeroes
+            if (greatestNumber == 1) {
+                greatestNumber++;
+                spaceString = " ";
+            }
+            newString += spaceString;
+            greatestNumber = DuAEF.DuJS.Number.convertToString(greatestNumber,numDigits);
+            newString += greatestNumber;
+    }
+
+    return newString;
+}
+
+/**
+* Number related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Number = {};
+
+/**
+ * Converts a number to a string, adding optionnal leading zeroes
+ * @param {Number} num	- The number
+ * @param {int} numDigits 	- The number of digits in the string. Adds leading zeroes
+ * @param {int} [base=10]	- The conversion base
+ * @return {string}	The number as a string
+ */
+DuAEF.DuJS.Number.convertToString = function (num, numDigits, base)
+{
+	if (base == undefined) base = 10;
+	var result = num.toString(base);
+    while(numDigits > result .length)
+    {
+        result  = "0"+ result ;
+    }
+    return result;
+}
+
+/**
+* Color related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Color = {};
+
+//Initialize
+(function ()
+{
+	/**
+	 * Enum for predefined colors.
+	 * @readonly
+	 * @enum {float[]}
+	 */
+	DuAEF.DuJS.Color.Colors =
+	{
+		LIGHT_GREY: [.7,.7,.7,1],
+		RAINBOX_RED: [.925,.094,.094,1],
+		RANDOM: [-1,-1,-1,-1]
+	};
+
+})();
+
+/**
+* Generates a random color
+* @memberof DuAEF.DuJS.Color
+* @return {float[]}	The color as an [R,G,B,A] Array with float values between 0.0 and 1.0
+*/
+DuAEF.DuJS.Color.random = function ()
+{
+	var color = [0,0,0,1];
+	for (var i = 0 ; i < 3 ; i++)
+	{
+		color[i] = DuAEF.DuJS.Math.random();
+		$.sleep(10);
+	}
+	return color;
+}
+
+/**
+* Converts an hexadecimal color to an RVB Array
+* @memberof DuAEF.DuJS.Color
+* @param {string|int[]} hexColor	- The hexadecimal color
+* @param {boolean}	[isString=true] 	- Whether hexColor is a string or an Array of int of base 16
+* @return {float[]}	The color as an [R,G,B,A] Array with float values between 0.0 and 1.0
+*/
+DuAEF.DuJS.Color.hexToRVB = function (hexColor,isString)
+{
+		if (isString == undefined) isString = true;
+		if (isString)
+		{
+			if (hexColor.indexOf("#") == 0) hexColor = hexColor.replace("#","");
+			var red = parseInt(hexColor.substr(0,2),16)/255.0;
+			var green = parseInt(hexColor.substr(2,2),16)/255.0;
+			var blue = parseInt(hexColor.substr(4,2),16)/255.0;
+			return [red,green,blue];
+		}
+		else
+		{
+			var r = hexColor >> 16;
+			var g = (hexColor & 0x00ff00) >> 8;
+			var b = hexColor & 0xff;
+			return [r/255,g/255,b/255,1];
+		}
+	}
+
+/**
+* Converts an RGB color to a hex string
+* @memberof DuAEF.DuJS.Color
+* @param {float[]} rgbColor	- The rgb color
+* @return {string}	The color as an hex string
+*/
+DuAEF.DuJS.Color.rgbToHex = function (rgbColor)
+{
+	var red = rgbColor[0]*255;
+	var green = rgbColor[1]*255;
+	var blue = rgbColor[2]*255;
+	var hexR = red.toString(16)
+	var hexG = green.toString(16)
+	var hexB = blue.toString(16);
+	if (hexR.length == 1) hexR = "0" + hexR;
+	if (hexG.length == 1) hexG = "0" + hexG;
+	if (hexB.length == 1) hexB = "0" + hexB;
+	var hex = hexR+hexG+hexB;
+	return hex;
 }
 /*
 DuProcessLib
@@ -2625,6 +2828,37 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 DuAEF.DuScriptUI = {};
 
+/**
+ * An image button
+ * @typedef {Object} ImageButton
+ * @property {string} standardImage - The path to the image (or a PNG as a string representation)
+ * @property {string} imageOver - The path to the image (or a PNG as a string representation) to display when mouseover
+ * @property {function} onClick - The function to execute on mouse click
+ * @property {ScriptUIImage}	image	- The scriptui object representing the image
+ * @property {StaticText}	label	- The label
+ * @property {Group}	group 	- The group containing the image and the label
+ */
+
+/**
+* An image checkbox
+* @typedef {Object} ImageCheckBox
+* @property {string} standardImage - The path to the image (or a PNG as a string representation)
+* @property {string} imageOver - The path to the image (or a PNG as a string representation) to display when mouseover
+* @property {string} imageChecked - The path to the image (or a PNG as a string representation) to display when the button is checked
+* @property {function} onClick - The function to execute on mouse click
+* @property {ScriptUIImage}	image	- The scriptui object representing the image
+* @property {StaticText}	label	- The label
+* @property {Group}	group 	- The group containing the image and the label
+* @property {boolean}	checked 	- The checked state of the button
+*/
+
+/**
+* A form
+* @typedef {Object} Form
+* @property {Group} labels - The left vertical group
+* @property {Group} buttons - The right vertical group
+*/
+
 //initilization
 (function ()
 {
@@ -2683,6 +2917,7 @@ DuAEF.DuScriptUI.setTextColor = function (text,color)
  * Creates the main panel of a script
  * @memberof DuAEF.DuScriptUI
  * @param {Panel|null}		container	- The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
+ * @param {string}	scriptName	- A name for this UI
  * @return {Panel|Window}	The panel created, either a ScriptUI Panel or a ScriptUI Window
  */
 DuAEF.DuScriptUI.createUI = function (container, scriptName)
@@ -2751,6 +2986,27 @@ DuAEF.DuScriptUI.addGroup = function (container,orientation)
 }
 
 /**
+ * Adds separator with an optionnal name in the group
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}		container	- Where to create the separator
+ * @param {string}					[name] - The name displayed
+ */
+DuAEF.DuScriptUI.addSeparator = function (container,name)
+{
+	if (name == undefined) name = "";
+	var group = DuAEF.DuScriptUI.addGroup(container,"row");
+	group.margins = DuAEF.DuScriptUI.defaultMargins;
+	if (name.length > 0)
+	{
+		var textName = group.add('statictext',undefined,name);
+		textName.alignment = ['left','fill'];
+	}
+	var separator1 = group.add('panel',undefined);
+	separator1.alignment = ['fill','center'];
+	separator1.height = 0;
+}
+
+/**
  * Creates a button with an optionnal icon. Must have at least an icon or a text, or both.
  * @memberof DuAEF.DuScriptUI
  * @param {Panel|Window|Group}			container	- The ScriptUI Object which will contain and display the button.
@@ -2767,6 +3023,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	if (!image) image = '';
 	if (!helpTip) helpTip = '';
 	if (!imageOver) imageOver = '';
+	if (debug == undefined) debug = false;
 
 	if (text == '' && image == '') throw "You must provide either a text or an icon to create the button";
 
@@ -2777,12 +3034,13 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	imageButton.onClick = function(){};
 	imageButton.image = null;
 	imageButton.label = null;
+	imageButton.debug = debug;
 
 	//create a group
 	var group = container.add('group');
 	group.orientation = 'row';
 	group.margins = 0;
-	group.spacing = 2;
+	group.spacing = 5;
 	imageButton.group = group;
 
 	if (image != '')
@@ -2804,19 +3062,19 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	//events
 	imageButton.clicked = function (e)
 	{
-		try { imageButton.onClick(); } catch (e) { if (debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
+		try { imageButton.onClick(); } catch (e) { if (imageButton.debug) alert('An error has occured in file\n' + $.fileName + '\nat line ' + e.line + '\n\n' + e.description); }
 	}
 
 	imageButton.mouseOver = function (e)
 	{
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
-		if (label) Duik.ui.setTextColor(imageButton.label,[.925,.094,.094,1]);
+		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 	}
 
 	imageButton.mouseOut = function (e)
 	{
 		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-		if (label) Duik.ui.setTextColor(imageButton.label,[.7,.7,.7,1]);
+		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 	}
 
 	//add events
@@ -2847,7 +3105,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
  * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
  * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
  * @param {bool}						debug			- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
- * @return {object}					The image checkbox created.
+ * @return {ImageCheckBox}					The image checkbox created.
  */
 DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,debug)
 {
@@ -2871,7 +3129,7 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	var group = container.add('group');
 	group.orientation = 'row';
 	group.margins = 0;
-	group.spacing = 2;
+	group.spacing =5;
 	imageButton.group = group;
 
 	if (image != '')
@@ -2902,6 +3160,11 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 
 	}
 
+	/**
+	* Checks or unchecks the button
+	* @memberof ImageCheckBox
+	* @param {boolean} c	- The checked state
+	*/
 	imageButton.setChecked = function (c)
 	{
 		imageButton.checked = imageButton.value = c;
@@ -2910,12 +3173,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 			if (imageButton.checked)
 			{
 				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+				if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 			}
 			else
 			{
 				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-				if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+				if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 			}
 		}
 	}
@@ -2929,7 +3192,7 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.mouseOver = function (e)
 	{
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
-		if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 	}
 
 	imageButton.mouseOut = function (e)
@@ -2937,18 +3200,18 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		if (imageButton.checked)
 		{
 			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.RAINBOXRED);
+			if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 		}
 		else
 		{
 			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-			if (label) Duik.ui.setTextColor(imageButton.label,Duik.colors.LIGHT_GRAY);
+			if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 		}
 	}
 
 	imageButton.group.addEventListener("mousedown",imageButton.clicked,true);
 	// Hack - CS6 Bug on mouseover with images
-	if (Duik.aeVersion >= 11 && Duik.aeVersion < 12)
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
 		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
 		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
@@ -2960,4 +3223,858 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	}
 
 	return imageButton;
+}
+
+/**
+ * Creates a layout to add forms to a UI, using ScriptUI groups.<br />
+ * The object returned is a custom group with two attributes:<br />
+ * form.labels is a vertical group on the left<br />
+ * form.buttons is a vertical group on the right<br />
+ * You can easily add controls/fields to this form using Duik.ui.addFormField
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group}	container		- The ScriptUI Object which will contain and display the form.
+ * @return {Form}		The custom Group containing the form.
+ */
+DuAEF.DuScriptUI.addForm = function (container)
+{
+	var mainGroup = container.add('group');
+	mainGroup.orientation = 'row';
+	mainGroup.margins = 0;
+	mainGroup.spacing = DuAEF.DuScriptUI.defaultSpacing;
+
+	var labelsGroup = mainGroup.add('group');
+	labelsGroup.alignment = ['left','top'];
+	labelsGroup.orientation = 'column';
+	labelsGroup.alignChildren = ['left','bottom'];
+	labelsGroup.spacing = DuAEF.DuScriptUI.defaultSpacing;
+
+	var buttonsGroup = mainGroup.add('group');
+	buttonsGroup.alignment = ['fill','top'];
+	buttonsGroup.orientation = 'column';
+	buttonsGroup.alignChildren = ['fill','fill'];
+	buttonsGroup.spacing = DuAEF.DuScriptUI.defaultSpacing;
+
+	mainGroup.labels = labelsGroup;
+	mainGroup.buttons = buttonsGroup;
+
+	return mainGroup;
+}
+/**
+ * Adds a field to a form
+ * example: Duik.ui.addFormField(form,'Composition:','dropdownlist',['Composition1','Composition2'],'Select a composition')
+ * @memberof Duik.ui
+ * @param {Form}			form		- A custom ScriptUI group as returned by DuAEF.DuScriptUI.addForm
+ * @param {string}			label		- The label text.
+ * @param {string}			type		- The type of ScriptUI object to add (like 'button','edittext', etc.).
+ * @param {object}			[value]		- The default value or content of the field added, depends on the type.
+ * @param {string}			[helpTip]		- The helpTip of the form control.
+ * @return {ScriptUI[]}		An array with at 0 the StaticText label, and at 1 the ScriptUI object of the type type, added to the form
+ */
+DuAEF.DuScriptUI.addFormField = function (form,label,type,value,helpTip)
+{
+	if (helpTip == undefined) helpTip = '';
+	var control = null;
+	var height = 20;
+	if (type == "ImageButton")
+	{
+		alert(value[0]);
+		alert(value[1]);
+		control = DuAEF.DuScriptUI.addImageButton(form.buttons,'',value[0],helpTip,value[1]);
+		height = control.image.preferredSize[1];
+	}
+	else
+	{
+		control = form.buttons.add(type,undefined,value);
+		control.helpTip = helpTip;
+		height = control.preferredSize[1];
+	}
+
+	var l = form.labels.add('statictext',undefined,label);
+	l.helpTip = helpTip;
+
+	l.minimumSize.height = l.maximumSize.height = height;
+	return [l,control];
+}
+/*
+DuSettingsLib
+Library to manager settings in a JSON file.
+Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+_Contributors:_
+Nicolas Dufresne - Lead developer
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* Constructs a new DuSettings instance
+* @class DuSettings
+* @classdesc A class to manager settings.
+* @param {string}	  namespace     - A namespace to group your settings.
+* @param {File|string}    [file=Folder.myDocuments/namespace_settings.json]    - The file to store the settings
+* @property {string}	  namespace	- A namespace to group your settings.
+* @property {File}		file	- The file to store the settings
+* @property {Object}	data	- The settings as a js object
+*/
+function DuSettings(namespace,file)
+{
+	if (file == undefined) file = new File(Folder.myDocuments.absoluteURI + "/" + namespace + "_settings.json");
+	this.namespace = namespace;
+	if (file instanceof File) this.file = file;
+	else this.file = new File(file);
+	this.file.encoding = 'UTF-8';
+
+	this.data = {};
+	this.load();
+}
+
+/**
+ * loads data from the settings file
+ * @memberof DuAEF.DuSettings
+ */
+DuSettings.prototype.load = function()
+{
+	//load file
+	if (this.file.exists)
+	{
+		//open file
+		if (this.file.open("r"))
+		{
+			var data = this.file.read();
+			this.file.close();
+			if (data != "") this.data = JSON.parse(data);
+		}
+	}
+}
+
+/**
+ * Saves data to the file
+ * @memberof DuAEF.DuSettings
+ * @param {string}		name	- The name of the setting
+ * @return {boolean}	true if the file has been correctly written
+ */
+DuSettings.prototype.save = function()
+{
+	if (this.file.open("w"))
+	{
+		var data = JSON.stringify(this.data);
+		this.file.write(data);
+		this.file.close();
+		return true;
+	}
+	return false;
+}
+/*
+DuikLib
+Library with Duik tools.
+Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* Constructs a Structure
+* @class Structure
+* @classdesc A Structure.
+* @property {Layer[]} elements - The elements of the structure, sorted by their parenting, root at 0
+*/
+function Structure()
+{
+	this.elements = [];
+	this.editModeRegExp = / \|StructureElementChildren:([\d,]*)\|/;
+}
+
+/**
+* Sets a new display size for the structure
+* @memberof Structure
+* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
+*/
+Structure.prototype.setSize = function (size)
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+	if (size == undefined)
+	{
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
+	}
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(2).setValue(size);
+	}
+}
+
+/**
+* Sets a new display color for the structure
+* @memberof Structure
+* @param {float[]} color - The color
+*/
+Structure.prototype.setColor = function (color)
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(color);
+	}
+}
+
+/**
+* Toggles the edit mode
+* @memberof Structure
+*/
+Structure.prototype.toggleEditMode = function (color)
+{
+	if (this.elements.length == 0) return;
+
+	var setEditMode = !this.editModeRegExp.test(this.elements[0].comment);
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		var layer = this.elements[i];
+		this.toggleElementEditMode(layer,setEditMode)
+	}
+}
+
+//low level undocumented function
+Structure.prototype.toggleElementEditMode = function (element,setEditMode)
+{
+	var comp = element.containingComp;
+	var already = this.editModeRegExp.test(element.comment);
+
+	if (setEditMode && !already)
+	{
+		var children = DuAEF.DuAE.Layer.getChildren(element);
+		element.comment = element.comment + ' |StructureElementChildren:';
+		for (var j = 0 ; j < children.length ; j++)
+		{
+			var child = children[j];
+			element.comment = element.comment + child.index;
+			if (j < children.length -1) element.comment = element.comment + ',';
+			child.parent = null;
+		}
+		element.comment = element.comment + "|";
+	}
+	else if (already)
+	{
+		var match = this.editModeRegExp.exec(element.comment);
+		if (match.length == 2)
+		{
+			var indices = match[1].split(',');
+			//reparent
+			if (indices.length > 0)
+			{
+				for (var i = 0 ; i < indices.length ; i++)
+				{
+					var index = parseInt(indices[i]);
+					if (isNaN(index)) continue;
+					comp.layer(index).parent = element;
+				}
+			}
+			//remove comment
+			element.comment = element.comment.replace(match[0],'');
+		}
+	}
+}
+
+/**
+* Toggles visibility of the structure
+* @memberof Structure
+*/
+Structure.prototype.showHide = function ()
+{
+	if (this.elements.length == 0) return;
+	var comp = this.elements[0].containingComp;
+	var show = !this.elements[0].enabled;
+
+	for (var i = 0 ; i < this.elements.length ; i++)
+	{
+		this.elements[i].enabled = show;
+	}
+}
+
+/**
+* Duik tools
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.Duik = {};
+
+//Initialize
+(function ()
+{
+var duik_structure = {"binAsString":"RIFX\x00\x00\r\u00DCFaFXhead\x00\x00\x00\x10\x00\x00\x00\x03\x00\x00\x00D\x00\x00\x00\x01\x01\x00\x00\x00LIST\x00\x00\r\u00B8bescbeso\x00\x00\x008\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00]\u00A8\x00\x1D\u00F8R\x00\x00\x00\x00\x00d\x00d\x00d\x00d?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\u00FF\u00FF\u00FF\u00FFLIST\x00\x00\x00\u00ACtdsptdot\x00\x00\x00\x04\u00FF\u00FF\u00FF\u00FFtdpl\x00\x00\x00\x04\x00\x00\x00\x02LIST\x00\x00\x00@tdsitdix\x00\x00\x00\x04\u00FF\u00FF\u00FF\u00FFtdmn\x00\x00\x00(ADBE Effect Parade\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00@tdsitdix\x00\x00\x00\x04\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdsn\x00\x00\x00\nStructure\x00LIST\x00\x00\x00dtdsptdot\x00\x00\x00\x04\u00FF\u00FF\u00FF\u00FFtdpl\x00\x00\x00\x04\x00\x00\x00\x01LIST\x00\x00\x00@tdsitdix\x00\x00\x00\x04\u00FF\u00FF\u00FF\u00FFtdmn\x00\x00\x00(ADBE End of path sentinel\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\f:sspcfnam\x00\x00\x000\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x04\u00D8parTparn\x00\x00\x00\x04\x00\x00\x00\x06tdmn\x00\x00\x00(Pseudo/DUIK structure-0000\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x0E\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\u00FF\u00FF\u00FF\u00FF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\rDisplay options\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\nSize\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\u00C2\u00C8\x00\x00Dz\x00\x00\x00\x00\x00\x00Dz\x00\x00B\u00C8\x00\x00\x00\x02\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Target\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\u00FF\u00FF\u00FF\u00FF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0004\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x05Color\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\u00FF\u00FF\u00FF\u00EC\x18\x18\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0005\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00pard\x00\x00\x00\u0094\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0E\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x07\x16tdgptdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\nStructure\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0000\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00\u00DAtdbstdsb\x00\x00\x00\x04\x00\x00\x00\x03tdsn\x00\x00\x00\x01\x00\x00tdb4\x00\x00\x00|\u00DB\u0099\x00\x01\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x02X?\x1A6\u00E2\u00EB\x1CC-?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x04\u00C0\u00C0\u00C0\u00FF\u00C0\u00C0\u00C0\x00\x00\x00\x00\u0080\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdpi\x00\x00\x00\x04\x00\x00\x00\x0Etdmn\x00\x00\x00(Pseudo/DUIK structure-0001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00\u00DCtdbstdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\x10Display options\x00tdb4\x00\x00\x00|\u00BD\u0099\x00\x01\x00\x01\x00\x00\x00\x01\x00\x04\x00\x00]\u00A8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00\u00F2tdbstdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\x05Size\x00\x00tdb4\x00\x00\x00|\u00BD\u0099\x00\x01\x00\x01\x00\x00\x00\x01\x00\u00FF\x00\x00]\u00A8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00(@Y\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdum\x00\x00\x00\b\x00\x00\x00\x00\x00\x00\x00\x00tduM\x00\x00\x00\b@\u008F@\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00\u00E0tdbstdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\x07Target\x00\x00tdb4\x00\x00\x00|\u00DB\u0099\x00\x01\x00\x01\x00\x00\x00\x01\x00\x04\x00\x00]\u00A8?\x1A6\u00E2\u00EB\x1CC-?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00?\u00F0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdpi\x00\x00\x00\x04\x00\x00\x00\x0Etdmn\x00\x00\x00(Pseudo/DUIK structure-0004\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x01\ntdbstdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\x06Color\x00tdb4\x00\x00\x00|\u00BD\u0099\x00\x04\x00\x07\x00\x01\x00\x02\u00FF\u00FF\x00\x00]\u00A8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00`@o\u00E0\x00\x00\x00\x00\x00@m\u0080\x00\x00\x00\x00\x00@8\x00\x00\x00\x00\x00\x00@8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdmn\x00\x00\x00(Pseudo/DUIK structure-0005\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LIST\x00\x00\x00\u00E2tdbstdsb\x00\x00\x00\x04\x00\x00\x00\x01tdsn\x00\x00\x00\nStructure\x00tdb4\x00\x00\x00|\u00BD\u0099\x00\x01\x00\x01\x00\x00\x00\x01\x00\x04\x00\x00]\u00A8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00cdat\x00\x00\x00(\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00tdpi\x00\x00\x00\x04\x00\x00\x00\x0Etdmn\x00\x00\x00(ADBE Group End\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00<control name=\"Structure\">[{\"name\":\"Display options\",\"type\":\"group\",\"id\":\"Group1\"},{\"name\":\"Size\",\"type\":\"slider\",\"id\":\"Slider2\",\"keys\":false,\"hold\":false,\"value\":100,\"sMin\":0,\"sMax\":1000,\"vMin\":-100,\"vMax\":1000,\"pre\":2,\"per\":true,\"pix\":false},{\"name\":\"Target\",\"type\":\"layer\",\"id\":\"Layer3\",\"keys\":false,\"hold\":true,\"value\":true},{\"name\":\"Color\",\"type\":\"color\",\"id\":\"Color3\",\"keys\":false,\"hold\":false,\"red\":236,\"green\":24,\"blue\":24},{\"type\":\"endgroup\"}]</control>","fileName":"duik_structure.ffx","category":""};
+duik_structure;
+	/**
+	 * The pseudo effects needed by Duik
+	 * @enum {File}
+	 * @readonly
+	 */
+	DuAEF.Duik.pseudoEffects =
+	{
+		STRUCTURE_ELEMENT: DuAEF.DuBinary.toFile(duik_structure)
+	};
+
+	/**
+	 * The pseudo effects match names
+	 * @enum {string}
+	 * @readonly
+	 */
+	DuAEF.Duik.pseudoEffectsMatchNames =
+	{
+		STRUCTURE_ELEMENT: "Pseudo/DUIK structure"
+	};
+
+	/**
+	 * Predefined sizes
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.sizes =
+	{
+		SMALL: 0,
+		MEDIUM: 1,
+		LARGE: 2,
+		CUSTOM: 3
+	};
+
+	/**
+	 * How to get structures depending on selection<br />
+	 * All structure, only children elements, or only selected element
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.structureSelectionMode =
+	{
+		STRUCTURE: 0,
+		CHILDREN: 1,
+		ELEMENT: 2
+	}
+
+	/**
+	* Size hint of structure elements
+	* @type {int}
+	* @default DuAEF.Duik.sizes.SMALL
+	*/
+	DuAEF.Duik.structureSizeHint = DuAEF.Duik.sizes.SMALL;
+	/**
+	* The default size for new structures if structureSizeHint is DuAEF.Duik.sizes.CUSTOM
+	* @type {int}
+	* @default 100
+	*/
+	DuAEF.Duik.structureSize = 100;
+	/**
+	* The default color for new structures
+	* @type {float[]}
+	* @default DuAEF.DuJS.Color.Colors.RANDOM
+	*/
+	DuAEF.Duik.structureColor = DuAEF.DuJS.Color.Colors.RANDOM
+
+})();
+
+/**
+ * Creates a structure in a composition
+ * @memberof DuAEF.Duik
+ * @param {int}		num	- The number of elements of the structure
+ * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
+ * @return {Structure|null}	The Structure or null if there is no active composition
+ */
+DuAEF.Duik.addStructure = function (num,comp,name)
+{
+	if (name === undefined) name = "Name";
+
+	//end
+	num++;
+
+	//structure
+	var structure = {};
+	structure.elements = [];
+
+	//elements length
+	var length = comp.width/(num+1);
+
+	var prevElement = null;
+	var color = DuAEF.Duik.structureColor;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	for (var i = 0 ; i < num ; i++)
+	{
+		var end = i == num-1;
+		var element = DuAEF.Duik.addStructureElement(comp,color);
+		if (end)
+		{
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("Structure " + name, comp);
+		}
+		else
+		{
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S " + name, comp);
+		}
+
+		if (prevElement)
+		{
+			element.parent = prevElement;
+			element.transform.position.setValue([length,0]);
+		}
+		else
+		{
+			element.transform.position.setValue([length,comp.height/2]);
+		}
+		prevElement = element;
+		structure.elements.push(element);
+	}
+	//links and layer selection
+	for (var i = 0;i < structure.elements.length ; i++)
+	{
+		if (i == structure.elements.length - 1)
+		{
+			structure.elements[i].effect("Structure")(3).setValue(structure.elements[i].index);
+			structure.elements[i].selected = false;
+		}
+		else
+		{
+			structure.elements[i].effect("Structure")(3).setValue(structure.elements[i+1].index);
+		}
+	}
+	structure.elements[0].selected = true;
+}
+
+/**
+ * Creates an element for a structure in a composition
+ * @memberof DuAEF.Duik
+ * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {float[]}	[color=[1,0.764,0.764,1]]		- The color of the element, [R,G,B,A] Array from 0.0 to 1.0
+ * @param {float}	[size] 		- The element size, un percent. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
+ * @return {ShapeLayer}	The element
+ */
+DuAEF.Duik.addStructureElement = function (comp,color,size)
+{
+	if (size == undefined)
+	{
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
+	}
+
+	if (!color)
+	{
+		color = DuAEF.Duik.structureColor;
+		if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+		{
+			color = DuAEF.DuJS.Color.random();
+		}
+	}
+
+
+	//======= CREATE ELEMENT USING SHAPE LAYER =======
+	var element = comp.layers.addShape();
+	//add effect
+
+	element.applyPreset(DuAEF.Duik.pseudoEffects.STRUCTURE_ELEMENT);
+	element.effect("Structure")(2).setValue(size);
+	element.effect("Structure")(4).setValue(color);
+
+	//bone group
+	var elementGroup = element("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	elementGroup.name = "Structure Element";
+	elementGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = '//Duik.structure.size\nif(!enabled) value;\nelse\n{\nvar s = effect("Structure")(2);\n[s,s];\n}';
+	//target group
+	var targetGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	targetGroup.name = "Target";
+	var targetGroupContent = targetGroup.property("ADBE Vectors Group");
+	var ellipse = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
+	ellipse("ADBE Vector Ellipse Size").setValue([15,15]);
+	var ellipse2 = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
+	ellipse2("ADBE Vector Ellipse Size").setValue([1,1]);
+	var targetStroke = targetGroupContent.addProperty("ADBE Vector Graphic - Stroke");
+	targetStroke("ADBE Vector Stroke Color").setValue([0.1,0.1,0.1,1]);
+	targetStroke("ADBE Vector Stroke Width").setValue(2);
+
+
+	var displayGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	displayGroup.name = "Display";
+	displayGroup.property("ADBE Vector Transform Group").property("ADBE Vector Group Opacity").setValue(50);
+	//stretch group
+	var stretchBoneGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	stretchBoneGroup.name = "Link";
+	var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
+	var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
+	star("ADBE Vector Star Type").setValue(2);
+	star("ADBE Vector Star Points").setValue(3);
+	star("ADBE Vector Star Outer Radius").setValue(20);
+	star("ADBE Vector Star Outer Roundess").setValue(100);
+
+	var roundExp = '//Duik.structure.roundness\n' +
+				'var child = null;\n' +
+				'var childIndex = -1;\n' +
+				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
+				'catch (e) {}\n' +
+				'if(!enabled || childIndex == thisLayer.index || effect("Structure")(2) == 0) value;\n' +
+				'else\n' +
+				'{\n' +
+				'function isBone(layer)\n' +
+				'{\n' +
+				'var ok = false;\n' +
+				'try { layer.content("Structure Element"); ok = true;}\n' +
+				'catch (e) { ok = false;}\n' +
+				'return ok;\n' +
+				'}\n' +
+				'if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n' +
+				'if (!isBone(child)) child = null;\n' +
+				'if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n' +
+				'if (!isBone(child)) child = null;\n' +
+				'if (!child)\n' +
+				'{\n' +
+				'for (var i = thisComp.numLayers  ; i > 0 ; i--)\n' +
+				'{\n' +
+				'if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n' +
+				'{\n' +
+				'child = thisComp.layer(i);\n' +
+				'if (!isBone(child)) child = null;\n' +
+				'if (child) break;\n' +
+				'}\n' +
+				'}\n' +
+				'}\n' +
+				'if (child)\n' +
+				'{\n' +
+				'var A = child.toWorld(child.anchorPoint);\n' +
+				'var B = thisLayer.toWorld(thisLayer.anchorPoint);\n' +
+				'var dist = length(A,B);\n' +
+				'if (dist < 20) dist = 20;\n' +
+				'var s = content("Structure Element").transform.scale[0];\n' +
+				'value/(dist/60)*s/80;\n' +
+				'}\n' +
+				'else value;\n' +
+				'}';
+
+	star("ADBE Vector Star Outer Roundess").expression = roundExp;
+
+	var stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
+	stretchBoneFill("ADBE Vector Fill Color").expression = '//Duik.structure.color\neffect("Structure")(4);';
+	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
+
+	var scaExpr = "//Duik.structure.stretch\n" +
+				'var child = null;\n' +
+				'var childIndex = -1;\n' +
+				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
+				'catch (e) {}\n' +
+				'if(!enabled || childIndex == thisLayer.index || effect("Structure")(2) == 0) [0,0];\n' +
+				'else\n' +
+				'{\n' +
+				"var X = 100;\n" +
+				"var Y = 60;\n" +
+				"function isBone(layer)\n" +
+				"{\n" +
+				"var ok = false;\n" +
+				"try { layer.content(\"Structure Element\"); ok = true;}\n" +
+				"catch (e) { ok = false;}\n" +
+				"return ok;\n" +
+				"}\n" +
+				"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (!child)\n" +
+				"{\n" +
+				"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
+				"{\n" +
+				"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
+				"{\n" +
+				"child = thisComp.layer(i);\n" +
+				"if (!isBone(child)) child = null;\n" +
+				"if (child) break;\n" +
+				"}\n" +
+				"}\n" +
+				"}\n" +
+				"if (child)\n" +
+				"{\n" +
+				"var A = child.toWorld(child.anchorPoint);\n" +
+				"var B = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+				"var dist = length(A,B);\n" +
+				"Y = dist/30*100;\n" +
+				"}\n" +
+				"[X,Y*100/content(\"Structure Element\").transform.scale[1]];\n" +
+				'}';
+
+	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
+
+	var rotExpr = "//Duik.structure.orientation\n" +
+			'var child = null;\n' +
+			'var childIndex = -1;\n' +
+			'try { child = effect("Structure")(3);childIndex = child.index || effect("Structure")(2) == 0}\n' +
+			'catch (e) {}\n' +
+			'if(!enabled || childIndex == thisLayer.index) value;\n' +
+			'else\n' +
+			'{\n' +
+			"var R = 45;\n" +
+			"function isBone(layer)\n" +
+			"{\n" +
+			"var ok = false;\n" +
+			"try { layer.content(\"Structure Element\"); ok = true;}\n" +
+			"catch (e) { ok = false;}\n" +
+			"return ok;\n" +
+			"}\n" +
+			"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
+			"if (!isBone(child)) child = null;\n" +
+			"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
+			"if (!isBone(child)) child = null;\n" +
+			"if (!child)\n" +
+			"{\n" +
+			"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
+			"{\n" +
+			"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
+			"{\n" +
+			"child = thisComp.layer(i);\n" +
+			"if (!isBone(child)) child = null;\n" +
+			"if (child) break;\n" +
+			"}\n" +
+			"}\n" +
+			"}\n" +
+			"var result = value;\n" +
+			"var layer = thisLayer;\n" +
+			"while (layer.hasParent)\n" +
+			"{\n" +
+			"layer = layer.parent;\n" +
+			"result = result - layer.rotation;\n" +
+			"}\n" +
+			"if (child)\n" +
+			"if (child.index != index)\n" +
+			"{\n" +
+			"C = child.toWorld(child.anchorPoint);\n" +
+			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+			"var vec = O-C;\n" +
+			"var angle = Math.atan2(vec[1], vec[0]);\n" +
+			"var ik = radiansToDegrees(angle);\n" +
+			"result += (ik-90-rotation)\n" +
+			"}\n" +
+			"result;\n" +
+			"}";
+
+	elementGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
+
+	var editModeGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+	editModeGroup.name = "Edit Mode";
+	var editModeContent = editModeGroup.property("ADBE Vectors Group");
+	var circle = editModeContent.addProperty("ADBE Vector Shape - Ellipse");
+	circle("ADBE Vector Ellipse Size").setValue([70,70]);
+
+	var editModeExpr = '//Duik.structure.editMode\n' +
+					'var child = null;\n' +
+					'if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n' +
+					'if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n' +
+					'if (child) [0,0];\n' +
+					'else value;';
+
+	circle("ADBE Vector Ellipse Size").expression = editModeExpr;
+
+	var editModeFill = editModeContent.addProperty("ADBE Vector Graphic - Fill");
+	editModeFill("ADBE Vector Fill Color").setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+
+	element.guideLayer = true;
+
+	//group
+	DuAEF.Dugr.addLayerToGroup(element,"Structures");
+
+	return element;
+}
+
+//Low-level undocumented function
+DuAEF.Duik.isStructure = function (layer)
+{
+	var structureEffect = layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT);
+	if (structureEffect) return true;
+	else return false;
+}
+
+/**
+ * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
+ * @memberof DuAEF.Duik
+ * @param {CompItem}	comp	- The composition where to get the structures
+ * @param {DuAEF.Duik.structureSelectionMode} structureSelectionMode	- The selection mode
+ * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.structureSelectionMode.ELEMENT, will be one structure with all elements found
+ */
+DuAEF.Duik.getStructures = function (comp,selectionMode)
+{
+	if (selectionMode == undefined) selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+	var layers = comp.selectedLayers;
+	var i = 0;
+	var m = layers.length-1;
+	if (layers.length == 0)
+	{
+		layers = comp.layers;
+		selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+		i = 1;
+		m = layers.length;
+	}
+
+	var structures = [];
+	var indexed = [];
+
+	var structure = new Structure();
+
+	for ( i ; i <= m ; i++)
+	{
+		var layer = layers[i];
+		if (!DuAEF.Duik.isStructure(layer)) continue;
+		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) continue;
+
+		indexed.push(layer.index);
+
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT)
+		{
+			structure.elements.push(layer);
+			continue;
+		}
+		var structure = new Structure();
+		structure.elements.push(layer);
+		//get children
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.CHILDREN || selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		{
+			//for all layers in the comp, get child
+			var childLayer = layer;
+			while (childLayer != null)
+			{
+				var childIndex = childLayer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				if (childIndex == childLayer.index) break;
+				var currentIndex = childLayer.index;
+				childLayer = null;
+				//get child
+				if (childIndex != 0)
+				{
+					var child = comp.layer(childIndex);
+					//check if it's a structure element
+					if (DuAEF.Duik.isStructure(child))
+					{
+						structure.elements.push(child);
+						childLayer = child;
+						indexed.push(child.index);
+						continue;
+					}
+				}
+				//search child
+				for (var j = 1 ; j <= comp.layers.length ; j++)
+				{
+					var child = comp.layer(j);
+					if (child.parent == null) continue;
+					if (DuAEF.Duik.isStructure(child) && child.parent.index == currentIndex)
+					{
+						structure.elements.push(child);
+						childLayer = child;
+						indexed.push(child.index);
+						break;
+					}
+				}
+			}
+		}
+
+		//get parents
+		if (selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		{
+			var parentLayer = layer;
+			while (parentLayer != null)
+			{
+				var testParent = parentLayer.parent;
+				var childIndex = parentLayer.index;
+
+				if (testParent == null) break;
+				else if (!DuAEF.Duik.isStructure(testParent)) break;
+
+				var testIndex = testParent.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+
+				parentLayer = null;
+
+				if (testIndex == testParent.index) break;
+				else if (testIndex == 0 || testIndex == childIndex)
+				{
+					structure.elements.unshift(testParent);
+					parentLayer = testParent;
+					indexed.push(testParent.index);
+				}
+			}
+		}
+
+		structures.push(structure);
+
+	}
+
+	if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT) structures.push(structure);
+
+	return structures;
+}
+/**
+* Dugr
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.Dugr = {};
+
+/**
+ * Adds a layer to a group
+ * @param {Layer} layer 	- The layer
+ * @param {string} group	- The group name
+ */
+DuAEF.Dugr.addLayerToGroup = function (layer,group)
+{
+	var groupComment = '|' + group + '| ';
+	if (layer.comment.indexOf(groupComment) < 0)
+	{
+		layer.comment = layer.comment + groupComment;
+	}
 }
