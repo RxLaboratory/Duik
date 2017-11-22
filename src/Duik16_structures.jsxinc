@@ -5,9 +5,488 @@ function setCurrentStructuresPanel(panel)
 
 	ui_structuresMainPanelGroup.visible = panel == 0;
 	ui_structuresCustomGroup.visible = panel == 1;
+	ui_armGroup.visible = panel == 2;
+	ui_legGroup.visible = panel == 3;
+	ui_spineGroup.visible = panel == 4;
+	ui_tailGroup.visible = panel == 5;
 }
 
 // ============= EVENTS =============
+
+//ARM
+function ui_armPlantiButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_armPlantiImage.visible = true;
+		ui_armDigiImage.visible = false;
+		ui_armUnguImage.visible = false;
+		ui_armPlantiLegImage.visible = false;
+	}
+
+	ui_armPlantiButton.setChecked(true);
+	ui_armDigiButton.setChecked(false);
+	ui_armUnguButton.setChecked(false);
+
+	ui_armClawsButton.label.text = "Claws";
+}
+
+function ui_armDigiButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_armPlantiImage.visible = false;
+		ui_armDigiImage.visible = true;
+		ui_armUnguImage.visible = false;
+		ui_armPlantiLegImage.visible = false;
+	}
+	ui_armPlantiButton.setChecked(false);
+	ui_armDigiButton.setChecked(true);
+	ui_armUnguButton.setChecked(false);
+
+	ui_armClawsButton.label.text = "Claws";
+}
+
+function ui_armUnguButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_armPlantiImage.visible = false;
+		ui_armDigiImage.visible = false;
+		ui_armUnguImage.visible = true;
+		ui_armPlantiLegImage.visible = false;
+	}
+	ui_armPlantiButton.setChecked(false);
+	ui_armDigiButton.setChecked(false);
+	ui_armUnguButton.setChecked(true);
+
+	ui_armClawsButton.label.text = "Hoof";
+}
+
+function ui_armClawsButton_clicked()
+{
+	if (settings.data.expert) return;
+	if (!ui_armPlantiButton.checked) return;
+	if (ui_armClawsButton.checked)
+	{
+		ui_armPlantiLegImage.visible = true;
+		ui_armPlantiImage.visible = false;
+	}
+	else
+	{
+		ui_armPlantiLegImage.visible = false;
+		ui_armPlantiImage.visible = true;
+	}
+}
+
+function ui_armValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	app.beginUndoGroup('Duik | ' + "Create arm structure");
+
+	//create structure
+	var numElements = 0;
+	if (ui_armShoulderButton.checked) numElements++;
+	if (ui_armHumerusButton.checked) numElements++;
+	if (ui_armRadiusButton.checked) numElements++;
+	if (ui_armHandButton.checked) numElements++;
+	if (ui_armClawsButton.checked) numElements++;
+
+	if (numElements == 0) return;
+
+	var structure = DuAEF.Duik.addStructure(numElements,comp);
+
+	var comment = " |Autorig:";
+	if (ui_armPlantiButton.checked) comment = comment + "Plantigrade|";
+	if (ui_armDigiButton.checked) comment = comment + "Digitigrade|";
+	if (ui_armUnguButton.checked) comment = comment + "Ungulate|";
+
+	//name and move
+
+	//element index we're working on
+	var currentElement = 0;
+
+	//size of the humerus
+	var size = comp.height/4;
+	if (ui_armDigiButton.checked) size = comp.height/6;
+	else if (ui_armUnguButton.checked) size = comp.height/8;
+
+	//position of the next limb
+	var nextPosition = [comp.width/2,comp.height/4];
+
+	if (ui_armShoulderButton.checked)
+	{
+		//set limb position and name
+		var element = structure.elements[currentElement];
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Shoulder",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		//position of the next limb
+		element.transform.position.setValue(nextPosition);
+		if (ui_armPlantiButton.checked) nextPosition = [-size/2,size/6];
+		else if (ui_armDigiButton.checked) nextPosition = [-size*3/4,size*3/4];
+		else if (ui_armUnguButton.checked) nextPosition = [-size,size];
+		//next
+		currentElement++;
+	}
+	if (ui_armHumerusButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Arm",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		if (ui_armPlantiButton.checked)
+		{
+			if (ui_armClawsButton.checked) nextPosition = [size/6,size];
+			else nextPosition = [-size/6,size];
+		}
+		else if (ui_armDigiButton.checked) nextPosition = [size*3/4,size*3/4];
+		else if (ui_armUnguButton.checked) nextPosition = [size*3/4,size*3/4];
+		currentElement++;
+	}
+	if (ui_armRadiusButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Forearm",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		if (ui_armPlantiButton.checked)
+		{
+			if (ui_armClawsButton.checked) nextPosition = [-size/6,size];
+			else nextPosition = [size/6,size];
+		}
+		else if (ui_armDigiButton.checked) nextPosition = [-size/3,size*4/3];
+		else if (ui_armUnguButton.checked) nextPosition = [-size/2,size*3/2];
+		currentElement++;
+	}
+	if (ui_armHandButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Hand",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		if (ui_armPlantiButton.checked)
+		{
+			if (ui_armClawsButton.checked) nextPosition = [-size/3,size/8];
+			else nextPosition = [size/3,size/3];
+		}
+		else if (ui_armDigiButton.checked) nextPosition = [0,size*3/8];
+		else if (ui_armUnguButton.checked) nextPosition = [size/5,size];
+		currentElement++;
+	}
+	if (ui_armClawsButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Claws",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+		if (ui_armPlantiButton.checked) nextPosition = [-size/4,0];
+		else if (ui_armDigiButton.checked) nextPosition = [-size/4,0];
+		else if (ui_armUnguButton.checked) nextPosition = [-size/5,size/2];
+		currentElement++;
+	}
+	var element = structure.elements[currentElement];
+	element.transform.position.setValue(nextPosition);
+	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Arm Tip",comp);
+	element.comment = element.comment + comment;
+
+	//heel
+	if (ui_armPlantiButton.checked && ui_armClawsButton.checked)
+	{
+		var heelStructure = DuAEF.Duik.addStructure(0,comp);
+		var element = heelStructure.elements[0];
+		element.parent = structure.elements[structure.elements.length-1];
+		element.transform.position.setValue([size/4+size/3,0]);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Heel",comp);
+		element.comment = element.comment + comment;
+		element.selected = false;
+		structure.elements[0].selected = true;
+	}
+
+	app.endUndoGroup();
+
+	setCurrentStructuresPanel(0);
+
+}
+
+//LEG
+function ui_legPlantiButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_legPlantiImage.visible = true;
+		ui_legDigiImage.visible = false;
+		ui_legUnguImage.visible = false;
+	}
+
+	ui_legPlantiButton.setChecked(true);
+	ui_legDigiButton.setChecked(false);
+	ui_legUnguButton.setChecked(false);
+
+	ui_legClawsButton.label.text = "Toes";
+}
+
+function ui_legDigiButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_legPlantiImage.visible = false;
+		ui_legDigiImage.visible = true;
+		ui_legUnguImage.visible = false;
+	}
+	ui_legPlantiButton.setChecked(false);
+	ui_legDigiButton.setChecked(true);
+	ui_legUnguButton.setChecked(false);
+
+	ui_legClawsButton.label.text = "Claws";
+}
+
+function ui_legUnguButton_clicked()
+{
+	if (!settings.data.expert)
+	{
+		ui_legPlantiImage.visible = false;
+		ui_legDigiImage.visible = false;
+		ui_legUnguImage.visible = true;
+	}
+	ui_legPlantiButton.setChecked(false);
+	ui_legDigiButton.setChecked(false);
+	ui_legUnguButton.setChecked(true);
+
+	ui_legClawsButton.label.text = "Hoof";
+}
+
+function ui_legValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	app.beginUndoGroup('Duik | ' + "Create leg structure");
+
+	//create structure
+	var numElements = 0;
+	if (ui_legFemurButton.checked) numElements++;
+	if (ui_legTibiaButton.checked) numElements++;
+	if (ui_legFootButton.checked) numElements++;
+	if (ui_legClawsButton.checked) numElements++;
+
+	if (numElements == 0) return;
+
+	var structure = DuAEF.Duik.addStructure(numElements,comp);
+
+	var comment = " |Autorig:";
+	if (ui_armPlantiButton.checked) comment = comment + "Plantigrade|";
+	if (ui_armDigiButton.checked) comment = comment + "Digitigrade|";
+	if (ui_armUnguButton.checked) comment = comment + "Ungulate|";
+
+	//name and move
+
+	//element index we're working on
+	var currentElement = 0;
+
+	//size of the femur
+	var size = comp.height/3;
+	if (ui_legDigiButton.checked) size = comp.height/5;
+	else if (ui_legUnguButton.checked) size = comp.height/5;
+
+	//position of the next limb
+	var nextPosition = [comp.width/2,comp.height/4];
+
+	if (ui_legFemurButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Thigh",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		if (ui_legPlantiButton.checked) nextPosition = [-size/6,size];
+		else if (ui_legDigiButton.checked) nextPosition = [-size*3/4,size*3/4];
+		else if (ui_legUnguButton.checked) nextPosition = [-size/2,size*3/4];
+		currentElement++;
+	}
+	if (ui_legTibiaButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Calf",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		if (ui_legPlantiButton.checked) nextPosition = [size/6,size];
+		else if (ui_legDigiButton.checked) nextPosition = [size*3/4,size*3/4];
+		else if (ui_legUnguButton.checked) nextPosition = [size*2/3,size*3/4];
+		currentElement++;
+	}
+	if (ui_legFootButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Foot",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		if (ui_legPlantiButton.checked)nextPosition = [-size*3/8,size/6];
+		else if (ui_legDigiButton.checked) nextPosition = [0,size/2];
+		else if (ui_legUnguButton.checked) nextPosition = [-size/4,size];
+		currentElement++;
+	}
+	if (ui_legClawsButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Claws",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+		if (ui_armPlantiButton.checked) nextPosition = [-size/8,0];
+		else if (ui_armDigiButton.checked) nextPosition = [-size/4,0];
+		else if (ui_armUnguButton.checked) nextPosition = [0,size/4];
+		currentElement++;
+	}
+	var element = structure.elements[currentElement];
+	element.transform.position.setValue(nextPosition);
+	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Leg Tip",comp);
+	element.comment = element.comment + comment;
+
+	//heel
+	if (ui_legPlantiButton.checked && ui_legClawsButton.checked)
+	{
+		var heelStructure = DuAEF.Duik.addStructure(0,comp);
+		var element = heelStructure.elements[0];
+		element.parent = structure.elements[structure.elements.length-1];
+		element.transform.position.setValue([size/8+size*3/8,0]);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Heel",comp);
+		element.comment = element.comment + comment;
+		element.selected = false;
+		structure.elements[0].selected = true;
+	}
+
+	app.endUndoGroup();
+
+	setCurrentStructuresPanel(0);
+}
+
+//SPINE
+function ui_spineValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	app.beginUndoGroup('Duik | ' + "Create spine structure");
+
+	//create structure
+	var numElements = 0;
+	if (ui_headButton.checked) numElements++;
+	var numNeck = parseInt(ui_neckEdit.text);
+	if (!isNaN(numNeck)) numElements += numNeck;
+	else numNeck = 0;
+	var numSpine = parseInt(ui_spineEdit.text);
+	if (!isNaN(numSpine)) numElements += numSpine;
+	else numSpine = 0;
+	if (ui_hipsButton.checked) numElements++;
+
+	if (numElements == 0) return;
+
+	var structure = DuAEF.Duik.addStructure(numElements,comp);
+
+	var comment = " |Autorig|";
+
+	//name and move
+
+	//element index we're working on
+	var currentElement = 0;
+
+	//size of the spine
+	var size = comp.height/3;
+
+	//position of the next limb
+	var nextPosition = [comp.width/2,comp.height*3/4];
+
+	if (ui_hipsButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Hips",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		nextPosition = [0,-size/6];
+		currentElement++;
+	}
+	for (var i = 0 ; i < numSpine ; i++)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Spine",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		nextPosition = [0,-size/numSpine];
+		currentElement++;
+	}
+	for (var i = 0 ; i < numNeck ; i++)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Neck",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		nextPosition = [0,-size/6/numNeck];
+		currentElement++;
+	}
+	if (ui_headButton.checked)
+	{
+		var element = structure.elements[currentElement];
+		element.transform.position.setValue(nextPosition);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Head",comp);
+		element.comment = element.comment + comment;
+		element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		nextPosition = [0,-size/3];
+		currentElement++;
+	}
+	var element = structure.elements[currentElement];
+	element.transform.position.setValue(nextPosition);
+	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S Spine Tip",comp);
+	element.comment = element.comment + comment;
+
+	app.endUndoGroup();
+
+	setCurrentStructuresPanel(0);
+}
+
+//TAIL
+function ui_tailValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	app.beginUndoGroup('Duik | ' + "Create tail structure");
+
+	//create structure
+	var numElements = parseInt(ui_tailEdit.text);
+	if (isNaN(numElements)) return;
+	if (numElements == 0) return;
+
+	var structure = DuAEF.Duik.addStructure(numElements,comp, "Tail");
+
+	var comment = " |Autorig|";
+
+	for (var i = 0 ; i < numElements ; i++)
+	{
+		var element = structure.elements[i];
+		element.comment = element.comment + comment;
+		if (i < numElements/3) element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		else if (i < numElements*2/3) element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		else element.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+	}
+
+	app.endUndoGroup();
+
+	setCurrentStructuresPanel(0);
+}
+
+//CUSTOM
 function ui_structuresCustomNameEdit_activated()
 {
 	if (ui_structuresCustomNameEdit.text == "Name") ui_structuresCustomNameEdit.setText('');
@@ -41,18 +520,18 @@ var ui_structuresGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,s
 ui_structuresGroup.alignment = ['center','top'];
 ui_structuresGroup.alignChildren = ['left','top'];
 var ui_armGroup = DuAEF.DuScriptUI.addGroup(ui_structuresGroup,settings.data.expert ? 'column' : 'row');
-var ui_armButton = DuAEF.DuScriptUI.addImageButton(ui_armGroup,settings.data.expert ? '' : "Arm (or front leg)",'E:/DEV SRC/RainboxUI/Icons/32w/arm_l.png',"Add a structure for an arm",'E:/DEV SRC/RainboxUI/Icons/32w/arm_r.png');
+var ui_armButton = DuAEF.DuScriptUI.addImageButton(ui_armGroup,settings.data.expert ? '' : "Arm (or front leg)",'E:/DEV SRC/RainboxUI/Icons/32w/arm_l.png',"Add a structure for an arm",'E:/DEV SRC/RainboxUI/Icons/32w/arm_r.png',settings.data.debug);
 var ui_armOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_armGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Arm options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 var ui_legGroup = DuAEF.DuScriptUI.addGroup(ui_structuresGroup,settings.data.expert ? 'column' : 'row');
-var ui_legButton = DuAEF.DuScriptUI.addImageButton(ui_legGroup,settings.data.expert ? '' : "Leg",'E:/DEV SRC/RainboxUI/Icons/32w/leg_l.png',"Add a structure for a leg",'E:/DEV SRC/RainboxUI/Icons/32w/leg_r.png');
+var ui_legButton = DuAEF.DuScriptUI.addImageButton(ui_legGroup,settings.data.expert ? '' : "Leg",'E:/DEV SRC/RainboxUI/Icons/32w/leg_l.png',"Add a structure for a leg",'E:/DEV SRC/RainboxUI/Icons/32w/leg_r.png',settings.data.debug);
 var ui_legOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_legGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Leg options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 var ui_spineGroup = DuAEF.DuScriptUI.addGroup(ui_structuresGroup,settings.data.expert ? 'column' : 'row');
-var ui_spineButton = DuAEF.DuScriptUI.addImageButton(ui_spineGroup,settings.data.expert ? '' : "Spine",'E:/DEV SRC/RainboxUI/Icons/32w/spine_l.png',"Add a structure for a spine",'E:/DEV SRC/RainboxUI/Icons/32w/spine_r.png');
+var ui_spineButton = DuAEF.DuScriptUI.addImageButton(ui_spineGroup,settings.data.expert ? '' : "Spine",'E:/DEV SRC/RainboxUI/Icons/32w/spine_l.png',"Add a structure for a spine",'E:/DEV SRC/RainboxUI/Icons/32w/spine_r.png',settings.data.debug);
 var ui_spineOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_spineGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Spine options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 var ui_tailGroup = DuAEF.DuScriptUI.addGroup(ui_structuresGroup,settings.data.expert ? 'column' : 'row');
-var ui_tailButton = DuAEF.DuScriptUI.addImageButton(ui_tailGroup,settings.data.expert ? '' : "Tail",'E:/DEV SRC/RainboxUI/Icons/32w/tail_l.png',"Add a structure for a tail",'E:/DEV SRC/RainboxUI/Icons/32w/tail_r.png');
+var ui_tailButton = DuAEF.DuScriptUI.addImageButton(ui_tailGroup,settings.data.expert ? '' : "Tail",'E:/DEV SRC/RainboxUI/Icons/32w/tail_l.png',"Add a structure for a tail",'E:/DEV SRC/RainboxUI/Icons/32w/tail_r.png',settings.data.debug);
 var ui_tailOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_tailGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Tail options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
-var ui_customStructureButton = DuAEF.DuScriptUI.addImageButton(ui_structuresGroup,settings.data.expert ? '' : "Custom...",'E:/DEV SRC/RainboxUI/Icons/32w/bone_l.png',"Add a structure",'E:/DEV SRC/RainboxUI/Icons/32w/bone_r.png');
+var ui_customStructureButton = DuAEF.DuScriptUI.addImageButton(ui_structuresGroup,settings.data.expert ? '' : "Custom...",'E:/DEV SRC/RainboxUI/Icons/32w/bone_l.png',"Add a structure",'E:/DEV SRC/RainboxUI/Icons/32w/bone_r.png',settings.data.debug);
 
 DuAEF.DuScriptUI.addSeparator(ui_structuresMainPanelGroup);
 var ui_structuresIKGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,settings.data.expert ? 'row' : 'column');
@@ -76,13 +555,117 @@ ui_structuresCustomNumberGroup.add('statictext',undefined,"Number of elements")
 var ui_structuresCustomNumberEdit = DuAEF.DuScriptUI.addNiceEditText(ui_structuresCustomNumberGroup, "3");
 ui_structuresCustomNumberEdit.minimumSize = [25,10];
 var ui_structuresCustomNameEdit = DuAEF.DuScriptUI.addNiceEditText(ui_structuresCustomGroup, "Name");
-//TODO option for bones color
-//TODO option for bones size
-//-> go to edit mode automatically after creation
 
-var ui_structuresValidGroup = DuAEF.DuScriptUI.addGroup(ui_structuresCustomGroup);
-var ui_structuresCustomCancelButton = DuAEF.DuScriptUI.addImageButton(ui_structuresValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
-var ui_structuresCustomValidButton = DuAEF.DuScriptUI.addImageButton(ui_structuresValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+var ui_structuresCustomValidGroup = DuAEF.DuScriptUI.addGroup(ui_structuresCustomGroup);
+var ui_structuresCustomCancelButton = DuAEF.DuScriptUI.addImageButton(ui_structuresCustomValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_structuresCustomValidButton = DuAEF.DuScriptUI.addImageButton(ui_structuresCustomValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+//ARM
+var ui_armGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+var ui_sutrcturesArmTypeGroup = DuAEF.DuScriptUI.addGroup(ui_armGroup,'row');
+ui_sutrcturesArmTypeGroup.alignChildren = ['center','top'];
+var ui_armPlantiButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesArmTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/filledhand_l.png',"Plantigrade (human and primates, bears, rabbits...)",'E:/DEV SRC/RainboxUI/Icons/25w/filledhand_r.png');
+ui_armPlantiButton.setChecked(true);
+var ui_armDigiButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesArmTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/digitigrade_l.png',"Digitigrade (dogs, cats, dinosaurs, walking birds...)",'E:/DEV SRC/RainboxUI/Icons/25w/digitigrade_r.png');
+var ui_armUnguButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesArmTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/ungulate_l.png',"Ungulate (horses, cattle, girafes, pigs, deers, camels, hippopotamuses...)",'E:/DEV SRC/RainboxUI/Icons/25w/ungulate_r.png');
+DuAEF.DuScriptUI.addSeparator(ui_armGroup);
+var ui_armDetailsGroup = DuAEF.DuScriptUI.addGroup(ui_armGroup,'column');
+ui_armDetailsGroup.alignment = ['center','top'];
+ui_armDetailsGroup.alignChildren = ['left','top'];
+if (!settings.data.expert)
+{
+	var ui_armHelpGroup = DuAEF.DuScriptUI.addGroup(ui_armDetailsGroup,'stack');
+	var ui_armPlantiImage = ui_armHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_plantiarm.png');
+	var ui_armDigiImage = ui_armHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_digitiarm.png');
+	var ui_armUnguImage = ui_armHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_unguarm.png');
+	var ui_armPlantiLegImage = ui_armHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_plantifrontleg.png');
+	ui_armDigiImage.visible = false;
+	ui_armUnguImage.visible = false;
+	ui_armPlantiLegImage.visible = false;
+}
+var ui_armShoulderButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_armDetailsGroup, "Shoulder", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+var ui_armHumerusButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_armDetailsGroup, "Arm", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.ORANGE);
+ui_armHumerusButton.setChecked(true);
+var ui_armRadiusButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_armDetailsGroup, "Forearm", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.YELLOW);
+ui_armRadiusButton.setChecked(true);
+var ui_armHandButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_armDetailsGroup, "Hand", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+ui_armHandButton.setChecked(true);
+var ui_armClawsButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_armDetailsGroup, "Claws", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+var ui_armValidGroup = DuAEF.DuScriptUI.addGroup(ui_armDetailsGroup);
+var ui_armCancelButton = DuAEF.DuScriptUI.addImageButton(ui_armValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_armValidButton = DuAEF.DuScriptUI.addImageButton(ui_armValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+//LEG
+var ui_legGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+var ui_sutrcturesLegTypeGroup = DuAEF.DuScriptUI.addGroup(ui_legGroup,'row');
+ui_sutrcturesLegTypeGroup.alignChildren = ['center','top'];
+var ui_legPlantiButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesLegTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/plantigrade_l.png',"Plantigrade (human and primates, bears, rabbits...)",'E:/DEV SRC/RainboxUI/Icons/25w/plantigrade_r.png');
+ui_legPlantiButton.setChecked(true);
+var ui_legDigiButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesLegTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/digitigrade_l.png',"Digitigrade (dogs, cats, dinosaurs, walking birds...)",'E:/DEV SRC/RainboxUI/Icons/25w/digitigrade_r.png');
+var ui_legUnguButton = DuAEF.DuScriptUI.addImageCheckBox(ui_sutrcturesLegTypeGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/ungulate_l.png',"Ungulate (horses, cattle, girafes, pigs, deers, camels, hippopotamuses...)",'E:/DEV SRC/RainboxUI/Icons/25w/ungulate_r.png');
+DuAEF.DuScriptUI.addSeparator(ui_legGroup);
+var ui_legDetailsGroup = DuAEF.DuScriptUI.addGroup(ui_legGroup,'column');
+ui_legDetailsGroup.alignment = ['center','top'];
+ui_legDetailsGroup.alignChildren = ['left','top'];
+if (!settings.data.expert)
+{
+	var ui_legHelpGroup = DuAEF.DuScriptUI.addGroup(ui_legDetailsGroup,'stack');
+	var ui_legPlantiImage = ui_legHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_plantileg.png');
+	var ui_legDigiImage = ui_legHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_digitileg.png');
+	var ui_legUnguImage = ui_legHelpGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_unguleg.png');
+	ui_legDigiImage.visible = false;
+	ui_legUnguImage.visible = false;
+}
+var ui_legFemurButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_legDetailsGroup, "Thigh", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.ORANGE);
+ui_legFemurButton.setChecked(true);
+var ui_legTibiaButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_legDetailsGroup, "Calf", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.YELLOW);
+ui_legTibiaButton.setChecked(true);
+var ui_legFootButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_legDetailsGroup, "Foot", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+ui_legFootButton.setChecked(true);
+var ui_legClawsButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_legDetailsGroup, "Toes", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+ui_legClawsButton.label.minimumSize.width = 50;
+var ui_legValidGroup = DuAEF.DuScriptUI.addGroup(ui_legDetailsGroup);
+var ui_legCancelButton = DuAEF.DuScriptUI.addImageButton(ui_legValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_legValidButton = DuAEF.DuScriptUI.addImageButton(ui_legValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+//SPINE
+var ui_spineGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+var ui_spineDetailsGroup = DuAEF.DuScriptUI.addGroup(ui_spineGroup,'column');
+ui_spineDetailsGroup.alignment = ['center','top'];
+ui_spineDetailsGroup.alignChildren = ['left','top'];
+if (!settings.data.expert)
+{
+	var ui_spineImage = ui_spineDetailsGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_spine.png');
+}
+var ui_headButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_spineDetailsGroup, "Head", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+ui_headButton.setChecked(true);
+var ui_neckEdit = DuAEF.DuScriptUI.addNiceEditText(ui_spineDetailsGroup,'1',"Neck: "," layers");
+if (!settings.data.expert)DuAEF.DuScriptUI.setTextColor(ui_neckEdit.static, DuAEF.DuJS.Color.Colors.ORANGE);
+var ui_spineEdit = DuAEF.DuScriptUI.addNiceEditText(ui_spineDetailsGroup,'2',"Spine: "," layers");
+if (!settings.data.expert)DuAEF.DuScriptUI.setTextColor(ui_spineEdit.static, DuAEF.DuJS.Color.Colors.YELLOW);
+var ui_hipsButton = DuAEF.DuScriptUI.addNiceCheckBox(ui_spineDetailsGroup, "Hips", '', settings.data.expert ? DuAEF.DuJS.Color.Colors.LIGHT_GREY : DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+ui_hipsButton.setChecked(true);
+
+var ui_spineValidGroup = DuAEF.DuScriptUI.addGroup(ui_spineDetailsGroup);
+var ui_spineCancelButton = DuAEF.DuScriptUI.addImageButton(ui_spineValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_spineValidButton = DuAEF.DuScriptUI.addImageButton(ui_spineValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+//TAIL
+var ui_tailGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainGroup,'column');
+var ui_tailDetailsGroup = DuAEF.DuScriptUI.addGroup(ui_tailGroup,'column');
+ui_tailDetailsGroup.alignment = ['center','top'];
+ui_tailDetailsGroup.alignChildren = ['left','top'];
+if (!settings.data.expert)
+{
+	var ui_tailImage = ui_tailDetailsGroup.add('image',undefined,'E:/DEV SRC/RainboxUI/Icons/illustrations/illustrations_tail.png');
+}
+var ui_tailEdit = DuAEF.DuScriptUI.addNiceEditText(ui_tailDetailsGroup,'3',"Tail: "," layers");
+if (!settings.data.expert)DuAEF.DuScriptUI.setTextColor(ui_tailEdit.static, DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+
+var ui_tailValidGroup = DuAEF.DuScriptUI.addGroup(ui_tailDetailsGroup);
+var ui_tailCancelButton = DuAEF.DuScriptUI.addImageButton(ui_tailValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_tailValidButton = DuAEF.DuScriptUI.addImageButton(ui_tailValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create structure",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
 
 //============== INIT ===================
 
@@ -90,9 +673,38 @@ setCurrentStructuresPanel();
 
 // ========= CONNECT EVENTS ===================
 
+//ARM
+ui_armPlantiButton.onClick = ui_armPlantiButton_clicked;
+ui_armDigiButton.onClick = ui_armDigiButton_clicked;
+ui_armUnguButton.onClick = ui_armUnguButton_clicked;
+
+ui_armClawsButton.onClick = ui_armClawsButton_clicked;
+
+ui_armOptionsButton.onClick = function() { setCurrentStructuresPanel(2); };
+ui_armCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
+ui_armValidButton.onClick = ui_armButton.onClick = ui_armValidButton_clicked;
+
+//LEG
+ui_legPlantiButton.onClick = ui_legPlantiButton_clicked;
+ui_legDigiButton.onClick = ui_legDigiButton_clicked;
+ui_legUnguButton.onClick = ui_legUnguButton_clicked;
+
+ui_legOptionsButton.onClick = function() { setCurrentStructuresPanel(3); };
+ui_legCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
+ui_legValidButton.onClick = ui_legButton.onClick = ui_legValidButton_clicked;
+
+//SPINE
+ui_spineOptionsButton.onClick = function() { setCurrentStructuresPanel(4); };
+ui_spineCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
+ui_spineValidButton.onClick = ui_spineButton.onClick = ui_spineValidButton_clicked;
+
+//TAIL
+ui_tailOptionsButton.onClick = function() { setCurrentStructuresPanel(5); };
+ui_tailCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
+ui_tailValidButton.onClick = ui_tailButton.onClick = ui_tailValidButton_clicked;
+
 //CUSTOM STRUCTURES
 ui_customStructureButton.onClick = function() { setCurrentStructuresPanel(1); };
-
 ui_structuresCustomNameEdit.onActivate = ui_structuresCustomNameEdit_activated;
 ui_structuresCustomNameEdit.onDeactivate = ui_structuresCustomNameEdit_Deactivated;
 ui_structuresCustomCancelButton.onClick = function() { setCurrentStructuresPanel(0); };
