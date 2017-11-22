@@ -103,14 +103,19 @@ Structure.prototype.toggleEditMode = function (color)
 
 	for (var i = 0 ; i < this.elements.length ; i++)
 	{
-		var layer = this.elements[i];
-		this.toggleElementEditMode(layer,setEditMode)
+		this.toggleElementEditMode(i,setEditMode)
 	}
 }
 
-//low level undocumented function
-Structure.prototype.toggleElementEditMode = function (element,setEditMode)
+/**
+* Toggles the edit mode of one element in the structure
+* @memberof Structure
+* @param {int} elementIndex - The index of the element to toggle in the Structure.elements Array
+* @param {boolean} setEditMode - true to turn on edit mode, false to turn it off.
+*/
+Structure.prototype.toggleElementEditMode = function (elementIndex,setEditMode)
 {
+	var element = this.elements[elementIndex];
 	var comp = element.containingComp;
 	var already = this.editModeRegExp.test(element.comment);
 
@@ -126,6 +131,7 @@ Structure.prototype.toggleElementEditMode = function (element,setEditMode)
 			child.parent = null;
 		}
 		element.comment = element.comment + "|";
+		element.name = '=EDIT= ' + element.name;
 	}
 	else if (already)
 	{
@@ -145,6 +151,7 @@ Structure.prototype.toggleElementEditMode = function (element,setEditMode)
 			}
 			//remove comment
 			element.comment = element.comment.replace(match[0],'');
+			element.name = element.name.replace('=EDIT= ','');
 		}
 	}
 }
@@ -175,7 +182,8 @@ DuAEF.Duik = {};
 //Initialize
 (function ()
 {
-	#include "pseudo_effects/duik_structure.ffx.jsxinc"
+	#include "pseudoEffects/duik_structure.ffx.jsxinc"
+	duik_structure = DuAEF.DuBinary.toFile(duik_structure);
 	/**
 	 * The pseudo effects needed by Duik
 	 * @enum {File}
@@ -183,7 +191,7 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
-		STRUCTURE_ELEMENT: DuAEF.DuBinary.toFile(duik_structure)
+		STRUCTURE_ELEMENT: duik_structure
 	};
 
 	/**
@@ -219,7 +227,8 @@ DuAEF.Duik = {};
 	{
 		STRUCTURE: 0,
 		CHILDREN: 1,
-		ELEMENT: 2
+		ELEMENT: 2,
+		ALL: 3
 	}
 
 	/**
@@ -566,7 +575,7 @@ DuAEF.Duik.isStructure = function (layer)
  * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
  * @memberof DuAEF.Duik
  * @param {CompItem}	comp	- The composition where to get the structures
- * @param {DuAEF.Duik.structureSelectionMode} structureSelectionMode	- The selection mode
+ * @param {int} [structureSelectionMode=DuAEF.Duik.structureSelectionMode.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.structureSelectionMode}
  * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.structureSelectionMode.ELEMENT, will be one structure with all elements found
  */
 DuAEF.Duik.getStructures = function (comp,selectionMode)
@@ -575,7 +584,7 @@ DuAEF.Duik.getStructures = function (comp,selectionMode)
 	var layers = comp.selectedLayers;
 	var i = 0;
 	var m = layers.length-1;
-	if (layers.length == 0)
+	if (selectionMode == DuAEF.Duik.structureSelectionMode.ALL)
 	{
 		layers = comp.layers;
 		selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
@@ -585,6 +594,8 @@ DuAEF.Duik.getStructures = function (comp,selectionMode)
 
 	var structures = [];
 	var indexed = [];
+
+	if (layers.length == 0) return structures;
 
 	var structure = new Structure();
 
