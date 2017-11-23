@@ -332,6 +332,23 @@ DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp)
 DuAEF.DuAE.Layer = {};
 
 /**
+* Generates a new unique name for an effect
+* @param {string} newName	- The wanted new name
+* @param {Layer} layer 	- The layer
+* @return {string}	The unique name, with a new number at the end if needed.
+*/
+DuAEF.DuAE.Layer.newUniqueEffectName = function(newName, layer)
+{
+	var effectNames = [];
+	for (var i = 1 ; i <= layer.effect.numProperties ; i++)
+	{
+		effectNames.push(layer.effect(i).name);
+	}
+	return DuAEF.DuJS.String.generateUnique(newName,effectNames);
+}
+
+
+/**
 * Gets the After Effects selected properties in the layer
 * @param {Layer}	layer	- The layer
 * @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
@@ -460,7 +477,7 @@ DuAEF.DuAE.Property = {};
 * @param {Property}	prop	- The After Effects Property
 * @return {Layer}	The layer
 */
-DuAEF.DuAE.Property.getPropertyLayer = function (prop)
+DuAEF.DuAE.Property.getLayer = function (prop)
 {
 	if (prop == undefined) throw "You must provide a property.";
 	var parentProp = prop;
@@ -477,10 +494,41 @@ DuAEF.DuAE.Property.getPropertyLayer = function (prop)
 * @param {Property}	prop	- The After Effects Property
 * @return {CompItem}	The composition
 */
-DuAEF.DuAE.Property.getPropertyComp = function (prop)
+DuAEF.DuAE.Property.getComp = function (prop)
 {
 	var layer = DuAEF.DuAE.Property.getPropertyLayer(prop);
 	return layer.containingComp;
+}
+
+/**
+* Gets the number of dimensions of a property
+* @param {Property}	prop	- The After Effects Property
+* @return {int}	The number of dimensions, 0 if this is not a dimensionnal value (ie color, text, shape...)
+*/
+DuAEF.DuAE.Property.getDimensions = function (prop)
+{
+	var dimensions = 0;
+	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
+	{
+		//if this is a position or scale and the layer is not 3D, AFX uses a 3D value in the position (with 0 as Z position), but the expression must return a 2D value.......
+		if ((prop.matchName == "ADBE Scale" || prop.matchName == "ADBE Position") && !DuAEF.DuAE.Property.getLayer(prop).threeDLayer)
+		{
+			dimensions = 2;
+		}
+		else
+		{
+			dimensions = 3;
+		}
+	}
+	else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
+	{
+		dimensions = 2;
+	}
+	else if (prop.propertyValueType == PropertyValueType.OneD)
+	{
+		dimensions = 1;
+	}
+	return dimensions;
 }
 
 /**
@@ -608,7 +656,7 @@ DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
 * @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
 * @return {KeyFrame[]}	The keyframes, or null of this property is of type PropertyValueType.NO_VALUE or PropertyValueType.CUSTOM_VALUE
 */
-DuAEF.DuAE.Property.getPropertyAnim = function (prop,selected,timeRange)
+DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 {
 	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
 	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
@@ -632,7 +680,7 @@ DuAEF.DuAE.Property.getPropertyAnim = function (prop,selected,timeRange)
 * @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
 * @return {PropertyGroupAnim|PropertyAnim}	The animations. A PropertyAnim if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
 */
-DuAEF.DuAE.Property.getPropertyGroupAnim = function (prop,selected,timeRange)
+DuAEF.DuAE.Property.getGroupAnim = function (prop,selected,timeRange)
 {
 	if (prop.propertyType === PropertyType.PROPERTY)
 	{
@@ -734,12 +782,14 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
 * @param {boolean}	[setExpression=false]	- Sets the expression too
+* @param {boolean}	[ignoreMatchName=false]	- true to set the anim even if matchName of the property do not match the animation.
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression)
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression,ignoreMatchName)
 {
 	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
 	if (ignoreName == undefined) ignoreName = false;
+	if (ignoreMatchName == undefined) ignoreMatchName = false;
 	if (setExpression == undefined) setExpression = false;
 
 	var matchName = anim._matchName;
@@ -752,7 +802,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression)
 	//find the property with the same name and matchname
 	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
 	{
-		if (prop.matchName == matchName && (!ignoreName && prop.name == name || ignoreName))
+		if ((!ignoreMatchName && prop.matchName == matchName || ignoreMatchName) && (!ignoreName && prop.name == name || ignoreName))
 		{
 			//if there are keys, set them
 			if (anim.keys.length > 0)
@@ -829,6 +879,23 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpress
 		}
 	}
 	return ok;
+}
+
+/**
+* Removes the animation from the property
+* @param {Property} prop -The property
+* @param {boolean} [removeExpression=false] - Set to true to remove the expression too
+*/
+DuAEF.DuAE.Property.removeAnim = function(prop,removeExpression)
+{
+	while (prop.numKeys > 0)
+	{
+		prop.removeKey(0);
+	}
+	if (removeExpression && prop.canSetExpression)
+	{
+		prop.expression = '';
+	}
 }
 
 /**
