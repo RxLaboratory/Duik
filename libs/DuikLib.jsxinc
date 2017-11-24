@@ -797,41 +797,54 @@ DuAEF.Duik.Automations.list = function (prop)
  * Adds a wiggle to a property
  * @memberof DuAEF.Duik.Automations
  * @param {Property}	prop 				- The property.
- * @param {bool}		[separateDimensions] 	- Wether to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal.
+ * @param {boolean}		[separateDimensions] 	- Set to true to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal.
+ * @param {PropertyGroup|null}	[effect]	- A wiggle effect already created by Duik to use as a controller for this wiggle
+ * @return {PropertyGroup} The effect created (or provided)
  */
-DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions)
+DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions,effect)
 {
-	if (!prop) throw "Missing Param 1: wiggle needs a Property";
-	if (prop.propertyType != PropertyType.PROPERTY) throw "This is not a Property (maybe a PropertyGroup?)";
-	if (!prop.canVaryOverTime) throw "This property is not animatable";
-	if (!prop.canSetExpression) throw "This property can not set expressions";
-
 	if (separateDimensions == undefined) separateDimensions = false;
+	if (effect == undefined) effect = null;
+	if (!prop) return effect;
+	if (prop.propertyType != PropertyType.PROPERTY) return effect;
+	if (!prop.canVaryOverTime) return effect;
+	if (!prop.canSetExpression) return effect;
 
 	//dimensions
 	var dimensions = DuAEF.DuAE.Property.getDimensions(prop);
-
 	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var comp = layer.containingComp;
 
-	layer.selected = true;
-	if (!separateDimensions && dimensions > 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_MULTIWIGGLE);
-	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_WIGGLE);
-	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_WIGGLE);
-	else layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_WIGGLE);
-	layer.selected = false;
+	if (effect == null)
+	{
+		layer.selected = true;
+		if (!separateDimensions && dimensions > 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_MULTIWIGGLE);
+		else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_WIGGLE);
+		else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_WIGGLE);
+		else layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_WIGGLE);
+		layer.selected = false;
 
-	var effect = layer.effect("Wiggle");
-	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Wiggle',layer);
+		effect = layer.effect("Wiggle");
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Wiggle',layer);
+	}
+
+	var compEffect = DuAEF.DuAE.Property.getComp(effect);
+	var sameComp = compEffect.name == comp.name;
+
+	if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.ONED_MULTIWIGGLE) effect(3).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.THREED_WIGGLE) effect(13).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.TWOD_WIGGLE) effect(9).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.ONED_WIGGLE) effect(3).setValue(comp.duration);
+
+	var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,sameComp);
 
 	if (!separateDimensions && dimensions > 1)
 	{
-		effect(4).setValue(layer.containingComp.duration);
-		prop.expression = "//Duik.1DMultiWiggle\n" +
-				"var fx = effect(\"" + effect.name + "\");\n" +
+		prop.expression = "//Duik.1DMultiWiggle\n" + effectLink + "\n" +
 				"freq = fx(2);\n" +
 				"amp = fx(1);\n" +
-				"linked = fx(3).value;\n" +
-				"loop = fx(4);\n" +
+				"linked = fx(4).value;\n" +
+				"loop = fx(3);\n" +
 				"if (loop == 0) loop = thisComp.duration;\n" +
 				"t = (time % loop)-loop;\n" +
 				"w1 = wiggle(freq,amp, 1, 0.5, t);\n" +
@@ -844,9 +857,7 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions)
 	}
 	else if (dimensions == 3)
 	{
-		effect(13).setValue(layer.containingComp.duration);
-		prop.expression = "//Duik.3DWiggle\n" +
-				"var fx = effect(\"" + effect.name + "\");\n" +
+		prop.expression = "//Duik.3DWiggle\n" + effectLink + "\n" +
 				"Xfreq = fx(3);\n" +
 				"Yfreq = fx(7);\n" +
 				"Zfreq = fx(11);\n" +
@@ -869,9 +880,7 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions)
 	}
 	else if (dimensions == 2)
 	{
-		effect(9).setValue(layer.containingComp.duration);
-	 	prop.expression = "//Duik.2DWiggle\n" +
-				"var fx = effect(\"" + effect.name + "\");\n" +
+	 	prop.expression = "//Duik.2DWiggle\n" + effectLink + "\n" +
 				"Xfreq = fx(3);\n" +
 				"Yfreq = fx(7);\n" +
 				"Xamp = fx(2);\n" +
@@ -890,9 +899,7 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions)
 	}
 	else if (dimensions == 1)
 	{
-		effect(3).setValue(layer.containingComp.duration);
-		prop.expression = "//Duik.1DWiggle\n" +
-				"var fx = effect(\"" + effect.name + "\");\n" +
+		prop.expression = "//Duik.1DWiggle\n" + effectLink + "\n" +
 				"freq = fx(2);\n" +
 				"amp = fx(1);\n" +
 				"loop = fx(3);\n" +
@@ -904,5 +911,5 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions)
 				"w + value - valueAtTime(0)";
 	}
 
-
+	return effect;
 }
