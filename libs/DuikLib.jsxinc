@@ -201,6 +201,15 @@ DuAEF.Duik = {};
 	duik_2d_wiggle = DuAEF.DuBinary.toFile(duik_2d_wiggle);
 	#include "pseudoEffects/duik_3d_wiggle.ffx.jsxinc"
 	duik_3d_wiggle = DuAEF.DuBinary.toFile(duik_3d_wiggle);
+	//swing
+	#include "pseudoEffects/duik_1d_swing.ffx.jsxinc"
+	duik_1d_swing = DuAEF.DuBinary.toFile(duik_1d_swing);
+	#include "pseudoEffects/duik_2d_swing.ffx.jsxinc"
+	duik_2d_swing = DuAEF.DuBinary.toFile(duik_2d_swing);
+	#include "pseudoEffects/duik_3d_swing.ffx.jsxinc"
+	duik_3d_swing = DuAEF.DuBinary.toFile(duik_3d_swing);
+	#include "pseudoEffects/duik_spatial_swing.ffx.jsxinc"
+	duik_spatial_swing = DuAEF.DuBinary.toFile(duik_spatial_swing);
 	/**
 	 * The pseudo effects needed by Duik
 	 * @enum {File}
@@ -208,6 +217,11 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
+		//Swing
+		ONED_SWING: duik_1d_swing,
+		SPATIAL_SWING: duik_spatial_swing,
+		TWOD_SWING: duik_2d_swing,
+		THREED_SWING: duik_3d_swing,
 		//wiggle
 		ONED_WIGGLE: duik_1d_wiggle,
 		ONED_MULTIWIGGLE: duik_1d_multiwiggle,
@@ -228,6 +242,11 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffectsMatchNames =
 	{
+		//Swing
+		ONED_SWING: "Pseudo/DUIK 1d swing",
+		SPATIAL_SWING: "Pseudo/DUIK spatial swing",
+		TWOD_SWING: "Pseudo/DUIK 2d swing",
+		THREED_SWING: "Pseudo/DUIK 3d swing",
 		//wiggle
 		ONED_WIGGLE: "Pseudo/DUIK 1d wiggle",
 		ONED_MULTIWIGGLE: "Pseudo/DUIK 1d multiwiggle",
@@ -743,14 +762,14 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 * @namespace
 * @memberof DuAEF.DUIK
 */
-DuAEF.Duik.Automations = {};
+DuAEF.Duik.Automation = {};
 
 /**
 * Adds a list on a property
- * @memberof DuAEF.Duik.Automations
+ * @memberof DuAEF.Duik.Automation
 * @param {Property} prop - The Property
 */
-DuAEF.Duik.Automations.list = function (prop)
+DuAEF.Duik.Automation.list = function (prop)
 {
 	if (prop == undefined) throw "Missing Param 1: list needs a Property";
 	if (prop.propertyType != PropertyType.PROPERTY) throw "This is not a Property (maybe a PropertyGroup?)";
@@ -795,13 +814,13 @@ DuAEF.Duik.Automations.list = function (prop)
 
 /**
  * Adds a wiggle to a property
- * @memberof DuAEF.Duik.Automations
+ * @memberof DuAEF.Duik.Automation
  * @param {Property}	prop 				- The property.
  * @param {boolean}		[separateDimensions] 	- Set to true to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal.
  * @param {PropertyGroup|null}	[effect]	- A wiggle effect already created by Duik to use as a controller for this wiggle
  * @return {PropertyGroup} The effect created (or provided)
  */
-DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions,effect)
+DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 {
 	if (separateDimensions == undefined) separateDimensions = false;
 	if (effect == undefined) effect = null;
@@ -835,7 +854,7 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions,effect)
 	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.THREED_WIGGLE) effect(13).setValue(comp.duration);
 	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.TWOD_WIGGLE) effect(9).setValue(comp.duration);
 	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.ONED_WIGGLE) effect(3).setValue(comp.duration);
-
+//TODO Wiggle for other types of properties
 	var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,sameComp);
 
 	if (!separateDimensions && dimensions > 1)
@@ -912,4 +931,128 @@ DuAEF.Duik.Automations.wiggle = function (prop,separateDimensions,effect)
 	}
 
 	return effect;
+}
+
+/**
+ * Adds a swing to a property
+ * @memberof DuAEF.Duik.Automation
+ * @param {Property}	prop 				- The property.
+ */
+DuAEF.Duik.Automation.swing = function (prop)
+{
+	if (!prop) return;
+	if (prop.propertyType != PropertyType.PROPERTY) return;
+	if (!prop.canVaryOverTime) return;
+	if (!prop.canSetExpression) return;
+
+	var dimensions = DuAEF.DuAE.Property.getDimensions(prop);
+	var layer = DuAEF.DuAE.Property.getLayer(prop);
+
+	if (dimensions < 1 || dimensions > 3) return;
+
+	layer.selected = true;
+	if (prop.isSpatial) layer.applyPreset(DuAEF.Duik.pseudoEffects.SPATIAL_SWING);
+	else if (dimensions == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_SWING);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_SWING);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_SWING);
+	layer.selected = false;
+	var effect = layer.effect("Swing");
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Swing',layer);
+
+
+
+	if (prop.isSpatial)
+	{
+		prop.expression = 	'//Duik.spatialSwing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = Math.abs(fx(4));\n' +
+					'var angle = fx(5)/180*Math.PI;\n' +
+					'var result = [0,0];\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'sin = sin*amp;\n' +
+					'result = [0,sin];\n' +
+					'var x = -sin*Math.sin(angle);\n' +
+					'var y = sin*Math.cos(angle);\n' +
+					'result = [ x,y ] ;\n' +
+					'}\n' +
+					'result + value;\n';
+	}
+	else if (dimensions == 1)
+	{
+		prop.expression = '//Duik.oneDSwing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'result + value;';
+	}
+	else if (dimensions == 2)
+	{
+		prop.expression = '//Duik.oneDSwing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var axis = fx(5);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'if (axis == 1) result = [result,result];\n' +
+					'else if (axis == 2) result =[result,0];\n' +
+					'else if (axis == 3) result =[0,result];\n' +
+					'result+value;';
+	}
+	else if (dimensions == 3)
+	{
+		prop.expression = '//Duik.oneDSwing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var axis = fx(5);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'if (axis == 1) result = [result,result];\n' +
+					'else if (axis == 2) result =[result,0,0];\n' +
+					'else if (axis == 3) result =[0,result,0];\n' +
+					'else if (axis == 4) result =[0,0,result];\n' +
+					'result+value;';
+	}
 }
