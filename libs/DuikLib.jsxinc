@@ -728,27 +728,32 @@ DuAEF.Duik.Automations.list = function (prop)
 {
 	if (prop == undefined) return;
 	if (prop.propertyType != PropertyType.PROPERTY) return;
+	if (!prop.canVaryOverTime) return;
+	if (!prop.canSetExpression) return;
 
 	var dim = DuAEF.DuAE.Property.getDimensions(prop);
-	if (dim < 1) return;
+
 	var layer = DuAEF.DuAE.Property.getLayer(prop);
 	var comp = layer.containingComp;
 
-	var effectName = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' List',layer);
-	var effect;
-	if (dim == 1) effect = layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_LIST);
-	else if (dim == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_LIST);
+	layer.selected = true;
+	if (dim == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_LIST);
+	else if (dim == 2)layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_LIST);
 	else if (dim == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_LIST);
+	else { layer.selected = false; return;}
+	layer.selected = false;
 
-	effect.name = effectName;
+
+	var effect = layer.effect("List");
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' List',layer);
 
 	//set animation with expression
 	var anim = DuAEF.DuAE.Property.getAnim(prop,false);
-	DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,true);
+	if (anim) DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,true);
 	DuAEF.DuAE.Property.removeAnim(prop);
 
 	prop.expression =  "//Duik.list\r\n" +
-	"var fx = effect(\"" + effect.name + "\");"
+	"var fx = effect(\"" + effect.name + "\");\n" +
 	"var v1 = fx(2);\n" +
 	"var w1 = fx(3);\n" +
 	"var v2 = fx(6);\n" +
