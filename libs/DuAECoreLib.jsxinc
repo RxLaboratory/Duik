@@ -89,6 +89,7 @@ function PropertyAnim(){
 	this.startValue = null;
 	this.type = "anim";
 	this.expression = "";
+	this.dimensions = 0;
 }
 
 /**
@@ -702,6 +703,7 @@ DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 	anim._matchName = prop.matchName;
 	anim.startValue = prop.valueAtTime(timeRange[0],true);
 	anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
+	anim.dimensions = DuAEF.DuAE.Property.getDimensions(prop);
 	if (prop.canSetExpression) anim.expression = prop.expression;
 	return anim;
 }
@@ -751,27 +753,51 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 
 	if (timeOffset == undefined) timeOffset = DuAEF.DuAE.Property.getPropertyComp(prop).time;
 	var time = key._time + timeOffset;
+	var propDimensions = DuAEF.DuAE.Property.getDimensions(prop);
+	var val = key.value;
+
+	if (propDimensions > 1 && !(val instanceof Array))
+	{
+		val = [val];
+	}
+
+	//adjust dimensions
+	if (val instanceof Array)
+	{
+		while (val.length < propDimensions)
+		{
+			val.push(0);
+		}
+		while (val.length > propDimensions)
+		{
+			val.pop();
+		}
+
+		//if spatial, do the same for spatial tangents
+		if (prop.isSpatial)
+		{
+			while (key.spatialProperties.inTangent.length < propDimensions)
+			{
+				key.spatialProperties.inTangent.push(0);
+			}
+			while (key.spatialProperties.inTangent.length > propDimensions)
+			{
+				key.spatialProperties.inTangent.pop();
+			}
+
+			while (key.spatialProperties.outTangent.length < propDimensions)
+			{
+				key.spatialProperties.outTangent.push(0);
+			}
+			while (key.spatialProperties.outTangent.length > propDimensions)
+			{
+				key.spatialProperties.outTangent.pop();
+			}
+		}
+	}
 
 	try
 	{
-		var val = key.value;
-		var dimensions = val.length;
-
-		//get Value
-		if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.ThreeD)
-		{
-			if (dimensions == 2) val = [val[0],val[1],0];
-			if (dimensions == 1) val = [val[0],0,0];
-		}
-		else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD)
-		{
-			if (dimensions == 3) val = [val[0],val[1]];
-			if (dimensions == 1) val = [val[0],0];
-		}
-		else
-		{
-			if (dimensions > 1) val = val[0];
-		}
 		prop.setValueAtTime(time,val);
 
 		//get the index of the created key
@@ -828,13 +854,14 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression,i
 
 	var matchName = anim._matchName;
 	var name = anim._name;
+	var dimensions = anim.dimensions;
 
 	var ok = false;
 
 	if (anim == null) return true;
 
 	//find the property with the same name and matchname
-	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
+	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime && DuAEF.DuAE.Property.getDimensions(prop) == dimensions)
 	{
 		if ((!ignoreMatchName && prop.matchName == matchName || ignoreMatchName) && (!ignoreName && prop.name == name || ignoreName))
 		{
@@ -851,6 +878,18 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression,i
 			{
 				try
 				{
+					var value = anim.startValue;
+					if (value instanceof Array)
+					{
+						while (value.length < dimensions)
+						{
+							value.push(0);
+						}
+						while (value.length > dimensions)
+						{
+							value.pop();
+						}
+					}
 					if (anim.startValue != null) prop.setValue(anim.startValue);
 					ok = true;
 				} catch (err) {};
@@ -924,7 +963,7 @@ DuAEF.DuAE.Property.removeAnim = function(prop,removeExpression)
 {
 	while (prop.numKeys > 0)
 	{
-		prop.removeKey(0);
+		prop.removeKey(1);
 	}
 	if (removeExpression && prop.canSetExpression)
 	{
