@@ -13,7 +13,7 @@
   var folder = Folder.selectDialog ("Select Folder");
   if (!folder) return;
 
-  //recursive method to convert all files in a folder
+  //recursive method to convert all files in a folder (replacing (and ignoring) previous jsxinc files)
   function convertFolder(f)
   {
     var files = f.getFiles();
@@ -26,6 +26,7 @@
       }
       else
       {
+        if (file.name.lastIndexOf('.jsxinc') == file.name.length - 7) continue;
         var outputFileName = folder.absoluteURI + '/' + file.name + '.jsxinc';
         var category = '';
         if (folder !== f) category = f.name;
