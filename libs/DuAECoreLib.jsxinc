@@ -1242,6 +1242,52 @@ DuAEF.DuAE.Property.removeAnim = function(prop,removeExpression)
 }
 
 /**
+ * Gets an expression link to the property
+ * @memberof DuAEF.DuAE.Property
+ * @param {Property}	prop			- The property
+ * @param {bool}		[useThisComp]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
+ * @return {str}		The expression link to the property
+ */
+DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp)
+{
+	if (useThisComp == undefined) useThisComp = false;
+
+	//get compact expression from matchName, if available
+	function getCompactExpression(matchName, name)
+	{
+		var translatedName = DuAEF.DuAE.compactExpressions[matchName];
+
+		if (translatedName !== undefined)
+			return eval(translatedName);
+		else
+			return ("(" + name + ")");
+	}
+
+	var exprCode = "";
+	var name;
+	while (prop.parentProperty !== null)
+	{
+		if (prop.propertyType == PropertyType.PROPERTY ) name = prop.propertyIndex;
+		else name = "\"" + prop.name + "\"";
+		compactName = getCompactExpression(prop.matchName, name);
+		exprCode = compactName + exprCode;
+
+		// Traverse up the property tree
+		prop = prop.parentProperty;
+	}
+
+	var comp = prop.containingComp;
+	// Prefix the layer reference
+	name = "\"" + prop.name + "\"";
+	exprCode = "layer(" + name + ")." + exprCode;
+	// Prefix the comp reference
+	if (useThisComp) exprCode = "thisComp." + exprCode;
+	else exprCode = "comp(\"" + comp.name + "\")." + exprCode;
+
+	return exprCode;
+}
+
+/**
 * Bezier Paths methods
 * @namespace
 * @memberof DuAEF.DuAE.Property
