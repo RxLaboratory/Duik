@@ -1,3 +1,11 @@
+function setCurrentAutomationPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_automationsGroup.visible = panel == 0;
+	ui_wiggleOptionsGroup.visible = panel == 1;
+}
+
 //=========== EVENTS ============
 function ui_listButton_clicked()
 {
@@ -17,6 +25,23 @@ function ui_listButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_wiggleSeparateDimensionsButton_clicked()
+{
+	var checked = ui_wiggleSeparateDimensionsButton.checked;
+	ui_wiggleSeparateDimensionsButton.label.text = checked ? "Separate dimensions" : "Collapse dimensions";
+	if (checked) ui_wiggleIndividualControlButton.setChecked(false);
+	ui_wiggleIndividualControlButton_clicked();
+
+}
+
+function ui_wiggleIndividualControlButton_clicked()
+{
+	var checked = ui_wiggleIndividualControlButton.checked;
+	ui_wiggleIndividualControlButton.label.text = checked ? "Individual controls" : "Unique control";
+	if (checked) ui_wiggleSeparateDimensionsButton.setChecked(false);
+	ui_wiggleSeparateDimensionsButton_clicked();
+}
+
 function ui_wiggleButton_clicked()
 {
 	var props = DuAEF.DuAE.Comp.getSelectedProps();
@@ -24,10 +49,13 @@ function ui_wiggleButton_clicked()
 
 	app.beginUndoGroup('Duik | ' + "Wiggle");
 
+	var effect = null;
+
 	var layers = DuAEF.DuAE.Comp.unselectLayers();
 	for (var i = 0 ; i < props.length ; i++)
 	{
-		DuAEF.Duik.Automations.wiggle(props[i]);
+		if (ui_wiggleIndividualControlButton.checked) DuAEF.Duik.Automations.wiggle(props[i],ui_wiggleSeparateDimensionsButton.checked);
+		else effect = DuAEF.Duik.Automations.wiggle(props[i],ui_wiggleSeparateDimensionsButton.checked,effect);
 	}
 	DuAEF.DuAE.Comp.selectLayers(layers);
 
@@ -36,14 +64,18 @@ function ui_wiggleButton_clicked()
 }
 
 //========== UI =============
-var ui_automationsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'row');
+var ui_automationsMainGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
+
+var ui_automationsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'row');
 ui_automationsGroup.alignment = ['center','top'];
 ui_automationsGroup.alignChildren = ['center','top'];
 
 var ui_automationsLeftGroup = DuAEF.DuScriptUI.addGroup(ui_automationsGroup,'column');
 ui_automationsLeftGroup.alignChildren = ['left','top'];
 var ui_listButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"List",'E:/DEV SRC/RainboxUI/Icons/25w/list_l.png',"Add a list to the property",'E:/DEV SRC/RainboxUI/Icons/25w/list_r.png',settings.data.debug);
-var ui_wiggleButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Wiggle",'E:/DEV SRC/RainboxUI/Icons/25w/wiggle_l.png',"Make the property wiggle",'E:/DEV SRC/RainboxUI/Icons/25w/wiggle_r.png',settings.data.debug);
+var ui_wiggleGroup = DuAEF.DuScriptUI.addGroup(ui_automationsLeftGroup);
+var ui_wiggleButton = DuAEF.DuScriptUI.addImageButton(ui_wiggleGroup,"Wiggle",'E:/DEV SRC/RainboxUI/Icons/25w/wiggle_l.png',"Make the property wiggle",'E:/DEV SRC/RainboxUI/Icons/25w/wiggle_r.png',settings.data.debug);
+var ui_wiggleOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_wiggleGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Wiggle options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 var ui_importAnimButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Swing",'E:/DEV SRC/RainboxUI/Icons/25w/swing_l.png',"Make the property swing between two values",'E:/DEV SRC/RainboxUI/Icons/25w/swing_r.png',settings.data.debug);
 var ui_importAnimButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Wheel",'E:/DEV SRC/RainboxUI/Icons/25w/wheel_l.png',"Automate the rotation of a wheel",'E:/DEV SRC/RainboxUI/Icons/25w/wheel_r.png',settings.data.debug);
 var ui_importAnimButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Randomize",'E:/DEV SRC/RainboxUI/Icons/25w/randomize_l.png',"Randomizes all types of values and properties",'E:/DEV SRC/RainboxUI/Icons/25w/randomize_r.png',settings.data.debug);
@@ -58,6 +90,25 @@ var ui_importAnimButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGro
 var ui_importAnimButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGroup,"Paint rig",'E:/DEV SRC/RainboxUI/Icons/25w/paintrig_l.png',"Rig brush strokes",'E:/DEV SRC/RainboxUI/Icons/25w/paintrig_r.png',settings.data.debug);
 
 
+//WIGGLE
+var ui_wiggleOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'column');
+ui_wiggleOptionsGroup.alignment = ['center','top'];
+ui_wiggleOptionsGroup.alignChildren = ['left','top'];
+var ui_wiggleSeparateDimensionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_wiggleOptionsGroup,"Collapse dimensions",'E:/DEV SRC/RainboxUI/Icons/32w/collapsedimensions_l.png',"Separate the dimension controls of the wiggle",'E:/DEV SRC/RainboxUI/Icons/32w/separatedimensions_r.png');
+var ui_wiggleIndividualControlButton = DuAEF.DuScriptUI.addImageCheckBox(ui_wiggleOptionsGroup,"Unique control",'E:/DEV SRC/RainboxUI/Icons/32w/batchcontrol_l.png',"Add one control for each property",'E:/DEV SRC/RainboxUI/Icons/32w/individualcontrol_r.png');
+ui_wiggleIndividualControlButton.label.minimumSize.width = 100;
+var ui_wiggleValidGroup = DuAEF.DuScriptUI.addGroup(ui_wiggleOptionsGroup);
+var ui_wiggleCancelButton = DuAEF.DuScriptUI.addImageButton(ui_wiggleValidGroup,'Cancel','E:/DEV SRC/RainboxUI/Icons/25w/cancel_m.png',"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/cancel_r.png');
+var ui_wiggleValidButton = DuAEF.DuScriptUI.addImageButton(ui_wiggleValidGroup,'Create','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create wiggle",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+
+//=========== INIT ==============
+setCurrentAutomationPanel();
+
 //====== CONNECT EVENTS ===========
 ui_listButton.onClick = ui_listButton_clicked;
-ui_wiggleButton.onClick = ui_wiggleButton_clicked;
+ui_wiggleButton.onClick = ui_wiggleValidButton.onClick = ui_wiggleButton_clicked;
+ui_wiggleOptionsButton.onClick = function(){setCurrentAutomationPanel(1);};
+ui_wiggleCancelButton.onClick = function(){setCurrentAutomationPanel(0);};
+ui_wiggleSeparateDimensionsButton.onClick = ui_wiggleSeparateDimensionsButton_clicked;
+ui_wiggleIndividualControlButton.onClick = ui_wiggleIndividualControlButton_clicked;
