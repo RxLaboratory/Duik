@@ -80,6 +80,14 @@ DuAEF.DuScriptUI = {};
 * @property {method} setText - Call this method to change the text
 */
 
+/**
+* A nice Slider
+* @typedef {Object} NiceSlider
+* @property {int} value - The current value
+* @property {event} onChanging - Function to execute when changing
+* @property {event} onChange - Function to execute when changed
+*/
+
 //initilization
 (function ()
 {
@@ -217,13 +225,15 @@ DuAEF.DuScriptUI.addSeparator = function (container,name)
 	if (name == undefined) name = "";
 	var group = DuAEF.DuScriptUI.addGroup(container,"row");
 	group.margins = DuAEF.DuScriptUI.defaultMargins;
+	group.margins.bottom = DuAEF.DuScriptUI.defaultMargins*2;
+	group.alignment = ['fill','top']
 	if (name.length > 0)
 	{
 		var textName = group.add('statictext',undefined,name);
 		textName.alignment = ['left','fill'];
 	}
 	var separator1 = group.add('panel',undefined);
-	separator1.alignment = ['fill','center'];
+	separator1.alignment = ['fill','bottom'];
 	separator1.height = 0;
 }
 
@@ -622,6 +632,7 @@ DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix)
 	niceEditText.onActivate = function(){};
 	niceEditText.onDeactivate = function(){};
 	niceEditText.onChange = function(){};
+	niceEditText.onChanging = function(){};
 
 	niceEditText.clicked = function()
 	{
@@ -645,6 +656,11 @@ DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix)
 		niceEditText.edit.active = false;
 		niceEditText.onChange();
 	}
+	niceEditText.changing = function()
+	{
+		niceEditText.text = niceEditText.edit.text ;
+		niceEditText.onChanging();
+	}
 
 	niceEditText.setText = function (text)
 	{
@@ -663,7 +679,93 @@ DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix)
 		niceEditText.onDeactivate();
 	}
 	niceEditText.edit.onChange = niceEditText.changed;
+	niceEditText.edit.onChanging = niceEditText.changing;
 	niceEditText.addEventListener("mousedown",niceEditText.clicked,true);
 
 	return niceEditText;
+}
+
+/**
+ * Creates a nice edittext where the edit text is shown only on click.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group}	container		- The ScriptUI Object which will contain and display the nice edit text.
+ * @param {int}	[defaultValue=0]		- The initial value.
+ * @param {int}	[min=0]		- The minimal value.
+ * @param {int}	[max=100]		- The maximal value.
+ * @param {string}	[orientation='column']		- Either 'row' or 'column'
+ * @param {boolean}	[invertedAppearance]		- Revert the slider with max value on the left
+ * @param {string}	[prefix]		- A text prefix to display.
+ * @param {string}	[suffix]		- A text suffix to display.
+ * @return {NiceSlider}	The custom Group containing the slider.
+ * @todo implement helpTip
+ */
+DuAEF.DuScriptUI.addNiceSlider = function(container,defaultValue,min,max,orientation,invertedAppearance,prefix,suffix)
+{
+	if (prefix == undefined) prefix = '';
+	if (suffix == undefined) suffix = '';
+	if (min == undefined) min = 0;
+	if (max == undefined) max = 100;
+	if (defaultValue == undefined) defaultValue = 0;
+	if (orientation != 'row') orientation = 'column';
+
+	var niceSlider = container.add('group');
+	niceSlider.orientation = orientation;
+	niceSlider.spacing = DuAEF.DuScriptUI.defaultSpacing;
+	niceSlider.alignment = ['fill','top'];
+	niceSlider.alignChildren = ['fill','center'];
+
+	niceSlider.value = defaultValue;
+	niceSlider.invertedAppearance = invertedAppearance;
+
+	var sliderValue = defaultValue;
+	if (niceSlider.invertedAppearance) sliderValue = max-defaultValue+min;
+
+	niceSlider.slider = niceSlider.add('slider',undefined,sliderValue,min,max);
+	niceSlider.edit = DuAEF.DuScriptUI.addNiceEditText(niceSlider,defaultValue.toString(),prefix,suffix);
+	niceSlider.edit.minimumSize.width = max.toString().length*7+7;
+	if (orientation == 'row')
+	{
+		niceSlider.edit.alignment = ['right','center'];
+	}
+	else
+	{
+		niceSlider.edit.alignment = ['center','center'];
+	}
+	niceSlider.onChanging = function () {};
+	niceSlider.onChange = function () {};
+
+	//events
+	niceSlider.slider.onChanging = function ()
+	{
+		if (niceSlider.invertedAppearance) niceSlider.value = Math.round(niceSlider.slider.maxvalue-niceSlider.slider.value+niceSlider.slider.minvalue);
+		else niceSlider.value = Math.round(niceSlider.slider.value);
+		niceSlider.edit.setText(niceSlider.value);
+		niceSlider.onChanging();
+	}
+	niceSlider.slider.onChange = function ()
+	{
+		niceSlider.onChange();
+	}
+	niceSlider.edit.onChanging = function ()
+	{
+		var val = parseInt(niceSlider.edit.text);
+		if (isNaN(val)) return;
+		niceSlider.value = val;
+		if (niceSlider.invertedAppearance) niceSlider.slider.value = niceSlider.slider.maxvalue-val+niceSlider.slider.minvalue;
+		else niceSlider.slider.value = val;
+		niceSlider.onChanging();
+	}
+	niceSlider.edit.onChange = function ()
+	{
+		var val = parseInt(niceSlider.edit.text);
+		if (isNaN(val)) return;
+		if (val < niceSlider.slider.minvalue) val = niceSlider.slider.minvalue;
+		if (val > niceSlider.slider.maxvalue) val = niceSlider.slider.maxvalue;
+		niceSlider.value = val;
+		if (niceSlider.invertedAppearance) niceSlider.slider.value = niceSlider.slider.maxvalue-val+niceSlider.slider.minvalue;
+		else niceSlider.slider.value = val;
+		niceSlider.onChange();
+	}
+
+	return niceSlider;
 }
