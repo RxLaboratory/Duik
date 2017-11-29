@@ -767,7 +767,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 /**
 * Automations
 * @namespace
-* @memberof DuAEF.DUIK
+* @memberof DuAEF.Duik
 */
 DuAEF.Duik.Automation = {};
 
@@ -1123,4 +1123,266 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 						'}\n' +
 						'Rev == 1 ? value - result : value + result;';
 
+}
+
+/**
+* Randomize tools
+* @namespace
+* @memberof DuAEF.Duik.Automation
+*/
+DuAEF.Duik.Automation.Randomize = {};
+
+/**
+* Randomizes the values at current time of the Properties
+* @param {PropertyBase[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} xMin - X minimum value
+* @param {float} xMax - X maximum value
+* @param {float} [yMin] - Y minimum value
+* @param {float} [yMax] - Y maximum value
+* @param {float} [zMin] - Z minimum value
+* @param {float} [zMax] - Z maximum value
+*/
+DuAEF.Duik.Automation.Randomize.properties = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+{
+	if (props == undefined) throw "You must select the properties you want to randomize";
+	if (props.length == 0) throw "You must select the properties you want to randomize";
+	var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+	var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+	var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			var xval = 0;
+			var yval = 0;
+			var zval = 0;
+			//X
+			if (x) xval = DuAEF.DuJS.Math.random(xMin,xMax);
+			else if (dim == 1) xval = prop.value;
+			else xval = prop.value[0];
+			//Y
+			if (dim == 2 || dim == 3 && y) yval = DuAEF.DuJS.Math.random(yMin,yMax);
+			else if (dim == 3 || dim == 2) yval = 0;
+			//Z
+			if (dim == 3 && z) zval = DuAEF.DuJS.Math.random(zMin,zMax);
+			else if (dim == 3) zval = 0;
+			//SET VALUE
+			var val;
+			if (dim == 1) val = xval;
+			if (dim == 2) val = [xval,yval];
+			if (dim == 3) val = [xval,yval,zval];
+			if (fromCurrentVal) val = val + prop.value;
+			prop.numKeys ? prop.setValueAtTime(comp.time,val) : prop.setValue(val);
+		}
+	}
+}
+
+/**
+* Randomizes the values of the selected keys of the Properties
+* @param {PropertyBase[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} xMin - X minimum value
+* @param {float} xMax - X maximum value
+* @param {float} [yMin] - Y minimum value
+* @param {float} [yMax] - Y maximum value
+* @param {float} [zMin] - Z minimum value
+* @param {float} [zMax] - Z maximum value
+*/
+DuAEF.Duik.Automation.Randomize.selectedKeys = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+{
+	if (props == undefined) throw "You must select the keyframes you want to randomize";
+	if (props.length == 0) throw "You must select the keyframes you want to randomize";
+	var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+	var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+	var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp and dimensions
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			//loop through selected keyframes
+			for (var j = 0 ; j < prop.selectedKeys.length; j++)
+			{
+				var key = prop.selectedKeys[j];
+				var xval = 0;
+				var yval = 0;
+				var zval = 0;
+				//X
+				if (x) xval = DuAEF.DuJS.Math.random(xMin,xMax);
+				else xval = 0;
+				//Y
+				if (dim == 2 || dim == 3 && y) yval = DuAEF.DuJS.Math.random(yMin,yMax);
+				else if (dim == 3 || dim == 2) yval = 0;
+				//Z
+				if (dim == 3 && z) zval = DuAEF.DuJS.Math.random(zMin,zMax);
+				else if (dim == 3) zval = 0;
+				//SET VALUE
+				var val;
+				if (dim == 1) val = xval;
+				if (dim == 2) val = [xval,yval];
+				if (dim == 3) val = [xval,yval,zval];
+				if (fromCurrentVal) val = val + prop.keyValue(key);
+				prop.setValueAtKey(key,val);
+			}
+		}
+	}
+}
+
+/**
+* Randomizes the times of the selected keys of the Properties
+* @param {PropertyBase[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.selectedKeyTimes = function (props,fromCurrentVal,min,max)
+{
+	if (props == undefined) throw "You must select the keyframes you want to randomize";
+	if (props.length == 0) throw "You must select the keyframes you want to randomize";
+	var x = (min != undefined && max != undefined && !isNaN(min) && !isNaN(max));
+	if (!x) throw "You must define a randomizing range";
+
+	//array to list keys to be removed
+	var krKeys = [];
+
+
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		var krK = [];
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp and dimensions
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			//loop through selected keyframes
+			for (var j = 0 ; j < prop.selectedKeys.length; j++)
+			{
+				var key = prop.selectedKeys[j];
+				var t = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+				//SET VALUE
+				if (fromCurrentVal) r += prop.keyTime(key);
+				var oldKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,key);
+				krK.push(prop.keyTime(key));
+				DuAEF.DuAE.Property.setKey(prop,oldKey,t);
+			}
+		}
+		krKeys.push(krK);
+	}
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		var prop = props[i];
+		for (var j = 0 ; j < krKeys[i].length ; j++)
+		{
+			prop.removeKey(prop.nearestKeyIndex(krKeys[i][j]));
+		}
+	}
+}
+
+/**
+* Randomizes the start times of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.startTimes = function (layers,fromCurrentVal,min,max)
+{
+		if (layers == undefined) return;
+		if (layers.length == 0 ) return;
+
+		var it = DuAEF.DuAE.getListIterator(layers);
+
+		for (var i = it.min ; i <= it.max ; i++)
+		{
+			var l = layers[i];
+			var comp = l.containingComp;
+			var startTime = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+			if (fromCurrentVal) l.startTime = l.startTime + startTime;
+			else l.startTime = startTime;
+		}
+	}
+
+/**
+* Randomizes the in points of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.inPoints = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = DuAEF.DuAE.getListIterator(layers);
+
+	for (var i = it.min; i<= it.max;i++)
+	{
+		var l = layers[i];
+		var comp = l.containingComp;
+		var inPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+		if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
+		else l.inPoint = inPoint;
+	}
+}
+
+/**
+* Randomizes the out points of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.outPoints = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = DuAEF.DuAE.getListIterator(layers);
+
+	for (var i = it.min; i<= it.max;i++)
+	{
+		var l = layers[i];
+		var comp = l.containingComp;
+		var outPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+		if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
+		else l.outPoint = outPoint;
+	}
+}
+
+/**
+* Randomizes the indices of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum index
+* @param {float} max - maximum index
+*/
+DuAEF.Duik.Automation.Randomize.outPoints = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = DuAEF.DuAE.getListIterator(layers);
+
+	for (var i = it.min; i<= it.max;i++)
+	{
+		var l = layers[i];
+		var index = DuAEF.DuJS.Math.random(min,max);
+		if (fromCurrentVal) index = l.index + index;
+		var comp = l.containingComp;
+		if (index >= comp.numLayers) l.moveToEnd();
+		else if (index < 2) l.moveToBeginning();
+		else l.moveBefore(comp.layer(index));
+	}
 }
