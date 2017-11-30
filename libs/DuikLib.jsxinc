@@ -1138,12 +1138,121 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 * @param {Property} prop - The property to rig
 * @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
 * @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
+* @return {object} A custom object with two attributes:<br />
+* - effectorLayer: the effector layer
+* - effect: the layer expression control on the rigged layer used to link to the effector
 */
 DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 {
 	if (effect == undefined) effect = null;
 	if (ctrlLayer == undefined) ctrlLayer = null;
+	var effector = {};
+	effector.effectorLayer = ctrlLayer;
+	effector.effect = effect;
+	if (!prop) return effect;
+	if (prop.propertyType != PropertyType.PROPERTY) return effector;
+	if (!prop.canVaryOverTime) return effector;
+	if (!prop.canSetExpression) return effector;
 
+	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var comp = layer.containingComp;
+
+	//create effector
+	if (ctrlLayer == null)
+	{
+		ctrlLayer = comp.layers.addShape();
+		ctrlLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName("Effector",comp);
+		//effect
+		ctrlLayer.selected = true;
+		layer.applyPreset(DuAEF.Duik.pseudoEffects.EFFECTOR);
+		//content
+		var centerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		centerGroup.name = "Center";
+		var centerContent = centerGroup.property("ADBE Vectors Group");
+		var centerCircle = centerContent.addProperty("ADBE Vector Shape - Ellipse");
+		centerCircle("ADBE Vector Ellipse Size").setValue([4,4]);
+		var centerFill = centerContent.addProperty("ADBE Vector Graphic - Fill");
+		centerFill("ADBE Vector Fill Color").setValue(DuAEF.DuJS.Color.Colors.BLACK);
+		centerFill("ADBE Vector Fill Opacity").setValue(50);
+		var innerGroup =  ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		innerGroup.name = "Inner";
+		var innerContent = innerGroup.property("ADBE Vectors Group");
+		var innerCircle = innerContent.addProperty("ADBE Vector Shape - Ellipse");
+		innerCircle("ADBE Vector Ellipse Size").expression = '//Duik.effector.inner\nvar inner = effect("Effector")(1)*2;\n[inner,inner];';
+		var innerStroke = innerContent.addProperty("ADBE Vector Graphic - Stroke");
+		innerStroke("ADBE Vector Stroke Color").setValue(DuAEF.DuJS.Color.Colors.GREEN);
+		var outerGroup =  ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		outerGroup.name = "Outer";
+		var outerContent = outerGroup.property("ADBE Vectors Group");
+		var outerCircle = outerContent.addProperty("ADBE Vector Shape - Ellipse");
+		outerCircle("ADBE Vector Ellipse Size").expression = '//Duik.effector.outer\nvar outer = effect("Effector")(2)*2;\n[outer,outer];';
+		var outerStroke = outerContent.addProperty("ADBE Vector Graphic - Stroke");
+		outerStroke("ADBE Vector Stroke Color").setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		//unselect
+		ctrlLayer.selected = false;
+		//set Defaults
+		var distance = DuAEF.DuAE.Layer.getDistance(layer,ctrlLayer);
+		ctrlLayer.effect("Effector")(1).setValue(distance/4);
+		ctrlLayer.effect("Effector")(2).setValue(distance*3/4);
+	}
+
+	//create effect
+	if (effect == null)
+	{
+		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Effector',layer);
+	}
+
+	//Set effect
+	effect(1).setValue(ctrlLayer.index);
+
+	//set expression
+	prop.expression = '//Duik.effector\n' +
+				'var ctrl = null;\n' +
+				'var result = value;\n' +
+				'try { ctrl = effect("' + effect.name + '")(1) } catch (e) {}\n' +
+				'if (ctrl && numKeys >= 2)\n' +
+				'{\n' +
+				'function p(l){ return l.toWorld(l.anchorPoint) };\n' +
+				'try { var fx = ctrl.effect("Effector"); } catch (e) {}\n' +
+				'if (fx)\n' +
+				'{\n' +
+				'var min = fx(1);\n' +
+				'var max = fx(2);\n' +
+				'var mode = fx(3);\n' +
+				'var reverse = fx(4).value;\n' +
+				'var t = 0;\n' +
+				'var beginTime = key(1).time;\n' +
+				'var endTime = key(numKeys).time;\n' +
+				'var distance = length ( p(thisLayer), p(ctrl) );\n' +
+				'if (mode == 1)\n' +
+				'{\n' +
+				'if (!reverse) t = linear(distance, min, max, endTime, beginTime);\n' +
+				'else t = linear(distance, min, max, beginTime, endTime);\n' +
+				'}\n' +
+				'else\n' +
+				'{\n' +
+				'var mid = (min + max)/2;\n' +
+				'if (!reverse)\n' +
+				'{\n' +
+				'if (distance > mid) t = linear(distance, mid, max, endTime, beginTime);\n' +
+				'else t = linear(distance, min, mid, beginTime, endTime);\n' +
+				'}\n' +
+				'else\n' +
+				'{\n' +
+				'if (distance > mid) t = linear(distance, mid, max, beginTime, endTime);\n' +
+				'else t = linear(distance, min, mid, endTime, beginTime);\n' +
+				'}\n' +
+				'}\n' +
+				'result = valueAtTime(t);\n' +
+				'}\n' +
+				'}\n' +
+				'result;\n';
+
+	effector.effectorLayer = ctrlLayer;
+	effector.effect = effect;
+
+	return effector;
 }
 
 /**
