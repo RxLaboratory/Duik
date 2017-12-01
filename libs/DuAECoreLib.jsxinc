@@ -154,8 +154,6 @@ function LayerAnim(){
 * instanciated before the effect has been broken.
 * @param {PropertyBase} property - The property
 * @property {int} index - The propertyIndex
-* @property {string} parentName  - The name of the parent property
-* @property {string} parentMatchName  - The matchName of the parent property
 * @property {boolean} isEffect - true if this is an effect (sub)property
 * @property {boolean} riggable  - true if this prop can be rigged (it's a value which can set expressions)
 * @property {Layer} layer - The layer containing the property
@@ -165,14 +163,16 @@ function PropertyInfo(property)
 {
 	this.property = property;
 	this.index = property.propertyIndex;
-	this.parentName  = "";
-	this.parentMatchName  = "";
+	this.parentIndices  = [this.index];
 	this.isEffect = property.isEffect;
-	if (property.parentProperty)
+	var parentProp = property;
+	while (parentProp.parentProperty)
 	{
-		this.parentName = property.parentProperty.name;
-		this.parentMatchName = property.parentProperty.matchName;
-		this.isEffect = property.parentProperty.isEffect;
+		// Traverse up the property tree
+		parentProp = parentProp.parentProperty;
+		this.isEffect = parentProp.isEffect;
+		this.parentIndices.unshift(parentProp.propertyIndex);
+		if (this.isEffect) break;
 	}
 
 	var riggable = true;
@@ -197,7 +197,12 @@ PropertyInfo.prototype.getProperty = function()
 {
 	if (this.isEffect)
 	{
-		this.property = this.layer("ADBE Effect Parade")(this.parentName)(this.index);
+		var parentProp = this.layer("ADBE Effect Parade");
+		for (var i = 0 ; i < this.parentIndices.length ; i++)
+		{
+			parentProp = parentProp(this.parentIndices[i]);
+		}
+		this.property = parentProp;
 	}
 	return this.property;
 }
