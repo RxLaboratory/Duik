@@ -1306,7 +1306,7 @@ DuAEF.Duik.Automation.spring = function (prop)
 	else layer.applyPreset(DuAEF.Duik.pseudoEffects.MULTID_SPRING);
 	layer.selected = false;
 	effect = layer.effect("Spring");
-	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Spring',layer);
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().parentProperty.name + ' Spring',layer);
 
 	if (bounce)
 	{
@@ -1337,6 +1337,23 @@ DuAEF.Duik.Automation.spring = function (prop)
 	}
 	else if (spatial)
 	{
+		var toWorldFunc = '';
+		if (prop.getProperty().matchName == 'ADBE Position')
+		{
+			toWorldFunc = "function worldVelocity(temps) {\n" +
+			"worldVelocityX = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[0]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[0])*100;\n" +
+			"worldVelocityY = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[1]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[1])*100;\n" +
+			"return [worldVelocityX,worldVelocityY];\n" +
+			"}\n";
+		}
+		else
+		{
+			toWorldFunc = "function worldVelocity(temps) {\n" +
+			"worldVelocityX = (thisLayer.toWorld(value,temps)[0]-thisLayer.toWorld(value,temps-.01)[0])*100;\n" +
+			"worldVelocityY = (thisLayer.toWorld(value,temps)[1]-thisLayer.toWorld(value,temps-.01)[1])*100;\n" +
+			"return [worldVelocityX,worldVelocityY];\n" +
+			"}\n";
+		}
 		prop.getProperty().expression = "//Duik.spring\n" +
 					'var fx = effect("' + effect.name + '")\n' +
 					"damping = fx(2).value;\n" +
@@ -1348,11 +1365,7 @@ DuAEF.Duik.Automation.spring = function (prop)
 					"retard = elasticity/damping;\n" +
 					"poids = 1/damping/10;\n" +
 					"precision = thisComp.frameDuration;\n" +
-					"function worldVelocity(temps) {\n" +
-					"worldVelocityX = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[0]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[0])*100;\n" +
-					"worldVelocityY = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[1]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[1])*100;\n" +
-					"return [worldVelocityX,worldVelocityY];\n" +
-					"}\n" +
+					toWorldFunc +
 					"function worldSpeed(temps) {\n" +
 					"return length(worldVelocity(temps));\n" +
 					"}\n" +
