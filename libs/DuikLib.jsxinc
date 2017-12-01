@@ -782,18 +782,16 @@ DuAEF.Duik.Automation = {};
 /**
 * Adds a list on a property
  * @memberof DuAEF.Duik.Automation
-* @param {Property} prop - The Property
+* @param {PropertyInfo} prop - The Property
 */
 DuAEF.Duik.Automation.list = function (prop)
 {
 	if (prop == undefined) throw "Missing Param 1: list needs a Property";
-	if (prop.propertyType != PropertyType.PROPERTY) throw "This is not a Property (maybe a PropertyGroup?)";
-	if (!prop.canVaryOverTime) throw "This property is not animatable";
-	if (!prop.canSetExpression) throw "This property can not set expressions";
+	if (!prop.riggable) return;
 
-	var dim = DuAEF.DuAE.Property.getDimensions(prop);
+	var dim = prop.dimensions;
 
-	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var layer =prop.layer;
 	var comp = layer.containingComp;
 
 	layer.selected = true;
@@ -805,32 +803,32 @@ DuAEF.Duik.Automation.list = function (prop)
 
 
 	var effect = layer.effect("List");
-	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' List',layer);
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' List',layer);
 
 	//set animation with expression
 	var anim = DuAEF.DuAE.Property.getAnim(prop,false);
 	if (anim) DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,true);
 	DuAEF.DuAE.Property.removeAnim(prop);
 
-	prop.expression =  "//Duik.list\r\n" +
-	"var fx = effect(\"" + effect.name + "\");\n" +
-	"var v1 = fx(2);\n" +
-	"var w1 = fx(3);\n" +
-	"var v2 = fx(6);\n" +
-	"var w2 = fx(7);\n" +
-	"var v3 = fx(10);\n" +
-	"var w3 = fx(11);\n" +
-	"var v4 = fx(14);\n" +
-	"var w4 = fx(15);\n" +
-	"var v5 = fx(18);\n" +
-	"var w5 = fx(19);\n" +
-	"v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;";
+	prop.getProperty().expression =  "//Duik.list\r\n" +
+					"var fx = effect(\"" + effect.name + "\");\n" +
+					"var v1 = fx(2);\n" +
+					"var w1 = fx(3);\n" +
+					"var v2 = fx(6);\n" +
+					"var w2 = fx(7);\n" +
+					"var v3 = fx(10);\n" +
+					"var w3 = fx(11);\n" +
+					"var v4 = fx(14);\n" +
+					"var w4 = fx(15);\n" +
+					"var v5 = fx(18);\n" +
+					"var w5 = fx(19);\n" +
+					"v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;";
 }
 
 /**
  * Adds a wiggle to a property
  * @memberof DuAEF.Duik.Automation
- * @param {Property}	prop 				- The property.
+ * @param {PropertyInfo}	prop 				- The property.
  * @param {boolean}		[separateDimensions] 	- Set to true to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal.
  * @param {PropertyGroup|null}	[effect]	- A wiggle effect already created by Duik to use as a controller for this wiggle
  * @return {PropertyGroup} The effect created (or provided)
@@ -840,13 +838,11 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	if (separateDimensions == undefined) separateDimensions = false;
 	if (effect == undefined) effect = null;
 	if (!prop) return effect;
-	if (prop.propertyType != PropertyType.PROPERTY) return effect;
-	if (!prop.canVaryOverTime) return effect;
-	if (!prop.canSetExpression) return effect;
+	if (!prop.riggable) return effect;
 
 	//dimensions
-	var dimensions = DuAEF.DuAE.Property.getDimensions(prop);
-	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
 	var comp = layer.containingComp;
 
 	if (effect == null)
@@ -859,7 +855,7 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 		layer.selected = false;
 
 		effect = layer.effect("Wiggle");
-		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Wiggle',layer);
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Wiggle',layer);
 	}
 
 	var compEffect = DuAEF.DuAE.Property.getComp(effect);
@@ -874,7 +870,7 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 
 	if (!separateDimensions && dimensions > 1)
 	{
-		prop.expression = "//Duik.1DMultiWiggle\n" + effectLink + "\n" +
+		prop.getProperty().expression = "//Duik.1DMultiWiggle\n" + effectLink + "\n" +
 				"freq = fx(2);\n" +
 				"amp = fx(1);\n" +
 				"linked = fx(4).value;\n" +
@@ -891,7 +887,7 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	}
 	else if (dimensions == 3)
 	{
-		prop.expression = "//Duik.3DWiggle\n" + effectLink + "\n" +
+		prop.getProperty().expression = "//Duik.3DWiggle\n" + effectLink + "\n" +
 				"Xfreq = fx(3);\n" +
 				"Yfreq = fx(7);\n" +
 				"Zfreq = fx(11);\n" +
@@ -914,7 +910,7 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	}
 	else if (dimensions == 2)
 	{
-	 	prop.expression = "//Duik.2DWiggle\n" + effectLink + "\n" +
+	 	prop.getProperty().expression = "//Duik.2DWiggle\n" + effectLink + "\n" +
 				"Xfreq = fx(3);\n" +
 				"Yfreq = fx(7);\n" +
 				"Xamp = fx(2);\n" +
@@ -933,7 +929,7 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	}
 	else if (dimensions == 1)
 	{
-		prop.expression = "//Duik.1DWiggle\n" + effectLink + "\n" +
+		prop.getProperty().expression = "//Duik.1DWiggle\n" + effectLink + "\n" +
 				"freq = fx(2);\n" +
 				"amp = fx(1);\n" +
 				"loop = fx(3);\n" +
@@ -951,22 +947,20 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 /**
  * Adds a swing to a property
  * @memberof DuAEF.Duik.Automation
- * @param {Property}	prop 				- The property.
+ * @param {Property|PropertyInfo}	prop 				- The property.
  */
 DuAEF.Duik.Automation.swing = function (prop)
 {
 	if (!prop) return;
-	if (prop.propertyType != PropertyType.PROPERTY) return;
-	if (!prop.canVaryOverTime) return;
-	if (!prop.canSetExpression) return;
+	if (!prop.riggable) return;
 
-	var dimensions = DuAEF.DuAE.Property.getDimensions(prop);
-	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
 
 	if (dimensions < 1 || dimensions > 3) return;
 
 	layer.selected = true;
-	if (prop.isSpatial) layer.applyPreset(DuAEF.Duik.pseudoEffects.SPATIAL_SWING);
+	if (prop.getProperty().isSpatial) layer.applyPreset(DuAEF.Duik.pseudoEffects.SPATIAL_SWING);
 	else if (dimensions == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_SWING);
 	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_SWING);
 	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_SWING);
@@ -976,9 +970,9 @@ DuAEF.Duik.Automation.swing = function (prop)
 
 
 
-	if (prop.isSpatial)
+	if (prop.getProperty().isSpatial)
 	{
-		prop.expression = 	'//Duik.spatialSwing\n' +
+		prop.getProperty().expression = 	'//Duik.spatialSwing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1003,7 +997,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 1)
 	{
-		prop.expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.oneDSwing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1023,7 +1017,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 2)
 	{
-		prop.expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.oneDSwing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1047,7 +1041,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 3)
 	{
-		prop.expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.oneDSwing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1135,7 +1129,7 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 
 /**
 * Links a property to an effector controller
-* @param {Property} prop - The property to rig
+* @param {Property|PropertyInfo} prop - The property to rig
 * @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
 * @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
 * @return {object} A custom object with two attributes:<br />
@@ -1149,12 +1143,10 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 	var effector = {};
 	effector.effectorLayer = ctrlLayer;
 	effector.effect = effect;
-	if (!prop) return effect;
-	if (prop.propertyType != PropertyType.PROPERTY) return effector;
-	if (!prop.canVaryOverTime) return effector;
-	if (!prop.canSetExpression) return effector;
+	if (!prop) return effector;
+	if (!prop.riggable) return effector;
 
-	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var layer = prop.layer;
 	var comp = layer.containingComp;
 
 	//create effector
@@ -1200,14 +1192,14 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 	if (effect == null)
 	{
 		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
-		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.name + ' Effector',layer);
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
 	}
 
 	//Set effect
 	effect(1).setValue(ctrlLayer.index);
 
 	//set expression
-	prop.expression = '//Duik.effector\n' +
+	prop.getProperty().expression = '//Duik.effector\n' +
 				'var ctrl = null;\n' +
 				'var result = value;\n' +
 				'try { ctrl = effect("' + effect.name + '")(1) } catch (e) {}\n' +
