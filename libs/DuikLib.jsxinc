@@ -223,6 +223,15 @@ DuAEF.Duik = {};
 	duik_multid_spring = DuAEF.DuBinary.toFile(duik_multid_spring);
 	#include "pseudoEffects/duik_spatial_spring.ffx.jsxinc"
 	duik_spatial_spring = DuAEF.DuBinary.toFile(duik_spatial_spring);
+	//Blink
+	#include "pseudoEffects/duik_1d_blink.ffx.jsxinc"
+	duik_1d_blink = DuAEF.DuBinary.toFile(duik_1d_blink);
+	#include "pseudoEffects/duik_2d_blink.ffx.jsxinc"
+	duik_2d_blink = DuAEF.DuBinary.toFile(duik_2d_blink);
+	#include "pseudoEffects/duik_3d_blink.ffx.jsxinc"
+	duik_3d_blink = DuAEF.DuBinary.toFile(duik_3d_blink);
+	#include "pseudoEffects/duik_color_blink.ffx.jsxinc"
+	duik_color_blink = DuAEF.DuBinary.toFile(duik_color_blink);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -231,6 +240,11 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
+		//Blink
+		COLOR_BLINK: duik_color_blink,
+		ONED_BLINK: duik_1d_blink,
+		TWOD_BLINK: duik_2d_blink,
+		THREED_BLINK: duik_3d_blink,
 		//Spring
 		ONED_SPRING: duik_1d_spring,
 		MULTID_SPRING: duik_multid_spring,
@@ -264,6 +278,11 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffectsMatchNames =
 	{
+		//Blink
+		COLOR_BLINK: "Pseudo/DUIK color blink",
+		ONED_BLINK: "Pseudo/DUIK 1d blink",
+		TWOD_BLINK: "Pseudo/DUIK 2d blink",
+		THREED_BLINK: "Pseudo/DUIK 3d blink",
 		//Spring
 		ONED_SPRING: "Pseudo/DUIK 1d spring",
 		MULTID_SPRING: "Pseudo/DUIK multid spring",
@@ -1012,7 +1031,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 1)
 	{
-		prop.getProperty().expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.Swing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1032,7 +1051,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 2)
 	{
-		prop.getProperty().expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.Swing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1056,7 +1075,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 	}
 	else if (dimensions == 3)
 	{
-		prop.getProperty().expression = '//Duik.oneDSwing\n' +
+		prop.getProperty().expression = '//Duik.Swing\n' +
 					'var fx = effect("' + effect.name + '");\n' +
 					'var amp = fx(1);\n' +
 					'var freq = fx(2);\n' +
@@ -1073,7 +1092,7 @@ DuAEF.Duik.Automation.swing = function (prop)
 					'}\n' +
 					'result = sin*amp;\n' +
 					'}\n' +
-					'if (axis == 1) result = [result,result];\n' +
+					'if (axis == 1) result = [result,result,result];\n' +
 					'else if (axis == 2) result =[result,0,0];\n' +
 					'else if (axis == 3) result =[0,result,0];\n' +
 					'else if (axis == 4) result =[0,0,result];\n' +
@@ -1265,11 +1284,6 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 /**
 * Adds a spring effect on the property
 * @param {PropertyInfo} prop - The property to rig
-* @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
-* @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
-* @return {object} A custom object with two attributes:<br />
-* - effectorLayer: the effector layer
-* - effect: the layer expression control on the rigged layer used to link to the effector
 */
 DuAEF.Duik.Automation.spring = function (prop)
 {
@@ -1416,6 +1430,43 @@ DuAEF.Duik.Automation.spring = function (prop)
 					"}\n" +
 					"else { value }";
 	}
+}
+
+/**
+* Adds a blink effect on the property
+* @param {PropertyInfo} prop - The property to rig
+*/
+DuAEF.Duik.Automation.blink = function (prop)
+{
+	if (!prop) return;
+	if (!prop.riggable) return;
+
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
+
+	layer.selected = true;
+	if (dimensions == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_BLINK);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_BLINK);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_BLINK);
+	else if (dimensions == 4) layer.applyPreset(DuAEF.Duik.pseudoEffects.COLOR_BLINK);
+
+	layer.selected = false;
+
+	var effect = layer.effect('Blink');
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Blink',layer);
+	DuAEF.DuAE.Property.setValue(effect(1),prop.getProperty().value);
+
+	prop.getProperty().expression = "//Duik.blink\n" +
+		'var fx = effect("' + effect.name + '")\n' +
+		"var phase = fx(3).value;\n" +
+		"var timeOn = fx(4).value;\n" +
+		"var offset = fx(5).value;\n" +
+		"var valueA = fx(1).value;\n" +
+		"var valueB = fx(2).value;\n" +
+		"freq= timeToFrames(1)/phase;\n" +
+		"var currentFrame = timeToFrames(time+offset/phase/100);\n" +
+		"if (currentFrame%freq > freq*timeOn/100) valueB;\n" +
+		"else valueA;";
 }
 
 /**
