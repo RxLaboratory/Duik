@@ -1,5 +1,58 @@
 //=========== EVENTS =============
 
+function ui_easePresetsList_changed()
+{
+	if (ui_easePresetsList.selection == null) return;
+	if (ui_easePresetsList.selection.index == 0) return;
+	var preset = ui_easePresetsList.selection.text;
+	var rePreset = /(\d+)\/(\d+) \| (-?\d+)\/(-?\d+)/i;
+	var vals = preset.match(rePreset);
+	if (vals == null) return;
+	if (vals.length != 5) return;
+	ui_easeInSlider.setValue( parseInt(vals[1]) );
+	ui_easeOutSlider.setValue( parseInt(vals[2]) );
+	ui_velocityInEdit.setText( vals[3] );
+	ui_velocityOutEdit.setText( vals[4] );
+	ui_lockEaseButton.setChecked(vals[1] != vals[2]);
+	ui_lockVelocityButton.setChecked(vals[3] != vals[4]);
+	ui_easeSetBothButton_clicked();
+}
+
+function ui_easePresetAddButton_clicked()
+{
+	var presets = [];
+	for (var i = 1 ; i < ui_easePresetsList.items.length ; i++)
+	{
+		presets.push(ui_easePresetsList.items[i].text);
+	}
+	presets.push(ui_easeInSlider.value + '/' + ui_easeOutSlider.value + ' | ' + ui_velocityInEdit.text + '/' + ui_velocityOutEdit.text);
+	presets.sort();
+	presets.unshift('Presets');
+	ui_easePresetsList.removeAll();
+	for (var i=0;i<presets.length;i++)
+	{
+		ui_easePresetsList.add('item',presets[i]);
+	}
+	settings.data.easePresets = presets;
+	settings.save();
+	ui_easePresetsList.selection = 0;
+}
+
+function ui_easePresetRemoveButton_clicked()
+{
+	if (ui_easePresetsList.selection == null) return;
+	if (ui_easePresetsList.selection.index == 0) return;
+	ui_easePresetsList.remove(ui_easePresetsList.selection);
+	var presets = [];
+	for (var i = 0 ; i < ui_easePresetsList.items.length ; i++)
+	{
+		presets.push(ui_easePresetsList.items[i].text);
+	}
+	settings.data.easePresets = presets;
+	settings.save();
+	ui_easePresetsList.selection = 0;
+}
+
 function ui_kRovingButton_clicked()
 {
 	var comp = DuAEF.DuAE.Project.getActiveComp();
@@ -247,7 +300,8 @@ if (!settings.data.expert)
     ui_easePresetAddButton.alignment = ['left','fill'];
     var ui_easePresetRemoveButton = DuAEF.DuScriptUI.addImageButton(ui_easePresetsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/simpleminus_l.png',"Remove preset",'E:/DEV SRC/RainboxUI/Icons/18w/simpleminus_r.png');
     ui_easePresetRemoveButton.alignment = ['left','fill'];
-    var ui_easePresetsList = ui_easePresetsGroup.add('dropdownlist',undefined,["Presets"]);
+	if (settings.data.easePresets == undefined) settings.data.easePresets = ['Presets','25/75 | 0/0','75/25 | 0/0','33/33 | 0/0','33/66 | 0/0','66/33 | 0/0','50/50 | 0/0','80/80 | 0/0'];
+    var ui_easePresetsList = ui_easePresetsGroup.add('dropdownlist',undefined,settings.data.easePresets);
     ui_easePresetsList.alignment = ['fill','fill'];
     ui_easePresetsList.selection = 0;
 }
@@ -345,6 +399,13 @@ var ui_celAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,setting
 
 
 //========== CONNECT EVENTS ========
+
+if (!settings.data.expert)
+{
+	ui_easePresetAddButton.onClick = ui_easePresetAddButton_clicked;
+	ui_easePresetRemoveButton.onClick = ui_easePresetRemoveButton_clicked;
+	ui_easePresetsList.onChange = ui_easePresetsList_changed;
+}
 
 ui_kRovingButton.onClick = ui_kRovingButton_clicked;
 ui_kLinearButton.onClick = ui_kLinearButton_clicked;
