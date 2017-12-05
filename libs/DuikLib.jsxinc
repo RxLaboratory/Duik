@@ -232,6 +232,9 @@ DuAEF.Duik = {};
 	duik_3d_blink = DuAEF.DuBinary.toFile(duik_3d_blink);
 	#include "pseudoEffects/duik_color_blink.ffx.jsxinc"
 	duik_color_blink = DuAEF.DuBinary.toFile(duik_color_blink);
+	//Paint Rig
+	#include "pseudoEffects/duik_paint_rig.ffx.jsxinc"
+	duik_paint_rig = DuAEF.DuBinary.toFile(duik_paint_rig);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -240,6 +243,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
+		//Paint Rig
+		PAINT_RIG: duik_paint_rig,
 		//Blink
 		COLOR_BLINK: duik_color_blink,
 		ONED_BLINK: duik_1d_blink,
@@ -278,6 +283,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffectsMatchNames =
 	{
+		//Paint Rig
+		PAINT_RIG: "Pseudo/DUIK paint rig",
 		//Blink
 		COLOR_BLINK: "Pseudo/DUIK color blink",
 		ONED_BLINK: "Pseudo/DUIK 1d blink",
@@ -1462,7 +1469,6 @@ DuAEF.Duik.Automation.blink = function (prop)
 	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_BLINK);
 	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_BLINK);
 	else if (dimensions == 4) layer.applyPreset(DuAEF.Duik.pseudoEffects.COLOR_BLINK);
-
 	layer.selected = false;
 
 	var effect = layer.effect('Blink');
@@ -1507,6 +1513,156 @@ DuAEF.Duik.Automation.moveAway = function (layer)
 						"{\n" +
 						"value\n" +
 						"}\n";
+}
+
+/**
+* Rigs the paint effects found on the layer to animate all the strokes as if there was only one
+* @param {Layer} layer - The layer to rig
+*/
+DuAEF.Duik.Automation.paintRig = function (layer)
+{
+	if (layer == undefined) return;
+
+	//if there's no paint effect
+	var paintEffect = layer("ADBE Effect Parade")("ADBE Paint");
+	if (paintEffect == null) return;
+
+	//add effect
+	layer.selected = true;
+	layer.applyPreset(DuAEF.Duik.pseudoEffects.PAINT_RIG);
+	layer.selected = false;
+	var effect = layer.effect('Paint Rig');
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName('Paint Rig',layer);
+
+	//need to get the paint effect again after addProperty, After Effects bug.......
+	var paintEffect = layer("Effects")("ADBE Paint");
+
+	//the first diameter and color
+	var defaultDiam = 0;
+	var defaultCol = [0,0,0,0];
+
+	//for each stroke
+	var nbre = paintEffect.property(2).numProperties;
+	for (var j=1;j<=nbre;j++)
+	{
+		var stroke = paintEffect.property(2).property(j);
+		var propStart = stroke.property(4).property(1);
+		var propEnd = stroke.property(4).property(2);
+		var propCol = stroke.property(4).property(3);
+		var propDiam = stroke.property(4).property(4);
+
+		if (defaultDiam == 0)
+		{
+			defaultDiam = propDiam.Value;
+			effect(13).setValue(defaultDiam);
+			effect(14).setValue(defaultDiam);
+		}
+		if (defaultCol == [0,0,0,0])
+		{
+			defaultCol = propCol.value;
+
+		}
+
+		propStart.expression = '//Duik.PaintRig\n' +
+					'var ctrl = effect("' + effect.name + '")(1);\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex\n' +
+					'result = ctrl - ((100/total)*(ind-1));\n' +
+					'result = result * total;\n' +
+					'result;';
+
+		propEnd.expression = '//Duik.PaintRig\n' +
+					'var ctrl = effect("' + effect.name + '")(2);\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'result = ctrl - ((100/total)*(ind-1));\n' +
+					'result = result * total;\n' +
+					'result;';
+
+		propDiam.expression = '//Duik.PaintRig\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var ctrlA = fx(13).value;\n' +
+					'var ctrlB = fx(14).value;\n' +
+					'var reverse = fx(6).value;\n' +
+					'var interpolation =fx(5).value;\n' +
+					'var mode = fx(4).value;\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'if (reverse)\n' +
+					'{\n' +
+					'var t = ctrlA;\n' +
+					'ctrlA = ctrlB;\n' +
+					'ctrlB = t;\n' +
+					'}\n' +
+					'var result = ctrlA;\n' +
+					'if (mode == 2\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else if (mode == 3)\n' +
+					'{\n' +
+					'if (ind < total /2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'}\n' +
+					'}\n' +
+					'result;';
+
+		propCol.expression = '//Duik.PaintRig\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var ctrlA = fx(9).value;\n' +
+					'var ctrlB = fx(10).value;\n' +
+					'var reverse = fx(6).value;\n' +
+					'var interpolation = fx(5).value;\n' +
+					'var mode = fx(4).value;\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'if (reverse)\n' +
+					'{\n' +
+					'var t = ctrlA;\n' +
+					'ctrlA = ctrlB;\n' +
+					'ctrlB = t;\n' +
+					'}\n' +
+					'var result = ctrlA;\n' +
+					'if (mode == 2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else if (mode == 3\n' +
+					'{\n' +
+					'if (ind < total /2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA\n' +
+					'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'}\n' +
+					'}\n' +
+					'result;';
+	}
 }
 
 /**
