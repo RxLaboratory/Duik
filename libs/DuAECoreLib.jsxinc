@@ -214,7 +214,7 @@ PropertyInfo.prototype.getProperty = function()
 */
 DuAEF.DuAE = {};
 
-//initi
+//init
 (function ()
 {
 	/**
@@ -894,6 +894,25 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 }
 
 /**
+* Checks if the layers have some selected keyframes
+* @param {Layer[]|LayerCollection} layers - The layers
+* @return {boolean} true if the layers have at least one selected keyframe
+*/
+DuAEF.DuAE.Comp.haveSelectedKeys = function (layers)
+{
+	var it = DuAEF.DuAE.getListIterator(layers);
+	if (it.length == 0) return;
+	for (var i = it.min ; i <= it.max ; i++)
+	{
+		if (DuAEF.DuAE.Property.hasSelectedKeys(layers[i]))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -1443,6 +1462,125 @@ DuAEF.DuAE.Property.setValue = function(prop,value)
 		}
 		prop.setValue(value);
 	}
+}
+
+/**
+* Changes the interpolation type on selected keyframes, or sets a new key at current time if there are no keyframes selected.
+* @param {Layer[]|LayerCollection} layers - The layers containing the properties
+* @param {PropertyBase[]|PropertyInfo[]} props - The properties
+* @param {KeyframeInterpolationType|string} typeIn - The in interpolation type (see AE API) or the string "roving" or "continuous"
+* @param {KeyframeInterpolationType|string} [typeOut=typeIn] - The out interpolation type (see AE API)
+* @param {int[]|int} [easeInValue=33] - The in interpolation ease value (used if typeIn is KeyframeInterpolationType.BEZIER)
+* @param {int[]|int} [easeOutValue=easeInValue] - The out interpolation ease value (used if typeOut is KeyframeInterpolationType.BEZIER)
+*/
+DuAEF.DuAE.Property.setInterpolationType = function(layers,props,typeIn,typeOut,easeInValue,easeOutValue)
+{
+	if (typeOut == undefined) typeOut = typeIn;
+	if (easeInValue == undefined) easeInValue = 33;
+	if (isNaN(easeInValue)) easeInValue = 33;
+	if (easeOutValue == undefined) easeOutValue = easeInValue;
+	if (isNaN(easeOutValue)) easeOutValue = 33;
+
+	easeInValue = new KeyframeEase(0,easeInValue);
+	easeOutValue = new KeyframeEase(0,easeOutValue);
+
+	if (!DuAEF.DuAE.Comp.haveSelectedKeys(layers))
+	{
+		for (var i=0;i<props.length;i++)
+		{
+			var propInfo = props[i];
+			var prop = props[i];
+			if (!(propInfo instanceof PropertyInfo))
+			{
+				propInfo = new PropertyInfo(prop);
+			}
+			if (prop.canVaryOverTime)
+			{
+				var key = prop.addKey(comp.time);
+				if (typeIn == "roving") prop.setRovingAtKey(key,true);
+				else if (typeIn == "continuous")
+				{
+					prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.BEZIER);
+					prop.setTemporalContinuousAtKey(key, true);
+					prop.setTemporalAutoBezierAtKey(key, true);
+				}
+				else
+				{
+					//influences
+					if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(key,[easeInValue,easeInValue,easeInValue],[easeOutValue,easeOutValue,easeOutValue]); }
+					else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(key,[easeInValue,easeInValue],[easeOutValue,easeOutValue]); }
+					else { prop.setTemporalEaseAtKey(key,[easeInValue],[easeOutValue]); }
+					prop.setInterpolationTypeAtKey(key,typeIn,typeOut);
+					//not continuous
+					prop.setTemporalContinuousAtKey(key, false);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (var i=0;i<props.length;i++)
+		{
+			var prop = props[i].getProperty();
+			if (prop.canVaryOverTime)
+			{
+				//for keys
+				for (var k=0;k<prop.selectedKeys.length;k++)
+				{
+					if (typeIn == "roving") {if(prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],true);}
+					else if (typeIn == "continuous")
+					{
+						prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.BEZIER);
+						prop.setTemporalContinuousAtKey(prop.selectedKeys[k], true);
+						prop.setTemporalAutoBezierAtKey(prop.selectedKeys[k], true);
+						//not roving
+						try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+					}
+					else
+					{
+						//influences
+						if (!prop.isSpatial && prop.value.length == 3) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeInValue,easeInValue,easeInValue],[easeOutValue,easeOutValue,easeOutValue]); }
+						else if (!prop.isSpatial && prop.value.length == 2) { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeInValue,easeInValue],[easeOutValue,easeOutValue]); }
+						else { prop.setTemporalEaseAtKey(prop.selectedKeys[k],[easeInValue],[easeOutValue]); }
+						//type
+						prop.setInterpolationTypeAtKey(prop.selectedKeys[k],typeIn,typeOut);
+						//not roving
+						try { prop.setRovingAtKey(prop.selectedKeys[k],false); } catch(e){}
+						//not continuous
+						prop.setTemporalContinuousAtKey(prop.selectedKeys[k], false);
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+* Checks if the property has some selected keyframes.<br />
+* The property can be either a Property or a PropertyGroup.
+* @param {PropertyBase} prop - The property
+* @return {boolean} true if the property have at least one selected keyframe
+*/
+DuAEF.DuAE.Property.hasSelectedKeys = function (prop)
+{
+	var yes = false;
+
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		if (prop.selectedKeys.length >0)
+		{
+			yes = true;
+		}
+	}
+	else if (prop.numProperties > 0)
+	{
+		for (var propIndex = 1;propIndex <= prop.numProperties;propIndex++)
+		{
+			yes = DuAEF.DuAE.Property.hasSelectedKeys(prop.property(propIndex));
+			if (yes) break;
+		}
+	}
+	return yes;
 }
 
 /**
