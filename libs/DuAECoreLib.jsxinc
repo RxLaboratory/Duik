@@ -1630,6 +1630,128 @@ DuAEF.DuAE.Property.hasSelectedKeys = function (prop)
 }
 
 /**
+* Sets the spatial interpolation of the selected keyframes on the property
+* @param {Property|PropertyInfo} prop - The property
+* @param {KeyframeInterpolationType} typeIn - The in interpolation type (see AE API)
+* @param {KeyframeInterpolationType} [typeOut=typeIn] - The in interpolation type (see AE API)
+*/
+DuAEF.DuAE.Property.setSpatialInterpolation = function (prop,typeIn,typeOut)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (typeOut == undefined) typeOut = typeIn;
+	if (!prop.isSpatial) return;
+		if (prop.selectedKeys.length == 0) return;
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+		if (typeIn == KeyframeInterpolationType.BEZIER && typeOut == KeyframeInterpolationType.BEZIER)
+		{
+			prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+		}
+		else if (typeIn == KeyframeInterpolationType.LINEAR && typeOut == KeyframeInterpolationType.LINEAR)
+		{
+			prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
+			prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+			if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+			{
+				prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0,0],[0,0,0]);
+    		}
+    		else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+    		{
+    		    prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
+    		}
+		}
+		else if (typeIn == KeyframeInterpolationType.BEZIER)
+		{
+			prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
+            prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+            var keyIndex = prop.selectedKeys[k];
+            if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+            {
+                if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0 && prop.keyInSpatialTangent(keyIndex)[2] == 0)
+                {
+                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+                }
+                prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0,0]);
+            }
+            else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+            {
+                if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0)
+                {
+                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+                }
+                prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0]);
+            }
+		}
+		else if (typeIn == KeyframeInterpolationType.LINEAR)
+		{
+			prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
+            prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+            var keyIndex = prop.selectedKeys[k];
+            if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+            {
+                if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0 && prop.keyOutSpatialTangent(keyIndex)[2] == 0)
+                {
+                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+                }
+                prop.setSpatialTangentsAtKey(keyIndex,[0,0,0],prop.keyOutSpatialTangent(keyIndex));
+            }
+            else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+            {
+                if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0)
+                {
+                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+                }
+                prop.setSpatialTangentsAtKey(keyIndex,[0,0],prop.keyOutSpatialTangent(keyIndex));
+            }
+		}
+	}
+}
+
+/**
+* Fixes the spatial interpolation of the selected keys.<br />
+* Sets the interpolation to linear when the property does not move between keyframes
+* @param {Property|PropertyInfo} prop - The property
+*/
+DuAEF.DuAE.Property.fixSpatialInterpolation = function(prop)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+
+	if (!prop.isSpatial) return;
+    if (!prop.canVaryOverTime) return;
+
+    var keyIndices = prop.selectedKeys;
+    if (keyIndices.length < 2) return;
+
+	for (var k=0;k<keyIndices.length-1;k++)
+	{
+	    var key = keyIndices[k];
+	    var nextKey = keyIndices[k+1]
+	    //get this key value
+	    var keyValue = prop.valueAtTime(prop.keyTime(key),true);
+	    //get next key value
+	    var nextKeyValue = prop.valueAtTime(prop.keyTime(key+1),true);
+
+	    //compare and set
+	    if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+	    {
+	        if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1] && keyValue[2] == nextKeyValue[2])
+	        {
+	            prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0,0]);
+	            prop.setSpatialTangentsAtKey(nextKey,[0,0,0],prop.keyOutSpatialTangent(nextKey));
+	        }
+	    }
+	    else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+	    {
+	        if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1])
+	        {
+	            prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0]);
+	            prop.setSpatialTangentsAtKey(nextKey,[0,0],prop.keyOutSpatialTangent(nextKey));
+	        }
+	    }
+	}
+}
+
+/**
 * Bezier Paths methods
 * @namespace
 * @memberof DuAEF.DuAE.Property
