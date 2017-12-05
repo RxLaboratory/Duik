@@ -1490,10 +1490,9 @@ DuAEF.DuAE.Property.setInterpolationType = function(layers,props,typeIn,typeOut,
 		{
 			var propInfo = props[i];
 			var prop = props[i];
-			if (!(propInfo instanceof PropertyInfo))
-			{
-				propInfo = new PropertyInfo(prop);
-			}
+			if (!(propInfo instanceof PropertyInfo)) propInfo = new PropertyInfo(prop);
+			prop = props[i].getProperty();
+
 			if (prop.canVaryOverTime)
 			{
 				var key = prop.addKey(comp.time);
@@ -1521,7 +1520,11 @@ DuAEF.DuAE.Property.setInterpolationType = function(layers,props,typeIn,typeOut,
 	{
 		for (var i=0;i<props.length;i++)
 		{
-			var prop = props[i].getProperty();
+			var propInfo = props[i];
+			var prop = props[i];
+			if (!(propInfo instanceof PropertyInfo)) propInfo = new PropertyInfo(prop);
+			prop = props[i].getProperty();
+
 			if (prop.canVaryOverTime)
 			{
 				//for keys
@@ -1550,6 +1553,49 @@ DuAEF.DuAE.Property.setInterpolationType = function(layers,props,typeIn,typeOut,
 						prop.setTemporalContinuousAtKey(prop.selectedKeys[k], false);
 					}
 				}
+			}
+		}
+	}
+}
+
+/**
+* Changes the ease influences of the selected keys
+* @param {PropertyBase[]|PropertyInfo[]} props - The properties
+* @param {int[]|int} [easeInValue] - The in interpolation ease value. Will be ignored if undefined.
+* @param {int[]|int} [easeOutValue] - The out interpolation ease value. Will be ignored if undefined.
+* @param {int[]|int} [velocityInValue] - The out interpolation ease value. Will be ignored if undefined.
+* @param {int[]|int} [velocityOutValue] - The out interpolation ease value. Will be ignored if undefined.
+*/
+DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityInValue,velocityOutValue)
+{
+	if (isNaN(easeInValue)) easeInValue = 33;
+	if (isNaN(easeOutValue)) easeOutValue = 33;
+	if (isNaN(velocityInValue)) velocityInValue = 0;
+	if (isNaN(velocityOutValue)) velocityOutValue = 0;
+
+	for (var i = 0; i < props.length ; i++)
+	{
+		var propInfo = props[i];
+		var prop = props[i];
+		if (!(propInfo instanceof PropertyInfo)) propInfo = new PropertyInfo(prop);
+		prop = propInfo.getProperty();
+
+		if (prop.canVaryOverTime)
+		{
+			for (var k=0 ; k < prop.selectedKeys.length ; k++)
+			{
+				var key = prop.selectedKeys[k];
+				var easeIn =  [ new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[0].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[0].influence) ];
+				var easeOut = [ new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[0].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[0].influence) ];
+				if (!prop.isSpatial)
+				{
+					for (var j = 1;j < prop.keyInTemporalEase(prop.selectedKeys[k]).length ; j++)
+					{
+						easeIn.push( new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[j].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[j].influence) );
+						easeOut.push( new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[j].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[j].influence) );
+					}
+				}
+				prop.setTemporalEaseAtKey(key,easeIn,easeOut);
 			}
 		}
 	}
