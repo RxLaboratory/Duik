@@ -105,8 +105,8 @@
 
 		ui_riggingGroup.visible = panel == 5;
 		ui_riggingButton.setChecked(ui_riggingGroup.visible);
-		ui_animationGroup.visible = panel == 4;
-		ui_animationButton.setChecked(ui_animationGroup.visible);
+		ui_animationStackGroup.visible = panel == 4;
+		ui_animationButton.setChecked(ui_animationStackGroup.visible);
 		ui_cameraGroup.visible = panel == 3;
 		ui_cameraButton.setChecked(ui_cameraGroup.visible);
 		ui_ioGroup.visible = panel == 2;
