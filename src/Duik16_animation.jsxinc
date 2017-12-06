@@ -1,3 +1,13 @@
+//=========== FUNCTIONS ==========
+
+function setCurrentAnimationPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_animationGroup.visible = panel == 0;
+	ui_motionTrailOptionsGroup.visible = panel == 1;
+}
+
 //=========== EVENTS =============
 
 if (!settings.data.expert)
@@ -365,9 +375,91 @@ function ui_smartSmoothButton_clicked()
 
 	app.endUndoGroup();
 }
+
+if (DuAEF.DuAE.App.version >= 15)
+{
+	function ui_motionTrailColorBox_changed()
+	{
+		var mode = ui_motionTrailColorBox.selection.index;
+		settings.data.motionTrailColorMode = mode;
+		settings.save();
+		ui_motionTrailColorGroup.enabled = mode == 1;
+	}
+
+	function ui_motionTrailColor_clicked()
+	{
+		var color = $.colorPicker();
+		if (color == -1) return;
+		color = DuAEF.DuJS.Color.hexToRGB(color,false);
+		ui_motionTrailColorEdit.setText(DuAEF.DuJS.Color.rgbToHex(color));
+		ui_motionTrailColorEdit_changed();
+	}
+
+	function ui_motionTrailColorEdit_changed()
+	{
+		settings.data.motionTrailColor = ui_motionTrailColorEdit.text;
+		settings.save();
+
+		var color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+		DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
+	}
+
+	function ui_motionTrailUseExistingButton_clicked()
+	{
+		if (ui_motionTrailUseExistingButton.checked) ui_motionTrailUseExistingButton.label.text = "Create new layer";
+		else ui_motionTrailUseExistingButton.label.text = "Use existing layer";
+	}
+
+	function ui_motionTrailButton_clicked()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+
+		app.beginUndoGroup('Duik | ' + "Motion trail");
+
+		//color
+		var color = null;
+		if (ui_motionTrailColorBox.selection.index == 1) color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+
+		//trail layer
+		var trailLayer = null;
+		if (!ui_motionTrailUseExistingButton.checked)
+		{
+			for (var i = 1 ; i <= comp.numLayers ; i++)
+			{
+				var layer = comp.layer(i);
+				if (layer instanceof ShapeLayer && layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.MOTION_TRAIL))
+				{
+					trailLayer = layer;
+					break;
+				}
+			}
+		}
+
+		var layers = DuAEF.DuAE.Comp.unselectLayers();
+
+		if (layers.length > 0)
+		{
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				trailLayer = DuAEF.Duik.Animation.motionTrail(comp,layers[i],trailLayer,color);
+			}
+			DuAEF.DuAE.Comp.selectLayers(layers);
+		}
+		else
+		{
+			DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer);
+		}
+
+		app.endUndoGroup();
+	}
+}
+
 //============ UI ===============
 
-var ui_animationGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'column');
+var ui_animationStackGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'stack');
+
+var ui_animationGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
 
 var ui_selectKeysButton = DuAEF.DuScriptUI.addImageButton(ui_animationGroup,"Select keyframes...",'E:/DEV SRC/RainboxUI/Icons/25w/selectkey_l.png',"Keyframe selector",'E:/DEV SRC/RainboxUI/Icons/25w/selectkey_r.png');
 //TODO with ability to select same properties in all layers or selected layers
@@ -473,7 +565,7 @@ ui_animToolsGroup.alignChildren = ['left','top'];
 if (DuAEF.DuAE.App.version >= 15)
 {
 	var ui_motionTrailGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,settings.data.expert ? 'column' : 'row');
-	var ui_motionTrailButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,settings.data.expert ? "" : "Motion trail",'E:/DEV SRC/RainboxUI/Icons/25w/anim_l.png',"Add a motion trail for the selected layer",'E:/DEV SRC/RainboxUI/Icons/25w/anim_r.png');
+	var ui_motionTrailButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,settings.data.expert ? "" : "Motion trail",'E:/DEV SRC/RainboxUI/Icons/25w/anim_l.png',"Add a motion trail for the selected layer",'E:/DEV SRC/RainboxUI/Icons/25w/anim_r.png',settings.data.debug);
 	var ui_motionTrailOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Motion trail options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 	//option: existing layer or new layer
 }
@@ -490,7 +582,30 @@ var ui_timeremapOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapGrou
 
 var ui_celAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,settings.data.expert ? "" : "Cel animation...",'E:/DEV SRC/RainboxUI/Icons/25w/cel_l.png',"Cel animation",'E:/DEV SRC/RainboxUI/Icons/25w/cel_r.png');
 
+// Motion Trails option
+var ui_motionTrailOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+ui_motionTrailOptionsGroup.alignment = ['center','top'];
+ui_motionTrailOptionsGroup.alignChildren = ['fill','top'];
+var ui_motionTrailUseExistingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_motionTrailOptionsGroup,"Use existing layer",'E:/DEV SRC/RainboxUI/Icons/32w/selectlayer_l.png',"Use an already existing layer for the motion trails, if any.",'E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png','E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png');*
+var ui_motionTrailColorBox = ui_motionTrailOptionsGroup.add('dropdownlist',undefined,["Random Color","Custom Color"]);
+var ui_motionTrailColorGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup,'row');
+ui_motionTrailColorGroup.alignment = ['center','top'];
+var ui_motionTrailColorLabel = ui_motionTrailColorGroup.add('statictext',undefined,"Color #");
+var ui_motionTrailColorEdit = DuAEF.DuScriptUI.addNiceEditText(ui_motionTrailColorGroup,'EC1818');
+var ui_motionTrailValidGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup);
+var ui_motionTrailCancelButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_motionTrailValidButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create motion trails",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
+//========= INIT ===================
+
+if (settings.data.motionTrailColor == undefined) settings.data.motionTrailColor = "EC1818";
+ui_motionTrailColorEdit.setText(settings.data.motionTrailColor);
+var color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
+if (settings.data.motionTrailColorMode == undefined) settings.data.motionTrailColorMode = 0;
+ui_motionTrailColorBox.selection = settings.data.motionTrailColorMode;
+ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
+setCurrentAnimationPanel(0);
 
 //========== CONNECT EVENTS ========
 
@@ -534,3 +649,14 @@ ui_spatialBezLinButton.onClick = ui_spatialBezLinButton_clicked;
 ui_spatialAutoButton.onClick = ui_spatialAutoButton_clicked;
 
 ui_smartSmoothButton.onClick = ui_smartEaseEndButton.onClick = ui_smartEaseStartButton.onClick = ui_smartSmoothButton_clicked;
+
+if (DuAEF.DuAE.App.version >= 15)
+{
+	ui_motionTrailUseExistingButton.onClick = ui_motionTrailUseExistingButton_clicked;
+	ui_motionTrailColorLabel.addEventListener("mousedown",ui_motionTrailColor_clicked,false);
+	ui_motionTrailColorEdit.onChange = ui_motionTrailColorEdit_changed;
+	ui_motionTrailColorBox.onChange = ui_motionTrailColorBox_changed;
+	ui_motionTrailButton.onClick = ui_motionTrailValidButton.onClick = ui_motionTrailButton_clicked;
+	ui_motionTrailOptionsButton.onClick = function () {setCurrentAnimationPanel(1);};
+	ui_motionTrailCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+}
