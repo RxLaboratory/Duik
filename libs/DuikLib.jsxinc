@@ -235,6 +235,9 @@ DuAEF.Duik = {};
 	//Paint Rig
 	#include "pseudoEffects/duik_paint_rig.ffx.jsxinc"
 	duik_paint_rig = DuAEF.DuBinary.toFile(duik_paint_rig);
+	//Motion Trail
+	#include "pseudoEffects/duik_motion_trail.ffx.jsxinc"
+	duik_motion_trail = DuAEF.DuBinary.toFile(duik_motion_trail);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -243,6 +246,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
+		//Motion trail
+		MOTION_TRAIL: duik_motion_trail,
 		//Paint Rig
 		PAINT_RIG: duik_paint_rig,
 		//Blink
@@ -283,6 +288,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffectsMatchNames =
 	{
+		//Motion trail
+		MOTION_TRAIL: "Pseudo/DUIK motion trail",
 		//Paint Rig
 		PAINT_RIG: "Pseudo/DUIK paint rig",
 		//Blink
@@ -921,6 +928,108 @@ DuAEF.Duik.Animation.smartInterpolation = function (prop,easeStart,easeEnd)
 }
 
 /**
+* Creates a motion trail for the layer
+* @param {CompItem} [comp] - The comp where to create the trails, can be omitted if you provide a layer
+* @param {Layer} [layer] - The layer source of the motion. If not provided, will just create an empty motion trail control
+* @param {ShapeLayer|null} [trailLayer] - An existing shape layer containing the trails
+* @param {float[]|null} [color] - A color for the motion trail. If not provided, random
+* @return {ShapeLayer} The layer containing the motion trail created
+*/
+DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
+{
+	if (comp == undefined && layer == undefined) return;
+	if (comp == undefined) comp = layer.containingComp;
+	if (color == undefined || color == null) color = DuAEF.DuJS.Color.random();
+
+	//create layer
+	if (trailLayer == undefined || trailLayer == null)
+	{
+		trailLayer = comp.layers.addShape();
+		trailLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName('Motion Trails',comp);
+	}
+
+	//Effect
+
+	var newEffectName = DuAEF.DuAE.Layer.newUniqueEffectName('Motion trail 1',trailLayer);
+	//trailLayer.applyPreset(DuAEF.Duik.pseudoEffects.MOTION_TRAIL);
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(trailLayer,DuAEF.Duik.pseudoEffects.MOTION_TRAIL,DuAEF.Duik.pseudoEffectsMatchNames.MOTION_TRAIL);
+	effect.name = newEffectName;
+
+	//create shape
+	var trailGroup = trailLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	trailGroup.name = effect.name;
+	var trailPath = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group");
+	trailPath = trailPath.property("ADBE Vector Shape");
+	trailPath.expression = '//Duik.motionTrail\n' +
+						'var fx = effect("' + effect.name + '");\n' +
+						'var layer = null;\n' +
+						'try {layer = fx(1);} catch(e){}\n' +
+						'if (layer != null) {\n' +
+						'var inFrame = fx(2).value;\n' +
+						'var outFrame = fx(3).value;\n' +
+						'var method = fx(5).value;\n' +
+						'var samples = fx(10).value;\n' +
+						'var points = [];\n' +
+						'var currentFrame = timeToFrames(time);\n' +
+						'if (inFrame > outFrame) inFrame = -inFrame;\n' +
+						'else if (inFrame == outFrame) inFrame = -1;\n' +
+						'var prevPos = null;\n' +
+						'var autoSampleLimit = 1/(20*samples)*(thisComp.width+thisComp.height);\n' +
+						'for (var i = currentFrame+outFrame ; i >= currentFrame+inFrame; i--)\n' +
+						'{\n' +
+						'var t = framesToTime(i);\n' +
+						'var pos = layer.toWorld( layer.anchorPoint, t );\n' +
+						'var subSamples = 0;\n' +
+						'if (method == 2 && prevPos)\n' +
+						'{\n' +
+						'var step = length(pos,prevPos);\n' +
+						'var stepRatio = step/autoSampleLimit;\n' +
+						'if (stepRatio > 1) subSamples = Math.floor(stepRatio);\n' +
+						'}\n' +
+						'else if (method == 3) subSamples = samples;\n' +
+						'if (method == 2 || method == 3)\n' +
+						'{\n' +
+						't = t+thisComp.frameDuration;\n' +
+						'for (var j = 0;j < subSamples ; j++)\n' +
+						'{\n' +
+						't = t-thisComp.frameDuration/subSamples;\n' +
+						'var subPos = layer.toWorld( layer.anchorPoint, t );\n' +
+						'subPos = subPos - position;\n' +
+						'points.push( subPos );\n' +
+						'}\n' +
+						'}\n' +
+						'prevPos = pos;\n' +
+						'pos = pos - position;\n' +
+						'points.push( pos );\n' +
+						'}\n' +
+						'createPath(points,[],[], false);\n' +
+						'} else value';
+
+	var trailStroke = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Stroke");
+
+	trailStroke('ADBE Vector Stroke Color').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(13);';
+
+	trailStroke('ADBE Vector Stroke Opacity').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(14);';
+
+	trailStroke('ADBE Vector Stroke Width').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(15);';
+
+	//set layer
+	if (layer != undefined) effect(1).setValue(layer.index);
+	//set color
+	effect(13).setValue(color);
+
+
+
+	return trailLayer;
+}
+
+/*
 * Automations
 * @namespace
 * @memberof DuAEF.Duik
