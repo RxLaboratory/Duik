@@ -814,6 +814,113 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 }
 
 /**
+* Animation tools
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Animation = {};
+
+/**
+* Automatically adjust the best bezier interpolations on the keyframes
+* @param {Property|PropertyInfo} prop - The property containing the keyframes
+* @param {boolean} [easeStart=true] - true to ease the first keyframe, false to set it to linear
+* @param {boolean} [easeEnd=true] - true to ease the last keyframe, false to set it to linear
+* @todo ability to change ease influence (only when velocity is 0?)
+* @todo implement a better multidimensionnal algo
+*/
+DuAEF.Duik.Animation.smartInterpolation = function (prop,easeStart,easeEnd)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (!prop.canVaryOverTime) return;
+
+	//set all keys to linear
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+		prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+		if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+	}
+
+	//smooth!
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+		var key = prop.selectedKeys[k];
+		var easeIn = [];
+		var easeOut = [];
+		//Compute base velocity
+		for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+		{
+			var speedIn = prop.keyInTemporalEase(key)[l].speed;
+			var speedOut = prop.keyOutTemporalEase(key)[l].speed;
+			var speed = 0;
+
+			if ( Math.abs(speedIn) <= Math.abs(speedOut) ) speed = speedIn else speed = speedOut;
+			if (( speedIn > 0 && speedOut < 0 ) || ( speedIn < 0 && speedOut > 0 )) speed = 0;
+			if (key == prop.numKeys) speed = 0;
+			if (key == 1) speed = 0;
+
+			easeIn.push(new KeyframeEase(speed,33));
+			easeOut.push(new KeyframeEase(speed, 33));
+		}
+		prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+
+		//depending on options, remove ease on first and last keyframes
+		if (key == prop.numKeys && !easeEnd)
+		{
+			prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+			if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+		}
+		if (key == 1 && !easeStart)
+		{
+			prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+			if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+		}
+	}
+
+	//Adjust velocities
+	for (var k=prop.selectedKeys.length-1;k>=0;k--)
+	{
+		var key = prop.selectedKeys[k];
+		var easeIn = [];
+		var easeOut = [];
+		if (key < prop.numKeys && key > 1)
+		{
+			for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+			{
+
+				var nextSpeed = prop.keyInTemporalEase(key+1)[l].speed;
+				var speed = prop.keyOutTemporalEase(key)[l].speed;
+				var defaultSpeed = ( prop.valueAtTime(prop.keyTime(key+1),true)-prop.valueAtTime(prop.keyTime(key),true) ) / (prop.keyTime(key+1) - prop.keyTime(key));
+
+				var nextAbsSpeed = Math.abs(nextSpeed);
+				var absSpeed = Math.abs(speed);
+
+				var nextDif = nextSpeed - defaultSpeed;
+				var dif = speed - defaultSpeed;
+
+				if (speed != 0)
+				{
+					if (nextAbsSpeed < absSpeed)
+					{
+						var fix = (1-nextAbsSpeed/absSpeed)*absSpeed;
+					}
+					else if (nextAbsSpeed != 0)
+					{
+						var fix = (1-absSpeed/nextAbsSpeed)*absSpeed;
+					}
+
+					if (-nextDif > dif) speed += fix;
+					else speed -= fix;
+
+				}
+				easeIn.push(new KeyframeEase(speed,33));
+				easeOut.push(new KeyframeEase(speed, 33));
+			}
+			prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+		}
+	}
+}
+
+/**
 * Automations
 * @namespace
 * @memberof DuAEF.Duik
