@@ -1,4 +1,4 @@
-/*
+﻿/*
 DuAECoreLib
 Library with core After Effects tools. Contains the main class of Duduf AE Framework
 Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
@@ -891,6 +891,41 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 	layer1.parent = layer1Parent;
 	layer2.parent = layer2Parent;
 	return Math.round(OA);
+}
+
+/**
+* This method is a workaround to AE API method layer.applyPreset to work like addProperty when adding pseudoEffects
+* @param {Layer} layer - The layer
+* @param {File} preset - The preset file
+* @param {string} matchName - The pseudo Effect matchName.
+* @return {PropertyGroup|null} The effect or null if anything went wrong
+*/
+DuAEF.DuAE.Layer.addPseudoEffect = function (layer,preset,matchName)
+{
+	if (layer == undefined) return null;
+	if (preset == undefined) return null;
+	if (matchName == undefined) return null;
+
+	var effects = layer("ADBE Effect Parade");
+	//add the preset to a temp comp if not available as an effect
+	if (!effects.canAddProperty(matchName))
+	{
+		//create comp
+		var comp = app.project.items.addComp("DuAEF Temp", 10, 10, 1, 1, 24);
+		//add null
+		var n = comp.layers.addNull();
+		//apply preset
+		n.applyPreset(preset);
+		//remove all
+		var nullSource = n.source;
+		n.remove();
+		nullSource.remove();
+		comp.remove();
+	}
+
+	//add the pseudoEffect as a property
+	var effect = effects.addProperty(matchName);
+	return effect;
 }
 
 /**
