@@ -455,6 +455,50 @@ if (DuAEF.DuAE.App.version >= 15)
 	}
 }
 
+function ui_copyAnimButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+
+	copiedAnim = [];
+
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		copiedAnim.push(DuAEF.DuAE.Layer.getAnim(layers[i],true));
+	}
+	//get the first keyframe time to offset when pasting
+	copiedAnim.firstKeyFrameTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+}
+
+function ui_pasteAnimButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Paste animation");
+
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		for (var j = 0 ; j < copiedAnim.length ; j++)
+		{
+			//paste using indices
+			if (layers[i].index == copiedAnim[j]._index)
+			{
+				DuAEF.DuAE.Layer.setAnim(layers[i],copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
+				break;
+			}
+		}
+	}
+
+	app.endUndoGroup();
+}
+
 //============ UI ===============
 
 var ui_animationStackGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'stack');
@@ -552,8 +596,8 @@ var ui_spatialAutoButton = DuAEF.DuScriptUI.addImageButton(ui_spatialInterpolati
 DuAEF.DuScriptUI.addSeparator(ui_animationGroup);
 var ui_copyPasetAnimGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup);
 ui_copyPasetAnimGroup.alignment = ['center','top'];
-var ui_copyAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,settings.data.expert ? "" : "Copy",'E:/DEV SRC/RainboxUI/Icons/25w/copy_l.png',"Copy selected keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/copy_r.png');
-var ui_pasteAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,"Paste anim",'E:/DEV SRC/RainboxUI/Icons/25w/paste_l.png',"Paste keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/paste_r.png');
+var ui_copyAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,settings.data.expert ? "" : "Copy",'E:/DEV SRC/RainboxUI/Icons/25w/copy_l.png',"Copy selected keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/copy_r.png',settings.data.debug);
+var ui_pasteAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,"Paste anim",'E:/DEV SRC/RainboxUI/Icons/25w/paste_l.png',"Paste keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/paste_r.png',settings.data.debug);
 var ui_copyPasteAnimOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Copy/paste options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 //TODO group tools (mirror, offset, loop...), inside paste options
 
@@ -605,6 +649,8 @@ DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
 if (settings.data.motionTrailColorMode == undefined) settings.data.motionTrailColorMode = 0;
 ui_motionTrailColorBox.selection = settings.data.motionTrailColorMode;
 ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
+var copiedAnim = [];
+copiedAnim.firstKeyFrameTime = 0;
 setCurrentAnimationPanel(0);
 
 //========== CONNECT EVENTS ========
@@ -660,3 +706,6 @@ if (DuAEF.DuAE.App.version >= 15)
 	ui_motionTrailOptionsButton.onClick = function () {setCurrentAnimationPanel(1);};
 	ui_motionTrailCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 }
+
+ui_copyAnimButton.onClick = ui_copyAnimButton_clicked;
+ui_pasteAnimButton.onClick = ui_pasteAnimButton_clicked;
