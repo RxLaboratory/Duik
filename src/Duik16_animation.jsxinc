@@ -6,6 +6,7 @@ function setCurrentAnimationPanel(panel)
 
 	ui_animationGroup.visible = panel == 0;
 	ui_motionTrailOptionsGroup.visible = panel == 1;
+	ui_copyPasteOptionsGroup.visible = panel == 2;
 }
 
 //=========== EVENTS =============
@@ -478,17 +479,25 @@ function ui_pasteAnimButton_clicked()
 	var comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return;
 
-	var layers = comp.selectedLayers;
+	var layers = comp.layers;
+	if (ui_copyPasteAllLayersButton.checked) layers = comp.selectedLayers;
 	if (layers.length == 0) return;
 
 	app.beginUndoGroup('Duik | ' + "Paste animation");
 
-	for (var i = 0 ; i < layers.length ; i++)
+	var it = DuAEF.DuAE.getListIterator(layers);
+
+	for (var i = it.min ; i <= it.max ; i++)
 	{
 		for (var j = 0 ; j < copiedAnim.length ; j++)
 		{
 			//paste using indices
-			if (layers[i].index == copiedAnim[j]._index)
+			if (layers[i].index == copiedAnim[j]._index && ui_copyPasteUseNamesButton.checked)
+			{
+				DuAEF.DuAE.Layer.setAnim(layers[i],copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
+				break;
+			}
+			else if (layers[i].name == copiedAnim[j]._name && !ui_copyPasteUseNamesButton.checked)
 			{
 				DuAEF.DuAE.Layer.setAnim(layers[i],copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
 				break;
@@ -497,6 +506,25 @@ function ui_pasteAnimButton_clicked()
 	}
 
 	app.endUndoGroup();
+	setCurrentAnimationPanel(0);
+}
+
+function ui_copyPasteUseNamesButton_clicked()
+{
+	if (ui_copyPasteUseNamesButton.checked) ui_copyPasteUseNamesButton.label.text = "Use indices";
+ 	else ui_copyPasteUseNamesButton.label.text = "Use layer names";
+
+	settings.data.copyPasteUseIndices = ui_copyPasteUseNamesButton.checked;
+	settings.save();
+}
+
+function ui_copyPasteAllLayersButton_clicked()
+{
+	if (ui_copyPasteAllLayersButton.checked) ui_copyPasteAllLayersButton.label.text = "Selected Layers";
+ 	else ui_copyPasteAllLayersButton.label.text = "All layers";
+
+	settings.data.copyPasteUseSelectedLayers = ui_copyPasteAllLayersButton.checked;
+	settings.save();
 }
 
 //============ UI ===============
@@ -551,10 +579,10 @@ var ui_easeButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
 ui_easeButtonsGroup.minimumSize.width = 18;
 ui_easeButtonsGroup.alignment = ['center','center'];
 ui_easeButtonsGroup.alignChildren = ['center','center'];
-var ui_easeSwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png',"Switch ease",'E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png');
+var ui_easeSwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/switch_l.png',"Switch ease",'E:/DEV SRC/RainboxUI/Icons/14w/switch_r.png');
 var ui_lockEaseButton = DuAEF.DuScriptUI.addImageCheckBox(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png',"Lock tangents",'E:/DEV SRC/RainboxUI/Icons/14w/unchained_l.png','E:/DEV SRC/RainboxUI/Icons/14w/chain_r.png');
 var ui_lockVelocityButton = DuAEF.DuScriptUI.addImageCheckBox(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png',"Lock velocities",'E:/DEV SRC/RainboxUI/Icons/14w/unchained_l.png','E:/DEV SRC/RainboxUI/Icons/14w/chain_r.png');
-var ui_velocitySwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png',"Switch velocities",'E:/DEV SRC/RainboxUI/Icons/14w/chain_l.png');
+var ui_velocitySwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/switch_l.png',"Switch velocities",'E:/DEV SRC/RainboxUI/Icons/14w/switch_r.png');
 
 var ui_easeOutGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
 var ui_easeOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeOutGroup,33,1,100,'column');
@@ -640,6 +668,19 @@ var ui_motionTrailValidGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGr
 var ui_motionTrailCancelButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
 var ui_motionTrailValidButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create motion trails",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
+// Copy/paste options
+var ui_copyPasteOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+ui_copyPasteOptionsGroup.alignment = ['center','top'];
+ui_copyPasteOptionsGroup.alignChildren = ['fill','top'];
+var ui_copyPasteUseNamesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"Use layer names",'E:/DEV SRC/RainboxUI/Icons/32w/layername_l.png',"Use layer names or indices to paste keyframes.",'E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png','E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png');*
+ui_copyPasteUseNamesButton.label.minimumSize.width = 100;
+var ui_copyPasteAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"All layers",'E:/DEV SRC/RainboxUI/Icons/32w/alllayers_l.png',"Paste on all or just selected layers.",'E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png','E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png');*
+ui_copyPasteAllLayersButton.label.minimumSize.width = 100;
+var ui_copyPasteValidGroup = DuAEF.DuScriptUI.addGroup(ui_copyPasteOptionsGroup);
+var ui_copyPasteCancelButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_copyPasteValidButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Paste",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Paste keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+
 //========= INIT ===================
 
 if (settings.data.motionTrailColor == undefined) settings.data.motionTrailColor = "EC1818";
@@ -651,6 +692,12 @@ ui_motionTrailColorBox.selection = settings.data.motionTrailColorMode;
 ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
 var copiedAnim = [];
 copiedAnim.firstKeyFrameTime = 0;
+if (settings.data.copyPasteUseIndices == undefined) settings.data.copyPasteUseIndices = false;
+ui_copyPasteUseNamesButton.setChecked(settings.data.copyPasteUseIndices);
+ui_copyPasteUseNamesButton_clicked();
+if (settings.data.copyPasteUseSelectedLayers == undefined) settings.data.copyPasteUseSelectedLayers = false;
+ui_copyPasteAllLayersButton.setChecked(settings.data.copyPasteUseSelectedLayers);
+ui_copyPasteAllLayersButton_clicked();
 setCurrentAnimationPanel(0);
 
 //========== CONNECT EVENTS ========
@@ -708,4 +755,8 @@ if (DuAEF.DuAE.App.version >= 15)
 }
 
 ui_copyAnimButton.onClick = ui_copyAnimButton_clicked;
-ui_pasteAnimButton.onClick = ui_pasteAnimButton_clicked;
+ui_pasteAnimButton.onClick = ui_copyPasteValidButton.onClick = ui_pasteAnimButton_clicked;
+ui_copyPasteUseNamesButton.onClick = ui_copyPasteUseNamesButton_clicked;
+ui_copyPasteAllLayersButton.onClick = ui_copyPasteAllLayersButton_clicked;
+ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
+ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
