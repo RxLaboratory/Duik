@@ -90,7 +90,8 @@ function KeyFrame(){
 * @property {string}	[expression=""]		- The expression on the property, if any.
 * @property {string}   [type="anim"]  - Read Only.
 */
-function PropertyAnim(){
+function PropertyAnim()
+{
 	this._name = "";
 	this._matchName = "";
 	this.keys = [];
@@ -109,7 +110,8 @@ function PropertyAnim(){
 * @property {PropertyAnim[]|PropertyGroupAnim[]}   [anims=[]]  - The animations in the group
 * @property {string}   [type="group"]  - Read Only.
 */
-function PropertyGroupAnim(){
+function PropertyGroupAnim()
+{
 	this._name = "";
 	this._matchName = "";
 	this.anims = [];
@@ -122,23 +124,16 @@ function PropertyGroupAnim(){
 * @classdesc Contains all PropertyGroupAnim from an After Effects Layer
 * @property {string}	  [_name=""]     - The property name
 * @property {int}    [_index=""]  - The index of the layer
-* @property {PropertyGroupAnim}   transform  - The transform animations
-* @property {PropertyGroupAnim}	masks 	- The masks animations
-* @property {PropertyGroupAnim}	effects	- The effects animations
-* @todo add other propertygroups
+* @property {PropertyGroupAnim[]} [anims=[]] - All the animations of the layer
+* @property {float} [firstKeyFrameTime=0] - The time of the first keyframe
+* @property {string}   [type="layer"]  - Read Only.
 */
-function LayerAnim(){
+function LayerAnim()
+{
 	this._name = "";
 	this._index = 0;
-	this.transform = new PropertyGroupAnim();
-	this.transform._name = "Transform";
-	this.transform._matchName = "ADBE Transform Group";
-	this.masks = new PropertyGroupAnim();
-	this.masks._name = "Masks";
-	this.masks._matchName = "ADBE Mask Parade";
-	this.effects = new PropertyGroupAnim();
-	this.effects._name = "Effects";
-	this.effects._matchName = "ADBE Effect Parade";
+	this.anims = [];
+	this.type = 'layer';
 }
 
 /**
@@ -811,18 +806,24 @@ DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 * The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
 * @param {Layer}	layer	- The layer.
 * @param {boolean}	[selected=false]	- true to get only selected keyframes.
-* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
-* @return {LayerAnim}	The animations. A PropertyAnim if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
-* @todo implement!
+* @param {float[]}	[timeRange]	- The time range, an array of two time values, in seconds.
+* @return {LayerAnim}	The animation.
 */
 DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 {
 	var anim = new LayerAnim();
 	anim._name = layer.name;
 	anim._index = layer.index;
-	anim.transform = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Transform Group"),selected,timeRange);
-	anim.masks = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Mask Parade"),selected,timeRange);
-	anim.effects = DuAEF.DuAE.Property.getPropertyGroupAnim(layer.property("ADBE Effect Parade"),selected,timeRange);
+	anim.anims = [];
+	for (var propIndex = 1;propIndex <= layer.numProperties;propIndex++)
+	{
+		var prop = layer.property(propIndex);
+		if (prop.matchName == 'ADBE Marker') continue;
+
+		var subAnim = DuAEF.DuAE.Property.getAnim(prop,selected,timeRange);
+		if (subAnim != null) anim.anims.push(subAnim);
+
+	}
 	return anim;
 }
 
@@ -841,14 +842,20 @@ DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 	if (ignoreName == undefined) ignoreName = false;
 	if (setExpression == undefined) setExpression = false;
 
-	var matchName = anim._matchName;
-	var name = anim._name;
-
-	var ok = false;
-
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Transform Group"),anim.transform,time,true,setExpression);
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Mask Parade"),anim.masks,time,ignoreName,setExpression);
-	DuAEF.DuAE.Property.setGroupAnim(layer.property("ADBE Effect Parade"),anim.effects,time,ignoreName,setExpression);
+	for (var i = 0 ; i < anim.anims.length ; i++)
+	{
+		var subAnim = anim.anims[i];
+		for (var propIndex = 1;propIndex <= layer.numProperties;propIndex++)
+		{
+			var subProp = layer.property(propIndex);
+			if (subProp == null) continue;
+			if (subProp.matchName == subAnim._matchName && subProp.matchName != 'ADBE Marker')
+			{
+				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp,subAnim,time,ignoreName,setExpression);
+				if (ok) break;
+			}
+		}
+	}
 }
 
 /**
@@ -933,7 +940,7 @@ DuAEF.DuAE.Layer.addPseudoEffect = function (layer,preset,matchName)
 * @param {Layer[]|LayerCollection} layers - The layers
 * @return {boolean} true if the layers have at least one selected keyframe
 */
-DuAEF.DuAE.Comp.haveSelectedKeys = function (layers)
+DuAEF.DuAE.Layer.haveSelectedKeys = function (layers)
 {
 	var it = DuAEF.DuAE.getListIterator(layers);
 	if (it.length == 0) return;
@@ -945,6 +952,25 @@ DuAEF.DuAE.Comp.haveSelectedKeys = function (layers)
 		}
 	}
 	return false;
+}
+
+/**
+* Gets the time of the first keyFrame
+* @param {Layer[]|LayerCollection} layer - The layer
+* @param {boolean} selected - true to check selected keyframes only
+* @return {float|null} The keyframe time or null if there are no keyframe
+*/
+DuAEF.DuAE.Layer.firstKeyFrameTime = function (layers,selected)
+{
+	var it = DuAEF.DuAE.getListIterator(layers);
+	var time = null;
+	for (var i = it.min ; i <= it.max ; i++)
+	{
+		var test = DuAEF.DuAE.Property.firstKeyFrameTime(layers[i],selected);
+		if (time == null) time = test;
+		else if (test != null) { if (time > test) time = test; }
+	}
+	return time;
 }
 
 /**
@@ -1091,10 +1117,11 @@ DuAEF.DuAE.Property.getKeyFrameAtTime = function (prop,time)
 
 /**
 * Gets the property keyframes in the whole timeline or in the time range<br />
-* The KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* The KeyFrame._time will be adjusted relatively to the start of the time range instead of the startTime of the composition.
 * @param {Property|PropertyInfo}	prop	- The property.
 * @param {boolean}	[selected=false]	- true to get only selected keyframes.
-* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @param {float[]}	[timeRange]	- The time range, an array of two time values, in seconds. If not provided, will use the comp time range.<br />
+* Ignored if selected is true;
 * @return {KeyFrame[]}	The keyframes, or null of this property is of type PropertyValueType.NO_VALUE or PropertyValueType.CUSTOM_VALUE
 */
 DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
@@ -1103,7 +1130,8 @@ DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
 	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
 	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
 
-	if (timeRange == undefined) timeRange = [0,23000];
+	var comp = DuAEF.DuAE.Property.getComp(prop);
+	if (timeRange == undefined) timeRange = [0,comp.duration];
 	if (selected == undefined) selected = false;
 
 	var keyFrames = [];
@@ -1141,45 +1169,34 @@ DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
 }
 
 /**
-* Gets the property animation in the whole timeline or in the time range<br />
-* The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
-* @param {Property|PropertyInfo}	prop	- The property.
-* @param {boolean}	[selected=false]	- true to get only selected keyframes.
-* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
-* @return {KeyFrame[]}	The keyframes, or null of this property is of type PropertyValueType.NO_VALUE or PropertyValueType.CUSTOM_VALUE
-*/
-DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
-{
-	if (prop instanceof PropertyInfo) prop = prop.getProperty();
-	if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
-	if (prop.propertyValueType == PropertyValueType.CUSTOM_VALUE) return null;
-
-	if (timeRange == undefined) timeRange = [0,23000];
-
-	var anim = new PropertyAnim();
-	anim._name = prop.name;
-	anim._matchName = prop.matchName;
-	anim.startValue = prop.valueAtTime(timeRange[0],true);
-	anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
-	anim.dimensions = DuAEF.DuAE.Property.getDimensions(prop);
-	if (prop.canSetExpression) anim.expression = prop.expression;
-	return anim;
-}
-
-/**
 * Gets all animations in the group in the whole timeline or in the time range<br />
 * The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
 * @param {PropertyGroup|PropertyInfo}	prop	- The property.
 * @param {boolean}	[selected=false]	- true to get only selected keyframes.
-* @param {float[]}	[timeRange=[0,23000]]	- The time range, an array of two time values, in seconds.
+* @param {float[]}	[timeRange]	- The time range, an array of two time values, in seconds. If not provided, will use the comp time range.
 * @return {PropertyGroupAnim|PropertyAnim}	The animations. A PropertyAnim if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
 */
-DuAEF.DuAE.Property.getGroupAnim = function (prop,selected,timeRange)
+DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 {
+	var comp = DuAEF.DuAE.Property.getComp(prop);
+	if (timeRange == undefined) timeRange = [0,comp.duration];
+	if (selected == undefined) selected = false;
+
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (prop.propertyType === PropertyType.PROPERTY)
 	{
-		return DuAEF.DuAE.Property.getPropertyAnim(prop,selected,timeRange);
+		if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
+		if (prop.elided) return null;
+		if (!prop.canVaryOverTime) return null;
+		if (prop.selectedKeys.length == 0 && selected) return null;
+		var anim = new PropertyAnim();
+		anim._name = prop.name;
+		anim._matchName = prop.matchName;
+		anim.startValue = prop.valueAtTime(timeRange[0],true);
+		anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
+		anim.dimensions = DuAEF.DuAE.Property.getDimensions(prop);
+		if (prop.canSetExpression) anim.expression = prop.expression;
+		return anim;
 	}
 	else if (prop.numProperties > 0)
 	{
@@ -1189,13 +1206,60 @@ DuAEF.DuAE.Property.getGroupAnim = function (prop,selected,timeRange)
 
 		for (var propIndex = 1;propIndex <= prop.numProperties;propIndex++)
 		{
-			var anim = DuAEF.DuAE.Property.getPropertyGroupAnim(prop.property(propIndex),selected,timeRange);
-			if (anim !== null) groupAnim.anims.push(anim);
+			var anim = DuAEF.DuAE.Property.getAnim(prop.property(propIndex),selected,timeRange);
+			if (anim != null) groupAnim.anims.push(anim);
 		}
-
 		return groupAnim;
 	}
 	return null;
+}
+
+/**
+* Gets the time of the first keyFrame
+* @param {PropertyBase[]|PropertyInfo[]} props - The properties
+* @param {boolean} selected - true to check selected keyframes only
+* @return {float<|null} The keyframe time or null if there are no keyframe
+*/
+DuAEF.DuAE.Property.firstKeyFrameTime = function (prop,selected)
+{
+	var time = null;
+
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		if (!prop.canVaryOverTime) return null;
+		if (selected)
+		{
+			if (prop.selectedKeys.length == 0) return null;
+			for (var keyIndex = 0; keyIndex < prop.selectedKeys.length ; keyIndex++)
+			{
+				var key = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,prop.selectedKeys[keyIndex]);
+				if (time == null) time = key._time;
+				else if (time > key._time) time = key._time;
+			}
+		}
+		else
+		{
+			if (prop.numKeys == 0) return null;
+			for (var keyIndex = 1; keyIndex <= prop.numKeys ; keyIndex++)
+			{
+				var key = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,keyIndex);
+				if (time == null) time = key._time;
+				else if (time > key._time) time = key._time;
+			}
+		}
+	}
+	else if (prop.numProperties > 0)
+	{
+		for (var propIndex = 1;propIndex <= prop.numProperties;propIndex++)
+		{
+			var test = DuAEF.DuAE.Property.firstKeyFrameTime(prop.property(propIndex),selected);
+			if (time == null) time = test;
+			else if (test != null) { if (time > test) time = test; }
+		}
+	}
+
+	return time;
 }
 
 /**
@@ -1276,7 +1340,10 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 }
 
 /**
-* Sets the property animation on the property
+* Sets the property animation on the property.<br />
+* Use this method only to force the animation onto the property without checks.<br />
+* Must be used on a Property (not a group) with a PropertyAnim (not a PropertyGroupAnim).<br />
+* To easily set an animation on a property with automatic compatibility checks, you should use setGroupAnim().
 * @param {Property|PropertyInfo}	prop	- The property.
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
@@ -1285,78 +1352,63 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {boolean}	[ignoreMatchName=false]	- true to set the anim even if matchName of the property do not match the animation.
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setAnim = function(prop,anim,time,ignoreName,setExpression,ignoreMatchName)
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
-	if (ignoreName == undefined) ignoreName = false;
-	if (ignoreMatchName == undefined) ignoreMatchName = false;
 	if (setExpression == undefined) setExpression = false;
 
-	var matchName = anim._matchName;
-	var name = anim._name;
 	var dimensions = anim.dimensions;
 
 	var ok = false;
 
 	if (anim == null) return true;
+	if (anim.type == 'group') return false;
 
 	//find the property with the same name and matchname
-	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime && DuAEF.DuAE.Property.getDimensions(prop) == dimensions)
+	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
 	{
-		if ((!ignoreMatchName && prop.matchName == matchName || ignoreMatchName) && (!ignoreName && prop.name == name || ignoreName))
+		//if there are keys, set them
+		if (anim.keys.length > 0)
 		{
-			//if there are keys, set them
-			if (anim.keys.length > 0)
+			for (var iclef = 0; iclef < anim.keys.length;iclef++)
 			{
-				for (var iclef = 0; iclef < anim.keys.length;iclef++)
-				{
-					DuAEF.DuAE.Property.setKey(prop,anim.keys[iclef],time);
-					ok = true;
-				}
+				DuAEF.DuAE.Property.setKey(prop,anim.keys[iclef],time);
+				ok = true;
 			}
-			else //set the start value
+		}
+		else //set the start value
+		{
+			try
 			{
-				try
+				var value = anim.startValue;
+				if (value instanceof Array)
 				{
-					var value = anim.startValue;
-					if (value instanceof Array)
+					while (value.length < dimensions)
 					{
-						while (value.length < dimensions)
-						{
-							value.push(0);
-						}
-						while (value.length > dimensions)
-						{
-							value.pop();
-						}
+						value.push(0);
 					}
-					if (anim.startValue != null) prop.setValue(anim.startValue);
-					ok = true;
-				} catch (err) {};
-			}
-			//set the expression
-			if (prop.canSetExpression && setExpression)
-			{
-				prop.expression = anim.expression;
-			}
+					while (value.length > dimensions)
+					{
+						value.pop();
+					}
+				}
+				if (anim.startValue != null) prop.setValue(anim.startValue);
+				ok = true;
+			} catch (err) {};
 		}
-	}
-	else if (prop.numProperties != undefined)
-	{
-		if (prop.numProperties > 0)
+		//set the expression
+		if (prop.canSetExpression && setExpression)
 		{
-			for (var pi = 1;pi <= prop.numProperties;pi++)
-			{
-				ok = (DuAEF.DuAE.Property.setAnim(prop.property(pi),anim,time,ignoreName,setExpression));
-			}
+			prop.expression = anim.expression;
 		}
 	}
+
 	return ok;
 }
 
 /**
-* Sets all animations from a property group
+* Sets all animations on a Property or a PropertyGroup.
 * @param {PropertyGroup|PropertyInfo}	prop	- The property group.
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
@@ -1375,7 +1427,14 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpress
 
 	if (anim == null) return true;
 
-	if (prop.matchName == anim._matchName && (!ignoreName && prop.name == anim._name || ignoreName))
+	if (anim.type == 'anim')
+	{
+		if (prop.matchName == anim._matchName && (!ignoreName && prop.name == anim._name || ignoreName))
+		{
+			return DuAEF.DuAE.Property.setAnim(prop,anim,time,setExpression);
+		}
+	}
+	else
 	{
 		for (var i = 0 ; i < anim.anims.length ; i++)
 		{
@@ -1386,13 +1445,13 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpress
 				var subProp = prop.property(j);
 				if (subProp.matchName == propAnim._matchName && (!ignoreName && subProp.name == propAnim._name || ignoreName))
 				{
-					if (propAnim.type == "group") ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName,setExpression);
-					else ok = DuAEF.DuAE.Property.setAnim(subProp,propAnim,time,ignoreName,setExpression);
+					ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName,setExpression);
 					break;
 				}
 			}
 		}
 	}
+
 	return ok;
 }
 
@@ -1519,7 +1578,7 @@ DuAEF.DuAE.Property.setInterpolationType = function(layers,props,typeIn,typeOut,
 	easeInValue = new KeyframeEase(0,easeInValue);
 	easeOutValue = new KeyframeEase(0,easeOutValue);
 
-	if (!DuAEF.DuAE.Comp.haveSelectedKeys(layers))
+	if (!DuAEF.DuAE.Layer.haveSelectedKeys(layers))
 	{
 		for (var i=0;i<props.length;i++)
 		{
