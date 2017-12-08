@@ -39,6 +39,16 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+* An onion skin
+* @typedef {Object} OnionSkin
+* @property {boolean} activated - Is it activated
+* @property {int} duration - Duration in frames
+* @property {int} exposure - Animation exposure
+* @property {int} outOpacity - out opacity
+* @property {int} inOpacity - in opacity
+*/
+
+/**
 * Constructs a Structure
 * @class Structure
 * @classdesc A Structure.
@@ -1165,6 +1175,207 @@ DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
 		}
 	}
 }
+
+/**
+* Cel animation tools
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.CelAnimation = {};
+
+/**
+* Creates a new animation cel on the layer
+* @param {CompItem} comp - The composition
+* @param {AVLayer|null} [layer] - The layer where to create the cel
+*/
+DuAEF.Duik.CelAnimation.createCell = function (comp,layer)
+{
+	if (comp == undefined) return;
+
+	if (layer == undefined || layer == null)
+	{
+		//create solid
+		layer = comp.layers.addSolid([0,0,0], DuAEF.DuAE.Comp.newUniqueLayerName("Cel",comp) , comp.width, comp.height, comp.pixelAspect , comp.duration);
+	}
+
+	var first = true;
+	for (var i = 1 ; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		if (layer.effect(i).matchName == 'ADBE Paint')
+		{
+			first = false;
+			break;
+		}
+	}
+
+	var newName = DuAEF.DuAE.Layer.newUniqueEffectName('Celluloid',layer);
+	var paint = layer('ADBE Effect Parade').addProperty('ADBE Paint');
+	paint.name = newName;
+
+	if (first) paint.property('ADBE Paint On Transparent').setValue(true);
+
+}
+
+/**
+* Activates or deactivates the onion skin on a cel
+* @param {AVLayer} layer - The layer with the cel
+* @param {OnionSkin} onionSkin - Onion skin parameters
+*/
+DuAEF.Duik.CelAnimation.onionSkin = function (layer,onionSkin)
+{
+	if (layer == undefined) return;
+	if (onionSkin == undefined)
+	{
+		onionSkin = new OnionSkin();
+		onionSkin.activated = true;
+	}
+	activate = onionSkin.activated;
+	onionDuration = onionSkin.duration;
+	exposure = onionSkin.exposure;
+	inOpacity = onionSkin.inOpacity;
+	outOpacity = onionSkin.outOpacity;
+
+	var comp = layer.containingComp;
+	for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+	{
+		var paint = layer.effect(i);
+		if (!paint) continue;
+		if (paint.matchName != "ADBE Paint") continue;
+		if (paint.name.indexOf('Celluloid') < 0) continue;
+		for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+		{
+			var stroke = paint.property("ADBE Paint Group")(j);
+			if (stroke.matchName != "ADBE Paint Atom") continue;
+
+			var inPoint = stroke.property("ADBE Paint Duration").value[0];
+			var duration = stroke.property("ADBE Paint Duration").value[1];
+
+			//adjust expo
+			if (stroke.name.indexOf("#Duik") < 0)
+			{
+				duration = exposure*comp.frameDuration;
+				stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				stroke.name = stroke.name + " #Duik";
+			}
+
+			if (activate)
+			{
+				//stroke.property("ADBE Paint Transfer Mode") : blending mode
+				var outPoint = duration + inPoint;
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				//if keyframes (already activated)
+				if (opacity.numKeys > 0)
+				{
+					if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+					{
+						outPoint = opacity.keyTime(2) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+						outPoint = opacity.keyTime(5) - layer.startTime;
+					}
+
+					//remove keys
+					while (opacity.numKeys>0)
+					{
+						opacity.removeKey(1);
+					}
+					opacity.setValue(100);
+					stroke.name = stroke.name.replace(/ #Out/g,"");
+					stroke.name = stroke.name.replace(/ #In/g,"");
+				}
+
+				//set duration
+				if (outOpacity > 0 && inOpacity <= 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				}
+				else if (outOpacity <= 0 && inOpacity > 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+				else
+				{
+					duration = outPoint - inPoint + 2*onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+
+
+				//add keyframes
+				if (outOpacity > 0)
+				{
+				opacity.setValueAtTime(outPoint-comp.frameDuration+layer.startTime,100);
+				opacity.setValueAtTime(outPoint+layer.startTime,outOpacity);
+				opacity.setValueAtTime(outPoint + onionDuration*comp.frameDuration+layer.startTime,0);
+				stroke.name = stroke.name + " #Out";
+				}
+				if (inOpacity > 0)
+				{
+				opacity.setValueAtTime(inPoint+layer.startTime,100);
+				opacity.setValueAtTime(inPoint-onionDuration*comp.frameDuration+layer.startTime,0);
+				opacity.setValueAtTime(inPoint-comp.frameDuration+layer.startTime,inOpacity);
+				stroke.name = stroke.name + " #In";
+				}
+
+			}
+			else
+			{
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				if (opacity.numKeys > 0)
+				{
+				inPoint = 0;
+				outPoint = 1;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+				{
+				inPoint = stroke.property("ADBE Paint Duration").value[0];
+				outPoint = opacity.keyTime(2);
+				}
+				else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				outPoint = stroke.property("ADBE Paint Duration").value[0] + stroke.property("ADBE Paint Duration").value[1];
+				inPoint = opacity.keyTime(3);
+				}
+				else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				inPoint = opacity.keyTime(3);
+				outPoint = opacity.keyTime(5);
+				}
+
+
+				while (opacity.numKeys>0)
+				{
+				opacity.removeKey(1);
+				}
+				opacity.setValue(100);
+				//set duration
+				var o = outPoint-inPoint;
+				var i = inPoint;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0) o = o-layer.startTime;
+				else if (stroke.name.indexOf("#Out") < 0) o = o + layer.startTime;
+				if (stroke.name.indexOf("#In") >= 0) i = i-layer.startTime;
+
+				stroke.property("ADBE Paint Duration").setValue([i,o]);
+
+				stroke.name = stroke.name.replace(/ #In/g,"");
+				stroke.name = stroke.name.replace(/ #Out/g,"");
+				}
+			}
+		}
+	}
+	//deselect
+	while(layer.selectedProperties.length > 0)
+	{
+		layer.selectedProperties[0].selected = false;
+	}
+}
+
 
 /**
 * Automations
