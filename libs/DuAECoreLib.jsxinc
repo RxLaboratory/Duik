@@ -725,6 +725,19 @@ DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp)
 }
 
 /**
+* Creates a new Adjustment layer
+* @param {CompItem} comp 	- The comp
+* @return {AVLayer}	The layer.
+*/
+DuAEF.DuAE.Comp.addAdjustmentLayer = function(comp)
+{
+	if (comp == undefined) return null;
+	var layer = comp.layers.addSolid([1,1,1], DuAEF.DuAE.Comp.newUniqueLayerName("Adjustment Layer",comp) , comp.width, comp.height, comp.pixelAspect, comp.duration);
+	layer.adjustmentLayer = true;
+	return layer;
+}
+
+/**
 * After Effects layer methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -905,9 +918,10 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 * @param {Layer} layer - The layer
 * @param {File} preset - The preset file
 * @param {string} matchName - The pseudo Effect matchName.
+* @param {string} [name] - The name to set on the effect
 * @return {PropertyGroup|null} The effect or null if anything went wrong
 */
-DuAEF.DuAE.Layer.addPseudoEffect = function (layer,preset,matchName)
+DuAEF.DuAE.Layer.addPseudoEffect = function (layer,preset,matchName,name)
 {
 	if (layer == undefined) return null;
 	if (preset == undefined) return null;
@@ -931,7 +945,10 @@ DuAEF.DuAE.Layer.addPseudoEffect = function (layer,preset,matchName)
 	}
 
 	//add the pseudoEffect as a property
+	var newEffectName = '';
+	newEffectName = DuAEF.DuAE.Layer.newUniqueEffectName(name,layer);
 	var effect = effects.addProperty(matchName);
+	effect.name = newEffectName;
 	return effect;
 }
 
@@ -1843,6 +1860,69 @@ DuAEF.DuAE.Property.fixSpatialInterpolation = function(prop)
 	        }
 	    }
 	}
+}
+
+/**
+* Gets the average speed of the animated propreties
+* @param {Property[]|PropertyInfo[]} props - The Properties
+* @return {float} The average speed
+*/
+DuAEF.DuAE.Property.getAverageSpeed = function(props)
+{
+	var averageSpeed = 0;
+	var count = 0;
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		if (prop.propertyType != PropertyType.PROPERTY) continue;
+		if (!prop.canVaryOverTime) continue;
+		if (prop.numKeys < 1) continue;
+
+		var comp = DuAEF.DuAE.Property.getComp(prop);
+		var frames = comp.duration / comp.frameDuration ;
+		var lastTime = prop.keyTime(prop.numKeys);
+		var firstTime = prop.keyTime(1);
+		var lastFrame = lastTime/comp.frameDuration ;
+		var firstFrame = firstTime/comp.frameDuration ;
+		if (lastFrame > frames) lastFrames = frames;
+		if (firstFrame < 1) firstFrame = 1;
+		var sum = 0;
+		for (var frame = firstFrame ; frame < lastFrame ; frame++)
+		{
+			var time = frame*comp.frameDuration;
+			sum += DuAEF.DuAE.Property.getSpeed(prop,time);
+		}
+		var speed = sum/(lastFrame-firstFrame);
+
+		if (speed > 0)
+		{
+			averageSpeed += speed;
+			count++;
+		}
+	}
+
+	averageSpeed = averageSpeed/count;
+	return averageSpeed;
+}
+
+/**
+* Gets the speed of a property at a given time
+* @param {Property|PropertyInfo} prop - The property
+* @param {float} [time=composition.time] - The time.
+* @return {float} The speed
+*/
+DuAEF.DuAE.Property.getSpeed = function (prop,time)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (prop.propertyType != PropertyType.PROPERTY) return 0;
+	if (prop.numKeys == 0) return 0;
+	var comp = DuAEF.DuAE.Property.getComp(prop);
+	if (time == undefined) time = comp.time;
+
+	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration,false),prop.valueAtTime(time-comp.frameDuration,false));
+	return speed;
 }
 
 /**
