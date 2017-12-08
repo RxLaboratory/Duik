@@ -7,6 +7,7 @@ function setCurrentAnimationPanel(panel)
 	ui_animationGroup.visible = panel == 0;
 	ui_motionTrailOptionsGroup.visible = panel == 1;
 	ui_copyPasteOptionsGroup.visible = panel == 2;
+	uiexposureOptionsGroup.visible = panel == 3;
 }
 
 //=========== EVENTS =============
@@ -527,6 +528,69 @@ function ui_copyPasteAllLayersButton_clicked()
 	settings.save();
 }
 
+function ui_exposureButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	app.beginUndoGroup('Duik | ' + "X-Sheet");
+
+	var ok = false;
+	if (props.length > 0)
+	{
+		var effect = null;
+		for (var i = 0 ; i < props.length ; i++)
+		{
+			effect = DuAEF.Duik.Animation.xSheet(comp,props[i],effect);
+			if (effect != null) ok = true;
+		}
+	}
+	if (!ok)
+	{
+		effect = DuAEF.Duik.Animation.xSheet(comp);
+	}
+
+	if (ui_exposureDetectButton.checked && props.length > 0)
+	{
+		//detect limit
+		var averageSpeed = DuAEF.DuAE.Property.getAverageSpeed(props);
+		if (averageSpeed > 0)
+		{
+			var precision = averageSpeed*2;
+			var frames = comp.duration / comp.frameDuration;
+			//set Keyframes
+			var step = 0;
+			effect(19).addKey(0);
+			for (var frame = 0 ; frame < frames ; frame++)
+			{
+				var time = frame*comp.frameDuration;
+
+				var maxSpeed = 0;
+				for (var j = 0 ; j < props.length ; j++)
+				{
+					var prop = props[j].getProperty();
+					var speedTest = DuAEF.DuAE.Property.getSpeed(prop,time);
+					if (speedTest > maxSpeed) maxSpeed = speedTest;
+				}
+
+				step += maxSpeed;
+
+				if (step >= precision && averageSpeed > 0)
+				{
+					step = 0;
+					effect(19).addKey(time);
+				}
+			}
+			effect(7).setValue(2);
+		}
+
+	}
+
+	app.endUndoGroup();
+	setCurrentAnimationPanel(0);
+}
+
 //============ UI ===============
 
 var ui_animationStackGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'stack');
@@ -627,7 +691,6 @@ ui_copyPasetAnimGroup.alignment = ['center','top'];
 var ui_copyAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,settings.data.expert ? "" : "Copy",'E:/DEV SRC/RainboxUI/Icons/25w/copy_l.png',"Copy selected keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/copy_r.png',settings.data.debug);
 var ui_pasteAnimButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,"Paste anim",'E:/DEV SRC/RainboxUI/Icons/25w/paste_l.png',"Paste keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/paste_r.png',settings.data.debug);
 var ui_copyPasteAnimOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasetAnimGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Copy/paste options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
-//TODO group tools (mirror, offset, loop...), inside paste options
 
 var ui_animToolsGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup,settings.data.expert ? 'row' : 'column');
 ui_animToolsGroup.alignment = ['center','top'];
@@ -643,9 +706,8 @@ if (DuAEF.DuAE.App.version >= 15)
 }
 
 var ui_exposureGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,settings.data.expert ? 'column' : 'row');
-var ui_exposureButton = DuAEF.DuScriptUI.addImageButton(ui_exposureGroup,settings.data.expert ? "" : "Exposure",'E:/DEV SRC/RainboxUI/Icons/25w/exposure_l.png',"Change the exposure of the animation",'E:/DEV SRC/RainboxUI/Icons/25w/exposure_r.png');
+var ui_exposureButton = DuAEF.DuScriptUI.addImageButton(ui_exposureGroup,settings.data.expert ? "" : "X-Sheet",'E:/DEV SRC/RainboxUI/Icons/25w/exposure_l.png',"Change the exposure of the animation",'E:/DEV SRC/RainboxUI/Icons/25w/exposure_r.png',settings.data.debug);
 var ui_exposureOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_exposureGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Exposure options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
-//options: all comp, by layer, by property, autodetect, with markers or effect (key or value)
 
 var ui_timeRemapGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,settings.data.expert ? 'column' : 'row');
 var ui_timeremapButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapGroup,settings.data.expert ? "" : "Time remap",'E:/DEV SRC/RainboxUI/Icons/25w/timeremap_l.png',"Enable time remapping",'E:/DEV SRC/RainboxUI/Icons/25w/timeremap_r.png');
@@ -658,7 +720,7 @@ var ui_celAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,setting
 var ui_motionTrailOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
 ui_motionTrailOptionsGroup.alignment = ['center','top'];
 ui_motionTrailOptionsGroup.alignChildren = ['fill','top'];
-var ui_motionTrailUseExistingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_motionTrailOptionsGroup,"Use existing layer",'E:/DEV SRC/RainboxUI/Icons/32w/selectlayer_l.png',"Use an already existing layer for the motion trails, if any.",'E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png','E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png');*
+var ui_motionTrailUseExistingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_motionTrailOptionsGroup,"Use existing layer",'E:/DEV SRC/RainboxUI/Icons/32w/selectlayer_l.png',"Use an already existing layer for the motion trails, if any.",'E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png','E:/DEV SRC/RainboxUI/Icons/32w/addlayer_r.png');
 var ui_motionTrailColorBox = ui_motionTrailOptionsGroup.add('dropdownlist',undefined,["Random Color","Custom Color"]);
 var ui_motionTrailColorGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup,'row');
 ui_motionTrailColorGroup.alignment = ['center','top'];
@@ -672,13 +734,22 @@ var ui_motionTrailValidButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailVa
 var ui_copyPasteOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
 ui_copyPasteOptionsGroup.alignment = ['center','top'];
 ui_copyPasteOptionsGroup.alignChildren = ['fill','top'];
-var ui_copyPasteUseNamesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"Use layer names",'E:/DEV SRC/RainboxUI/Icons/32w/layername_l.png',"Use layer names or indices to paste keyframes.",'E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png','E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png');*
+var ui_copyPasteUseNamesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"Use layer names",'E:/DEV SRC/RainboxUI/Icons/32w/layername_l.png',"Use layer names or indices to paste keyframes.",'E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png','E:/DEV SRC/RainboxUI/Icons/32w/layerindex_r.png');
 ui_copyPasteUseNamesButton.label.minimumSize.width = 100;
-var ui_copyPasteAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"All layers",'E:/DEV SRC/RainboxUI/Icons/32w/alllayers_l.png',"Paste on all or just selected layers.",'E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png','E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png');*
+var ui_copyPasteAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"All layers",'E:/DEV SRC/RainboxUI/Icons/32w/alllayers_l.png',"Paste on all or just selected layers.",'E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png','E:/DEV SRC/RainboxUI/Icons/32w/selectedlayers_r.png');
 ui_copyPasteAllLayersButton.label.minimumSize.width = 100;
 var ui_copyPasteValidGroup = DuAEF.DuScriptUI.addGroup(ui_copyPasteOptionsGroup);
 var ui_copyPasteCancelButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
 var ui_copyPasteValidButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Paste",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Paste keyframes",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+// Exposure options
+var uiexposureOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+uiexposureOptionsGroup.alignment = ['center','top'];
+uiexposureOptionsGroup.alignChildren = ['fill','top'];
+var ui_exposureDetectButton = DuAEF.DuScriptUI.addImageCheckBox(uiexposureOptionsGroup,"Auto-Detect",'E:/DEV SRC/RainboxUI/Icons/32w/detectexposure_l.png',"Try to set a nice animation exposure based on the property velocities.",'E:/DEV SRC/RainboxUI/Icons/32w/detectexposure_r.png');
+var ui_exposureValidGroup = DuAEF.DuScriptUI.addGroup(uiexposureOptionsGroup);
+var ui_exposureCancelButton = DuAEF.DuScriptUI.addImageButton(ui_exposureValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_exposureValidButton = DuAEF.DuScriptUI.addImageButton(ui_exposureValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Exposure controls",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
 
 //========= INIT ===================
@@ -760,3 +831,7 @@ ui_copyPasteUseNamesButton.onClick = ui_copyPasteUseNamesButton_clicked;
 ui_copyPasteAllLayersButton.onClick = ui_copyPasteAllLayersButton_clicked;
 ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
 ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+
+ui_exposureButton.onClick = ui_exposureValidButton.onClick = ui_exposureButton_clicked;
+ui_exposureCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_exposureOptionsButton.onClick = function() {setCurrentAnimationPanel(3);};
