@@ -238,6 +238,9 @@ DuAEF.Duik = {};
 	//Motion Trail
 	#include "pseudoEffects/duik_motion_trail.ffx.jsxinc"
 	duik_motion_trail = DuAEF.DuBinary.toFile(duik_motion_trail);
+	//X-Sheet
+	#include "pseudoEffects/duik_x_sheet.ffx.jsxinc"
+	duik_x_sheet = DuAEF.DuBinary.toFile(duik_x_sheet);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -246,6 +249,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffects =
 	{
+		//X-Sheet
+		X_SHEET: duik_x_sheet,
 		//Motion trail
 		MOTION_TRAIL: duik_motion_trail,
 		//Paint Rig
@@ -288,6 +293,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.pseudoEffectsMatchNames =
 	{
+		//X-Sheet
+		X_SHEET: "Pseudo/DUIK x sheet",
 		//Motion trail
 		MOTION_TRAIL: "Pseudo/DUIK motion trail",
 		//Paint Rig
@@ -1028,6 +1035,99 @@ DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 
 
 	return trailLayer;
+}
+
+/**
+* Adds animation exposure controls
+* @param {CompItem} comp - The comp where to create the X-Sheet
+* @param {Property|PropertyInfo} [prop] - The property controlled. If not provided, will add an X-Sheet adjustment layer in the comp.
+* @param {PropertyGroup|null} [effect] - an X-Sheet effect already created to use as a control for the prop
+* @return {PropertyGroup} The effect used to control
+*/
+DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
+{
+	var createLayer = prop == undefined;
+	if (effect == undefined) effect = null;
+	if (!createLayer)
+	{
+		if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+		if (!prop.riggable) return effect;
+
+		var layer = prop.layer;
+		comp = layer.containingComp;
+
+		//add effect
+		if (effect == null) effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.pseudoEffects.X_SHEET,DuAEF.Duik.pseudoEffectsMatchNames.X_SHEET,prop.getProperty().name + " X-Sheet");
+		var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,true);
+		prop.getProperty().expression = '//Duik.XSheet\n' + effectLink + '\n' +
+					'var mode = fx(7);\n' +
+					'var frameDuration = fx(14).value;\n' +
+					'var xSheet = fx(19);\n' +
+					'var result = value;\n' +
+					'function getValAtKey(prop)\n' +
+					'{\n' +
+					'if (prop.numKeys > 0)\n' +
+					'{\n' +
+					'var k = prop.nearestKey(time);\n' +
+					'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+					'return valueAtTime(k.time);\n' +
+					'}\n' +
+					'else return value;\n' +
+					'}\n' +
+					'if (mode == 1)\n' +
+					'{\n' +
+					'frameDuration = Math.round(frameDuration);\n' +
+					'timef = timeToFrames(time);\n' +
+					'result = valueAtTime(framesToTime( timef - timef%frameDuration ))\n' +
+					'}\n' +
+					'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+					'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+					'else result = getValAtKey(thisComp.marker);\n' +
+					'result;';
+	}
+	else
+	{
+		if (comp == undefined) return effect;
+		var newName = DuAEF.DuAE.Comp.newUniqueLayerName("X-Sheet",comp);
+		var layer = DuAEF.DuAE.Comp.addAdjustmentLayer(comp);
+		layer.name = newName;
+
+		//add Effects
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.pseudoEffects.X_SHEET,DuAEF.Duik.pseudoEffectsMatchNames.X_SHEET,"X-Sheet");
+
+		var timeWarp = layer('ADBE Effect Parade').addProperty('ADBE Timewarp');
+		timeWarp(1).setValue(1);
+		timeWarp(2).setValue(2);
+
+		timeWarp(4).expression = '//Duik.XSheet\n' +
+										'var fx = effect("X-Sheet")\n' +
+										'var mode = fx(7);\n' +
+										'var frameDuration = fx(14).value;\n' +
+										'var xSheet = fx(19);\n' +
+										'var result = timeToFrames(time);\n' +
+										'function getValAtKey(prop)\n' +
+										'{\n' +
+										'if (prop.numKeys > 0)\n' +
+										'{\n' +
+										'var k = prop.nearestKey(time);\n' +
+										'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+										'return timeToFrames(k.time);\n' +
+										'}\n' +
+										'else return timeToFrames(time);\n' +
+										'}\n' +
+										'if (mode == 1)\n' +
+										'{\n' +
+										'frameDuration = Math.round(frameDuration);\n' +
+										'timef = timeToFrames(time);\n' +
+										'result = timef - timef%frameDuration;\n' +
+										'}\n' +
+										'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+										'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+										'else result = getValAtKey(thisComp.marker);\n' +
+										'result;\n';
+	}
+
+	return effect;
 }
 
 /**
