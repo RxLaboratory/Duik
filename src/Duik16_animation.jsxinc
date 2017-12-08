@@ -9,6 +9,7 @@ function setCurrentAnimationPanel(panel)
 	ui_copyPasteOptionsGroup.visible = panel == 2;
 	uiexposureOptionsGroup.visible = panel == 3;
 	ui_timeRemapOptionsGroup.visible = panel == 4;
+	ui_celAnimGroup.visible = panel == 5;
 }
 
 //=========== EVENTS =============
@@ -618,6 +619,118 @@ function ui_timeRemapLoopOutButton_clicked()
 	if (ui_timeRemapLoopOutButton.checked) ui_timeRemapLoopInButton.setChecked(false);
 }
 
+function ui_celSingleLayerButton_clicked()
+{
+	if (ui_celSingleLayerButton.checked) ui_celSingleLayerButton.label.text = "Single layer";
+	else ui_celSingleLayerButton.label.text = "Multiple layers";
+}
+
+function ui_onionSkinInButton_clicked()
+{
+	ui_onionSkinInSlider.enabled = ui_onionSkinInButton.checked;
+	if (!ui_onionSkinInButton.checked)
+	{
+		ui_onionSkinOutButton.setChecked(true);
+		ui_onionSkinOutButton_clicked();
+	}
+	ui_onionSkinButton_clicked();
+}
+
+function ui_onionSkinOutButton_clicked()
+{
+	ui_onionSkinOutSlider.enabled = ui_onionSkinOutButton.checked;
+	if (!ui_onionSkinOutButton.checked)
+	{
+		ui_onionSkinInButton.setChecked(true);
+		ui_onionSkinInButton_clicked();
+	}
+	ui_onionSkinButton_clicked();
+}
+
+function ui_onionSkinButton_clicked()
+{
+	ui_onionSkinEdit.enabled = ui_onionSkinInGroup.enabled = ui_onionSkinOutGroup.enabled = ui_onionSkinButton.checked;
+
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) layers = comp.layers;
+
+	var it = DuAEF.DuAE.getListIterator(layers);
+	app.beginUndoGroup('Duik | ' + "Update Onion Skin");
+
+	var os = {};
+	os.activated = ui_onionSkinButton.checked;
+	os.duration = parseInt(ui_onionSkinEdit.text);
+	os.exposure = parseInt(ui_celExpoEdit.text);
+	if (ui_onionSkinOutButton.checked )os.outOpacity = ui_onionSkinOutSlider.value;
+	else os.outOpacity = 0;
+	if (ui_onionSkinInButton.checked )os.inOpacity = ui_onionSkinInSlider.value;
+	else os.inOpacity = 0;
+
+	for (var i = it.min ; i <= it.max ; i++)
+	{
+		DuAEF.Duik.CelAnimation.onionSkin(layers[i],os);
+	}
+
+	app.endUndoGroup();
+}
+
+function ui_celCreateCelButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layer = null;
+
+	if (ui_celSingleLayerButton.checked)
+	{
+		//look for a layer with cels
+		if (comp.selectedLayers.length == 0)
+		{
+			for (var i = 1 ; i <= comp.layers.length ; i++)
+			{
+				var paint = comp.layer(i)('ADBE Effect Parade')('ADBE Paint');
+				if (paint)
+				{
+					if (paint.name.indexOf('Celluloid') >= 0)
+					{
+						layer = comp.layer(i);
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			layer = comp.selectedLayers[0];
+		}
+	}
+
+	app.beginUndoGroup('Duik | ' + "New celluloid");
+	DuAEF.Duik.CelAnimation.createCell(comp,layer);
+	app.endUndoGroup();
+
+}
+
+function ui_celPrevFrameButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	comp.time = comp.time - comp.frameDuration*parseInt(ui_celExpoEdit.text);
+	ui_onionSkinButton_clicked();
+}
+
+function ui_celNextFrameButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	comp.time = comp.time + comp.frameDuration*parseInt(ui_celExpoEdit.text);
+	ui_onionSkinButton_clicked();
+}
+
+
 //============ UI ===============
 
 var ui_animationStackGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'stack');
@@ -659,7 +772,7 @@ ui_easeGroup.alignChildren = ['fill','fill'];
 ui_easeGroup.alignment = ['fill','top'];
 
 var ui_easeInGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
-var ui_easeInSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeInGroup,33,1,100,'column',true);
+var ui_easeInSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeInGroup,33,1,100,'column',true,'','%');
 ui_easeInSlider.helpTip = "Ease In influence";
 var ui_velocityInEdit = DuAEF.DuScriptUI.addNiceEditText(ui_easeInGroup,'0');
 ui_velocityInEdit.helpTip = "Velocity In";
@@ -676,7 +789,7 @@ var ui_lockVelocityButton = DuAEF.DuScriptUI.addImageCheckBox(ui_easeButtonsGrou
 var ui_velocitySwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/switch_l.png',"Switch velocities",'E:/DEV SRC/RainboxUI/Icons/14w/switch_r.png');
 
 var ui_easeOutGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
-var ui_easeOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeOutGroup,33,1,100,'column');
+var ui_easeOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeOutGroup,33,1,100,'column',false,'','%');
 ui_easeOutSlider.helpTip = "Ease Out influence";
 var ui_velocityOutEdit = DuAEF.DuScriptUI.addNiceEditText(ui_easeOutGroup,'0');
 ui_velocityOutEdit.helpTip = "Velocity Out";
@@ -788,6 +901,39 @@ var ui_timeRemapValidGroup = DuAEF.DuScriptUI.addGroup(ui_timeRemapOptionsGroup)
 var ui_timeRemapCancelButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
 var ui_timeRemapValidButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Exposure controls",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
+// Cel anim
+var ui_celAnimGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+var ui_celAnimCelsGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
+ui_celAnimCelsGroup.alignment = ['center','top'];
+ui_celAnimCelsGroup.alignChildren = ['left','top'];
+var ui_celSingleLayerButton = DuAEF.DuScriptUI.addImageCheckBox(ui_celAnimCelsGroup,"Multiple layers",'E:/DEV SRC/RainboxUI/Icons/25w/layers_l.png',"If enabled, creates cels as new paint effects on a single layer",'E:/DEV SRC/RainboxUI/Icons/25w/singlelayer_r.png','E:/DEV SRC/RainboxUI/Icons/25w/singlelayer_l.png');
+var ui_celCreateCelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimCelsGroup,"New Cel.",'E:/DEV SRC/RainboxUI/Icons/25w/newcel_l.png',"Creates a new animation cel.",'E:/DEV SRC/RainboxUI/Icons/25w/newcel_r.png',settings.data.debug);
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_onionSkinGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
+ui_onionSkinGroup.alignment = ['center','top'];
+ui_onionSkinGroup.alignChildren = ['left','top'];
+var ui_activateOnionSkinGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+var ui_onionSkinButton = DuAEF.DuScriptUI.addImageCheckBox(ui_activateOnionSkinGroup,settings.data.expert ? '' : "Onion skin: ",'E:/DEV SRC/RainboxUI/Icons/25w/onion_l.png',"Activates onion skin",'E:/DEV SRC/RainboxUI/Icons/25w/onion_r.png','E:/DEV SRC/RainboxUI/Icons/25w/onion_r.png',settings.data.debug);
+var ui_onionSkinEdit = DuAEF.DuScriptUI.addNiceEditText(ui_activateOnionSkinGroup,'5',''," frames");
+var ui_onionSkinInGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+var ui_onionSkinInButton = DuAEF.DuScriptUI.addImageCheckBox(ui_onionSkinInGroup,"In: ",'E:/DEV SRC/RainboxUI/Icons/14w/cancel_l.png',"In Opacity",'E:/DEV SRC/RainboxUI/Icons/14w//check_g.png','E:/DEV SRC/RainboxUI/Icons/14w//check_r.png');
+var ui_onionSkinInSlider = DuAEF.DuScriptUI.addNiceSlider(ui_onionSkinInGroup,50,0,100,'row',false,'','%');
+ui_onionSkinInSlider.alignment = ['fill','center'];
+var ui_onionSkinOutGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+var ui_onionSkinOutButton = DuAEF.DuScriptUI.addImageCheckBox(ui_onionSkinOutGroup,"Out: ",'E:/DEV SRC/RainboxUI/Icons/14w//cancel_l.png',"Out Opacity",'E:/DEV SRC/RainboxUI/Icons/14w//check_g.png','E:/DEV SRC/RainboxUI/Icons/14w//check_r.png');
+var ui_onionSkinOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_onionSkinOutGroup,50,0,100,'row',false,'','%');
+ui_onionSkinOutSlider.alignment = ['fill','center'];
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_celNavGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'row');
+ui_celNavGroup.alignment = ['center','top'];
+var ui_celPrevFrameButton = DuAEF.DuScriptUI.addImageButton(ui_celNavGroup,'','E:/DEV SRC/RainboxUI/Icons/32w/previousframe_l.png',"Previous frame",'E:/DEV SRC/RainboxUI/Icons/32w/previousframe_r.png');
+var ui_celExpoEdit = DuAEF.DuScriptUI.addNiceEditText(ui_celNavGroup,'02');
+ui_celExpoEdit.static.helpTip = "Animation exposure";
+var ui_celNextFrameButton = DuAEF.DuScriptUI.addImageButton(ui_celNavGroup,'','E:/DEV SRC/RainboxUI/Icons/32w/nextframe_l.png',"Next frame",'E:/DEV SRC/RainboxUI/Icons/32w/nextframe_r.png');
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_celAnimCancelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+ui_celAnimCancelButton.alignment = ['center','top'];
+
 //========= INIT ===================
 
 if (settings.data.motionTrailColor == undefined) settings.data.motionTrailColor = "EC1818";
@@ -806,6 +952,9 @@ if (settings.data.copyPasteUseSelectedLayers == undefined) settings.data.copyPas
 ui_copyPasteAllLayersButton.setChecked(settings.data.copyPasteUseSelectedLayers);
 ui_copyPasteAllLayersButton_clicked();
 ui_timeRemapLoopOutButton.setChecked(true);
+ui_onionSkinInSlider.enabled = false;
+ui_onionSkinOutButton.setChecked(true);
+ui_onionSkinButton.setChecked(true);
 setCurrentAnimationPanel(0);
 
 //========== CONNECT EVENTS ========
@@ -878,3 +1027,14 @@ ui_timeremapOptionsButton.onClick = function() {setCurrentAnimationPanel(4);};
 ui_timeRemapCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 ui_timeRemapLoopInButton.onClick = ui_timeRemapLoopInButton_clicked;
 ui_timeRemapLoopOutButton.onClick = ui_timeRemapLoopOutButton_clicked;
+
+ui_celAnimCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_celAnimButton.onClick = function() {setCurrentAnimationPanel(5);};
+ui_celSingleLayerButton.onClick = ui_celSingleLayerButton_clicked;
+ui_onionSkinInButton.onClick = ui_onionSkinInButton_clicked;
+ui_onionSkinOutButton.onClick = ui_onionSkinOutButton_clicked;
+ui_onionSkinButton.onClick = ui_onionSkinButton_clicked;
+ui_celCreateCelButton.onClick = ui_celCreateCelButton_clicked;
+ui_onionSkinInSlider.onChange = ui_onionSkinOutSlider.onChange = ui_onionSkinEdit.onChange = ui_celExpoEdit.onChange = ui_onionSkinButton_clicked;
+ui_celPrevFrameButton.onClick = ui_celPrevFrameButton_clicked;
+ui_celNextFrameButton.onClick = ui_celNextFrameButton_clicked;
