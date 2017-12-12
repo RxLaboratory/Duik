@@ -75,6 +75,7 @@
 	//=========================
 
 	#include DuAEF.jsxinc
+	#include Duik16_shared.jsxinc
 
 	//=========== SETTINGS ===========
 	//get file
