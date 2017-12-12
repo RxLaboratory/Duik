@@ -321,9 +321,10 @@ DuAEF.Duik = {};
 	//constraints
 	#include "pseudoEffects/duik_orientation.ffx.jsxinc"
 	duik_orientation = DuAEF.DuBinary.toFile(duik_orientation);
-	//constraints
 	#include "pseudoEffects/duik_position.ffx.jsxinc"
 	duik_position = DuAEF.DuBinary.toFile(duik_position);
+	#include "pseudoEffects/duik_path.ffx.jsxinc"
+	duik_path = DuAEF.DuBinary.toFile(duik_path);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -333,6 +334,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffects =
 	{
 		//constraints
+		PATH: duik_path,
 		POSITION: duik_position,
 		ORIENTATION: duik_orientation,
 		//Controller
@@ -385,6 +387,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
 		//constraints
+		PATH: "Pseudo/DUIK path",
 		POSITION: "Pseudo/DUIK position",
 		ORIENTATION: "Pseudo/DUIK orientation",
 		//Controller
@@ -3265,4 +3268,29 @@ DuAEF.Duik.Rigging.positionConstraint = function (layer)
 								'}\n' +
 								'}\n' +
 								'result;';
+}
+
+/**
+* Adds a path constraint to a layer
+* @param {Layer} layer - The layer
+* @param {Property|PropertyInfo} path - The path property
+*/
+DuAEF.Duik.Rigging.pathConstraint = function (layer,path)
+{
+	if (path instanceof PropertyInfo) path = path.getProperty();
+
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.PATH,DuAEF.Duik.PseudoEffectsMatchNames.PATH,'Path constraint');
+
+	var l = DuAEF.DuAE.Property.getLayer(path);
+	var pathExpr = DuAEF.DuAE.Property.getExpressionLink(path,true);
+
+	var previous = layer.position.value;
+	layer.position.expression = '//Duik.positionConstraint\n' +
+								'var fx = effect("' + effect.name + '");\n' +
+								'var l = thisComp.layer("' + l.name + '");\n' +
+								'var p = ' + pathExpr + ';\n' +
+								'var percent = fx(1)%100/100;\n' +
+								'p.pointOnPath(percent, time)+l.position+value;';
+
+	layer.position.setValue(previous - (layer.position.value-previous));
 }
