@@ -1,0 +1,231 @@
+// ========= FUNCTIONS ================
+function controllersEditInit()
+{
+	if (settings.data.controllerSizeHint == undefined) settings.data.controllerSizeHint = 0;
+	if (settings.data.controllerSize == undefined) settings.data.controllerSize = 100;
+
+	DuAEF.Duik.controllerSize = settings.data.controllerSize;
+	DuAEF.Duik.controllerSizeHint = settings.data.controllerSizeHint;
+
+	ui_controllersEditSizeEdit.setText(settings.data.controllerSize);
+	ui_controllersEditSizeList[1].selection = settings.data.controllerSizeHint;
+	if (settings.data.controllerSizeHint == 3)
+	{
+		ui_controllersEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_controllersEditSizeEdit.enabled = false;
+	}
+
+	if (settings.data.controllerColor == undefined) settings.data.controllerColor = "EC1818";
+	ui_controllersEditColor.setText(settings.data.controllerColor);
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_controllersEditColor.text);
+	DuAEF.Duik.controllerColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_controllersEditColorLabel,color);
+}
+
+//====== EVENTS ================
+
+function ui_controllersEditSizeList_changed()
+{
+	var index = ui_controllersEditSizeList[1].selection.index;
+	if (index == 3)
+	{
+		ui_controllersEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_controllersEditSizeEdit.enabled = false;
+	}
+	DuAEF.Duik.controllerSizeHint = index;
+	settings.data.controllerSizeHint = index;
+	settings.save();
+
+	ui_controllersEditSizeValidButton_clicked();
+}
+
+function ui_controllersEditSizeEdit_changed()
+{
+	DuAEF.Duik.controllerSize = parseInt(ui_controllersEditSizeEdit.text);
+	settings.data.controllerSize = DuAEF.Duik.controllerSize;
+	settings.save();
+	ui_controllersEditSizeValidButton_clicked();
+}
+
+function ui_controllersEditSizeValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
+	if (ctrls.length == 0) return;
+
+	app.beginUndoGroup('Duik - ' + "Set controller size");
+	for (var i = 0 ; i < ctrls.length ; i++)
+	{
+		ctrls[i].setSize();
+	}
+	app.endUndoGroup();
+}
+
+function ui_controllersEditColor_changed()
+{
+	settings.data.controllerColor = ui_controllersEditColor.text;
+	settings.save();
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_controllersEditColor.text);
+	DuAEF.Duik.controllerColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_controllersEditColorLabel,color);
+
+	ui_controllersEditColorValidButton_clicked();
+}
+
+function ui_controllersEditColor_clicked()
+{
+	var color = $.colorPicker();
+	if (color == -1) return;
+	color = DuAEF.DuJS.Color.hexToRGB(color,false);
+	ui_controllersEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_controllersEditColor_changed();
+}
+
+function ui_controllersEditRandomColorButton_clicked()
+{
+	var color = DuAEF.DuJS.Color.random();
+	ui_controllersEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_controllersEditColor_changed();
+}
+
+function ui_controllersEditColorValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
+	if (ctrls.length == 0) return;
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_controllersEditColor.text);
+
+
+	app.beginUndoGroup('Duik - ' + "Set controller color");
+	for (var i = 0 ; i < ctrls.length ; i++)
+	{
+		ctrls[i].setColor(color);
+	}
+	app.endUndoGroup();
+}
+
+function ui_controllersEditSetButton_clicked()
+{
+	ui_controllersEditSizeValidButton_clicked();
+	ui_controllersEditColorValidButton_clicked();
+}
+
+function ui_controllersEditGetButton_clicked()
+{
+
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	//get from first element
+	var ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
+
+	if (ctrls.length >= 0)
+	{
+		var effect = ctrls[0].effect;
+		var color = effect(2).value;
+		var size = effect(4).value;
+		settings.data.controllerSize = size;
+		settings.data.controllerSizeHint = DuAEF.Duik.Sizes.CUSTOM;
+		settings.data.controllerColor = DuAEF.DuJS.Color.rgbToHex(color);
+		controllersEditInit();
+	}
+}
+
+function ui_controllersEditShowButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var ctrls = [];
+	if (comp.selectedLayers.length > 0) ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
+	else ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
+
+	if (ctrls.length == 0) return;
+
+	app.beginUndoGroup('Duik - ' + "Show/hide controllers");
+	var visible = !ctrls[0].layer.enabled;
+	for (var i = 0 ; i < ctrls.length ; i++)
+	{
+		ctrls[i].layer.enabled = visible;
+	}
+	app.endUndoGroup();
+}
+
+
+//============ UI =====================
+var ui_controllersEditGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
+var ui_controllersEditForm = DuAEF.DuScriptUI.addForm(ui_controllersEditGroup);
+ui_controllersEditForm.alignment = ['center','top'];
+//add a column for valid buttons
+var ui_controllersEditValidButtons = ui_controllersEditForm.add('group');
+ui_controllersEditValidButtons.alignment = ['right','top'];
+ui_controllersEditValidButtons.orientation = 'column';
+ui_controllersEditValidButtons.alignChildren = ['right','center'];
+ui_controllersEditValidButtons.spacing = 2;
+
+var ui_controllersEditSizeList = DuAEF.DuScriptUI.addFormField(ui_controllersEditForm,"Size",'dropdownlist',["Small","Medium","Large","Custom"],"Set the display size of the controllers.");
+var ui_controllersEditSizeValidButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditValidButtons,'','E:/DEV SRC/RainboxUI/Icons/18w/check_m.png',"Set size",'E:/DEV SRC/RainboxUI/Icons/18w/check_g.png',settings.data.debug);
+ui_controllersEditSizeValidButton.group.minimumSize.height = ui_controllersEditSizeValidButton.group.maximumSize.height = ui_controllersEditSizeList[1].preferredSize[1];
+
+var ui_controllersEditSizeEdit = DuAEF.DuScriptUI.addNiceEditText(ui_controllersEditForm.buttons,'100');
+ui_controllersEditSizeEdit.helpTip = "Set the display size of the controllers.";
+var ui_controllersEditSpacer = ui_controllersEditValidButtons.add('statictext',undefined,'');
+ui_controllersEditSpacer.minimumSize.height = ui_controllersEditSpacer.maximumSize.height = ui_controllersEditSizeEdit.edit.preferredSize[1];
+ui_controllersEditSpacer = ui_controllersEditForm.labels.add('statictext',undefined,'');
+ui_controllersEditSpacer.minimumSize.height = ui_controllersEditSpacer.maximumSize.height = ui_controllersEditSizeEdit.edit.preferredSize[1];
+
+var ui_controllersEditColor = DuAEF.DuScriptUI.addNiceEditText(ui_controllersEditForm.buttons,'EC1818');
+var ui_controllersEditColorLabel = ui_controllersEditForm.labels.add('statictext',undefined,"Color #");
+ui_controllersEditColor.helpTip = "Set the display color of the controllers.";
+ui_controllersEditColorLabel.helpTip = "Set the display color of the controllers.";
+ui_controllersEditColorLabel.minimumSize.height = ui_controllersEditColorLabel.maximumSize.height = ui_controllersEditColor.edit.preferredSize[1];
+var ui_controllersEditColorValidButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditValidButtons,'','E:/DEV SRC/RainboxUI/Icons/18w/check_m.png',"Set color",'E:/DEV SRC/RainboxUI/Icons/18w/check_g.png',settings.data.debug);
+ui_controllersEditColorValidButton.group.minimumSize.height = ui_controllersEditColorValidButton.group.maximumSize.height = ui_controllersEditColor.edit.preferredSize[1];
+
+var ui_controllersEditRandomColorButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditForm.buttons,"Random",'E:/DEV SRC/RainboxUI/Icons/18w/random_l.png',"Generates a random color",'E:/DEV SRC/RainboxUI/Icons/18w/random_r.png',settings.data.debug);
+
+DuAEF.DuScriptUI.addSeparator(ui_controllersEditGroup);
+
+var ui_controllersEditGetSetGroup = DuAEF.DuScriptUI.addGroup(ui_controllersEditGroup);
+ui_controllersEditGetSetGroup.alignment = ['center','top'];
+var ui_controllersEditGetButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditGetSetGroup,'Get','E:/DEV SRC/RainboxUI/Icons/25w/handeyedropper_l.png',"Get size and color",'E:/DEV SRC/RainboxUI/Icons/25w/handeyedropper_r.png',settings.data.debug);
+var ui_controllersEditSetButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditGetSetGroup,'Set','E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Set size and color",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+DuAEF.DuScriptUI.addSeparator(ui_controllersEditGroup);
+
+var ui_controllersEditToolsGroup = DuAEF.DuScriptUI.addGroup(ui_controllersEditGroup,settings.data.expert ? 'row' : 'column');
+var ui_controllersEditShowButton = DuAEF.DuScriptUI.addImageButton(ui_controllersEditToolsGroup,settings.data.expert ? "" : "Show/hide",'E:/DEV SRC/RainboxUI/Icons/25w/showhand_l.png',"Show or hide controllers",'E:/DEV SRC/RainboxUI/Icons/25w/hidehand_r.png',settings.data.debug);
+ui_controllersEditShowButton.alignment= ['center','top'];
+
+
+//============== INIT ========================
+controllersEditInit();
+
+
+//=============== CONNECT EVENTS =======================
+
+ui_controllersEditSizeList[1].onChange = ui_controllersEditSizeList_changed;
+ui_controllersEditSizeEdit.onChange = ui_controllersEditSizeEdit_changed;
+ui_controllersEditColor.onChange = ui_controllersEditColor_changed;
+ui_controllersEditColorLabel.addEventListener("mousedown",ui_controllersEditColor_clicked,false);
+
+ui_controllersEditSizeValidButton.onClick = ui_controllersEditSizeValidButton_clicked;
+ui_controllersEditRandomColorButton.onClick = ui_controllersEditRandomColorButton_clicked;
+ui_controllersEditColorValidButton.onClick = ui_controllersEditColorValidButton_clicked;
+
+ui_controllersEditSetButton.onClick = ui_controllersEditSetButton_clicked;
+ui_controllersEditGetButton.onClick = ui_controllersEditGetButton_clicked;
+
+ui_controllersEditShowButton.onClick = ui_controllersEditShowButton_clicked;
