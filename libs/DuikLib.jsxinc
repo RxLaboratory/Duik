@@ -49,6 +49,61 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+* Constructs a Controller
+* @class Controller
+* @classdesc A Controller.
+* @param {ShapeLayer} layer - The layer of the controller
+* @param {DuAEF.Duik.ControllerType} [type=DuAEF.Duik.ControllerType.TRANSFORM] - The type of the controller
+* @property {ShapeLayer} layer - The Shape layer of the controller
+* @property {DuAEF.Duik.ControllerType} type - The type of the controller
+* @property {PropertyGroup} effect - The effect on the layer
+*/
+function Controller(layer)
+{
+	this.layer = layer;
+	var effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
+	if (!effect) effect =this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
+	if (!effect) effect =this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
+	if (!effect) effect =this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER);
+	this.effect = effect;
+}
+
+/**
+* Sets a new display size for the controller
+* @memberof Controller
+* @param {int} [size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.controllerSizeHint
+*/
+Controller.prototype.setSize = function (size)
+{
+	if (this.layer == null) return;
+	if (size == undefined)
+	{
+		var comp = this.layer.containingComp;
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.controllerSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+		else if (DuAEF.Duik.controllerSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+		else if (DuAEF.Duik.controllerSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+		else if (DuAEF.Duik.controllerSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.controllerSize;
+	}
+
+	this.effect(4).setValue(size);
+	this.effect(10).setValue(size);
+}
+
+/**
+* Sets a new display color for the controller
+* @memberof Controller
+* @param {float[]} color - The new color
+*/
+Controller.prototype.setColor = function (color)
+{
+	if (color == undefined) color = DuAEF.Duik.controllerColor;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM) color = DuAEF.DuJS.Color.random();
+
+	this.effect(2).setValue(color);
+}
+
+/**
 * Constructs a Structure
 * @class Structure
 * @classdesc A Structure.
@@ -63,7 +118,7 @@ function Structure()
 /**
 * Sets a new display size for the structure
 * @memberof Structure
-* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
+* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.structureSizeHint
 */
 Structure.prototype.setSize = function (size)
 {
@@ -72,32 +127,35 @@ Structure.prototype.setSize = function (size)
 	if (size == undefined)
 	{
 		size = comp.width/2 + comp.height/2;
-		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.structureSize;
 	}
 	for (var i = 0 ; i < this.elements.length ; i++)
 	{
 		var layer = this.elements[i];
-		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(2).setValue(size);
+		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(2).setValue(size);
 	}
 }
 
 /**
 * Sets a new display color for the structure
 * @memberof Structure
-* @param {float[]} color - The color
+* @param {float[]} [color=DuAEF.Duik.structureColor] - The color
 */
 Structure.prototype.setColor = function (color)
 {
 	if (this.elements.length == 0) return;
 	var comp = this.elements[0].containingComp;
 
+	if (color == undefined) color = DuAEF.Duik.structureColor;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM) color = DuAEF.DuJS.Color.random();
+
 	for (var i = 0 ; i < this.elements.length ; i++)
 	{
 		var layer = this.elements[i];
-		layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(color);
+		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(color);
 	}
 }
 
@@ -266,7 +324,7 @@ DuAEF.Duik = {};
 	 * @enum {File}
 	 * @readonly
 	 */
-	DuAEF.Duik.pseudoEffects =
+	DuAEF.Duik.PseudoEffects =
 	{
 		//Controller
 		CONTROLLER: duik_controller,
@@ -315,7 +373,7 @@ DuAEF.Duik = {};
 	 * @enum {string}
 	 * @readonly
 	 */
-	DuAEF.Duik.pseudoEffectsMatchNames =
+	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
 		//Controller
 		CONTROLLER: "Pseudo/DUIK controller",
@@ -364,7 +422,7 @@ DuAEF.Duik = {};
 	 * @enum {int}
 	 * @readonly
 	 */
-	DuAEF.Duik.sizes =
+	DuAEF.Duik.Sizes =
 	{
 		SMALL: 0,
 		MEDIUM: 1,
@@ -378,7 +436,7 @@ DuAEF.Duik = {};
 	 * @enum {int}
 	 * @readonly
 	 */
-	DuAEF.Duik.structureSelectionMode =
+	DuAEF.Duik.StructureSelectionMode =
 	{
 		STRUCTURE: 0,
 		CHILDREN: 1,
@@ -387,13 +445,40 @@ DuAEF.Duik = {};
 	}
 
 	/**
+	 * The shapes/type/icon of the controllers
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.ControllerType =
+	{
+		ROTATION: 1,
+		X_POSITION: 2,
+		Y_POSITION: 3,
+		POSITION: 4,
+		TRANSFORM: 5,
+		SLIDER: 6,
+		DOUBLE_SLIDER: 7,
+		ANGLE: 8,
+		CAMERA: 9,
+		HEAD: 10,
+		HAND: 11,
+		FOOT: 12,
+		CLAWS: 13,
+		HOOF: 14,
+		EYE: 15,
+		EYES: 16,
+		FACE: 17,
+		SQUARE: 18
+	}
+
+	/**
 	* Size hint of structure elements
 	* @type {int}
-	* @default DuAEF.Duik.sizes.SMALL
+	* @default DuAEF.Duik.Sizes.SMALL
 	*/
-	DuAEF.Duik.structureSizeHint = DuAEF.Duik.sizes.SMALL;
+	DuAEF.Duik.structureSizeHint = DuAEF.Duik.Sizes.SMALL;
 	/**
-	* The default size for new structures if structureSizeHint is DuAEF.Duik.sizes.CUSTOM
+	* The default size for new structures if structureSizeHint is DuAEF.Duik.Sizes.CUSTOM
 	* @type {int}
 	* @default 100
 	*/
@@ -404,7 +489,24 @@ DuAEF.Duik = {};
 	* @default DuAEF.DuJS.Color.Colors.RANDOM
 	*/
 	DuAEF.Duik.structureColor = DuAEF.DuJS.Color.Colors.RANDOM
-
+	/**
+	* Size hint of controllers
+	* @type {int}
+	* @default DuAEF.Duik.Sizes.SMALL
+	*/
+	DuAEF.Duik.controllerSizeHint = DuAEF.Duik.Sizes.SMALL;
+	/**
+	* The default size for new controllers if controllerSizeHint is DuAEF.Duik.Sizes.CUSTOM
+	* @type {int}
+	* @default 100
+	*/
+	DuAEF.Duik.controllerSize = 100;
+	/**
+	* The default color for new controllers
+	* @type {float[]}
+	* @default DuAEF.DuJS.Color.Colors.RAINBOX_RED
+	*/
+	DuAEF.Duik.controllerColor = DuAEF.DuJS.Color.Colors.RAINBOX_RED;
 })();
 
 /**
@@ -491,7 +593,7 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name)
  * @memberof DuAEF.Duik
  * @param {CompItem}	comp	- The composition where to create the Structure
  * @param {float[]}	[color=[1,0.764,0.764,1]]		- The color of the element, [R,G,B,A] Array from 0.0 to 1.0
- * @param {float}	[size] 		- The element size, un percent. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
+ * @param {float}	[size] 		- The element size, a percentage. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
  * @return {ShapeLayer}	The element
  */
 DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
@@ -499,10 +601,10 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
 	if (size == undefined)
 	{
 		size = comp.width/2 + comp.height/2;
-		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.SMALL) size = Math.floor(size/14);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.MEDIUM) size = Math.floor(size/10);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.LARGE) size = Math.floor(size/6);
-		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.sizes.CUSTOM) size = DuAEF.Duik.structureSize;
+		if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size/14);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size/10);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size/6);
+		else if (DuAEF.Duik.structureSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.structureSize;
 	}
 
 	if (!color)
@@ -519,7 +621,7 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
 	var element = comp.layers.addShape();
 	//add effect
 
-	element.applyPreset(DuAEF.Duik.pseudoEffects.STRUCTURE_ELEMENT);
+	element.applyPreset(DuAEF.Duik.PseudoEffects.STRUCTURE_ELEMENT);
 	element.effect("Structure")(2).setValue(size);
 	element.effect("Structure")(4).setValue(color);
 
@@ -733,7 +835,7 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
 //Low-level undocumented function
 DuAEF.Duik.Structure.isStructure = function (layer)
 {
-	var structureEffect = layer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT);
+	var structureEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT);
 	if (structureEffect) return true;
 	else return false;
 }
@@ -742,19 +844,19 @@ DuAEF.Duik.Structure.isStructure = function (layer)
  * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
  * @memberof DuAEF.Duik
  * @param {CompItem}	comp	- The composition where to get the structures
- * @param {int} [structureSelectionMode=DuAEF.Duik.structureSelectionMode.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.structureSelectionMode}
- * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.structureSelectionMode.ELEMENT, will be one structure with all elements found
+ * @param {int} [structureSelectionMode=DuAEF.Duik.StructureSelectionMode.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.StructureSelectionMode}
+ * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.StructureSelectionMode.ELEMENT, will be one structure with all elements found
  */
 DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 {
-	if (selectionMode == undefined) selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+	if (selectionMode == undefined) selectionMode = DuAEF.Duik.StructureSelectionMode.STRUCTURE;
 	var layers = comp.selectedLayers;
 	var i = 0;
 	var m = layers.length-1;
-	if (selectionMode == DuAEF.Duik.structureSelectionMode.ALL)
+	if (selectionMode == DuAEF.Duik.StructureSelectionMode.ALL)
 	{
 		layers = comp.layers;
-		selectionMode = DuAEF.Duik.structureSelectionMode.STRUCTURE;
+		selectionMode = DuAEF.Duik.StructureSelectionMode.STRUCTURE;
 		i = 1;
 		m = layers.length;
 	}
@@ -774,7 +876,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 
 		indexed.push(layer.index);
 
-		if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT)
+		if (selectionMode == DuAEF.Duik.StructureSelectionMode.ELEMENT)
 		{
 			structure.elements.push(layer);
 			continue;
@@ -782,13 +884,13 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 		var structure = new Structure();
 		structure.elements.push(layer);
 		//get children
-		if (selectionMode == DuAEF.Duik.structureSelectionMode.CHILDREN || selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		if (selectionMode == DuAEF.Duik.StructureSelectionMode.CHILDREN || selectionMode == DuAEF.Duik.StructureSelectionMode.STRUCTURE)
 		{
 			//for all layers in the comp, get child
 			var childLayer = layer;
 			while (childLayer != null)
 			{
-				var childIndex = childLayer.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				var childIndex = childLayer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
 				if (childIndex == childLayer.index) break;
 				var currentIndex = childLayer.index;
 				childLayer = null;
@@ -822,7 +924,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 		}
 
 		//get parents
-		if (selectionMode == DuAEF.Duik.structureSelectionMode.STRUCTURE)
+		if (selectionMode == DuAEF.Duik.StructureSelectionMode.STRUCTURE)
 		{
 			var parentLayer = layer;
 			while (parentLayer != null)
@@ -833,7 +935,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 				if (testParent == null) break;
 				else if (!DuAEF.Duik.Structure.isStructure(testParent)) break;
 
-				var testIndex = testParent.effect(DuAEF.Duik.pseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				var testIndex = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
 
 				parentLayer = null;
 
@@ -851,7 +953,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 
 	}
 
-	if (selectionMode == DuAEF.Duik.structureSelectionMode.ELEMENT) structures.push(structure);
+	if (selectionMode == DuAEF.Duik.StructureSelectionMode.ELEMENT) structures.push(structure);
 
 	return structures;
 }
@@ -988,8 +1090,8 @@ DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 	//Effect
 
 	var newEffectName = DuAEF.DuAE.Layer.newUniqueEffectName('Motion trail 1',trailLayer);
-	//trailLayer.applyPreset(DuAEF.Duik.pseudoEffects.MOTION_TRAIL);
-	var effect = DuAEF.DuAE.Layer.addPseudoEffect(trailLayer,DuAEF.Duik.pseudoEffects.MOTION_TRAIL,DuAEF.Duik.pseudoEffectsMatchNames.MOTION_TRAIL);
+	//trailLayer.applyPreset(DuAEF.Duik.PseudoEffects.MOTION_TRAIL);
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(trailLayer,DuAEF.Duik.PseudoEffects.MOTION_TRAIL,DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL);
 	effect.name = newEffectName;
 
 	//create shape
@@ -1086,7 +1188,7 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 		comp = layer.containingComp;
 
 		//add effect
-		if (effect == null) effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.pseudoEffects.X_SHEET,DuAEF.Duik.pseudoEffectsMatchNames.X_SHEET,prop.getProperty().name + " X-Sheet");
+		if (effect == null) effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,prop.getProperty().name + " X-Sheet");
 		var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,true);
 		prop.getProperty().expression = '//Duik.XSheet\n' + effectLink + '\n' +
 					'var mode = fx(7);\n' +
@@ -1122,7 +1224,7 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 		layer.name = newName;
 
 		//add Effects
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.pseudoEffects.X_SHEET,DuAEF.Duik.pseudoEffectsMatchNames.X_SHEET,"X-Sheet");
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,"X-Sheet");
 
 		var timeWarp = layer('ADBE Effect Parade').addProperty('ADBE Timewarp');
 		timeWarp(1).setValue(1);
@@ -1168,10 +1270,11 @@ DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
 {
 	if (layers == undefined) return;
 	if (layers.length == 0 ) return;
-	var it = DuAEF.DuAE.getListIterator(layers);
-	for (var i = it.min ; i <= it.max ; i++)
+	var it = new Iterator(layers);
+	while (!it.atEnd)
 	{
-		var layer = layers[i];
+		it.next();
+		var layer = layers[it.current];
 		if (!layer.canSetTimeRemapEnabled) continue;
 
 		var comp = layer.containingComp;
@@ -1418,9 +1521,9 @@ DuAEF.Duik.Automation.list = function (prop)
 	var comp = layer.containingComp;
 
 	layer.selected = true;
-	if (dim == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_LIST);
-	else if (dim == 2)layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_LIST);
-	else if (dim == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_LIST);
+	if (dim == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_LIST);
+	else if (dim == 2)layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_LIST);
+	else if (dim == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_LIST);
 	else { layer.selected = false; return;}
 	layer.selected = false;
 
@@ -1471,10 +1574,10 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	if (effect == null)
 	{
 		layer.selected = true;
-		if (!separateDimensions && dimensions > 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_MULTIWIGGLE);
-		else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_WIGGLE);
-		else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_WIGGLE);
-		else layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_WIGGLE);
+		if (!separateDimensions && dimensions > 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_MULTIWIGGLE);
+		else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_WIGGLE);
+		else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_WIGGLE);
+		else layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_WIGGLE);
 		layer.selected = false;
 
 		effect = layer.effect("Wiggle");
@@ -1484,10 +1587,10 @@ DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
 	var compEffect = DuAEF.DuAE.Property.getComp(effect);
 	var sameComp = compEffect.name == comp.name;
 
-	if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.ONED_MULTIWIGGLE) effect(3).setValue(comp.duration);
-	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.THREED_WIGGLE) effect(13).setValue(comp.duration);
-	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.TWOD_WIGGLE) effect(9).setValue(comp.duration);
-	else if (effect.matchName == DuAEF.Duik.pseudoEffectsMatchNames.ONED_WIGGLE) effect(3).setValue(comp.duration);
+	if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.ONED_MULTIWIGGLE) effect(3).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.THREED_WIGGLE) effect(13).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.TWOD_WIGGLE) effect(9).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.ONED_WIGGLE) effect(3).setValue(comp.duration);
 	//TODO Wiggle for other types of properties
 	var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,sameComp);
 
@@ -1583,10 +1686,10 @@ DuAEF.Duik.Automation.swing = function (prop)
 	if (dimensions < 1 || dimensions > 3) return;
 
 	layer.selected = true;
-	if (prop.getProperty().isSpatial) layer.applyPreset(DuAEF.Duik.pseudoEffects.SPATIAL_SWING);
-	else if (dimensions == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_SWING);
-	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_SWING);
-	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_SWING);
+	if (prop.getProperty().isSpatial) layer.applyPreset(DuAEF.Duik.PseudoEffects.SPATIAL_SWING);
+	else if (dimensions == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_SWING);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_SWING);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_SWING);
 	layer.selected = false;
 	var effect = layer.effect("Swing");
 	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Swing',layer);
@@ -1711,7 +1814,7 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 
 	var effectName = DuAEF.DuAE.Layer.newUniqueEffectName('Wheel',layer);
 	layer.selected = true;
-	layer.applyPreset(DuAEF.Duik.pseudoEffects.WHEEL);
+	layer.applyPreset(DuAEF.Duik.PseudoEffects.WHEEL);
 	layer.selected = false;
 	var effect = layer.effect("Wheel");
 	effect.name = effectName;
@@ -1779,7 +1882,7 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 		ctrlLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName("Effector",comp);
 		//effect
 		ctrlLayer.selected = true;
-		layer.applyPreset(DuAEF.Duik.pseudoEffects.EFFECTOR);
+		layer.applyPreset(DuAEF.Duik.PseudoEffects.EFFECTOR);
 		//content
 		var centerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		centerGroup.name = "Center";
@@ -1890,9 +1993,9 @@ DuAEF.Duik.Automation.spring = function (prop)
 	var effect = null;
 
 	layer.selected = true;
-	if (bounce) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_SPRING);
-	else if (spatial) layer.applyPreset(DuAEF.Duik.pseudoEffects.SPATIAL_SPRING);
-	else layer.applyPreset(DuAEF.Duik.pseudoEffects.MULTID_SPRING);
+	if (bounce) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_SPRING);
+	else if (spatial) layer.applyPreset(DuAEF.Duik.PseudoEffects.SPATIAL_SPRING);
+	else layer.applyPreset(DuAEF.Duik.PseudoEffects.MULTID_SPRING);
 	layer.selected = false;
 	effect = layer.effect("Spring");
 	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().parentProperty.name + ' Spring',layer);
@@ -2047,10 +2150,10 @@ DuAEF.Duik.Automation.blink = function (prop)
 	var layer = prop.layer;
 
 	layer.selected = true;
-	if (dimensions == 1) layer.applyPreset(DuAEF.Duik.pseudoEffects.ONED_BLINK);
-	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.pseudoEffects.TWOD_BLINK);
-	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.pseudoEffects.THREED_BLINK);
-	else if (dimensions == 4) layer.applyPreset(DuAEF.Duik.pseudoEffects.COLOR_BLINK);
+	if (dimensions == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_BLINK);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_BLINK);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_BLINK);
+	else if (dimensions == 4) layer.applyPreset(DuAEF.Duik.PseudoEffects.COLOR_BLINK);
 	layer.selected = false;
 
 	var effect = layer.effect('Blink');
@@ -2112,7 +2215,7 @@ DuAEF.Duik.Automation.paintRig = function (layer)
 	//add effect
 	var newName = DuAEF.DuAE.Layer.newUniqueEffectName('Paint Rig',layer);
 	layer.selected = true;
-	layer.applyPreset(DuAEF.Duik.pseudoEffects.PAINT_RIG);
+	layer.applyPreset(DuAEF.Duik.PseudoEffects.PAINT_RIG);
 	layer.selected = false;
 	var effect = layer.effect('Paint Rig');
 	effect.name = newName;
@@ -2425,11 +2528,12 @@ DuAEF.Duik.Automation.Randomize.startTimes = function (layers,fromCurrentVal,min
 		if (layers == undefined) return;
 		if (layers.length == 0 ) return;
 
-		var it = DuAEF.DuAE.getListIterator(layers);
+		var it = new Iterator(layers);
 
-		for (var i = it.min ; i <= it.max ; i++)
+		while (!it.atEnd)
 		{
-			var l = layers[i];
+			it.next();
+			var l = layers[it.current];
 			var comp = l.containingComp;
 			var startTime = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
 			if (fromCurrentVal) l.startTime = l.startTime + startTime;
@@ -2449,11 +2553,12 @@ DuAEF.Duik.Automation.Randomize.inPoints = function (layers,fromCurrentVal,min,m
 	if (layers == undefined) return;
 	if (layers.length == 0 ) return;
 
-	var it = DuAEF.DuAE.getListIterator(layers);
+	var it = new Iterator(layers);
 
-	for (var i = it.min; i<= it.max;i++)
+	while (!it.atEnd)
 	{
-		var l = layers[i];
+		it.next();
+		var l = layers[it.current];
 		var comp = l.containingComp;
 		var inPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
 		if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
@@ -2473,11 +2578,12 @@ DuAEF.Duik.Automation.Randomize.outPoints = function (layers,fromCurrentVal,min,
 	if (layers == undefined) return;
 	if (layers.length == 0 ) return;
 
-	var it = DuAEF.DuAE.getListIterator(layers);
+	var it = new Iterator(layers);
 
 	for (var i = it.min; i<= it.max;i++)
 	{
-		var l = layers[i];
+		it.next();
+		var l = layers[it.current];
 		var comp = l.containingComp;
 		var outPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
 		if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
@@ -2497,11 +2603,12 @@ DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,ma
 	if (layers == undefined) return;
 	if (layers.length == 0 ) return;
 
-	var it = DuAEF.DuAE.getListIterator(layers);
+	var it = new Iterator(layers);
 
-	for (var i = it.min; i<= it.max;i++)
+	while (!it.atEnd)
 	{
-		var l = layers[i];
+		it.next();
+		var l = layers[it.current];
 		var index = parseInt(DuAEF.DuJS.Math.random(min,max));
 		if (fromCurrentVal) index = l.index + index;
 		if (index == l.index) continue;
@@ -2519,44 +2626,15 @@ DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,ma
 */
 DuAEF.Duik.Controller = {};
 
-//init
-(function ()
-{
-	/**
-	 * The shapes/type/icon of the controllers
-	 * @enum {int}
-	 * @readonly
-	 */
-	DuAEF.Duik.ControllerType =
-	{
-		ROTATION: 1,
-		X_POSITION: 2,
-		Y_POSITION: 3,
-		POSITION: 4,
-		TRANSFORM: 5,
-		SLIDER: 6,
-		DOUBLE_SLIDER: 7,
-		ANGLE: 8,
-		CAMERA: 9,
-		HEAD: 10,
-		HAND: 11,
-		FOOT: 12,
-		CLAWS: 13,
-		HOOF: 14,
-		EYE: 15,
-		EYES: 16,
-		FACE: 17,
-		SQUARE: 18
-	}
-})();
-
 /**
 * Creates a new controller
 * @param {CompItem} comp - The composition
 * @param {DuAEF.Duik.ControllerType} [type=DuAEF.Duik.ControllerType.TRANSFORM] - The type of Controller
 * @param {Layer} [layer] - The layer where to create the controller.
+* @param {float}	[size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.controllerSizeHint
+* @return {Controller} The controller
 */
-DuAEF.Duik.Controller.create = function (comp,type,layer)
+DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 {
 	if (comp == undefined) return;
 	var ctrl = comp.layers.addShape();
@@ -2567,7 +2645,7 @@ DuAEF.Duik.Controller.create = function (comp,type,layer)
 	if (type != DuAEF.Duik.ControllerType.SQUARE && type != DuAEF.Duik.ControllerType.SLIDER && type != DuAEF.Duik.ControllerType.DOUBLE_SLIDER && type != DuAEF.Duik.ControllerType.ANGLE)
 	{
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.pseudoEffects.CONTROLLER,DuAEF.Duik.pseudoEffectsMatchNames.CONTROLLER,'Controller');
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER,'Controller');
 
 		//create anchor
 		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -2590,17 +2668,17 @@ DuAEF.Duik.Controller.create = function (comp,type,layer)
 	else if (type == DuAEF.Duik.ControllerType.SLIDER)
 	{
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.pseudoEffects.CONTROLLER_SLIDER,DuAEF.Duik.pseudoEffectsMatchNames.CONTROLLER_SLIDER,'Slider');
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER,'Slider');
 	}
 	else if (type == DuAEF.Duik.ControllerType.DOUBLE_SLIDER)
 	{
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.pseudoEffects.CONTROLLER_DOUBLE_SLIDER,DuAEF.Duik.pseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER,'Slider');
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER,'Slider');
 	}
 	else if (type == DuAEF.Duik.ControllerType.ANGLE)
 	{
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.pseudoEffects.CONTROLLER_ANGLE,DuAEF.Duik.pseudoEffectsMatchNames.CONTROLLER_ANGLE,'Angle');
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE,'Angle');
 	}
 
 	var iconGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -3030,5 +3108,50 @@ DuAEF.Duik.Controller.create = function (comp,type,layer)
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
 	}
 
+	ctrl = new Controller(ctrl,type);
+	ctrl.setSize(size);
+	ctrl.setColor(color);
 	return ctrl;
+}
+
+//Low-level undocumented function
+DuAEF.Duik.Controller.isController = function (layer)
+{
+	var controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER);
+	if (controllerEffect) return true;
+	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
+	if (controllerEffect) return true;
+	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
+	if (controllerEffect) return true;
+	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
+	if (controllerEffect) return true;
+
+	return false;
+}
+
+/**
+ * Gets Controllers in the comp or the selection.
+ * @memberof DuAEF.Duik
+ * @param {CompItem}	comp	- The composition where to get the controllers
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {Controller[]}	The controllers.
+ */
+DuAEF.Duik.Controller.getControllers = function (comp,selectedOnly)
+{
+	if (selectedOnly == undefined) selectedOnly = false;
+
+	var layers = [];
+	if (selectedOnly) layers = comp.selectedLayers;
+	else layers = comp.layers;
+
+	if (layers.length == 0) return [];
+
+	var it = new Iterator(layers);
+	var ctrls = [];
+	function gc(l)
+	{
+		if (DuAEF.Duik.Controller.isController(l)) ctrls.push(new Controller(l));
+	}
+	it.do(gc);
+	return ctrls;
 }
