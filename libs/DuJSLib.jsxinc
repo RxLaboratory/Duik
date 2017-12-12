@@ -23,6 +23,135 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/**
+* Constructs an iterator
+* @example
+* var it = new Iterator(layers);
+* while (!it.atEnd)
+* {
+* 	it.next();
+* 	var layer = layers[it.current];
+*	//do something with the layer
+*
+* }
+* @example
+* var it = new Iterator(layers);
+* function doSomething(layer) { //do something with one layer }
+* it.do(doSomething);
+* @class Iterator
+* @classdesc An iterator object to use for easier loops
+* @property {Array|Collection} list - An array or an After Effects Collection
+* @param {Array|Collection} list - An array or an After Effects Collection
+* @property {int} min - The minimum value (inclusive)
+* @property {int} max - The maximum (inclusive)
+* @property {int} length - The number of items
+* @property {int} current - The current item number
+* @property {boolean} atEnd - true if the iterator has reached the end
+* @property {boolean} atStart - true if the iterator is at the start
+* @property {boolean} valid - true if the iterator is between min and max. false until next() or previous() has been called at least once
+* @property {boolean} isCollection - true if the list is a Collection, false if it's a controller
+*/
+function Iterator(list)
+{
+	this.min = 0;
+	this.max = list.length -1;
+	this.length = list.length;
+	this.isCollection = false;
+	if (list instanceof ItemCollection || list instanceof LayerCollection || list instanceof OMCollection || list instanceof RQItemCollection)
+	{
+		this.min = 1;
+		this.max = this.length;
+		this.isCollection = true;
+	}
+	this.current = -1;
+	this.atStart = false;
+	this.atEnd = false;
+	this.valid = false;
+	this.list = list;
+}
+
+/**
+* Increments the Iterator<br />
+* Must be called at least once to validate the iterator
+*/
+Iterator.prototype.next = function ()
+{
+	if (!this.valid)
+	{
+		this.goToStart();
+	}
+	else
+	{
+		if (this.current < this.max) this.goTo(this.current + 1);
+	}
+
+}
+
+/**
+* Decrements the Iterator
+* if it's called while valid is false, goes to the end
+*/
+Iterator.prototype.previous = function ()
+{
+	if (!this.valid)
+	{
+		this.goToEnd();
+	}
+	else
+	{
+		if (this.current > this.min) this.goTo(this.current - 1);
+	}
+}
+
+/**
+* Goes to the end of the Iterator
+*/
+Iterator.prototype.goToEnd = function ()
+{
+	this.goTo(this.max);
+}
+
+/**
+* Goes to the start of the Iterator
+*/
+Iterator.prototype.goToStart = function ()
+{
+	this.goTo(this.min);
+}
+
+/**
+* Sets the iterator on the index
+* @param {int} index - The index
+*/
+Iterator.prototype.goTo = function(index)
+{
+	this.current = index;
+	if (this.current < this.min || this.current > this.max) this.valid = false;
+	else this.valid = true;
+	if (this.current == this.min) this.atStart = true;
+	else this.atStart = false;
+	if (this.current == this.max) this.atEnd = true;
+	else this.atEnd = false;
+}
+
+/**
+* Executes a function on each item of the List
+* @param {function} callBack - The function to execute, which takes one parameter: an item of the list
+*/
+Iterator.prototype.do = function (callBack)
+{
+	var current = this.current;
+	this.valid = false;
+	this.atEnd = false;
+	while(!this.atEnd)
+	{
+		this.next();
+		callBack(this.list[this.current]);
+	}
+	this.goTo(current);
+}
+
 /**
 * Useful JavaScript tools
 * @namespace
