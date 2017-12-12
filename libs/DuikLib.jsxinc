@@ -318,6 +318,12 @@ DuAEF.Duik = {};
 	duik_controller_dslider = DuAEF.DuBinary.toFile(duik_controller_dslider);
 	#include "pseudoEffects/duik_controller_angle.ffx.jsxinc"
 	duik_controller_angle = DuAEF.DuBinary.toFile(duik_controller_angle);
+	//constraints
+	#include "pseudoEffects/duik_orientation.ffx.jsxinc"
+	duik_orientation = DuAEF.DuBinary.toFile(duik_orientation);
+	//constraints
+	#include "pseudoEffects/duik_position.ffx.jsxinc"
+	duik_position = DuAEF.DuBinary.toFile(duik_position);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -326,6 +332,9 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffects =
 	{
+		//constraints
+		POSITION: duik_position,
+		ORIENTATION: duik_orientation,
 		//Controller
 		CONTROLLER: duik_controller,
 		CONTROLLER_SLIDER: duik_controller_slider,
@@ -375,6 +384,9 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
+		//constraints
+		POSITION: "Pseudo/DUIK position",
+		ORIENTATION: "Pseudo/DUIK orientation",
 		//Controller
 		CONTROLLER: "Pseudo/DUIK controller",
 		CONTROLLER_SLIDER: "Pseudo/DUIK controller slider",
@@ -3194,4 +3206,63 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 	zero.selected = false;
 	zero.locked = true;
 	return zero;
+}
+
+/**
+* Adds an orientation constraint to a layer
+* @param {Layer} layer - The layer
+*/
+DuAEF.Duik.Rigging.orientationConstraint = function (layer)
+{
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.ORIENTATION,DuAEF.Duik.PseudoEffectsMatchNames.ORIENTATION,'Orientation constraint');
+
+	layer.rotation.expression = '//Duik.orientationConstraint\n' +
+						'function o(l)\n' +
+						'{\n' +
+						'var r = 0;\n' +
+						'r += l.rotation;\n' +
+						'while(l.hasParent)\n' +
+						'{\n' +
+						'l = l.parent;\n' +
+						'r += l.rotation;\n' +
+						'}\n' +
+						'return r;\n' +
+						'}\n' +
+						'var result = value;\n' +
+						'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
+						'{\n' +
+						'var fx = effect(i) ;\n' +
+						'if (fx.name.indexOf("Orientation constraint") == 0)\n' +
+						'{\n' +
+						'var l = null;\n' +
+						'try { l = fx(1); } catch (e){}\n' +
+						'if (l) result += o(l)*(fx(2).value/100);\n' +
+						'}\n' +
+						'}\n' +
+						'result;';
+
+}
+
+/**
+* Adds a position constraint to a layer
+* @param {Layer} layer - The layer
+*/
+DuAEF.Duik.Rigging.positionConstraint = function (layer)
+{
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.POSITION,DuAEF.Duik.PseudoEffectsMatchNames.POSITION,'Position constraint');
+
+	layer.position.expression = '//Duik.positionConstraint\n' +
+								'function p(l){return l.toWorld(l.anchorPoint);}\n' +
+								'var result = value;\n' +
+								'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
+								'{\n' +
+								'var fx = effect(i) ;\n' +
+								'if (fx.name.indexOf("Position constraint") == 0)\n' +
+								'{\n' +
+								'var l = null;\n' +
+								'try { l = fx(1); } catch (e){}\n' +
+								'if (l) result += p(l)*(fx(2).value/100);\n' +
+								'}\n' +
+								'}\n' +
+								'result;';
 }
