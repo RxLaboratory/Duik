@@ -1,4 +1,44 @@
+//========== FUNCTIONS =========
+
+function setCurrentConstraintsPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_constraintsGeneralGroup.visible = panel == 0;
+	ui_pathConstraintGroup.visible = panel == 1;
+}
+
 //====== EVENTS ================
+
+function ui_pathConstraintButton_clicked()
+{
+	pathConstraintPathProp = null;
+	ui_pathConstraintLabel.text ="Pick a path\nthen select a layer\nto appy the constraint.";
+	ui_pathConstraintPickButton_clicked();
+	setCurrentConstraintsPanel(1);
+}
+
+function ui_pathConstraintPickButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
+	if (props.length == 0) return;
+
+	pathConstraintPathProp = props[props.length-1];
+	ui_pathConstraintLabel.text ="Now select a layer to appy the constraint.";
+}
+
+function ui_pathConstraintValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	if (!pathConstraintPathProp) return;
+
+	var layers = comp.selectedLayers;
+
+	app.beginUndoGroup('Duik | ' + "Path constraint");
+	DuAEF.Duik.Rigging.pathConstraint(layers[0],pathConstraintPathProp);
+	app.endUndoGroup();
+}
 
 function ui_positionConstraintButton_clicked()
 {
@@ -48,9 +88,11 @@ function ui_zeroButton_clicked()
 }
 
 //========== UI ==============
-var ui_constraintsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
+var ui_constraintsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
 
-var ui_IKMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,settings.data.expert ? 'row' : 'column');
+var ui_constraintsGeneralGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
+
+var ui_IKMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
 ui_IKMainGroup.alignment = ['center','top'];
 ui_IKMainGroup.alignChildren = ['left','top'];
 var ui_autorigButton = DuAEF.DuScriptUI.addImageButton(ui_IKMainGroup,settings.data.expert ? '' : "Auto-rig",'E:/DEV SRC/RainboxUI/Icons/32w/autorig_l.png',"Automatically rig structures",'E:/DEV SRC/RainboxUI/Icons/32w/autorig_r.png');
@@ -61,38 +103,63 @@ var ui_bezierIKGroup = DuAEF.DuScriptUI.addGroup(ui_IKMainGroup,settings.data.ex
 var ui_bezierIKButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKGroup,settings.data.expert ? '' : "Bezier IK",'E:/DEV SRC/RainboxUI/Icons/25w/bezierik_l.png',"Add an IK to the selected structure",'E:/DEV SRC/RainboxUI/Icons/25w/bezierik_r.png');
 var ui_bezierIKOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Bezier IK options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 
-DuAEF.DuScriptUI.addSeparator(ui_constraintsGroup);
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
-var ui_connectorButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsGroup,"Connector...",'E:/DEV SRC/RainboxUI/Icons/32w/constraint_l.png',"Connect any property to any master property",'E:/DEV SRC/RainboxUI/Icons/32w/constraint_r.png');
+var ui_connectorButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsGeneralGroup,"Connector...",'E:/DEV SRC/RainboxUI/Icons/32w/constraint_l.png',"Connect any property to any master property",'E:/DEV SRC/RainboxUI/Icons/32w/constraint_r.png');
 
-DuAEF.DuScriptUI.addSeparator(ui_constraintsGroup);
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
-var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'row');
+var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,'row');
 ui_bonesGroup.alignment = ['center','top'];
 var ui_bonesButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,"Add bones",'E:/DEV SRC/RainboxUI/Icons/32w/target_l.png',"Connect any spatial property to a control layer",'E:/DEV SRC/RainboxUI/Icons/32w/target_r.png');
 var ui_bonesOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Bones options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
 
-DuAEF.DuScriptUI.addSeparator(ui_constraintsGroup);
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
-var ui_constraintsMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,settings.data.expert ? 'row' : 'column');
+var ui_constraintsMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
 ui_constraintsMainGroup.alignment = ['center','top'];
 ui_constraintsMainGroup.alignChildren = ['left','top'];
 var ui_skinButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Attachment",'E:/DEV SRC/RainboxUI/Icons/25w/skin_l.png',"Attach layers to other layers, with weighted influnce",'E:/DEV SRC/RainboxUI/Icons/25w/skin_r.png');
 var ui_parentButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Parent link",'E:/DEV SRC/RainboxUI/Icons/25w/parent_l.png',"Link layers together (animatable)",'E:/DEV SRC/RainboxUI/Icons/25w/parent_r.png');
 var ui_pathConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Path constraint...",'E:/DEV SRC/RainboxUI/Icons/25w/pathconstraint_l.png',"Attach a layer to a bezier path",'E:/DEV SRC/RainboxUI/Icons/25w/pathconstraint_r.png');
+//path constraint: only on CC2018+ (15+)
+if (DuAEF.DuAE.App.version < 15)
+{
+	ui_pathConstraintButton.label.text = 'CC2018';
+	ui_pathConstraintButton.group.enabled = false;
+}
 var ui_positionConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Position constraint",'E:/DEV SRC/RainboxUI/Icons/25w/positionconstraint_l.png',"Constraint a layer to the position of other layers",'E:/DEV SRC/RainboxUI/Icons/25w/positionconstraint_r.png');
 var ui_orientationConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Orientation constraint",'E:/DEV SRC/RainboxUI/Icons/25w/orientationconstraint_l.png',"Constrain the rotation of a layer to the orientation of other layers",'E:/DEV SRC/RainboxUI/Icons/25w/orientationconstraint_r.png');
 
-DuAEF.DuScriptUI.addSeparator(ui_constraintsGroup);
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
-var ui_constraintsToolsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,settings.data.expert ? 'row' : 'column');
+var ui_constraintsToolsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
 ui_constraintsToolsGroup.alignment = ['center','top'];
 ui_constraintsToolsGroup.alignChildren = ['left','top'];
 var ui_listConstaintsButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add list",'E:/DEV SRC/RainboxUI/Icons/18w/list_l.png',"Add a list to the property",'E:/DEV SRC/RainboxUI/Icons/18w/list_r.png');
 var ui_zeroButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add zero",'E:/DEV SRC/RainboxUI/Icons/18w/zero_l.png',"Add a \"zero\" to a layer",'E:/DEV SRC/RainboxUI/Icons/18w/zero_r.png');
 
+//path constraint options
+var ui_pathConstraintGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
+ui_pathConstraintGroup.alignChildren = ['center','top'];
+var ui_pathConstraintPickButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintGroup,"Pick path",'E:/DEV SRC/RainboxUI/Icons/32w/pickpath_l.png',"Select the path for the constraint",'E:/DEV SRC/RainboxUI/Icons/32w/pickpath_r.png');
+var ui_pathConstraintLabel = ui_pathConstraintGroup.add('statictext',undefined,"Pick a path\nthen select a layer\nto appy the constraint.",{multiline:true});
+var ui_pathConstraintValidGroup = DuAEF.DuScriptUI.addGroup(ui_pathConstraintGroup);
+var ui_pathConstraintCancelButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_pathConstraintValidButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Path constraint",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
+
+//=========== INIT =============
+
+setCurrentConstraintsPanel();
+var pathConstraintPathProp = null;
 
 //=========== CONNECT EVENTS ===========
+
+ui_pathConstraintButton.onClick = ui_pathConstraintButton_clicked;
+ui_pathConstraintCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+ui_pathConstraintPickButton.onClick = ui_pathConstraintPickButton_clicked;
+ui_pathConstraintValidButton.onClick = ui_pathConstraintValidButton_clicked;
 
 ui_positionConstraintButton.onClick = ui_positionConstraintButton_clicked;
 ui_orientationConstraintButton.onClick = ui_orientationConstraintButton_clicked;
