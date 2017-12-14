@@ -325,6 +325,8 @@ DuAEF.Duik = {};
 	duik_position = DuAEF.DuBinary.toFile(duik_position);
 	#include "pseudoEffects/duik_path.ffx.jsxinc"
 	duik_path = DuAEF.DuBinary.toFile(duik_path);
+	#include "pseudoEffects/duik_parent.ffx.jsxinc"
+	duik_parent = DuAEF.DuBinary.toFile(duik_parent);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -334,6 +336,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffects =
 	{
 		//constraints
+		PARENT: duik_parent,
 		PATH: duik_path,
 		POSITION: duik_position,
 		ORIENTATION: duik_orientation,
@@ -387,6 +390,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
 		//constraints
+		PARENT: "Pseudo/DUIK parent",
 		PATH: "Pseudo/DUIK path",
 		POSITION: "Pseudo/DUIK position",
 		ORIENTATION: "Pseudo/DUIK orientation",
@@ -3293,4 +3297,85 @@ DuAEF.Duik.Rigging.pathConstraint = function (layer,path)
 								'p.pointOnPath(percent, time)+l.position+value;';
 
 	layer.position.setValue(previous - (layer.position.value-previous));
+}
+
+/**
+* Adds a parent constraint to a layer
+* @param {Layer} layer - The layer
+*/
+DuAEF.Duik.Rigging.parentConstraint = function (layer)
+{
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.PARENT,DuAEF.Duik.PseudoEffectsMatchNames.PARENT,'Parent link');
+
+	layer.position.expression = '//Duik.parent\n' +
+							'function getParentTransform(l,origin,sF,eF)\n' +
+							'{\n' +
+							'var sT = framesToTime(sF);\n' +
+							'var eT = framesToTime(eF);\n' +
+							'var pos = l.fromWorld( origin , sT ) ;\n' +
+							'var prevPos = l.toWorld( pos , sT );\n' +
+							'var newPos =  l.toWorld( pos , eT );\n' +
+							'return newPos - prevPos;\n' +
+							'}\n' +
+							'var result = valueAtTime(0);\n' +
+							'var cF = 1;\n' +
+							'while (cF <= timeToFrames())\n' +
+							'{\n' +
+							'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
+							'{\n' +
+							'var fx = effect(i);\n' +
+							'if (fx.name.indexOf("Parent link") != 0) continue;\n' +
+							'try { var parentLayer = fx(1); } catch (e){ continue; }\n' +
+							'if (parentLayer.index == index) continue;\n' +
+							'var weight = fx(2).valueAtTime( framesToTime(cF) ) / 100;\n' +
+							'result += getParentTransform( parentLayer , result , cF-1 , cF )*weight;\n' +
+							'}\n' +
+							'result += valueAtTime(framesToTime(cF)) - valueAtTime(framesToTime(cF-1));\n' +
+							'cF++;\n' +
+							'}\n' +
+							'result;'
+
+	layer.rotation.expression = '//Duik.parent\n' +
+						'function o(l,t)\n' +
+						'{\n' +
+						'if (t == undefined) t = time;\n' +
+						'var r = 0;\n' +
+						'r += l.rotation.valueAtTime(t);\n' +
+						'while(l.hasParent)\n' +
+						'{\n' +
+						'l = l.parent;\n' +
+						'r += l.rotation.valueAtTime(t);\n' +
+						'}\n' +
+						'return r;\n' +
+						'}\n' +
+						'var result = value;\n' +
+						'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
+						'{\n' +
+						'var fx = effect(i) ;\n' +
+						'if (fx.name.indexOf("Parent link") != 0) continue;\n' +
+						'var follow = fx(2);\n' +
+						'try { var l = fx(1); } catch (e){ continue; }\n' +
+						'if (l.index == index) continue;\n' +
+						'if ( fx(2).numKeys < 2 )\n' +
+						'{\n' +
+						'var P = o(l);\n' +
+						'var oP = o(l,0);\n' +
+						'var w = fx(2).value/100;\n' +
+						'result += (P - oP)*w;\n' +
+						'}\n' +
+						'else\n' +
+						'{\n' +
+						'var frame = timeToFrames(time);\n' +
+						'for (var j = frame;j>=0;j--)\n' +
+						'{\n' +
+						'var t = framesToTime(j);\n' +
+						'var prevT = framesToTime(j-1);\n' +
+						'var w = follow.valueAtTime(t)/100;\n' +
+						'var P = o(l,t);\n' +
+						'var oP = o(l,prevT);\n' +
+						'result += (P - oP)*w;\n' +
+						'}\n' +
+						'}\n' +
+						'}\n' +
+						'result;';
 }
