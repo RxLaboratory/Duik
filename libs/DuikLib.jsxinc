@@ -499,6 +499,18 @@ DuAEF.Duik = {};
 	}
 
 	/**
+	 * The shapes/type/icon of the bones
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Duik.BoneType =
+	{
+		PIN: 1,
+		VERTEX: 2,
+		TANGENT: 3
+	}
+
+	/**
 	* Size hint of structure elements
 	* @type {int}
 	* @default DuAEF.Duik.Sizes.SMALL
@@ -3512,11 +3524,109 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 }
 
 /**
+* Creates a stand alone bone in the comp
+* @param {CompItem} comp - The containing composition
+* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
+* @param {DuAEF.Duik.BoneType} [type=DuAEF.Duik.BoneType.PIN] - The type
+* @return {ShapeLayer} The bone
+*/
+DuAEF.Duik.Rigging.createBone = function(comp,size,type)
+{
+	if (size == undefined)
+	{
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.boneSize;
+	}
+
+	//create
+	var bone = comp.layers.addShape();
+
+	function createIcon()
+	{
+		var iconGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		iconGroup.name = 'Icon';
+		iconContent = iconGroup.property("ADBE Vectors Group");
+
+		if (type == DuAEF.Duik.BoneType.PIN)
+		{
+			var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+			var handleShape = new Shape();
+			handleShape.vertices = [[24.6726379394531, -34.5], [34.6699981689453, -24.9618682861328], [26.9935607910156, -18.9175109863281], [25.2696228027344, -9.10385131835938], [9.27384948730469, -24.3648681640625], [18.9956817626953, -26.5480346679688]];
+			handleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+			handleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+			handleShape.closed = true;
+			shape1('ADBE Vector Shape').setValue(handleShape);
+			var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+			var needleShape = new Shape();
+			needleShape.vertices = [[13.7023773193359, -16], [5.47381591796875, -7.77142333984375], [0.75, 0], [8.06428527832031, -5.4857177734375], [16.2928619384766, -13.7142791748047]];
+			needleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+			needleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+			needleShape.closed = true;
+			shape2('ADBE Vector Shape').setValue(needleShape);
+			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
+			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor-[0.1,0.1,0.1,0]);
+		}
+		else if (type == DuAEF.Duik.BoneType.VERTEX)
+		{
+			var rect = iconContent.addProperty("ADBE Vector Shape - Rect");
+			rect("ADBE Vector Rect Size").setValue([30,30]);
+			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
+			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor);
+
+			bone.transform.scale.expression = '[value[0],value[0]];';
+		}
+		else if (type == DuAEF.Duik.BoneType.TANGENT)
+		{
+			var circle = iconContent.addProperty("ADBE Vector Shape - Ellipse");
+			circle("ADBE Vector Ellipse Size").setValue([20,20]);
+
+			var line = iconContent.addProperty("ADBE Vector Shape - Group");
+			line('ADBE Vector Shape').expression = "createPath([[0,0], -transform.position], [[0,0],[0,0]], [[0,0],[0,0]], false);";
+			var pathStroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
+			pathStroke.property("Color").setValue(DuAEF.Duik.boneColor-[0.2,0.2,0.2,0]);
+			pathStroke.property("Stroke Width").setValue(6);
+			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
+			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor-[0.2,0.2,0.2,0]);
+		}
+
+		iconGroup.transform.scale.setValue([size,size]);
+	}
+
+	function createAnchor()
+	{
+		var anchorGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+
+		var centerCircle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
+		centerCircle("ADBE Vector Ellipse Size").setValue([2,2]);
+		var rect = anchorContent.addProperty("ADBE Vector Shape - Rect");
+		rect("ADBE Vector Rect Size").setValue([12,12]);
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").setValue([0,0,0,1]);
+	}
+
+	if (type == DuAEF.Duik.BoneType.VERTEX) createAnchor();
+	createIcon();
+	if (type == DuAEF.Duik.BoneType.PIN) createAnchor();
+
+	bone.guideLayer = true;
+
+	//group
+	DuAEF.Dugr.addLayerToGroup(bone,"Bones");
+
+	return bone;
+}
+
+/**
 * Links the property to a bone
 * @param {Property|PropertyInfo} prop - The property
 * @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
 * @param {Layer} bone - An already existing bone
-* @return {ShapeLayer} The bone created
+* @return {ShapeLayer|ShapeLayer[]} The bone(s) created. An Array if prop is a Shape
 */
 DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 {
@@ -3535,140 +3645,221 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 	if (prop.matchName == "ADBE FreePin3 PosPin Atom")
 	{
 		prop = prop.position;
+		propInfo = new PropertyInfo(prop);
 	}
 
-	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD )
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD && prop.propertyValueType != PropertyValueType.SHAPE)
 	{
 		return bone;
 	}
+
+	if (prop.propertyValueType == PropertyValueType.SHAPE && DuAEF.DuAE.App.version < 15) return bone;
 
 
 	var layer = DuAEF.DuAE.Property.getLayer(prop);
 	var comp = layer.containingComp;
 
-	//add effect
-	//check if an effect already exists
-	var effect = null;
-	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
-	for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	if (prop.propertyValueType == PropertyValueType.SHAPE)
 	{
-		var fx = layer('ADBE Effect Parade').property(i);
-		if (fx.matchName == 'ADBE Layer Control' && fx.name == effectName )
+		var pathPath = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+		var pathPoints = prop.value.vertices;
+		var pathInTangents = prop.value.inTangents;
+		var pathOutTangents = prop.value.outTangents;
+		var nullSet = [];
+		var nullSetIn = [];
+		var nullSetOut = [];
+
+		var bones = [];
+
+		//create effect function
+		function createControl(l,nullLayer,name)
 		{
-			effect = fx;
-			break;
-		}
-	}
-	if (effect == null)
-	{
-		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
-		effect.name = effectName;
-	}
-
-	if (effect(1).value != 0 && effect(1).value != layer.index ) bone = comp.layer(effect(1).value);
-
-	prop = propInfo.getProperty();
-
-	//create bone
-	if (bone == null)
-	{
-		if (size == undefined)
-		{
-			size = comp.width/2 + comp.height/2;
-			if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
-			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
-			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
-			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.boneSize;
+			//check if an effect already exists
+			var effect = null;
+			for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+			{
+				var fx = layer('ADBE Effect Parade').property(i);
+				if (fx.matchName == 'ADBE Layer Control' && fx.name == name )
+				{
+					effect = fx;
+					break;
+				}
+			}
+			if (effect == null)
+			{
+				effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+				effect.name = name;
+			}
+			effect(1).setValue(nullLayer.index);
 		}
 
-		//create
-		var bone = comp.layers.addShape();
+		for (var i = 0; i < pathPoints.length; i++)
+		{ //For each path point
+			var nullName = 'B | ' + layer.name + " | " + prop.parentProperty.name + " - " + i;
+			var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
+			var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
 
-		var iconGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
-		iconGroup.name = 'Icon';
-		var iconContent = iconGroup.property("ADBE Vectors Group");
+			var newNull = comp.layer(nullName);
+			var newNullIn = comp.layer(nullNameIn);
+			var newNullOut = comp.layer(nullNameOut);
 
-		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
-		var handleShape = new Shape();
-		handleShape.vertices = [[24.6726379394531, -34.5], [34.6699981689453, -24.9618682861328], [26.9935607910156, -18.9175109863281], [25.2696228027344, -9.10385131835938], [9.27384948730469, -24.3648681640625], [18.9956817626953, -26.5480346679688]];
-		handleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
-		handleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
-		handleShape.closed = true;
-		shape1('ADBE Vector Shape').setValue(handleShape);
-		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
-		var needleShape = new Shape();
-		needleShape.vertices = [[13.7023773193359, -16], [5.47381591796875, -7.77142333984375], [0.75, 0], [8.06428527832031, -5.4857177734375], [16.2928619384766, -13.7142791748047]];
-		needleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
-		needleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
-		needleShape.closed = true;
-		shape2('ADBE Vector Shape').setValue(needleShape);
-		var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
-		fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor);
+			// Get names of nulls that don't exist yet and create them
+			if(comp.layer(nullName) == undefined)
+			{
+				//Create nulls
+				newNull = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.VERTEX);
+				newNull.name = nullName;
+				newNull.label = 11;
+			}
 
-		iconGroup.transform.scale.setValue([size,size]);
+			// Set position using layer space transforms, then remove expressions
+			newNull.position.setValue(pathPoints[i]);
+			newNull.position.expression = "var srcLayer = thisComp.layer(\"" + layer.name + "\"); \r" +
+										"var srcPath = " + pathPath + ".points()[" + i + "]; \r" +
+										"srcLayer.toComp(srcPath);";
+			newNull.position.setValue(newNull.position.value);
+			newNull.position.expression = '';
 
-		var anchorGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
-		anchorGroup.name = 'Anchor';
-		var anchorContent = anchorGroup.property("ADBE Vectors Group");
-		var centerCircle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
-		centerCircle("ADBE Vector Ellipse Size").setValue([2,2]);
-		var rect = anchorContent.addProperty("ADBE Vector Shape - Rect");
-		rect("ADBE Vector Rect Size").setValue([12,12]);
-		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").setValue([0,0,0,1]);
 
-		bone.moveBefore(layer);
+			if (comp.layer(nullNameOut) == undefined)
+			{
+				var newNullOut = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
+				newNullOut.parent = newNull;
+				newNullOut.name = nullNameOut;
+				newNullOut.label = 14;
+				newNull.moveBefore(newNullOut);
+				newNullOut.position.setValue(pathOutTangents[i]);
+			}
 
-		//rename bone
-		var name = "B " + layer.name;
-		if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
-		if (name.length > 32) name = name.substr(0,29) + "...";
-		bone.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+			if (comp.layer(nullNameIn) == undefined)
+			{
+				var newNullIn = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
+				newNullIn.parent = newNull;
+				newNullIn.name = nullNameIn;
+				newNullIn.label = 14;
+				newNullIn.position.setValue(pathInTangents[i]);
+			}
 
-		bone.guideLayer = true;
-	}
 
-	//move the bone to the prop : use an expression to get its world position
-	posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+			//add effect
+			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
+			createControl(layer,newNull,effectName);
+			var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
+			createControl(layer,newNullIn,effectNameIn);
+			var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
+			createControl(layer,newNullOut,effectNameOut);
 
-	if (!(layer instanceof ShapeLayer))
-	{
-		bone.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
-		bone.position.setValue(bone.position.value);
-		bone.position.expression = "";
+			nullSet.push(effectName);
+			nullSetIn.push(effectNameIn);
+			nullSetOut.push(effectNameOut);
+
+			bones.push(newNull);
+			bones.push(newNullIn);
+			bones.push(newNullOut);
+		}
+
+		prop.expression = "var nullLayerNames = [\"" + nullSet.join("\",\"") + "\"]; \r" +
+						"var nullLayerNamesIn = [\"" + nullSetIn.join("\",\"") + "\"]; \r" +
+						"var nullLayerNamesOut = [\"" + nullSetOut.join("\",\"") + "\"]; \r" +
+						"var origPath = thisProperty; \r" +
+						"var origPoints = origPath.points(); \r" +
+						"var origInTang = origPath.inTangents(); \r" +
+						"var origOutTang = origPath.outTangents(); \r" +
+						"var getNullLayers = []; \r" +
+						"var getNullLayersIn = []; \r" +
+						"var getNullLayersOut = []; \r" +
+						"for (var i = 0; i < nullLayerNames.length; i++){ \r" +
+						"    try{  \r" +
+						"        getNullLayers.push(effect(nullLayerNames[i])(\"ADBE Layer Control-0001\")); \r" +
+						"        getNullLayersIn.push(effect(nullLayerNamesIn[i])(\"ADBE Layer Control-0001\")); \r" +
+						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(\"ADBE Layer Control-0001\")); \r" +
+						"    } catch(err) { \r" +
+						"        getNullLayers.push(null); \r" +
+						"    }} \r" +
+						"for (var i = 0; i < getNullLayers.length; i++){ \r" +
+						"    if (getNullLayers[i] != null && getNullLayers[i].index != thisLayer.index){ \r" +
+						"        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  \r" +
+						"        origInTang[i] = fromCompToSurface(getNullLayersIn[i].toComp(getNullLayersIn[i].anchorPoint)) - origPoints[i];  \r" +
+						"        origOutTang[i] = fromCompToSurface(getNullLayersOut[i].toComp(getNullLayersOut[i].anchorPoint)) - origPoints[i];  \r" +
+						"    }} \r" +
+						"createPath(origPoints,origInTang,origOutTang,origPath.isClosed());";
 	}
 	else
 	{
-		bone.position.setValue(position.value);
+		//add effect
+		//check if an effect already exists
+		var effect = null;
+		var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
+		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+		{
+			var fx = layer('ADBE Effect Parade').property(i);
+			if (fx.matchName == 'ADBE Layer Control' && fx.name == effectName )
+			{
+				effect = fx;
+				break;
+			}
+		}
+		if (effect == null)
+		{
+			effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+			effect.name = effectName;
+		}
+
+		if (effect(1).value != 0 && effect(1).value != layer.index ) bone = comp.layer(effect(1).value);
+		prop = propInfo.getProperty();
+
+		//create bone
+		if (bone == null)
+		{
+			bone = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.PIN);
+			bone.moveBefore(layer);
+			//rename bone
+			var name = "B " + layer.name;
+			if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
+			if (name.length > 32) name = name.substr(0,29) + "...";
+			bone.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+		}
+
+		//move the bone to the prop : use an expression to get its world position
+		prop.expression = "";
+		posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+
+		if (!(layer instanceof ShapeLayer))
+		{
+			bone.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
+			bone.position.setValue(bone.position.value);
+			bone.position.expression = "";
+		}
+		else
+		{
+			bone.position.setValue(prop.value);
+		}
+
+		effect(1).setValue(bone.index);
+
+		//add expression
+		if (layer instanceof ShapeLayer)
+		{
+			prop.expression = '//Duik.bone\n' +
+			 				'var l = null;\n' +
+							'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+							'var result = value;\n' +
+							'if (l != null) { result = l.toWorld(l.anchorPoint); }\n' +
+							'result;';
+		}
+		else
+		{
+			prop.expression = '//Duik.bone\n' +
+			 				'var l = null;\n' +
+							'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+							'var result = value;\n' +
+							'if (l != null) {\n' +
+							'result = l.toWorld(l.anchorPoint);\n' +
+							'result = fromWorld(result);\n' +
+							'}\n' +
+							'result;';
+		}
+
+		return bone;
 	}
-
-	//group
-	DuAEF.Dugr.addLayerToGroup(bone,"Bones");
-
-	effect(1).setValue(bone.index);
-
-	//add expression
-	if (layer instanceof ShapeLayer)
-	{
-		prop.expression = '//Duik.bone\n' +
-		 				'var l = null;\n' +
-						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-						'var result = value;\n' +
-						'if (l != null) { result = l.toWorld(l.anchorPoint); }\n' +
-						'result;';
-	}
-	else
-	{
-		prop.expression = '//Duik.bone\n' +
-		 				'var l = null;\n' +
-						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-						'var result = value;\n' +
-						'if (l != null) {\n' +
-						'result = l.toWorld(l.anchorPoint);\n' +
-						'result = fromWorld(result);\n' +
-						'}\n' +
-						'result;';
-	}
-
-	return bone;
 }
