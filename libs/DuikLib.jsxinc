@@ -534,6 +534,24 @@ DuAEF.Duik = {};
 	* @default DuAEF.DuJS.Color.Colors.RAINBOX_RED
 	*/
 	DuAEF.Duik.controllerColor = DuAEF.DuJS.Color.Colors.RAINBOX_RED;
+	/**
+	* Size hint of bones
+	* @type {int}
+	* @default DuAEF.Duik.Sizes.SMALL
+	*/
+	DuAEF.Duik.boneSizeHint = DuAEF.Duik.Sizes.SMALL;
+	/**
+	* The default size for new bones if boneSizeHint is DuAEF.Duik.Sizes.CUSTOM
+	* @type {int}
+	* @default 100
+	*/
+	DuAEF.Duik.boneSize = 100;
+	/**
+	* The default color for new bones
+	* @type {float[]}
+	* @default DuAEF.DuJS.Color.Colors.RAINBOX_RED
+	*/
+	DuAEF.Duik.boneColor = DuAEF.DuJS.Color.Colors.RAINBOX_RED;
 })();
 
 /**
@@ -2806,7 +2824,7 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		stroke("ADBE Vector Stroke Width").setValue(1.5);
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Transfor,',comp);
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C transform',comp);
 	}
 	else if (type == DuAEF.Duik.ControllerType.EYE)
 	{
@@ -3136,6 +3154,7 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	}
 
 	DuAEF.Dugr.addLayerToGroup(ctrl,"Controllers");
+	ctrl.guideLayer = true;
 	ctrl = new Controller(ctrl,type);
 	ctrl.setSize(size);
 	ctrl.setColor(color);
@@ -3490,4 +3509,166 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 						'result;';
 
 
+}
+
+/**
+* Links the property to a bone
+* @param {Property|PropertyInfo} prop - The property
+* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
+* @param {Layer} bone - An already existing bone
+* @return {ShapeLayer} The bone created
+*/
+DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
+{
+	if (bone == undefined) bone == null;
+
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else propInfo = new PropertyInfo(prop);
+
+	try { prop.matchName; } catch (e) {return bone;}
+
+	if (prop.matchName == "ADBE FreePin3 PosPin Atom")
+	{
+		prop = prop.position;
+	}
+
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD )
+	{
+		return bone;
+	}
+
+
+	var layer = DuAEF.DuAE.Property.getLayer(prop);
+	var comp = layer.containingComp;
+
+	//add effect
+	//check if an effect already exists
+	var effect = null;
+	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
+	for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		var fx = layer('ADBE Effect Parade').property(i);
+		if (fx.matchName == 'ADBE Layer Control' && fx.name == effectName )
+		{
+			effect = fx;
+			break;
+		}
+	}
+	if (effect == null)
+	{
+		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+		effect.name = effectName;
+	}
+
+	if (effect(1).value != 0 && effect(1).value != layer.index ) bone = comp.layer(effect(1).value);
+
+	prop = propInfo.getProperty();
+
+	//create bone
+	if (bone == null)
+	{
+		if (size == undefined)
+		{
+			size = comp.width/2 + comp.height/2;
+			if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+			else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.boneSize;
+		}
+
+		//create
+		var bone = comp.layers.addShape();
+
+		var iconGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		iconGroup.name = 'Icon';
+		var iconContent = iconGroup.property("ADBE Vectors Group");
+
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var handleShape = new Shape();
+		handleShape.vertices = [[24.6726379394531, -34.5], [34.6699981689453, -24.9618682861328], [26.9935607910156, -18.9175109863281], [25.2696228027344, -9.10385131835938], [9.27384948730469, -24.3648681640625], [18.9956817626953, -26.5480346679688]];
+		handleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		handleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		handleShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(handleShape);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var needleShape = new Shape();
+		needleShape.vertices = [[13.7023773193359, -16], [5.47381591796875, -7.77142333984375], [0.75, 0], [8.06428527832031, -5.4857177734375], [16.2928619384766, -13.7142791748047]];
+		needleShape.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		needleShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		needleShape.closed = true;
+		shape2('ADBE Vector Shape').setValue(needleShape);
+		var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor);
+
+		iconGroup.transform.scale.setValue([size,size]);
+
+		var anchorGroup = bone("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+		var centerCircle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
+		centerCircle("ADBE Vector Ellipse Size").setValue([2,2]);
+		var rect = anchorContent.addProperty("ADBE Vector Shape - Rect");
+		rect("ADBE Vector Rect Size").setValue([12,12]);
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").setValue([0,0,0,1]);
+
+		bone.moveBefore(layer);
+
+		//rename bone
+		var name = "B " + layer.name;
+		if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
+		if (name.length > 32) name = name.substr(0,29) + "...";
+		bone.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+
+		bone.guideLayer = true;
+	}
+
+	//move the bone to the prop : use an expression to get its world position
+	posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+
+	if (!(layer instanceof ShapeLayer))
+	{
+		bone.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
+		bone.position.setValue(bone.position.value);
+		bone.position.expression = "";
+	}
+	else
+	{
+		bone.position.setValue(position.value);
+	}
+
+	//group
+	DuAEF.Dugr.addLayerToGroup(bone,"Bones");
+
+	effect(1).setValue(bone.index);
+
+	//add expression
+	if (layer instanceof ShapeLayer)
+	{
+		prop.expression = '//Duik.bone\n' +
+		 				'var l = null;\n' +
+						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+						'var result = value;\n' +
+						'if (l != null) { result = l.toWorld(l.anchorPoint); }\n' +
+						'result;';
+	}
+	else
+	{
+		prop.expression = '//Duik.bone\n' +
+		 				'var l = null;\n' +
+						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+						'var result = value;\n' +
+						'if (l != null) {\n' +
+						'result = l.toWorld(l.anchorPoint);\n' +
+						'result = fromWorld(result);\n' +
+						'}\n' +
+						'result;';
+	}
+
+	return bone;
 }
