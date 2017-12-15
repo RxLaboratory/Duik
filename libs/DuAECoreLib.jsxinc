@@ -491,7 +491,10 @@ DuAEF.DuAE.getPropertyInfos = function (props)
 	var propInfos = [];
 	for (var i = 0 ; i < props.length ; i++)
 	{
-		propInfos.push(new PropertyInfo(props[i]));
+		var propInfo;
+		if (props[i] instanceof PropertyInfo) propInfo = props[i];
+		else propInfo = new PropertyInfo(props[i]);
+		propInfos.push(propInfo);
 	}
 	return propInfos;
 }
@@ -619,13 +622,15 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 	{
 		props = comp.selectedProperties;
 	}
-
-	var layers = comp.selectedLayers;
-	if (layers.length === 0) return props;
-
-	for (var i = 0 ; i < layers.length ; i++)
+	else
 	{
-		props = props.concat(DuAEF.DuAE.Layer.getSelectedProps(layers[i],filter,strict,caseSensitive));
+		var layers = comp.selectedLayers;
+		if (layers.length === 0) return props;
+
+		for (var i = 0 ; i < layers.length ; i++)
+		{
+			props = props.concat(DuAEF.DuAE.Layer.getSelectedProps(layers[i],filter,strict,caseSensitive));
+		}
 	}
 
 	return DuAEF.DuAE.getPropertyInfos(props);
@@ -678,6 +683,8 @@ DuAEF.DuAE.Comp.selectLayers = function (layers)
 {
 	for (var i = 0 ; i < layers.length ; i++)
 	{
+		if (layers[i] == undefined) continue;
+		if (layers[i] == null) continue;
 		layers[i].selected = true;
 	}
 }
@@ -686,16 +693,17 @@ DuAEF.DuAE.Comp.selectLayers = function (layers)
 * Generates a new unique name for a layer
 * @param {string} newName	- The wanted new name
 * @param {CompItem} comp 	- The comp
+* @param {boolean} [increment=true] - true to automatically increment the new name if it already ends with a digit
 * @return {string}	The unique name, with a new number at the end if needed.
 */
-DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp)
+DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp,increment)
 {
 	var layerNames = [];
 	for (var i = 1 ; i <= comp.layers.length ; i++)
 	{
 		layerNames.push(comp.layer(i).name);
 	}
-	return DuAEF.DuJS.String.generateUnique(newName,layerNames);
+	return DuAEF.DuJS.String.generateUnique(newName,layerNames,increment);
 }
 
 /**
@@ -722,9 +730,10 @@ DuAEF.DuAE.Layer = {};
 * Generates a new unique name for an effect
 * @param {string} newName	- The wanted new name
 * @param {Layer} layer 	- The layer
+* @param {boolean} [increment=true] - true to automatically increment the new name if it already ends with a digit
 * @return {string}	The unique name, with a new number at the end if needed.
 */
-DuAEF.DuAE.Layer.newUniqueEffectName = function(newName, layer)
+DuAEF.DuAE.Layer.newUniqueEffectName = function(newName, layer, increment)
 {
 	if (!layer) throw new Error("Needs a layer to generate a new unique effect name","DuAECOreLib",645);
 	if (newName == undefined) return "";
@@ -734,7 +743,7 @@ DuAEF.DuAE.Layer.newUniqueEffectName = function(newName, layer)
 	{
 		effectNames.push(layer.effect(i).name);
 	}
-	return DuAEF.DuJS.String.generateUnique(newName,effectNames);
+	return DuAEF.DuJS.String.generateUnique(newName,effectNames,increment);
 }
 
 /**
