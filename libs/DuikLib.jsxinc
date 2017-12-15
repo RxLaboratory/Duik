@@ -329,6 +329,8 @@ DuAEF.Duik = {};
 	duik_parent = DuAEF.DuBinary.toFile(duik_parent);
 	#include "pseudoEffects/duik_attachment.ffx.jsxinc"
 	duik_attachment = DuAEF.DuBinary.toFile(duik_attachment);
+	#include "pseudoEffects/duik_attachment_options.ffx.jsxinc"
+	duik_attachment_options = DuAEF.DuBinary.toFile(duik_attachment_options);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -338,6 +340,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffects =
 	{
 		//constraints
+		ATTACHMENT_OPTIONS: duik_attachment_options,
 		ATTACHMENT: duik_attachment,
 		PARENT: duik_parent,
 		PATH: duik_path,
@@ -393,6 +396,7 @@ DuAEF.Duik = {};
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
 		//constraints
+		ATTACHMENT_OPTIONS: "Pseudo/DUIK attachment options",
 		ATTACHMENT: "Pseudo/DUIK attachment",
 		PARENT: "Pseudo/DUIK parent",
 		PATH: "Pseudo/DUIK path",
@@ -3404,7 +3408,22 @@ DuAEF.Duik.Rigging.parentConstraint = function (layer)
 */
 DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 {
-	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.ATTACHMENT,DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT,'Attachment');
+	var options = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.ATTACHMENT_OPTIONS,DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT_OPTIONS,'::: Attachment options');
+	var effect1 = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.ATTACHMENT,DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT,'Attachment');
+	var effect2 = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.ATTACHMENT,DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT,'Attachment');
+
+	if (layer.parent != null)
+	{
+		var comp = layer.containingComp;
+		var time = comp.time;
+		comp.time = 0;
+		var parent = layer.parent;
+		layer.parent = null;
+		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT)(1).setValue(parent.index);
+		comp.time = time;
+	}
+
+	layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ATTACHMENT_OPTIONS)(2).setValue(layer.position.value);
 
 	layer.position.expression = '//Duik.attachment\n' +
 						'function getParentTransform(l,origin,sF,eF)\n' +
@@ -3416,7 +3435,10 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 						'var newPos =  l.toWorld( pos , eT );\n' +
 						'return newPos - prevPos;\n' +
 						'}\n' +
-						'var result = valueAtTime(0);\n' +
+						'var result = toWorld(anchorPoint,0);\n' +
+						'var totalWeights = 0;\n' +
+						'var translation = [0,0,0];\n' +
+						'var normalize = effect("::: Attachment options")(1).value;\n' +
 						'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
 						'{\n' +
 						'var fx = effect(i);\n' +
@@ -3426,8 +3448,12 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 						'if (parentLayer.index == index) continue;\n' +
 						'weight = fx(2).value / 100;\n' +
 						'if (weight == 0) continue;\n' +
-						'result += getParentTransform( parentLayer , result , 0 , timeToFrames() )*weight;\n' +
+						'totalWeights += weight;\n' +
+						'translation += getParentTransform( parentLayer , result , 0 , timeToFrames() )*weight;\n' +
 						'}\n' +
+						'if (totalWeights > 0 && normalize) result += translation/totalWeights;\n' +
+						'else result += translation;\n' +
+						'if (thisLayer.hasParent) result = thisLayer.parent.fromWorld(result);\n' +
 						'result;';
 
 	layer.rotation.expression = '//Duik.attachment\n' +
@@ -3444,6 +3470,9 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 						'return r;\n' +
 						'}\n' +
 						'var result = value;\n' +
+						'var totalWeights = 0;\n' +
+						'var translation = 0;\n' +
+						'var normalize = effect("::: Attachment options")(1).value;\n' +
 						'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
 						'{\n' +
 						'var fx = effect(i) ;\n' +
@@ -3453,20 +3482,14 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 						'if (l.index == index) continue;\n' +
 						'var w = fx(2).value/100;\n' +
 						'if (w == 0) continue;\n' +
+						'totalWeights += w;\n' +
 						'var P = o(l);\n' +
 						'var oP = o(l,0);\n' +
-						'result += (P - oP)*w;\n' +
+						'translation += (P - oP)*w;\n' +
 						'}\n' +
+						'if (totalWeights > 0 && normalize) result += translation/totalWeights;\n' +
+						'else result += translation;\n' +
 						'result;';
 
-	if (layer.parent != null)
-	{
-		var comp = layer.containingComp;
-		var time = comp.time;
-		comp.time = 0;
-		var parent = layer.parent;
-		layer.parent = null;
-		effect(1).setValue(parent.index);
-		comp.time = time;
-	}
+
 }
