@@ -7,6 +7,7 @@ function setCurrentConstraintsPanel(panel)
 	ui_constraintsGeneralGroup.visible = panel == 0;
 	ui_pathConstraintGroup.visible = panel == 1;
 	ui_bonesGroup.visible = panel == 2;
+	ui_connectorGroup.visible = panel == 3;
 }
 
 function bonesEditInit()
@@ -35,7 +36,82 @@ function bonesEditInit()
 	DuAEF.DuScriptUI.setTextColor(ui_bonesEditColorLabel,color);
 }
 
+function connectorInit()
+{
+	connectorMasterProp = null;
+	ui_connectorPickButton.label.text = "Pick master property";
+	ui_connectorLabel.text = "Pick a master property,\nchoose min and max\nthen select the child properties.";
+	ui_connectorMinimumEdit.setText("0");
+	ui_connectorMaximumEdit.setText("100");
+}
+
 //====== EVENTS ================
+
+function ui_connectorPickButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	connectorMasterProp = null;
+	ui_connectorMinimumEdit.setText('0');
+	ui_connectorMaximumEdit.setText('100');
+
+	//if there's a selected layer which is a Duik controller (slider, 2d slider, angle)
+	var layers = comp.selectedLayers;
+	if (layers.length > 0)
+	{
+		var layer = layers[layers.length - 1];
+		var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
+		if (effect)
+		{
+			connectorMasterProp = new PropertyInfo(effect(12));
+			ui_connectorMinimumEdit.setText('-100');
+			ui_connectorMaximumEdit.setText('100');
+			ui_connectorPickButton.label.text = "Slider";
+		}
+		if (!effect)
+		{
+			var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
+			if (effect)
+			{
+				connectorMasterProp = new PropertyInfo(effect(12));
+				ui_connectorMinimumEdit.setText('0');
+				ui_connectorMaximumEdit.setText('360');
+				ui_connectorPickButton.label.text = "Angle";
+			}
+		}
+		if  (!effect)
+		{
+			effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
+			if (effect)
+			{
+				connectorMasterProp = new PropertyInfo(effect(14));
+				ui_connectorMinimumEdit.setText('-100');
+				ui_connectorMaximumEdit.setText('100');
+				ui_connectorPickButton.label.text = "2D Slider";
+			}
+		}
+	}
+
+	if (!connectorMasterProp)
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length > 0)
+		{
+			connectorMasterProp = props[props.length-1];
+			var prop = connectorMasterProp.getProperty();
+			ui_connectorPickButton.label.text = prop.name;
+		}
+	}
+
+
+	if (connectorMasterProp) ui_connectorLabel.text ="Choose min and max\nthen select the child properties.";
+	else
+	{
+		ui_connectorLabel.text = "Pick a master property,\nchoose min and max\nthen select the child properties.";
+		ui_connectorPickButton.label.text = "Pick master property";
+	}
+}
 
 function ui_bonesEditSizeList_changed()
 {
@@ -385,14 +461,47 @@ var ui_bonesValidGroup = DuAEF.DuScriptUI.addGroup(ui_bonesGroup);
 var ui_bonesCancelButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
 var ui_bonesValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create bones",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
+//connector options
+var ui_connectorGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+ui_connectorGroup.alignChildren = ['center','top'];
+
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'1 - ' + "Create controller");
+var ui_connectorCtrlGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,'row');
+var ui_connectorSliderButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/slider_l.png','','E:/DEV SRC/RainboxUI/Icons/25w/slider_r.png',settings.data.debug);
+var ui_connectorDoubleSliderButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/doubleslider_l.png','','E:/DEV SRC/RainboxUI/Icons/25w/doubleslider_r.png',settings.data.debug);
+var ui_connectorAngleButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'','E:/DEV SRC/RainboxUI/Icons/25w/angle_l.png','','E:/DEV SRC/RainboxUI/Icons/25w/angle_r.png',settings.data.debug);
+
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,"Or pick master");
+var ui_connectorPickButton = DuAEF.DuScriptUI.addImageButton(ui_connectorGroup,"Pick master property",'E:/DEV SRC/RainboxUI/Icons/32w/pickproperty_l.png',"Select the master property",'E:/DEV SRC/RainboxUI/Icons/32w/pickproperty_r.png');
+
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'2 - ' + "Set values");
+var ui_connectorForm = DuAEF.DuScriptUI.addForm(ui_connectorGroup);
+ui_connectorForm.alignment = ['center','top'];
+var ui_connectorMinLabel = ui_connectorForm.labels.add('statictext',undefined,"Minimum: ");
+var ui_connectorMaxLabel = ui_connectorForm.labels.add('statictext',undefined,"Maximum: ");
+var ui_connectorMinimumEdit = DuAEF.DuScriptUI.addNiceEditText(ui_connectorForm.buttons,'0');
+var ui_connectorMaximumEdit = DuAEF.DuScriptUI.addNiceEditText(ui_connectorForm.buttons,'10000');
+ui_connectorMinLabel.minimumSize.height = ui_connectorMinLabel.maximumSize.height = ui_connectorMinimumEdit.edit.preferredSize[1];
+ui_connectorMaxLabel.minimumSize.height = ui_connectorMaxLabel.maximumSize.height = ui_connectorMaximumEdit.edit.preferredSize[1];
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
+var ui_connectorLabel = ui_connectorGroup.add('statictext',undefined,"Pick a master property,\nchoose min and max\nthen select the child properties.",{multiline:true});
+DuAEF.DuScriptUI.setTextColor(ui_connectorLabel,DuAEF.DuJS.Color.Colors.DARK_GREY);
+var ui_connectorValidGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup);
+var ui_connectorCancelButton = DuAEF.DuScriptUI.addImageButton(ui_connectorValidGroup,"Cancel",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_connectorValidButton = DuAEF.DuScriptUI.addImageButton(ui_connectorValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Connect",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
 //=========== INIT =============
 
 bonesEditInit();
 setCurrentConstraintsPanel();
 var pathConstraintPathProp = null;
+var connectorMasterProp = null;
 
 //=========== CONNECT EVENTS ===========
+
+ui_connectorButton.onClick = function () { connectorInit(); setCurrentConstraintsPanel(3);};
+ui_connectorCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+ui_connectorPickButton.onClick = ui_connectorPickButton_clicked;
 
 ui_bonesButton.onClick = function () {ui_bonesButton_clicked(true);}
 ui_bonesValidButton.onClick = function () {ui_bonesButton_clicked(false);}
