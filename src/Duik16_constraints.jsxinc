@@ -6,20 +6,166 @@ function setCurrentConstraintsPanel(panel)
 
 	ui_constraintsGeneralGroup.visible = panel == 0;
 	ui_pathConstraintGroup.visible = panel == 1;
+	ui_bonesGroup.visible = panel == 2;
+}
+
+function bonesEditInit()
+{
+	if (settings.data.boneSizeHint == undefined) settings.data.boneSizeHint = 0;
+	if (settings.data.boneSize == undefined) settings.data.boneSize = 100;
+
+	DuAEF.Duik.boneSize = settings.data.boneSize;
+	DuAEF.Duik.boneSizeHint = settings.data.boneSizeHint;
+
+	ui_bonesEditSizeEdit.setText(settings.data.boneSize);
+	ui_bonesEditSizeList[1].selection = settings.data.boneSizeHint;
+	if (settings.data.boneSizeHint == 3)
+	{
+		ui_bonesEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_bonesEditSizeEdit.enabled = false;
+	}
+
+	if (settings.data.boneColor == undefined) settings.data.boneColor = "EC1818";
+	ui_bonesEditColor.setText(settings.data.boneColor);
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+	DuAEF.Duik.boneColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_bonesEditColorLabel,color);
 }
 
 //====== EVENTS ================
 
-function ui_bonesButton_clicked()
+function ui_bonesEditSizeList_changed()
+{
+	var index = ui_bonesEditSizeList[1].selection.index;
+	if (index == 3)
+	{
+		ui_bonesEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_bonesEditSizeEdit.enabled = false;
+	}
+	DuAEF.Duik.boneSizeHint = index;
+	settings.data.boneSizeHint = index;
+	settings.save();
+
+	ui_bonesEditSizeValidButton_clicked();
+}
+
+function ui_bonesEditSizeEdit_changed()
+{
+	DuAEF.Duik.boneSize = parseInt(ui_bonesEditSizeEdit.text);
+	settings.data.boneSize = DuAEF.Duik.boneSize;
+	settings.save();
+	ui_bonesEditSizeValidButton_clicked();
+}
+
+function ui_bonesEditColor_changed()
+{
+	settings.data.boneColor = ui_bonesEditColor.text;
+	settings.save();
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+	DuAEF.Duik.controllerColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_bonesEditColorLabel,color);
+
+	ui_bonesEditColorValidButton_clicked();
+}
+
+function ui_bonesEditColor_clicked()
+{
+	var color = $.colorPicker();
+	if (color == -1) return;
+	color = DuAEF.DuJS.Color.hexToRGB(color,false);
+	ui_bonesEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_bonesEditColor_changed();
+}
+
+function ui_bonesEditSizeValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+	if (bones.length == 0) return;
+
+	app.beginUndoGroup('Duik - ' + "Set bone size");
+	for (var i = 0 ; i < bones.length ; i++)
+	{
+		bones[i].setSize();
+	}
+	app.endUndoGroup();
+}
+
+function ui_bonesEditRandomColorButton_clicked()
+{
+	var color = DuAEF.DuJS.Color.random();
+	ui_bonesEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_bonesEditColor_changed();
+}
+
+function ui_bonesEditColorValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+	if (bones.length == 0) return;
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+
+
+	app.beginUndoGroup('Duik - ' + "Set bone color");
+	for (var i = 0 ; i < bones.length ; i++)
+	{
+		bones[i].setColor(color);
+	}
+	app.endUndoGroup();
+}
+
+function ui_bonesEditSetButton_clicked()
+{
+	ui_bonesEditSizeValidButton_clicked();
+	ui_bonesEditColorValidButton_clicked();
+}
+
+function ui_bonesEditGetButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	//get from first element
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+
+	//TODO does not work?
+
+	if (bones.length >= 0)
+	{
+		var effect = bones[0].effect;
+		var color = effect(1).value;
+		var size = effect(2).value;
+		settings.data.boneSize = size;
+		settings.data.boneSizeHint = DuAEF.Duik.Sizes.CUSTOM;
+		settings.data.boneColor = DuAEF.DuJS.Color.rgbToHex(color);
+		bonesEditInit();
+	}
+}
+
+function ui_bonesButton_clicked(randomColor)
 {
 	var props = DuAEF.DuAE.Comp.getSelectedProps();
 	if (props.length == 0) return;
 
 	app.beginUndoGroup('Duik | ' + "Create bones");
+	if (randomColor) DuAEF.Duik.boneColor = DuAEF.DuJS.Color.random();
+	else DuAEF.Duik.boneColor = DuAEF.DuJS.Color.hexToRGB(settings.data.boneColor);
 	var bones = [];
 	for (var i = 0 ; i < props.length ; i++)
 	{
-		bones.push(DuAEF.Duik.Rigging.addBone(props[i]));
+		bones.push(DuAEF.Duik.Bone.addBone(props[i]));
 	}
 	DuAEF.DuAE.Comp.selectLayers(bones);
 	app.endUndoGroup();
@@ -157,7 +303,6 @@ var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,'row');
 ui_bonesGroup.alignment = ['center','top'];
 var ui_bonesButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,"Add bones",'E:/DEV SRC/RainboxUI/Icons/32w/target_l.png',"Connect any spatial property to a control layer",'E:/DEV SRC/RainboxUI/Icons/32w/target_r.png');
 var ui_bonesOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,'','E:/DEV SRC/RainboxUI/Icons/14w/plus_m.png',"Bones options",'E:/DEV SRC/RainboxUI/Icons/14w/plus_r.png');
-//TODO Options: color, size
 
 DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
@@ -194,15 +339,77 @@ var ui_pathConstraintValidGroup = DuAEF.DuScriptUI.addGroup(ui_pathConstraintGro
 var ui_pathConstraintCancelButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
 var ui_pathConstraintValidButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Path constraint",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
 
+//bones options
+var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+ui_bonesGroup.alignChildren = ['center','top'];
+var ui_bonesEditForm = DuAEF.DuScriptUI.addForm(ui_bonesGroup);
+ui_bonesEditForm.alignment = ['center','top'];
+//add a column for valid buttons
+var ui_bonesEditValidButtons = ui_bonesEditForm.add('group');
+ui_bonesEditValidButtons.alignment = ['right','top'];
+ui_bonesEditValidButtons.orientation = 'column';
+ui_bonesEditValidButtons.alignChildren = ['right','center'];
+ui_bonesEditValidButtons.spacing = 2;
+
+var ui_bonesEditSizeList = DuAEF.DuScriptUI.addFormField(ui_bonesEditForm,"Size",'dropdownlist',["Small","Medium","Large","Custom"],"Set the display size of the bones.");
+var ui_bonesEditSizeValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditValidButtons,'','E:/DEV SRC/RainboxUI/Icons/18w/check_m.png',"Set size",'E:/DEV SRC/RainboxUI/Icons/18w/check_g.png',settings.data.debug);
+ui_bonesEditSizeValidButton.group.minimumSize.height = ui_bonesEditSizeValidButton.group.maximumSize.height = ui_bonesEditSizeList[1].preferredSize[1];
+
+var ui_bonesEditSizeEdit = DuAEF.DuScriptUI.addNiceEditText(ui_bonesEditForm.buttons,'100');
+ui_bonesEditSizeEdit.helpTip = "Set the display size of the controllers.";
+var ui_bonesEditSpacer = ui_bonesEditValidButtons.add('statictext',undefined,'');
+ui_bonesEditSpacer.minimumSize.height = ui_bonesEditSpacer.maximumSize.height = ui_bonesEditSizeEdit.edit.preferredSize[1];
+ui_bonesEditSpacer = ui_bonesEditForm.labels.add('statictext',undefined,'');
+ui_bonesEditSpacer.minimumSize.height = ui_bonesEditSpacer.maximumSize.height = ui_bonesEditSizeEdit.edit.preferredSize[1];
+
+var ui_bonesEditColor = DuAEF.DuScriptUI.addNiceEditText(ui_bonesEditForm.buttons,'EC1818');
+var ui_bonesEditColorLabel = ui_bonesEditForm.labels.add('statictext',undefined,"Color #");
+ui_bonesEditColor.helpTip = "Set the display color of the controllers.";
+ui_bonesEditColorLabel.helpTip = "Set the display color of the controllers.";
+ui_bonesEditColorLabel.minimumSize.height = ui_bonesEditColorLabel.maximumSize.height = ui_bonesEditColor.edit.preferredSize[1];
+var ui_bonesEditColorValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditValidButtons,'','E:/DEV SRC/RainboxUI/Icons/18w/check_m.png',"Set color",'E:/DEV SRC/RainboxUI/Icons/18w/check_g.png',settings.data.debug);
+ui_bonesEditColorValidButton.group.minimumSize.height = ui_bonesEditColorValidButton.group.maximumSize.height = ui_bonesEditColor.edit.preferredSize[1];
+
+var ui_bonesEditRandomColorButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditForm.buttons,"Random",'E:/DEV SRC/RainboxUI/Icons/18w/random_l.png',"Generates a random color",'E:/DEV SRC/RainboxUI/Icons/18w/random_r.png',settings.data.debug);
+
+DuAEF.DuScriptUI.addSeparator(ui_bonesGroup);
+
+var ui_bonesEditGetSetGroup = DuAEF.DuScriptUI.addGroup(ui_bonesGroup);
+ui_bonesEditGetSetGroup.alignment = ['center','top'];
+var ui_bonesEditGetButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditGetSetGroup,'Get','E:/DEV SRC/RainboxUI/Icons/25w/handeyedropper_l.png',"Get size and color",'E:/DEV SRC/RainboxUI/Icons/25w/handeyedropper_r.png',settings.data.debug);
+var ui_bonesEditSetButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditGetSetGroup,'Set','E:/DEV SRC/RainboxUI/Icons/25w/check_l.png',"Set size and color",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',settings.data.debug);
+
+DuAEF.DuScriptUI.addSeparator(ui_bonesGroup);
+
+var ui_bonesValidGroup = DuAEF.DuScriptUI.addGroup(ui_bonesGroup);
+var ui_bonesCancelButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_m.png',"Back",'E:/DEV SRC/RainboxUI/Icons/25w/back_r.png');
+var ui_bonesValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Create",'E:/DEV SRC/RainboxUI/Icons/25w/check_g.png',"Create bones",'E:/DEV SRC/RainboxUI/Icons/25w/check_r.png',settings.data.debug);
+
 
 //=========== INIT =============
 
+bonesEditInit();
 setCurrentConstraintsPanel();
 var pathConstraintPathProp = null;
 
 //=========== CONNECT EVENTS ===========
 
-ui_bonesButton.onClick = ui_bonesButton_clicked;
+ui_bonesButton.onClick = function () {ui_bonesButton_clicked(true);}
+ui_bonesValidButton.onClick = function () {ui_bonesButton_clicked(false);}
+ui_bonesOptionsButton.onClick = function () {setCurrentConstraintsPanel(2);};
+ui_bonesCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+
+ui_bonesEditSizeList[1].onChange = ui_bonesEditSizeList_changed;
+ui_bonesEditSizeEdit.onChange = ui_bonesEditSizeEdit_changed;
+ui_bonesEditColor.onChange = ui_bonesEditColor_changed;
+ui_bonesEditColorLabel.addEventListener("mousedown",ui_bonesEditColor_clicked,false);
+
+ui_bonesEditSizeValidButton.onClick = ui_bonesEditSizeValidButton_clicked;
+ui_bonesEditRandomColorButton.onClick = ui_bonesEditRandomColorButton_clicked;
+ui_bonesEditColorValidButton.onClick = ui_bonesEditColorValidButton_clicked;
+
+ui_bonesEditSetButton.onClick = ui_bonesEditSetButton_clicked;
+ui_bonesEditGetButton.onClick = ui_bonesEditGetButton_clicked;
 
 ui_attachmentButton.onClick = ui_attachmentButton_clicked;
 ui_parentButton.onClick = ui_parentButton_clicked;
