@@ -49,11 +49,59 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+* Constructs a Bone
+* @class Bone
+* @classdesc A Bone.
+* @param {ShapeLayer} layer - The layer of the bone
+* @property {ShapeLayer} layer - The Shape layer of the bone
+* @property {PropertyGroup} effect - The effect on the bone
+*/
+function Bone(layer)
+{
+	this.layer = layer;
+	var effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.BONE);
+	this.effect = effect;
+}
+
+/**
+* Sets a new display size for the bone
+* @memberof Bone
+* @param {int} [size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
+*/
+Bone.prototype.setSize = function (size)
+{
+	if (this.layer == null) return;
+	if (size == undefined)
+	{
+		var comp = this.layer.containingComp;
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.boneSize;
+	}
+
+	this.effect(2).setValue(size);
+}
+
+/**
+* Sets a new display color for the bone
+* @memberof Controller
+* @param {float[]} color - The new color
+*/
+Bone.prototype.setColor = function (color)
+{
+	if (color == undefined) color = DuAEF.Duik.boneColor;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM) color = DuAEF.DuJS.Color.random();
+
+	this.effect(1).setValue(color);
+}
+
+/**
 * Constructs a Controller
 * @class Controller
 * @classdesc A Controller.
 * @param {ShapeLayer} layer - The layer of the controller
-* @param {DuAEF.Duik.ControllerType} [type=DuAEF.Duik.ControllerType.TRANSFORM] - The type of the controller
 * @property {ShapeLayer} layer - The Shape layer of the controller
 * @property {DuAEF.Duik.ControllerType} type - The type of the controller
 * @property {PropertyGroup} effect - The effect on the layer
@@ -3201,7 +3249,6 @@ DuAEF.Duik.Controller.isController = function (layer)
 
 /**
  * Gets Controllers in the comp or the selection.
- * @memberof DuAEF.Duik
  * @param {CompItem}	comp	- The composition where to get the controllers
  * @param {boolean} [selectedOnly=false] - Selected layers only
  * @return {Controller[]}	The controllers.
@@ -3218,11 +3265,11 @@ DuAEF.Duik.Controller.getControllers = function (comp,selectedOnly)
 
 	var it = new Iterator(layers);
 	var ctrls = [];
-	function gc(l)
+
+	it.do(function (layer)
 	{
-		if (DuAEF.Duik.Controller.isController(l)) ctrls.push(new Controller(l));
-	}
-	it.do(gc);
+		if (DuAEF.Duik.Controller.isController(layer)) ctrls.push(new Controller(layer));
+	});
 	return ctrls;
 }
 
@@ -3535,23 +3582,21 @@ DuAEF.Duik.Rigging.attachmentConstraint = function (layer)
 }
 
 /**
+* Bones
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Bone = {};
+
+/**
 * Creates a stand alone bone in the comp
 * @param {CompItem} comp - The containing composition
 * @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
 * @param {DuAEF.Duik.BoneType} [type=DuAEF.Duik.BoneType.PIN] - The type
-* @return {ShapeLayer} The bone
+* @return {Bone} The bone
 */
-DuAEF.Duik.Rigging.createBone = function(comp,size,type)
+DuAEF.Duik.Bone.createBone = function(comp,size,type)
 {
-	if (size == undefined)
-	{
-		size = comp.width/2 + comp.height/2;
-		if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
-		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
-		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
-		else if (DuAEF.Duik.boneSizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.boneSize;
-	}
-
 	//create
 	var bone = comp.layers.addShape();
 	//add effect
@@ -3594,18 +3639,18 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 		else if (type == DuAEF.Duik.BoneType.TANGENT)
 		{
 			var circle = iconContent.addProperty("ADBE Vector Shape - Ellipse");
-			circle("ADBE Vector Ellipse Size").setValue([20,20]);
+			circle("ADBE Vector Ellipse Size").expression = '[20,20] * effect("Bone")(2).value/100';
 
 			var line = iconContent.addProperty("ADBE Vector Shape - Group");
 			line('ADBE Vector Shape').expression = "createPath([[0,0], -transform.position], [[0,0],[0,0]], [[0,0],[0,0]], false);";
 			var pathStroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
-			pathStroke.property("Color").setValue(DuAEF.Duik.boneColor-[0.2,0.2,0.2,0]);
+			pathStroke.property("Color").expression = 'effect("Bone")(1)-[0.2,0.2,0.2,0]';
 			pathStroke.property("Stroke Width").setValue(6);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
 			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1)-[0.2,0.2,0.2,0]';
 		}
 
-		iconGroup.transform.scale.expression = '[effect("Bone")(2).value,effect("Bone")(2).value]';
+		if (type != DuAEF.Duik.BoneType.TANGENT) iconGroup.transform.scale.expression = '[effect("Bone")(2).value,effect("Bone")(2).value]';
 	}
 
 	function createAnchor()
@@ -3631,7 +3676,78 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 	//group
 	DuAEF.Dugr.addLayerToGroup(bone,"Bones");
 
+	bone = new Bone(bone);
+	bone.setSize();
+	bone.setColor();
 	return bone;
+}
+
+//Low-level undocumented function
+DuAEF.Duik.Bone.isBone = function (layer)
+{
+	var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.BONE);
+	if (effect) return true;
+	return false;
+}
+
+/**
+ * Gets Bones in the comp or the selection.
+ * @memberof DuAEF.Duik.Bone
+ * @param {CompItem}	comp	- The composition where to get the bones
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {Bone[]}	The bones.
+ */
+DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
+{
+	if (selectedOnly == undefined) selectedOnly = false;
+	if (name == undefined) name = '';
+
+	var layers = [];
+	if (selectedOnly) layers = comp.selectedLayers;
+	else layers = comp.layers;
+
+	if (layers.length == 0) return [];
+
+	var it = new Iterator(layers);
+	var bones = [];
+
+	it.do( function (layer)
+	{
+		if (DuAEF.Duik.Bone.isController(layer)) bones.push(new Bone(layer));
+	});
+
+	return bones;
+}
+
+/**
+ * Gets Bones in the comp or the selection.
+ * @memberof DuAEF.Duik.Bone
+ * @param {CompItem}	comp	- The composition where to get the bones
+ * @param {String} [name] - A name filter
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {Bone[]}	The bones.
+ */
+DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
+{
+	if (selectedOnly == undefined) selectedOnly = false;
+
+	var layers = [];
+	if (selectedOnly) layers = comp.selectedLayers;
+	else layers = comp.layers;
+
+	if (layers.length == 0) return [];
+
+	var it = new Iterator(layers);
+
+	it.do( function (layer)
+	{
+		if (DuAEF.Duik.Bone.isBone(layer))
+		{
+			if (name == layer.name) return new Bone(layer);
+		}
+	});
+
+	return null;
 }
 
 /**
@@ -3639,9 +3755,9 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 * @param {Property|PropertyInfo} prop - The property
 * @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.boneSizeHint
 * @param {Layer} bone - An already existing bone
-* @return {ShapeLayer|ShapeLayer[]} The bone(s) created. An Array if prop is a Shape
+* @return {Bone|Bone[]} The bone(s) created. An Array if prop is a Shape
 */
-DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
+DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 {
 	if (bone == undefined) bone == null;
 
@@ -3712,66 +3828,66 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 			var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
 			var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
 
-			var newNull = comp.layer(nullName);
-			var newNullIn = comp.layer(nullNameIn);
-			var newNullOut = comp.layer(nullNameOut);
+			var newBone = DuAEF.Duik.Bone.getBoneByName(comp,nullName);
+			var newBoneIn = DuAEF.Duik.Bone.getBoneByName(comp,nullNameIn);
+			var newBoneOut = DuAEF.Duik.Bone.getBoneByName(comp,nullNameOut);
 
 			// Get names of nulls that don't exist yet and create them
-			if(comp.layer(nullName) == undefined)
+			if(newBone == null)
 			{
 				//Create nulls
-				newNull = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.VERTEX);
-				newNull.name = nullName;
-				newNull.label = 11;
+				newBone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.BoneType.VERTEX);
+				newBone.layer.name = nullName;
+				newBone.layer.label = 11;
 			}
 
 			// Set position using layer space transforms, then remove expressions
-			newNull.position.setValue(pathPoints[i]);
-			newNull.position.expression = "var srcLayer = thisComp.layer(\"" + layer.name + "\"); \r" +
+			newBone.layer.position.setValue(pathPoints[i]);
+			newBone.layer.position.expression = "var srcLayer = thisComp.layer(\"" + layer.name + "\"); \r" +
 										"var srcPath = " + pathPath + ".points()[" + i + "]; \r" +
 										"srcLayer.toComp(srcPath);";
-			newNull.position.setValue(newNull.position.value);
-			newNull.position.expression = '';
+			newBone.layer.position.setValue(newBone.layer.position.value);
+			newBone.layer.position.expression = '';
 
 
-			if (comp.layer(nullNameOut) == undefined)
+			if (newBoneOut == null)
 			{
-				var newNullOut = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
-				newNullOut.parent = newNull;
-				newNullOut.name = nullNameOut;
-				newNullOut.label = 14;
-				newNull.moveBefore(newNullOut);
-				newNullOut.position.setValue(pathOutTangents[i]);
+				var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
+				newBoneOut.layer.parent = newBone.layer;
+				newBoneOut.layer.name = nullNameOut;
+				newBoneOut.layer.label = 14;
+				newBone.layer.moveBefore(newBoneOut.layer);
+				newBoneOut.layer.position.setValue(pathOutTangents[i]);
 			}
 
-			if (comp.layer(nullNameIn) == undefined)
+			if (newBoneIn == null)
 			{
-				var newNullIn = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
-				newNullIn.parent = newNull;
-				newNullIn.name = nullNameIn;
-				newNullIn.label = 14;
-				newNullIn.position.setValue(pathInTangents[i]);
+				var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.BoneType.TANGENT);
+				newBoneIn.layer.parent = newBone.layer;
+				newBoneIn.layer.name = nullNameIn;
+				newBoneIn.layer.label = 14;
+				newBoneIn.layer.position.setValue(pathInTangents[i]);
 			}
 
 
 			//add effect
 			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
 			var effect = createControl(layer,effectName);
-			effect(1).setValue(newNull.index);
+			effect(1).setValue(newBone.layer.index);
 			var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
 			var effectIn = createControl(layer,effectNameIn);
-			effectIn(1).setValue(newNullIn.index);
+			effectIn(1).setValue(newBoneIn.layer.index);
 			var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
 			var effectOut = createControl(layer,effectNameOut);
-			effectOut(1).setValue(newNullOut.index);
+			effectOut(1).setValue(newBoneOut.layer.index);
 
 			nullSet.push(effectName);
 			nullSetIn.push(effectNameIn);
 			nullSetOut.push(effectNameOut);
 
-			bones.push(newNull);
-			bones.push(newNullIn);
-			bones.push(newNullOut);
+			bones.push(newBone);
+			bones.push(newBoneIn);
+			bones.push(newBoneOut);
 		}
 
 		prop.expression = "var nullLayerNames = [\"" + nullSet.join("\",\"") + "\"]; \r" +
@@ -3786,9 +3902,9 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 						"var getNullLayersOut = []; \r" +
 						"for (var i = 0; i < nullLayerNames.length; i++){ \r" +
 						"    try{  \r" +
-						"        getNullLayers.push(effect(nullLayerNames[i])(\"ADBE Layer Control-0001\")); \r" +
-						"        getNullLayersIn.push(effect(nullLayerNamesIn[i])(\"ADBE Layer Control-0001\")); \r" +
-						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(\"ADBE Layer Control-0001\")); \r" +
+						"        getNullLayers.push(effect(nullLayerNames[i])(1)); \r" +
+						"        getNullLayersIn.push(effect(nullLayerNamesIn[i])(1)); \r" +
+						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(1)); \r" +
 						"    } catch(err) { \r" +
 						"        getNullLayers.push(null); \r" +
 						"    }} \r" +
@@ -3799,6 +3915,8 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 						"        origOutTang[i] = fromCompToSurface(getNullLayersOut[i].toComp(getNullLayersOut[i].anchorPoint)) - origPoints[i];  \r" +
 						"    }} \r" +
 						"createPath(origPoints,origInTang,origOutTang,origPath.isClosed());";
+
+		return bones;
 	}
 	else
 	{
@@ -3806,19 +3924,19 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 		var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
 		var effect = createControl(layer,effectName);
 
-		if (effect(1).value != 0 && effect(1).value != layer.index ) bone = comp.layer(effect(1).value);
+		if (effect(1).value != 0 && effect(1).value != layer.index ) bone = new Bone(comp.layer(effect(1).value));
 		prop = propInfo.getProperty();
 
 		//create bone
 		if (bone == null)
 		{
-			bone = DuAEF.Duik.Rigging.createBone(comp,size,DuAEF.Duik.BoneType.PIN);
-			bone.moveBefore(layer);
+			bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.BoneType.PIN);
+			bone.layer.moveBefore(layer);
 			//rename bone
 			var name = "B " + layer.name;
 			if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
 			if (name.length > 32) name = name.substr(0,29) + "...";
-			bone.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+			bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
 		}
 
 		//move the bone to the prop : use an expression to get its world position
@@ -3827,16 +3945,16 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 
 		if (!(layer instanceof ShapeLayer))
 		{
-			bone.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
-			bone.position.setValue(bone.position.value);
-			bone.position.expression = "";
+			bone.layer.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
+			bone.layer.position.setValue(bone.layer.position.value);
+			bone.layer.position.expression = "";
 		}
 		else
 		{
-			bone.position.setValue(prop.value);
+			bone.layer.position.setValue(prop.value);
 		}
 
-		effect(1).setValue(bone.index);
+		effect(1).setValue(bone.layer.index);
 		effect(2).expression = 'try { effect("' + effect.name + '")(1).effect("Bone")(1) } catch (e){}';
 
 		//add expression
