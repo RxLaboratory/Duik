@@ -331,6 +331,11 @@ DuAEF.Duik = {};
 	duik_attachment = DuAEF.DuBinary.toFile(duik_attachment);
 	#include "pseudoEffects/duik_attachment_options.ffx.jsxinc"
 	duik_attachment_options = DuAEF.DuBinary.toFile(duik_attachment_options);
+	//bones
+	#include "pseudoEffects/duik_bone.ffx.jsxinc"
+	duik_bone = DuAEF.DuBinary.toFile(duik_bone);
+	#include "pseudoEffects/duik_bone_linker.ffx.jsxinc"
+	duik_bone_linker = DuAEF.DuBinary.toFile(duik_bone_linker);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -339,6 +344,9 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffects =
 	{
+		//bones
+		BONE: duik_bone,
+		BONE_LINKER: duik_bone_linker,
 		//constraints
 		ATTACHMENT_OPTIONS: duik_attachment_options,
 		ATTACHMENT: duik_attachment,
@@ -395,6 +403,9 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
+		//bones
+		BONE: "Pseudo/DUIK bone",
+		BONE_LINKER: "Pseudo/DUIK bone linker",
 		//constraints
 		ATTACHMENT_OPTIONS: "Pseudo/DUIK attachment options",
 		ATTACHMENT: "Pseudo/DUIK attachment",
@@ -3543,6 +3554,8 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 
 	//create
 	var bone = comp.layers.addShape();
+	//add effect
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(bone,DuAEF.Duik.PseudoEffects.BONE,DuAEF.Duik.PseudoEffectsMatchNames.BONE,'Bone');
 
 	function createIcon()
 	{
@@ -3567,14 +3580,14 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 			needleShape.closed = true;
 			shape2('ADBE Vector Shape').setValue(needleShape);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
-			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor-[0.1,0.1,0.1,0]);
+			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1).value';
 		}
 		else if (type == DuAEF.Duik.BoneType.VERTEX)
 		{
 			var rect = iconContent.addProperty("ADBE Vector Shape - Rect");
 			rect("ADBE Vector Rect Size").setValue([30,30]);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
-			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor);
+			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1).value';
 
 			bone.transform.scale.expression = '[value[0],value[0]];';
 		}
@@ -3589,10 +3602,10 @@ DuAEF.Duik.Rigging.createBone = function(comp,size,type)
 			pathStroke.property("Color").setValue(DuAEF.Duik.boneColor-[0.2,0.2,0.2,0]);
 			pathStroke.property("Stroke Width").setValue(6);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
-			fill("ADBE Vector Fill Color").setValue(DuAEF.Duik.boneColor-[0.2,0.2,0.2,0]);
+			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1)-[0.2,0.2,0.2,0]';
 		}
 
-		iconGroup.transform.scale.setValue([size,size]);
+		iconGroup.transform.scale.expression = '[effect("Bone")(2).value,effect("Bone")(2).value]';
 	}
 
 	function createAnchor()
@@ -3659,6 +3672,28 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 	var layer = DuAEF.DuAE.Property.getLayer(prop);
 	var comp = layer.containingComp;
 
+	//create effect function
+	function createControl(l,name)
+	{
+		//check if an effect already exists
+		var effect = null;
+
+		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+		{
+			var fx = layer('ADBE Effect Parade').property(i);
+			if (fx.matchName == DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER && fx.name == name )
+			{
+				effect = fx;
+				break;
+			}
+		}
+		if (effect == null)
+		{
+			effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER,name);
+		}
+		return effect;
+	}
+
 	if (prop.propertyValueType == PropertyValueType.SHAPE)
 	{
 		var pathPath = DuAEF.DuAE.Property.getExpressionLink(prop,true);
@@ -3670,28 +3705,6 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 		var nullSetOut = [];
 
 		var bones = [];
-
-		//create effect function
-		function createControl(l,nullLayer,name)
-		{
-			//check if an effect already exists
-			var effect = null;
-			for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
-			{
-				var fx = layer('ADBE Effect Parade').property(i);
-				if (fx.matchName == 'ADBE Layer Control' && fx.name == name )
-				{
-					effect = fx;
-					break;
-				}
-			}
-			if (effect == null)
-			{
-				effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
-				effect.name = name;
-			}
-			effect(1).setValue(nullLayer.index);
-		}
 
 		for (var i = 0; i < pathPoints.length; i++)
 		{ //For each path point
@@ -3743,11 +3756,14 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 
 			//add effect
 			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
-			createControl(layer,newNull,effectName);
+			var effect = createControl(layer,effectName);
+			effect(1).setValue(newNull.index);
 			var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
-			createControl(layer,newNullIn,effectNameIn);
+			var effectIn = createControl(layer,effectNameIn);
+			effectIn(1).setValue(newNullIn.index);
 			var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
-			createControl(layer,newNullOut,effectNameOut);
+			var effectOut = createControl(layer,effectNameOut);
+			effectOut(1).setValue(newNullOut.index);
 
 			nullSet.push(effectName);
 			nullSetIn.push(effectNameIn);
@@ -3787,23 +3803,8 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 	else
 	{
 		//add effect
-		//check if an effect already exists
-		var effect = null;
 		var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
-		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
-		{
-			var fx = layer('ADBE Effect Parade').property(i);
-			if (fx.matchName == 'ADBE Layer Control' && fx.name == effectName )
-			{
-				effect = fx;
-				break;
-			}
-		}
-		if (effect == null)
-		{
-			effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
-			effect.name = effectName;
-		}
+		var effect = createControl(layer,effectName);
 
 		if (effect(1).value != 0 && effect(1).value != layer.index ) bone = comp.layer(effect(1).value);
 		prop = propInfo.getProperty();
@@ -3836,6 +3837,7 @@ DuAEF.Duik.Rigging.addBone = function (prop,size,bone)
 		}
 
 		effect(1).setValue(bone.index);
+		effect(2).expression = 'try { effect("' + effect.name + '")(1).effect("Bone")(1) } catch (e){}';
 
 		//add expression
 		if (layer instanceof ShapeLayer)
