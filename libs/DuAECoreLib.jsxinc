@@ -205,6 +205,36 @@ DuAEF.DuAE = {};
 (function ()
 {
 	/**
+	 * The axis or channels
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.DuAE.Axis =
+	{
+		X: 1,
+		Y: 2,
+		Z: 3,
+		RED: 4,
+		GREEN: 5,
+		BLUE: 6,
+		ALPHA: 7,
+		HUE: 8,
+		SATURATION: 9,
+		VALUE: 10
+	}
+
+	/**
+	 * Types of values
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.DuAE.Types =
+	{
+		VALUE: 1,
+		VELOCITY: 2
+	}
+
+	/**
 	* Associative array that converts property match names to their compact English expression statements.
 	* @example
 	* DuAEF.DuAE.compactExpressions["ADBE Transform Group"]
@@ -736,6 +766,7 @@ DuAEF.DuAE.Layer = {};
 DuAEF.DuAE.Layer.newUniqueEffectName = function(newName, layer, increment)
 {
 	if (!layer) throw new Error("Needs a layer to generate a new unique effect name","DuAECOreLib",645);
+	if (increment == undefined) increment = true;
 	if (newName == undefined) return "";
 	if (newName == "") return "";
 	var effectNames = [];
@@ -1503,12 +1534,14 @@ DuAEF.DuAE.Property.removeAnim = function(prop,removeExpression)
  * @memberof DuAEF.DuAE.Property
  * @param {Property|PropertyInfo}	prop			- The property
  * @param {bool}		[useThisComp]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
+ * @param {bool}		[fromLayer=true]		- Wether to begin the expression by comp.layer or directly from the first prop of the layer
  * @return {str}		The expression link to the property
  */
-DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp)
+DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (useThisComp == undefined) useThisComp = false;
+	if (fromLayer == undefined) fromLayer = true;
 
 	//get compact expression from matchName, if available
 	function getCompactExpression(matchName, name)
@@ -1538,14 +1571,18 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp)
 		prop = prop.parentProperty;
 	}
 
-	var comp = prop.containingComp;
-	// Prefix the layer reference
-	name = "\"" + prop.name + "\"";
 	if (exprCode.indexOf("(") != 0) exprCode = '.' + exprCode;
-	exprCode = "layer(" + name + ")" + exprCode;
-	// Prefix the comp reference
-	if (useThisComp) exprCode = "thisComp." + exprCode;
-	else exprCode = "comp(\"" + comp.name + "\")." + exprCode;
+
+	if (fromLayer)
+	{
+		var comp = prop.containingComp;
+		// Prefix the layer reference
+		name = "\"" + prop.name + "\"";
+		exprCode = "layer(" + name + ")" + exprCode;
+		// Prefix the comp reference
+		if (useThisComp) exprCode = "thisComp." + exprCode;
+		else exprCode = "comp(\"" + comp.name + "\")." + exprCode;
+	}
 
 	return exprCode;
 }
