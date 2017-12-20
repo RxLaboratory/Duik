@@ -3709,7 +3709,7 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, mi
 	var comp = 'thisComp.';
 	if (parentComp !== childComp) comp = 'comp("' + parentComp.name + '").';
 
-	var expr = '//Duik.Connector\n' +
+	var expr = '//Duik.connector\n' +
 				'var ctrlLayer = ' + comp + 'layer("' + parentLayer.name + '");\n' +
 				'var ctrlValue = ctrlLayer' + DuAEF.DuAE.Property.getExpressionLink(parentProp.getProperty(),false,false) + ';\n' +
 				'var ctrlEffect = ctrlLayer.effect("' + parentEffect.name + '");\n' +
@@ -3756,6 +3756,57 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, mi
 			'else value;';
 
 	childProp.getProperty().expression = expr;
+
+	//Add expression to the parent
+	if (parentProp.getProperty().expression == '' && dim != 4)
+	{
+		var parentExpr = '//Duik.connector.ctrl\n' +
+					'var fx = effect("' + parentEffect.name + '");\n' +
+					'var min = fx(2);\n' +
+					'var max = fx(3);\n';
+		if (dim == 1)
+		{
+			parentExpr += 'var useLimits = fx(11).value;\n' +
+						'var snapping = fx(12).value;\n' +
+						'var steps = fx(13).value;\n' +
+						'var result = value;\n';
+		}
+		else
+		{
+			var originValue = parentProp.getProperty().value;
+			parentExpr += 'var originValue = ' + originValue.toSource() + ';\n' +
+						'var useLimits = fx(12).value;\n' +
+						'var snapping = fx(13).value;\n' +
+						'var steps = fx(14).value;\n' +
+						'var axis = fx(4)-1;\n' +
+						'var result = value[axis];\n';
+		}
+		parentExpr += 'if (useLimits)\n' +
+					'{\n' +
+					'if (result > max) result = max;\n' +
+					'else if (result < min) result = min;\n' +
+					'}\n' +
+					'if (snapping)\n' +
+					'{\n' +
+					'var step = (max-min)/steps;\n' +
+					'result = Math.floor(result/step)*step;\n' +
+					'}\n';
+		if (dim != 1)
+		{
+			parentExpr += 'finalResult = [];\n' +
+						'for (var i = 0; i < value.length ; i++)\n' +
+						'{\n' +
+						'if (i == axis) finalResult.push(result);\n' +
+						'else if (useLimits) finalResult.push(originValue[i]);\n' +
+						'else finalResult.push(value[i]);\n' +
+						'}\n' +
+						'result = finalResult;';
+		}
+		parentExpr += 'result;';
+
+	}
+
+	parentProp.getProperty().expression = parentExpr;
 
 	return parentEffect;
 }
