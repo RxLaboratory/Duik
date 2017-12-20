@@ -1983,6 +1983,63 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 DuAEF.DuAE.Property.Shape = {};
 
 /**
+* Export the given shape property to the given file <br/>
+* The file name in the given path will be used to name the shape in the jsx code
+* @example
+* var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
+* var prop = props[0].getProperty();
+* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
+* @param {Property}	 [shapeProp]	- The path property to export
+* @param {String}	     [file]	- The path to where the jsxinc shape will be written
+* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
+* @return {int} A status code. [0: success, ...]
+*/
+DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCenter)
+{
+    if (shapeProp.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
+    if (shapeProp.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
+    if(typeof(offsetToCenter) === 'undefined') offsetToCenter = false;
+ 
+    var shape = shapeProp.value;
+    var vertices = shape.vertices;
+    
+    if (offsetToCenter)
+    {
+        //get center and offset
+        var sum = [0,0];
+        for (var i = 0 ; i < vertices.length ; i++)
+        {
+            sum[0] += vertices[i][0];
+            sum[1] += vertices[i][1];
+        }
+        var center = sum/vertices.length;
+        //adjust values
+        for (var i = 0 ; i < vertices.length ; i++)
+        {
+            vertices[i][0] -= center[0];
+            vertices[i][1] -= center[1];
+        }
+    }
+
+    var verticesStr = vertices.toSource();
+    var inTangentsStr = shape.inTangents.toSource();
+    var outTangentsStr = shape.outTangents.toSource();
+    var closedStr = shape.closed ? 'true' : 'false';
+    
+    var file = new File(file);
+    if(!file.open("w")) return 3
+    var name = DuAEF.DuJS.Fs.getBasename(file);
+    
+    file.writeln('var ' + name + ' = new Shape();');
+    file.writeln(name + '.vertices = ' + verticesStr + ';');
+    file.writeln(name + '.inTangents = ' + inTangentsStr + ';');
+    file.writeln(name + '.outTangents = ' + outTangentsStr + ';');
+    file.writeln(name + '.closed = ' + closedStr + ';');
+    file.close();
+    return 0;
+}
+
+/**
 * Makes a horizontal symetry transformation on the path.
 * @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
 */
