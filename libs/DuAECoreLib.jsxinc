@@ -530,6 +530,30 @@ DuAEF.DuAE.getPropertyInfos = function (props)
 }
 
 /**
+* Converts an AE Collection to an Array<br />
+* Should only be used in case you need an copy of the collection as an Array,<br />
+* you should use an {@link Iterator} otherwise
+* @param {[]|Collection} collection - The collection to convert
+* @return {[]} The array
+*/
+DuAEF.DuAE.convertCollectionToArray = function (collection)
+{
+	var arr = [];
+	if (DuAEF.DuAE.isCollection(collection))
+	{
+		for (var i = 1;i<=collection.length;i++)
+		{
+			arr.push(collection[i]);
+		}
+	}
+	else
+	{
+		arr = collection;
+	}
+	return arr;
+}
+
+/**
 * Application related methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -1027,6 +1051,70 @@ DuAEF.DuAE.Layer.firstKeyFrameTime = function (layers,selected)
 		else if (test != null) { if (time > test) time = test; }
 	}
 	return time;
+}
+
+/**
+* Sort the layers by their parenting (root at first index 0)
+* @param {Layer[]|Collection} layers - The layers to sort
+* @return {Layer[]} The sorted array
+*/
+DuAEF.DuAE.Layer.sortByParent = function (layers)
+{
+	var sortedLayers = [];
+	var layersToSort = DuAEF.DuAE.convertCollectionToArray(layers);
+
+	while (layersToSort.length > 0)
+	{
+		for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
+		{
+			var l = layersToSort[i];
+			if (l.parent == null)
+			{
+				sortedLayers.push(l);
+				layersToSort.splice(i,1);
+			}
+			else
+			{
+				for (var j = 0 ; j < sortedLayers.length ; j++ )
+				{
+					var sL = sortedLayers[j];
+					if (l.parent.index == sL.index)
+					{
+						sortedLayers.push(l);
+						layersToSort.splice(i,1);
+						break;
+					}
+				}
+			}
+		}
+	}
+	return sortedLayers;
+
+}
+
+/**
+* Parents all the layers together beginning by the end of the array
+* @param {Layer[]} layers - The layers to parent
+*/
+DuAEF.DuAE.Layer.parentChain = function (layers)
+{
+	DuAEF.DuAE.Layer.unparent(layers);
+	for (var i = layers.length -1 ; i >= 1 ; i--)
+	{
+		layers[i].parent = layers[i-1];
+	}
+}
+
+/**
+* Un-parents all the layers
+* @param {Layer[]} layers - The layers
+*/
+DuAEF.DuAE.Layer.unparent = function (layers)
+{
+	for (var i = layers.length -1 ; i >= 0 ; i--)
+	{
+		layers[i].parent = null;
+	}
 }
 
 /**
@@ -1976,6 +2064,24 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 }
 
 /**
+* Sets an expression to a property.<br />
+* Tries to keep the original value of the property by resetting it after.
+* @param {Property|PropertyInfo} prop - The property
+* @param {string} expr - The expression
+*/
+DuAEF.DuAE.Property.setExpression = function (prop,expr)
+{
+	if (!prop.canSetExpression) return;
+	var originalValue = prop.value;
+	//remove current expression
+	prop.expression = "";
+	prop.setValue(originalValue);
+	//set new expression
+	prop.expression = expr;
+	prop.setValue( -prop.value + 2*originalValue)
+}
+
+/**
 * Bezier Paths methods
 * @namespace
 * @memberof DuAEF.DuAE.Property
@@ -1999,10 +2105,10 @@ DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCen
     if (shapeProp.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
     if (shapeProp.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
     if(typeof(offsetToCenter) === 'undefined') offsetToCenter = false;
- 
+
     var shape = shapeProp.value;
     var vertices = shape.vertices;
-    
+
     if (offsetToCenter)
     {
         //get center and offset
@@ -2025,11 +2131,11 @@ DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCen
     var inTangentsStr = shape.inTangents.toSource();
     var outTangentsStr = shape.outTangents.toSource();
     var closedStr = shape.closed ? 'true' : 'false';
-    
+
     var file = new File(file);
     if(!file.open("w")) return 3
     var name = DuAEF.DuJS.Fs.getBasename(file);
-    
+
     file.writeln('var ' + name + ' = new Shape();');
     file.writeln(name + '.vertices = ' + verticesStr + ';');
     file.writeln(name + '.inTangents = ' + inTangentsStr + ';');
