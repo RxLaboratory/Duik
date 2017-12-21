@@ -173,24 +173,80 @@ DuAEF.DuBinary.convertToBinaryFile = function(jsFile,outputFileName)
 }
 
 /**
-* 
-* https://regexr.com/3ia38
-* ([\"\'])(([A-Za-z]\:?|\~)?(\/|\\\\))?([A-Za-z0-9\-\_\.]+(\/|\\\\))*([A-Za-z0-9\-\_]+\.[A-Za-z0-9]+)\1
+ *  Extract paths from a given file. Paths are not checked, be sure to check them before using them. (checking if they exist)
+ * @memberof DuAEF.DuBinary
+ * @param {String}    filePath        - The path to the file
+ * @return {Array{String}} List of paths.
+ * @return {int} 1 if the file can't be opened
 */
 DuAEF.DuBinary.parseFilePaths = function(filePath)
 {
     var paths = [];
 
-   var re = /([\"\'])(\~|.\:)?[a-z0-9\-\_\\\/\.]+\.[A-Za-z0-9]+\1/gi;
-   
     var file = new File(filePath);
     if(!file.open("r")) return 1; // Unable to open the file
+    
+    var folder = file.parent.absoluteURI;
 
+    var indexSimple, indexDouble, indexEnd;
+    var offset = 0;
+    var simple = false;
+    var currentString;
+    var start;
     // Line by line reading
     while(!file.eof )
     {
           var line = file.readln();
-          paths = paths.concat(line.match(re));                   
+        
+          // Detect strings
+          var strings = [];
+          offset = 0;
+          do{
+              // Start string
+              indexDouble = line.indexOf('"', offset); // " 
+              indexSimple = line.indexOf("'", offset); // '
+              if(indexDouble == indexSimple) break; // No match
+              if((indexDouble < indexSimple || indexSimple == -1) && indexDouble != -1)
+              {
+                    simple = false;
+                    offset = indexDouble + 1;                    
+              }else if(indexSimple != -1)
+              {
+                    simple = true;
+                    offset = indexSimple + 1;    
+               }else break;
+                start = offset;
+                // End string
+               do{
+                    if(simple)
+                        indexEnd = line.indexOf("'", offset); // '
+                    else
+                        indexEnd = line.indexOf('"', offset); // "
+                    offset = indexEnd + 1;
+                } while (indexEnd != -1 && line.charAt(indexEnd - 1) == '\\'); // Escaped end string
+            
+                if(indexEnd == -1) break;
+                // String
+                currentString = line.slice(start, indexEnd);
+                
+                // Test if its a file
+                // Dumb check
+                var indexPoint = currentString.lastIndexOf('.');
+                if(indexPoint != -1 && indexPoint != currentString.length - 1)
+                {
+                    // Relative resolve
+                    var code = currentString.charCodeAt(0) ;
+                    if (currentString.charAt(1) != ':'  &&( // E:/
+                            (code > 47 && code < 58) || // numeric (0-9)
+                            (code > 64 && code < 91) || // upper alpha (A-Z)
+                            (code > 96 && code < 123) || // lower alpha (a-z)
+                            code == 46))  // .git for example
+                        currentString = DuAEF.DuJS.String.pathJoin([folder, currentString]);
+                    paths.push(currentString);
+                }   
+                
+          }while(indexSimple != indexDouble);     
+                    
     }
 
     file.close();
