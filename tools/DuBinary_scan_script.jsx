@@ -1,6 +1,7 @@
 (function ()
 {
 	#include "../DuAEF.jsxinc"
+	#include "Dutranslator.jsxinc"
 
      var script = File.openDialog ("Select Script");
      if (!script) return;
@@ -25,7 +26,7 @@
          else
             removedPaths.push(p);
      }
-     if(removedPaths.length > 0) alert(tr("The following paths were removed because they doesn't exist or can't be opened.") + "\n\n" +
+     if(removedPaths.length > 0) alert(tr("The following paths were removed because they don't exist or can't be opened.") + "\n\n" +
         removedPaths.join("\n"));
 
      // Ui
