@@ -89,9 +89,8 @@
 	if (settings.data.debug == undefined) settings.data.debug = false;
 
 	//========== MODULES =============
-	//Notes
+
 	#include Duik16_notes.jsxinc
-	//Calculator
 	#include Duik16_calc.jsxinc
 
 	//=========== FUNCTIONS ==========
@@ -159,19 +158,19 @@
 
 	//=== TOP LEFT TOOLS ===
 
-	var ui_notesButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/notes_l.png',"Simple notepad, with auto-save.",'E:/DEV SRC/RainboxUI/Icons/18w/notes_r.png');
-	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/smallcalc_l.png',"Calculator",'E:/DEV SRC/RainboxUI/Icons/18w/smallcalc_r.png');
+	var ui_notesButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_notes_l.png',"Simple notepad, with auto-save.",'E:/DEV SRC/RainboxUI/Icons/18w/w18_notes_r.png');
+	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_smallcalc_l.png',"Calculator",'E:/DEV SRC/RainboxUI/Icons/18w/w18_smallcalc_r.png');
 
 	//=== TOP RIGHT TOOLS ===
 
 	var ui_tabsGroup = DuAEF.DuScriptUI.addGroup(ui_topGroup,'row');
 	ui_tabsGroup.alignment = ['right','center'];
-	var ui_riggingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/rig_l.png',"Rigging",'E:/DEV SRC/RainboxUI/Icons/18w/rig_r.png');
-	var ui_animationButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/kbez_l.png',"Animation",'E:/DEV SRC/RainboxUI/Icons/18w/kbez_r.png');
-	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/camera_l.png',"Camera",'E:/DEV SRC/RainboxUI/Icons/18w/camera_r.png');
-	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/io_l.png',"I/O Tools",'E:/DEV SRC/RainboxUI/Icons/18w/io_r.png');
-	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/settings_l.png',"Settings",'E:/DEV SRC/RainboxUI/Icons/18w/settings_r.png');
-	var ui_helpButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/help_l.png',"Help | About",'E:/DEV SRC/RainboxUI/Icons/18w/help_r.png');
+	var ui_riggingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_rig_l.png',"Rigging",'E:/DEV SRC/RainboxUI/Icons/18w/w18_rig_r.png');
+	var ui_animationButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_kbez_l.png',"Animation",'E:/DEV SRC/RainboxUI/Icons/18w/w18_kbez_r.png');
+	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_camera_l.png',"Camera",'E:/DEV SRC/RainboxUI/Icons/18w/w18_camera_r.png');
+	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_io_l.png',"I/O Tools",'E:/DEV SRC/RainboxUI/Icons/18w/w18_io_r.png');
+	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_settings_l.png',"Settings",'E:/DEV SRC/RainboxUI/Icons/18w/w18_settings_r.png');
+	var ui_helpButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'','E:/DEV SRC/RainboxUI/Icons/18w/w18_help_l.png',"Help | About",'E:/DEV SRC/RainboxUI/Icons/18w/w18_help_r.png');
 
 	//=== BOTTOM ===
 
@@ -179,6 +178,7 @@
 	ui_rainboxURL.alignment = ['left','bottom'];
 
 	//=== PANELS ===
+
 	#include Duik16_rigging.jsxinc
 	#include Duik16_animation.jsxinc
 	#include Duik16_camera.jsxinc
