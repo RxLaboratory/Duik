@@ -66,16 +66,27 @@ DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 {
 	if (outputFileName === undefined) outputFileName = Folder.userData.absoluteURI + '/DuAEF/' + duBinaryFile.category + '/' + duBinaryFile.fileName;
 	var file = new File(outputFileName);
-	var fileContent = '';
+	var update = true;
 	if (file.exists)
 	{
-		file.encoding = 'BINARY';
-		if (file.open('r', 'TEXT', '????'))
-		{
-			fileContent = file.read();
+		//check last modification
+		var modifiedDate = file.modified;
+		var currentDate = new Date();
+		var dif = currentDate.getTime() - modifiedDate.getTime();
 
-			file.close();
+		//if debug mode, check content
+		if (DuAEF.debug || dif > 43200000)
+		{
+			file.encoding = 'BINARY';
+			if (file.open('r', 'TEXT', '????'))
+			{
+				fileContent = file.read();
+
+				file.close();
+			}
+			update = fileContent != duBinaryFile.binAsString;
 		}
+
 	}
 	else
 	{
@@ -85,8 +96,8 @@ DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 			folder.create();
 		}
 	}
-	var success = fileContent == duBinaryFile.binAsString;
-	if (!success)
+
+	if (update)
 	{
 		file.encoding = 'BINARY';
 		if (file.open('w'))
