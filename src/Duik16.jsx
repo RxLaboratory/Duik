@@ -391,6 +391,7 @@
 	//set settings if new
 	if (settings.data.expert == undefined) settings.data.expert = false;
 	if (settings.data.debug == undefined) settings.data.debug = false;
+	DuAEF.debug = settings.data.debug;
 
 	//========== MODULES =============
 
