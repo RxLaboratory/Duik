@@ -74,6 +74,29 @@
 	var version = '16.0.0-Alpha-1';
 	//=========================
 
+	#include DuAEF.jsxinc
+	#include Duik16_shared.jsxinc
+
+	//=========== SETTINGS ===========
+
+	var settingsFile;
+	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
+	var settings = new DuSettings("Duik",settingsFile);
+	//TODO get the version of Duik, update settings if changed
+	settings.data.duikVersion = version;
+	//set settings if new
+	if (settings.data.expert == undefined) settings.data.expert = false;
+	if (settings.data.debug == undefined) settings.data.debug = false;
+	DuAEF.debug = settings.data.debug;
+
+	//create Debug log
+	var settingsPath = settings.file.path;
+	var debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
+	debugLog.startTimer("Loading Duik");
+
+
+	//============= ICONS =============
+
 	#include 'icons/w14_plus_r.jsxinc'
 	#include 'icons/w14_plus_m.jsxinc'
 	#include 'icons/w14_edit_r.jsxinc'
@@ -378,20 +401,7 @@
 	#include 'icons/w25_selectkey_r.jsxinc'
 	#include 'icons/w25_selectkey_l.jsxinc'
 
-	#include DuAEF.jsxinc
-	#include Duik16_shared.jsxinc
-
-	//=========== SETTINGS ===========
-	//get file
-	var settingsFile;
-	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
-	var settings = new DuSettings("Duik",settingsFile);
-	//TODO get the version of Duik, update settings if changed
-	settings.data.duikVersion = version;
-	//set settings if new
-	if (settings.data.expert == undefined) settings.data.expert = false;
-	if (settings.data.debug == undefined) settings.data.debug = false;
-	DuAEF.debug = settings.data.debug;
+	debugLog.checkTimer("Icons created");
 
 	//========== MODULES =============
 
@@ -449,6 +459,8 @@
 	}
 
 	//=========== UI =============
+
+	debugLog.checkTimer("Building UI");
 
 	//main palette
 	var ui_palette = DuAEF.DuScriptUI.createUI(obj,'Duik 16');
@@ -509,6 +521,9 @@
 
 	//=== INIT ===
 	setCurrentPanel();
+	debugLog.checkTimer("Showing UI");
 	DuAEF.DuScriptUI.showUI(ui_palette);
+
+	debugLog.checkTimer("Duik successfully loaded.");
 
 })(this);
