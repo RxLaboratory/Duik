@@ -1,0 +1,148 @@
+/*
+	DuDebugLib
+  Library to with tools for debugging
+	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+	https://rainboxprod.coop
+
+	_Contributors:_
+		Nicolas Dufresne - Lead developer
+
+	This file is part of DuAEF.
+
+	DuAEF is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	DuAEF is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+* Tools for debugging
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.Debug = {};
+
+//init
+(function ()
+{
+	/**
+	 * The log levels
+	 * @enum {int}
+	 * @readonly
+	 */
+	DuAEF.Debug.LogLevel =
+	{
+		NO_DEBUG: 0,
+		DEBUG: 1,
+		WARNING: 2,
+		CRITICAL: 3,
+		FATAL: 4
+	}
+})();
+
+/**
+ * Constructs a new debug logger
+ * @class DebugLog
+ * @classdesc A logger for debugging purposes: writes debug messages to a file, with date and type
+ * @param	{string|File} pathOrFile - The log file.
+ * @param	{boolean} [clear=true] - Whether to clear the previous log file before starting
+ * @param	{DuAEF.Debug.LogLevel}	[logLevel=DuAEF.Debug.LogLevel.DEBUG] -  The log level.
+ * @param	{boolean}	[enabled=DuAEF.debug] -  true to enable the log and start recording
+ * @property {DuAEF.Debug.LogLevel} level - The log level.
+ * @property {File}	file - The log file.
+ */
+function DebugLog(pathOrFile,clear,logLevel,enabled)
+{
+	if (!(pathOrFile instanceof File)) this.file = new File(pathOrFile);
+	else this.file = pathOrFile;
+	this.file.encoding = 'UTF-8';
+
+	if (logLevel == undefined) logLevel = DuAEF.Debug.DEBUG;
+	this.level = logLevel;
+
+	if (enabled == undefined) enabled = DuAEF.debug;
+	this.enabled = enabled;
+
+	this.timerDate = new Date();
+
+	if (clear == undefined) clear = true;
+	var openOption = 'a';
+	if (clear || !this.file.exists) openOption = 'w';
+	if (this.file.open(openOption))
+	{
+		var currentDate = new Date();
+		this.file.writeln('[' + currentDate.toString() + '] == Debugger started. ==');
+		this.file.close();
+	}
+}
+
+/**
+* Logs a message
+* @param {string} message - The message to log
+* @param {DuAEF.Debug.LogLevel} [level=DuAEF.Debug.LogLevel.DEBUG] - The level of the message
+*/
+DebugLog.prototype.log = function (message,level)
+{
+	if (!this.enabled) return;
+	if (level < this.level) return;
+
+	if (!this.file.open('a')) return;
+
+	if (level == undefined) level = DuAEF.Debug.DEBUG;
+
+	var currentDate = new Date();
+	var levelString = " || Debug info || ";
+	if (level == DuAEF.Debug.LogLevel.WARNING) levelString = " || Warning || ";
+	else if (level == DuAEF.Debug.LogLevel.CRITICAL) levelString = " || Critical || ";
+	else if (level == DuAEF.Debug.LogLevel.FATAL) levelString = " || Fatal || ";
+	this.file.writeln('[' + currentDate.toString() + ']' + levelString + message );
+	this.file.close();
+}
+
+/**
+* Starts the debugger timer.
+* @param {string} [message] - A message to display in the log
+*/
+DebugLog.prototype.startTimer = function(message)
+{
+	this.timerDate = new Date();
+	var currentDate = new Date();
+
+	if (!this.enabled) return;
+	if (!this.file.open('a')) return;
+
+	if (message == undefined) message = '';
+
+	this.file.writeln('[' + currentDate.toString() + '] == Timer started. == ' + message);
+	this.file.close();
+}
+
+/**
+* Checks the time elapsed since the timer has started
+* @param {string} message - A message to display in the log
+* @return {int} The time elapsed in milliseconds
+*/
+DebugLog.prototype.checkTimer = function(message)
+{
+	var currentDate = new Date();
+	var elapsed = currentDate.getTime() - this.timerDate.getTime();
+
+	if (!this.enabled) return -1;
+	if (!this.file.open('a')) return -1;
+
+	if (message == undefined) message = '';
+
+	this.file.writeln('[' + currentDate.toString() + '] == Time elapsed | ' + elapsed + 'ms | == ' + message);
+	this.file.close();
+
+	return elapsed;
+}
