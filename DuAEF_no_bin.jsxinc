@@ -1,25 +1,26 @@
 /**
  * To use the Duduf After Effects scripting framework, just include one of those three files in your script:<br />
- * - <code>DuAEF_fill.jsxinc</code> is the best option if you do not know what to choose. It will include the whole framework with all dependencies.<br />
+ * - <code>build/DuAEF_fill.jsxinc</code> is the best option if you do not know what to choose. It will include the whole framework with all dependencies.<br />
  * - <code>DuAEF.jsxinc</code> will include all files independently, you'll have to keep all files inside lib/ and bin/ for it to work. This is a good option if you plan to make some changes to DuAEF.<br />
- * - <code>DuAEF_no_bin.jsxinc</code> will include everything but the binaries, this file is way lighter than the "full" version.<br />
+ * - <code>build/DuAEF_no_bin.jsxinc</code> will include everything but the binaries, this file is way lighter than the "full" version.<br />
  * - You can also rename one of these file to *.jsx and put it in the Scripts/Startup/ folder of After Effects to make the DuAEF object available for all your scripts without inclusion.<br />
  * @overview Duduf After Effects ExtendScript Framework.
- * @author Nicolas Dufresne
+ * @author Nicolas Dufresne and contributors
  * @copyright 2017 Nicolas Dufresne, Rainbox Productions
  * @version 0.0.2
- * @license GPL-3.0
- * DuAEF is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * DuAEF is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
+ * @name DuAEF
+ * @license GPL-3.0 <br />
+ * DuAEF is free software: you can redistribute it and/or modify<br />
+ * it under the terms of the GNU General Public License as published by<br />
+ * the Free Software Foundation, either version 3 of the License, or<br />
+ * (at your option) any later version.<br />
+ *<br />
+ * DuAEF is distributed in the hope that it will be useful,<br />
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of<br />
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br />
+ * GNU General Public License for more details.<br />
+ *<br />
+ * You should have received a copy of the GNU General Public License<br />
  * along with DuAEF. If not, see {@link http://www.gnu.org/licenses/}.
  */
 
@@ -67,32 +68,20 @@ DuAEF.bin = {};
 	/**
 	* The current OS, true if we're on Mac OS
 	* @memberof DuAEF
+	* @readonly
 	* @type {boolean}
 	*/
 	DuAEF.mac = mac;
 	/**
 	* The current OS, true if we're on Windows
 	* @memberof DuAEF
+	* @readonly
 	* @type {boolean}
 	*/
 	DuAEF.win = !mac;
 
 	//the binaries
-
-	/**
-	* pngquant binary
-	* @memberof DuAEF.bin
-	* @type {DuBinaryFile}
-	* @todo include pngquant for mac too
-	*/
 	DuAEF.bin.pngquant = null;
-	/**
-	* pngquantbatch binary
-	* This is an older version of pngquant where the command 'pngquant *.png' works, but which is a bit slower and less efficient. The current version seems to be broken (on windows at least).
-	* @memberof DuAEF.bin
-	* @type {DuBinaryFile}
-	* @todo include pngquantbatch for mac too
-	*/
 	DuAEF.bin.pngquantbatch = null
 
 })();
@@ -2374,6 +2363,34 @@ DuAEF.DuAE.Property.setExpression = function (prop,expr)
 }
 
 /**
+* Replaces text in Expressions
+* @param {PropertyBase|PropertyInfo} prop - The property (can be a group)
+* @param {string} oldString - The string to replace
+* @param {string} newString - The new string
+* @param {boolean} [caseSensitive=true] - Wether the search has to be case sensitive
+*/
+DuAEF.DuAE.Property.replaceInExpressions = function (prop,oldString,newString,caseSensitive)
+{
+	if (caseSensitive == undefined) caseSensitive = true;
+
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		if (prop.canSetExpression)
+		{
+			try {prop.expression = DuAEF.DuJS.String.replace(prop.expression,oldString,newString,caseSensitive);}
+			catch(e){};
+		}
+	}
+	else if (prop.numProperties > 0)
+	{
+		for (var propertyIndex = 1;propertyIndex <= prop.numProperties;propertyIndex++)
+		{
+			DuAEF.DuAE.Property.replaceInExpressions(prop.property(propertyIndex),oldString,newString,caseSensitive);
+		}
+	}
+}
+
+/**
 * Bezier Paths methods
 * @namespace
 * @memberof DuAEF.DuAE.Property
@@ -3234,6 +3251,7 @@ function Iterator(list)
 	this.min = 0;
 	this.max = list.length -1;
 	this.length = list.length;
+	if (list.length == 0) return;
 	this.isCollection = false;
 	if (list instanceof ItemCollection || list instanceof LayerCollection || list instanceof OMCollection || list instanceof RQItemCollection)
 	{
@@ -3254,15 +3272,21 @@ function Iterator(list)
 */
 Iterator.prototype.next = function ()
 {
+	if (this.length == 0) return false;
+
 	if (!this.valid)
 	{
 		this.goToStart();
-	}
-	else
-	{
-		if (this.current < this.max) this.goTo(this.current + 1);
+		return true;
 	}
 
+	if (this.current < this.max)
+	{
+		this.goTo(this.current + 1);
+		return true;
+	}
+
+	return false;
 }
 
 /**
@@ -3271,6 +3295,7 @@ Iterator.prototype.next = function ()
 */
 Iterator.prototype.previous = function ()
 {
+	if (this.length == 0) return;
 	if (!this.valid)
 	{
 		this.goToEnd();
@@ -3286,6 +3311,7 @@ Iterator.prototype.previous = function ()
 */
 Iterator.prototype.goToEnd = function ()
 {
+	if (this.length == 0) return;
 	this.goTo(this.max);
 }
 
@@ -3294,6 +3320,7 @@ Iterator.prototype.goToEnd = function ()
 */
 Iterator.prototype.goToStart = function ()
 {
+	if (this.length == 0) return;
 	this.goTo(this.min);
 }
 
@@ -3303,6 +3330,7 @@ Iterator.prototype.goToStart = function ()
 */
 Iterator.prototype.goTo = function(index)
 {
+	if (this.length == 0) return;
 	this.current = index;
 	if (this.current < this.min || this.current > this.max) this.valid = false;
 	else this.valid = true;
@@ -3318,12 +3346,12 @@ Iterator.prototype.goTo = function(index)
 */
 Iterator.prototype.do = function (callBack)
 {
+	if (this.length == 0) return;
 	var current = this.current;
 	this.valid = false;
 	this.atEnd = false;
-	while(!this.atEnd)
+	while(this.next())
 	{
-		this.next();
 		callBack(this.list[this.current]);
 	}
 	this.goTo(current);
@@ -4932,10 +4960,11 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
  * @param {string}					helpTip			- The helptip. Default: empty string
  * @param {string}					imageChecked	- The path to an icon displayed when the button is checked. Default: empty string
  * @param {string}					imageOver		- The path to an icon displayed when the mouse is over the button. Default: same as imageChecked
+ * @param {string}					[textChecked]			- The label of the button displayed when it is checked.
  * @param {bool}						debug			- If true, the errors will be thrown instead of being catched. The default is false to work around a bug in the AE JavaScript Debugger. Default: false
  * @return {ImageCheckBox}					The image checkbox created.
  */
-DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,debug)
+DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,textChecked,debug)
 {
 	if (!container) return null;
 	if (!text) text = '';
@@ -4944,6 +4973,7 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	if (!imageChecked) imageChecked = '';
 	if (!imageOver) imageOver = imageChecked;
 	if (debug == undefined) debug = DuAEF.debug;
+	if (textChecked == undefined) textChecked = '';
 
 	if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
 
@@ -4955,6 +4985,8 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.onClick = function () {};
 	imageButton.checked = imageButton.value = false;
 	imageButton.debug = debug;
+	imageButton.textChecked = textChecked;
+	imageButton.defaultText = text;
 
 	var group = container.add('group');
 	group.orientation = 'row';
@@ -4996,6 +5028,8 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 			imageButton.label = label;
 			imageButton.box = true;
 		}
+		if (text.length < textChecked.length) imageButton.label.minimumSize.width = textChecked.length*7;
+		else imageButton.label.minimumSize.width = text.length*7;
 
 	}
 
@@ -5011,13 +5045,15 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		{
 			if (imageButton.checked)
 			{
-				if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-				if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+				if (imageButton.textChecked != '' && imageButton.label) imageButton.label.text = imageButton.textChecked;
+				if (imageButton.image) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+				if (imageButton.label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 			}
 			else
 			{
-				if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-				if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+				if (imageButton.label) imageButton.label.text = imageButton.defaultText;
+				if (imageButton.image) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
+				if (imageButton.label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 			}
 		}
 	}
@@ -5216,20 +5252,26 @@ DuAEF.DuScriptUI.addFormField = function (form,label,type,value,helpTip)
  * @param {string}	text		- The initial text in the edit.
  * @param {string}	[prefix]		- A text prefix to display.
  * @param {string}	[suffix]		- A text suffix to display.
+ * @param {string}	[placeHolder]	- A place holder default text.
  * @return {NiceEditText}	The custom Group containing the edit text.
  * @todo implement helpTip
  */
-DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix)
+DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix,placeHolder)
 {
 	if (prefix == undefined) prefix = '';
 	if (suffix == undefined) suffix = '';
+	if (placeHolder == undefined) placeHolder = '';
 	var niceEditText = container.add('group');
 	niceEditText.orientation = 'stack';
 	niceEditText.margins = 0;
 	niceEditText.alignChildren = ['fill','fill'];
-	niceEditText.static = niceEditText.add('statictext',undefined,prefix + text + suffix);
+	niceEditText.placeHolder = placeHolder;
+	var staticText = text;
+	if (text == "" && placeHolder != "") staticText = placeHolder;
+	niceEditText.static = niceEditText.add('statictext',undefined,prefix + staticText + suffix);
 	niceEditText.static.alignment = ['fill','center'];
-	DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.AFTER_EFFECTS_BLUE);
+	if (text == "" && placeHolder != "") DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+	else DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.AFTER_EFFECTS_BLUE);
 	niceEditText.edit = niceEditText.add('edittext',undefined,text);
 	niceEditText.edit.visible = false;
 	niceEditText.prefix = prefix;
@@ -5258,7 +5300,18 @@ DuAEF.DuScriptUI.addNiceEditText = function(container,text,prefix,suffix)
 	niceEditText.changed = function()
 	{
 		niceEditText.editing = false;
-		niceEditText.static.text = niceEditText.prefix + niceEditText.edit.text + niceEditText.suffix;
+		var staticText = '';
+		if (niceEditText.edit.text == '' && niceEditText.placeHolder != '')
+		{
+			DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			staticText = niceEditText.placeHolder;
+		}
+		else
+		{
+			if (niceEditText.placeHolder != '') DuAEF.DuScriptUI.setTextColor(niceEditText.static,DuAEF.DuJS.Color.Colors.AFTER_EFFECTS_BLUE);
+			staticText = niceEditText.edit.text;
+		}
+		niceEditText.static.text = niceEditText.prefix + staticText + niceEditText.suffix;
 		niceEditText.text = niceEditText.edit.text ;
 		niceEditText.edit.visible = false;
 		niceEditText.static.visible = true;
@@ -5557,7 +5610,7 @@ Bone.prototype.setSize = function (size)
 
 /**
 * Sets a new display color for the bone
-* @memberof Controller
+* @memberof Bone
 * @param {float[]} color - The new color
 */
 Bone.prototype.setColor = function (color)
