@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: DuProcessLib.jsxinc</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: DuProcessLib.jsxinc</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+DuProcessLib
+Library of tools to run command line tools and processes from After Effects scripts
+Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+_Contributors:_
+Nicolas Dufresne - Lead developer
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see &lt;http://www.gnu.org/licenses/>.
+*/
+
+/**
+* Constructs a new DuProcess instance
+* @class DuProcess
+* @classdesc A class to launch and manage processes, using the system command line.
+* @param {string}	  processPath     - The path to the process executable binary
+* @param {array}    [args]            - The common arguments used to run the process. You can append arguments each time you run the process with start(args)
+* @param {int}      [timeout=0]         - Waiting timeout after process start, in ms, 0 to avoid waiting, -1 for infinite.
+* If the process times out, process will not be killed, the script will just stop waiting.
+* @property {string}	  processPath     - The path to the process executable binary
+* @property {array}    args            - The common arguments used to run the process. You can append arguments each time you run the process with start(args)
+* @property {int}      timeout         - Waiting timeout after process start, in ms, 0 to avoid waiting, -1 for infinite.
+* If the process times out, process will not be killed, the script will just stop waiting. Default: 0
+* @property {string[]}	queue			- An Array of arguments array.
+Arrays of arguments in the queue will be processed one after each other.
+Update the Array and launch the queue with startQueue()
+* @property {string}	latestCommand	- The latest command which has been run.
+*/
+function DuProcess(processPath,args,timeout)
+{
+	if (processPath === undefined) processPath = "";
+	this.processPath = processPath;
+	if (args === undefined) args = [];
+	this.args = args;
+	if (timeout === undefined) timeout = 0;
+	this.timeout = timeout;
+
+	this.queue = [];
+
+	this.latestCommand = '';
+}
+
+/**
+* Starts the process
+* @memberof DuProcess
+* @param {Array}  args  - Args to append to DuProcess.args before starting
+* @param {int}		[timeout] 	- Overrides the default timeout.
+*/
+DuProcess.prototype.start = function (args,timeout)
+{
+	if (timeout === undefined) timeout = this.timeout;
+
+	var cmd = this.buildCmd(args);
+
+	this.startCmd(cmd);
+	this.latestCommand = cmd;
+	this.waitForFinished(timeout);
+}
+
+/**
+* Starts the queue
+* @memberof DuProcess
+* @param {int}		[timeout] 	- Overrides the default timeout.
+*/
+DuProcess.prototype.startQueue = function (timeout)
+{
+	if (timeout === undefined) timeout = this.timeout;
+
+	var cmd = this.buildQueueCmd();
+
+	this.startCmd(cmd);
+	this.latestCommand = cmd;
+	this.queue = [];
+
+	this.waitForFinished(timeout);
+}
+
+/**
+* Waits for the process to finish
+* @memberof DuProcess
+* @param {int}		[timeout] 	- Overrides the default timeout.
+*/
+DuProcess.prototype.waitForFinished = function (timeout)
+{
+	if (timeout === undefined) timeout = this.timeout;
+	//wait
+	var wait = true;
+	var currentDate = new Date();
+	var timeout = currentDate.getTime() + timeout;
+	var checkTime = new Date();
+
+	var checkCmd = '';
+	var processName = new File(this.processPath).name;
+	if (DuAEF.mac) checkCmd = 'ps -A | grep "' + processName + '"';
+	if (DuAEF.win) checkCmd = 'tasklist /FO TABLE /NH /FI "Imagename eq ' + processName + '"';
+
+	//wait
+	while(wait)
+	{
+		var test = system.callSystem(checkCmd);
+		if (test.indexOf(processName) &lt; 0) break;
+		$.sleep(100);
+		checkTime = new Date();
+
+		if (this.timeout >= 0)
+		{
+			wait = checkTime.getTime() &lt; timeout;
+		}
+	}
+}
+
+/**
+* Buidls and returns the command line
+* @memberof DuProcess
+* @param {string[]}  [args]  - Args to append to DuProcess.args before starting
+* @return {string}	The command
+*/
+DuProcess.prototype.buildCmd = function (args)
+{
+	if (args === undefined) args = [];
+	//build command
+	//make sure to use fsName
+	if(this.processPath.indexOf('/') >= 0 || this.processPath.indexOf('\\') >= 0)
+	{
+		var processFile = new File(this.processPath);
+		this.processPath = processFile.fsName;
+		if (this.processPath.indexOf(' ') > 0)
+		{
+			this.processPath = '"' + this.processPath + '"';
+		}
+	}
+	var cmd = this.processPath;
+
+	//args
+	for (var a = 0 ; a &lt; this.args.length ; a++)
+	{
+		var arg = this.args[a];
+		if (arg.indexOf(' ') > 0)
+		{
+			arg = '"' + arg + '"';
+		}
+		cmd += ' ' + arg;
+	}
+	for (var b = 0 ; b &lt; args.length ; b++)
+	{
+		var arg = args[b];
+		if (arg.indexOf(' ') > 0)
+		{
+			arg = '"' + arg + '"';
+		}
+		cmd += ' ' + arg;
+	}
+
+	return cmd;
+}
+
+/**
+* Builds and returns the command line to launch the current queue
+* @memberof DuProcess
+* @return {string}	The command
+*/
+DuProcess.prototype.buildQueueCmd = function ()
+{
+	var cmd = '';
+
+	if (this.queue.length == 0)
+	{
+		return this.buildCmd();
+	}
+
+	for (var i = 0 ; i &lt; this.queue.length ; i++)
+	{
+		if (i > 0)
+		{
+			if (DuAEF.mac) cmd += ' &amp;&amp; ';
+			if (DuAEF.win) cmd += '\r\n';
+		}
+		cmd += this.buildCmd(this.queue[i]);
+	}
+	return cmd;
+}
+
+/**
+* Starts a command (in another thread).
+* @memberof DuProcess
+* @param {string}  cmd  - The command to start
+*/
+DuProcess.prototype.startCmd = function (cmd)
+{
+	//Start
+	if (DuAEF.mac)
+	{
+		//add ' &amp;' at the end to start detached
+		cmd += ' &amp;';
+		system.callSystem(cmd);
+	}
+	if (DuAEF.win)
+	{
+		//create batch file
+		var bat = new File(Folder.userData.absoluteURI + '/DuAEF/DuProcess.bat');
+		bat.open('w');
+		bat.write(cmd);
+		bat.close();
+		bat.execute();
+	}
+}
+
+/**
+* Constructs a queue of different processes
+* @class DuProcessQueue
+* @classdesc A class to launch several processes
+* @param {DuProcess[]}	  [processes]     - The DuProcess Array
+* @property {DuProcess[]}	  processes     - The DuProcess Array
+*/
+function DuProcessQueue(processes)
+{
+	if (processes === undefined) processes = [];
+	this.processes = processes;
+}
+
+/**
+* Starts the processes
+* @memberof DuProcessQueue
+*/
+DuProcessQueue.prototype.start = function ()
+{
+	if(!this.processes.length) return;
+	var cmd = '';
+	for (var i = 0 ; i &lt; this.processes.length ; i++)
+	{
+		var p = this.processes[i];
+		if (i > 0)
+		{
+			if (DuAEF.mac) cmd += ' &amp;&amp; ';
+			if (DuAEF.win) cmd += '\r\n';
+		}
+		cmd += p.buildQueueCmd();
+		p.queue = [];
+	}
+	this.processes[0].startCmd(cmd);
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DebugLog.html">DebugLog</a></li><li><a href="DuBinaryFile.html">DuBinaryFile</a></li><li><a href="DuFFMpeg.html">DuFFMpeg</a></li><li><a href="DuFFMpegInputModule.html">DuFFMpegInputModule</a></li><li><a href="DuFFMpegOutputModule.html">DuFFMpegOutputModule</a></li><li><a href="DuFFMpegQueueItem.html">DuFFMpegQueueItem</a></li><li><a href="DuProcess.html">DuProcess</a></li><li><a href="DuProcessQueue.html">DuProcessQueue</a></li><li><a href="DuQuant.html">DuQuant</a></li><li><a href="DuRenderer.html">DuRenderer</a></li><li><a href="DuRendererItem.html">DuRendererItem</a></li><li><a href="DuSettings.html">DuSettings</a></li><li><a href="Iterator.html">Iterator</a></li><li><a href="KeyFrame.html">KeyFrame</a></li><li><a href="KeySpatialProperties.html">KeySpatialProperties</a></li><li><a href="LayerAnim.html">LayerAnim</a></li><li><a href="PropertyAnim.html">PropertyAnim</a></li><li><a href="PropertyGroupAnim.html">PropertyGroupAnim</a></li><li><a href="PropertyInfo.html">PropertyInfo</a></li></ul><h3>Namespaces</h3><ul><li><a href="DuAEF.Debug.html">Debug</a></li><li><a href="DuAEF.DuAE.html">DuAE</a></li><li><a href="DuAEF.DuAE.App.html">App</a></li><li><a href="DuAEF.DuAE.Comp.html">Comp</a></li><li><a href="DuAEF.DuAE.Layer.html">Layer</a></li><li><a href="DuAEF.DuAE.Project.html">Project</a></li><li><a href="DuAEF.DuAE.Property.html">Property</a></li><li><a href="DuAEF.DuAE.Property.Shape.html">Shape</a></li><li><a href="DuAEF.DuBinary.html">DuBinary</a></li><li><a href="DuAEF.Dugr.html">Dugr</a></li><li><a href="DuAEF.DuJS.html">DuJS</a></li><li><a href="DuAEF.DuJS.Array.html">Array</a></li><li><a href="DuAEF.DuJS.Color.html">Color</a></li><li><a href="DuAEF.DuJS.Fs.html">Fs</a></li><li><a href="DuAEF.DuJS.Math.html">Math</a></li><li><a href="DuAEF.DuJS.Number.html">Number</a></li><li><a href="DuAEF.DuJS.RegExp.html">RegExp</a></li><li><a href="DuAEF.DuJS.String.html">String</a></li><li><a href="DuAEF.DuScriptUI.html">DuScriptUI</a></li></ul><h3>Global</h3><ul><li><a href="global.html#JSON">JSON</a></li><li><a href="global.html#seedRandom">seedRandom</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Dec 26 2017 19:47:56 GMT+0100 (Paris, Madrid)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

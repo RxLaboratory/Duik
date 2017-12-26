@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: DuJSLib.jsxinc</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: DuJSLib.jsxinc</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>﻿/*
+DuJSLib
+Library javascript tools
+Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+_Contributors:_
+Nicolas Dufresne - Lead developer
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see &lt;http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+* Constructs an iterator
+* @example
+* var it = new Iterator(layers);
+* while (!it.atEnd)
+* {
+* 	it.next();
+* 	var layer = layers[it.current];
+*	//do something with the layer
+*
+* }
+* @example
+* var it = new Iterator(layers);
+* function doSomething(layer) { //do something with one layer }
+* it.do(doSomething);
+* @class Iterator
+* @classdesc An iterator object to use for easier loops
+* @property {Array|Collection} list - An array or an After Effects Collection
+* @param {Array|Collection} list - An array or an After Effects Collection
+* @property {int} min - The minimum value (inclusive)
+* @property {int} max - The maximum (inclusive)
+* @property {int} length - The number of items
+* @property {int} current - The current item number
+* @property {boolean} atEnd - true if the iterator has reached the end
+* @property {boolean} atStart - true if the iterator is at the start
+* @property {boolean} valid - true if the iterator is between min and max. false until next() or previous() has been called at least once
+* @property {boolean} isCollection - true if the list is a Collection, false if it's a controller
+*/
+function Iterator(list)
+{
+	this.min = 0;
+	this.max = list.length -1;
+	this.length = list.length;
+	if (list.length == 0) return;
+	this.isCollection = false;
+	if (list instanceof ItemCollection || list instanceof LayerCollection || list instanceof OMCollection || list instanceof RQItemCollection)
+	{
+		this.min = 1;
+		this.max = this.length;
+		this.isCollection = true;
+	}
+	this.current = -1;
+	this.atStart = false;
+	this.atEnd = false;
+	this.valid = false;
+	this.list = list;
+}
+
+/**
+* Increments the Iterator&lt;br />
+* Must be called at least once to validate the iterator
+*/
+Iterator.prototype.next = function ()
+{
+	if (this.length == 0) return false;
+
+	if (!this.valid)
+	{
+		this.goToStart();
+		return true;
+	}
+
+	if (this.current &lt; this.max)
+	{
+		this.goTo(this.current + 1);
+		return true;
+	}
+
+	return false;
+}
+
+/**
+* Decrements the Iterator
+* if it's called while valid is false, goes to the end
+*/
+Iterator.prototype.previous = function ()
+{
+	if (this.length == 0) return;
+	if (!this.valid)
+	{
+		this.goToEnd();
+	}
+	else
+	{
+		if (this.current > this.min) this.goTo(this.current - 1);
+	}
+}
+
+/**
+* Goes to the end of the Iterator
+*/
+Iterator.prototype.goToEnd = function ()
+{
+	if (this.length == 0) return;
+	this.goTo(this.max);
+}
+
+/**
+* Goes to the start of the Iterator
+*/
+Iterator.prototype.goToStart = function ()
+{
+	if (this.length == 0) return;
+	this.goTo(this.min);
+}
+
+/**
+* Sets the iterator on the index
+* @param {int} index - The index
+*/
+Iterator.prototype.goTo = function(index)
+{
+	if (this.length == 0) return;
+	this.current = index;
+	if (this.current &lt; this.min || this.current > this.max) this.valid = false;
+	else this.valid = true;
+	if (this.current == this.min) this.atStart = true;
+	else this.atStart = false;
+	if (this.current == this.max) this.atEnd = true;
+	else this.atEnd = false;
+}
+
+/**
+* Executes a function on each item of the List
+* @param {function} callBack - The function to execute, which takes one parameter: an item of the list
+*/
+Iterator.prototype.do = function (callBack)
+{
+	if (this.length == 0) return;
+	var current = this.current;
+	this.valid = false;
+	this.atEnd = false;
+	while(this.next())
+	{
+		callBack(this.list[this.current]);
+	}
+	this.goTo(current);
+}
+
+/**
+* Useful JavaScript tools
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.DuJS = {};
+
+/**
+* JavaScript Array related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Array = {};
+
+/**
+* Gets the first index of a value in an Array, or -1 if not found
+* @memberof DuAEF.DuJS.Array
+* @param {Array}	arr	- The array
+* @param {*}	value	- The value to find. Must be compatible with the == operand
+* @return {int}	The index of value, -1 if not found
+*/
+DuAEF.DuJS.Array.indexOf = function (arr,value)
+{
+	if (value == undefined) throw "Value can not be undefined";
+
+	for (var i = 0;i&lt;arr.length;i++)
+	{
+	if (arr[i] == value) return i;
+	}
+	return -1;
+}
+
+/**
+* Checks if the array has duplicate values
+* @memberof DuAEF.DuJS.Array
+* @param {Array}	arr	- The array
+* @return {boolean}	true if the array has duplicate values
+*/
+DuAEF.DuJS.Array.hasDuplicates = function (arr)
+{
+	for (var i = 0;i&lt;arr.length-1;i++) {
+	for (var j=i+1;j&lt;arr.length;j++) {
+	if (arr[i] === arr[j]) return true;
+	}
+	}
+	return false;
+}
+
+/**
+* Returns all duplicated values found in the array
+* @memberof DuAEF.DuJS.Array
+* @param {Array}	arr	- The array
+* @return {Array}	The duplicated values
+*/
+DuAEF.DuJS.Array.getDuplicates = function (arr)
+{
+	var duplicates = [];
+	for (var i = 0;i&lt;arr.length-1;i++) {
+	for (var j=i+1;j&lt;arr.length;j++) {
+	if (arr[i] === arr[j]) duplicates.push(arr[j]);
+	}
+	}
+	DuAEF.DuJS.Array.removeDuplicates(duplicates);
+	return duplicates;
+}
+
+/**
+* Removes all duplicated values from the Array, and returns them
+* @memberof DuAEF.DuJS.Array
+* @param {Array}	arr	- The array
+* @return {Array}	The duplicated (and removed) values
+*/
+DuAEF.DuJS.Array.removeDuplicates = function (arr)
+{
+	var removed = [];
+	for (var i = 0;i&lt;arr.length-1;i++) {
+        for (var j=i+1;j&lt;arr.length;j++) {
+            if (arr[i] === arr[j]) {
+                removed = removed.concat(arr.splice(j,1));
+            }
+        }
+	}
+	return removed;
+}
+
+/**
+* JavaScript File System related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Fs = {};
+
+/**
+* Recursively gets all files in a folder using a name filter
+* Returns an array of File objects.
+* @memberof DuAEF.DuJS.Fs
+* @param {Folder}	folder	- The Folder
+* @param {string|function}	[filter=*]	- A search mask for file names, specified as a string or a function.
+* A mask string can contain question mark (?) and asterisk (*) wild cards. Default is "*", which matches all file names.
+* Can also be the name of a function that takes a File or Folder object as its argument. It is called for each file or folder found in the search; if it returns true, the object is added to the return array.
+* @return {Array}	The files found.
+*/
+DuAEF.DuJS.Fs.getFilesInFolder = function (folder,filter)
+{
+	if (folder === undefined) return [];
+	if (!(folder instanceof Folder)) return [];
+
+	var files = folder.getFiles(filter);
+	if (files === null) files = [];
+
+	var folders = folder.getFiles(DuJS.fs.isFolder);
+
+	for (var i = 0 ; i &lt; folders.length ; i++)
+	{
+		files = files.concat(DuJS.fs.getFilesInFolder(folders[i],filter));
+	}
+	return files;
+}
+
+/**
+* Checks if an object is a Folder
+* @memberof DuAEF.DuJS.Fs
+* @param {*}	file	- The object to check
+* @return {boolean}	true if this object is an instance of Folder
+*/
+DuAEF.DuJS.Fs.isFolder = function (file)
+{
+	return file instanceof Folder;
+}
+
+/**
+* Returns the basename of the given path or file
+* @memberof DuAEF.DuJS.Fs
+* @example
+* DuAEF.DuJS.Fs.getBasename(new File("D:/code/open/Duik/shape.test")) // "shape"
+* DuAEF.DuJS.Fs.getBasename("D:/code/open/Duik/shape.test") // "shape"
+* @param {String|File}	 [pathOrFile]	- The file or the path
+* @return {String} The basename
+*/
+DuAEF.DuJS.Fs.getBasename = function(pathOrFile)
+{
+    if (pathOrFile instanceof File) pathOrFile = pathOrFile.absoluteURI;
+    var name = pathOrFile.split("/").pop();
+    name = name.split("\\").pop();
+    if(name.lastIndexOf(".") > 0) return name.slice(0, name.lastIndexOf("."));
+    return name;
+}
+
+/**
+* Switch the extension of the given path. Create a new path from a given path and a given extension.
+* @memberof DuAEF.DuJS.Fs
+* @param {String|File}	 [pathOrFile]	- The file or the path
+* @param {String}	     [newExtension]	- The new extension
+* @return {String}  The new path
+*/
+DuAEF.DuJS.Fs.switchExtension = function(pathOrFile, newExtension)
+{
+    if (pathOrFile instanceof File) pathOrFile = pathOrFile.absoluteURI;
+    var point = pathOrFile.lastIndexOf(".");
+    if(point == -1) return pathOrFile;
+    return pathOrFile.slice(0, point) + "." + newExtension;
+}
+
+/**
+* Checks if the given path exists
+* @memberof DuAEF.DuJS.Fs
+* @param {String}	 [path]	- The file path
+* @return {boolean} True or false
+*/
+DuAEF.DuJS.Fs.fileExists = function(path)
+{
+    var file = new File(path);
+    return file.exists;
+}
+
+/**
+* JavaScript Math related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Math = {};
+
+/**
+* Generates a random integer between minimum and maximum
+* @memberof DuAEF.DuJS.Math
+* @param {int}	[min=0]	- The minimum value
+* @param {int}	[max=1]	- The maximum value
+* @return {int}	The randomly generated integer
+*/
+DuAEF.DuJS.Math.random = function (min, max)
+{
+	if (min == undefined) min = 0;
+	if (max == undefined) max = 1;
+	var rng = null;
+	$.sleep(1);
+	var date = new Date();
+	var rng = new Math.seedrandom(date.getTime())();
+	//rng = Math.random();
+
+	if (!rng) return 0;
+	return rng * (max - min) + min;
+}
+
+/**
+* Measures the vector length between two points
+* @param {int[]} value1 - The first value
+* @param {int[]} value2 - The second value
+* @return {float} The length
+*/
+DuAEF.DuJS.Math.getLength = function (value1,value2)
+{
+	if (typeof value1 !== typeof value2)
+	{
+		return null;
+	}
+	if (value1.length > 0)
+	{
+		var result = 0;
+		for (var dim = 0;dim&lt;value1.length;dim++)
+		{
+			result += (value1[dim]-value2[dim])*(value1[dim]-value2[dim]);
+		}
+		result = Math.sqrt(result);
+		return result;
+	}
+	else return Math.abs(value1 - value2) ;
+}
+
+/**
+* JavaScript Regular Expression related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.RegExp = {};
+
+/**
+* Escape reg exp reserved characters from a string to build a regular expression compatible string
+* @memberof DuAEF.DuJS.RegExp
+* @param {string}	string		- The string to escape
+* @return	{string}	The escaped string
+*/
+DuAEF.DuJS.RegExp.escapeRegExp = function (string)
+{
+	return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+
+/**
+* JavaScript String related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.String = {};
+
+/**
+* Replaces all occurences of a substring by another and returns the new string.
+* @memberof DuAEF.DuJS.String
+* @param {string}	string			- The original string
+* @param {string}	find			- The substring to replace
+* @param {string}	replace			- The new substring to insert
+* @param {boolean}	[caseSensitive=true]	- Optionnal. Do a case sensitive search of substring.
+* @return	{string}	The new string
+*/
+DuAEF.DuJS.String.replace = function (string, find, replace, caseSensitive)
+{
+	if (caseSensitive == undefined) caseSensitive = true;
+	var re = new RegExp(DuAEF.DuJS.RegExp.escapeRegExp(find),caseSensitive ? 'g' : 'gi');
+	return string.replace(re, replace);
+}
+
+/**
+ * Checks if a string ends with a given suffix
+ * @memberof DuAEF.DuJS.String
+ * @param {string}	str 	The string to check
+ * @param {string}	suffix	The suffix
+ * @return {bool}	Wether the string ends with the given suffix or not
+ */
+DuAEF.DuJS.String.endsWith = function (str, suffix)
+{
+	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+/**
+ * Generates a new unique string (numbered)
+ * @param {string} newString	- The wanted new string
+ * @param {string[]} stringList 	- The list of strings where the new one must be generateUnique
+ * @param {boolean} [increment=true] - true to automatically increment the new name if it already ends with a digit
+ * @return {string}	The unique string, with a new number at the end if needed.
+ */
+DuAEF.DuJS.String.generateUnique = function ( newString , stringList , increment )
+{
+	if (increment == undefined) increment = true;
+	if (!increment) newString += ' ';
+
+    //detect digits
+    var reg = "( *)(\\d+)([.,]?\\d*)$";
+    //clean input
+    var regexClean = new RegExp(reg);
+    newString = newString.replace(regexClean,"");
+    //go!
+    var regex = new RegExp( newString + reg);
+    //The greatest number found
+    var greatestNumber = 0;
+    //The number of digits for the number as string
+    var numDigits = 0;
+    var spaceString = "";
+    for ( var i =0 ; i &lt; stringList.length ; i ++)
+    {
+        var currentNumberMatch = stringList[i].match(regex);
+        if (stringList[i] === newString &amp;&amp; greatestNumber == 0) greatestNumber++;
+        else if (currentNumberMatch !== null)
+        {
+            //if its a decimal number, keep only the integer part
+            var numberAsString = currentNumberMatch[2];
+            //convert to int
+            var numberAsInt = parseInt(currentNumberMatch[2],10);
+			if (isNaN(numberAsInt)) continue;
+            if(numberAsInt >= greatestNumber ){
+                greatestNumber = numberAsInt  + 1;
+                spaceString = currentNumberMatch[1];
+            }
+            //check if there are zeroes before the number, count the digits
+            if(numberAsInt.toString().length &lt; numberAsString.length &amp;&amp; numDigits &lt; numberAsString.length) numDigits = numberAsString.length;
+        }
+    }
+
+    //add leading 0 if needed
+    if (greatestNumber > 0)
+    {
+            //convert to string with leading zeroes
+            if (greatestNumber == 1) {
+                greatestNumber++;
+                spaceString = " ";
+            }
+            newString += spaceString;
+            greatestNumber = DuAEF.DuJS.Number.convertToString(greatestNumber,numDigits);
+            newString += greatestNumber;
+    }
+
+	if (!increment) newString = newString.substr(0,newString.length-1);
+
+    return newString;
+}
+
+/**
+* Join multiple paths togetther.
+* @param {string[]}	 [parts]	- The parts to join togehter
+* @param {String}	[sep=/]	- The separator to use. If not defined, will look for the first sep in the path.
+* @return {String} The final path
+*/
+DuAEF.DuJS.String.pathJoin = function(parts, sep){
+   var separator = sep || false;
+   if(!separator)
+   {
+       // Find first /
+       if(parts[0].indexOf('/') != -1) separator = '/';
+       if(parts[0].indexOf('\\') != -1) separator = '\\';
+   }
+   if(!separator) separator = '/';
+   var replace   = new RegExp(separator+'{1,}', 'g');  // Replace ///// with /
+   return parts.join(separator).replace(replace, separator);
+}
+
+/**
+* Number related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Number = {};
+
+/**
+ * Converts a number to a string, adding optionnal leading zeroes
+ * @param {Number} num	- The number
+ * @param {int} numDigits 	- The number of digits in the string. Adds leading zeroes
+ * @param {int} [base=10]	- The conversion base
+ * @return {string}	The number as a string
+ */
+DuAEF.DuJS.Number.convertToString = function (num, numDigits, base)
+{
+	if (base == undefined) base = 10;
+	var result = num.toString(base);
+    while(numDigits > result .length)
+    {
+        result  = "0"+ result ;
+    }
+    return result;
+}
+
+/**
+* Color related methods
+* @namespace
+* @memberof DuAEF.DuJS
+*/
+DuAEF.DuJS.Color = {};
+
+//Initialize
+(function ()
+{
+	/**
+	 * Enum for predefined colors.
+	 * @readonly
+	 * @enum {float[]}
+	 */
+	DuAEF.DuJS.Color.Colors =
+	{
+		BLACK: [0,0,0,1],
+		DARK_GREY: [.262,.262,.262,1],
+		LIGHT_GREY: [.7,.7,.7,1],
+		RAINBOX_RED: [.925,.094,.094,1],
+		ORANGE: [.925,.471,.094,1],
+		YELLOW: [.925,.839,.094,1],
+		GREEN: [.094,.925,.094],
+		LIGHT_BLUE: [.471,.839,.925,1],
+		LIGHT_PURPLE: [.471,.471,.925,1],
+		AFTER_EFFECTS_BLUE: [.439,.722,1,1],
+		RANDOM: [-1,-1,-1,-1]
+	};
+
+})();
+
+/**
+* Generates a random color
+* @memberof DuAEF.DuJS.Color
+* @return {float[]}	The color as an [R,G,B,A] Array with float values between 0.0 and 1.0
+*/
+DuAEF.DuJS.Color.random = function ()
+{
+	var color = [0,0,0,1];
+	for (var i = 0 ; i &lt; 3 ; i++)
+	{
+		color[i] = DuAEF.DuJS.Math.random();
+		$.sleep(10);
+	}
+	return color;
+}
+
+/**
+* Converts an hexadecimal color to an RVB Array
+* @memberof DuAEF.DuJS.Color
+* @param {string|int[]} hexColor	- The hexadecimal color
+* @param {boolean}	[isString=true] 	- Whether hexColor is a string or an Array of int of base 16
+* @return {float[]}	The color as an [R,G,B,A] Array with float values between 0.0 and 1.0
+*/
+DuAEF.DuJS.Color.hexToRGB = function (hexColor,isString)
+{
+		if (isString == undefined) isString = true;
+		if (isString)
+		{
+			if (hexColor.indexOf("#") == 0) hexColor = hexColor.replace("#","");
+			var red = parseInt(hexColor.substr(0,2),16)/255.0;
+			var green = parseInt(hexColor.substr(2,2),16)/255.0;
+			var blue = parseInt(hexColor.substr(4,2),16)/255.0;
+			return [red,green,blue];
+		}
+		else
+		{
+			var r = hexColor >> 16;
+			var g = (hexColor &amp; 0x00ff00) >> 8;
+			var b = hexColor &amp; 0xff;
+			return [r/255,g/255,b/255,1];
+		}
+	}
+
+/**
+* Converts an RGB color to a hex string
+* @memberof DuAEF.DuJS.Color
+* @param {float[]} rgbColor	- The rgb color
+* @return {string}	The color as an hex string
+*/
+DuAEF.DuJS.Color.rgbToHex = function (rgbColor)
+{
+	var red = rgbColor[0]*255;
+	var green = rgbColor[1]*255;
+	var blue = rgbColor[2]*255;
+	var hexR = red.toString(16)
+	var hexG = green.toString(16)
+	var hexB = blue.toString(16);
+	if (hexR.length == 1) hexR = "0" + hexR;
+	if (hexG.length == 1) hexG = "0" + hexG;
+	if (hexB.length == 1) hexB = "0" + hexB;
+	var hex = hexR+hexG+hexB;
+	return hex;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="DebugLog.html">DebugLog</a></li><li><a href="DuBinaryFile.html">DuBinaryFile</a></li><li><a href="DuFFMpeg.html">DuFFMpeg</a></li><li><a href="DuFFMpegInputModule.html">DuFFMpegInputModule</a></li><li><a href="DuFFMpegOutputModule.html">DuFFMpegOutputModule</a></li><li><a href="DuFFMpegQueueItem.html">DuFFMpegQueueItem</a></li><li><a href="DuProcess.html">DuProcess</a></li><li><a href="DuProcessQueue.html">DuProcessQueue</a></li><li><a href="DuQuant.html">DuQuant</a></li><li><a href="DuRenderer.html">DuRenderer</a></li><li><a href="DuRendererItem.html">DuRendererItem</a></li><li><a href="DuSettings.html">DuSettings</a></li><li><a href="Iterator.html">Iterator</a></li><li><a href="KeyFrame.html">KeyFrame</a></li><li><a href="KeySpatialProperties.html">KeySpatialProperties</a></li><li><a href="LayerAnim.html">LayerAnim</a></li><li><a href="PropertyAnim.html">PropertyAnim</a></li><li><a href="PropertyGroupAnim.html">PropertyGroupAnim</a></li><li><a href="PropertyInfo.html">PropertyInfo</a></li></ul><h3>Namespaces</h3><ul><li><a href="DuAEF.Debug.html">Debug</a></li><li><a href="DuAEF.DuAE.html">DuAE</a></li><li><a href="DuAEF.DuAE.App.html">App</a></li><li><a href="DuAEF.DuAE.Comp.html">Comp</a></li><li><a href="DuAEF.DuAE.Layer.html">Layer</a></li><li><a href="DuAEF.DuAE.Project.html">Project</a></li><li><a href="DuAEF.DuAE.Property.html">Property</a></li><li><a href="DuAEF.DuAE.Property.Shape.html">Shape</a></li><li><a href="DuAEF.DuBinary.html">DuBinary</a></li><li><a href="DuAEF.Dugr.html">Dugr</a></li><li><a href="DuAEF.DuJS.html">DuJS</a></li><li><a href="DuAEF.DuJS.Array.html">Array</a></li><li><a href="DuAEF.DuJS.Color.html">Color</a></li><li><a href="DuAEF.DuJS.Fs.html">Fs</a></li><li><a href="DuAEF.DuJS.Math.html">Math</a></li><li><a href="DuAEF.DuJS.Number.html">Number</a></li><li><a href="DuAEF.DuJS.RegExp.html">RegExp</a></li><li><a href="DuAEF.DuJS.String.html">String</a></li><li><a href="DuAEF.DuScriptUI.html">DuScriptUI</a></li></ul><h3>Global</h3><ul><li><a href="global.html#JSON">JSON</a></li><li><a href="global.html#seedRandom">seedRandom</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Dec 26 2017 19:47:56 GMT+0100 (Paris, Madrid)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
