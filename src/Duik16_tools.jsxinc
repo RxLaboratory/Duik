@@ -6,6 +6,15 @@ function setCurrentToolsPanel(panel)
 
 	ui_toolsMainGroup.visible = panel == 0;
 	ui_renameGroup.visible = panel == 1;
+	uiSRGroup.visible = panel == 2;
+}
+
+function setCurrentSRPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_SRSelectGroup2.visible = panel == 0;
+	ui_SRSelectGroup3.visible = panel == 1;
 }
 
 function generateNewName(oldName,i)
@@ -47,12 +56,14 @@ function ui_renameLayersButton_clicked()
 	ui_renamePinsButton.setChecked(false);
 	ui_renameItemsButton.setChecked(false);
 }
+
 function ui_renamePinsButton_clicked()
 {
 	ui_renameLayersButton.setChecked(false);
 	ui_renamePinsButton.setChecked(true);
 	ui_renameItemsButton.setChecked(false);
 }
+
 function ui_renameItemsButton_clicked()
 {
 	ui_renameLayersButton.setChecked(false);
@@ -126,8 +137,213 @@ function ui_renameValidButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_SRExpressionsButton_clicked()
+{
+	ui_SRExpressionsButton.setChecked(true);
+	ui_SRTextsButton.setChecked(false);
+	ui_rSRLayersButton.setChecked(false);
+	ui_SRItemsButton.setChecked(false);
+	ui_SRUpdateExpressionsButton.group.visible = false;
+	setCurrentSRPanel(0);
+}
 
+function ui_SRTextsButton_clicked()
+{
+	ui_SRExpressionsButton.setChecked(false);
+	ui_SRTextsButton.setChecked(true);
+	ui_rSRLayersButton.setChecked(false);
+	ui_SRItemsButton.setChecked(false);
+	ui_SRUpdateExpressionsButton.group.visible = false;
+	setCurrentSRPanel(0);
+}
 
+function ui_rSRLayersButton_clicked()
+{
+	ui_SRExpressionsButton.setChecked(false);
+	ui_SRTextsButton.setChecked(false);
+	ui_rSRLayersButton.setChecked(true);
+	ui_SRItemsButton.setChecked(false);
+	ui_SRUpdateExpressionsButton.group.visible = true;
+	setCurrentSRPanel(0);
+}
+
+function ui_SRItemsButton_clicked()
+{
+	ui_SRExpressionsButton.setChecked(false);
+	ui_SRTextsButton.setChecked(false);
+	ui_rSRLayersButton.setChecked(false);
+	ui_SRItemsButton.setChecked(true);
+	ui_SRUpdateExpressionsButton.group.visible = true;
+	setCurrentSRPanel(1);
+}
+
+function ui_SRCompSelectButton_clicked()
+{
+	if (ui_SRCompSelectButton.checked) ui_SRLayersSelectButton.group.visible = false;
+	else ui_SRLayersSelectButton.group.visible = true;
+}
+
+function ui_SRValidButton_clicked()
+{
+	if (ui_SRSearchEdit.text == ui_SRReplaceEdit.text) return;
+
+	if (ui_SRExpressionsButton.checked)
+	{
+		if (ui_SRCompSelectButton.checked)
+		{
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+			var itItems = new Iterator(app.project.items);
+			itItems.do(function (item)
+			{
+				if (item instanceof CompItem)
+				{
+					var itLayers = new Iterator(item.layers);
+					itLayers.do(function (layer)
+					{
+						DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+					});
+				}
+			});
+		}
+		else
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+
+			var layers = [];
+			if (ui_SRLayersSelectButton.checked) layers = comp.selectedLayers;
+			else layers = comp.layers;
+			if (layers.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(layers);
+			it.do(function (layer)
+			{
+				DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+			});
+		}
+	}
+	else if (ui_SRTextsButton.checked)
+	{
+		if (ui_SRCompSelectButton.checked)
+		{
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+			var itItems = new Iterator(app.project.items);
+			itItems.do(function (item)
+			{
+				if (item instanceof CompItem)
+				{
+					var itLayers = new Iterator(item.layers);
+					itLayers.do(function (layer)
+					{
+						if(layer instanceof TextLayer)
+						{
+							var source = layer.sourceText.value;
+							source.text = DuAEF.DuJS.String.replace(source.text,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+							layer.sourceText.setValue(source);
+						}
+					});
+				}
+			});
+		}
+		else
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+
+			var layers = [];
+			if (ui_SRLayersSelectButton.checked) layers = comp.selectedLayers;
+			else layers = comp.layers;
+			if (layers.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(layers);
+			it.do(function (layer)
+			{
+				if(layer instanceof TextLayer)
+				{
+					var source = layer.sourceText.value;
+					source.text = DuAEF.DuJS.String.replace(source.text,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+					layer.sourceText.setValue(source);
+				}
+			});
+		}
+	}
+	else if (ui_rSRLayersButton.checked)
+	{
+		if (ui_SRCompSelectButton.checked)
+		{
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+			var itItems = new Iterator(app.project.items);
+			itItems.do(function (item)
+			{
+				if (item instanceof CompItem)
+				{
+					var itLayers = new Iterator(item.layers);
+					itLayers.do(function (layer)
+					{
+						var oldName = layer.name;
+						layer.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+						if (ui_SRUpdateExpressionsButton.checked) app.project.autoFixExpressions(oldName,layer.name);
+					});
+				}
+			});
+		}
+		else
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+
+			var layers = [];
+			if (ui_SRLayersSelectButton.checked) layers = comp.selectedLayers;
+			else layers = comp.layers;
+			if (layers.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(layers);
+			it.do(function (layer)
+			{
+				var oldName = layer.name;
+				layer.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+				if (ui_SRUpdateExpressionsButton.checked) app.project.autoFixExpressions(oldName,layer.name);
+			});
+		}
+	}
+	else if (ui_SRItemsButton.checked)
+	{
+		if (ui_SRItemsSelectButton.checked) items = app.project.selection;
+		else items = DuAEF.DuAE.convertCollectionToArray(app.project.items);
+
+		if (items.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Search and replace");
+		app.beginSuppressDialogs();
+
+		var it = new Iterator(items);
+		it.do(function (item)
+		{
+			if ((ui_SRCompItemSelectButton.checked && item instanceof CompItem) || (ui_SRFootageItemSelectButton.checked && item instanceof FootageItem) || (ui_SRFolderItemSelectButton.checked && item instanceof FolderItem))
+			{
+				var oldName = item.name;
+				item.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,!ui_SRCaseButton.checked);
+				if (ui_SRUpdateExpressionsButton.checked) app.project.autoFixExpressions(oldName,item.name);
+			}
+		});
+
+	}
+
+	app.endSuppressDialogs(false);
+	app.endUndoGroup();
+}
 
 // ========== UI ==================
 
@@ -171,18 +387,68 @@ var ui_renamNumberGroup = DuAEF.DuScriptUI.addGroup(ui_renameForm,'row');
 var ui_renameNumberButton = ui_renamNumberGroup.add('checkbox',undefined,'');
 var ui_renameNumberEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renamNumberGroup,'1',"Number from ");
 DuAEF.DuScriptUI.addSeparator(ui_renameGroup);
-var ui_renameExpressionsGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup,settings.data.expert ? 'row' : 'column');
-var ui_renameExpressionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameExpressionsGroup,settings.data.expert ? '' : "Update Expressions",DuAEF.DuBinary.toFile(w25_code_l),"Update Expressions",DuAEF.DuBinary.toFile(w25_code_r));
+var ui_renameExpressionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameGroup,"Don't update Expressions",DuAEF.DuBinary.toFile(w25_code_l),"Update Expressions",DuAEF.DuBinary.toFile(w25_code_r),undefined,"Udpate expressions");
+ui_renameExpressionsButton.alignment = ['center','top'];
 DuAEF.DuScriptUI.addSeparator(ui_renameGroup);
 var ui_renameValidGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup);
 ui_renameValidGroup.alignment = ['center','top'];
 var ui_renameCancelButton = DuAEF.DuScriptUI.addImageButton(ui_renameValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 var ui_renameValidButton = DuAEF.DuScriptUI.addImageButton(ui_renameValidGroup,'Rename',DuAEF.DuBinary.toFile(w25_check_g),"Rename selection",DuAEF.DuBinary.toFile(w25_check_r),settings.data.debug);
 
+//Search and replace
+
+var uiSRGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+
+var ui_SRSelectGroup1 = DuAEF.DuScriptUI.addGroup(uiSRGroup,settings.data.expert ? 'row' : 'column');
+ui_SRSelectGroup1.alignment = ['center','top'];
+ui_SRSelectGroup1.alignChildren = ['left','top'];
+var ui_SRExpressionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup1,settings.data.expert ? '' : "Expressions",DuAEF.DuBinary.toFile(w25_code_l),"Search and replace text in expressions",DuAEF.DuBinary.toFile(w25_code_r));
+var ui_SRTextsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup1,settings.data.expert ? '' : "Texts",DuAEF.DuBinary.toFile(w25_text_l),"Search and replace text in sources of text layers",DuAEF.DuBinary.toFile(w25_text_r));
+var ui_rSRLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup1,settings.data.expert ? '' : "Layers",DuAEF.DuBinary.toFile(w25_aelayers_l),"Search and replace text in layer names",DuAEF.DuBinary.toFile(w25_aelayers_r));
+var ui_SRItemsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup1,settings.data.expert ? '' : "Project items",DuAEF.DuBinary.toFile(w25_items_l),"Search and replace text in project item names",DuAEF.DuBinary.toFile(w25_items_r));
+DuAEF.DuScriptUI.addSeparator(uiSRGroup);
+var ui_SRSubSelectGroup = DuAEF.DuScriptUI.addGroup(uiSRGroup,'stack');
+var ui_SRSelectGroup2 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,settings.data.expert ? 'row' : 'column');
+ui_SRSelectGroup2.alignment = ['center','top'];
+ui_SRSelectGroup2.alignChildren = ['left','top'];
+var ui_SRCompSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup2,settings.data.expert ? '' : "Active comp.",DuAEF.DuBinary.toFile(w25_comp_l),"Search and replace text in the active composition or the whole project",DuAEF.DuBinary.toFile(w25_project_r),undefined,"All comps.");
+var ui_SRLayersSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup2,settings.data.expert ? '' : "All layers",DuAEF.DuBinary.toFile(w25_alllayers_l),"Search and replace text in the selected layers only or all layers",DuAEF.DuBinary.toFile(w25_selectedlayers_r),undefined,"Selected layers");
+var ui_SRSelectGroup3 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,settings.data.expert ? 'row' : 'column');
+ui_SRSelectGroup3.alignment = ['center','top'];
+ui_SRSelectGroup3.alignChildren = ['left','top'];
+var ui_SRItemsTypeGroup = DuAEF.DuScriptUI.addGroup(ui_SRSelectGroup3,'row');
+var ui_SRCompItemSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_comp_l),"Search and replace text in compositions",DuAEF.DuBinary.toFile(w25_comp_r));
+var ui_SRFootageItemSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_footage_l),"Search and replace text in footages",DuAEF.DuBinary.toFile(w25_footage_r));
+var ui_SRFolderItemSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_folder_l),"Search and replace text in folders",DuAEF.DuBinary.toFile(w25_folder_r));
+var ui_SRItemsSelectButton = DuAEF.DuScriptUI.addImageCheckBox(ui_SRSelectGroup3,settings.data.expert ? '' : "All items",DuAEF.DuBinary.toFile(w25_allitems_l),"Search and replace text in the selected items only or all items",DuAEF.DuBinary.toFile(w25_selecteditems_r),undefined,"Selected items");
+
+DuAEF.DuScriptUI.addSeparator(uiSRGroup);
+var uiSRSearchGroup = DuAEF.DuScriptUI.addGroup(uiSRGroup,settings.data.expert ? 'row' : 'column');
+var ui_SRSearchEdit = DuAEF.DuScriptUI.addNiceEditText(uiSRSearchGroup,'','','',"Search");
+ui_SRSearchEdit.alignment = ['fill','top'];
+var ui_SRCaseButton = DuAEF.DuScriptUI.addImageCheckBox(uiSRSearchGroup,settings.data.expert ? '' : "Case Sensitive",DuAEF.DuBinary.toFile(w25_casesensitive_l),"Case (in)sensitive search",DuAEF.DuBinary.toFile(w25_caseinsensitive_r),undefined,"Case insensitive");
+settings.data.expert ? ui_SRCaseButton.group.alignment = ['right','top'] : ui_SRCaseButton.group.alignment = ['center','top'];
+var ui_SRReplaceEdit = DuAEF.DuScriptUI.addNiceEditText(uiSRGroup,'','','',"Replace");
+DuAEF.DuScriptUI.addSeparator(uiSRGroup);
+var ui_SRUpdateExpressionsButton = DuAEF.DuScriptUI.addImageCheckBox(uiSRGroup,"Don't Update Expressions",DuAEF.DuBinary.toFile(w25_code_l),"Update Expressions",DuAEF.DuBinary.toFile(w25_code_r),undefined,"Udpate expressions");
+ui_SRUpdateExpressionsButton.alignment = ['center','top'];
+DuAEF.DuScriptUI.addSeparator(uiSRGroup);
+var ui_SRValidGroup = DuAEF.DuScriptUI.addGroup(uiSRGroup);
+ui_SRValidGroup.alignment = ['center','top'];
+var ui_SRCancelButton = DuAEF.DuScriptUI.addImageButton(ui_SRValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_SRValidButton = DuAEF.DuScriptUI.addImageButton(ui_SRValidGroup,'Replace',DuAEF.DuBinary.toFile(w25_check_g),"Search and replace text",DuAEF.DuBinary.toFile(w25_check_r),settings.data.debug);
+
 
 //========== INIT =============
 ui_renameLayersButton.setChecked(true);
 ui_renameExpressionsButton.setChecked(true);
+ui_SRCompItemSelectButton.setChecked(true);
+ui_SRFootageItemSelectButton.setChecked(true);
+ui_SRFolderItemSelectButton.setChecked(true);
+ui_SRExpressionsButton.setChecked(true);
+ui_SRUpdateExpressionsButton.setChecked(true);
+ui_SRUpdateExpressionsButton.group.visible = false;
+setCurrentSRPanel();
 setCurrentToolsPanel();
 
 //======= CONNECT EVENTS ===========
@@ -193,3 +459,12 @@ ui_renameLayersButton.onClick = ui_renameLayersButton_clicked;
 ui_renamePinsButton.onClick = ui_renamePinsButton_clicked;
 ui_renameItemsButton.onClick = ui_renameItemsButton_clicked;
 ui_renameValidButton.onClick = ui_renameValidButton_clicked;
+ui_SRCompSelectButton.onClick = ui_SRCompSelectButton_clicked;
+ui_SRValidButton.onClick = ui_SRValidButton_clicked;
+
+ui_searchReplaceButton.onClick = function () { setCurrentToolsPanel(2); };
+ui_SRCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+ui_SRExpressionsButton.onClick = ui_SRExpressionsButton_clicked;
+ui_SRTextsButton.onClick = ui_SRTextsButton_clicked;
+ui_rSRLayersButton.onClick = ui_rSRLayersButton_clicked;
+ui_SRItemsButton.onClick = ui_SRItemsButton_clicked;
