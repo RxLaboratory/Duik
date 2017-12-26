@@ -10,9 +10,13 @@
 
   #include "../DuAEF.jsxinc"
 
-  var file = File.openDialog ("Select File");
+  var file = File.openDialog ("Select File(s)",undefined,true);
   if (!file) return;
 
-  DuAEF.DuBinary.convertToIncludeFile(file);
+for (var i = 0 ; i < file.length ; i++)
+{
+DuAEF.DuBinary.convertToIncludeFile(file[i]);
+}
+
 
 })();
