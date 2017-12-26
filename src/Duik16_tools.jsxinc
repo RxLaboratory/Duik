@@ -1,10 +1,195 @@
+// ====== FUNCTIONS ==============
+
+function setCurrentToolsPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_toolsMainGroup.visible = panel == 0;
+	ui_renameGroup.visible = panel == 1;
+}
+
+function generateNewName(oldName,i)
+{
+	var prefix = ui_renamePrefixEdit.text;
+	var suffix = ui_renameSuffixEdit.text;
+
+	var newName = ui_renameNameEdit.text;
+	if (newName == '')
+	{
+		newName = oldName;
+		var removeFirst = parseInt(ui_renameRemoveFirstEdit.text);
+		var removeLast = parseInt(ui_renameRemoveLastEdit.text);
+		if (removeFirst > 0)
+		{
+			newName = newName.substr(removeFirst);
+		}
+		if (removeLast > 0)
+		{
+			newName = newName.substring(0,newName.length-removeLast);
+		}
+	}
+	var newName = prefix + newName + suffix;
+
+	var num = parseInt(ui_renameNumberEdit.text);
+	if (! isNaN(num) && ui_renameNumberButton.value)
+	{
+		newName += (num + i);
+	}
+
+	return newName;
+}
+
+// ========= EVENTS ===========
+
+function ui_renameLayersButton_clicked()
+{
+	ui_renameLayersButton.setChecked(true);
+	ui_renamePinsButton.setChecked(false);
+	ui_renameItemsButton.setChecked(false);
+}
+function ui_renamePinsButton_clicked()
+{
+	ui_renameLayersButton.setChecked(false);
+	ui_renamePinsButton.setChecked(true);
+	ui_renameItemsButton.setChecked(false);
+}
+function ui_renameItemsButton_clicked()
+{
+	ui_renameLayersButton.setChecked(false);
+	ui_renamePinsButton.setChecked(false);
+	ui_renameItemsButton.setChecked(true);
+}
+
+function ui_renameValidButton_clicked()
+{
+	if (ui_renameLayersButton.checked)
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+		var layers = comp.selectedLayers;
+		if (layers.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Rename");
+		app.beginSuppressDialogs();
+
+		var it = new Iterator(layers);
+		it.do(function (layer)
+		{
+			var oldName = layer.name;
+			var newName = generateNewName(oldName,it.current);
+			layer.name = newName;
+			if (ui_renameExpressionsButton.checked) app.project.autoFixExpressions(oldName,newName);
+		});
+	}
+	else if (ui_renamePinsButton.checked)
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps('ADBE FreePin3 PosPin Atom');
+		if (props.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Rename");
+		app.beginSuppressDialogs();
+
+		var num = parseInt(ui_renameNumberEdit.text);
+
+		var it = new Iterator(props);
+		it.do(function (prop)
+		{
+			var oldName = prop.getProperty().name;
+			var newName = generateNewName(oldName,it.current);
+			prop.getProperty().name = newName;
+			if (ui_renameExpressionsButton.checked) app.project.autoFixExpressions(oldName,newName);
+		});
+	}
+	else
+	{
+		var items = app.project.selection;
+		if (items.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Rename");
+		app.beginSuppressDialogs();
+
+		var it = new Iterator(items);
+		it.do(function (item)
+		{
+			var oldName = item.name;
+			var newName = generateNewName(oldName,it.current);
+			item.name = newName;
+			if (ui_renameExpressionsButton.checked) app.project.autoFixExpressions(oldName,newName);
+		});
+	}
+
+
+	ui_renameRemoveFirstEdit.setText('0');
+	ui_renameRemoveLastEdit.setText('0');
+
+	app.endSuppressDialogs(false);
+	app.endUndoGroup();
+}
+
+
+
+
+// ========== UI ==================
+
 //tools
-var ui_toolsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
-ui_toolsGroup.alignment = ['center','top'];
-ui_toolsGroup.alignChildren = ['left','top'];
+var ui_toolsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
 
-ui_toolsGroup.enabled = false;
+var ui_toolsMainGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+ui_toolsMainGroup.alignment = ['center','top'];
+ui_toolsMainGroup.alignChildren = ['left','top'];
 
-var ui_renameButton = DuAEF.DuScriptUI.addImageButton(ui_toolsGroup,"Rename",DuAEF.DuBinary.toFile(w32_rename_l),"Rename stuff",DuAEF.DuBinary.toFile(w32_rename_r));
-var ui_searchReplaceButton = DuAEF.DuScriptUI.addImageButton(ui_toolsGroup,"Search and replace",DuAEF.DuBinary.toFile(w32_searchreplace_l),"Search and replace text",DuAEF.DuBinary.toFile(w32_searchreplace_r));
-var ui_measureButton = DuAEF.DuScriptUI.addImageButton(ui_toolsGroup,"Measure distance",DuAEF.DuBinary.toFile(w32_measure_l),"Measure the distance between two layers",DuAEF.DuBinary.toFile(w32_measure_r));
+var ui_renameButton = DuAEF.DuScriptUI.addImageButton(ui_toolsMainGroup,"Rename",DuAEF.DuBinary.toFile(w32_rename_l),"Rename stuff",DuAEF.DuBinary.toFile(w32_rename_r));
+var ui_searchReplaceButton = DuAEF.DuScriptUI.addImageButton(ui_toolsMainGroup,"Search and replace",DuAEF.DuBinary.toFile(w32_searchreplace_l),"Search and replace text",DuAEF.DuBinary.toFile(w32_searchreplace_r));
+var ui_measureButton = DuAEF.DuScriptUI.addImageButton(ui_toolsMainGroup,"Measure distance",DuAEF.DuBinary.toFile(w32_measure_l),"Measure the distance between two layers",DuAEF.DuBinary.toFile(w32_measure_r));
+
+//Rename
+
+var ui_renameGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+
+var ui_renameSelectGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup,settings.data.expert ? 'row' : 'column');
+ui_renameSelectGroup.alignment = ['center','top'];
+ui_renameSelectGroup.alignChildren = ['left','top'];
+
+var ui_renameLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameSelectGroup,settings.data.expert ? '' : "Layers",DuAEF.DuBinary.toFile(w25_aelayers_l),"Rename layers",DuAEF.DuBinary.toFile(w25_aelayers_r));
+var ui_renamePinsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameSelectGroup,settings.data.expert ? '' : "Pins",DuAEF.DuBinary.toFile(w25_pin_l),"Rename puppet pins",DuAEF.DuBinary.toFile(w25_pin_r));
+var ui_renameItemsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameSelectGroup,settings.data.expert ? '' : "Project items",DuAEF.DuBinary.toFile(w25_items_l),"Rename puppet pins",DuAEF.DuBinary.toFile(w25_items_r));
+DuAEF.DuScriptUI.addSeparator(ui_renameGroup);
+var ui_renamNameGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup,'row');
+ui_renamNameGroup.alignment = ['fill','top'];
+ui_renamNameGroup.alignChildren = ['fill','top'];
+var ui_renamePrefixEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renamNameGroup,'','','',"Prefix" + '_');
+var ui_renameNameEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renamNameGroup,'','','',"Name");
+var ui_renameSuffixEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renamNameGroup,'','','','_' + "Suffix");
+var ui_renameForm =  DuAEF.DuScriptUI.addGroup(ui_renameGroup,'column');
+ui_renameForm.alignment = ['center','top'];
+ui_renameForm.alignChildren = ['left','top'];
+var ui_renameRemoveFirstLabel = ui_renameForm.add('statictext',undefined,"Remove the first");
+var ui_renameRemoveFirstEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renameForm,'',''," digits.",'0');
+var ui_renameRemoveLastLabel = ui_renameForm.add('statictext',undefined,"Remove the last");
+var ui_renameRemoveLastEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renameForm,'',''," digits.",'0');
+var ui_renamNumberGroup = DuAEF.DuScriptUI.addGroup(ui_renameForm,'row');
+var ui_renameNumberButton = ui_renamNumberGroup.add('checkbox',undefined,'');
+var ui_renameNumberEdit = DuAEF.DuScriptUI.addNiceEditText(ui_renamNumberGroup,'1',"Number from ");
+DuAEF.DuScriptUI.addSeparator(ui_renameGroup);
+var ui_renameExpressionsGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup,settings.data.expert ? 'row' : 'column');
+var ui_renameExpressionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_renameExpressionsGroup,settings.data.expert ? '' : "Update Expressions",DuAEF.DuBinary.toFile(w25_code_l),"Update Expressions",DuAEF.DuBinary.toFile(w25_code_r));
+DuAEF.DuScriptUI.addSeparator(ui_renameGroup);
+var ui_renameValidGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup);
+ui_renameValidGroup.alignment = ['center','top'];
+var ui_renameCancelButton = DuAEF.DuScriptUI.addImageButton(ui_renameValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_renameValidButton = DuAEF.DuScriptUI.addImageButton(ui_renameValidGroup,'Rename',DuAEF.DuBinary.toFile(w25_check_g),"Rename selection",DuAEF.DuBinary.toFile(w25_check_r),settings.data.debug);
+
+
+//========== INIT =============
+ui_renameLayersButton.setChecked(true);
+ui_renameExpressionsButton.setChecked(true);
+setCurrentToolsPanel();
+
+//======= CONNECT EVENTS ===========
+
+ui_renameButton.onClick = function () { setCurrentToolsPanel(1); };
+ui_renameCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+ui_renameLayersButton.onClick = ui_renameLayersButton_clicked;
+ui_renamePinsButton.onClick = ui_renamePinsButton_clicked;
+ui_renameItemsButton.onClick = ui_renameItemsButton_clicked;
+ui_renameValidButton.onClick = ui_renameValidButton_clicked;

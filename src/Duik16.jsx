@@ -71,7 +71,7 @@
 (function(obj)
 {
 	//=========================
-	var version = '16.0.0-Alpha-1';
+	var version = '16.0.0-Alpha-2';
 	//=========================
 
 	#include DuAEF.jsxinc
@@ -146,6 +146,10 @@
 	#include 'icons/w18_randomlayerstarttime_l.jsxinc'
 	#include 'icons/w18_randomize_r.jsxinc'
 	#include 'icons/w18_randomize_l.jsxinc'
+	#include 'icons/w18_bezierik_r.jsxinc'
+	#include 'icons/w18_bezierik_l.jsxinc'
+	#include 'icons/w18_ik_r.jsxinc'
+	#include 'icons/w18_ik_l.jsxinc'
 
 	#include 'icons/w25_plantigrade_r.jsxinc'
 	#include 'icons/w25_plantigrade_l.jsxinc'
@@ -266,6 +270,14 @@
 	#include 'icons/w25_wiggle_l.jsxinc'
 	#include 'icons/w25_list_r.jsxinc'
 	#include 'icons/w25_list_l.jsxinc'
+	#include 'icons/w25_aelayers_l.png.jsxinc'
+	#include 'icons/w25_aelayers_r.png.jsxinc'
+	#include 'icons/w25_pin_l.png.jsxinc'
+	#include 'icons/w25_pin_r.png.jsxinc'
+	#include 'icons/w25_items_l.png.jsxinc'
+	#include 'icons/w25_items_r.png.jsxinc'
+	#include 'icons/w25_comp_l.png.jsxinc'
+	#include 'icons/w25_project_r.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
