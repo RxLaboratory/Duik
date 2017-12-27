@@ -697,7 +697,9 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 */
 DuAEF.DuAE.Comp.unselectProperties = function()
 {
-	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return props;
+	var props = comp.selectedProperties;
 	for (var i = 0; i < props.length ; i++)
 	{
 		props[i].selected = false;
@@ -1125,6 +1127,57 @@ DuAEF.DuAE.Layer.unparent = function (layers)
 * @memberof DuAEF.DuAE
 */
 DuAEF.DuAE.Property = {};
+
+/**
+* Gets the After Effects  properties in the property
+* @param {PropertyBase|PropertyInfo}	property	- The layer
+* @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
+* A function which take one PropertyBase as argument can be used to filter the properties: the Property will be returned if the function returns true.
+* @param {boolean}	[strict=false]	- If a string filter is provided, wether to search for the exact name/matchName or if it contains the filter.
+* @param {boolean}	[caseSensitive=true]	- If a string filter is provided, and not strict is false, does the search have to be case sensitive?
+* @return {PropertyInfo[]} The selected properties, an empty Array if nothing found
+*/
+DuAEF.DuAE.Property.getProps = function(property,filter,strict,caseSensitive)
+{
+	if (strict == undefined) strict = false;
+	if (caseSensitive == undefined) caseSensitive = true;
+	var prop;
+	if (property instanceof PropertyInfo) prop = property.getProperty();
+	else prop = property;
+
+	var props = [];
+
+	if (!caseSensitive && typeof filter === "string") filter = filter.toLowerCase();
+
+	var name = prop.name;
+	var matchName = prop.matchName;
+	if (!caseSensitive)
+	{
+		name = name.toLowerCase();
+		matchName = matchName.toLowerCase();
+	}
+
+	if (strict && name === filter) props.push(prop);
+	else if (strict && matchName === filter) props.push(prop);
+	else if (typeof filter === "string")
+	{
+		if (name.indexOf(filter) >= 0) props.push(prop);
+		else if (matchName.indexOf(filter) >= 0) props.push(prop);
+	}
+	else if (typeof filter === "function") if (filter(prop)) props.push(prop);
+	else if (prop.propertyType == PropertyType.PROPERTY) if (prop.propertyValueType == filter) props.push(prop);
+	else if (prop.propertyType == filter) props.push(prop);
+
+	if (prop.numProperties > 0)
+	{
+		for (var k = 1 ; k <= prop.numProperties ; k++)
+		{
+			props = props.concat(DuAEF.DuAE.Property.getProps(prop.property(k),filter,strict,caseSensitive));
+		}
+	}
+
+	return DuAEF.DuAE.getPropertyInfos(props);
+}
 
 /**
 * Gets the layer containing the property
@@ -1616,6 +1669,49 @@ DuAEF.DuAE.Property.removeAnim = function(prop,removeExpression)
 	if (removeExpression && prop.canSetExpression)
 	{
 		prop.expression = '';
+	}
+}
+
+/**
+* Selects the keyframes in the propoerty.<br />
+* Selects all nested keyframes if the property is a group.
+* @param {PropertyBase|PropertyInfo} property - The property
+* @param {float} [inTime=0] - The time at which to select the keyframes
+* @param {float} [outTime=inTime] - The end time
+*/
+DuAEF.DuAE.Property.selectKeyFrames = function(property,inTime,outTime)
+{
+	if (inTime == undefined) inTime = 0;
+	if (outTime == undefined) outTime = inTime;
+	var prop;
+	if (property instanceof PropertyInfo) prop = property.getProperty();
+	else prop = property;
+
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		if (inTime == outTime)
+		{
+			//get key
+			var key = DuAEF.DuAE.Property.getKeyFrameAtTime(prop,inTime);
+			if (key) prop.setSelectedAtKey(key._index,true);
+		}
+		else
+		{
+			//get keys
+			var keys = DuAEF.DuAE.Property.getKeyFrames(prop,false,[inTime,outTime]);
+			if (!keys) return;
+			for (var i = 0 ; i < keys.length ; i++)
+			{
+				prop.setSelectedAtKey(keys[i]._index,true);
+			}
+		}
+	}
+	else if (prop.numProperties > 0)
+	{
+		for (var i = 1 ; i <= prop.numProperties ; i++)
+		{
+			DuAEF.DuAE.Property.selectKeyFrames(prop.property(i),inTime,outTime);
+		}
 	}
 }
 
