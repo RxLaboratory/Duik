@@ -1122,6 +1122,39 @@ DuAEF.DuAE.Layer.unparent = function (layers)
 }
 
 /**
+* Creates a sequence with the layers, but using opacities.
+* This enables more possibilities to rig them, like with the Connector
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {string} [expr] - An expression to add to the opacity of the layers
+*/
+DuAEF.DuAE.Layer.sequence = function (layers,expr)
+{
+	if (layers.length == 0) return;
+	if (expr == undefined) expr = '';
+	var comp = layers[0].containingComp;
+	var it = new Iterator(layers);
+	it.do(function (layer)
+	{
+		while (layer.transform.opacity.numKeys > 0)
+		{
+			layer.transform.opacity.removeKey(layer.transform.opacity.numKeys);
+		}
+		var i = it.current;
+		var t = i*comp.frameDuration;
+		var endTime = (layers.length-1)*comp.frameDuration;
+		layer.transform.opacity.setValueAtTime(0,0);
+		layer.transform.opacity.setValueAtTime(endTime,0);
+		layer.transform.opacity.setValueAtTime(t,100);
+		if (i < layers.length -1 ) layer.transform.opacity.setValueAtTime(t+comp.frameDuration,0);
+		for (var keyIndex = 1;keyIndex <= layer.transform.opacity.numKeys;keyIndex++)
+		{
+			layer.transform.opacity.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+		}
+		layer.transform.opacity.expression = expr;
+	});
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
