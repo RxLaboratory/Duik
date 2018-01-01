@@ -382,6 +382,10 @@
 	#include 'icons/w25_update_l.png.jsxinc'
 	#include 'icons/w25_eyedropper_r.png.jsxinc'
 	#include 'icons/w25_eyedropper_l.png.jsxinc'
+	#include 'icons/w25_opacity_l.png.jsxinc'
+	#include 'icons/w25_opacity_r.png.jsxinc'
+	#include 'icons/w25_allproperties_l.png.jsxinc'
+	#include 'icons/w25_allproperties_r.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'

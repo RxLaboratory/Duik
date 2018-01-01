@@ -16,7 +16,6 @@ function initConstraintsUI()
 	setCurrentConstraintsPanel(0);
 }
 
-
 function bonesEditInit()
 {
 	if (settings.data.boneSizeHint == undefined) settings.data.boneSizeHint = 0;
@@ -47,7 +46,6 @@ function connectorInit()
 {
 	connectorMasterProp = null;
 	ui_connectorPickButton.label.text = "Pick master property";
-	ui_connectorLabel.text = "Pick a master property,\nchoose min and max\nthen select the child properties.";
 	ui_connectorMinimumEdit.setText("0");
 	ui_connectorMaximumEdit.setText("100");
 	ui_connectorAxisList.removeAll();
@@ -57,6 +55,13 @@ function connectorInit()
 	ui_connectorValidButton.label.enabled = false;
 	ui_connectorValidButton.image.enabled = false;
 	ui_connectorForm.enabled = false;
+	if (!settings.data.expert)
+	{
+		ui_connectorSeparator3.enabled = false;
+		ui_connectorSeparator2.enabled = false;
+	}
+	ui_connectorChildrenGroup.enabled = false;
+	ui_connectorPropertiesButton.setChecked(true);
 }
 
 //====== EVENTS ================
@@ -172,25 +177,56 @@ function ui_connectorPickButton_clicked()
 
 	if (connectorMasterProp)
 	{
-		ui_connectorLabel.text ="Choose min and max\nthen select the child properties.";
 		ui_connectorValidButton.label.enabled = true;
 		ui_connectorValidButton.image.enabled = true;
 		ui_connectorForm.enabled = true;
+		ui_connectorChildrenGroup.enabled = true;
+		if (!settings.data.expert)
+		{
+			ui_connectorSeparator3.enabled = true;
+			ui_connectorSeparator2.enabled = true;
+		}
 	}
 	else
 	{
-		ui_connectorLabel.text = "Pick a master property,\nchoose min and max\nthen select the child properties.";
 		ui_connectorPickButton.label.text = "Pick master property";
 		ui_connectorForm.enabled = false;
+		ui_connectorChildrenGroup.enabled = false;
+		if (!settings.data.expert)
+		{
+			ui_connectorSeparator3.enabled = false;
+			ui_connectorSeparator2.enabled = false;
+		}
 	}
+}
+
+function ui_connectorTypeList_changed()
+{
+	if (ui_connectorTypeList.selection.index == 0)
+	{
+		ui_connectorAxisList.enabled = true;
+		//TODO get min and max values
+	}
+	else if (ui_connectorTypeList.selection.index == 1)
+	{
+		ui_connectorAxisList.enabled = false;
+		//TODO get max velocity
+	}
+}
+
+function ui_connectorPropertiesButton_clicked()
+{
+	ui_connectorPropertiesButton.setChecked(true);
+	ui_connectorOpacitiesButton.setChecked(false);
+}
+function ui_connectorOpacitiesButton_clicked()
+{
+	ui_connectorPropertiesButton.setChecked(false);
+	ui_connectorOpacitiesButton.setChecked(true);
 }
 
 function ui_connectorValidButton_clicked()
 {
-	var props = DuAEF.DuAE.Comp.getSelectedProps();
-	if (props.length == 0) return;
-
-	app.beginUndoGroup('Duik | ' + "Connector");
 	var effect = null;
 	var min = parseFloat(ui_connectorMinimumEdit.text);
 	var max = parseFloat(ui_connectorMaximumEdit.text);
@@ -213,11 +249,40 @@ function ui_connectorValidButton_clicked()
 		else if (ui_connectorAxisList.selection.index == 6) axis = DuAEF.DuAE.Axis.VALUE;
 	}
 
-	var it = new Iterator(props);
-	it.do(function (p) {
-		effect = DuAEF.Duik.Rigging.connector(p,connectorMasterProp,effect,min,max,axis,type);
-	});
-	app.endUndoGroup();
+
+	if (ui_connectorPropertiesButton.checked)
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Connector");
+
+		var it = new Iterator(props);
+		it.do(function (p) {
+			effect = DuAEF.Duik.Rigging.connector(p,connectorMasterProp,effect,min,max,axis,type);
+		});
+
+		app.endUndoGroup();
+	}
+	else
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+		var layers = comp.selectedLayers;
+		if (layers.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Connector");
+
+		DuAEF.DuAE.Layer.sequence(layers);
+		var it = new Iterator(layers);
+		it.do(function (layer) {
+			effect = DuAEF.Duik.Rigging.connector(layer.transform.opacity,connectorMasterProp,effect,min,max,axis,type);
+		});
+
+		app.endUndoGroup();
+	}
+
+
 }
 
 function ui_bonesEditSizeList_changed()
@@ -584,7 +649,7 @@ var ui_connectorAngleButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGr
 if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,"Or pick master");
 var ui_connectorPickButton = DuAEF.DuScriptUI.addImageButton(ui_connectorGroup,"Pick master property",DuAEF.DuBinary.toFile(w32_pickproperty_l),"Select the master property",DuAEF.DuBinary.toFile(w32_pickproperty_r));
 
-if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'2 - ' + "Set values");
+if (!settings.data.expert) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'2 - ' + "Set values");
 var ui_connectorForm = DuAEF.DuScriptUI.addForm(ui_connectorGroup);
 ui_connectorForm.alignment = ['center','top'];
 var ui_connectorAxisLabel = ui_connectorForm.labels.add('statictext',undefined,"Placeholder: ");
@@ -599,9 +664,13 @@ ui_connectorMinLabel.minimumSize.height = ui_connectorMinLabel.maximumSize.heigh
 ui_connectorMaxLabel.minimumSize.height = ui_connectorMaxLabel.maximumSize.height = ui_connectorMaximumEdit.edit.preferredSize[1];
 ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.height = ui_connectorAxisList.preferredSize[1];
 ui_connectorTypeLabel.minimumSize.height = ui_connectorTypeLabel.maximumSize.height = ui_connectorTypeList.preferredSize[1];
-if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
-var ui_connectorLabel = ui_connectorGroup.add('statictext',undefined,"Pick a master property,\nchoose min and max\nthen select the child properties.",{multiline:true});
-DuAEF.DuScriptUI.setTextColor(ui_connectorLabel,DuAEF.DuJS.Color.Colors.DARK_GREY);
+if (!settings.data.expert) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
+var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,settings.data.expert ? 'row' : 'column');
+ui_connectorChildrenGroup.alignment = ['center','top'];
+ui_connectorChildrenGroup.alignChildren = ['left','top'];
+var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_connectorChildrenGroup,settings.data.expert ? '' : 'Selected properties',DuAEF.DuBinary.toFile(w25_allproperties_l),"Connect selected properties",DuAEF.DuBinary.toFile(w25_allproperties_r))
+var ui_connectorOpacitiesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_connectorChildrenGroup,settings.data.expert ? '' : 'Selected layers opacity',DuAEF.DuBinary.toFile(w25_opacity_l),"Connect selected layers opacity",DuAEF.DuBinary.toFile(w25_opacity_r))
+DuAEF.DuScriptUI.addSeparator(ui_connectorGroup);
 var ui_connectorValidGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup);
 var ui_connectorCancelButton = DuAEF.DuScriptUI.addImageButton(ui_connectorValidGroup,"Cancel",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 var ui_connectorValidButton = DuAEF.DuScriptUI.addImageButton(ui_connectorValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Connect",DuAEF.DuBinary.toFile(w25_check_r));
@@ -621,6 +690,9 @@ ui_bezierIKButton.onClick = shared.createBezierIK;
 ui_connectorSliderButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.SLIDER); ui_connectorPickButton_clicked(); }
 ui_connectorDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.DOUBLE_SLIDER); ui_connectorPickButton_clicked(); }
 ui_connectorAngleButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.ANGLE); ui_connectorPickButton_clicked(); }
+ui_connectorTypeList.onChange = ui_connectorTypeList_changed;
+ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
+ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
 
 ui_connectorButton.onClick = function () { connectorInit(); setCurrentConstraintsPanel(3);};
 ui_connectorCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
