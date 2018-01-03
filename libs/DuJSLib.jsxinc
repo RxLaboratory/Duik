@@ -58,7 +58,7 @@ function Iterator(list)
 	this.length = list.length;
 	if (list.length == 0) return;
 	this.isCollection = false;
-	if (list instanceof ItemCollection || list instanceof LayerCollection || list instanceof OMCollection || list instanceof RQItemCollection)
+	if (DuAEF.DuAE.isCollection(list))
 	{
 		this.min = 1;
 		this.max = this.length;
@@ -177,6 +177,17 @@ DuAEF.DuJS = {};
 DuAEF.DuJS.Array = {};
 
 /**
+* Checks if this is an Array or an After Effects collection type
+* @memberof DuAEF.DuJS.Array
+* @param {Array|Collection} list - The list to check
+* @return {boolean} true if this is a Cllection or an Array
+*/
+DuAEF.DuJS.Array.isList = function (list)
+{
+	return (list instanceof Array || DuAEF.DuAE.isCollection(list));
+}
+
+/**
 * Gets the first index of a value in an Array, or -1 if not found
 * @memberof DuAEF.DuJS.Array
 * @param {Array}	arr	- The array
@@ -245,6 +256,44 @@ DuAEF.DuJS.Array.removeDuplicates = function (arr)
         }
 	}
 	return removed;
+}
+
+/**
+* Compares two arrays.<br />
+* The items in the arrays must be compatible with the == operand
+* @memberof DuAEF.DuJS.Array
+* @param {Array|Collection} array1 - The array
+* @param {Array|Collection} array2 - The array
+* @param {int} [floatPrecision=-1] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
+* @return {boolean} true if the two arrays contain the same values
+*/
+DuAEF.DuJS.Array.compare = function (array1,array2,floatPrecision)
+{
+	if (!DuAEF.DuJS.Array.isList(array1) && !DuAEF.DuJS.Array.isList(array2))
+	{
+		if (typeof array1 == 'number' && typeof array2 == 'number')
+		{
+			return DuAEF.DuJS.Math.compare(array1,array2,floatPrecision)
+		}
+		else return array1 == array2;
+	}
+	if (DuAEF.DuJS.Array.isList(array1) && !DuAEF.DuJS.Array.isList(array2)) return false;
+	if (!DuAEF.DuJS.Array.isList(array1) && DuAEF.DuJS.Array.isList(array2)) return false;
+	if (array1.length != array2.length) return false;
+
+	var it = new Iterator(array1);
+	var ok = true;
+	it.do(function (item1)
+	{
+		var item2 = array2[it.current];
+		if (!DuAEF.DuJS.Array.compare(item1,item2,floatPrecision))
+		{
+			ok = false;
+			return;
+		}
+	});
+
+	return ok;
 }
 
 /**
@@ -388,6 +437,28 @@ DuAEF.DuJS.Math.getLength = function (value1,value2)
 		return result;
 	}
 	else return Math.abs(value1 - value2) ;
+}
+
+/**
+* Compares two numbers
+* @memberof DuAEF.DuJS.Array
+* @param {Number} value1 - The first value
+* @param {Number} value2 - The second value
+* @param {int} [floatPrecision=-1] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
+* @return {boolean} true if the two values are equal
+*/
+DuAEF.DuJS.Math.compare = function (value1,value2,floatPrecision)
+{
+	if (typeof value1 != 'number') return false;
+	if (typeof value2 != 'number') return false;
+	if (floatPrecision >= 0)
+	{
+		var mul = Math.pow(10,floatPrecision);
+		var num1 = Math.round(value1*mul)/mul;
+		var num2 = Math.round(value2*mul)/mul;
+		return num1 == num2;
+	}
+	else return value1 == value2;
 }
 
 /**
