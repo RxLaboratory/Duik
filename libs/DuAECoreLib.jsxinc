@@ -45,17 +45,17 @@ function KeySpatialProperties (){
 * Constructs a new KeyFrame
 * @class KeyFrame
 * @classdesc Properties of an After Effects Keyframe, as returned by {@linkcode DuAEF.DuAE.Property.getKeyFrames} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtIndex} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtTime}.
-* @property {float}	  [_time=0]     - The keyframe time
-* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}    [value=null]  -  The keyframe value
-* @property {KeyframeInterpolationType}   [_inInterpolationType=KeyframeInterpolationType.LINEAR]  - The incoming temporal interpolation type
-* @property {KeyframeInterpolationType}	[_outInterpolationType=KeyframeInterpolationType.LINEAR]		- The outgoing temporal interpolation type
-* @property {boolean}	[_spatial=false]	- true if this keyframe has a spatial value
-* @property {KeySpatialProperties}	[spatialProperties=new KeySpatialProperties()]	- the spatial properties {@linkcode KeySpatialProperties} of this keyframe
-* @property {KeyframeEase[]}	[inEase=null]	- The incoming temporal ease. The number of objects in the Array depends on the value type
-* @property {KeyframeEase[]}	[outEase=null]	- The outgoing temporal ease. The number of objects in the Array depends on the value type
-* @property {boolean}	[_continuous=false]	- true if the keyframe has temporal continuity
-* @property {boolean}	[_autoBezier=false]	- true if the keyframe has temporal auto-Bezier interpolation
-* @property {int}		[_index=0]	- The index of the keyFrame. Warning: not updated when another key frame is added on the property some time before this key._time!
+* @property {float}	  _time     - The keyframe time
+* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}    value  -  The keyframe value
+* @property {KeyframeInterpolationType}   _inInterpolationType  - The incoming temporal interpolation type
+* @property {KeyframeInterpolationType}	_outInterpolationType		- The outgoing temporal interpolation type
+* @property {boolean}	_spatial	- true if this keyframe has a spatial value
+* @property {KeySpatialProperties}	spatialProperties	- the spatial properties {@linkcode KeySpatialProperties} of this keyframe
+* @property {KeyframeEase[]}	inEase	- The incoming temporal ease. The number of objects in the Array depends on the value type
+* @property {KeyframeEase[]}	outEase	- The outgoing temporal ease. The number of objects in the Array depends on the value type
+* @property {boolean}	_continuous	- true if the keyframe has temporal continuity
+* @property {boolean}	_autoBezier	- true if the keyframe has temporal auto-Bezier interpolation
+* @property {int}		_index	- The index of the keyFrame. Warning: not updated when another key frame is added on the property some time before this key._time!
 */
 function KeyFrame(){
 	this._time = 0;
@@ -2128,6 +2128,50 @@ DuAEF.DuAE.Property.fixSpatialInterpolation = function(prop)
 	            prop.setSpatialTangentsAtKey(nextKey,[0,0],prop.keyOutSpatialTangent(nextKey));
 	        }
 	    }
+	}
+}
+
+/**
+* Removes all unneeded keyframes from the property.< br/>
+* Also checks the interpolation values to reset the correct display as linear/smooth.
+* @param {Property|PropertyInfo} property - The property
+*/
+DuAEF.DuAE.Property.cleanKeyframes = function(property)
+{
+	var prop = property;
+	if (prop instanceof PropertyInfo) prop = property.getProperty();
+
+	var numKeys = prop.numKeys;
+	if (numKeys == 0) return;
+	if (numKeys == 1)
+	{
+		prop.removeKey(1);
+		return;
+	}
+
+	for (var i = numKeys ; i > 0 ; i--)
+	{
+		var currentKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i);
+
+		if (i > 1) var prevKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i-1);
+		if (i < prop.numKeys) var nextKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i+1);
+
+		//check values
+		if (i > 1 && !DuAEF.DuJS.Array.compare(currentKey.value,prevKey.value,3)) continue;
+		if (i < prop.numKeys && !DuAEF.DuJS.Array.compare(currentKey.value,nextKey.value,3)) continue;
+		//check velocities
+		var remove = false;
+		for (var j = 0 ; j < currentKey.inEase.length ; j++)
+		{
+			remove = false
+			if (i > 1 && !DuAEF.DuJS.Math.compare(prevKey.outEase[j].speed,0,4)) break;
+			if (i > 1 && !DuAEF.DuJS.Math.compare(currentKey.inEase[j].speed,0,4)) break;
+			if (i < prop.numKeys && !DuAEF.DuJS.Math.compare(currentKey.outEase[j].speed,0,4)) break;
+			if (i < prop.numKeys && !DuAEF.DuJS.Math.compare(nextKey.inEase[j].speed,0,4)) break;
+			remove = true;
+		}
+		//remove key
+		if (remove) prop.removeKey(i);
 	}
 }
 
