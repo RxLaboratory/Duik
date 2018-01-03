@@ -388,6 +388,8 @@
 	#include 'icons/w25_allproperties_r.png.jsxinc'
 	#include 'icons/w25_animtools_r.png.jsxinc'
 	#include 'icons/w25_animtools_l.png.jsxinc'
+	#include 'icons/w25_broom_l.png.jsxinc'
+	#include 'icons/w25_broom_r.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
