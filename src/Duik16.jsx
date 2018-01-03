@@ -386,6 +386,8 @@
 	#include 'icons/w25_opacity_r.png.jsxinc'
 	#include 'icons/w25_allproperties_l.png.jsxinc'
 	#include 'icons/w25_allproperties_r.png.jsxinc'
+	#include 'icons/w25_animtools_r.png.jsxinc'
+	#include 'icons/w25_animtools_l.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
@@ -477,8 +479,8 @@
 
 		ui_riggingGroup.visible = panel == 5;
 		ui_riggingButton.setChecked(ui_riggingGroup.visible);
-		ui_animationStackGroup.visible = panel == 4;
-		ui_animationButton.setChecked(ui_animationStackGroup.visible);
+		ui_animationMainGroup.visible = panel == 4;
+		ui_animationButton.setChecked(ui_animationMainGroup.visible);
 		ui_cameraGroup.visible = panel == 3;
 		ui_cameraButton.setChecked(ui_cameraGroup.visible);
 		ui_ioGroup.visible = panel == 2;
