@@ -3,127 +3,172 @@
 	#include "../DuAEF.jsxinc"
 	#include "Dutranslator.jsxinc"
 
-     var script = File.openDialog ("Select Script");
-     if (!script) return;
-     script = script.absoluteURI;
-     paths = DuAEF.DuBinary.parseFilePaths(script);
-     if(paths == 1)
-     {
-        alert(tr("Unable to open the file {#}", false, script));
-        return;
-     }
+	var script = File.openDialog ("Select Script");
 
-     // Remove duplicates
-     DuAEF.DuJS.Array.removeDuplicates(paths);
+	if (!script) return;
+	var folder = script.parent.absoluteURI;
 
-     var newPaths = [];
-     var removedPaths = [];
-     while(paths.length > 0)
-     {
-         var p = paths.pop();
-         if(DuAEF.DuJS.Fs.fileExists(p))
-             newPaths.push(p);
-         else
-            removedPaths.push(p);
-     }
-     if(removedPaths.length > 0) alert(tr("The following paths were removed because they don't exist or can't be opened.") + "\n\n" +
-        removedPaths.join("\n"));
+	script = script.absoluteURI;
+	var paths = DuAEF.DuBinary.parseFilePaths(script);    
+	if(paths == 1)
+	{
+		alert(tr("Unable to open the file {#}", false, script));
+		return;
+	}
+ 
+    // Remove duplicates
+    DuAEF.DuJS.Array.removeDuplicates(paths);
+ 
+	var data = {};
+	// Data contains for each real path, the list of original script paths and js var name
 
-     // Ui
-     var ui = DuAEF.DuScriptUI.createUI(null, "DuBinary Scan Script");
-     ui.alignChildren=["fill","top"];
-     ui.spacing = 20;
+	var removedPaths = [];
+	for(var i = 0; i < paths.length; ++i)
+	{
+		var path = paths[i];
+		var resolved = path.substring(1, path.length - 1);
+		// Relative resolve
+		var code = resolved.charCodeAt(0) ;
+		if (resolved.charAt(1) != ':'  &&( // E:/
+				(code > 47 && code < 58) || // numeric (0-9)
+				(code > 64 && code < 91) || // upper alpha (A-Z)
+				(code > 96 && code < 123) || // lower alpha (a-z)
+				code == 46))  // .git for example
+			resolved = DuAEF.DuJS.String.pathJoin([folder, resolved]);
+		
+		// Checks if exists
+		if(!DuAEF.DuJS.Fs.fileExists(resolved))
+		{
+			removedPaths.push(resolved);
+			continue;
+		}
+		
+		// Define var name
+		if( !(resolved in data)) 
+			data[resolved] = {
+				'name': "",
+				'originals': []
+			};
+			
+		if (data[resolved]['name'] == "")        
+			data[resolved]['name'] = DuAEF.DuJS.String.replace(resolved.replace(/\..+/,''),'%20','_');
+		
+		data[resolved]['originals'] .push(path);
+	}
+  
+    
+    if(removedPaths.length > 0) 
+		alert(tr("The following paths were removed because they don't exist or can't be opened.") +
+			"\n\n" +
+			removedPaths.join("\n"));
 
-     // Table
-     var properties = {
-         'multiselect': true,
-         'name': 'DuBinaryScanScriptFileList',
-         'columnWidths': [500]
+    // Ui
+    var ui = DuAEF.DuScriptUI.createUI(null, "DuBinary Scan Script");
+    ui.alignChildren=["fill","top"];
+    ui.spacing = 20;
 
-         };
-     var listBox = ui.add("listbox", undefined, newPaths, properties);
-     listBox.alignment = ["fill","fill"];
+    // Table
+    var properties = {
+        'multiselect': true,
+        'name': 'DuBinaryScanScriptFileList',
+        'columnWidths': [500]
+    };
+	
+    var uiPaths = []
+    for(var key in data)
+    {
+		uiPaths.push(key);
+    }
+    
+	var listBox = ui.add("listbox", undefined, uiPaths, properties);
+    listBox.alignment = ["fill","fill"];
 
     // Buttons
 
-     // Cancel
-     function cancel()
-     {
-            ui.hide();
+    // Cancel
+    function cancel()
+    {
+		ui.hide();
+    }
+
+
+    function processExport(filter)
+    {
+        var skipFilter = false;
+        if (filter === undefined || filter.length == 0) skipFilter = true;
+
+		var outputFolder = Folder.selectDialog();
+		if(!outputFolder) return;
+		outputFolder = outputFolder.absoluteURI;
+		var debug = "";
+
+		var scriptPrefix = "";
+		
+		for(var resolved in data)
+		{
+			if(!skipFilter && DuAEF.DuJS.Array.indexOf(filter, resolved) != -1)
+				continue;
+			var name = DuAEF.DuJS.Fs.getBasename(resolved) + ".jsxinc";
+			var path = DuAEF.DuJS.String.pathJoin([outputFolder, name], "/");
+			debug += tr("{#} has been exported to {#}", false, [resolved, path]) + "\n";
+			scriptPrefix += "#include \"" + name + "\"\n";
+			DuAEF.DuBinary.convertToIncludeFile(new File(resolved),  "", path, data[resolved]["name"]);
+		}
+
+		// Get content
+		var scriptFile = new File(script);
+		if(!scriptFile.open('r')) return alert(tr("Unable to open the script file {#} for reading.",
+			script));
+		var content = scriptFile.read();
+		scriptFile.close();
+
+		// Replace paths in content
+		
+		var replace = "";
+		for(var resolved in data)
+		{                
+				if(DuAEF.DuJS.String.endsWith(resolved, ".png"))
+					replace = data[resolved]["name"] + ".binAsString";
+				else
+					replace = "DuAEF.DuBinary.toFile(" + data[resolved]["name"] + ")";
+				for(var i = 0; i < data[resolved]["originals"].length; i++)
+				{
+					content = content.replace(data[resolved]["originals"][i], replace);
+				}
+		}
+		// Write content
+
+		if(!scriptFile.open('w')) return alert(tr("Unable to open the script file {#} for writting. Be sure that the file is not opened in another application.",
+			script));
+		if(!scriptFile.write(scriptPrefix + "\n" + content))
+			return alert(tr("Unable to write {#} in the file {#}.", false, ["\n\n" + scriptPrefix + "\n\n", script]));
+		scriptFile.close();
+
+		// Feedback
+		alert(
+			tr("Export to {#} finished.", false, outputFolder)+
+			'\n\n'+ debug + "\n\n" +
+			tr("The script {#} has been updated with following lines:", false, script) +
+			"\n\n" + scriptPrefix);
+		ui.hide();
      }
 
-
-     function processExport(pathList)
-     {
-            var outputFolder = Folder.selectDialog();
-            if(!outputFolder) return;
-            outputFolder = outputFolder.absoluteURI;
-            var debug = "";
-
-            var scriptPrefix = "";
-
-            for(var i = 0; i < pathList.length; ++i)
-            {
-                    var name = DuAEF.DuJS.Fs.getBasename(pathList[i]) + ".jsxinc";
-                    var path = DuAEF.DuJS.String.pathJoin([outputFolder, name], "/");
-                    debug += tr("{#} has been exported to {#}", false, [pathList[i], path]) + "\n";
-                    scriptPrefix += "#include \"" + name + "\"\n";
-                    DuAEF.DuBinary.convertToIncludeFile(new File(pathList[i]),  "", path);
-            }
-
-            // Get content
-            var scriptFile = new File(script);
-            if(!scriptFile.open('r')) return alert(tr("Unable to open the script file {#} for reading.",
-                script));
-            var content = scriptFile.read();
-            scriptFile.close();
-
-            // Replace paths in content
-            /*
-                var replacements = {};
-                for(var i = 0; i < pathList.length; ++i)
-                {
-                        if(DuAEF.DuJS.String.endsWith(pathList[i], ".png"))
-                            replacements[pathList[i]] = convertedName + "binAsString";
-                        else
-                            replacements[pathList[i]] = "DuAEF.DuBinary.toFile(" + convertedName + ")";
-                }
-                */
-            // Write content
-
-            if(!scriptFile.open('w')) return alert(tr("Unable to open the script file {#} for writting. Be sure that the file is not opened in another application.",
-                script));
-            if(!scriptFile.write(scriptPrefix + "\n" + content))
-                return alert(tr("Unable to write {#} in the file {#}.", false, ["\n\n" + scriptPrefix + "\n\n", script]));
-            scriptFile.close();
-
-            // Feedback
-            alert(
-                tr("Export to {#} finished.", false, outputFolder)+
-                '\n\n'+ debug + "\n\n" +
-                tr("The script {#} has been updated with following lines:", false, script) +
-                "\n\n" + scriptPrefix);
-            ui.hide();
-
-
-     }
-
-     // convert every items
-     function convertAll()
-     {
-                 processExport(newPaths);
-     }
+    // convert every items
+    function convertAll()
+    {
+		processExport([]);
+    }
 
     // convert selected ones
     function convertSelected()
     {
-                  var selectedPaths = [];
-                  if(listBox.selection === null || listBox.selection.length < 1) return alert(tr("Nothing is selected") + ".\n");
-                  for (var i = 0 ; i < listBox.selection.length ; i++)
-                  {
-                        selectedPaths.push(listBox.selection[i].text);
-                  }
-                  processExport(selectedPaths);
+	    var selectedPaths = [];
+		if(listBox.selection === null || listBox.selection.length < 1) return alert(tr("Nothing is selected") + ".\n");
+			for (var i = 0 ; i < listBox.selection.length ; i++)
+			{
+				selectedPaths.push(listBox.selection[i].text);
+		    }
+			processExport(selectedPaths);
     }
 
 

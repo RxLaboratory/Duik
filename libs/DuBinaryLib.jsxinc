@@ -180,6 +180,8 @@ DuAEF.DuBinary.convertToBinaryFile = function(jsFile,outputFileName)
 
 /**
  *  Extract paths from a given file. Paths are not checked, be sure to check them before using them. (checking if they exist)
+ * Ignore lines starting with "#include".
+ * Also returns the surounding elements "path" or 'path'.
  * @memberof DuAEF.DuBinary
  * @param {String}    filePath        - The path to the file
  * @return {string[]} List of paths.
@@ -203,6 +205,8 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
     while(!file.eof )
     {
           var line = file.readln();
+          
+          if (line.indexOf("#include", 0) == 0) continue;
 
           // Detect strings
           var strings = [];
@@ -221,13 +225,13 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
                     simple = true;
                     offset = indexSimple + 1;
                }else break;
-                start = offset;
+                start = offset - 1;
                 // End string
                do{
                     if(simple)
-                        indexEnd = line.indexOf("'", offset); // '
+                        indexEnd = line.indexOf("'", offset) + 1; // '
                     else
-                        indexEnd = line.indexOf('"', offset); // "
+                        indexEnd = line.indexOf('"', offset) + 1; // "
                     offset = indexEnd + 1;
                 } while (indexEnd != -1 && line.charAt(indexEnd - 1) == '\\'); // Escaped end string
 
@@ -239,15 +243,7 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
                 // Dumb check
                 var indexPoint = currentString.lastIndexOf('.');
                 if(indexPoint != -1 && indexPoint != currentString.length - 1)
-                {
-                    // Relative resolve
-                    var code = currentString.charCodeAt(0) ;
-                    if (currentString.charAt(1) != ':'  &&( // E:/
-                            (code > 47 && code < 58) || // numeric (0-9)
-                            (code > 64 && code < 91) || // upper alpha (A-Z)
-                            (code > 96 && code < 123) || // lower alpha (a-z)
-                            code == 46))  // .git for example
-                        currentString = DuAEF.DuJS.String.pathJoin([folder, currentString]);
+                {  
                     paths.push(currentString);
                 }
 
