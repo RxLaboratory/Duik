@@ -1,4 +1,4 @@
-(function ()
+﻿(function ()
 {
 	#include "../DuAEF.jsxinc"
 	#include "Dutranslator.jsxinc"
@@ -67,7 +67,7 @@
                     var name = DuAEF.DuJS.Fs.getBasename(pathList[i]) + ".jsxinc";
                     var path = DuAEF.DuJS.String.pathJoin([outputFolder, name], "/");
                     debug += tr("{#} has been exported to {#}", false, [pathList[i], path]) + "\n";
-                    scriptPrefix += "#include " + name + "\n";
+                    scriptPrefix += "#include \"" + name + "\"\n";
                     DuAEF.DuBinary.convertToIncludeFile(new File(pathList[i]),  "", path);
             }
 
@@ -93,7 +93,6 @@
 
             if(!scriptFile.open('w')) return alert(tr("Unable to open the script file {#} for writting. Be sure that the file is not opened in another application.",
                 script));
-            alert(content);
             if(!scriptFile.write(scriptPrefix + "\n" + content))
                 return alert(tr("Unable to write {#} in the file {#}.", false, ["\n\n" + scriptPrefix + "\n\n", script]));
             scriptFile.close();
