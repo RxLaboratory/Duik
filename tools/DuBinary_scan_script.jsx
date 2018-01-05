@@ -51,7 +51,7 @@
 			};
 			
 		if (data[resolved]['name'] == "")        
-			data[resolved]['name'] = DuAEF.DuJS.String.replace(resolved.replace(/\..+/,''),'%20','_');
+			data[resolved]['name'] = DuAEF.DuJS.Fs.getBasename(resolved);
 		
 		data[resolved]['originals'] .push(path);
 	}
