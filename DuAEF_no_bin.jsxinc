@@ -43,7 +43,7 @@ var DuAEF = {};
 * @memberof DuAEF
 * @type {string}
 */
-DuAEF.version = "0.0.3-Alpha";
+DuAEF.version = "0.0.4-Alpha";
 /**
 * Set to true and enable debug mode if you're a developper
 * @memberof DuAEF
@@ -326,17 +326,17 @@ function KeySpatialProperties (){
 * Constructs a new KeyFrame
 * @class KeyFrame
 * @classdesc Properties of an After Effects Keyframe, as returned by {@linkcode DuAEF.DuAE.Property.getKeyFrames} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtIndex} or {@linkcode DuAEF.DuAE.Property.getKeyFrameAtTime}.
-* @property {float}	  [_time=0]     - The keyframe time
-* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}    [value=null]  -  The keyframe value
-* @property {KeyframeInterpolationType}   [_inInterpolationType=KeyframeInterpolationType.LINEAR]  - The incoming temporal interpolation type
-* @property {KeyframeInterpolationType}	[_outInterpolationType=KeyframeInterpolationType.LINEAR]		- The outgoing temporal interpolation type
-* @property {boolean}	[_spatial=false]	- true if this keyframe has a spatial value
-* @property {KeySpatialProperties}	[spatialProperties=new KeySpatialProperties()]	- the spatial properties {@linkcode KeySpatialProperties} of this keyframe
-* @property {KeyframeEase[]}	[inEase=null]	- The incoming temporal ease. The number of objects in the Array depends on the value type
-* @property {KeyframeEase[]}	[outEase=null]	- The outgoing temporal ease. The number of objects in the Array depends on the value type
-* @property {boolean}	[_continuous=false]	- true if the keyframe has temporal continuity
-* @property {boolean}	[_autoBezier=false]	- true if the keyframe has temporal auto-Bezier interpolation
-* @property {int}		[_index=0]	- The index of the keyFrame. Warning: not updated when another key frame is added on the property some time before this key._time!
+* @property {float}	  _time     - The keyframe time
+* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}    value  -  The keyframe value
+* @property {KeyframeInterpolationType}   _inInterpolationType  - The incoming temporal interpolation type
+* @property {KeyframeInterpolationType}	_outInterpolationType		- The outgoing temporal interpolation type
+* @property {boolean}	_spatial	- true if this keyframe has a spatial value
+* @property {KeySpatialProperties}	spatialProperties	- the spatial properties {@linkcode KeySpatialProperties} of this keyframe
+* @property {KeyframeEase[]}	inEase	- The incoming temporal ease. The number of objects in the Array depends on the value type
+* @property {KeyframeEase[]}	outEase	- The outgoing temporal ease. The number of objects in the Array depends on the value type
+* @property {boolean}	_continuous	- true if the keyframe has temporal continuity
+* @property {boolean}	_autoBezier	- true if the keyframe has temporal auto-Bezier interpolation
+* @property {int}		_index	- The index of the keyFrame. Warning: not updated when another key frame is added on the property some time before this key._time!
 */
 function KeyFrame(){
 	this._time = 0;
@@ -1403,6 +1403,39 @@ DuAEF.DuAE.Layer.unparent = function (layers)
 }
 
 /**
+* Creates a sequence with the layers, but using opacities.
+* This enables more possibilities to rig them, like with the Connector
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {string} [expr] - An expression to add to the opacity of the layers
+*/
+DuAEF.DuAE.Layer.sequence = function (layers,expr)
+{
+	if (layers.length == 0) return;
+	if (expr == undefined) expr = '';
+	var comp = layers[0].containingComp;
+	var it = new Iterator(layers);
+	it.do(function (layer)
+	{
+		while (layer.transform.opacity.numKeys > 0)
+		{
+			layer.transform.opacity.removeKey(layer.transform.opacity.numKeys);
+		}
+		var i = it.current;
+		var t = i*comp.frameDuration;
+		var endTime = (layers.length-1)*comp.frameDuration;
+		layer.transform.opacity.setValueAtTime(0,0);
+		layer.transform.opacity.setValueAtTime(endTime,0);
+		layer.transform.opacity.setValueAtTime(t,100);
+		if (i < layers.length -1 ) layer.transform.opacity.setValueAtTime(t+comp.frameDuration,0);
+		for (var keyIndex = 1;keyIndex <= layer.transform.opacity.numKeys;keyIndex++)
+		{
+			layer.transform.opacity.setInterpolationTypeAtKey(keyIndex,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+		}
+		layer.transform.opacity.expression = expr;
+	});
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -2380,6 +2413,50 @@ DuAEF.DuAE.Property.fixSpatialInterpolation = function(prop)
 }
 
 /**
+* Removes all unneeded keyframes from the property.< br/>
+* Also checks the interpolation values to reset the correct display as linear/smooth.
+* @param {Property|PropertyInfo} property - The property
+*/
+DuAEF.DuAE.Property.cleanKeyframes = function(property)
+{
+	var prop = property;
+	if (prop instanceof PropertyInfo) prop = property.getProperty();
+
+	var numKeys = prop.numKeys;
+	if (numKeys == 0) return;
+	if (numKeys == 1)
+	{
+		prop.removeKey(1);
+		return;
+	}
+
+	for (var i = numKeys ; i > 0 ; i--)
+	{
+		var currentKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i);
+
+		if (i > 1) var prevKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i-1);
+		if (i < prop.numKeys) var nextKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,i+1);
+
+		//check values
+		if (i > 1 && !DuAEF.DuJS.Array.compare(currentKey.value,prevKey.value,3)) continue;
+		if (i < prop.numKeys && !DuAEF.DuJS.Array.compare(currentKey.value,nextKey.value,3)) continue;
+		//check velocities
+		var remove = false;
+		for (var j = 0 ; j < currentKey.inEase.length ; j++)
+		{
+			remove = false
+			if (i > 1 && !DuAEF.DuJS.Math.compare(prevKey.outEase[j].speed,0,4)) break;
+			if (i > 1 && !DuAEF.DuJS.Math.compare(currentKey.inEase[j].speed,0,4)) break;
+			if (i < prop.numKeys && !DuAEF.DuJS.Math.compare(currentKey.outEase[j].speed,0,4)) break;
+			if (i < prop.numKeys && !DuAEF.DuJS.Math.compare(nextKey.inEase[j].speed,0,4)) break;
+			remove = true;
+		}
+		//remove key
+		if (remove) prop.removeKey(i);
+	}
+}
+
+/**
 * Gets the average speed of the animated propreties
 * @param {Property[]|PropertyInfo[]} props - The Properties
 * @return {float} The average speed
@@ -2927,6 +3004,8 @@ DuAEF.DuBinary.convertToBinaryFile = function(jsFile,outputFileName)
 
 /**
  *  Extract paths from a given file. Paths are not checked, be sure to check them before using them. (checking if they exist)
+ * Ignore lines starting with "#include".
+ * Also returns the surounding elements "path" or 'path'.
  * @memberof DuAEF.DuBinary
  * @param {String}    filePath        - The path to the file
  * @return {string[]} List of paths.
@@ -2950,6 +3029,8 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
     while(!file.eof )
     {
           var line = file.readln();
+          
+          if (line.indexOf("#include", 0) == 0) continue;
 
           // Detect strings
           var strings = [];
@@ -2968,13 +3049,13 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
                     simple = true;
                     offset = indexSimple + 1;
                }else break;
-                start = offset;
+                start = offset - 1;
                 // End string
                do{
                     if(simple)
-                        indexEnd = line.indexOf("'", offset); // '
+                        indexEnd = line.indexOf("'", offset) + 1; // '
                     else
-                        indexEnd = line.indexOf('"', offset); // "
+                        indexEnd = line.indexOf('"', offset) + 1; // "
                     offset = indexEnd + 1;
                 } while (indexEnd != -1 && line.charAt(indexEnd - 1) == '\\'); // Escaped end string
 
@@ -2986,15 +3067,7 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
                 // Dumb check
                 var indexPoint = currentString.lastIndexOf('.');
                 if(indexPoint != -1 && indexPoint != currentString.length - 1)
-                {
-                    // Relative resolve
-                    var code = currentString.charCodeAt(0) ;
-                    if (currentString.charAt(1) != ':'  &&( // E:/
-                            (code > 47 && code < 58) || // numeric (0-9)
-                            (code > 64 && code < 91) || // upper alpha (A-Z)
-                            (code > 96 && code < 123) || // lower alpha (a-z)
-                            code == 46))  // .git for example
-                        currentString = DuAEF.DuJS.String.pathJoin([folder, currentString]);
+                {  
                     paths.push(currentString);
                 }
 
@@ -3344,7 +3417,7 @@ function Iterator(list)
 	this.length = list.length;
 	if (list.length == 0) return;
 	this.isCollection = false;
-	if (list instanceof ItemCollection || list instanceof LayerCollection || list instanceof OMCollection || list instanceof RQItemCollection)
+	if (DuAEF.DuAE.isCollection(list))
 	{
 		this.min = 1;
 		this.max = this.length;
@@ -3463,6 +3536,17 @@ DuAEF.DuJS = {};
 DuAEF.DuJS.Array = {};
 
 /**
+* Checks if this is an Array or an After Effects collection type
+* @memberof DuAEF.DuJS.Array
+* @param {Array|Collection} list - The list to check
+* @return {boolean} true if this is a Cllection or an Array
+*/
+DuAEF.DuJS.Array.isList = function (list)
+{
+	return (list instanceof Array || DuAEF.DuAE.isCollection(list));
+}
+
+/**
 * Gets the first index of a value in an Array, or -1 if not found
 * @memberof DuAEF.DuJS.Array
 * @param {Array}	arr	- The array
@@ -3531,6 +3615,44 @@ DuAEF.DuJS.Array.removeDuplicates = function (arr)
         }
 	}
 	return removed;
+}
+
+/**
+* Compares two arrays.<br />
+* The items in the arrays must be compatible with the == operand
+* @memberof DuAEF.DuJS.Array
+* @param {Array|Collection} array1 - The array
+* @param {Array|Collection} array2 - The array
+* @param {int} [floatPrecision=-1] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
+* @return {boolean} true if the two arrays contain the same values
+*/
+DuAEF.DuJS.Array.compare = function (array1,array2,floatPrecision)
+{
+	if (!DuAEF.DuJS.Array.isList(array1) && !DuAEF.DuJS.Array.isList(array2))
+	{
+		if (typeof array1 == 'number' && typeof array2 == 'number')
+		{
+			return DuAEF.DuJS.Math.compare(array1,array2,floatPrecision)
+		}
+		else return array1 == array2;
+	}
+	if (DuAEF.DuJS.Array.isList(array1) && !DuAEF.DuJS.Array.isList(array2)) return false;
+	if (!DuAEF.DuJS.Array.isList(array1) && DuAEF.DuJS.Array.isList(array2)) return false;
+	if (array1.length != array2.length) return false;
+
+	var it = new Iterator(array1);
+	var ok = true;
+	it.do(function (item1)
+	{
+		var item2 = array2[it.current];
+		if (!DuAEF.DuJS.Array.compare(item1,item2,floatPrecision))
+		{
+			ok = false;
+			return;
+		}
+	});
+
+	return ok;
 }
 
 /**
@@ -3674,6 +3796,28 @@ DuAEF.DuJS.Math.getLength = function (value1,value2)
 		return result;
 	}
 	else return Math.abs(value1 - value2) ;
+}
+
+/**
+* Compares two numbers
+* @memberof DuAEF.DuJS.Array
+* @param {Number} value1 - The first value
+* @param {Number} value2 - The second value
+* @param {int} [floatPrecision=-1] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
+* @return {boolean} true if the two values are equal
+*/
+DuAEF.DuJS.Math.compare = function (value1,value2,floatPrecision)
+{
+	if (typeof value1 != 'number') return false;
+	if (typeof value2 != 'number') return false;
+	if (floatPrecision >= 0)
+	{
+		var mul = Math.pow(10,floatPrecision);
+		var num1 = Math.round(value1*mul)/mul;
+		var num2 = Math.round(value2*mul)/mul;
+		return num1 == num2;
+	}
+	else return value1 == value2;
 }
 
 /**
@@ -4799,6 +4943,14 @@ DuAEF.DuScriptUI = {};
 * @property {method} setValue - Call this method to change the value
 */
 
+/**
+* A Separator
+* @typedef {Object} Separator
+* @property {StaticText|CheckBox} label - the label
+* @property {Panel} separator - the separator
+* @property {boolean} checkable @readonly - true if a checkbox is displayed
+*/
+
 //initilization
 (function ()
 {
@@ -4928,24 +5080,34 @@ DuAEF.DuScriptUI.addGroup = function (container,orientation)
 /**
  * Adds separator with an optionnal name in the group
  * @memberof DuAEF.DuScriptUI
- * @param {Panel|Window|Group}		container	- Where to create the separator
- * @param {string}					[name] - The name displayed
+ * @param {Panel|Window|Group} container - Where to create the separator
+ * @param {string} [name] - The name displayed
+ * @param {boolean} [checkable=false] - When true, adds a checkbox to the separator
+ * @return {Separator} The separator
  */
-DuAEF.DuScriptUI.addSeparator = function (container,name)
+DuAEF.DuScriptUI.addSeparator = function (container,name,checkable)
 {
 	if (name == undefined) name = "";
-	var group = DuAEF.DuScriptUI.addGroup(container,"row");
-	group.margins = DuAEF.DuScriptUI.defaultMargins;
-	group.margins.bottom = DuAEF.DuScriptUI.defaultMargins*2;
-	group.alignment = ['fill','top']
-	if (name.length > 0)
+	if (checkable == undefined) checkable = false;
+	var separator = DuAEF.DuScriptUI.addGroup(container,"row");
+	separator.margins = DuAEF.DuScriptUI.defaultMargins;
+	separator.margins.bottom = DuAEF.DuScriptUI.defaultMargins*2;
+	separator.alignment = ['fill','top'];
+	separator.checkable = checkable;
+
+	separator.label = null;
+	if (name != '' || checkable)
 	{
-		var textName = group.add('statictext',undefined,name);
-		textName.alignment = ['left','fill'];
+		if (checkable) separator.label = separator.add('checkbox',undefined,name);
+		else separator.label = separator.add('statictext',undefined,name);
+		separator.label.alignment = ['left','bottom'];
 	}
-	var separator1 = group.add('panel',undefined);
-	separator1.alignment = ['fill','bottom'];
-	separator1.height = 0;
+
+	separator.separator = separator.add('panel',undefined);
+	separator.separator.alignment = ['fill','center'];
+	separator.separator.height = 0;
+
+	return separator;
 }
 
 /**
@@ -8192,7 +8354,7 @@ DuAEF.Duik.Automation.Randomize = {};
 
 /**
 * Randomizes the values at current time of the Properties
-* @param {PropertyBase[]} props - The Properties
+* @param {PropertyBase[]|PropertyInfo[]} props - The Properties
 * @param {boolean} [fromCurrentVal] - true to offset the current value
 * @param {float} xMin - X minimum value
 * @param {float} xMax - X maximum value
@@ -8212,6 +8374,7 @@ DuAEF.Duik.Automation.Randomize.properties = function (props,fromCurrentVal,xMin
 	for (var i = 0;i<props.length;i++)
 	{
 		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		if (prop.propertyType == PropertyType.PROPERTY)
 		{
 			//Get containing comp
@@ -8262,6 +8425,7 @@ DuAEF.Duik.Automation.Randomize.selectedKeys = function (props,fromCurrentVal,xM
 	for (var i = 0;i<props.length;i++)
 	{
 		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		if (prop.propertyType == PropertyType.PROPERTY)
 		{
 			//Get containing comp and dimensions
@@ -8316,6 +8480,7 @@ DuAEF.Duik.Automation.Randomize.selectedKeyTimes = function (props,fromCurrentVa
 	for (var i = 0;i<props.length;i++)
 	{
 		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		var krK = [];
 		if (prop.propertyType == PropertyType.PROPERTY)
 		{
@@ -8340,6 +8505,7 @@ DuAEF.Duik.Automation.Randomize.selectedKeyTimes = function (props,fromCurrentVa
 	for (var i = 0 ; i < props.length ; i++)
 	{
 		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		for (var j = 0 ; j < krKeys[i].length ; j++)
 		{
 			prop.removeKey(prop.nearestKeyIndex(krKeys[i][j]));
@@ -9507,9 +9673,8 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, mi
 		}
 		parentExpr += 'result;';
 
+		parentProp.getProperty().expression = parentExpr;
 	}
-
-	parentProp.getProperty().expression = parentExpr;
 
 	return parentEffect;
 }
