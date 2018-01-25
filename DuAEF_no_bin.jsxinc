@@ -24,7 +24,6 @@
  * along with DuAEF. If not, see {@link http://www.gnu.org/licenses/}.
  */
 
-
 /**
 * The general Duduf After Effects ExtendScript Framework namespace.<br />
 * Provides some general tools and information.
@@ -1037,6 +1036,7 @@ DuAEF.DuAE.Comp.selectLayers = function (layers)
 */
 DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp,increment)
 {
+	if (increment == undefined) increment = true;
 	var layerNames = [];
 	for (var i = 1 ; i <= comp.layers.length ; i++)
 	{
@@ -1348,27 +1348,53 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 	var sortedLayers = [];
 	var layersToSort = DuAEF.DuAE.convertCollectionToArray(layers);
 
+	//add layers with no parents
+	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
+	{
+		var l = layersToSort[i];
+		if (l.parent == null)
+		{
+			sortedLayers.push(l);
+			layersToSort.splice(i,1);
+		}
+	}
+
+	//add layers with a parent outside
+	//those with a parent outside of the selection
+	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
+	{
+		var l = layersToSort[i];
+		var parent = l.parent;
+		var isParentOutside = true;
+		for (var j = 0 ; j < layersToSort.length ; j++ )
+		{
+			if (parent.index == layersToSort[j].index)
+			{
+				isParentOutside = false;
+				break;
+			}
+		}
+		if (isParentOutside)
+		{
+			sortedLayers.push(l);
+			layersToSort.splice(i,1);
+		}
+	}
+
+	//sort the rest
 	while (layersToSort.length > 0)
 	{
 		for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
 		{
 			var l = layersToSort[i];
-			if (l.parent == null)
+			for (var j = 0 ; j < sortedLayers.length ; j++ )
 			{
-				sortedLayers.push(l);
-				layersToSort.splice(i,1);
-			}
-			else
-			{
-				for (var j = 0 ; j < sortedLayers.length ; j++ )
+				var sL = sortedLayers[j];
+				if (l.parent.index == sL.index)
 				{
-					var sL = sortedLayers[j];
-					if (l.parent.index == sL.index)
-					{
-						sortedLayers.push(l);
-						layersToSort.splice(i,1);
-						break;
-					}
+					sortedLayers.push(l);
+					layersToSort.splice(i,1);
+					break;
 				}
 			}
 		}
@@ -1383,7 +1409,14 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 */
 DuAEF.DuAE.Layer.parentChain = function (layers)
 {
-	DuAEF.DuAE.Layer.unparent(layers);
+	//unparent  all but the first
+	var layersUnparent = [];
+	for (var i = 1 ; i < layers.length ; i++)
+	{
+		layersUnparent.push(layers[i]);
+	}
+	DuAEF.DuAE.Layer.unparent(layersUnparent);
+
 	for (var i = layers.length -1 ; i >= 1 ; i--)
 	{
 		layers[i].parent = layers[i-1];
@@ -3891,7 +3924,7 @@ DuAEF.DuJS.String.generateUnique = function ( newString , stringList , increment
     var regexClean = new RegExp(reg);
     newString = newString.replace(regexClean,"");
     //go!
-    var regex = new RegExp( newString + reg);
+    var regex = new RegExp( DuAEF.DuJS.RegExp.escapeRegExp(newString) + reg);
     //The greatest number found
     var greatestNumber = 0;
     //The number of digits for the number as string
@@ -6544,11 +6577,11 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name)
 		var element = DuAEF.Duik.Structure.addStructureElement(comp,color);
 		if (end)
 		{
-			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S-End " + name, comp);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S-End | " + name, comp);
 		}
 		else
 		{
-			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S " + name, comp);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + name, comp);
 		}
 
 		if (prevElement)
@@ -9108,8 +9141,9 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		//center the controller and name it after the layer
 		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
 		var newName = layer.name;
+		if (newName.indexOf(' | ') >= 0) newName = newName.substring(newName.indexOf(' | ') + 3);
 		if (newName.indexOf('_') == 1 || newName.indexOf(' ') == 1) newName = newName.substring(2);
-		newName = 'C ' + newName;
+		newName = 'C | ' + newName;
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
 	}
 
@@ -9183,7 +9217,7 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 	layer.parent = null;
 	zero.position.setValue(layer.position.value);
 	zero.rotation.setValue(layer.rotation.value);
-	zero.name = "Zero_" + layer.name.slice(-24);
+	zero.name = "Zero | " + layer.name.slice(-24);
 	layer.parent = zero;
 	zero.scale.setValue(layer.scale.value);
 	layer.scale.setValue([100,100,100]);
@@ -9496,7 +9530,7 @@ DuAEF.Duik.Rigging.connectorCheckParent = function (prop)
 * @param {DuAEF.DuAE.Types} [axis=DuAEF.DuAE.Types.VALUE] - The type
 * @return {PropertyGroup} The controlling effect created
 */
-DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, minValue, maxValue, axis, type)
+DuAEF.Duik.Rigging.connector = function (childProp, parentProperty, parentEffect, minValue, maxValue, axis, type)
 {
 	if (minValue == undefined) minValue = null;
 	if (maxValue == undefined) maxValue = null;
@@ -9504,11 +9538,13 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, mi
 	if (type == undefined) axis = DuAEF.DuAE.Types.VALUE;
 
 	if (!(childProp instanceof PropertyInfo)) childProp = new PropertyInfo(childProp);
+	var parentProp = parentProperty;
+	if (!(parentProperty instanceof PropertyInfo)) parentProp = new PropertyInfo(parentProperty);
 
-	if (!childProp.riggable) return -1;
+	if (!childProp.riggable) return null;
 
 	var dim = DuAEF.Duik.Rigging.connectorCheckParent(parentProp);
-	if (dim == 0) return -2;
+	if (dim == 0) return null;
 
 	var parentLayer = DuAEF.DuAE.Property.getLayer(parentProp);
 
@@ -9657,7 +9693,7 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProp, parentEffect, mi
 					'}\n' +
 					'if (snapping)\n' +
 					'{\n' +
-					'var step = (max-min)/steps;\n' +
+					'var step = (max-min)/(steps-1);\n' +
 					'result = Math.floor(result/step)*step;\n' +
 					'}\n';
 		if (dim != 1)
@@ -10887,8 +10923,8 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	var ikEffect = DuAEF.DuAE.Layer.addPseudoEffect(controller.layer,DuAEF.Duik.PseudoEffects.BEZIER_IK,DuAEF.Duik.PseudoEffectsMatchNames.BEZIER_IK,"IK | " + name);
 
 	//create curve controller
-	var curveController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.ControllerType.TRANSFORM);
-	curveController.layer.name = "C " + name + " | Curve";
+	var curveController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.ControllerType.TRANSFORM,layers[0]);
+	curveController.layer.name = curveController.layer.name + " | Curve";
 
 	//add effect
 	var curveEffect = DuAEF.DuAE.Layer.addPseudoEffect(curveController.layer,DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE,DuAEF.Duik.PseudoEffectsMatchNames.BEZIER_IK_CURVE,"Bezier IK");
@@ -11307,7 +11343,8 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 		}
 		if (effect == null)
 		{
-			effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER,name);
+			effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER);
+			effect.name = name;
 		}
 		return effect;
 	}
@@ -11324,8 +11361,9 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 
 		var bones = [];
 
+		//For each path point
 		for (var i = 0; i < pathPoints.length; i++)
-		{ //For each path point
+		{
 			var nullName = 'B | ' + layer.name + " | " + prop.parentProperty.name + " - " + i;
 			var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
 			var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
@@ -11358,7 +11396,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 				newBoneOut.layer.parent = newBone.layer;
 				newBoneOut.layer.name = nullNameOut;
 				newBoneOut.layer.label = 14;
-				newBone.layer.moveBefore(newBoneOut.layer);
 				newBoneOut.layer.position.setValue(pathOutTangents[i]);
 			}
 
@@ -11368,6 +11405,7 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 				newBoneIn.layer.parent = newBone.layer;
 				newBoneIn.layer.name = nullNameIn;
 				newBoneIn.layer.label = 14;
+				newBone.layer.moveBefore(newBoneIn.layer);
 				newBoneIn.layer.position.setValue(pathInTangents[i]);
 			}
 
@@ -11435,7 +11473,7 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 			bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.BoneType.PIN);
 			bone.layer.moveBefore(layer);
 			//rename bone
-			var name = "B " + layer.name;
+			var name = "B | " + layer.name;
 			if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
 			if (name.length > 32) name = name.substr(0,29) + "...";
 			bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
@@ -11504,4 +11542,268 @@ DuAEF.Dugr.addLayerToGroup = function (layer,group)
 	{
 		layer.comment = layer.comment + groupComment;
 	}
+}
+/*
+DuStoryboarderLib
+Library for interchange with Wonderunit Storyboarder
+Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+* Wonderunit Storyboarder interchange tools<br />
+* Dependencies: JSON.jsxinc
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.WUStoryboarder = {};
+
+/**
+ * Imports a .storyboard file with all boards
+ * @memberof DuAEF.WUStoryboarder
+ * @param {File} file - The .storyboard file to import. Boards as png files must be in an 'images' subfolder
+ * @param {boolean} [overlayInfo = false] - True to display text information on top of the image, false to display it under the image
+ * @param {boolean} [precompShots = true] - True to precompose the layers and boards for each shots
+ * @return {int} Error code: -2: invalid file or data, -1: images not found or invalid, 0: no board to import in the file, 1: ok
+ */
+DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
+{
+	if (overlayInfo === undefined) overlayInfo = false;
+	if (precompShots === undefined) precompShots = true;
+
+	//open and parse file
+	if (!file.open('r')) return -2;
+	var data = file.read();
+	file.close();
+	data = JSON.parse(data);
+
+	//check boards count
+	if (!data.boards) return -1;
+	if (data.boards.length == 0) return 0;
+
+	//check images
+	var imagesPath = file.path + '/images/';
+	var imagesFolder = new Folder(imagesPath);
+	if (!imagesFolder.exists) return -1;
+	//first board
+	var firstImageFile = new File(imagesPath + data.boards[0].url);
+	if (!firstImageFile.exists) return -1;
+	//size
+	//import first image to check size
+	var item = app.project.importFile(new ImportOptions(firstImageFile));
+	width = item.width;
+	height = overlayInfo ? item.height : item.height+200;
+	item.remove();
+
+	//storyboard name
+	var name = file.name.replace('.storyboarder','');
+	//duration
+	var lastBoard = data.boards[data.boards.length-1];
+	var duration = lastBoard.time + lastBoard.duration;
+
+	//create comp
+	var comp = app.project.items.addComp(name + " Animatic", width, height, 1, duration/1000, data.fps);
+
+	//create Folder item
+	var imageFolder = app.project.items.addFolder(name + " Boards");
+	var precompFolder = null;
+	if (precompShots) precompFolder = app.project.items.addFolder(name + " Shots");
+
+	//import boards
+	var shotComp = comp;
+	var boardTime = 0;
+	for (var i = 0 ; i < data.boards.length ; i++)
+	{
+		var board = data.boards[i];
+		if (board.duration == 0) board.duration = data.defaultBoardTiming;
+
+		//create shot comp
+		if ((i == 0 || board.newShot) && precompShots)
+		{
+			//background
+			if (!overlayInfo && i != 0)
+			{
+				var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+				solid.transform.position.setValue([width/2,height-100]);
+				solid.moveToEnd();
+			}
+
+			//get shot duration
+			var shotDuration = board.duration/1000;
+			for (var j = i+1 ; j <  data.boards.length ; j++ )
+			{
+				var nextBoard = data.boards[j];
+				if (nextBoard.newShot) break;
+				shotDuration = shotDuration + nextBoard.duration/1000;
+			}
+			shotComp = app.project.items.addComp("Shot " + board.shot.replace('A',''), width, height, 1, shotDuration, data.fps);
+
+			shotComp.parentFolder = precompFolder;
+			//add to comp
+			var shotCompLayer = comp.layers.add(shotComp);
+			shotCompLayer.startTime = board.time/1000;
+			shotCompLayer.moveToEnd();
+			boardTime = 0;
+		}
+
+		//import
+		var mainFile = new File(imagesPath + board.url);
+		var mainItem = app.project.importFile(new ImportOptions(mainFile));
+		mainItem.parentFolder = imageFolder;
+		//add to comp
+		var shotLayer = shotComp.layers.add(mainItem,board.duration/1000);
+		shotLayer.label = 16;
+		shotLayer.name = board.shot;
+		shotLayer.startTime = boardTime;
+		if (!overlayInfo) shotLayer.transform.position.setValue([width/2,mainItem.height/2]);
+		shotLayer.moveToEnd();
+
+		//add dialog
+		if (board.dialogue)
+		{
+			dialogueLayer = shotComp.layers.addText(board.dialogue);
+			var textDocument = dialogueLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = overlayInfo ? [0,0,0] : [1,1,1];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			dialogueLayer.sourceText.setValue(textDocument);
+			dialogueLayer.name = board.shot + " | Action";
+			dialogueLayer.startTime = boardTime;
+			dialogueLayer.outPoint = board.duration/1000 + boardTime;
+			dialogueLayer.moveBefore(shotLayer);
+			dialogueLayer.transform.position.setValue([width/2,height-150]);
+		}
+
+		//add action
+		if (board.action)
+		{
+			actionLayer = shotComp.layers.addText(board.action);
+			var textDocument = actionLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = [1,0,0];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			actionLayer.sourceText.setValue(textDocument);
+			actionLayer.name = board.shot + " | Dialogue";
+			actionLayer.startTime = boardTime;
+			actionLayer.outPoint = board.duration/1000 + boardTime;
+			actionLayer.moveBefore(shotLayer);
+			actionLayer.transform.position.setValue([width/2,height-87]);
+		}
+
+		//add notes
+		if (board.notes)
+		{
+			notesLayer = shotComp.layers.addText(board.notes);
+			var textDocument = notesLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = [0,1,0];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			notesLayer.sourceText.setValue(textDocument);
+			notesLayer.name = board.shot + " | Notes";
+			notesLayer.startTime = boardTime;
+			notesLayer.outPoint = board.duration/1000 + boardTime;
+			notesLayer.moveBefore(shotLayer);
+			notesLayer.transform.position.setValue([width/2,height-25]);
+		}
+
+		//add notes layer
+		if (board.layers.notes !== undefined)
+		{
+			var notesFile = new File(imagesPath + board.layers.notes.url);
+			var notesItem = app.project.importFile(new ImportOptions(notesFile));
+			notesItem.parentFolder = imageFolder;
+			var notesLayer = shotComp.layers.add(notesItem,board.duration/1000);
+			notesLayer.label = 14;
+			notesLayer.name = board.shot + " | Notes";
+			notesLayer.startTime = boardTime;
+			if (!overlayInfo) notesLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			notesLayer.moveBefore(shotLayer);
+		}
+
+		//add reference layer
+		if (board.layers.reference !== undefined)
+		{
+			var referenceFile = new File(imagesPath + board.layers.reference.url);
+			var referenceItem = app.project.importFile(new ImportOptions(referenceFile));
+			referenceItem.parentFolder = imageFolder;
+			var referenceLayer = shotComp.layers.add(referenceItem,board.duration/1000);
+			referenceLayer.label = 12;
+			referenceLayer.name = board.shot + " | Reference";
+			referenceLayer.startTime = boardTime;
+			referenceLayer.transform.opacity.setValue(board.layers.reference.opacity*100);
+			if (!overlayInfo) referenceLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			referenceLayer.moveAfter(shotLayer);
+		}
+
+		//set new time
+		boardTime = boardTime + board.duration/1000;
+	}
+
+	//background
+	if (!overlayInfo && i != 0)
+	{
+		var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+		solid.transform.position.setValue([width/2,height-100]);
+		solid.moveToEnd();
+	}
+
+	return 1;
 }
