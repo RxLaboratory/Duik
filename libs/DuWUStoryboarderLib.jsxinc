@@ -1,0 +1,264 @@
+/*
+DuStoryboarderLib
+Library for interchange with Wonderunit Storyboarder
+Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+* Wonderunit Storyboarder interchange tools<br />
+* Dependencies: JSON.jsxinc
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.WUStoryboarder = {};
+
+/**
+ * Imports a .storyboard file with all boards
+ * @memberof DuAEF.WUStoryboarder
+ * @param {File} file - The .storyboard file to import. Boards as png files must be in an 'images' subfolder
+ * @param {boolean} [overlayInfo = false] - True to display text information on top of the image, false to display it under the image
+ * @param {boolean} [precompShots = true] - True to precompose the layers and boards for each shots
+ * @return {int} Error code: -2: invalid file or data, -1: images not found or invalid, 0: no board to import in the file, 1: ok
+ */
+DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
+{
+	if (overlayInfo === undefined) overlayInfo = false;
+	if (precompShots === undefined) precompShots = true;
+
+	//open and parse file
+	if (!file.open('r')) return -2;
+	var data = file.read();
+	file.close();
+	data = JSON.parse(data);
+
+	//check boards count
+	if (!data.boards) return -1;
+	if (data.boards.length == 0) return 0;
+
+	//check images
+	var imagesPath = file.path + '/images/';
+	var imagesFolder = new Folder(imagesPath);
+	if (!imagesFolder.exists) return -1;
+	//first board
+	var firstImageFile = new File(imagesPath + data.boards[0].url);
+	if (!firstImageFile.exists) return -1;
+	//size
+	//import first image to check size
+	var item = app.project.importFile(new ImportOptions(firstImageFile));
+	width = item.width;
+	height = overlayInfo ? item.height : item.height+200;
+	item.remove();
+
+	//storyboard name
+	var name = file.name.replace('.storyboarder','');
+	//duration
+	var lastBoard = data.boards[data.boards.length-1];
+	var duration = lastBoard.time + lastBoard.duration;
+
+	//create comp
+	var comp = app.project.items.addComp(name + " Animatic", width, height, 1, duration/1000, data.fps);
+
+	//create Folder item
+	var imageFolder = app.project.items.addFolder(name + " Boards");
+	var precompFolder = null;
+	if (precompShots) precompFolder = app.project.items.addFolder(name + " Shots");
+
+	//import boards
+	var shotComp = comp;
+	var boardTime = 0;
+	for (var i = 0 ; i < data.boards.length ; i++)
+	{
+		var board = data.boards[i];
+		if (board.duration == 0) board.duration = data.defaultBoardTiming;
+
+		//create shot comp
+		if ((i == 0 || board.newShot) && precompShots)
+		{
+			//background
+			if (!overlayInfo && i != 0)
+			{
+				var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+				solid.transform.position.setValue([width/2,height-100]);
+				solid.moveToEnd();
+			}
+
+			//get shot duration
+			var shotDuration = board.duration/1000;
+			for (var j = i+1 ; j <  data.boards.length ; j++ )
+			{
+				var nextBoard = data.boards[j];
+				if (nextBoard.newShot) break;
+				shotDuration = shotDuration + nextBoard.duration/1000;
+			}
+			shotComp = app.project.items.addComp("Shot " + board.shot.replace('A',''), width, height, 1, shotDuration, data.fps);
+
+			shotComp.parentFolder = precompFolder;
+			//add to comp
+			var shotCompLayer = comp.layers.add(shotComp);
+			shotCompLayer.startTime = board.time/1000;
+			shotCompLayer.moveToEnd();
+			boardTime = 0;
+		}
+
+		//import
+		var mainFile = new File(imagesPath + board.url);
+		var mainItem = app.project.importFile(new ImportOptions(mainFile));
+		mainItem.parentFolder = imageFolder;
+		//add to comp
+		var shotLayer = shotComp.layers.add(mainItem,board.duration/1000);
+		shotLayer.label = 16;
+		shotLayer.name = board.shot;
+		shotLayer.startTime = boardTime;
+		if (!overlayInfo) shotLayer.transform.position.setValue([width/2,mainItem.height/2]);
+		shotLayer.moveToEnd();
+
+		//add dialog
+		if (board.dialogue)
+		{
+			dialogueLayer = shotComp.layers.addText(board.dialogue);
+			var textDocument = dialogueLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = overlayInfo ? [0,0,0] : [1,1,1];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			dialogueLayer.sourceText.setValue(textDocument);
+			dialogueLayer.name = board.shot + " | Action";
+			dialogueLayer.startTime = boardTime;
+			dialogueLayer.outPoint = board.duration/1000 + boardTime;
+			dialogueLayer.moveBefore(shotLayer);
+			dialogueLayer.transform.position.setValue([width/2,height-150]);
+		}
+
+		//add action
+		if (board.action)
+		{
+			actionLayer = shotComp.layers.addText(board.action);
+			var textDocument = actionLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = [1,0,0];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			actionLayer.sourceText.setValue(textDocument);
+			actionLayer.name = board.shot + " | Dialogue";
+			actionLayer.startTime = boardTime;
+			actionLayer.outPoint = board.duration/1000 + boardTime;
+			actionLayer.moveBefore(shotLayer);
+			actionLayer.transform.position.setValue([width/2,height-87]);
+		}
+
+		//add notes
+		if (board.notes)
+		{
+			notesLayer = shotComp.layers.addText(board.notes);
+			var textDocument = notesLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 50;
+			textDocument.fillColor = [0,1,0];
+			textDocument.strokeColor = [1,1,1];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.CENTER_JUSTIFY;
+			notesLayer.sourceText.setValue(textDocument);
+			notesLayer.name = board.shot + " | Notes";
+			notesLayer.startTime = boardTime;
+			notesLayer.outPoint = board.duration/1000 + boardTime;
+			notesLayer.moveBefore(shotLayer);
+			notesLayer.transform.position.setValue([width/2,height-25]);
+		}
+
+		//add notes layer
+		if (board.layers.notes !== undefined)
+		{
+			var notesFile = new File(imagesPath + board.layers.notes.url);
+			var notesItem = app.project.importFile(new ImportOptions(notesFile));
+			notesItem.parentFolder = imageFolder;
+			var notesLayer = shotComp.layers.add(notesItem,board.duration/1000);
+			notesLayer.label = 14;
+			notesLayer.name = board.shot + " | Notes";
+			notesLayer.startTime = boardTime;
+			if (!overlayInfo) notesLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			notesLayer.moveBefore(shotLayer);
+		}
+
+		//add reference layer
+		if (board.layers.reference !== undefined)
+		{
+			var referenceFile = new File(imagesPath + board.layers.reference.url);
+			var referenceItem = app.project.importFile(new ImportOptions(referenceFile));
+			referenceItem.parentFolder = imageFolder;
+			var referenceLayer = shotComp.layers.add(referenceItem,board.duration/1000);
+			referenceLayer.label = 12;
+			referenceLayer.name = board.shot + " | Reference";
+			referenceLayer.startTime = boardTime;
+			referenceLayer.transform.opacity.setValue(board.layers.reference.opacity*100);
+			if (!overlayInfo) referenceLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			referenceLayer.moveAfter(shotLayer);
+		}
+
+		//set new time
+		boardTime = boardTime + board.duration/1000;
+	}
+
+	//background
+	if (!overlayInfo && i != 0)
+	{
+		var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+		solid.transform.position.setValue([width/2,height-100]);
+		solid.moveToEnd();
+	}
+
+	return 1;
+}
