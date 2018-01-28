@@ -71,7 +71,7 @@
 (function(obj)
 {
 	//=========================
-	var version = '16.0.1-Alpha-3';
+	var version = '16.0.1-Alpha-4';
 	//=========================
 
 	#include DuAEF.jsxinc
@@ -390,6 +390,8 @@
 	#include 'icons/w25_animtools_l.png.jsxinc'
 	#include 'icons/w25_broom_l.png.jsxinc'
 	#include 'icons/w25_broom_r.png.jsxinc'
+	#include 'icons/w25_storyboard_r.png.jsxinc'
+	#include 'icons/w25_storyboard_l.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
