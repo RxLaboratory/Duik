@@ -38,14 +38,61 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+* A complete storyboard, as returned by DuAEF.WUStoryboarder.loadStoryboard
+* @typedef {Object} WUStoryboard
+* @property {string} version - The version of Storyboarder used to create this storyboard
+* @property {string} aspectRatio - The format of the board
+* @property {number} fps - The fps of the project
+* @property {int} defaultBoardTiming - The default board duration
+* @property {WUBoard[]} boards - The boards
+*/
+
+/**
+* A board
+* @typedef {Object} WUBoard
+* @property {string} uid - A unique identifier for this board
+* @property {string} url - The file name of the main layer image
+* @property {boolean} newShot - Wether this board is a new shot or the next board of the previous shot
+* @property {string} shot - The name of the board
+* @property {int} number - The index of the board
+* @property {int} time - The time of the board, in ms
+* @property {int} duration - The duration of this board, in ms
+*/
 
 /**
 * Wonderunit Storyboarder interchange tools<br />
-* Dependencies: JSON.jsxinc
+* Dependencies: JSON.jsxinc; DuAEFLib.jsxinc; DuJSLib.jsxinc
 * @namespace
 * @memberof DuAEF
 */
 DuAEF.WUStoryboarder = {};
+
+/**
+ * Loads a Storyboarder file
+ * @memberof DuAEF.WUStoryboarder
+ * @param {File} file - The .storyboarder JSON file
+ * @return {WUStoryboard|null} The storyboard or null if the file could not be parsed or opened
+ */
+DuAEF.WUStoryboarder.loadStoryboard = function(file)
+{
+	//open and parse file
+	if (!file.open('r')) return null;
+	var data = file.read();
+	file.close();
+	data = JSON.parse(data);
+
+	//check boards count
+	if (!data.boards) return null;
+
+	//update board durations
+	var it = new Iterator(data.boards);
+	it.do( function(board) {
+		if (!board.duration) board.duration = data.defaultBoardTiming;
+	});
+
+	return data;
+}
 
 /**
  * Imports a .storyboard file with all boards
@@ -63,22 +110,19 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	if (overlayInfo === undefined) overlayInfo = false;
 	if (precompShots === undefined) precompShots = true;
 
-	//open and parse file
-	if (!file.open('r')) return -2;
-	var data = file.read();
-	file.close();
-	data = JSON.parse(data);
+	var storyboard = DuAEF.WUStoryboarder.loadStoryboard(file);
 
-	//check boards count
-	if (!data.boards) return -1;
-	if (data.boards.length == 0) return 0;
+	if (!storyboard) return -2;
+	var boards = storyboard.boards;
+	var numBoards = boards.length;
+	if (numBoards == 0) return 0;
 
 	//check images
 	var imagesPath = file.path + '/images/';
 	var imagesFolder = new Folder(imagesPath);
 	if (!imagesFolder.exists) return -1;
 	//first board
-	var firstImageFile = new File(imagesPath + data.boards[0].url);
+	var firstImageFile = new File(imagesPath + boards[0].url);
 	if (!firstImageFile.exists) return -1;
 	//size
 	//import first image to check size
@@ -90,11 +134,11 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	//storyboard name
 	var name = file.name.replace('.storyboarder','');
 	//duration
-	var lastBoard = data.boards[data.boards.length-1];
+	var lastBoard = boards[numBoards-1];
 	var duration = lastBoard.time + lastBoard.duration;
 
 	//create comp
-	var comp = app.project.items.addComp(name + " Animatic", width, height, 1, duration/1000, data.fps);
+	var comp = app.project.items.addComp(name + " Animatic", width, height, 1, duration/1000, storyboard.fps);
 
 	//create Folder item
 	var imageFolder = app.project.items.addFolder(name + " Boards");
@@ -104,10 +148,9 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	//import boards
 	var shotComp = comp;
 	var boardTime = 0;
-	for (var i = 0 ; i < data.boards.length ; i++)
+	for (var i = 0 ; i < numBoards ; i++)
 	{
-		var board = data.boards[i];
-		if (board.duration == 0) board.duration = data.defaultBoardTiming;
+		var board = boards[i];
 
 		//create shot comp
 		if ((i == 0 || board.newShot) && precompShots)
@@ -122,13 +165,13 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 
 			//get shot duration
 			var shotDuration = board.duration/1000;
-			for (var j = i+1 ; j <  data.boards.length ; j++ )
+			for (var j = i+1 ; j <  numBoards ; j++ )
 			{
-				var nextBoard = data.boards[j];
+				var nextBoard = boards[j];
 				if (nextBoard.newShot) break;
 				shotDuration = shotDuration + nextBoard.duration/1000;
 			}
-			shotComp = app.project.items.addComp("Shot " + board.shot.replace('A',''), width, height, 1, shotDuration, data.fps);
+			shotComp = app.project.items.addComp("Shot " + board.shot.replace('A',''), width, height, 1, shotDuration, storyboard.fps);
 
 			shotComp.parentFolder = precompFolder;
 			//add to comp
