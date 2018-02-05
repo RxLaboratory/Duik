@@ -7,6 +7,8 @@
 	#include "libs/DuScriptUILib.jsxinc"
 	#include "libs/DuWUStoryboarderLib.jsxinc"
 
+	var version = "0.1-Beta-1";
+
 	//====== EVENTS ===============
 
 	function fileButton_clicked()
@@ -29,6 +31,8 @@
 	var fileButton = palette.add('button',undefined,"Select .storyboarder file...");
 	var overlayButton = palette.add('checkbox',undefined,"Overlay text information");
 	var precompButton = palette.add('checkbox',undefined,"Precompose shots");
+	var versionText = palette.add('statictext',undefined,'v' + version);
+	versionText.alignment = ['right','bottom'];
 	precompButton.value = true;
 
 	//=========== CONNECT EVENTS ==========

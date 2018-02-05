@@ -4366,6 +4366,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	var imageFolder = app.project.items.addFolder(name + " Boards");
 	var precompFolder = null;
 	if (precompShots) precompFolder = app.project.items.addFolder(name + " Shots");
+	var audioFolder = app.project.items.addFolder(name + " Audio");
 
 	//import boards
 	var shotComp = comp;
@@ -4377,14 +4378,6 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		//create shot comp
 		if ((i == 0 || board.newShot) && precompShots)
 		{
-			//background
-			if (!overlayInfo && i != 0)
-			{
-				var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
-				solid.transform.position.setValue([width/2,height-100]);
-				solid.moveToEnd();
-			}
-
 			//get shot duration
 			var shotDuration = board.duration/1000;
 			for (var j = i+1 ; j <  numBoards ; j++ )
@@ -4394,6 +4387,33 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 				shotDuration = shotDuration + nextBoard.duration/1000;
 			}
 			shotComp = app.project.items.addComp("Shot " + board.shot.replace('A',''), width, height, 1, shotDuration, storyboard.fps);
+
+			//background
+			if (!overlayInfo)
+			{
+				var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+				solid.transform.position.setValue([width/2,height-100]);
+				solid.moveToEnd();
+			}
+
+			//time code
+			var tcLayer = shotComp.layers.addText('00');
+			var textDocument = tcLayer.sourceText.value;
+			textDocument.resetCharStyle();
+			textDocument.resetParagraphStyle();
+			textDocument.fontSize = 35;
+			textDocument.fillColor = [1,1,1];
+			textDocument.strokeColor = [0,0,0];
+			textDocument.strokeWidth = 4;
+			textDocument.font = "Arial";
+			textDocument.strokeOverFill = false;
+			textDocument.applyStroke = overlayInfo;
+			textDocument.applyFill = true;
+			textDocument.justification = ParagraphJustification.LEFT_JUSTIFY;
+			tcLayer.sourceText.setValue(textDocument);
+			tcLayer.sourceText.expression = '"Shot  ' + board.shot.replace('A','') + '\\n" + timeToCurrentFormat()';
+			tcLayer.name = "TC";
+			tcLayer.transform.position.setValue([20,height-60]);
 
 			shotComp.parentFolder = precompFolder;
 			//add to comp
@@ -4413,16 +4433,16 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		shotLayer.name = board.shot;
 		shotLayer.startTime = boardTime;
 		if (!overlayInfo) shotLayer.transform.position.setValue([width/2,mainItem.height/2]);
-		shotLayer.moveToEnd();
+		shotLayer.moveBefore(shotComp.layer(shotComp.numLayers));
 
 		//add dialog
 		if (board.dialogue)
 		{
-			dialogueLayer = shotComp.layers.addText(board.dialogue);
+			var dialogueLayer = shotComp.layers.addText(board.dialogue);
 			var textDocument = dialogueLayer.sourceText.value;
 			textDocument.resetCharStyle();
 			textDocument.resetParagraphStyle();
-			textDocument.fontSize = 50;
+			textDocument.fontSize = 25;
 			textDocument.fillColor = overlayInfo ? [0,0,0] : [1,1,1];
 			textDocument.strokeColor = [1,1,1];
 			textDocument.strokeWidth = 4;
@@ -4442,11 +4462,11 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		//add action
 		if (board.action)
 		{
-			actionLayer = shotComp.layers.addText(board.action);
+			var actionLayer = shotComp.layers.addText(board.action);
 			var textDocument = actionLayer.sourceText.value;
 			textDocument.resetCharStyle();
 			textDocument.resetParagraphStyle();
-			textDocument.fontSize = 50;
+			textDocument.fontSize = 25;
 			textDocument.fillColor = [1,0,0];
 			textDocument.strokeColor = [1,1,1];
 			textDocument.strokeWidth = 4;
@@ -4466,11 +4486,11 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		//add notes
 		if (board.notes)
 		{
-			notesLayer = shotComp.layers.addText(board.notes);
+			var notesLayer = shotComp.layers.addText(board.notes);
 			var textDocument = notesLayer.sourceText.value;
 			textDocument.resetCharStyle();
 			textDocument.resetParagraphStyle();
-			textDocument.fontSize = 50;
+			textDocument.fontSize = 25;
 			textDocument.fillColor = [0,1,0];
 			textDocument.strokeColor = [1,1,1];
 			textDocument.strokeWidth = 4;
@@ -4516,20 +4536,63 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			referenceLayer.moveAfter(shotLayer);
 		}
 
+		//add audio layer
+		if (board.audio !== undefined)
+		{
+			var audioFile = new File(imagesPath + board.audio.filename);
+			var audioItem = app.project.importFile(new ImportOptions(audioFile));
+			audioItem.parentFolder = audioFolder;
+			//add to shot precomp
+			var audioLayer = shotComp.layers.add(audioItem);
+			audioLayer.name = board.shot + " | Audio";
+			audioLayer.startTime = boardTime;
+			audioLayer.moveToEnd();
+			//add to main comp
+			if (precompShots)
+			{
+				audioLayer.guideLayer = true;
+				var audioMainLayer = comp.layers.add(audioItem);
+				audioMainLayer.name = board.shot + " | Audio";
+				audioMainLayer.startTime = board.time/1000;
+				audioMainLayer.moveToEnd();
+			}
+		}
+
 		//set new time
 		boardTime = boardTime + board.duration/1000;
 	}
 
 	//background
-	if (!overlayInfo && i != 0)
+	if (!overlayInfo  && !precompShots )
 	{
-		var solid = shotComp.layers.addSolid([0,0,0], "Background", width, 200, 1);
+		var solid = comp.layers.addSolid([0,0,0], "Background", width, 200, 1);
 		solid.transform.position.setValue([width/2,height-100]);
 		solid.moveToEnd();
 	}
 
+	//time code
+	var tcLayer = comp.layers.addText('00');
+	var textDocument = tcLayer.sourceText.value;
+	textDocument.resetCharStyle();
+	textDocument.resetParagraphStyle();
+	textDocument.fontSize = 35;
+	textDocument.fillColor = [1,1,1];
+	textDocument.strokeColor = [0,0,0];
+	textDocument.strokeWidth = 4;
+	textDocument.font = "Arial";
+	textDocument.strokeOverFill = false;
+	textDocument.applyStroke = overlayInfo;
+	textDocument.applyFill = true;
+	textDocument.justification = ParagraphJustification.RIGHT_JUSTIFY;
+	tcLayer.sourceText.setValue(textDocument);
+	tcLayer.sourceText.expression = 'timeToCurrentFormat()';
+	tcLayer.name = "TC";
+	tcLayer.transform.position.setValue([width-20,height-20]);
+
 	return 1;
 }
+
+	var version = "0.1-Beta-1";
 
 	//====== EVENTS ===============
 
@@ -4553,6 +4616,8 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	var fileButton = palette.add('button',undefined,"Select .storyboarder file...");
 	var overlayButton = palette.add('checkbox',undefined,"Overlay text information");
 	var precompButton = palette.add('checkbox',undefined,"Precompose shots");
+	var versionText = palette.add('statictext',undefined,'v' + version);
+	versionText.alignment = ['right','bottom'];
 	precompButton.value = true;
 
 	//=========== CONNECT EVENTS ==========
