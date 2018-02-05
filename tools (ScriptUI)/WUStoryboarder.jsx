@@ -1,6 +1,9 @@
 (function(thisObj)
 {
+	#include "libs/JSON.jsxinc"
 	#include "libs/DuAEFLib.jsxinc"
+	#include "libs/DuAECoreLib.jsxinc"
+	#include "libs/DuJSLib.jsxinc"
 	#include "libs/DuScriptUILib.jsxinc"
 	#include "libs/DuWUStoryboarderLib.jsxinc"
 
