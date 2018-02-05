@@ -144,6 +144,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	var imageFolder = app.project.items.addFolder(name + " Boards");
 	var precompFolder = null;
 	if (precompShots) precompFolder = app.project.items.addFolder(name + " Shots");
+	var audioFolder = app.project.items.addFolder(name + " Audio");
 
 	//import boards
 	var shotComp = comp;
@@ -292,6 +293,28 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			referenceLayer.transform.opacity.setValue(board.layers.reference.opacity*100);
 			if (!overlayInfo) referenceLayer.transform.position.setValue([width/2,mainItem.height/2]);
 			referenceLayer.moveAfter(shotLayer);
+		}
+
+		//add audio layer
+		if (board.audio !== undefined)
+		{
+			var audioFile = new File(imagesPath + board.audio.filename);
+			var audioItem = app.project.importFile(new ImportOptions(audioFile));
+			audioItem.parentFolder = audioFolder;
+			//add to shot precomp
+			var audioLayer = shotComp.layers.add(audioItem);
+			audioLayer.name = board.shot + " | Audio";
+			audioLayer.startTime = boardTime;
+			audioLayer.moveToEnd();
+			//add to main comp
+			if (precompShots)
+			{
+				audioLayer.guideLayer = true;
+				var audioMainLayer = comp.layers.add(audioItem);
+				audioMainLayer.name = board.shot + " | Audio";
+				audioMainLayer.startTime = board.time/1000;
+				audioMainLayer.moveToEnd();
+			}
 		}
 
 		//set new time
