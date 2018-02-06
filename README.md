@@ -12,11 +12,11 @@ Just include the framework in your script with this simple code:
 
     #include DuAEF.jsxinc //includes all libraries, as separated files (you'll need the complete /libs/ folder)
     //OR
-    #include DuAEF_full.jsxinc //includes the comprehensive framework with one single file.
+    #include DuAEF_full.jsxinc //includes the whole framework with one single file.
     
 After one of these two lines, all objects and methods from DuAEF will be available.
 
-As you can see, you can either use only the "DuAEF_full.jsxinc" file which contains the whole framework, or "DuAEF.jsxinc" file to keep every library in separated files. In most cases, you should use the first method. The second one might be easier to use if you plan to modify or personnalize the framework.
+As you can see, you can either use only the "DuAEF_full.jsxinc" file which contains the whole framework, or "DuAEF.jsxinc" file to keep every library in separated files. In most cases, you should use the "full" file. The second one might be easier to use if you plan to modify or personnalize the framework.
 
 ## Comprehensive reference
 
@@ -24,7 +24,7 @@ The framework reference is available in the [docs](docs) folder, **[click here t
     
 ## Other tools
 
-- The [tools](https://github.com/Rainbox-dev/DuAEF/tree/master/tools) subfolder contains some useful scripts, which can be used as example cases of DuAEF use.
+- The [tools](https://github.com/Rainbox-dev/DuAEF/tree/master/src/tools) subfolder contains some useful scripts, which can be used as example cases of DuAEF use.
 - [DuBuilder](https://github.com/Rainbox-dev/DuAEF/tree/master/DuBuilder) is a stand-alone application written in Qt/C++ to build the scripts. It replaces all includes with the actual source code and lets you distribute your scripts as single files instead of a main script with a lot of includes.
 You can [download the latest (windows-only) version here](https://rainboxprod.coop/downloads/duaef/DuBuilder_0.0.1-Alpha_win64.zip).
 
