@@ -392,6 +392,10 @@
 	#include 'icons/w25_broom_r.png.jsxinc'
 	#include 'icons/w25_storyboard_r.png.jsxinc'
 	#include 'icons/w25_storyboard_l.png.jsxinc'
+	#include 'icons/w25_import_l.png.jsxinc'
+	#include 'icons/w25_import_r.png.jsxinc'
+	#include 'icons/w25_exportfile_l.png.jsxinc'
+	#include 'icons/w25_exportfile_r.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
@@ -530,7 +534,8 @@
 
 	//layout
 	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
-	DuAEF.DuScriptUI.addSeparator(ui_palette);
+	DuAEF.DuScriptUI.setBackgroundColor(ui_topGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	//DuAEF.DuScriptUI.addSeparator(ui_palette);
 	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
 	ui_mainGroup.alignment = ['fill','top'];
 	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
