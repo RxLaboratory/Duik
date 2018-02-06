@@ -152,6 +152,20 @@ DuAEF.DuScriptUI.setTextColor = function (text,color)
 }
 
 /**
+ * Changes the color of the background of a ScriptUI Object
+ * @memberof DuAEF.DuScriptUI
+ * @param {ScriptUI} uiItem - The ScriptUI Object
+ * @param {Array} color - The new color [R,V,B,A] Array
+ */
+DuAEF.DuScriptUI.setBackgroundColor = function (uiItem,color)
+{
+	if (!uiItem) throw "You must provide a ScriptUI Control to change the color of the background";
+	var g = uiItem.graphics;
+	var brush = g.newBrush(g.BrushType.SOLID_COLOR,color);
+	g.backgroundColor = brush;
+}
+
+/**
  * Creates the main panel of a script
  * @memberof DuAEF.DuScriptUI
  * @param {Panel|null}		container	- The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
@@ -229,12 +243,14 @@ DuAEF.DuScriptUI.addGroup = function (container,orientation)
  * @param {Panel|Window|Group} container - Where to create the separator
  * @param {string} [name] - The name displayed
  * @param {boolean} [checkable=false] - When true, adds a checkbox to the separator
+ * @param {boolean} [drawLine=false] - Draws a line when there is no name. When false, the separator is an empty space
  * @return {Separator} The separator
  */
-DuAEF.DuScriptUI.addSeparator = function (container,name,checkable)
+DuAEF.DuScriptUI.addSeparator = function (container,name,checkable,drawLine)
 {
 	if (name == undefined) name = "";
 	if (checkable == undefined) checkable = false;
+	if (drawLine == undefined) drawLine = true;
 	var separator = DuAEF.DuScriptUI.addGroup(container,"row");
 	separator.margins = DuAEF.DuScriptUI.defaultMargins;
 	separator.margins.bottom = DuAEF.DuScriptUI.defaultMargins*2;
@@ -246,12 +262,13 @@ DuAEF.DuScriptUI.addSeparator = function (container,name,checkable)
 	{
 		if (checkable) separator.label = separator.add('checkbox',undefined,name);
 		else separator.label = separator.add('statictext',undefined,name);
-		separator.label.alignment = ['left','bottom'];
+		separator.label.alignment = ['center','bottom'];
+		if (drawLine) DuAEF.DuScriptUI.setBackgroundColor(separator,DuAEF.DuJS.Color.Colors.DARK_GREY);
 	}
-
-	separator.separator = separator.add('panel',undefined);
-	separator.separator.alignment = ['fill','center'];
-	separator.separator.height = 0;
+	else if (drawLine)
+	{
+		DuAEF.DuScriptUI.setBackgroundColor(separator,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	}
 
 	return separator;
 }
@@ -286,7 +303,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	//create a group
 	var group = container.add('group');
 	group.orientation = 'row';
-	group.margins = 0;
+	group.margins = 2;
 	group.spacing = 5;
 	imageButton.group = group;
 
@@ -309,6 +326,8 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		label.helpTip = helpTip;
 		label.alignment = ['left','center'];
 		imageButton.label = label;
+		DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		group.alignment = ['fill','top'];
 	}
 
 	//events
@@ -320,13 +339,21 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	imageButton.mouseOver = function (e)
 	{
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
-		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		if (label)
+		{
+			//DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+			DuAEF.DuScriptUI.setBackgroundColor(imageButton.group,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		}
 	}
 
 	imageButton.mouseOut = function (e)
 	{
 		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+		if (label)
+		{
+			//DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			DuAEF.DuScriptUI.setBackgroundColor(imageButton.group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		}
 	}
 
 	//add events
