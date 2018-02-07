@@ -73,7 +73,6 @@
 	//=========================
 	var version = '16.0.1-Alpha-4';
 	//=========================
-
 	#include DuAEF.jsxinc
 	#include Duik16_shared.jsxinc
 
@@ -93,6 +92,9 @@
 	var settingsPath = settings.file.path;
 	var debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
 	debugLog.startTimer("Loading Duik");
+
+	//this file
+	var thisScriptFile = new File($.fileName);
 
 
 	//============= ICONS =============
@@ -561,6 +563,13 @@
 
 	var ui_rainboxURL = ui_bottomGroup.add ('statictext',undefined,'rainboxprod.coop');
 	ui_rainboxURL.alignment = ['left','bottom'];
+	if (settings.data.debug)
+	{
+		var refreshButton = ui_bottomGroup.add('button',undefined,'R');
+		refreshButton.alignment = ['right','bottom'];
+		refreshButton.maximumSize = [20, 20];
+		refreshButton.onClick = function () { ui_palette.refreshUI( thisScriptFile ); };
+	}
 
 	//=== PANELS ===
 
@@ -585,7 +594,7 @@
 	ui_helpButton.onClick = function(){setCurrentPanel(0)};
 
 	//bottom
-	ui_bottomGroup.addEventListener('mousedown',ui_bottomGroup_clicked,true);
+	ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
 
 	//=== INIT ===
 	setCurrentPanel();
