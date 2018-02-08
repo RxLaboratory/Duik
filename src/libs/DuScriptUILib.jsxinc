@@ -173,6 +173,7 @@ DuAEF.DuScriptUI.setBackgroundColor = function (uiItem,color)
  * @return {Panel|Window}	The panel created, either a ScriptUI Panel or a ScriptUI Window.<br />
  * The resulting object has one custom method: Panel.refreshUI which takes one argument:<br />
  * a File object which must be the script to reload.<br />
+ * The method returns true on success, false otherwise.<br />
  * @example
  * var ui = DuAEF.DuScriptUI.createUI(this,"Test Script");
  * var refreshButton = ui.add('button',undefined,"Refresh");
@@ -196,8 +197,10 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 
 	myPal.refreshUI = function (scriptFile)
 	{
+
 		function refresh()
 		{
+			var ok = false;
 			// Remove everything
 			for ( var i = myPal.children.length - 1; i >= 0; i-- )
 			{
@@ -207,19 +210,28 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 			// Run the scriptFile
 			try
 			{
+				ok = true;
 				$.evalFile( scriptFile );
-			// Alert any errors
 			}
 			catch ( err )
 			{
-				alert( err.fileName + "\n" + err.message + " on line " + err.line );
+				ok = false;
+				//add debug info
+				myPal.add('statictext',undefined,err.fileName,{multiline:true});
+				myPal.add('statictext',undefined,err.message,{multiline:true});
+				myPal.add('statictext',undefined,"on line" + err.line);
+				//add a refresh button
+				var button = myPal.add('button',undefined,"Refresh UI");
+				button.onClick = function () { myPal.refreshUI(scriptFile) };
 			}
 
 			// Recalculate UI
 			myPal.layout.layout( true );
+
+			return ok;
 		}
 
-		refresh.call(myPal);
+		return refresh.call(myPal);
 	}
 
 	return myPal;
