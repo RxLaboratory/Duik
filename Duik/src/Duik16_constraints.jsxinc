@@ -1,0 +1,739 @@
+
+//========== FUNCTIONS =========
+
+function setCurrentConstraintsPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_constraintsGeneralGroup.visible = panel == 0;
+	ui_pathConstraintGroup.visible = panel == 1;
+	ui_bonesGroup.visible = panel == 2;
+	ui_connectorGroup.visible = panel == 3;
+}
+
+function initConstraintsUI()
+{
+	setCurrentConstraintsPanel(0);
+}
+
+function bonesEditInit()
+{
+	if (settings.data.boneSizeHint == undefined) settings.data.boneSizeHint = 0;
+	if (settings.data.boneSize == undefined) settings.data.boneSize = 100;
+
+	DuAEF.Duik.boneSize = settings.data.boneSize;
+	DuAEF.Duik.boneSizeHint = settings.data.boneSizeHint;
+
+	ui_bonesEditSizeEdit.setText(settings.data.boneSize);
+	ui_bonesEditSizeList[1].selection = settings.data.boneSizeHint;
+	if (settings.data.boneSizeHint == 3)
+	{
+		ui_bonesEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_bonesEditSizeEdit.enabled = false;
+	}
+
+	if (settings.data.boneColor == undefined) settings.data.boneColor = "EC1818";
+	ui_bonesEditColor.setText(settings.data.boneColor);
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+	DuAEF.Duik.boneColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_bonesEditColorLabel,color);
+}
+
+function connectorInit()
+{
+	connectorMasterProp = null;
+	ui_connectorPickButton.label.text = "Pick master property";
+	ui_connectorMinimumEdit.setText("0");
+	ui_connectorMaximumEdit.setText("100");
+	ui_connectorAxisList.removeAll();
+	ui_connectorAxisList.enabled = false;
+	ui_connectorAxisLabel.text = "Axis: ";
+	ui_connectorTypeList.selection = 0;
+	ui_connectorForm.enabled = false;
+	if (!settings.data.expert)
+	{
+		ui_connectorSeparator3.enabled = false;
+		ui_connectorSeparator2.enabled = false;
+	}
+	ui_connectorChildrenGroup.enabled = false;
+}
+
+//====== EVENTS ================
+
+function ui_connectorPickButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	connectorMasterProp = null;
+	ui_connectorMinimumEdit.setText('0');
+	ui_connectorMaximumEdit.setText('100');
+
+	//if there's a selected layer which is a Duik controller (slider, 2d slider, angle)
+	var layers = comp.selectedLayers;
+	if (layers.length > 0)
+	{
+		var layer = layers[layers.length - 1];
+		var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
+		if (effect)
+		{
+			connectorMasterProp = new PropertyInfo(effect(18));
+			ui_connectorMinimumEdit.setText('-100');
+			ui_connectorMaximumEdit.setText('100');
+			ui_connectorPickButton.label.text = "Slider";
+		}
+		if (!effect)
+		{
+			var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
+			if (effect)
+			{
+				connectorMasterProp = new PropertyInfo(effect(18));
+				ui_connectorMinimumEdit.setText('0');
+				ui_connectorMaximumEdit.setText('360');
+				ui_connectorPickButton.label.text = "Angle";
+			}
+		}
+		if  (!effect)
+		{
+			effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
+			if (effect)
+			{
+				connectorMasterProp = new PropertyInfo(effect(20));
+				ui_connectorMinimumEdit.setText('-100');
+				ui_connectorMaximumEdit.setText('100');
+				ui_connectorPickButton.label.text = "2D Slider";
+			}
+		}
+	}
+
+	if (!connectorMasterProp)
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length > 0)
+		{
+			connectorMasterProp = props[props.length-1];
+			var prop = connectorMasterProp.getProperty();
+			ui_connectorPickButton.label.text = prop.name;
+		}
+	}
+
+	if (connectorMasterProp != null)
+	{
+		var dim = DuAEF.Duik.Rigging.connectorCheckParent(connectorMasterProp);
+		if (dim == 0)
+		{
+			connectorMasterProp = null;
+			alert("This property cannot be used as a master property with the connector.");
+		}
+		else if (dim == 1)
+		{
+			ui_connectorAxisList.removeAll();
+			ui_connectorAxisList.enabled = false;
+			ui_connectorAxisLabel.text = "Axis: ";
+		}
+		else if (dim == 2)
+		{
+			ui_connectorAxisList.removeAll();
+			ui_connectorAxisList.enabled = true;
+			ui_connectorAxisList.add('item','X');
+			ui_connectorAxisList.add('item','Y');
+			ui_connectorAxisList.selection = 0;
+			ui_connectorAxisLabel.text = "Axis: ";
+		}
+		else if (dim == 3)
+		{
+			ui_connectorAxisList.removeAll();
+			ui_connectorAxisList.enabled = true;
+			ui_connectorAxisList.add('item','X');
+			ui_connectorAxisList.add('item','Y');
+			ui_connectorAxisList.add('item','Z');
+			ui_connectorAxisList.selection = 0;
+			ui_connectorAxisLabel.text = "Axis: ";
+		}
+		else if (dim == 4)
+		{
+			ui_connectorAxisList.removeAll();
+			ui_connectorAxisList.enabled = true;
+			ui_connectorAxisList.add('item',"Red");
+			ui_connectorAxisList.add('item',"Green");
+			ui_connectorAxisList.add('item',"Blue");
+			ui_connectorAxisList.add('item',"Alpha");
+			ui_connectorAxisList.add('item',"Hue");
+			ui_connectorAxisList.add('item',"Saturation");
+			ui_connectorAxisList.add('item',"Value");
+			ui_connectorAxisList.selection = 4;
+			ui_connectorAxisLabel.text = "Channel: ";
+			if (app.project.bitsPerChannel == 8) ui_connectorMaximumEdit.setText('255');
+			else if (app.project.bitsPerChannel == 16) ui_connectorMaximumEdit.setText('32768');
+			else if (app.project.bitsPerChannel == 32) ui_connectorMaximumEdit.setText('1.0');
+		}
+	}
+
+	if (connectorMasterProp)
+	{
+		ui_connectorForm.enabled = true;
+		ui_connectorChildrenGroup.enabled = true;
+		if (!settings.data.expert)
+		{
+			ui_connectorSeparator3.enabled = true;
+			ui_connectorSeparator2.enabled = true;
+		}
+	}
+	else
+	{
+		ui_connectorPickButton.label.text = "Pick master property";
+		ui_connectorForm.enabled = false;
+		ui_connectorChildrenGroup.enabled = false;
+		if (!settings.data.expert)
+		{
+			ui_connectorSeparator3.enabled = false;
+			ui_connectorSeparator2.enabled = false;
+		}
+	}
+}
+
+function ui_connectorTypeList_changed()
+{
+	if (ui_connectorTypeList.selection.index == 0)
+	{
+		ui_connectorAxisList.enabled = true;
+		//TODO get min and max values
+	}
+	else if (ui_connectorTypeList.selection.index == 1)
+	{
+		ui_connectorAxisList.enabled = false;
+		//TODO get max velocity
+	}
+}
+
+function ui_connectorPropertiesButton_clicked()
+{
+	var effect = null;
+	var min = parseFloat(ui_connectorMinimumEdit.text);
+	var max = parseFloat(ui_connectorMaximumEdit.text);
+	var type = DuAEF.DuAE.Types.VALUE;
+	if (ui_connectorTypeList.selection.index == 1) type = DuAEF.DuAE.Types.VELOCITY;
+	var axis = DuAEF.DuAE.Axis.X;
+	if (connectorMasterProp.dimensions == 2 || connectorMasterProp.dimensions == 3)
+	{
+		if (ui_connectorAxisList.selection.index == 1) axis = DuAEF.DuAE.Axis.Y;
+		else if (ui_connectorAxisList.selection.index == 2) axis = DuAEF.DuAE.Axis.Z;
+	}
+	else if (connectorMasterProp.dimensions == 4)
+	{
+		if (ui_connectorAxisList.selection.index == 0) axis = DuAEF.DuAE.Axis.RED;
+		else if (ui_connectorAxisList.selection.index == 1) axis = DuAEF.DuAE.Axis.GREEN;
+		else if (ui_connectorAxisList.selection.index == 2) axis = DuAEF.DuAE.Axis.BLUE;
+		else if (ui_connectorAxisList.selection.index == 3) axis = DuAEF.DuAE.Axis.ALPHA;
+		else if (ui_connectorAxisList.selection.index == 4) axis = DuAEF.DuAE.Axis.HUE;
+		else if (ui_connectorAxisList.selection.index == 5) axis = DuAEF.DuAE.Axis.SATURATION;
+		else if (ui_connectorAxisList.selection.index == 6) axis = DuAEF.DuAE.Axis.VALUE;
+	}
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Connector");
+
+	var effect = null;
+	var it = new Iterator(props);
+	it.do(function (p) {
+		effect = DuAEF.Duik.Rigging.connector(p,connectorMasterProp,effect,min,max,axis,type);
+	});
+
+	app.endUndoGroup();
+
+}
+
+function ui_connectorOpacitiesButton_clicked()
+{
+	var effect = null;
+	var min = parseFloat(ui_connectorMinimumEdit.text);
+	var max = parseFloat(ui_connectorMaximumEdit.text);
+	var type = DuAEF.DuAE.Types.VALUE;
+	if (ui_connectorTypeList.selection.index == 1) type = DuAEF.DuAE.Types.VELOCITY;
+	var axis = DuAEF.DuAE.Axis.X;
+	if (connectorMasterProp.dimensions == 2 || connectorMasterProp.dimensions == 3)
+	{
+		if (ui_connectorAxisList.selection.index == 1) axis = DuAEF.DuAE.Axis.Y;
+		else if (ui_connectorAxisList.selection.index == 2) axis = DuAEF.DuAE.Axis.Z;
+	}
+	else if (connectorMasterProp.dimensions == 4)
+	{
+		if (ui_connectorAxisList.selection.index == 0) axis = DuAEF.DuAE.Axis.RED;
+		else if (ui_connectorAxisList.selection.index == 1) axis = DuAEF.DuAE.Axis.GREEN;
+		else if (ui_connectorAxisList.selection.index == 2) axis = DuAEF.DuAE.Axis.BLUE;
+		else if (ui_connectorAxisList.selection.index == 3) axis = DuAEF.DuAE.Axis.ALPHA;
+		else if (ui_connectorAxisList.selection.index == 4) axis = DuAEF.DuAE.Axis.HUE;
+		else if (ui_connectorAxisList.selection.index == 5) axis = DuAEF.DuAE.Axis.SATURATION;
+		else if (ui_connectorAxisList.selection.index == 6) axis = DuAEF.DuAE.Axis.VALUE;
+	}
+
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Connector");
+
+	DuAEF.DuAE.Layer.sequence(layers);
+	var effect = null;
+	var it = new Iterator(layers);
+	it.do(function (layer) {
+		effect = DuAEF.Duik.Rigging.connector(layer.transform.opacity,connectorMasterProp,effect,min,max,axis,type);
+	});
+
+	app.endUndoGroup();
+}
+
+function ui_bonesEditSizeList_changed()
+{
+	var index = ui_bonesEditSizeList[1].selection.index;
+	if (index == 3)
+	{
+		ui_bonesEditSizeEdit.enabled = true;
+	}
+	else
+	{
+		ui_bonesEditSizeEdit.enabled = false;
+	}
+	DuAEF.Duik.boneSizeHint = index;
+	settings.data.boneSizeHint = index;
+	settings.save();
+
+	ui_bonesEditSizeValidButton_clicked();
+}
+
+function ui_bonesEditSizeEdit_changed()
+{
+	DuAEF.Duik.boneSize = parseInt(ui_bonesEditSizeEdit.text);
+	settings.data.boneSize = DuAEF.Duik.boneSize;
+	settings.save();
+	ui_bonesEditSizeValidButton_clicked();
+}
+
+function ui_bonesEditColor_changed()
+{
+	settings.data.boneColor = ui_bonesEditColor.text;
+	settings.save();
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+	DuAEF.Duik.controllerColor = color;
+	DuAEF.DuScriptUI.setTextColor(ui_bonesEditColorLabel,color);
+
+	ui_bonesEditColorValidButton_clicked();
+}
+
+function ui_bonesEditColor_clicked()
+{
+	var color = $.colorPicker();
+	if (color == -1) return;
+	color = DuAEF.DuJS.Color.hexToRGB(color,false);
+	ui_bonesEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_bonesEditColor_changed();
+}
+
+function ui_bonesEditSizeValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+	if (bones.length == 0) return;
+
+	app.beginUndoGroup('Duik - ' + "Set bone size");
+	for (var i = 0 ; i < bones.length ; i++)
+	{
+		bones[i].setSize();
+	}
+	app.endUndoGroup();
+}
+
+function ui_bonesEditRandomColorButton_clicked()
+{
+	var color = DuAEF.DuJS.Color.random();
+	ui_bonesEditColor.setText(DuAEF.DuJS.Color.rgbToHex(color));
+	ui_bonesEditColor_changed();
+}
+
+function ui_bonesEditColorValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+	if (bones.length == 0) return;
+
+	var color = DuAEF.DuJS.Color.hexToRGB(ui_bonesEditColor.text);
+
+
+	app.beginUndoGroup('Duik - ' + "Set bone color");
+	for (var i = 0 ; i < bones.length ; i++)
+	{
+		bones[i].setColor(color);
+	}
+	app.endUndoGroup();
+}
+
+function ui_bonesEditSetButton_clicked()
+{
+	ui_bonesEditSizeValidButton_clicked();
+	ui_bonesEditColorValidButton_clicked();
+}
+
+function ui_bonesEditGetButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	//get from first element
+	var bones = DuAEF.Duik.Bone.getBones(comp,true);
+
+	//TODO does not work?
+
+	if (bones.length >= 0)
+	{
+		var effect = bones[0].effect;
+		var color = effect(1).value;
+		var size = effect(2).value;
+		settings.data.boneSize = size;
+		settings.data.boneSizeHint = DuAEF.Duik.Sizes.CUSTOM;
+		settings.data.boneColor = DuAEF.DuJS.Color.rgbToHex(color);
+		bonesEditInit();
+	}
+}
+
+function ui_bonesButton_clicked(randomColor)
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Create bones");
+	if (randomColor) DuAEF.Duik.boneColor = DuAEF.DuJS.Color.random();
+	else DuAEF.Duik.boneColor = DuAEF.DuJS.Color.hexToRGB(settings.data.boneColor);
+	var bones = [];
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		bones.push(DuAEF.Duik.Bone.addBone(props[i]));
+	}
+	DuAEF.DuAE.Comp.selectLayers(bones);
+	app.endUndoGroup();
+
+}
+
+function ui_attachmentButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Attachment");
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		DuAEF.Duik.Rigging.attachmentConstraint(layers[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+	app.endUndoGroup();
+}
+
+function ui_parentButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Parent link");
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		DuAEF.Duik.Rigging.parentConstraint(layers[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+	app.endUndoGroup();
+}
+
+function ui_pathConstraintButton_clicked()
+{
+	pathConstraintPathProp = null;
+	ui_pathConstraintLabel.text ="Pick a path\nthen select a layer\nto apply the constraint.";
+	ui_pathConstraintPickButton_clicked();
+	setCurrentConstraintsPanel(1);
+}
+
+function ui_pathConstraintPickButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
+	if (props.length == 0) return;
+
+	pathConstraintPathProp = props[props.length-1];
+	ui_pathConstraintLabel.text ="Now select a layer to appy the constraint.";
+}
+
+function ui_pathConstraintValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	if (!pathConstraintPathProp) return;
+
+	var layers = comp.selectedLayers;
+
+	app.beginUndoGroup('Duik | ' + "Path constraint");
+	DuAEF.Duik.Rigging.pathConstraint(layers[0],pathConstraintPathProp);
+	app.endUndoGroup();
+}
+
+function ui_positionConstraintButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Orientation Constraint");
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		DuAEF.Duik.Rigging.positionConstraint(layers[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+	app.endUndoGroup();
+}
+
+function ui_orientationConstraintButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Orientation Constraint");
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		DuAEF.Duik.Rigging.orientationConstraint(layers[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+	app.endUndoGroup();
+}
+
+function ui_listConstaintsButton_clicked()
+{
+	shared.addList();
+}
+
+function ui_zeroButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Add zero");
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		DuAEF.Duik.Rigging.addZero(layers[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+	app.endUndoGroup();
+}
+
+//========== UI ==============
+var ui_constraintsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
+
+var ui_constraintsGeneralGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup,"Links & constraints");
+
+var ui_IKMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
+var ui_autorigButton = DuAEF.DuScriptUI.addImageButton(ui_IKMainGroup,settings.data.expert ? '' : "Auto-rig",DuAEF.DuBinary.toFile(w32_autorig_l),"Automatically rig structures",DuAEF.DuBinary.toFile(w32_autorig_r));
+ui_autorigButton.group.enabled = false;
+var ui_IKGroup = DuAEF.DuScriptUI.addGroup(ui_IKMainGroup,settings.data.expert ? 'column' : 'row');
+var ui_IKButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,settings.data.expert ? '' : "IK",DuAEF.DuBinary.toFile(w25_ik_l),"Add an IK to the selected structure",DuAEF.DuBinary.toFile(w25_ik_r));
+var ui_IKOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"IK options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_IKOptionsButton.group.enabled = false;
+ui_IKOptionsButton.group.alignment = ['right','center'];
+var ui_bezierIKGroup = DuAEF.DuScriptUI.addGroup(ui_IKMainGroup,settings.data.expert ? 'column' : 'row');
+var ui_bezierIKButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKGroup,settings.data.expert ? '' : "Bezier IK",DuAEF.DuBinary.toFile(w25_bezierik_l),"Add an IK to the selected structure",DuAEF.DuBinary.toFile(w25_bezierik_r));
+var ui_bezierIKOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bezierIKGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Bezier IK options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_bezierIKOptionsButton.group.enabled = false;
+ui_bezierIKOptionsButton.group.alignment = ['right','center'];
+
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
+
+var ui_connectorButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsGeneralGroup,"Connector...",DuAEF.DuBinary.toFile(w32_constraint_l),"Connect any property to any master property",DuAEF.DuBinary.toFile(w32_constraint_r));
+
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
+
+var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,'row');
+//ui_bonesGroup.alignment = ['fill','top'];
+var ui_bonesButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,"Add bones",DuAEF.DuBinary.toFile(w32_target_l),"Connect any spatial property to a control layer",DuAEF.DuBinary.toFile(w32_target_r));
+var ui_bonesOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_bonesGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Bones options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_bonesOptionsButton.group.alignment = ['right','center'];
+
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
+
+var ui_constraintsMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
+var ui_attachmentButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Attachment",DuAEF.DuBinary.toFile(w25_skin_l),"Attach layers to other layers, with weighted influnce",DuAEF.DuBinary.toFile(w25_skin_r));
+var ui_parentButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Parent link",DuAEF.DuBinary.toFile(w25_parent_l),"Link layers together (animatable)",DuAEF.DuBinary.toFile(w25_parent_r));
+var ui_pathConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Path constraint...",DuAEF.DuBinary.toFile(w25_pathconstraint_l),"Attach a layer to a bezier path",DuAEF.DuBinary.toFile(w25_pathconstraint_r));
+//path constraint: only on CC2018+ (15+)
+if (DuAEF.DuAE.App.version < 15)
+{
+	if (!settings.data.expert) ui_pathConstraintButton.label.text = 'CC2018';
+	ui_pathConstraintButton.group.enabled = false;
+}
+var ui_positionConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Position constraint",DuAEF.DuBinary.toFile(w25_positionconstraint_l),"Constraint a layer to the position of other layers",DuAEF.DuBinary.toFile(w25_positionconstraint_r));
+var ui_orientationConstraintButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.expert ? '' : "Orientation constraint",DuAEF.DuBinary.toFile(w25_orientationconstraint_l),"Constrain the rotation of a layer to the orientation of other layers",DuAEF.DuBinary.toFile(w25_orientationconstraint_r));
+
+DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
+
+var ui_constraintsToolsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.expert ? 'row' : 'column');
+var ui_listConstaintsButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add list",DuAEF.DuBinary.toFile(w18_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w18_list_r));
+var ui_zeroButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer",DuAEF.DuBinary.toFile(w18_zero_r));
+
+//path constraint options
+var ui_pathConstraintGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_pathConstraintGroup,"Path constraint");
+ui_pathConstraintGroup.alignChildren = ['center','top'];
+var ui_pathConstraintPickButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintGroup,"Pick path",DuAEF.DuBinary.toFile(w32_pickpath_l),"Select the path for the constraint",DuAEF.DuBinary.toFile(w32_pickpath_r));
+var ui_pathConstraintLabel = ui_pathConstraintGroup.add('statictext',undefined,"Pick a path\nthen select a layer\nto apply the constraint.",{multiline:true});
+DuAEF.DuScriptUI.setTextColor(ui_pathConstraintLabel,DuAEF.DuJS.Color.Colors.DARK_GREY);
+var ui_pathConstraintValidGroup = DuAEF.DuScriptUI.addGroup(ui_pathConstraintGroup);
+ui_pathConstraintValidGroup.alignment = ['fill','top'];
+var ui_pathConstraintCancelButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_pathConstraintValidButton = DuAEF.DuScriptUI.addImageButton(ui_pathConstraintValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Path constraint",DuAEF.DuBinary.toFile(w25_check_r));
+
+//bones options
+var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_bonesGroup,"Edit bones");
+ui_bonesGroup.alignChildren = ['center','top'];
+var ui_bonesEditForm = DuAEF.DuScriptUI.addForm(ui_bonesGroup);
+ui_bonesEditForm.alignment = ['fill','top'];
+DuAEF.DuScriptUI.setBackgroundColor(ui_bonesEditForm,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+//add a column for valid buttons
+var ui_bonesEditValidButtons = ui_bonesEditForm.add('group');
+ui_bonesEditValidButtons.alignment = ['right','top'];
+ui_bonesEditValidButtons.orientation = 'column';
+ui_bonesEditValidButtons.alignChildren = ['right','center'];
+ui_bonesEditValidButtons.spacing = 2;
+
+var ui_bonesEditSizeList = DuAEF.DuScriptUI.addFormField(ui_bonesEditForm,"Size",'dropdownlist',["Small","Medium","Large","Custom"],"Set the display size of the bones.");
+var ui_bonesEditSizeValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditValidButtons,'',DuAEF.DuBinary.toFile(w18_check_m),"Set size",DuAEF.DuBinary.toFile(w18_check_g));
+ui_bonesEditSizeValidButton.group.minimumSize.height = ui_bonesEditSizeValidButton.group.maximumSize.height = ui_bonesEditSizeList[1].preferredSize[1];
+
+var ui_bonesEditSizeEdit = DuAEF.DuScriptUI.addNiceEditText(ui_bonesEditForm.buttons,'100');
+ui_bonesEditSizeEdit.helpTip = "Set the display size of the controllers.";
+var ui_bonesEditSpacer = ui_bonesEditValidButtons.add('statictext',undefined,'');
+ui_bonesEditSpacer.minimumSize.height = ui_bonesEditSpacer.maximumSize.height = ui_bonesEditSizeEdit.edit.preferredSize[1];
+ui_bonesEditSpacer = ui_bonesEditForm.labels.add('statictext',undefined,'');
+ui_bonesEditSpacer.minimumSize.height = ui_bonesEditSpacer.maximumSize.height = ui_bonesEditSizeEdit.edit.preferredSize[1];
+
+var ui_bonesEditColor = DuAEF.DuScriptUI.addNiceEditText(ui_bonesEditForm.buttons,'EC1818');
+var ui_bonesEditColorLabel = ui_bonesEditForm.labels.add('statictext',undefined,"Color #");
+ui_bonesEditColor.helpTip = "Set the display color of the controllers.";
+ui_bonesEditColorLabel.helpTip = "Set the display color of the controllers.";
+ui_bonesEditColorLabel.minimumSize.height = ui_bonesEditColorLabel.maximumSize.height = ui_bonesEditColor.edit.preferredSize[1];
+var ui_bonesEditColorValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditValidButtons,'',DuAEF.DuBinary.toFile(w18_check_m),"Set color",DuAEF.DuBinary.toFile(w18_check_g));
+ui_bonesEditColorValidButton.group.minimumSize.height = ui_bonesEditColorValidButton.group.maximumSize.height = ui_bonesEditColor.edit.preferredSize[1];
+
+var ui_bonesEditRandomColorButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditForm.buttons,"Random",DuAEF.DuBinary.toFile(w18_random_l),"Generates a random color",DuAEF.DuBinary.toFile(w18_random_r));
+
+//DuAEF.DuScriptUI.addSeparator(ui_bonesGroup);
+
+var ui_bonesEditGetSetGroup = DuAEF.DuScriptUI.addGroup(ui_bonesGroup);
+ui_bonesEditGetSetGroup.alignment = ['fill','top'];
+var ui_bonesEditGetButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditGetSetGroup,'Get',DuAEF.DuBinary.toFile(w25_handeyedropper_l),"Get size and color",DuAEF.DuBinary.toFile(w25_handeyedropper_r));
+var ui_bonesEditSetButton = DuAEF.DuScriptUI.addImageButton(ui_bonesEditGetSetGroup,'Set',DuAEF.DuBinary.toFile(w25_check_l),"Set size and color",DuAEF.DuBinary.toFile(w25_check_g));
+
+DuAEF.DuScriptUI.addSeparator(ui_bonesGroup);
+
+var ui_bonesValidGroup = DuAEF.DuScriptUI.addGroup(ui_bonesGroup);
+ui_bonesValidGroup.alignment = ['fill','top'];
+var ui_bonesCancelButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_bonesValidButton = DuAEF.DuScriptUI.addImageButton(ui_bonesValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Create bones",DuAEF.DuBinary.toFile(w25_check_r));
+
+//connector options
+var ui_connectorGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,"Connector");
+ui_connectorGroup.alignChildren = ['center','top'];
+
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'1 - ' + "Create controller");
+var ui_connectorCtrlGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,'row');
+var ui_connectorSliderButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'',DuAEF.DuBinary.toFile(w25_slider_l),'',DuAEF.DuBinary.toFile(w25_slider_r));
+var ui_connectorDoubleSliderButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'',DuAEF.DuBinary.toFile(w25_doubleslider_l),'',DuAEF.DuBinary.toFile(w25_doubleslider_r));
+var ui_connectorAngleButton = DuAEF.DuScriptUI.addImageButton(ui_connectorCtrlGroup,'',DuAEF.DuBinary.toFile(w25_angle_l),'',DuAEF.DuBinary.toFile(w25_angle_r));
+
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,"Or pick master");
+var ui_connectorPickButton = DuAEF.DuScriptUI.addImageButton(ui_connectorGroup,"Pick master property",DuAEF.DuBinary.toFile(w32_pickproperty_l),"Select the master property",DuAEF.DuBinary.toFile(w32_pickproperty_r));
+
+if (!settings.data.expert) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'2 - ' + "Set values");
+var ui_connectorForm = DuAEF.DuScriptUI.addForm(ui_connectorGroup);
+DuAEF.DuScriptUI.setBackgroundColor(ui_connectorForm,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+ui_connectorForm.alignment = ['fill','top'];
+var ui_connectorAxisLabel = ui_connectorForm.labels.add('statictext',undefined,"Placeholder: ");
+var ui_connectorTypeLabel = ui_connectorForm.labels.add('statictext',undefined,"Type: ");
+var ui_connectorMinLabel = ui_connectorForm.labels.add('statictext',undefined,"Minimum: ");
+var ui_connectorMaxLabel = ui_connectorForm.labels.add('statictext',undefined,"Maximum: ");
+var ui_connectorAxisList = ui_connectorForm.buttons.add('dropdownlist',undefined,['            ']);
+var ui_connectorTypeList = ui_connectorForm.buttons.add('dropdownlist',undefined,["Value","Velocity"]);
+var ui_connectorMinimumEdit = DuAEF.DuScriptUI.addNiceEditText(ui_connectorForm.buttons,'0');
+var ui_connectorMaximumEdit = DuAEF.DuScriptUI.addNiceEditText(ui_connectorForm.buttons,'10000');
+ui_connectorMinLabel.minimumSize.height = ui_connectorMinLabel.maximumSize.height = ui_connectorMinimumEdit.edit.preferredSize[1];
+ui_connectorMaxLabel.minimumSize.height = ui_connectorMaxLabel.maximumSize.height = ui_connectorMaximumEdit.edit.preferredSize[1];
+ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.height = ui_connectorAxisList.preferredSize[1];
+ui_connectorTypeLabel.minimumSize.height = ui_connectorTypeLabel.maximumSize.height = ui_connectorTypeList.preferredSize[1];
+if (!settings.data.expert) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
+var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,settings.data.expert ? 'row' : 'column');
+ui_connectorChildrenGroup.alignment = ['fill','top'];
+var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addImageButton(ui_connectorChildrenGroup,settings.data.expert ? '' : 'Connect to properties',DuAEF.DuBinary.toFile(w25_allproperties_l),"Connect selected properties",DuAEF.DuBinary.toFile(w25_allproperties_r))
+var ui_connectorOpacitiesButton = DuAEF.DuScriptUI.addImageButton(ui_connectorChildrenGroup,settings.data.expert ? '' : 'Connect to opacities',DuAEF.DuBinary.toFile(w25_opacity_l),"Connect selected layers opacity",DuAEF.DuBinary.toFile(w25_opacity_r))
+DuAEF.DuScriptUI.addSeparator(ui_connectorGroup);
+var ui_connectorCancelButton = DuAEF.DuScriptUI.addImageButton(ui_connectorGroup,"Cancel",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+ui_connectorCancelButton.alignment = ['center','top'];
+
+//=========== INIT =============
+
+bonesEditInit();
+setCurrentConstraintsPanel();
+var pathConstraintPathProp = null;
+var connectorMasterProp = null;
+
+//=========== CONNECT EVENTS ===========
+
+ui_IKButton.onClick = shared.createIK;
+ui_bezierIKButton.onClick = shared.createBezierIK;
+
+ui_connectorSliderButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.SLIDER); ui_connectorPickButton_clicked(); }
+ui_connectorDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.DOUBLE_SLIDER); ui_connectorPickButton_clicked(); }
+ui_connectorAngleButton.onClick = function () {shared.createController(DuAEF.Duik.ControllerType.ANGLE); ui_connectorPickButton_clicked(); }
+ui_connectorTypeList.onChange = ui_connectorTypeList_changed;
+ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
+ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
+
+ui_connectorButton.onClick = function () { connectorInit(); setCurrentConstraintsPanel(3);};
+ui_connectorCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+ui_connectorPickButton.onClick = ui_connectorPickButton_clicked;
+ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
+ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
+
+ui_bonesButton.onClick = function () {ui_bonesButton_clicked(true);}
+ui_bonesValidButton.onClick = function () {ui_bonesButton_clicked(false);}
+ui_bonesOptionsButton.onClick = function () {setCurrentConstraintsPanel(2);};
+ui_bonesCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+
+ui_bonesEditSizeList[1].onChange = ui_bonesEditSizeList_changed;
+ui_bonesEditSizeEdit.onChange = ui_bonesEditSizeEdit_changed;
+ui_bonesEditColor.onChange = ui_bonesEditColor_changed;
+ui_bonesEditColorLabel.addEventListener("mousedown",ui_bonesEditColor_clicked,false);
+
+ui_bonesEditSizeValidButton.onClick = ui_bonesEditSizeValidButton_clicked;
+ui_bonesEditRandomColorButton.onClick = ui_bonesEditRandomColorButton_clicked;
+ui_bonesEditColorValidButton.onClick = ui_bonesEditColorValidButton_clicked;
+
+ui_bonesEditSetButton.onClick = ui_bonesEditSetButton_clicked;
+ui_bonesEditGetButton.onClick = ui_bonesEditGetButton_clicked;
+
+ui_attachmentButton.onClick = ui_attachmentButton_clicked;
+ui_parentButton.onClick = ui_parentButton_clicked;
+
+ui_pathConstraintButton.onClick = ui_pathConstraintButton_clicked;
+ui_pathConstraintCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+ui_pathConstraintPickButton.onClick = ui_pathConstraintPickButton_clicked;
+ui_pathConstraintValidButton.onClick = ui_pathConstraintValidButton_clicked;
+
+ui_positionConstraintButton.onClick = ui_positionConstraintButton_clicked;
+ui_orientationConstraintButton.onClick = ui_orientationConstraintButton_clicked;
+
+ui_listConstaintsButton.onClick = ui_listConstaintsButton_clicked;
+ui_zeroButton.onClick = ui_zeroButton_clicked;
