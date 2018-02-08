@@ -398,6 +398,10 @@
 	#include 'icons/w25_import_r.png.jsxinc'
 	#include 'icons/w25_exportfile_l.png.jsxinc'
 	#include 'icons/w25_exportfile_r.png.jsxinc'
+	#include 'icons/w25_overlaytext_r.png.jsxinc'
+	#include 'icons/w25_overlaytext_l.png.jsxinc'
+	#include 'icons/w25_textbelow_r.png.jsxinc'
+	#include 'icons/w25_textbelow_l.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
