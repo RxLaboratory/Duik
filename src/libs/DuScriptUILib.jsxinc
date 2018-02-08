@@ -23,6 +23,9 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "icons/w18_menu_l.png.jsxinc"
+#include "icons/w18_menu_m.png.jsxinc"
+
 /**
 * ScriptUI tools
 * @namespace
@@ -361,6 +364,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		icon.alignment = ['center','center'];
 		icon.helpTip = helpTip;
 		imageButton.image = icon;
+		imageButton.icon = icon;
 	}
 	if (imageOver != '')
 	{
@@ -388,7 +392,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
 		if (label)
 		{
-			//DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+			DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
 			DuAEF.DuScriptUI.setBackgroundColor(imageButton.group,DuAEF.DuJS.Color.Colors.DARK_GREY);
 		}
 	}
@@ -398,7 +402,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
 		if (label)
 		{
-			//DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 			DuAEF.DuScriptUI.setBackgroundColor(imageButton.group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 		}
 	}
@@ -902,4 +906,122 @@ DuAEF.DuScriptUI.addNiceSlider = function(container,defaultValue,min,max,orienta
 	}
 
 	return niceSlider;
+}
+
+DuAEF.DuScriptUI.addSelector = function(container)
+{
+	//create main group
+	var selector = container.add('group');
+	selector.orientation = 'row';
+	selector.margins = 2;
+	selector.spacing = 5;
+	selector.alignment = ['fill','top'];
+	selector.alignChildren = ['center','center'];
+	DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	selector.addButton = function (text,image,helpTip,imageOver)
+	{
+		if (!text) text = '-';
+		if (!image) image = '';
+		if (!helpTip) helpTip = '';
+		if (!imageOver) imageOver = '';
+
+		var size = text.length*7;
+		if (selector.label.minimumSize.width < size) selector.label.minimumSize.width = size;
+
+		var index = selector.items.length;
+		selector.items.push([text,image,helpTip,imageOver]);
+		var button = DuAEF.DuScriptUI.addImageButton(selector.popup,text,image,helpTip,imageOver);
+		button.onClick = function () { selector.setCurrentIndex(index); selector.popup.hide(); };
+		button.icon.alignment = ['left','center'];
+	}
+
+	selector.setCurrentIndex = function (index)
+	{
+		if (index < 0) return;
+		if (index >= selector.items.length) return;
+
+		var item = selector.items[index];
+
+		selector.image = item[1];
+		if (selector.image != '')
+		{
+			selector.icon.image = selector.image;
+			selector.icon.helpTip = item[2];
+		}
+		selector.label.helpTip = item[2];
+		selector.label.text = item[0];
+		selector.imageOver = item[3];
+
+		selector.index = index;
+	}
+
+	//the menu button
+	selector.menuImage = DuAEF.DuBinary.toFile(w18_menu_m);
+	selector.menuImageOver = DuAEF.DuBinary.toFile(w18_menu_l);
+	selector.menuButton = selector.add('image',undefined,selector.menuImage);
+
+	//the image
+	selector.image = '';
+	selector.icon = selector.add('image');
+
+	//the text
+	selector.label = selector.add('statictext',undefined,'-');
+	selector.label.helpTip = '';
+
+	//the image over
+	selector.imageOver = '';
+
+	//create popup
+	selector.popup = new Window('palette','',undefined,{borderless:true});
+	selector.popup.margins = 2;
+	selector.popup.spacing = 0;
+	DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+	selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
+	selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
+
+	//add default button
+	selector.items = [];
+	selector.index = -1;
+
+	//show popup on click
+	selector.clicked = function (e)
+	{
+		var x = e.screenX-e.clientX;
+		var y = e.screenY-e.clientY;
+		selector.popup.location = [x,y];
+		selector.popup.show();
+	}
+
+	//mouse over
+	selector.mouseOver = function (e)
+	{
+		selector.menuButton.image = selector.menuImageOver;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		if (selector.imageOver != '') selector.icon.image = selector.imageOver;
+	}
+
+	selector.mouseOut = function (e)
+	{
+		selector.menuButton.image = selector.menuImage;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		if (selector.image != '') selector.icon.image = selector.image;
+	}
+
+	// Hack - CS6 Bugs on mouseover with images
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
+	{
+		selector.label.addEventListener("mouseover",selector.mouseOver);
+		selector.label.addEventListener("mouseout",selector.mouseOut);
+	}
+	else
+	{
+		selector.addEventListener("mouseover",selector.mouseOver);
+		selector.addEventListener("mouseout",selector.mouseOut);
+	}
+	selector.addEventListener("click",selector.clicked,true);
+
+	return selector;
 }
