@@ -402,6 +402,10 @@
 	#include 'icons/w25_overlaytext_l.png.jsxinc'
 	#include 'icons/w25_textbelow_r.png.jsxinc'
 	#include 'icons/w25_textbelow_l.png.jsxinc'
+	#include 'icons/w25_precompshots_l.png.jsxinc'
+	#include 'icons/w25_precompshots_r.png.jsxinc'
+	#include 'icons/w25_noprecomp_l.png.jsxinc'
+	#include 'icons/w25_noprecomp_r.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
@@ -490,6 +494,7 @@
 		//reinit panels
 		initRiggingUI();
 		initAnimationUI();
+		initIOUI();
 
 		ui_riggingGroup.visible = panel == 5;
 		ui_riggingButton.setChecked(ui_riggingGroup.visible);
