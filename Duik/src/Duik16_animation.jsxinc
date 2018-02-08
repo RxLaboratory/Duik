@@ -1,0 +1,1294 @@
+
+//=========== FUNCTIONS ==========
+
+function setCurrentAnimationPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_animationGroup.visible = panel == 0;
+	ui_motionTrailOptionsGroup.visible = panel == 1;
+	ui_copyPasteOptionsGroup.visible = panel == 2;
+	uiexposureOptionsGroup.visible = panel == 3;
+	ui_timeRemapOptionsGroup.visible = panel == 4;
+	ui_celAnimGroup.visible = panel == 5;
+	ui_selectKeysGroup.visible = panel == 6;
+	ui_animToolsGroup.visible = panel == 7;
+	ui_kleanerOptionsGroup.visible = panel == 8;
+	if (panel == 7 || panel == 5 || panel == 4 || panel == 3 || panel == 1)
+	{
+		ui_animationKeysButton.setChecked(false);
+		ui_animationToolsButton.setChecked(true);
+	}
+	else
+	{
+		ui_animationKeysButton.setChecked(true);
+		ui_animationToolsButton.setChecked(false);
+	}
+}
+
+function initAnimationUI()
+{
+	setCurrentAnimationPanel(0);
+}
+
+function selectorGetProperties(prop)
+{
+	var mn = prop.matchName;
+	if (ui_selectKeysAllButton.checked) return true;
+	if (ui_selectKeysPosButton.checked && (mn == 'ADBE Position' || mn == 'ADBE Vector Position')) return true;
+	if (ui_selectKeysRotButton.checked && (mn == 'ADBE Rotate Z' || mn == 'ADBE Rotate Y'  || mn == 'ADBE Rotate X'  || mn == 'ADBE Orientation'  || mn == 'ADBE Vector Rotation')) return true;
+	if (ui_selectKeysScaleButton.checked && (mn == 'ADBE Scale' || mn == 'ADBE Vector Scale')) return true;
+	if (ui_selectKeysOpacityButton.checked && (mn == 'ADBE Opacity' || mn == 'ADBE Vector Group Opacity')) return true;
+	if (ui_selectKeysMaskButton.checked && mn == 'ADBE Mask Parade') return true;
+	if (ui_selectKeysFXButton.checked && mn == 'ADBE Effect Parade') return true;
+	return false;
+}
+
+//=========== EVENTS =============
+
+function ui_animationKeysButton_clicked()
+{
+	ui_animationKeysButton.setChecked(true);
+	ui_animationToolsButton.setChecked(false);
+	setCurrentAnimationPanel(0);
+}
+
+function ui_animationToolsButton_clicked()
+{
+	ui_animationKeysButton.setChecked(false);
+	ui_animationToolsButton.setChecked(true);
+	setCurrentAnimationPanel(7);
+}
+
+function ui_kleanerButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Kleaner");
+
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		//SPATIAL AUTO
+		if (ui_spatialAutoButton.checked) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
+		//SMART SMOOTH
+		if (ui_smartSmoothButton.checked) DuAEF.Duik.Animation.smartInterpolation(props[i],ui_smartEaseStartButton.checked,ui_smartEaseEndButton.checked);
+		//CLEAN
+		if (ui_kleanerKeysButton.checked) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
+	}
+
+	app.endUndoGroup();
+}
+
+if (!settings.data.expert)
+{
+	function ui_easePresetsList_changed()
+	{
+		if (ui_easePresetsList.selection == null) return;
+		if (ui_easePresetsList.selection.index == 0) return;
+		var preset = ui_easePresetsList.selection.text;
+		var rePreset = /(\d+)\/(\d+) \| (-?\d+)\/(-?\d+)/i;
+		var vals = preset.match(rePreset);
+		if (vals == null) return;
+		if (vals.length != 5) return;
+		ui_easeInSlider.setValue( parseInt(vals[1]) );
+		ui_easeOutSlider.setValue( parseInt(vals[2]) );
+		ui_velocityInEdit.setText( vals[3] );
+		ui_velocityOutEdit.setText( vals[4] );
+		ui_lockEaseButton.setChecked(vals[1] != vals[2]);
+		ui_lockVelocityButton.setChecked(vals[3] != vals[4]);
+		ui_easeSetBothButton_clicked();
+	}
+
+	function ui_easePresetAddButton_clicked()
+	{
+		var presets = [];
+		for (var i = 1 ; i < ui_easePresetsList.items.length ; i++)
+		{
+			presets.push(ui_easePresetsList.items[i].text);
+		}
+		presets.push(ui_easeInSlider.value + '/' + ui_easeOutSlider.value + ' | ' + ui_velocityInEdit.text + '/' + ui_velocityOutEdit.text);
+		presets.sort();
+		presets.unshift('Presets');
+		ui_easePresetsList.removeAll();
+		for (var i=0;i<presets.length;i++)
+		{
+			ui_easePresetsList.add('item',presets[i]);
+		}
+		settings.data.easePresets = presets;
+		settings.save();
+		ui_easePresetsList.selection = 0;
+	}
+
+	function ui_easePresetRemoveButton_clicked()
+	{
+		if (ui_easePresetsList.selection == null) return;
+		if (ui_easePresetsList.selection.index == 0) return;
+		ui_easePresetsList.remove(ui_easePresetsList.selection);
+		var presets = [];
+		for (var i = 0 ; i < ui_easePresetsList.items.length ; i++)
+		{
+			presets.push(ui_easePresetsList.items[i].text);
+		}
+		settings.data.easePresets = presets;
+		settings.save();
+		ui_easePresetsList.selection = 0;
+	}
+}
+function ui_kRovingButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Roving");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,"roving");
+
+	app.endUndoGroup();
+}
+
+function ui_kLinearButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Linear Interpolation");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,KeyframeInterpolationType.LINEAR);
+
+	app.endUndoGroup();
+}
+
+function ui_kEaseInButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Ease In");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR,ui_easeInSlider.value,ui_easeOutSlider.value);
+
+	app.endUndoGroup();
+}
+
+function ui_kEaseOutButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Ease Out");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER,ui_easeInSlider.value,ui_easeOutSlider.value);
+
+	app.endUndoGroup();
+}
+
+function ui_kAutoButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Auto Bezier");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,"continuous");
+
+	app.endUndoGroup();
+}
+
+function ui_kEaseButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Ease");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.BEZIER,ui_easeInSlider.value,ui_easeOutSlider.value);
+
+	app.endUndoGroup();
+}
+
+function ui_kHoldButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Hold");
+
+	DuAEF.DuAE.Property.setInterpolationType(comp.selectedLayers,props,KeyframeInterpolationType.HOLD);
+
+	app.endUndoGroup();
+}
+
+function ui_easeInSlider_changed()
+{
+	ui_easeSetButton_clicked();
+}
+
+function ui_easeInSlider_changing()
+{
+	if (!ui_lockEaseButton.checked) ui_easeOutSlider.setValue(ui_easeInSlider.value);
+}
+
+function ui_easeOutSlider_changed()
+{
+	if (!ui_lockEaseButton.checked) ui_easeInSlider.setValue(ui_easeOutSlider.value);
+	ui_easeSetButton_clicked();
+}
+
+function ui_easeOutSlider_changing()
+{
+	if (!ui_lockEaseButton.checked) ui_easeInSlider.setValue(ui_easeOutSlider.value);
+}
+
+function ui_velocityInEdit_changing()
+{
+	if (!ui_lockVelocityButton.checked) ui_velocityOutEdit.setText(ui_velocityInEdit.text);
+}
+
+function ui_velocityInEdit_changed()
+{
+	ui_velocitySetButton_clicked();
+}
+
+function ui_velocityOutEdit_changed()
+{
+	ui_velocitySetButton_clicked();
+}
+
+function ui_velocityOutEdit_changing()
+{
+	if (!ui_lockVelocityButton.checked) ui_velocityInEdit.setText(ui_velocityOutEdit.text);
+}
+
+function ui_easeSwitchButton_clicked()
+{
+	var inVal = ui_easeInSlider.value;
+	ui_easeInSlider.setValue(ui_easeOutSlider.value);
+	ui_easeOutSlider.setValue(inVal);
+	ui_easeSetButton_clicked();
+}
+
+function ui_velocitySwitchButton_clicked()
+{
+	var inVal = ui_velocityInEdit.text;
+	ui_velocityInEdit.setText(ui_velocityOutEdit.text);
+	ui_velocityOutEdit.setText(inVal);
+	ui_velocitySetButton_clicked();
+}
+
+function ui_easePickButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	for (var i=0;i<props.length;i++)
+	{
+		var prop = props[i].getProperty();
+		if (prop.selectedKeys.length == 0) continue;
+		var speedIn = prop.keyInTemporalEase(prop.selectedKeys[0])[0].speed;
+		var speedOut = prop.keyOutTemporalEase(prop.selectedKeys[0])[0].speed;
+		var easeIn = prop.keyInTemporalEase(prop.selectedKeys[0])[0].influence;
+		var easeOut = prop.keyOutTemporalEase(prop.selectedKeys[0])[0].influence;
+		ui_easeInSlider.setValue(easeIn);
+		ui_easeOutSlider.setValue(easeOut);
+		ui_velocityInEdit.setText(speedIn);
+		ui_velocityOutEdit.setText(speedOut);
+		ui_lockEaseButton.setChecked(easeIn != easeOut);
+		ui_lockVelocityButton.setChecked(speedIn != speedOut);
+		break;
+	}
+}
+
+function ui_velocitySetButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Set velocity");
+
+	DuAEF.DuAE.Property.setEase(props,undefined,undefined,parseInt(ui_velocityInEdit.text),parseInt(ui_velocityOutEdit.text));
+
+	app.endUndoGroup();
+}
+
+function ui_easeSetButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Set Ease");
+
+	DuAEF.DuAE.Property.setEase(props,ui_easeInSlider.value,ui_easeOutSlider.value);
+
+	app.endUndoGroup();
+}
+
+function ui_easeSetBothButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Set Interpolation");
+
+	DuAEF.DuAE.Property.setEase(props,ui_easeInSlider.value,ui_easeOutSlider.value,parseInt(ui_velocityInEdit.text),parseInt(ui_velocityOutEdit.text));
+
+	app.endUndoGroup();
+}
+
+function ui_spatialLinButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Spatial Linear");
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		DuAEF.DuAE.Property.setSpatialInterpolation(props[i],KeyframeInterpolationType.LINEAR);
+	}
+
+	app.endUndoGroup();
+}
+
+function ui_spatialBezButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Spatial Bezier");
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		DuAEF.DuAE.Property.setSpatialInterpolation(props[i],KeyframeInterpolationType.BEZIER);
+	}
+
+	app.endUndoGroup();
+}
+
+function ui_spatialLinBezButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Spatial Linear|Bezier");
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		DuAEF.DuAE.Property.setSpatialInterpolation(props[i],KeyframeInterpolationType.LINEAR,KeyframeInterpolationType.BEZIER);
+	}
+
+	app.endUndoGroup();
+}
+
+function ui_spatialBezLinButton_clicked()
+{
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Spatial Bezier|Linear");
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		DuAEF.DuAE.Property.setSpatialInterpolation(props[i],KeyframeInterpolationType.BEZIER,KeyframeInterpolationType.LINEAR);
+	}
+
+	app.endUndoGroup();
+}
+
+if (DuAEF.DuAE.App.version >= 15)
+{
+	function ui_motionTrailColorBox_changed()
+	{
+		var mode = ui_motionTrailColorBox.selection.index;
+		settings.data.motionTrailColorMode = mode;
+		settings.save();
+		ui_motionTrailColorGroup.enabled = mode == 1;
+	}
+
+	function ui_motionTrailColor_clicked()
+	{
+		var color = $.colorPicker();
+		if (color == -1) return;
+		color = DuAEF.DuJS.Color.hexToRGB(color,false);
+		ui_motionTrailColorEdit.setText(DuAEF.DuJS.Color.rgbToHex(color));
+		ui_motionTrailColorEdit_changed();
+	}
+
+	function ui_motionTrailColorEdit_changed()
+	{
+		settings.data.motionTrailColor = ui_motionTrailColorEdit.text;
+		settings.save();
+
+		var color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+		DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
+	}
+
+	function ui_motionTrailUseExistingButton_clicked()
+	{
+		if (ui_motionTrailUseExistingButton.checked) ui_motionTrailUseExistingButton.label.text = "Create new layer";
+		else ui_motionTrailUseExistingButton.label.text = "Use existing layer";
+	}
+
+	function ui_motionTrailButton_clicked()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+
+		app.beginUndoGroup('Duik | ' + "Motion trail");
+
+		//color
+		var color = null;
+		if (ui_motionTrailColorBox.selection.index == 1) color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+
+		//trail layer
+		var trailLayer = null;
+		if (!ui_motionTrailUseExistingButton.checked)
+		{
+			for (var i = 1 ; i <= comp.numLayers ; i++)
+			{
+				var layer = comp.layer(i);
+				if (layer instanceof ShapeLayer && layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL))
+				{
+					trailLayer = layer;
+					break;
+				}
+			}
+		}
+
+		var layers = DuAEF.DuAE.Comp.unselectLayers();
+
+		if (layers.length > 0)
+		{
+			for (var i = 0 ; i < layers.length ; i++)
+			{
+				trailLayer = DuAEF.Duik.Animation.motionTrail(comp,layers[i],trailLayer,color);
+			}
+		}
+		else
+		{
+			DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer);
+		}
+
+		app.endUndoGroup();
+	}
+}
+
+function ui_copyAnimButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+
+	copiedAnim = [];
+
+	for (var i = 0 ; i < layers.length ; i++)
+	{
+		copiedAnim.push(DuAEF.DuAE.Layer.getAnim(layers[i],true));
+	}
+	//get the first keyframe time to offset when pasting
+	copiedAnim.firstKeyFrameTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+}
+
+function ui_pasteAnimButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.layers;
+	if (ui_copyPasteAllLayersButton.checked) layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+
+	app.beginUndoGroup('Duik | ' + "Paste animation");
+
+	var it = new Iterator(layers);
+	it.do(function(layer)
+	{
+		for (var j = 0 ; j < copiedAnim.length ; j++)
+		{
+			//paste using indices
+			if (layer.index == copiedAnim[j]._index && ui_copyPasteUseNamesButton.checked)
+			{
+				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
+				break;
+			}
+			else if (layer.name == copiedAnim[j]._name && !ui_copyPasteUseNamesButton.checked)
+			{
+				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
+				break;
+			}
+		}
+	});
+
+	app.endUndoGroup();
+	setCurrentAnimationPanel(0);
+}
+
+function ui_copyPasteUseNamesButton_clicked()
+{
+	if (ui_copyPasteUseNamesButton.checked) ui_copyPasteUseNamesButton.label.text = "Use indices";
+ 	else ui_copyPasteUseNamesButton.label.text = "Use layer names";
+
+	settings.data.copyPasteUseIndices = ui_copyPasteUseNamesButton.checked;
+	settings.save();
+}
+
+function ui_copyPasteAllLayersButton_clicked()
+{
+	if (ui_copyPasteAllLayersButton.checked) ui_copyPasteAllLayersButton.label.text = "Selected Layers";
+ 	else ui_copyPasteAllLayersButton.label.text = "All layers";
+
+	settings.data.copyPasteUseSelectedLayers = ui_copyPasteAllLayersButton.checked;
+	settings.save();
+}
+
+function ui_exposureButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var props = DuAEF.DuAE.Comp.getSelectedProps();
+	app.beginUndoGroup('Duik | ' + "X-Sheet");
+
+	var ok = false;
+	if (props.length > 0)
+	{
+		var effect = null;
+		for (var i = 0 ; i < props.length ; i++)
+		{
+			effect = DuAEF.Duik.Animation.xSheet(comp,props[i],effect);
+			if (effect != null) ok = true;
+		}
+	}
+	if (!ok)
+	{
+		effect = DuAEF.Duik.Animation.xSheet(comp);
+	}
+
+	if (ui_exposureDetectButton.checked && props.length > 0)
+	{
+		//detect limit
+		var averageSpeed = DuAEF.DuAE.Property.getAverageSpeed(props);
+		if (averageSpeed > 0)
+		{
+			var precision = averageSpeed*2.5;
+			var frames = comp.duration / comp.frameDuration;
+			//set Keyframes
+			var step = 0;
+			effect(19).addKey(0);
+			for (var frame = 0 ; frame < frames ; frame++)
+			{
+				var time = frame*comp.frameDuration;
+
+				var maxSpeed = 0;
+				for (var j = 0 ; j < props.length ; j++)
+				{
+					var prop = props[j].getProperty();
+					var speedTest = DuAEF.DuAE.Property.getSpeed(prop,time);
+					if (speedTest > maxSpeed) maxSpeed = speedTest;
+				}
+
+				step += maxSpeed;
+
+				if (step >= precision && averageSpeed > 0)
+				{
+					step = 0;
+					effect(19).addKey(time);
+				}
+			}
+			effect(7).setValue(2);
+		}
+
+	}
+
+	app.endUndoGroup();
+	setCurrentAnimationPanel(0);
+}
+
+function ui_timeremapButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	var loopType = '';
+	if (ui_timeRemapLoopInButton.checked) loopType = 'in';
+	else if (ui_timeRemapLoopOutButton.checked) loopType = 'out';
+	app.beginUndoGroup('Duik | ' + "Time Remap");
+	DuAEF.Duik.Animation.timeRemap(layers,loopType);
+	app.endUndoGroup();
+
+	setCurrentAnimationPanel(0);
+}
+
+function ui_timeRemapLoopInButton_clicked()
+{
+	if (ui_timeRemapLoopInButton.checked) ui_timeRemapLoopOutButton.setChecked(false);
+}
+
+function ui_timeRemapLoopOutButton_clicked()
+{
+	if (ui_timeRemapLoopOutButton.checked) ui_timeRemapLoopInButton.setChecked(false);
+}
+
+function ui_celSingleLayerButton_clicked()
+{
+	if (ui_celSingleLayerButton.checked) ui_celSingleLayerButton.label.text = "Single layer";
+	else ui_celSingleLayerButton.label.text = "Multiple layers";
+}
+
+function ui_onionSkinInButton_clicked()
+{
+	ui_onionSkinInSlider.enabled = ui_onionSkinInButton.checked;
+	if (!ui_onionSkinInButton.checked)
+	{
+		ui_onionSkinOutButton.setChecked(true);
+		ui_onionSkinOutButton_clicked();
+	}
+	ui_onionSkinButton_clicked();
+}
+
+function ui_onionSkinOutButton_clicked()
+{
+	ui_onionSkinOutSlider.enabled = ui_onionSkinOutButton.checked;
+	if (!ui_onionSkinOutButton.checked)
+	{
+		ui_onionSkinInButton.setChecked(true);
+		ui_onionSkinInButton_clicked();
+	}
+	ui_onionSkinButton_clicked();
+}
+
+function ui_onionSkinButton_clicked()
+{
+	ui_onionSkinEdit.enabled = ui_onionSkinInGroup.enabled = ui_onionSkinOutGroup.enabled = ui_onionSkinButton.checked;
+
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) layers = comp.layers;
+
+	var it = new Iterator(layers);
+	app.beginUndoGroup('Duik | ' + "Update Onion Skin");
+
+	var os = {};
+	os.activated = ui_onionSkinButton.checked;
+	os.duration = parseInt(ui_onionSkinEdit.text);
+	os.exposure = parseInt(ui_celExpoEdit.text);
+	if (ui_onionSkinOutButton.checked )os.outOpacity = ui_onionSkinOutSlider.value;
+	else os.outOpacity = 0;
+	if (ui_onionSkinInButton.checked )os.inOpacity = ui_onionSkinInSlider.value;
+	else os.inOpacity = 0;
+
+	while (!it.atEnd)
+	{
+		it.next();
+		DuAEF.Duik.CelAnimation.onionSkin(layers[it.current],os);
+	}
+
+	app.endUndoGroup();
+}
+
+function ui_celCreateCelButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layer = null;
+
+	if (ui_celSingleLayerButton.checked)
+	{
+		//look for a layer with cels
+		if (comp.selectedLayers.length == 0)
+		{
+			for (var i = 1 ; i <= comp.layers.length ; i++)
+			{
+				var paint = comp.layer(i)('ADBE Effect Parade')('ADBE Paint');
+				if (paint)
+				{
+					if (paint.name.indexOf('Celluloid') >= 0)
+					{
+						layer = comp.layer(i);
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			layer = comp.selectedLayers[0];
+		}
+	}
+
+	app.beginUndoGroup('Duik | ' + "New celluloid");
+	DuAEF.Duik.CelAnimation.createCell(comp,layer);
+	app.endUndoGroup();
+
+}
+
+function ui_celPrevFrameButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	comp.time = comp.time - comp.frameDuration*parseInt(ui_celExpoEdit.text);
+	ui_onionSkinButton_clicked();
+}
+
+function ui_celNextFrameButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	comp.time = comp.time + comp.frameDuration*parseInt(ui_celExpoEdit.text);
+	ui_onionSkinButton_clicked();
+}
+
+function ui_selectKeysTimeButton_clicked()
+{
+	ui_selectKeysTimeButton.setChecked(true);
+	ui_selectKeysTimeRangeButton.setChecked(false);
+	ui_selectKeysOutEdit.enabled = false;
+}
+
+function ui_selectKeysTimeRangeButton_clicked()
+{
+	ui_selectKeysTimeButton.setChecked(false);
+	ui_selectKeysTimeRangeButton.setChecked(true);
+	ui_selectKeysOutEdit.enabled = true;
+}
+
+function ui_selectKeysCurrentButton_clicked()
+{
+	ui_selectKeysPickButton.group.enabled = !ui_selectKeysCurrentButton.checked;
+	ui_selectKeysRangeGroup.enabled = !ui_selectKeysCurrentButton.checked;
+}
+
+function ui_selectKeysAllLayersButton_clicked()
+{
+	if (settings.data.expert) return;
+	if (ui_selectKeysAllLayersButton.checked) ui_selectKeysAllLayersButton.label.text = "All layers";
+	else ui_selectKeysAllLayersButton.label.text = "Selected layers";
+}
+
+function ui_selectKeysControllersButton_clicked()
+{
+	if (settings.data.expert) return;
+	if (ui_selectKeysControllersButton.checked) ui_selectKeysControllersButton.label.text = "All layer types";
+	else ui_selectKeysControllersButton.label.text = "Controllers";
+}
+
+function ui_selectKeysAllButton_clicked()
+{
+	var checked = ui_selectKeysAllButton.checked;
+	ui_selectKeysPosButton.setChecked(checked);
+	ui_selectKeysRotButton.setChecked(checked);
+	ui_selectKeysScaleButton.setChecked(checked);
+	ui_selectKeysOpacityButton.setChecked(checked);
+	ui_selectKeysMaskButton.setChecked(checked);
+	ui_selectKeysFXButton.setChecked(checked);
+}
+
+function ui_selectKeysPickButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	if (ui_selectKeysTimeButton.checked)
+	{
+		ui_selectKeysInEdit.setText(timeToCurrentFormat(comp.time+comp.displayStartTime,1/comp.frameDuration));
+	}
+	else
+	{
+		ui_selectKeysInEdit.setText(timeToCurrentFormat(comp.workAreaStart+comp.displayStartTime,1/comp.frameDuration));
+		ui_selectKeysOutEdit.setText(timeToCurrentFormat(comp.workAreaStart + comp.workAreaDuration+comp.displayStartTime,1/comp.frameDuration));
+	}
+
+}
+
+function ui_selectKeysValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	app.beginUndoGroup('Duik | ' + "Select Keyframes");
+
+	//get layers
+	var layers = [];
+	if (ui_selectKeysAllLayersButton.checked)
+	{
+		if (ui_selectKeysControllersButton.checked) layers = comp.layers;
+		else layers = DuAEF.Duik.Controller.getControllers(comp,false);
+	}
+	else
+	{
+		if (ui_selectKeysControllersButton.checked) layers = comp.selectedLayers;
+		else layers = DuAEF.Duik.Controller.getControllers(comp,true);
+	}
+
+	if (layers.length == 0) return;
+
+	var inTime = comp.time;
+	var outTime = comp.time;
+	if (ui_selectKeysCurrentButton.checked)
+	{
+		if (ui_selectKeysTimeRangeButton.checked)
+		{
+			inTime = comp.workAreaStart;
+			outTime = comp.workAreaStart + comp.workAreaDuration;
+		}
+	}
+	else
+	{
+		inTime = currentFormatToTime(ui_selectKeysInEdit.text,1/comp.frameDuration)-comp.displayStartTime;
+		if (ui_selectKeysTimeRangeButton.checked) outTime = currentFormatToTime(ui_selectKeysOutEdit.text,1/comp.frameDuration)-comp.displayStartTime;
+		else outTime = inTime;
+	}
+
+	//unselect all previously selected keyframes
+	DuAEF.DuAE.Comp.unselectProperties();
+
+	//get all properties
+	var it = new Iterator(layers);
+	it.do(function (layer)
+	{
+		if (layer instanceof Controller) layer = layer.layer;
+		var props = DuAEF.DuAE.Property.getProps(layer,selectorGetProperties);
+		var itProp = new Iterator(props);
+		itProp.do(function(prop)
+		{
+			DuAEF.DuAE.Property.selectKeyFrames(prop,inTime,outTime);
+		});
+	});
+
+	app.endUndoGroup();
+}
+
+//============ UI ===============
+
+var ui_animationMainGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_animationMainGroup,"Animation");
+var ui_animationTopGroup = DuAEF.DuScriptUI.addGroup(ui_animationMainGroup,'row');
+ui_animationTopGroup.alignment = ['center','top'];
+var ui_animationKeysButton = DuAEF.DuScriptUI.addImageCheckBox(ui_animationTopGroup,settings.data.expert ? '' : "Keys",DuAEF.DuBinary.toFile(w25_selectkey_l),"Keyframe and interpolation",DuAEF.DuBinary.toFile(w25_selectkey_r));
+var ui_animationToolsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_animationTopGroup,settings.data.expert ? '' : "Tools",DuAEF.DuBinary.toFile(w25_animtools_l),"Animation tools",DuAEF.DuBinary.toFile(w25_animtools_r));
+
+var ui_animationStackGroup = DuAEF.DuScriptUI.addGroup(ui_animationMainGroup,'stack');
+
+var ui_animationGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_animationGroup,"Keyframes");
+
+var ui_selectKeysButton = DuAEF.DuScriptUI.addImageButton(ui_animationGroup,"Select keyframes...",DuAEF.DuBinary.toFile(w25_selectkey_l),"Keyframe selector",DuAEF.DuBinary.toFile(w25_selectkey_r));
+//TODO with ability to select same properties in all layers or selected layers
+
+var ui_setKeyGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup);
+ui_setKeyGroup.alignment = ['center','top'];
+var ui_kRovingButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_kroving_l),"Roving",DuAEF.DuBinary.toFile(w18_kroving_r));
+var ui_kLinearButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_klin_l),"Linear Interpolation",DuAEF.DuBinary.toFile(w18_klin_r));
+var ui_kEaseInButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_kinbez_l),"Ease In",DuAEF.DuBinary.toFile(w18_kinbez_r));
+var ui_kEaseOutButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_koutbez_l),"Ease Out",DuAEF.DuBinary.toFile(w18_koutbez_r));
+var ui_kEaseButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_kbez_l),"Easy Ease",DuAEF.DuBinary.toFile(w18_kbez_r));
+var ui_kAutoButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_kauto_l),"Auto Bezier",DuAEF.DuBinary.toFile(w18_kauto_r));
+var ui_kHoldButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w18_khold_l),"Hold",DuAEF.DuBinary.toFile(w18_khold_r));
+var ui_kOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_setKeyGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Set key options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_kOptionsButton.group.enabled = false;
+
+if (!settings.data.expert)
+{
+    var ui_easePresetsGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup);
+    ui_easePresetsGroup.alignment = ['center','top'];
+    var ui_easePresetAddButton = DuAEF.DuScriptUI.addImageButton(ui_easePresetsGroup,'',DuAEF.DuBinary.toFile(w18_simpleplus_l),"Add preset",DuAEF.DuBinary.toFile(w18_simpleplus_r));
+    ui_easePresetAddButton.alignment = ['left','fill'];
+    var ui_easePresetRemoveButton = DuAEF.DuScriptUI.addImageButton(ui_easePresetsGroup,'',DuAEF.DuBinary.toFile(w18_simpleminus_l),"Remove preset",DuAEF.DuBinary.toFile(w18_simpleminus_r));
+    ui_easePresetRemoveButton.alignment = ['left','fill'];
+	if (settings.data.easePresets == undefined) settings.data.easePresets = ['Presets','25/75 | 0/0','75/25 | 0/0','33/33 | 0/0','33/66 | 0/0','66/33 | 0/0','50/50 | 0/0','80/80 | 0/0'];
+    var ui_easePresetsList = ui_easePresetsGroup.add('dropdownlist',undefined,settings.data.easePresets);
+    ui_easePresetsList.alignment = ['fill','fill'];
+    ui_easePresetsList.selection = 0;
+}
+
+DuAEF.DuScriptUI.addSeparator(ui_animationGroup);
+var ui_easeGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup);
+ui_easeGroup.alignChildren = ['fill','fill'];
+ui_easeGroup.alignment = ['fill','top'];
+
+var ui_easeInGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
+var ui_easeInSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeInGroup,33,1,100,'column',true,'','%');
+ui_easeInSlider.helpTip = "Ease In influence";
+var ui_velocityInEdit = DuAEF.DuScriptUI.addNiceEditText(ui_easeInGroup,'0');
+ui_velocityInEdit.helpTip = "Velocity In";
+ui_velocityInEdit.minimumSize.width = 35;
+ui_velocityInEdit.alignment = ['center','top'];
+
+var ui_easeButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
+ui_easeButtonsGroup.maximumSize.width = ui_easeButtonsGroup.minimumSize.width = 18;
+ui_easeButtonsGroup.alignment = ['center','center'];
+ui_easeButtonsGroup.alignChildren = ['center','center'];
+var ui_easeSwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'',DuAEF.DuBinary.toFile(w14_switch_l),"Switch ease",DuAEF.DuBinary.toFile(w14_switch_r));
+var ui_lockEaseButton = DuAEF.DuScriptUI.addImageCheckBox(ui_easeButtonsGroup,'',DuAEF.DuBinary.toFile(w14_chain_l),"Lock tangents",DuAEF.DuBinary.toFile(w14_unchained_l),DuAEF.DuBinary.toFile(w14_chain_r));
+var ui_lockVelocityButton = DuAEF.DuScriptUI.addImageCheckBox(ui_easeButtonsGroup,'',DuAEF.DuBinary.toFile(w14_chain_l),"Lock velocities",DuAEF.DuBinary.toFile(w14_unchained_l),DuAEF.DuBinary.toFile(w14_chain_r));
+var ui_velocitySwitchButton = DuAEF.DuScriptUI.addImageButton(ui_easeButtonsGroup,'',DuAEF.DuBinary.toFile(w14_switch_l),"Switch velocities",DuAEF.DuBinary.toFile(w14_switch_r));
+
+var ui_easeOutGroup = DuAEF.DuScriptUI.addGroup(ui_easeGroup,'column');
+var ui_easeOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_easeOutGroup,33,1,100,'column',false,'','%');
+ui_easeOutSlider.helpTip = "Ease Out influence";
+var ui_velocityOutEdit = DuAEF.DuScriptUI.addNiceEditText(ui_easeOutGroup,'0');
+ui_velocityOutEdit.helpTip = "Velocity Out";
+ui_velocityOutEdit.minimumSize.width = 35;
+ui_velocityOutEdit.alignment = ['center','top'];
+
+var ui_easeSetButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup,'row');
+ui_easeSetButtonsGroup.alignment = ['fill','top'];
+ui_easeSetButtonsGroup.alignChildren = ['fill','fill'];
+var ui_easePickButton = DuAEF.DuScriptUI.addImageButton(ui_easeSetButtonsGroup,'',DuAEF.DuBinary.toFile(w18_keyeyedropper_l),"Pick ease and velocity from key",DuAEF.DuBinary.toFile(w18_keyeyedropper_r));
+ui_easePickButton.group.alignment = ['left','center'];
+var ui_velocitySetButton = DuAEF.DuScriptUI.addImageButton(ui_easeSetButtonsGroup,'Velocity',DuAEF.DuBinary.toFile(w14_check_l),"Set velocity on selected keys",DuAEF.DuBinary.toFile(w14_check_g));
+var ui_easeSetButton = DuAEF.DuScriptUI.addImageButton(ui_easeSetButtonsGroup,'Ease',DuAEF.DuBinary.toFile(w14_check_l),"Set ease on selected keys",DuAEF.DuBinary.toFile(w14_check_g));
+var ui_easeSetBothButton = DuAEF.DuScriptUI.addImageButton(ui_easeSetButtonsGroup,'',DuAEF.DuBinary.toFile(w18_check_g),"Set ease and velocity on selected keys",DuAEF.DuBinary.toFile(w18_check_r));
+ui_easeSetBothButton.group.alignment = ['right','center'];
+
+DuAEF.DuScriptUI.addSeparator(ui_animationGroup);
+var ui_animationBottomGroup = DuAEF.DuScriptUI.addGroup(ui_animationGroup,'column');
+var ui_kleanerGroup = DuAEF.DuScriptUI.addGroup(ui_animationBottomGroup,'row');
+var ui_kleanerButton = DuAEF.DuScriptUI.addImageButton(ui_kleanerGroup,"Kleaner",DuAEF.DuBinary.toFile(w25_broom_l),"Cleans keyframes",DuAEF.DuBinary.toFile(w25_broom_r));
+var ui_kleanerOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_kleanerGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Kleaner options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_kleanerOptionsButton.group.alignment = ['right','center'];
+var ui_copyAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animationBottomGroup,settings.data.expert ? "" : "Copy Anim",DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected keyframes",DuAEF.DuBinary.toFile(w25_copy_r));
+var ui_pasteAnimGroup = DuAEF.DuScriptUI.addGroup(ui_animationBottomGroup,'row');
+var ui_pasteAnimButton = DuAEF.DuScriptUI.addImageButton(ui_pasteAnimGroup,"Paste anim",DuAEF.DuBinary.toFile(w25_paste_l),"Paste keyframes",DuAEF.DuBinary.toFile(w25_paste_r));
+var ui_copyPasteAnimOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_pasteAnimGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Copy/paste options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_copyPasteAnimOptionsButton.group.alignment = ['right','center'];
+
+var ui_animToolsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_animToolsGroup,"Animation tools");
+var ui_motionTrailGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,'row');
+var ui_motionTrailButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,"Motion trail",DuAEF.DuBinary.toFile(w25_anim_l),"Add a motion trail for the selected layer",DuAEF.DuBinary.toFile(w25_anim_r));
+var ui_motionTrailOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Motion trail options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_motionTrailOptionsButton.group.alignment = ['right','center'];
+//TODO option: existing layer or new layer
+if (DuAEF.DuAE.App.version < 15)
+{
+	ui_motionTrailGroup.enabled = false;
+	if (!settings.data.expert) ui_motionTrailButton.label.text = 'CC2018';
+}
+var ui_exposureGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,'row');
+var ui_exposureButton = DuAEF.DuScriptUI.addImageButton(ui_exposureGroup,"X-Sheet",DuAEF.DuBinary.toFile(w25_exposure_l),"Change the exposure of the animation",DuAEF.DuBinary.toFile(w25_exposure_r));
+var ui_exposureOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_exposureGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Exposure options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_exposureOptionsButton.group.alignment = ['right','center'];
+var ui_timeRemapGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,'row');
+var ui_timeremapButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapGroup,"Time remap",DuAEF.DuBinary.toFile(w25_timeremap_l),"Enable time remapping",DuAEF.DuBinary.toFile(w25_timeremap_r));
+var ui_timeremapOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Time remap options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_timeremapOptionsButton.group.alignment = ['right','center'];
+var ui_celAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,"Cel animation...",DuAEF.DuBinary.toFile(w25_cel_l),"Cel animation",DuAEF.DuBinary.toFile(w25_cel_r));
+
+// Kleaner
+var ui_kleanerOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_kleanerOptionsGroup,"Kleaner");
+DuAEF.DuScriptUI.addSeparator(ui_kleanerOptionsGroup,settings.data.expert ? '' : "Spatial interpolation");
+var ui_spatialInterpolationGroup = DuAEF.DuScriptUI.addGroup(ui_kleanerOptionsGroup);
+ui_spatialInterpolationGroup.alignment = ['center','top'];
+var ui_spatialLinButton = DuAEF.DuScriptUI.addImageButton(ui_spatialInterpolationGroup,'',DuAEF.DuBinary.toFile(w18_curvelin_l),"Set linear spatial interpolation",DuAEF.DuBinary.toFile(w18_curvelin_r));
+var ui_spatialBezButton = DuAEF.DuScriptUI.addImageButton(ui_spatialInterpolationGroup,'',DuAEF.DuBinary.toFile(w18_curvebez_l),"Set bezier spatial interpolation",DuAEF.DuBinary.toFile(w18_curvebez_r));
+var ui_spatialLinBezButton = DuAEF.DuScriptUI.addImageButton(ui_spatialInterpolationGroup,'',DuAEF.DuBinary.toFile(w18_curvelinbez_l),"Set linear in / bezier out spatial interpolation",DuAEF.DuBinary.toFile(w18_curvelinbez_r));
+var ui_spatialBezLinButton = DuAEF.DuScriptUI.addImageButton(ui_spatialInterpolationGroup,'',DuAEF.DuBinary.toFile(w18_curvebezlin_l),"Set bezier in / linear out spatial interpolation",DuAEF.DuBinary.toFile(w18_curvebezlin_r));
+var ui_spatialAutoButton = DuAEF.DuScriptUI.addImageCheckBox(ui_spatialInterpolationGroup,"Auto fix",DuAEF.DuBinary.toFile(w25_magic_l),"Auto-fix spatial interpolations",DuAEF.DuBinary.toFile(w25_magic_r));
+DuAEF.DuScriptUI.addSeparator(ui_kleanerOptionsGroup,settings.data.expert ? '' : "Smart interpolation");
+var ui_smartEaseGroup = DuAEF.DuScriptUI.addGroup(ui_kleanerOptionsGroup);
+ui_smartEaseGroup.alignment = ['center','top'];
+var ui_smartEaseStartButton = DuAEF.DuScriptUI.addImageCheckBox(ui_smartEaseGroup,'',DuAEF.DuBinary.toFile(w25_linstart_l),"Ease start",DuAEF.DuBinary.toFile(w25_easestart_l),DuAEF.DuBinary.toFile(w25_easestart_r));
+var ui_smartEaseEndButton = DuAEF.DuScriptUI.addImageCheckBox(ui_smartEaseGroup,'',DuAEF.DuBinary.toFile(w25_linend_l),"Ease end",DuAEF.DuBinary.toFile(w25_easeend_l),DuAEF.DuBinary.toFile(w25_easeend_r));
+var ui_smartSmoothButton = DuAEF.DuScriptUI.addImageCheckBox(ui_smartEaseGroup,"Smooth!",DuAEF.DuBinary.toFile(w25_magic_l),"Automatically make your animations smoother",DuAEF.DuBinary.toFile(w25_magic_r));
+DuAEF.DuScriptUI.addSeparator(ui_kleanerOptionsGroup,settings.data.expert ? '' : "Clean keyframes");
+var ui_kleanerKeysButton =DuAEF.DuScriptUI.addImageCheckBox(ui_kleanerOptionsGroup,"Clean",DuAEF.DuBinary.toFile(w25_broom_l),"Automatically removes unneeded keyframes",DuAEF.DuBinary.toFile(w25_broom_r));
+DuAEF.DuScriptUI.addSeparator(ui_kleanerOptionsGroup);
+var ui_kleanerValidGroup = DuAEF.DuScriptUI.addGroup(ui_kleanerOptionsGroup);
+ui_kleanerValidGroup.alignment = ['fill','top'];
+var ui_kleanerCancelButton = DuAEF.DuScriptUI.addImageButton(ui_kleanerValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_kleanerValidButton = DuAEF.DuScriptUI.addImageButton(ui_kleanerValidGroup,"Klean!",DuAEF.DuBinary.toFile(w25_check_g),"Cleans the animation",DuAEF.DuBinary.toFile(w25_check_r));
+
+// Motion Trails option
+var ui_motionTrailOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_motionTrailOptionsGroup,"Motion trails");
+ui_motionTrailOptionsGroup.alignment = ['fill','top'];
+ui_motionTrailOptionsGroup.alignChildren = ['fill','top'];
+var ui_motionTrailUseExistingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_motionTrailOptionsGroup,"Use existing layer",DuAEF.DuBinary.toFile(w32_selectlayer_l),"Use an already existing layer for the motion trails, if any.",DuAEF.DuBinary.toFile(w32_addlayer_r),DuAEF.DuBinary.toFile(w32_addlayer_r));
+var ui_motionTrailColorBox = ui_motionTrailOptionsGroup.add('dropdownlist',undefined,["Random Color","Custom Color"]);
+var ui_motionTrailColorGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup,'row');
+ui_motionTrailColorGroup.alignment = ['center','top'];
+var ui_motionTrailColorLabel = ui_motionTrailColorGroup.add('statictext',undefined,"Color #");
+var ui_motionTrailColorEdit = DuAEF.DuScriptUI.addNiceEditText(ui_motionTrailColorGroup,'EC1818');
+var ui_motionTrailValidGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup);
+var ui_motionTrailCancelButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_motionTrailValidButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Create motion trails",DuAEF.DuBinary.toFile(w25_check_r));
+
+// Copy/paste options
+var ui_copyPasteOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_copyPasteOptionsGroup,"Paste animation");
+ui_copyPasteOptionsGroup.alignment = ['fill','top'];
+ui_copyPasteOptionsGroup.alignChildren = ['center','top'];
+var ui_copyPasteUseNamesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"Use layer names",DuAEF.DuBinary.toFile(w32_layername_l),"Use layer names or indices to paste keyframes.",DuAEF.DuBinary.toFile(w32_layerindex_r),DuAEF.DuBinary.toFile(w32_layerindex_r));
+ui_copyPasteUseNamesButton.label.minimumSize.width = 100;
+var ui_copyPasteAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"All layers",DuAEF.DuBinary.toFile(w32_alllayers_l),"Paste on all or just selected layers.",DuAEF.DuBinary.toFile(w32_selectedlayers_r),DuAEF.DuBinary.toFile(w32_selectedlayers_r));
+ui_copyPasteAllLayersButton.label.minimumSize.width = 100;
+var ui_copyPasteValidGroup = DuAEF.DuScriptUI.addGroup(ui_copyPasteOptionsGroup);
+ui_copyPasteValidGroup.alignment = ['fill','top'];
+var ui_copyPasteCancelButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_copyPasteValidButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Paste",DuAEF.DuBinary.toFile(w25_check_g),"Paste keyframes",DuAEF.DuBinary.toFile(w25_check_r));
+
+// Exposure options
+var uiexposureOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(uiexposureOptionsGroup,"X-Sheet");
+uiexposureOptionsGroup.alignment = ['fill','top'];
+var ui_exposureDetectButton = DuAEF.DuScriptUI.addImageCheckBox(uiexposureOptionsGroup,"Auto-Detect",DuAEF.DuBinary.toFile(w32_detectexposure_l),"Try to set a nice animation exposure based on the property velocities.",DuAEF.DuBinary.toFile(w32_detectexposure_r));
+ui_exposureDetectButton.alignment = ['center','top'];
+var ui_exposureValidGroup = DuAEF.DuScriptUI.addGroup(uiexposureOptionsGroup);
+var ui_exposureCancelButton = DuAEF.DuScriptUI.addImageButton(ui_exposureValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_exposureValidButton = DuAEF.DuScriptUI.addImageButton(ui_exposureValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Exposure controls",DuAEF.DuBinary.toFile(w25_check_r));
+
+// Time remap options
+var ui_timeRemapOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_timeRemapOptionsGroup,"Time remap");
+ui_timeRemapOptionsGroup.alignment = ['fill','top'];
+ui_timeRemapOptionsGroup.alignChildren = ['center','top'];
+var ui_timeRemapLoopInButton = DuAEF.DuScriptUI.addImageCheckBox(ui_timeRemapOptionsGroup,"Loop in",DuAEF.DuBinary.toFile(w32_loopin_l),"Add a loop in expression.",DuAEF.DuBinary.toFile(w32_loopin_r));
+var ui_timeRemapLoopOutButton = DuAEF.DuScriptUI.addImageCheckBox(ui_timeRemapOptionsGroup,"Loop out",DuAEF.DuBinary.toFile(w32_loopout_l),"Add a loop out expression.",DuAEF.DuBinary.toFile(w32_loopout_r));
+var ui_timeRemapValidGroup = DuAEF.DuScriptUI.addGroup(ui_timeRemapOptionsGroup);
+ui_timeRemapValidGroup.alignment = ['fill','top'];
+var ui_timeRemapCancelButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_timeRemapValidButton = DuAEF.DuScriptUI.addImageButton(ui_timeRemapValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Exposure controls",DuAEF.DuBinary.toFile(w25_check_r));
+
+// Cel anim
+var ui_celAnimGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup,"Cel animation");
+var ui_celAnimCelsGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
+ui_celAnimCelsGroup.alignment = ['fill','top'];
+ui_celAnimCelsGroup.alignChildren = ['fill','top'];
+var ui_celSingleLayerButton = DuAEF.DuScriptUI.addImageCheckBox(ui_celAnimCelsGroup,"Multiple layers",DuAEF.DuBinary.toFile(w25_layers_l),"If enabled, creates cels as new paint effects on a single layer",DuAEF.DuBinary.toFile(w25_singlelayer_r),DuAEF.DuBinary.toFile(w25_singlelayer_l));
+ui_celSingleLayerButton.alignment = ['center','top'];
+var ui_celCreateCelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimCelsGroup,"New Cel.",DuAEF.DuBinary.toFile(w25_newcel_l),"Creates a new animation cel.",DuAEF.DuBinary.toFile(w25_newcel_r));
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_onionSkinGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
+ui_onionSkinGroup.alignment = ['fill','top'];
+ui_onionSkinGroup.alignChildren = ['fill','top'];
+var ui_activateOnionSkinGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+ui_activateOnionSkinGroup.alignment = ['center','top'];
+var ui_onionSkinButton = DuAEF.DuScriptUI.addImageCheckBox(ui_activateOnionSkinGroup,settings.data.expert ? '' : "Onion skin: ",DuAEF.DuBinary.toFile(w25_onion_l),"Activates onion skin",DuAEF.DuBinary.toFile(w25_onion_r),DuAEF.DuBinary.toFile(w25_onion_r));
+var ui_onionSkinEdit = DuAEF.DuScriptUI.addNiceEditText(ui_activateOnionSkinGroup,'5',''," frames");
+var ui_onionSkinInGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+var ui_onionSkinInButton = DuAEF.DuScriptUI.addImageCheckBox(ui_onionSkinInGroup,"In: ",DuAEF.DuBinary.toFile(w14_cancel_l),"In Opacity",DuAEF.DuBinary.toFile(w14_check_g),DuAEF.DuBinary.toFile(w14_check_r));
+var ui_onionSkinInSlider = DuAEF.DuScriptUI.addNiceSlider(ui_onionSkinInGroup,50,0,100,'row',false,'','%');
+ui_onionSkinInSlider.alignment = ['fill','center'];
+var ui_onionSkinOutGroup = DuAEF.DuScriptUI.addGroup(ui_onionSkinGroup,'row');
+var ui_onionSkinOutButton = DuAEF.DuScriptUI.addImageCheckBox(ui_onionSkinOutGroup,"Out: ",DuAEF.DuBinary.toFile(w14_cancel_l),"Out Opacity",DuAEF.DuBinary.toFile(w14_check_g),DuAEF.DuBinary.toFile(w14_check_r));
+var ui_onionSkinOutSlider = DuAEF.DuScriptUI.addNiceSlider(ui_onionSkinOutGroup,50,0,100,'row',false,'','%');
+ui_onionSkinOutSlider.alignment = ['fill','center'];
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_celNavGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'row');
+ui_celNavGroup.alignment = ['center','top'];
+var ui_celPrevFrameButton = DuAEF.DuScriptUI.addImageButton(ui_celNavGroup,'',DuAEF.DuBinary.toFile(w32_previousframe_l),"Previous frame",DuAEF.DuBinary.toFile(w32_previousframe_r));
+var ui_celExpoEdit = DuAEF.DuScriptUI.addNiceEditText(ui_celNavGroup,'02');
+ui_celExpoEdit.static.helpTip = "Animation exposure";
+var ui_celNextFrameButton = DuAEF.DuScriptUI.addImageButton(ui_celNavGroup,'',DuAEF.DuBinary.toFile(w32_nextframe_l),"Next frame",DuAEF.DuBinary.toFile(w32_nextframe_r));
+DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
+var ui_celAnimCancelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+ui_celAnimCancelButton.alignment = ['center','top'];
+
+
+//Select keys
+var ui_selectKeysGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup,"Select keyframes");
+var ui_selectKeysMethodGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,'row');
+ui_selectKeysMethodGroup.alignment = ['center','top'];
+var ui_selectKeysTimeButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysMethodGroup,settings.data.expert ? '' : "Time",DuAEF.DuBinary.toFile(w25_time_l),"Select at a precise time.",DuAEF.DuBinary.toFile(w25_time_r));
+var ui_selectKeysTimeRangeButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysMethodGroup,settings.data.expert ? '' : "Range",DuAEF.DuBinary.toFile(w25_timerange_l),"Select using a time range.",DuAEF.DuBinary.toFile(w25_timerange_r));
+var ui_selectKeysUpdateGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,'row');
+ui_selectKeysUpdateGroup.alignment = ['center','top'];
+var ui_selectKeysCurrentButton = DuAEF.DuScriptUI.addImageCheckBox(settings.data.expert ? ui_selectKeysMethodGroup : ui_selectKeysUpdateGroup,settings.data.expert ? '' : "Current",DuAEF.DuBinary.toFile(w25_update_l),"Use current time/work area.",DuAEF.DuBinary.toFile(w25_update_r));
+var ui_selectKeysPickButton = DuAEF.DuScriptUI.addImageButton(settings.data.expert ? ui_selectKeysMethodGroup : ui_selectKeysUpdateGroup,settings.data.expert ? '' : "Pick",DuAEF.DuBinary.toFile(w25_eyedropper_l),"Pick current time/work area.",DuAEF.DuBinary.toFile(w25_eyedropper_r));
+ui_selectKeysRangeGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,'row');
+ui_selectKeysRangeGroup.alignment = ['center','top'];
+var ui_selectKeysInEdit = DuAEF.DuScriptUI.addNiceEditText(ui_selectKeysRangeGroup,'',settings.data.expert ? '' : 'In ','','00:00:00:00');
+ui_selectKeysRangeGroup.add('statictext',undefined,' - ');
+var ui_selectKeysOutEdit = DuAEF.DuScriptUI.addNiceEditText(ui_selectKeysRangeGroup,'',settings.data.expert ? '' : 'Out ','','00:00:00:00');
+ui_selectKeysLayersGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,settings.data.expert ? 'row' : 'column');
+ui_selectKeysLayersGroup.alignment = ['center','top'];
+ui_selectKeysLayersGroup.alignChildren = ['left','top'];
+var ui_selectKeysAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysLayersGroup,settings.data.expert ? '' : "Selected layers",DuAEF.DuBinary.toFile(w25_selectedlayers_l),"Use selected layers only or all layers",DuAEF.DuBinary.toFile(w25_alllayers_r));
+var ui_selectKeysControllersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysLayersGroup,settings.data.expert ? '' : "Controllers",DuAEF.DuBinary.toFile(w25_filledhand_l),"Use controllers or all layer types",DuAEF.DuBinary.toFile(w25_aelayers_r));
+DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup);
+var ui_selectKeysTypeGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,'row');
+ui_selectKeysTypeGroup.alignment = ['center','top'];
+var ui_selectKeysPosButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_pos_l),"Position",DuAEF.DuBinary.toFile(w18_pos_r));
+var ui_selectKeysRotButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_rotation_l),"Rotation",DuAEF.DuBinary.toFile(w18_rotation_r));
+var ui_selectKeysScaleButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_scale_l),"Scale",DuAEF.DuBinary.toFile(w18_scale_r));
+var ui_selectKeysOpacityButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_opacity_l),"Opacity",DuAEF.DuBinary.toFile(w18_opacity_r));
+var ui_selectKeysMaskButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_mask_l),"Masks",DuAEF.DuBinary.toFile(w18_mask_r));
+var ui_selectKeysFXButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_fx_l),"FX",DuAEF.DuBinary.toFile(w18_fx_r));
+var ui_selectKeysAllButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_allproperties_l),"All",DuAEF.DuBinary.toFile(w18_allproperties_r));
+DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup);
+var ui_selectKeysValidGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup);
+ui_selectKeysValidGroup.alignment = ['fill','top'];
+var ui_selectKeysCancelButton = DuAEF.DuScriptUI.addImageButton(ui_selectKeysValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_selectKeysCopyAnimButton = DuAEF.DuScriptUI.addImageButton(ui_selectKeysValidGroup,settings.data.expert ? '' : "Copy",DuAEF.DuBinary.toFile(w25_copy_l),"Copy keyframes",DuAEF.DuBinary.toFile(w25_copy_r));
+var ui_selectKeysValidButton = DuAEF.DuScriptUI.addImageButton(ui_selectKeysValidGroup,"Select",DuAEF.DuBinary.toFile(w25_check_g),"Select keyframes",DuAEF.DuBinary.toFile(w25_check_r));
+
+
+//========= INIT ===================
+
+if (settings.data.motionTrailColor == undefined) settings.data.motionTrailColor = "EC1818";
+ui_motionTrailColorEdit.setText(settings.data.motionTrailColor);
+var color = DuAEF.DuJS.Color.hexToRGB(ui_motionTrailColorEdit.text);
+DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
+if (settings.data.motionTrailColorMode == undefined) settings.data.motionTrailColorMode = 0;
+ui_motionTrailColorBox.selection = settings.data.motionTrailColorMode;
+ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
+var copiedAnim = [];
+copiedAnim.firstKeyFrameTime = 0;
+if (settings.data.copyPasteUseIndices == undefined) settings.data.copyPasteUseIndices = false;
+ui_copyPasteUseNamesButton.setChecked(settings.data.copyPasteUseIndices);
+ui_copyPasteUseNamesButton_clicked();
+if (settings.data.copyPasteUseSelectedLayers == undefined) settings.data.copyPasteUseSelectedLayers = false;
+ui_copyPasteAllLayersButton.setChecked(settings.data.copyPasteUseSelectedLayers);
+ui_copyPasteAllLayersButton_clicked();
+ui_timeRemapLoopOutButton.setChecked(true);
+ui_onionSkinInSlider.enabled = false;
+ui_onionSkinOutButton.setChecked(true);
+ui_onionSkinButton.setChecked(true);
+ui_selectKeysTimeButton.setChecked(true);
+ui_selectKeysCurrentButton.setChecked(true);
+ui_selectKeysPosButton.setChecked(true);
+ui_selectKeysRotButton.setChecked(true);
+ui_selectKeysScaleButton.setChecked(true);
+ui_selectKeysOpacityButton.setChecked(true);
+ui_selectKeysMaskButton.setChecked(true);
+ui_selectKeysFXButton.setChecked(true);
+ui_selectKeysPickButton.group.enabled = false;
+ui_selectKeysOutEdit.enabled = false;
+ui_selectKeysRangeGroup.enabled = false;
+ui_spatialAutoButton.setChecked(true);
+ui_smartSmoothButton.setChecked(true);
+ui_kleanerKeysButton.setChecked(true);
+ui_smartEaseStartButton.setChecked(true);
+ui_smartEaseEndButton.setChecked(true);
+setCurrentAnimationPanel(0);
+
+//========== CONNECT EVENTS ========
+
+ui_animationKeysButton.onClick = ui_animationKeysButton_clicked;
+ui_animationToolsButton.onClick = ui_animationToolsButton_clicked;
+
+ui_selectKeysTimeButton.onClick = ui_selectKeysTimeButton_clicked;
+ui_selectKeysTimeRangeButton.onClick = ui_selectKeysTimeRangeButton_clicked;
+ui_selectKeysCurrentButton.onClick = ui_selectKeysCurrentButton_clicked;
+ui_selectKeysAllLayersButton.onClick = ui_selectKeysAllLayersButton_clicked;
+ui_selectKeysControllersButton.onClick = ui_selectKeysControllersButton_clicked;
+ui_selectKeysAllButton.onClick = ui_selectKeysAllButton_clicked;
+ui_selectKeysValidButton.onClick = ui_selectKeysValidButton_clicked;
+ui_selectKeysPickButton.onClick = ui_selectKeysPickButton_clicked;
+ui_selectKeysCopyAnimButton.onClick = function() { ui_selectKeysValidButton_clicked(); ui_copyAnimButton_clicked(); }
+
+if (!settings.data.expert)
+{
+	ui_easePresetAddButton.onClick = ui_easePresetAddButton_clicked;
+	ui_easePresetRemoveButton.onClick = ui_easePresetRemoveButton_clicked;
+	ui_easePresetsList.onChange = ui_easePresetsList_changed;
+}
+
+ui_kRovingButton.onClick = ui_kRovingButton_clicked;
+ui_kLinearButton.onClick = ui_kLinearButton_clicked;
+ui_kEaseInButton.onClick = ui_kEaseInButton_clicked;
+ui_kEaseOutButton.onClick = ui_kEaseOutButton_clicked;
+ui_kEaseButton.onClick = ui_kEaseButton_clicked;
+ui_kAutoButton.onClick = ui_kAutoButton_clicked;
+ui_kHoldButton.onClick = ui_kHoldButton_clicked;
+
+ui_easeInSlider.onChange = ui_easeInSlider_changed;
+ui_easeInSlider.onChanging = ui_easeInSlider_changing;
+ui_easeOutSlider.onChange = ui_easeOutSlider_changed;
+ui_easeOutSlider.onChanging = ui_easeOutSlider_changing;
+
+ui_velocityInEdit.onChanging = ui_velocityInEdit_changing;
+ui_velocityOutEdit.onChanging = ui_velocityOutEdit_changing;
+ui_velocityInEdit.onChange = ui_velocityInEdit_changed;
+ui_velocityOutEdit.onChange = ui_velocityOutEdit_changed;
+
+ui_easeSwitchButton.onClick = ui_easeSwitchButton_clicked;
+ui_velocitySwitchButton.onClick = ui_velocitySwitchButton_clicked;
+
+ui_easePickButton.onClick = ui_easePickButton_clicked;
+ui_velocitySetButton.onClick = ui_velocitySetButton_clicked;
+ui_easeSetButton.onClick = ui_easeSetButton_clicked;
+ui_easeSetBothButton.onClick = ui_easeSetBothButton_clicked;
+
+ui_spatialLinButton.onClick = ui_spatialLinButton_clicked;
+ui_spatialBezButton.onClick = ui_spatialBezButton_clicked;
+ui_spatialLinBezButton.onClick = ui_spatialLinBezButton_clicked;
+ui_spatialBezLinButton.onClick = ui_spatialBezLinButton_clicked;
+
+if (DuAEF.DuAE.App.version >= 15)
+{
+	ui_motionTrailUseExistingButton.onClick = ui_motionTrailUseExistingButton_clicked;
+	ui_motionTrailColorLabel.addEventListener("mousedown",ui_motionTrailColor_clicked,false);
+	ui_motionTrailColorEdit.onChange = ui_motionTrailColorEdit_changed;
+	ui_motionTrailColorBox.onChange = ui_motionTrailColorBox_changed;
+	ui_motionTrailButton.onClick = ui_motionTrailValidButton.onClick = ui_motionTrailButton_clicked;
+	ui_motionTrailOptionsButton.onClick = function () {setCurrentAnimationPanel(1);};
+	ui_motionTrailCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+}
+
+ui_copyAnimButton.onClick = ui_copyAnimButton_clicked;
+ui_pasteAnimButton.onClick = ui_copyPasteValidButton.onClick = ui_pasteAnimButton_clicked;
+ui_copyPasteUseNamesButton.onClick = ui_copyPasteUseNamesButton_clicked;
+ui_copyPasteAllLayersButton.onClick = ui_copyPasteAllLayersButton_clicked;
+ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
+ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+
+ui_exposureButton.onClick = ui_exposureValidButton.onClick = ui_exposureButton_clicked;
+ui_exposureCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_exposureOptionsButton.onClick = function() {setCurrentAnimationPanel(3);};
+
+ui_timeremapButton.onClick = ui_timeRemapValidButton.onClick = ui_timeremapButton_clicked;
+ui_timeremapOptionsButton.onClick = function() {setCurrentAnimationPanel(4);};
+ui_timeRemapCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_timeRemapLoopInButton.onClick = ui_timeRemapLoopInButton_clicked;
+ui_timeRemapLoopOutButton.onClick = ui_timeRemapLoopOutButton_clicked;
+
+ui_celAnimCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_celAnimButton.onClick = function() {setCurrentAnimationPanel(5);};
+ui_celSingleLayerButton.onClick = ui_celSingleLayerButton_clicked;
+ui_onionSkinInButton.onClick = ui_onionSkinInButton_clicked;
+ui_onionSkinOutButton.onClick = ui_onionSkinOutButton_clicked;
+ui_onionSkinButton.onClick = ui_onionSkinButton_clicked;
+ui_celCreateCelButton.onClick = ui_celCreateCelButton_clicked;
+ui_onionSkinInSlider.onChange = ui_onionSkinOutSlider.onChange = ui_onionSkinEdit.onChange = ui_celExpoEdit.onChange = ui_onionSkinButton_clicked;
+ui_celPrevFrameButton.onClick = ui_celPrevFrameButton_clicked;
+ui_celNextFrameButton.onClick = ui_celNextFrameButton_clicked;
+
+ui_selectKeysButton.onClick = function() {setCurrentAnimationPanel(6);};
+ui_selectKeysCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+
+ui_kleanerOptionsButton.onClick = function() {setCurrentAnimationPanel(8);};
+ui_kleanerCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
+ui_kleanerButton.onClick = ui_kleanerValidButton.onClick = ui_kleanerButton_clicked;
