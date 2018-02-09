@@ -445,12 +445,6 @@ if (DuAEF.DuAE.App.version >= 15)
 		DuAEF.DuScriptUI.setTextColor(ui_motionTrailColorLabel,color);
 	}
 
-	function ui_motionTrailUseExistingButton_clicked()
-	{
-		if (ui_motionTrailUseExistingButton.checked) ui_motionTrailUseExistingButton.label.text = "Create new layer";
-		else ui_motionTrailUseExistingButton.label.text = "Use existing layer";
-	}
-
 	function ui_motionTrailButton_clicked()
 	{
 		var comp = DuAEF.DuAE.Project.getActiveComp();
@@ -464,7 +458,7 @@ if (DuAEF.DuAE.App.version >= 15)
 
 		//trail layer
 		var trailLayer = null;
-		if (!ui_motionTrailUseExistingButton.checked)
+		if (ui_motionTrailUseExistingSelector.index == 0)
 		{
 			for (var i = 1 ; i <= comp.numLayers ; i++)
 			{
@@ -519,7 +513,7 @@ function ui_pasteAnimButton_clicked()
 	if (!comp) return;
 
 	var layers = comp.layers;
-	if (ui_copyPasteAllLayersButton.checked) layers = comp.selectedLayers;
+	if (ui_copyPasteAllLayersSelector.index == 1) layers = comp.selectedLayers;
 	if (layers.length == 0) return;
 
 	app.beginUndoGroup('Duik | ' + "Paste animation");
@@ -530,12 +524,12 @@ function ui_pasteAnimButton_clicked()
 		for (var j = 0 ; j < copiedAnim.length ; j++)
 		{
 			//paste using indices
-			if (layer.index == copiedAnim[j]._index && ui_copyPasteUseNamesButton.checked)
+			if (layer.index == copiedAnim[j]._index && ui_copyPasteNamesSelector.index == 1)
 			{
 				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
 				break;
 			}
-			else if (layer.name == copiedAnim[j]._name && !ui_copyPasteUseNamesButton.checked)
+			else if (layer.name == copiedAnim[j]._name && ui_copyPasteNamesSelector.index == 0)
 			{
 				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
 				break;
@@ -547,21 +541,15 @@ function ui_pasteAnimButton_clicked()
 	setCurrentAnimationPanel(0);
 }
 
-function ui_copyPasteUseNamesButton_clicked()
+function ui_copyPasteNamesSelector_changed()
 {
-	if (ui_copyPasteUseNamesButton.checked) ui_copyPasteUseNamesButton.label.text = "Use indices";
- 	else ui_copyPasteUseNamesButton.label.text = "Use layer names";
-
-	settings.data.copyPasteUseIndices = ui_copyPasteUseNamesButton.checked;
+	settings.data.copyPasteUseIndices = ui_copyPasteNamesSelector.index == 1;
 	settings.save();
 }
 
-function ui_copyPasteAllLayersButton_clicked()
+function ui_copyPasteAllLayersSelector_changed()
 {
-	if (ui_copyPasteAllLayersButton.checked) ui_copyPasteAllLayersButton.label.text = "Selected Layers";
- 	else ui_copyPasteAllLayersButton.label.text = "All layers";
-
-	settings.data.copyPasteUseSelectedLayers = ui_copyPasteAllLayersButton.checked;
+	settings.data.copyPasteUseSelectedLayers = ui_copyPasteAllLayersSelector.index == 1;
 	settings.save();
 }
 
@@ -654,12 +642,6 @@ function ui_timeRemapLoopOutButton_clicked()
 	if (ui_timeRemapLoopOutButton.checked) ui_timeRemapLoopInButton.setChecked(false);
 }
 
-function ui_celSingleLayerButton_clicked()
-{
-	if (ui_celSingleLayerButton.checked) ui_celSingleLayerButton.label.text = "Single layer";
-	else ui_celSingleLayerButton.label.text = "Multiple layers";
-}
-
 function ui_onionSkinInButton_clicked()
 {
 	ui_onionSkinInSlider.enabled = ui_onionSkinInButton.checked;
@@ -720,7 +702,7 @@ function ui_celCreateCelButton_clicked()
 
 	var layer = null;
 
-	if (ui_celSingleLayerButton.checked)
+	if (ui_celSingleLayerSelector.index == 1)
 	{
 		//look for a layer with cels
 		if (comp.selectedLayers.length == 0)
@@ -786,20 +768,6 @@ function ui_selectKeysCurrentButton_clicked()
 	ui_selectKeysRangeGroup.enabled = !ui_selectKeysCurrentButton.checked;
 }
 
-function ui_selectKeysAllLayersButton_clicked()
-{
-	if (settings.data.expert) return;
-	if (ui_selectKeysAllLayersButton.checked) ui_selectKeysAllLayersButton.label.text = "All layers";
-	else ui_selectKeysAllLayersButton.label.text = "Selected layers";
-}
-
-function ui_selectKeysControllersButton_clicked()
-{
-	if (settings.data.expert) return;
-	if (ui_selectKeysControllersButton.checked) ui_selectKeysControllersButton.label.text = "All layer types";
-	else ui_selectKeysControllersButton.label.text = "Controllers";
-}
-
 function ui_selectKeysAllButton_clicked()
 {
 	var checked = ui_selectKeysAllButton.checked;
@@ -837,14 +805,14 @@ function ui_selectKeysValidButton_clicked()
 
 	//get layers
 	var layers = [];
-	if (ui_selectKeysAllLayersButton.checked)
+	if (ui_selectKeysLayersSelector.index == 1)
 	{
-		if (ui_selectKeysControllersButton.checked) layers = comp.layers;
+		if (ui_selectKeysLayerTypeSelector.index == 1) layers = comp.layers;
 		else layers = DuAEF.Duik.Controller.getControllers(comp,false);
 	}
 	else
 	{
-		if (ui_selectKeysControllersButton.checked) layers = comp.selectedLayers;
+		if (ui_selectKeysLayerTypeSelector.index == 1) layers = comp.selectedLayers;
 		else layers = DuAEF.Duik.Controller.getControllers(comp,true);
 	}
 
@@ -1033,7 +1001,10 @@ var ui_motionTrailOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGrou
 if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_motionTrailOptionsGroup,"Motion trails");
 ui_motionTrailOptionsGroup.alignment = ['fill','top'];
 ui_motionTrailOptionsGroup.alignChildren = ['fill','top'];
-var ui_motionTrailUseExistingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_motionTrailOptionsGroup,"Use existing layer",DuAEF.DuBinary.toFile(w32_selectlayer_l),"Use an already existing layer for the motion trails, if any.",DuAEF.DuBinary.toFile(w32_addlayer_r),DuAEF.DuBinary.toFile(w32_addlayer_r));
+var ui_motionTrailUseExistingSelector = DuAEF.DuScriptUI.addSelector(ui_motionTrailOptionsGroup);
+ui_motionTrailUseExistingSelector.addButton("Use existing layer",DuAEF.DuBinary.toFile(w32_selectlayer_l),"Use an already existing layer for the motion trails, if any.",DuAEF.DuBinary.toFile(w32_selectlayer_r));
+ui_motionTrailUseExistingSelector.addButton("Create new layer",DuAEF.DuBinary.toFile(w32_addlayer_l),"Creates a new layer for the trails.",DuAEF.DuBinary.toFile(w32_addlayer_r));
+ui_motionTrailUseExistingSelector.setCurrentIndex(0);
 var ui_motionTrailColorBox = ui_motionTrailOptionsGroup.add('dropdownlist',undefined,["Random Color","Custom Color"]);
 var ui_motionTrailColorGroup = DuAEF.DuScriptUI.addGroup(ui_motionTrailOptionsGroup,'row');
 ui_motionTrailColorGroup.alignment = ['center','top'];
@@ -1048,10 +1019,14 @@ var ui_copyPasteOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,
 if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_copyPasteOptionsGroup,"Paste animation");
 ui_copyPasteOptionsGroup.alignment = ['fill','top'];
 ui_copyPasteOptionsGroup.alignChildren = ['center','top'];
-var ui_copyPasteUseNamesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"Use layer names",DuAEF.DuBinary.toFile(w32_layername_l),"Use layer names or indices to paste keyframes.",DuAEF.DuBinary.toFile(w32_layerindex_r),DuAEF.DuBinary.toFile(w32_layerindex_r));
-ui_copyPasteUseNamesButton.label.minimumSize.width = 100;
-var ui_copyPasteAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,"All layers",DuAEF.DuBinary.toFile(w32_alllayers_l),"Paste on all or just selected layers.",DuAEF.DuBinary.toFile(w32_selectedlayers_r),DuAEF.DuBinary.toFile(w32_selectedlayers_r));
-ui_copyPasteAllLayersButton.label.minimumSize.width = 100;
+var ui_copyPasteNamesSelector = DuAEF.DuScriptUI.addSelector(ui_copyPasteOptionsGroup);
+ui_copyPasteNamesSelector.addButton("Use layer names",DuAEF.DuBinary.toFile(w32_layername_l),"Use layer names to paste keyframes.",DuAEF.DuBinary.toFile(w32_layername_r));
+ui_copyPasteNamesSelector.addButton("Use indices",DuAEF.DuBinary.toFile(w32_layerindex_l),"Use layer indices to paste keyframes.",DuAEF.DuBinary.toFile(w32_layerindex_r));
+ui_copyPasteNamesSelector.setCurrentIndex(0);
+var ui_copyPasteAllLayersSelector = DuAEF.DuScriptUI.addSelector(ui_copyPasteOptionsGroup);
+ui_copyPasteAllLayersSelector.addButton("All layers",DuAEF.DuBinary.toFile(w32_alllayers_l),"Paste on all layers.",DuAEF.DuBinary.toFile(w32_alllayers_r));
+ui_copyPasteAllLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w32_selectedlayers_l),"Paste on selected layers.",DuAEF.DuBinary.toFile(w32_selectedlayers_r));
+ui_copyPasteAllLayersSelector.setCurrentIndex(0);
 var ui_copyPasteValidGroup = DuAEF.DuScriptUI.addGroup(ui_copyPasteOptionsGroup);
 ui_copyPasteValidGroup.alignment = ['fill','top'];
 var ui_copyPasteCancelButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
@@ -1085,8 +1060,10 @@ if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup,"Cel an
 var ui_celAnimCelsGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
 ui_celAnimCelsGroup.alignment = ['fill','top'];
 ui_celAnimCelsGroup.alignChildren = ['fill','top'];
-var ui_celSingleLayerButton = DuAEF.DuScriptUI.addImageCheckBox(ui_celAnimCelsGroup,"Multiple layers",DuAEF.DuBinary.toFile(w25_layers_l),"If enabled, creates cels as new paint effects on a single layer",DuAEF.DuBinary.toFile(w25_singlelayer_r),DuAEF.DuBinary.toFile(w25_singlelayer_l));
-ui_celSingleLayerButton.alignment = ['center','top'];
+var ui_celSingleLayerSelector = DuAEF.DuScriptUI.addSelector(ui_celAnimCelsGroup);
+ui_celSingleLayerSelector.addButton("Multiple layers",DuAEF.DuBinary.toFile(w25_layers_l),"Creates cels as new layers",DuAEF.DuBinary.toFile(w25_layers_r));
+ui_celSingleLayerSelector.addButton("Single layer",DuAEF.DuBinary.toFile(w25_singlelayer_l),"Creates cels as new paint effects on a single layer",DuAEF.DuBinary.toFile(w25_singlelayer_r));
+ui_celSingleLayerSelector.setCurrentIndex(0);
 var ui_celCreateCelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimCelsGroup,"New Cel.",DuAEF.DuBinary.toFile(w25_newcel_l),"Creates a new animation cel.",DuAEF.DuBinary.toFile(w25_newcel_r));
 DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
 var ui_onionSkinGroup = DuAEF.DuScriptUI.addGroup(ui_celAnimGroup,'column');
@@ -1135,9 +1112,15 @@ var ui_selectKeysOutEdit = DuAEF.DuScriptUI.addNiceEditText(ui_selectKeysRangeGr
 ui_selectKeysLayersGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,settings.data.expert ? 'row' : 'column');
 ui_selectKeysLayersGroup.alignment = ['center','top'];
 ui_selectKeysLayersGroup.alignChildren = ['left','top'];
-var ui_selectKeysAllLayersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysLayersGroup,settings.data.expert ? '' : "Selected layers",DuAEF.DuBinary.toFile(w25_selectedlayers_l),"Use selected layers only or all layers",DuAEF.DuBinary.toFile(w25_alllayers_r));
-var ui_selectKeysControllersButton = DuAEF.DuScriptUI.addImageCheckBox(ui_selectKeysLayersGroup,settings.data.expert ? '' : "Controllers",DuAEF.DuBinary.toFile(w25_filledhand_l),"Use controllers or all layer types",DuAEF.DuBinary.toFile(w25_aelayers_r));
-DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup);
+var ui_selectKeysLayersSelector = DuAEF.DuScriptUI.addSelector(ui_selectKeysLayersGroup);
+ui_selectKeysLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w25_selectedlayers_l),"Use selected layers only",DuAEF.DuBinary.toFile(w25_selectedlayers_r));
+ui_selectKeysLayersSelector.addButton("All layers",DuAEF.DuBinary.toFile(w25_alllayers_l),"Use all layers",DuAEF.DuBinary.toFile(w25_alllayers_r));
+ui_selectKeysLayersSelector.setCurrentIndex(0);
+var ui_selectKeysLayerTypeSelector = DuAEF.DuScriptUI.addSelector(ui_selectKeysLayersGroup);
+ui_selectKeysLayerTypeSelector.addButton("Controllers",DuAEF.DuBinary.toFile(w25_filledhand_l),"Use controllers only",DuAEF.DuBinary.toFile(w25_filledhand_r));
+ui_selectKeysLayerTypeSelector.addButton("All layers",DuAEF.DuBinary.toFile(w25_aelayers_l),"Use all layer types",DuAEF.DuBinary.toFile(w25_aelayers_r));
+ui_selectKeysLayerTypeSelector.setCurrentIndex(0);
+
 var ui_selectKeysTypeGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup,'row');
 ui_selectKeysTypeGroup.alignment = ['center','top'];
 var ui_selectKeysPosButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_pos_l),"Position",DuAEF.DuBinary.toFile(w18_pos_r));
@@ -1147,7 +1130,7 @@ var ui_selectKeysOpacityButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKey
 var ui_selectKeysMaskButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_mask_l),"Masks",DuAEF.DuBinary.toFile(w18_mask_r));
 var ui_selectKeysFXButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_fx_l),"FX",DuAEF.DuBinary.toFile(w18_fx_r));
 var ui_selectKeysAllButton = DuAEF.DuScriptUI.addImageCheckBox( ui_selectKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_allproperties_l),"All",DuAEF.DuBinary.toFile(w18_allproperties_r));
-DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup);
+
 var ui_selectKeysValidGroup = DuAEF.DuScriptUI.addGroup(ui_selectKeysGroup);
 ui_selectKeysValidGroup.alignment = ['fill','top'];
 var ui_selectKeysCancelButton = DuAEF.DuScriptUI.addImageButton(ui_selectKeysValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
@@ -1167,11 +1150,9 @@ ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
 var copiedAnim = [];
 copiedAnim.firstKeyFrameTime = 0;
 if (settings.data.copyPasteUseIndices == undefined) settings.data.copyPasteUseIndices = false;
-ui_copyPasteUseNamesButton.setChecked(settings.data.copyPasteUseIndices);
-ui_copyPasteUseNamesButton_clicked();
+if (settings.data.copyPasteUseIndices) ui_copyPasteNamesSelector.setCurrentIndex(1);
 if (settings.data.copyPasteUseSelectedLayers == undefined) settings.data.copyPasteUseSelectedLayers = false;
-ui_copyPasteAllLayersButton.setChecked(settings.data.copyPasteUseSelectedLayers);
-ui_copyPasteAllLayersButton_clicked();
+if (settings.data.copyPasteUseSelectedLayers) ui_copyPasteAllLayersSelector.setCurrentIndex(1);
 ui_timeRemapLoopOutButton.setChecked(true);
 ui_onionSkinInSlider.enabled = false;
 ui_onionSkinOutButton.setChecked(true);
@@ -1202,8 +1183,6 @@ ui_animationToolsButton.onClick = ui_animationToolsButton_clicked;
 ui_selectKeysTimeButton.onClick = ui_selectKeysTimeButton_clicked;
 ui_selectKeysTimeRangeButton.onClick = ui_selectKeysTimeRangeButton_clicked;
 ui_selectKeysCurrentButton.onClick = ui_selectKeysCurrentButton_clicked;
-ui_selectKeysAllLayersButton.onClick = ui_selectKeysAllLayersButton_clicked;
-ui_selectKeysControllersButton.onClick = ui_selectKeysControllersButton_clicked;
 ui_selectKeysAllButton.onClick = ui_selectKeysAllButton_clicked;
 ui_selectKeysValidButton.onClick = ui_selectKeysValidButton_clicked;
 ui_selectKeysPickButton.onClick = ui_selectKeysPickButton_clicked;
@@ -1249,7 +1228,6 @@ ui_spatialBezLinButton.onClick = ui_spatialBezLinButton_clicked;
 
 if (DuAEF.DuAE.App.version >= 15)
 {
-	ui_motionTrailUseExistingButton.onClick = ui_motionTrailUseExistingButton_clicked;
 	ui_motionTrailColorLabel.addEventListener("mousedown",ui_motionTrailColor_clicked,false);
 	ui_motionTrailColorEdit.onChange = ui_motionTrailColorEdit_changed;
 	ui_motionTrailColorBox.onChange = ui_motionTrailColorBox_changed;
@@ -1260,8 +1238,8 @@ if (DuAEF.DuAE.App.version >= 15)
 
 ui_copyAnimButton.onClick = ui_copyAnimButton_clicked;
 ui_pasteAnimButton.onClick = ui_copyPasteValidButton.onClick = ui_pasteAnimButton_clicked;
-ui_copyPasteUseNamesButton.onClick = ui_copyPasteUseNamesButton_clicked;
-ui_copyPasteAllLayersButton.onClick = ui_copyPasteAllLayersButton_clicked;
+ui_copyPasteNamesSelector.onChange = ui_copyPasteNamesSelector_changed;
+ui_copyPasteAllLayersSelector.onChange = ui_copyPasteAllLayersSelector_changed;
 ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
 ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 
@@ -1277,7 +1255,6 @@ ui_timeRemapLoopOutButton.onClick = ui_timeRemapLoopOutButton_clicked;
 
 ui_celAnimCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 ui_celAnimButton.onClick = function() {setCurrentAnimationPanel(5);};
-ui_celSingleLayerButton.onClick = ui_celSingleLayerButton_clicked;
 ui_onionSkinInButton.onClick = ui_onionSkinInButton_clicked;
 ui_onionSkinOutButton.onClick = ui_onionSkinOutButton_clicked;
 ui_onionSkinButton.onClick = ui_onionSkinButton_clicked;
