@@ -573,6 +573,24 @@ DuAEF.Duik = {};
 	};
 
 	/**
+	 * The different types of layers created by Duik
+	 * @enum {string}
+	 * @readonly
+	 */
+	DuAEF.Duik.LayerTypes =
+	{
+		MOTION_TRAIL: 'motion trail',
+		STRUCTURE: 'structure',
+		X_SHEET: 'x-sheet',
+		CEL: 'cel',
+		EFFECTOR: 'effector',
+		CONTROLLER: 'controller',
+		TWOD_CAMERA_LAYER: '2d camera layer',
+		ZERO: 'zero',
+		BONE: 'bone'
+	}
+
+	/**
 	 * Predefined sizes
 	 * @enum {int}
 	 * @readonly
@@ -694,6 +712,99 @@ DuAEF.Duik = {};
 	DuAEF.Duik.boneColor = DuAEF.DuJS.Color.Colors.RAINBOX_RED;
 })();
 
+//undocumented low-level function used by Duik
+DuAEF.Duik.setDuikMarker = function(layer,displayName,layerType)
+{
+	if (layerType == undefined) layerType = displayName.toLowerCase();
+	var marker = layer.property('ADBE Marker').valueAtTime(0,true);
+	marker.comment = displayName;
+	var params = marker.getParameters();
+	params.duik = layerType;
+	marker.setParameters(params);
+	layer.property('ADBE Marker').setValueAtTime(0,marker);
+}
+
+//undocumented low-level function used by Duik
+DuAEF.Duik.getDuikMarkerParameters = function(layer)
+{
+	var marker = layer.property('ADBE Marker').valueAtTime(0,true);
+	var params = marker.getParameters();
+	if (params.duik) return params;
+	return null;
+}
+
+/**
+ * Gets layers previously created by Duik
+ * @memberof DuAEF.Duik
+ * @param {DuAEF.Duik.LayerTypes} [layerType] - The type of the layer.
+ * @param {boolean} [selectedOnly=false] - Wether to search only in the layer selection
+ * @param {CompItem} [comp] - The composition
+ * @return {Layer[]}	The Structure or null if there is no active composition
+ */
+DuAEF.Duik.getLayers = function(layerType,selectedOnly,comp)
+{
+	if (layerType == undefined) layerType = '';
+	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
+	if (selectedOnly == undefined) selectedOnly = false;
+
+	var layers = comp.layers;
+	if (selectedOnly) layers = comp.selectedLayers;
+
+	if (layers.length == 0) return [];
+
+	var it = new Iterator(layers);
+	var found = [];
+	it.do(function(layer) {
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		if (!params) return;
+		if (layerType == '' || params.duik == layerType) found.push(layer);
+	});
+
+	return found;
+}
+
+/**
+ * Gets the first layer of a kind previously created by Duik
+ * @memberof DuAEF.Duik
+ * @param {DuAEF.Duik.LayerTypes} layerType - The type of the layer.
+ * @param {boolean} [selectedOnly=false] - Wether to search only in the layer selection
+ * @param {CompItem} [comp] - The composition
+ * @return {Layer[]}	The Structure or null if there is no active composition
+ */
+DuAEF.Duik.getLayer = function(layerType,selectedOnly,comp)
+{
+	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
+	if (selectedOnly == undefined) selectedOnly = false;
+
+	var layers = comp.layers;
+	if (selectedOnly) layers = comp.selectedLayers;
+
+	if (layers.length == 0) return null;
+
+	var it = new Iterator(layers);
+	while(layer = it.next())
+	{
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		if (!params) continue;
+		if (params.duik == layerType) return layer;
+	}
+	return null;
+}
+
+//low-level undocumented function
+DuAEF.Duik.getLayerType = function(layer)
+{
+	var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+	if (!params) return '';
+	return params.duik;
+}
+
+//low-level undocumented function
+DuAEF.Duik.isLayerType = function(layer,layerType)
+{
+	return DuAEF.Duik.getLayerType(layer) == layerType;
+}
+
 /**
 * Structures
 * @namespace
@@ -703,7 +814,7 @@ DuAEF.Duik.Structure = {};
 
 /**
  * Creates a structure in a composition
- * @memberof DuAEF.Duik
+ * @memberof DuAEF.Duik.Structure
  * @param {int}		num	- The number of elements of the structure
  * @param {CompItem}	comp	- The composition where to create the Structure
  * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
@@ -737,6 +848,7 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name)
 		if (end)
 		{
 			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S-End | " + name, comp);
+			DuAEF.Duik.setDuikMarker(element,"Structure end",DuAEF.Duik.LayerTypes.STRUCTURE);
 		}
 		else
 		{
@@ -755,6 +867,7 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name)
 		prevElement = element;
 		structure.elements.push(element);
 	}
+
 	//links and layer selection
 	for (var i = 0;i < structure.elements.length ; i++)
 	{
@@ -775,7 +888,7 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name)
 
 /**
  * Creates an element for a structure in a composition
- * @memberof DuAEF.Duik
+ * @memberof DuAEF.Duik.Structure
  * @param {CompItem}	comp	- The composition where to create the Structure
  * @param {float[]}	[color=[1,0.764,0.764,1]]		- The color of the element, [R,G,B,A] Array from 0.0 to 1.0
  * @param {float}	[size] 		- The element size, a percentage. By default, it will adjust automatically depending on comp size and DuikLib.structureSizeHint
@@ -804,6 +917,7 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
 
 	//======= CREATE ELEMENT USING SHAPE LAYER =======
 	var element = comp.layers.addShape();
+	DuAEF.Duik.setDuikMarker(element,"Structure",DuAEF.Duik.LayerTypes.STRUCTURE);
 	//add effect
 
 	element.applyPreset(DuAEF.Duik.PseudoEffects.STRUCTURE_ELEMENT);
@@ -1017,17 +1131,9 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size)
 	return element;
 }
 
-//Low-level undocumented function
-DuAEF.Duik.Structure.isStructure = function (layer)
-{
-	var structureEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT);
-	if (structureEffect) return true;
-	else return false;
-}
-
 /**
  * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
- * @memberof DuAEF.Duik
+ * @memberof DuAEF.Duik.Structure
  * @param {CompItem}	comp	- The composition where to get the structures
  * @param {int} [structureSelectionMode=DuAEF.Duik.StructureSelectionMode.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.StructureSelectionMode}
  * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.StructureSelectionMode.ELEMENT, will be one structure with all elements found
@@ -1056,7 +1162,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 	for ( i ; i <= m ; i++)
 	{
 		var layer = layers[i];
-		if (!DuAEF.Duik.Structure.isStructure(layer)) continue;
+		if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) continue;
 		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) continue;
 
 		indexed.push(layer.index);
@@ -1084,7 +1190,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 				{
 					var child = comp.layer(childIndex);
 					//check if it's a structure element
-					if (DuAEF.Duik.Structure.isStructure(child))
+					if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE))
 					{
 						structure.elements.push(child);
 						childLayer = child;
@@ -1097,7 +1203,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 				{
 					var child = comp.layer(j);
 					if (child.parent == null) continue;
-					if (DuAEF.Duik.Structure.isStructure(child) && child.parent.index == currentIndex)
+					if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE) && child.parent.index == currentIndex)
 					{
 						structure.elements.push(child);
 						childLayer = child;
@@ -1118,7 +1224,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 				var childIndex = parentLayer.index;
 
 				if (testParent == null) break;
-				else if (!DuAEF.Duik.Structure.isStructure(testParent)) break;
+				else if (!DuAEF.Duik.isLayerType(testParent,DuAEF.Duik.LayerTypes.STRUCTURE)) break;
 
 				var testIndex = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
 
@@ -1269,6 +1375,7 @@ DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 	if (trailLayer == undefined || trailLayer == null)
 	{
 		trailLayer = comp.layers.addShape();
+		DuAEF.Duik.setDuikMarker(trailLayer,"Motion Trail",DuAEF.Duik.LayerTypes.MOTION_TRAIL);
 		trailLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName('Motion Trails',comp);
 	}
 
@@ -1348,8 +1455,6 @@ DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 	//set color
 	effect(13).setValue(color);
 
-
-
 	return trailLayer;
 }
 
@@ -1407,6 +1512,7 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 		var newName = DuAEF.DuAE.Comp.newUniqueLayerName("X-Sheet",comp);
 		var layer = DuAEF.DuAE.Comp.addAdjustmentLayer(comp);
 		layer.name = newName;
+		DuAEF.Duik.setDuikMarker(layer,"X-Sheet",DuAEF.Duik.LayerTypes.X_SHEET);
 
 		//add Effects
 		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,"X-Sheet");
@@ -1495,7 +1601,7 @@ DuAEF.Duik.CelAnimation = {};
 * @param {CompItem} comp - The composition
 * @param {AVLayer|null} [layer] - The layer where to create the cel
 */
-DuAEF.Duik.CelAnimation.createCell = function (comp,layer)
+DuAEF.Duik.CelAnimation.createCel = function (comp,layer)
 {
 	if (comp == undefined) return;
 
@@ -1503,6 +1609,7 @@ DuAEF.Duik.CelAnimation.createCell = function (comp,layer)
 	{
 		//create solid
 		layer = comp.layers.addSolid([0,0,0], DuAEF.DuAE.Comp.newUniqueLayerName("Cel",comp) , comp.width, comp.height, comp.pixelAspect , comp.duration);
+		DuAEF.Duik.setDuikMarker(layer,"Cel",DuAEF.Duik.LayerTypes.CEL);
 	}
 
 	var first = true;
@@ -2064,6 +2171,7 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 	if (ctrlLayer == null)
 	{
 		ctrlLayer = comp.layers.addShape();
+		DuAEF.Duik.setDuikMarker(ctrlLayer,"Effector",DuAEF.Duik.LayerTypes.EFFECTOR);
 		ctrlLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName("Effector",comp);
 		//effect
 		ctrlLayer.selected = true;
@@ -2838,10 +2946,6 @@ DuAEF.Duik.Camera.create2DCam = function(comp,layers)
 	var camCtrl;
 	var camLayer;
 
-	var marker = new MarkerValue('2D Camera');
-	var markerParam = {duik:'2d camera'};
-	marker.setParameters(markerParam);
-
 	for (var i=1;i<=numLayers;i++)
 	{
 		var name = 'L' + DuAEF.DuJS.Number.convertToString(i,2);
@@ -2857,16 +2961,14 @@ DuAEF.Duik.Camera.create2DCam = function(comp,layers)
 			//add a zero
 			DuAEF.Duik.Rigging.addZero(camLayer);
 			//add marker
-			var camMarker = new MarkerValue('2D Camera Controller');
-			camMarker.setParameters(markerParam);
-			camLayer.property('ADBE Marker').setValueAtTime(0,camMarker);
+			DuAEF.Duik.setDuikMarker(camLayer,"2D Camera Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 		}
 		else
 		{
 			var layer = app.project.activeItem.layers.addNull() ;
 			layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
 			layer.shy = true;
-			layer.property('ADBE Marker').setValueAtTime(0,marker);
+			DuAEF.Duik.setDuikMarker(layer,"2D Camera",DuAEF.Duik.LayerTypes.TWOD_CAMERA_LAYER);
 		}
 	}
 
@@ -2954,7 +3056,7 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 {
 	if (comp == undefined) return;
 	var ctrl = comp.layers.addShape();
-
+	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
 	var effect = null;
 
@@ -3433,53 +3535,16 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
 	}
 
+	var marker = new MarkerValue('Controller');
+	marker.setParameters({duik:'controller'});
+	ctrl.property('ADBE Marker').setValueAtTime(0,marker);
+
 	DuAEF.Dugr.addLayerToGroup(ctrl,"Controllers");
 	ctrl.guideLayer = true;
 	ctrl = new Controller(ctrl,type);
 	ctrl.setSize(size);
 	ctrl.setColor(color);
 	return ctrl;
-}
-
-//Low-level undocumented function
-DuAEF.Duik.Controller.isController = function (layer)
-{
-	var controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER);
-	if (controllerEffect) return true;
-	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
-	if (controllerEffect) return true;
-	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
-	if (controllerEffect) return true;
-	controllerEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
-	if (controllerEffect) return true;
-
-	return false;
-}
-
-/**
- * Gets Controllers in the comp or the selection.
- * @param {CompItem}	comp	- The composition where to get the controllers
- * @param {boolean} [selectedOnly=false] - Selected layers only
- * @return {Controller[]}	The controllers.
- */
-DuAEF.Duik.Controller.getControllers = function (comp,selectedOnly)
-{
-	if (selectedOnly == undefined) selectedOnly = false;
-
-	var layers = [];
-	if (selectedOnly) layers = comp.selectedLayers;
-	else layers = comp.layers;
-
-	if (layers.length == 0) return [];
-
-	var it = new Iterator(layers);
-	var ctrls = [];
-
-	it.do(function (layer)
-	{
-		if (DuAEF.Duik.Controller.isController(layer)) ctrls.push(new Controller(layer));
-	});
-	return ctrls;
 }
 
 /**
@@ -3507,6 +3572,8 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 	layer.parent = zero;
 	zero.scale.setValue(layer.scale.value);
 	layer.scale.setValue([100,100,100]);
+
+	DuAEF.Duik.setDuikMarker(zero,"Zero",DuAEF.Duik.LayerTypes.ZERO);
 
 	//parent
 	zero.parent = layerparent;
@@ -4020,7 +4087,7 @@ DuAEF.Duik.Rigging.ik = function (layers,controller,forceBezier)
 		for (var i = 0 ; i < layers.length ; i++)
 		{
 			var l = layers[i];
-			if (DuAEF.Duik.Controller.isController(l))
+			if (DuAEF.Duik.isLayerType(l,DuAEF.Duik.LayerTypes.CONTROLLER))
 			{
 				controller = l;
 				layers.splice(i,1);
@@ -4041,6 +4108,7 @@ DuAEF.Duik.Rigging.ik = function (layers,controller,forceBezier)
 		//check position
 		var cL = controller;
 		if (controller instanceof Controller) cL = controller.layer;
+		else controller = new Controller(controller);
 		var distance = DuAEF.DuAE.Layer.getDistance(cL,l);
 		if (distance > 10) withGoal = false;
 	}
@@ -5200,9 +5268,9 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	{
 		controller = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.ControllerType.TRANSFORM,goal);
 		goal.parent = null;
-		controller.layer.transform.rotation.setValue(goal.transform.rotation.value);
+		if (goal) controller.layer.transform.rotation.setValue(goal.transform.rotation.value);
 	}
-	goal.parent = controller.layer;
+	if (goal) goal.parent = controller.layer;
 
 	//add effect
 	var name = layers[0].name;
@@ -5424,6 +5492,7 @@ DuAEF.Duik.Bone.createBone = function(comp,size,type)
 {
 	//create
 	var bone = comp.layers.addShape();
+	DuAEF.Duik.setDuikMarker(bone,"Bone",DuAEF.Duik.LayerTypes.BONE);
 	//add effect
 	var effect = DuAEF.DuAE.Layer.addPseudoEffect(bone,DuAEF.Duik.PseudoEffects.BONE,DuAEF.Duik.PseudoEffectsMatchNames.BONE,'Bone');
 
@@ -5507,49 +5576,13 @@ DuAEF.Duik.Bone.createBone = function(comp,size,type)
 	return bone;
 }
 
-//Low-level undocumented function
-DuAEF.Duik.Bone.isBone = function (layer)
-{
-	var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.BONE);
-	if (effect) return true;
-	return false;
-}
-
 /**
  * Gets Bones in the comp or the selection.
  * @memberof DuAEF.Duik.Bone
  * @param {CompItem}	comp	- The composition where to get the bones
+ * @param {String} name - A name filter
  * @param {boolean} [selectedOnly=false] - Selected layers only
- * @return {Bone[]}	The bones.
- */
-DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
-{
-	if (selectedOnly == undefined) selectedOnly = false;
-
-	var layers = [];
-	if (selectedOnly) layers = comp.selectedLayers;
-	else layers = comp.layers;
-
-	if (layers.length == 0) return [];
-
-	var it = new Iterator(layers);
-	var bones = [];
-
-	it.do( function (layer)
-	{
-		if (DuAEF.Duik.Bone.isBone(layer)) bones.push(new Bone(layer));
-	});
-
-	return bones;
-}
-
-/**
- * Gets Bones in the comp or the selection.
- * @memberof DuAEF.Duik.Bone
- * @param {CompItem}	comp	- The composition where to get the bones
- * @param {String} [name] - A name filter
- * @param {boolean} [selectedOnly=false] - Selected layers only
- * @return {Bone[]}	The bones.
+ * @return {Bone|null}	The bones.
  */
 DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
 {
@@ -5559,13 +5592,13 @@ DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
 	if (selectedOnly) layers = comp.selectedLayers;
 	else layers = comp.layers;
 
-	if (layers.length == 0) return [];
+	if (layers.length == 0) return null;
 
 	var it = new Iterator(layers);
 
 	it.do( function (layer)
 	{
-		if (DuAEF.Duik.Bone.isBone(layer))
+		if (DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.BONE))
 		{
 			if (name == layer.name) return new Bone(layer);
 		}
