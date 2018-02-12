@@ -27,17 +27,30 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 /**
 * Constructs an iterator
 * @example
-* var it = new Iterator(layers);
-* while (!it.next())
-* {
-* 	var layer = layers[it.current];
-*	//do something with the layer
-* }
-* @example
+* //When iterating through the whole list,
+* //using the function do() has the best performance
+* //but you can not break the loop.
+* //If you need it, instead of using the word 'continue',
+* //just make the function return.
 * var it = new Iterator(layers);
 * it.do(function doSomething(layer) {
-* layer.name = something;
+* 	layer.name = something;
+*	//If we need to continue to the next item, return.
+*	if (dontWantThis) return;
+*	//else do something here
 * });
+* @example
+* //If you need to break the loop at one time,
+* //like if you're searching for something,
+* //you can use this method instead, which is a bit less quick than using the function do()
+* var it = new Iterator(layers);
+* while (layer = it.next())
+* {
+*	//do something with the layer
+	layer.name = something;
+	//when found what we're looking for
+	if (found) break;
+* }
 * @class Iterator
 * @classdesc An iterator object to use for easier loops
 * @property {Array|Collection} list - An array or an After Effects Collection
@@ -77,21 +90,20 @@ function Iterator(list)
 */
 Iterator.prototype.next = function ()
 {
-	if (this.length == 0) return false;
+	if (this.length == 0) return null;
 
 	if (!this.valid)
 	{
 		this.goToStart();
-		return true;
+		return this.list[this.current];
 	}
-
-	if (this.current < this.max)
+	 if (this.current < this.max)
 	{
 		this.goTo(this.current + 1);
-		return true;
+		return this.list[this.current];
 	}
 
-	return false;
+	return null;
 }
 
 /**
@@ -100,15 +112,19 @@ Iterator.prototype.next = function ()
 */
 Iterator.prototype.previous = function ()
 {
-	if (this.length == 0) return;
+	if (this.length == 0) return null;
 	if (!this.valid)
 	{
 		this.goToEnd();
+		return this.list[this.current];
 	}
-	else
+	if (this.current > this.min)
 	{
-		if (this.current > this.min) this.goTo(this.current - 1);
+		this.goTo(this.current - 1);
+		return this.list[this.current];
 	}
+
+	return null;
 }
 
 /**
