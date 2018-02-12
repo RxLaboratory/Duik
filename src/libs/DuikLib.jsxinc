@@ -420,6 +420,9 @@ DuAEF.Duik = {};
 	duik_bezier_ik_layer = DuAEF.DuBinary.toFile(duik_bezier_ik_layer);
 	#include "pseudoEffects/duik_ik.ffx.jsxinc"
 	duik_ik = DuAEF.DuBinary.toFile(duik_ik);
+	//cameras
+	#include "pseudoEffects/duik_2d_camera.ffx.jsxinc"
+	duik_2d_camera = DuAEF.DuBinary.toFile(duik_2d_camera);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -428,6 +431,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffects =
 	{
+		//camera
+		TWOD_CAMERA: duik_2d_camera,
 		//ik
 		ONELAYER_IK: duik_1layer_ik,
 		TWOLAYER_IK: duik_2layer_ik,
@@ -500,6 +505,8 @@ DuAEF.Duik = {};
 	 */
 	DuAEF.Duik.PseudoEffectsMatchNames =
 	{
+		//camera
+		TWOD_CAMERA: "Pseudo/DUIK 2d camera",
 		//ik
 		ONELAYER_IK: "Pseudo/DUIK 1layer ik",
 		TWOLAYER_IK: "Pseudo/DUIK 2layer ik",
@@ -2802,6 +2809,131 @@ DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,ma
 }
 
 /**
+* Camera tools
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Camera = {};
+
+/**
+* Creates a new 2D Multiplane Camera
+* @param {CompItem} [comp] - The containing comp. Ignored if layers are provided.
+* @param {Layers[]|LayerCollection|null|undefined} [layers=comp.selectedLayers] - The layers to automatically link to the controllers.<br />
+* By default, the selected layers will be used, and if there are no selected layers, three controllers will be created
+* @return {Controller} The camera controller
+*/
+DuAEF.Duik.Camera.create2DCam = function(comp,layers)
+{
+	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
+	if (layers == undefined) layers = comp.selectedLayers;
+	var numLayers = 3;
+	if (layers.length != 0)
+	{
+		layers = DuAEF.DuAE.Layer.sortByIndex(layers);
+		numLayers = layers.length;
+		comp = layers[0].containingComp;
+	}
+	var camIndex = Math.ceil(numLayers/2);
+
+	var camCtrl;
+	var camLayer;
+
+	var marker = new MarkerValue('2D Camera');
+	marker.setParameters({duik:'2d camera'});
+
+	for (var i=1;i<=numLayers;i++)
+	{
+		var name = 'L' + DuAEF.DuJS.Number.convertToString(i,2);
+		if (layers.length) name = name + ' | ' + layers[i-1].name;
+
+		//creer les nuls et leurs zeros
+		if (i == camIndex)
+		{
+			var camCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.ControllerType.CAMERA);
+			var camLayer = camCtrl.layer;
+			//Creer un ctrl cam
+			camLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name + ' CAMERA',comp);
+			//add a zero
+			DuAEF.Duik.Rigging.addZero(camLayer);
+			//add marker
+
+			camLayer.property('ADBE Marker').setValueAtTime(0,marker);
+		}
+		else
+		{
+			var layer = app.project.activeItem.layers.addNull() ;
+			layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+			layer.shy = true;
+			layer.property('ADBE Marker').setValueAtTime(0,marker);
+		}
+	}
+
+	//cam effect
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(camLayer,DuAEF.Duik.PseudoEffects.TWOD_CAMERA,DuAEF.Duik.PseudoEffectsMatchNames.TWOD_CAMERA,"2D Camera");
+
+	//cam rig
+	var camZero = camLayer.parent;
+	//tilt
+	camZero.transform.rotation.expression = "//Duik.twoDCamera\n" +
+	"thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(4);";
+	//zoom & truck in/out
+	camZero.transform.scale.expression = "//Duik.twoDCamera\n" +
+	"var zoom = thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(2);\n" +
+	"var truck = thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(3);\n" +
+	"value + [zoom,zoom] + [truck,truck];";
+	//pan
+	camZero.transform.position.expression = "//Duik.twoDCamera\n" +
+	"thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(1) + [thisComp.width/2,thisComp.height/2];";
+
+	//expressions and sliders
+	var numLayersAbove = camLayer.index-1;
+	var numLayersUnder = numLayers - camLayer.index;
+	for (var i=1;i<=numLayers;i++)
+	{
+		//if this is not the cam layer
+		if (i != camLayer.index)
+		{
+			var layer = comp.layer(i);
+			var zero = layer.parent;
+
+			var slider = layer.Effects.addProperty("ADBE Slider Control");
+			slider.name = 'Camera influence';
+			(i<camLayer.index+1) ? slider(1).setValue((1+(numLayersAbove-i+1)*.2)*100) : slider(1).setValue(((1/(camIndex+1))*Math.abs(i-numLayers-2))*100) ;
+
+			//truck
+			layer.transform.anchorPoint.expression = '//Duik.twoDCamera\nvar camPosition = thisComp.layer("' + camLayer.name + '").transform.position.value;\nvalueAtTime(0) - camPosition * effect("Camera influence")(1) / 100';
+
+			//tilt
+			layer.transform.rotation.expression = '//Duik.twoDCamera\n' +
+			'thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(4);';
+
+			//zoom & truck in/out
+			layer.transform.scale.expression = "//Duik.twoDCamera\n" +
+			"var zoom = thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(2);\n" +
+			"var truck = thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(3);\n" +
+			"var infl = thisComp.layer(\"" + layer.name + "\").effect(\"Camera influence\")(1);\n" +
+			"value + [zoom,zoom] + [truck,truck]*infl/100;";
+
+			//pan
+			layer.transform.position.expression = "//Duik.twoDCamera\n" +
+			"thisComp.layer(\"" + camLayer.name + "\").effect(\"" + effect.name + "\")(1) + [thisComp.width/2,thisComp.height/2];";
+		}
+	}
+
+	// Parent layers
+	if (layers.length)
+	{
+		for (var i = 0 ; i<layers.length;i++)
+		{
+			layers[i].parent = comp.layer(i+1);
+		}
+	}
+
+	DuAEF.DuAE.Comp.unselectLayers();
+	camLayer.selected = true;
+}
+
+/**
 * Controllers
 * @namespace
 * @memberof DuAEF.Duik
@@ -3365,7 +3497,7 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 	//create null object
 	var zero = layer.containingComp.layers.addNull();
 	DuAEF.Dugr.addLayerToGroup(zero,"Zeros");
-	var calqueparent = layer.parent;
+	var layerparent = layer.parent;
 	layer.parent = null;
 	zero.position.setValue(layer.position.value);
 	zero.rotation.setValue(layer.rotation.value);
@@ -3375,7 +3507,7 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 	layer.scale.setValue([100,100,100]);
 
 	//parent
-	zero.parent = calqueparent;
+	zero.parent = layerparent;
 
 	//lock and hide
 	zero.moveToEnd();
