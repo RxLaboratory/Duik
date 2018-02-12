@@ -483,6 +483,10 @@
 	#include 'icons/w32_precompshots_r.png.jsxinc'
 	#include 'icons/w32_textbelow_l.png.jsxinc'
 	#include 'icons/w32_textbelow_r.png.jsxinc'
+	#include 'icons/w32_linkcameralayers_r.png.jsxinc'
+	#include 'icons/w32_linkcameralayers_l.png.jsxinc'
+	#include 'icons/w32_numlayers_r.png.jsxinc'
+	#include 'icons/w32_numlayers_l.png.jsxinc'
 
 	#include 'icons/illustrations_tail.jsxinc'
 	#include 'icons/illustrations_spine.jsxinc'
@@ -515,6 +519,7 @@
 		initRiggingUI();
 		initAnimationUI();
 		initIOUI();
+		initCameraUI();
 
 		ui_riggingGroup.visible = panel == 5;
 		ui_riggingButton.setChecked(ui_riggingGroup.visible);
