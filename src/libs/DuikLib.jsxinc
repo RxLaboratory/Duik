@@ -487,7 +487,10 @@ DuAEF.Duik.Autorig.Elements =
 	SHOULDER_BLADE: 'shoulder',
 	CLAVICLE: 'shoulder',
 	HUMERUS: 'humerus',
+	ARM: 'humerus',
+	FOREARM: 'radius',
 	RADIUS: 'radius',
+	ULNA: 'radius',
 	HAND: 'hand',
 	FINGERS: 'fingers',
 	FRONT_CLAWS: 'fingers',
@@ -771,6 +774,403 @@ DuAEF.Duik.Autorig.tagTail = function (tail,tip)
 		DuAEF.Duik.setDuikMarkerParameter(tip,DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT,DuAEF.Duik.Autorig.Elements.TAIL_TIP);
 		DuAEF.Duik.setDuikMarkerParameter(tip,DuAEF.Duik.MarkerParameters.AUTORIG_LIMB,limb);
 		DuAEF.Duik.setDuikMarkerParameter(tip,DuAEF.Duik.MarkerParameters.AUTORIG_ID,id);
+	}
+}
+
+/**
+ * Rigs the layers according to the tags found
+ * @memberof DuAEF.Duik.Autorig
+ * @param {Layer[]} layers - The layers to rig
+ * @return {boolean} false if the layers can not be rigged
+ */
+DuAEF.Duik.Autorig.rig = function (layers)
+{
+	if (layers.length == 0) return false;
+
+	//what we expect
+	var arms = [];
+	var legs = [];
+	var spine = {};
+	spine.spine = [];
+	spine.neck = [];
+	var tails = [];
+
+	//a sorter for spine, neck and tail layer
+	function sortElements(a,b)
+	{
+		return a.i - b.i;
+	}
+
+	// ================== INIT ===================
+
+	var comp = layers[0].containingComp;
+
+	//check if layers are tagged, if not return false
+	var wrongLayers = DuAEF.Duik.Autorig.checkLayerTags(layers);
+	if (wrongLayers.length > 0) return false;
+
+	//Sort layers, load data
+	//TODO: do not check all layers, but get by autorig_id in the comp
+	//this way, one has only one layer for each limb to select and can forget some.
+	var it = new Iterator(layers);
+	it.do(function (layer){
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		//if spine
+		if (params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB] == DuAEF.Duik.Autorig.Limbs.SPINE)
+		{
+			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.HIPS)
+			{
+				spine.hips = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.SPINE)
+			{
+				var sp = {};
+				sp = layer;
+				sp.i = params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT_NUMBER];
+				spine.spine.push(sp);
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.NECK)
+			{
+				var ne = {};
+				ne = layer;
+				ne.i = params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT_NUMBER];
+				spine.neck.push(ne);
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.HEAD)
+			{
+				spine.head = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.SPINE_TIP)
+			{
+				spine.tip = layer;
+				return;
+			}
+		}
+		else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB] == DuAEF.Duik.Autorig.Limbs.TAIL)
+		{
+			//get id
+			var id = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
+
+			//look for existing tail if any
+			var tail;
+			for (var i = 0 ; i < tails.length ; i++)
+			{
+				if (tails[i].id == id)
+				{
+					tail = tails[i];
+					break;
+				}
+			}
+			if (!tail)
+			{
+				tail = {};
+				tail.tail = [];
+				tail.id = id;
+				tails.push(tail);
+			}
+
+			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.TAIL)
+			{
+				var ta = {};
+				ta = layer;
+				ta.i = params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT_NUMBER];
+				tail.tail.push(ta);
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.TAIL_TIP)
+			{
+				tail.tip = layer;
+				return;
+			}
+		}
+		else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB] == DuAEF.Duik.Autorig.Limbs.ARM)
+		{
+			//get id
+			var id = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
+
+			//look for existing arm if any
+			var arm;
+			for (var i = 0 ; i < arms.length ; i++)
+			{
+				if (arms[i].id == id)
+				{
+					arm = arms[i];
+					break;
+				}
+			}
+			if (!arm)
+			{
+				arm = {};
+				arm.id = id;
+				arm.type = DuAEF.Duik.MarkerParameters.AUTORIG_ANIMAL_TYPE;
+				arms.push(arm);
+			}
+
+			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.SHOULDER)
+			{
+				arm.shoulder = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.HUMERUS)
+			{
+				arm.humerus = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.RADIUS)
+			{
+				arm.radius = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.HAND)
+			{
+				arm.hand = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FINGERS)
+			{
+				arm.claws = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.PALM)
+			{
+				arm.palm = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.ARM_TIP)
+			{
+				arm.tip = layer;
+				return;
+			}
+		}
+		else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB] == DuAEF.Duik.Autorig.Limbs.LEG)
+		{
+			//get id
+			var id = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
+
+			//look for existing arm if any
+			var leg;
+			for (var i = 0 ; i < legs.length ; i++)
+			{
+				if (legs[i].id == id)
+				{
+					leg = legs[i];
+					break;
+				}
+			}
+			if (!leg)
+			{
+				leg = {};
+				leg.id = id;
+				leg.type = DuAEF.Duik.MarkerParameters.AUTORIG_ANIMAL_TYPE;
+				legs.push(leg);
+			}
+
+			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FEMUR)
+			{
+				leg.femur = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.TIBIA)
+			{
+				leg.tibia = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FOOT)
+			{
+				leg.foot = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.TOES)
+			{
+				leg.toes = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.HEEL)
+			{
+				leg.hell = layer;
+				return;
+			}
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.LEG_TIP)
+			{
+				leg.tip = layer;
+				return;
+			}
+		}
+	});
+
+	// ================ SPINE =======================
+
+	//sort the spine and the neck
+	spine.spine.sort(sortElements);
+	spine.neck.sort(sortElements);
+
+	//find the root and the torso
+	var spineRoot = null;
+	if (spine.hips) spineRoot = spine.hips;
+	else if (spine.spine.length > 0) spineRoot = spine.spine[0];
+	else if (spine.neck.length > 0) spineRoot = spine.neck[0];
+	else if (spine.head) spineRoot = spine.head;
+	else if (spine.tip) spineRoot = spine.tip;
+
+	//find the torso
+	var spineTorso = null;
+
+
+	//let's do this!
+	if (spineRoot)
+	{
+		//unparent everything, just to be sure
+		var spineRootParent = spineRoot.parent;
+		spineRoot.parent = null;
+
+		if (spine.spine.length > 0) for (var i=0;i<spine.spine.length;i++ ) spine.spine[i].parent = null;
+		if (spine.neck.length > 0) for (var i=0;i<spine.neck.length;i++ ) spine.neck[i].parent = null;
+		if (spine.head) spine.head.parent = null;
+		if (spine.tip) spine.tip.parent = null;
+
+		//controllers
+		var hipsCtrl = null;
+		var bigHipsCtrl = null;
+		var shoulderCtrl = null;
+		var headCtrl = null;
+
+		//hips controller
+		if (spine.hips)
+		{
+			bigHipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.BODY,spine.hips);
+			hipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HIPS,spine.hips);
+		}
+		else if (spine.spine.length > 0)
+		{
+			bigHipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.BODY,spine.spine[0]);
+			hipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HIPS,spine.spine[0]);
+		}
+
+		//shoulders controller
+		if (spine.neck.length > 0)
+		{
+			shoulderCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.SHOULDERS,spine.neck[0]);
+		}
+
+		//head controller
+		if (spine.head)
+		{
+			headCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HEAD,spine.head);
+		}
+
+		//parenting structures
+		if (spine.hips)
+		{
+			spine.hips.parent = hipsCtrl.layer;
+		}
+		if (spine.spine.length > 0)
+		{
+			if (!spine.hips)
+			{
+				spine.spine[0].parent = hipsCtrl.layer;
+				//if structure, disable display link (bug AE)
+				if (DuAEF.Duik.isLayerType(spine.spine[0],DuAEF.Duik.LayerTypes.STRUCTURE))
+				{
+					spine.spine[0].effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).setValue(0);
+				}
+			}
+			else spine.spine[0].parent = spine.hips;
+		}
+		if (spine.neck.length > 0)
+		{
+			if (spine.spine.length > 0) spine.neck[0].parent = spine.spine[spine.spine.length-1];
+			else if (spine.hips) spine.neck[0].parent = spine.hips;
+			else spine.neck[0].parent = shoulderCtrl.layer;
+			for (var i = 1;i<spine.neck.length;i++)
+			{
+				spine.neck[i].parent = spine.neck[i-1];
+			}
+		}
+		if (spine.head)
+		{
+			if (spine.neck.length > 0) spine.head.parent = spine.neck[spine.neck.length-1];
+			else if (spine.spine.length > 0) spine.head.parent = spine.spine[spine.spine.length-1];
+			else if (spine.hips) spine.head.parent = spine.hips;
+			else spine.head.parent = headCtrl.layer;
+		}
+		if (spine.tip)
+		{
+			if (spine.head) spine.tip.parent = spine.head;
+			else if (spine.neck.length > 0) spine.tip.parent = spine.neck[spine.neck.length-1];
+			else if (spine.spine.length > 0) spine.tip.parent = spine.spine[spine.spine.length-1];
+			else if (spine.hips) spine.tip.parent = spine.hips;
+			else
+			{
+				hipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HIPS,spine.tip);
+				spine.tip.parent = hipsCtrl.layer;
+			}
+		}
+
+		//parenting controllers
+		if (bigHipsCtrl)
+		{
+			bigHipsCtrl.layer.parent = spineRootParent;
+			hipsCtrl.layer.parent = bigHipsCtrl.layer;
+		}
+
+		if (shoulderCtrl)
+		{
+			if (bigHipsCtrl) shoulderCtrl.layer.parent = bigHipsCtrl.layer;
+		}
+
+		if (headCtrl)
+		{
+			if (shoulderCtrl) headCtrl.layer.parent = shoulderCtrl.layer;
+			else if (bigHipsCtrl) headCtrl.layer.parent = bigHipsCtrl.layer;
+		}
+
+		//spine IK
+		var goal;
+		if (spine.neck.length > 0) goal = spine.neck[0];
+		else if (spine.head) goal = spine.head;
+		else if (spine.tip) goal = spine.tip;
+		var ctrl;
+		if (shoulderCtrl) ctrl = shoulderCtrl;
+		else if (headCtrl) ctrl = headCtrl;
+
+		if (ctrl || goal)
+		{
+			if (spine.hips && spine.spine.length == 0)
+			{
+				var backCtrl = DuAEF.Duik.Rigging.oneLayerIK(spine.hips,goal,ctrl);
+				if (!ctrl) backCtrl.layer.parent = bigHipsCtrl.layer;
+			}
+			else if (spine.spine.length == 1)
+			{
+				var backCtrl = DuAEF.Duik.Rigging.oneLayerIK(spine.spine[0],goal,ctrl);
+				if (!ctrl) backCtrl.layer.parent = bigHipsCtrl.layer;
+			}
+			else if (spine.spine.length > 1)
+			{
+				var backCtrl = DuAEF.Duik.Rigging.bezierIK(spine.spine,goal,ctrl);
+				goal.parent = spine.spine[spine.spine.length-1];
+
+				backCtrl[0].layer.parent = bigHipsCtrl.layer;
+				if (!ctrl) backCtrl[1].layer.parent = bigHipsCtrl.layer;
+			}
+		}
+
+		//other controls
+		//neck
+		if (spine.neck.length > 0)
+		{
+			DuAEF.Duik.Rigging.goal(spine.neck,shoulderCtrl);
+		}
+
+		//head
+		if (spine.head)
+		{
+			DuAEF.Duik.Rigging.goal(spine.head,headCtrl);
+		}
 	}
 }
 
@@ -3730,7 +4130,10 @@ DuAEF.Duik.Controller.Types =
 	EYE: 15,
 	EYES: 16,
 	FACE: 17,
-	SQUARE: 18
+	SQUARE: 18,
+	HIPS: 19,
+	BODY: 20,
+	SHOULDERS: 21
 }
 
 /**
@@ -4224,9 +4627,7 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
 	}
 
-	var marker = new MarkerValue('Controller');
-	marker.setParameters({duik:'controller'});
-	ctrl.property('ADBE Marker').setValueAtTime(0,marker);
+	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
 	DuAEF.Dugr.addLayerToGroup(ctrl,"Controllers");
 	ctrl.guideLayer = true;
@@ -5874,7 +6275,7 @@ DuAEF.Duik.Rigging.threeLayerIK = function (layer1,layer2,layer3,goal,controller
 * @param {Layer|null} [goal] - The goal layer, at the end of the IK
 * @param {Layer|Controller|null} [controllers] - The layer to use as controller, can be automatically created.<br />
 * Must be provided if goal is undefined.
-* @return {Controller[]} The controllers [root,curve,end]
+* @return {Controller[]} The controllers [curve,end]
 */
 DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 {
@@ -5898,7 +6299,7 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	var ikEffect = DuAEF.DuAE.Layer.addPseudoEffect(controller.layer,DuAEF.Duik.PseudoEffects.BEZIER_IK,DuAEF.Duik.PseudoEffectsMatchNames.BEZIER_IK,"IK | " + name);
 
 	//create curve controller
-	var curveController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.TRANSFORM,layers[0]);
+	var curveController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.POSITION,layers[0]);
 	curveController.layer.name = curveController.layer.name + " | Curve";
 
 	//add effect
@@ -6092,7 +6493,48 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	curveController.layer.selected = false;
 	controller.layer.moveBefore(curveController.layer);
 
-	return controller;
+	return [curveController,controller];
+}
+
+DuAEF.Duik.Rigging.goal = function (layers, controller)
+{
+	if (layers instanceof Array) layers = DuAEF.DuAE.Layer.sortByParent(layers);
+	else layers = [layers];
+	var numLayers = layers.length;
+
+	if (controller instanceof Controller) controller = controller.layer;
+	//add checkbox and data
+	var effect = controller.effect.addProperty("ADBE Checkbox Control");
+	effect.name = layers[0].name + " Follow";
+	var effectName = effect.name;
+
+
+	for (var i = 0; i<layers.length;i++)
+	{
+		var goalData = layers[i].effect.addProperty("ADBE Layer Control");
+		goalData.name = "Goal";
+		goalData(1).setValue(controller.index);
+
+		layers[i].transform.rotation.expression = "//Duik.goal\n" +
+			"var ctrl = null;\n" +
+			"var result = value;\n" +
+			"try { ctrl = effect(\"Goal\")(1); } catch (e){};\n" +
+			"if (ctrl != null)\n" +
+			"{\n" +
+			"var goal = ctrl.effect(\"" + effectName + "\")(1).value;\n" +
+			"result += ctrl.rotation.value/" + (numLayers/(i+1)) + ";\n" +
+			"if (!goal)\n" +
+			"{\n" +
+			"var layer = thisLayer;\n" +
+			"while (layer.hasParent)\n" +
+			"{\n" +
+			"layer = layer.parent;\n" +
+			"result = result - layer.rotation/" + (numLayers/(i+1)) + ";\n" +
+			"}\n" +
+			"}\n" +
+			"}\n" +
+			"result;";
+	}
 }
 
 /**
