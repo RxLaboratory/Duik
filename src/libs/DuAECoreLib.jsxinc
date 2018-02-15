@@ -1204,6 +1204,24 @@ DuAEF.DuAE.Layer.sequence = function (layers,expr)
 }
 
 /**
+* Adds a new Null object just above a layer, at the same positionConstraint
+* @param {Layer} layer - The layer
+* @return {Layer} the null
+*/
+DuAEF.DuAE.Layer.addNull = function (layer)
+{
+	if (layer == undefined) return null;
+	var nullLayer = layer.containingComp.layers.addNull();
+	layerParent = layer.parent;
+	layer.parent = null;
+	nullLayer.transform.position.setValue(layer.transform.position.value);
+	layer.parent = layerParent;
+	nullLayer.moveBefore(layer);
+	nullLayer.name = "N | " + layer.name;
+	return nullLayer;
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -2329,6 +2347,52 @@ DuAEF.DuAE.Property.replaceInExpressions = function (prop,oldString,newString,ca
 		for (var propertyIndex = 1;propertyIndex <= prop.numProperties;propertyIndex++)
 		{
 			DuAEF.DuAE.Property.replaceInExpressions(prop.property(propertyIndex),oldString,newString,caseSensitive);
+		}
+	}
+}
+
+/**
+ * Adds an expression to the child property, linking it to the parent property
+ * @memberof DuAEF.DuAE.Property
+ * @param {Property} childProp - The child property (the one which gets an expression).
+ * @param {Property} parentProp - The parent property.
+ * @param {bool} useThisComp - Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ */
+DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
+{
+	if (!childProp.canSetExpression) return;
+	if (useThisComp == undefined)
+	{
+		var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
+		var childComp = DuAEF.DuAE.Property.getComp(childProp);
+		if (parentComp.id == childComp.id) useThisComp = true;
+		else useThisComp = false;
+	}
+	childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp);
+}
+
+/**
+ * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)
+ * @memberof DuAEF.DuAE.Property
+ * @param {PropertyBase}	childProp			- The child property
+ * @param {PropertyBase}	parentProp			- The parent property
+ * @param {bool}		[useThisComp]				- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ */
+DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
+{
+	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided)
+	{
+		//copy paste the animation / value
+		var anim = DuAEF.DuAE.Property.getAnim(childProp,false);
+		if (anim != null) DuAEF.DuAE.Property.setAnim(parentProp,anim,0,true,true);
+		//set the link
+		DuAEF.DuAE.Property.pickWhip(childProp,parentProp,useThisComp);
+	}
+	else
+	{
+		for (var p = 1 ; p <= childProp.numProperties ; p++)
+		{
+			DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
 		}
 	}
 }
