@@ -164,6 +164,8 @@ DuAEF.Duik = {};
 	//autorig
 	#include "pseudoEffects/duik_foot_roll.ffx.jsxinc"
 	duik_foot_roll = DuAEF.DuBinary.toFile(duik_foot_roll);
+	#include "pseudoEffects/duik_shoulder.ffx.jsxinc"
+	duik_shoulder = DuAEF.DuBinary.toFile(duik_shoulder);
 
 	/**
 	 * The pseudo effects needed by Duik
@@ -174,6 +176,7 @@ DuAEF.Duik = {};
 	{
 		//autorig
 		FOOT_ROLL: duik_foot_roll,
+		SHOULDER: duik_shoulder,
 		//camera
 		TWOD_CAMERA: duik_2d_camera,
 		//ik
@@ -250,6 +253,7 @@ DuAEF.Duik = {};
 	{
 		//autorig
 		FOOT_ROLL: "Pseudo/DUIK foot roll",
+		SHOULDER: "Pseudo/DUIK shoulder",
 		//camera
 		TWOD_CAMERA: "Pseudo/DUIK 2d camera",
 		//ik
@@ -622,7 +626,7 @@ DuAEF.Duik.Autorig.tagArm = function (shoulder,humerus,radius,hand,claws,palm,ti
 	}
 	if (claws)
 	{
-		DuAEF.Duik.setDuikMarkerParameter(claws,DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT,DuAEF.Duik.Autorig.Elements.CLAWS);
+		DuAEF.Duik.setDuikMarkerParameter(claws,DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT,DuAEF.Duik.Autorig.Elements.FRONT_CLAWS);
 		DuAEF.Duik.setDuikMarkerParameter(claws,DuAEF.Duik.MarkerParameters.AUTORIG_ANIMAL_TYPE,type);
 		DuAEF.Duik.setDuikMarkerParameter(claws,DuAEF.Duik.MarkerParameters.AUTORIG_LIMB,limb);
 		DuAEF.Duik.setDuikMarkerParameter(claws,DuAEF.Duik.MarkerParameters.AUTORIG_ID,id);
@@ -958,7 +962,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 				arm.hand = layer;
 				return;
 			}
-			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FINGERS)
+			else if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FRONT_CLAWS)
 			{
 				arm.claws = layer;
 				return;
@@ -1037,7 +1041,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 	spine.spine.sort(sortElements);
 	spine.neck.sort(sortElements);
 
-	//find the root and the torso
+	//find the root
 	var spineRoot = null;
 	if (spine.hips) spineRoot = spine.hips;
 	else if (spine.spine.length > 0) spineRoot = spine.spine[0];
@@ -1047,6 +1051,11 @@ DuAEF.Duik.Autorig.rig = function (layers)
 
 	//find the torso
 	var spineTorso = null;
+	if (spine.spine.length > 0) spineTorso = spine.spine[spine.spine.length-1];
+	else if (spine.hips) spineTorso = spine.hips;
+	else if (spine.neck.length) spineTorso = spine.neck[0];
+	else if (spine.head) spineTorso = spine.head;
+	else if (spine.tip) spineTorso = spine.tip;
 
 	//let's do this!
 	if (spineRoot)
@@ -1206,6 +1215,8 @@ DuAEF.Duik.Autorig.rig = function (layers)
 	var itLegs = new Iterator(legs);
 	itLegs.do(function(leg){
 
+		//TODO DIGITIGRADE and ungulate
+
 		//unparent
 		if (leg.tibia && leg.femur) leg.tibia.parent = null;
 		if (leg.foot && (leg.tibia || leg.femur)) leg.foot.parent = null;
@@ -1269,7 +1280,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			if (leg.foot) leg.toes.parent = leg.foot;
 			else if (leg.tibia) leg.toes.parent = leg.tibia;
 			else if (leg.femur) leg.toes.parent = leg.femur;
-			else if (leg.tip) leg.toes.parent = spineRoot;
+			else if (leg.tip || leg.heel) leg.toes.parent = spineRoot;
 			else
 			{
 				leg.toes.parent = ctrl.layer;
@@ -1280,7 +1291,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		{
 			if (leg.tibia) leg.foot.parent = leg.tibia;
 			else if (leg.femur) leg.foot.parent = leg.femur;
-			else if (leg.toes || leg.tip) leg.foot.parent = spineRoot;
+			else if (leg.toes || leg.tip || leg.heel) leg.foot.parent = spineRoot;
 			else
 			{
 				leg.foot.parent = ctrl.layer;
@@ -1355,9 +1366,9 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			}
 			else if (leg.heel)
 			{
-				if (leg.femur && leg.tibia) DuAEF.Duik.Rigging.twoLayerIK(leg.femur,leg.tibia,leg.tip,ctrl);
-				else if (leg.femur) DuAEF.Duik.Rigging.oneLayerIK(leg.femur,leg.tip,ctrl);
-				else if (leg.tibia) DuAEF.Duik.Rigging.oneLayerIK(leg.tibia,leg.tip,ctrl);
+				if (leg.femur && leg.tibia) DuAEF.Duik.Rigging.twoLayerIK(leg.femur,leg.tibia,leg.heel,ctrl);
+				else if (leg.femur) DuAEF.Duik.Rigging.oneLayerIK(leg.femur,leg.heel,ctrl);
+				else if (leg.tibia) DuAEF.Duik.Rigging.oneLayerIK(leg.tibia,leg.heel,ctrl);
 			}
 			else if (leg.femur && leg.tibia) DuAEF.Duik.Rigging.oneLayerIK(leg.femur,leg.tibia,ctrl);
 		}
@@ -1401,6 +1412,263 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		DuAEF.DuAE.Comp.unselectLayers();
 		ctrl.layer.selected = true;
 	});
+
+	// =============== ARMS ================================
+
+	var itArms = new Iterator(arms);
+	itArms.do(function(arm){
+
+		//TODO DIGITIGRADE and ungulate
+
+		//unparent
+		if (arm.humerus && arm.shoulder) arm.humerus.parent = null;
+		if (arm.radius && (arm.humerus ||  arm.shoulder)) arm.radius.parent = null;
+		if (arm.hand && (arm.radius || arm.humerus)) arm.hand.parent = null;
+		if (arm.claws  && (arm.hand || arm.radius || arm.humerus)) arm.claws.parent = null;
+		if (arm.tip) arm.tip.parent = null;
+		if (arm.palm) arm.palm.parent = null;
+
+		//detect right or left, depending on the toes position
+		var right = false;
+		if (arm.claws && arm.hand)
+		{
+			var clawsPos = DuAEF.DuAE.Layer.getWorldPos(arm.claws);
+			var handPos = DuAEF.DuAE.Layer.getWorldPos(arm.hand);
+			right = (clawsPos[0] - handPos[0]) > 0;
+		}
+
+		//add nulls and controllers for the footRoll
+		var clawsNull, handNull;
+		//the foot roll needs all parts
+		if ( arm.claws && arm.hand && ((arm.radius && arm.humerus) || (arm.radius && arm.shoulder) || (arm.humerus && arm.shoulder)) )
+		{
+			//claws
+			clawsNull = DuAEF.DuAE.Layer.addNull(arm.claws);
+			DuAEF.Duik.setDuikMarker(clawsNull,'Autorig FootRoll',DuAEF.Duik.LayerTypes.NULL);
+			clawsNull.name = "FootRoll | " + arm.claws.name;
+
+			var handSize = arm.claws.transform.position.value[0] - arm.hand.transform.position.value[0];
+			//tiptoe
+			if (!arm.tip)
+			{
+				arm.tip = DuAEF.DuAE.Layer.addNull(arm.claws);
+				arm.tip.name = "FootRoll | Tiptoe";
+				arm.tip.transform.position.setValue([clawsNull.transform.position.value[0] + handSize/2,clawsNull.transform.position.value[1]]);
+			}
+
+			if (!arm.palm)
+			{
+				arm.palm = DuAEF.DuAE.Layer.addNull(arm.claws);
+				arm.palm.name = "FootRoll | Heel";
+				arm.palm.transform.position.setValue([arm.hand.transform.position.value[0],clawsNull.transform.position.value[1]]);
+			}
+
+			//hand
+			handNull = DuAEF.DuAE.Layer.addNull(arm.hand);
+			DuAEF.Duik.setDuikMarker(handNull,'Autorig FootRoll',DuAEF.Duik.LayerTypes.NULL);
+			handNull.name = "FootRoll | " + arm.hand.name;
+		}
+
+		//Controller for the arm
+		var ctrl = null;
+		if (arm.hand && ((arm.humerus || arm.radius || arm.shoulder) || (!arm.claws && !arm.tip))) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.hand);
+		else if (arm.claws && ((arm.humerus || arm.radius || arm.shoulder) || !arm.tip)) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.claws);
+		else if (arm.tip) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.tip);
+		else if (arm.palm) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.palm);
+		else if (arm.radius) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.radius);
+		else if (arm.humerus) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.humerus);
+		else if (arm.shoulder) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.shoulder);
+
+		//parenting
+		if (arm.claws)
+		{
+			if (arm.hand) arm.claws.parent = arm.hand;
+			else if (arm.radius) arm.claws.parent = arm.radius;
+			else if (arm.humerus) arm.claws.parent = arm.humerus;
+			else if (arm.shoulder) arm.claws.parent = arm.shoulder;
+			else if (arm.tip || arm.palm) arm.claws.parent = spineTorso;
+			else
+			{
+				arm.claws.parent = ctrl.layer;
+				ctrl.layer.parent = spineTorso;
+			}
+		}
+		if (arm.hand)
+		{
+			if (arm.radius) arm.hand.parent = arm.radius;
+			else if (arm.humerus) arm.hand.parent = arm.humerus;
+			else if (arm.shoulder) arm.hand.parent = arm.shoulder;
+			else if (arm.claws || arm.tip || arm.palm) arm.hand.parent = spineTorso;
+			else
+			{
+				arm.hand.parent = ctrl.layer;
+				ctrl.layer.parent = spineTorso;
+			}
+		}
+		if (arm.radius)
+		{
+			if (arm.humerus) arm.radius.parent = arm.humerus;
+			else if (arm.shoulder) arm.radius.parent = arm.shoulder;
+			else if (arm.hand || arm.claws || arm.tip || arm.palm) arm.radius.parent = spineTorso;
+			else
+			{
+				arm.radius.parent = ctrl.layer;
+				ctrl.layer.parent = spineTorso;
+			}
+		}
+		if (arm.humerus)
+		{
+			if (arm.shoulder) arm.humerus.parent = arm.shoulder;
+			else if (arm.radius || arm.hand || arm.claws || arm.palm) arm.humerus.parent = spineTorso;
+			else
+			{
+				arm.humerus.parent = ctrl.layer;
+				if (spineTorso) ctrl.layer.parent = spineTorso;
+			}
+		}
+		if (arm.tip)
+		{
+			if (arm.palm) arm.tip.parent = arm.palm;
+			else if (arm.hand) arm.tip.parent = arm.hand;
+			else if (arm.radius) arm.tip.parent = arm.radius;
+			else if (arm.humerus) arm.tip.parent = arm.humerus;
+			else if (arm.shoulder) arm.tip.parent = arm.shoulder;
+		}
+		if (handNull)
+		{
+			handNull.parent = clawsNull;
+			clawsNull.parent = arm.tip;
+			arm.palm.parent = ctrl.layer;
+		}
+
+		//IKs
+		if (handNull)
+		{
+			//claws
+			DuAEF.Duik.Rigging.oneLayerIK(arm.claws,undefined,arm.tip);
+			//arm
+			if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.humerus,arm.radius,arm.hand,handNull);
+			else if (arm.humerus && arm.shoulder) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.humerus,arm.hand,handNull);
+			else if (arm.radius && arm.shoulder) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.radius,arm.hand,handNull);
+			//hand
+			DuAEF.Duik.Rigging.oneLayerIK(arm.hand,undefined,clawsNull);
+		}
+		else
+		{
+			if (arm.hand)
+			{
+				if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.humerus,arm.radius,arm.hand,ctrl);
+				else if (arm.humerus && arm.shoulder) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.humerus,arm.hand,ctrl);
+				else if (arm.radius && arm.shoulder) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.radius,arm.hand,ctrl);
+				else if (arm.shoulder) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.hand,ctrl);
+				else if (arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.humerus,arm.hand,ctrl);
+				else if (arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.radius,arm.hand,ctrl);
+				else if (arm.claws) DuAEF.Duik.Rigging.oneLayerIK(arm.hand,arm.claws,ctrl);
+				else if (arm.tip) DuAEF.Duik.Rigging.oneLayerIK(arm.hand,arm.tip,ctrl);
+			}
+			else if (arm.claws)
+			{
+				if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.humerus,arm.radius,arm.claws,ctrl);
+				if (arm.humerus && arm.shoulder) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.humerus,arm.claws,ctrl);
+				if (arm.shoulder && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.radius,arm.claws,ctrl);
+				else if (arm.shoulder) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.claws,ctrl);
+				else if (arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.humerus,arm.claws,ctrl);
+				else if (arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.radius,arm.claws,ctrl);
+				else if (arm.tip) DuAEF.Duik.Rigging.oneLayerIK(arm.claws,arm.tip,ctrl);
+			}
+			else if (arm.tip)
+			{
+				if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.humerus,arm.radius,arm.tip,ctrl);
+				if (arm.shoulder && arm.humerus) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.humerus,arm.tip,ctrl);
+				if (arm.shoulder && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.radius,arm.tip,ctrl);
+				else if (arm.shoulder) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.tip,ctrl);
+				else if (arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.humerus,arm.tip,ctrl);
+				else if (arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.radius,arm.tip,ctrl);
+			}
+			else if (arm.palm)
+			{
+				if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.humerus,arm.radius,arm.palm,ctrl);
+				if (arm.shoulder && arm.humerus) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.humerus,arm.palm,ctrl);
+				if (arm.shoulder && arm.radius) DuAEF.Duik.Rigging.twoLayerIK(arm.shoulder,arm.radius,arm.palm,ctrl);
+				else if (arm.shoulder) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.palm,ctrl);
+				else if (arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.humerus,arm.palm,ctrl);
+				else if (arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.radius,arm.palm,ctrl);
+			}
+			else if (arm.humerus && arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.humerus,arm.radius,ctrl);
+			else if (arm.shoulder && arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.humerus,ctrl);
+			else if (arm.shoulder && arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.radius,ctrl);
+		}
+		if (arm.shoulder && arm.humerus && arm.radius)
+		{
+			DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,undefined,ctrl);
+			var ikShoulderEffect = ctrl.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK);
+			var oldName = ikShoulderEffect.name;
+			ikShoulderEffect.name = arm.shoulder.name + " rotation";
+			app.project.autoFixExpressions(oldName,arm.shoulder.name + " rotation");
+			ikShoulderEffect(2).setValue(20);
+			ikShoulderEffect(3).setValue(-arm.shoulder.transform.rotation.value);
+			ikShoulderEffect(5).setValue(1);
+		}
+
+		//Controls
+		if (handNull)
+		{
+			//add an IK effect on the controller
+			var ikCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.TWOLAYER_IK,DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK,"IK");
+			//the effect on the null of the hand
+			var ikEffect = handNull.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+			ikCtrl.name = ikEffect.name;
+			//link the properties
+			DuAEF.DuAE.Property.linkProperties(ikEffect,ikCtrl);
+
+			//tiptoe, heel and footroll
+			var handCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.FOOT_ROLL,DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL,"Foot roll");
+			arm.tip.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);";
+			var op  = right ? "<" : ">";
+			arm.palm.transform.rotation.expression = "//Duik.footRoll\n" +
+			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);\n" +
+			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
+			"roll " + op + " 0 ? roll+ctrl : ctrl;";
+			op = right ? ">" : "<";
+			clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
+			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
+			"ctrl " + op + " 0 ? ctrl : 0;";
+		}
+
+		if (arm.shoulder)
+		{
+			var shoulderCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.SHOULDER,DuAEF.Duik.PseudoEffectsMatchNames.SHOULDER,arm.shoulder.name + " position");
+
+			arm.shoulder.transform.position.expression = '//Duik.shoulder\n' +
+				'var c = thisComp.layer("' + ctrl.layer.name + '");\n' +
+				'var a = c.effect("' + shoulderCtrl.name + '")(14).value;\n' +
+				'var result = value + a;\n' +
+				'if (thisLayer.hasParent)\n' +
+				'{\n' +
+				'var w = c.effect("' + shoulderCtrl.name + '")(9).value / 100;\n' +
+				'var p = thisLayer.parent;\n' +
+				'var o = c.toWorld(c.anchorPoint,0) - p.toWorld(p.anchorPoint,0);\n' +
+				'var t = c.toWorld(c.anchorPoint) - p.toWorld(p.anchorPoint);\n' +
+				'result = result + (t-o)*w;\n' +
+				'}\n' +
+				'result;';
+		}
+
+		//hide and lock
+		if (handNull){
+			clawsNull.enabled = false;
+			clawsNull.shy = true;
+			clawsNull.locked = true;
+			handNull.enabled = false;
+			handNull.shy = true;
+			handNull.locked = true;
+		}
+
+		//select controller
+		DuAEF.DuAE.Comp.unselectLayers();
+		ctrl.layer.selected = true;
+	})
+
 }
 
 /**
@@ -5467,7 +5735,7 @@ DuAEF.Duik.Rigging.oneLayerIK = function (layer,goal,controller)
 				'var vec = R == 1 ? O-C : C-O;\n' +
 				'var layer = thisLayer;\n' +
 				'if (layer.hasParent && parentRot) result += layer.parent.rotation.value;\n' +
-				'while (layer.hasParent)\n' +
+				'else while (layer.hasParent)\n' +
 				'{\n' +
 				'layer = layer.parent;\n' +
 				'result = result - layer.rotation;\n' +
@@ -5554,15 +5822,20 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 	var endParent = controller.layer.parent;
 	controller.layer.parent = null;
 
+	var clockwise = false;
+
 	var upperLength = DuAEF.DuJS.Math.getLength(layer1.transform.position.value,layer2.transform.position.value);
 	var lowerLength = DuAEF.DuJS.Math.getLength(layer2.transform.position.value,controller.layer.transform.position.value);
 	var endPos = controller.layer.transform.position.value - layer1.transform.position.value;
 	var middlePos = layer2.transform.position.value - layer1.transform.position.value;
-	var coef = endPos[1]/endPos[0];
-
-	var clockwise = false;
-	if (middlePos[1] < middlePos[0]*coef && endPos[0] > 0) clockwise = true;
-	if (middlePos[1] > middlePos[0]*coef && endPos[0] < 0) clockwise = true;
+	if (endPos[0] == 0 && endPos[1] > 0 && middlePos[0] > 0) clockwise = true;
+	else if (endPos[0] == 0 && endPos[1] < 0 && middlePos[0] < 0) clockwise = true;
+	else
+	{
+		var coef = endPos[1]/endPos[0];
+		if (middlePos[1] < middlePos[0]*coef && endPos[0] > 0) clockwise = true;
+		if (middlePos[1] > middlePos[0]*coef && endPos[0] < 0) clockwise = true;
+	}
 
 	//reparent
 	layer1.parent = rootParent;
