@@ -1074,9 +1074,13 @@ DuAEF.DuScriptUI.addSelector = function(container)
 
 		var index = selector.items.length;
 		selector.items.push([text,image,helpTip,imageOver]);
-		var button = DuAEF.DuScriptUI.addImageButton(selector.popup,text,image,helpTip,imageOver);
-		button.onClick = function () { selector.setCurrentIndex(index); selector.popup.hide(); };
-		button.icon.alignment = ['left','center'];
+		//add it to popup if not CS6
+		if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
+		{
+			var button = DuAEF.DuScriptUI.addImageButton(selector.popup,text,image,helpTip,imageOver);
+			button.onClick = function () { selector.setCurrentIndex(index); selector.popup.hide(); };
+			button.icon.alignment = ['left','center'];
+		}
 	}
 
 	selector.setCurrentIndex = function (index)
@@ -1118,33 +1122,33 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	//the image over
 	selector.imageOver = '';
 
-	//create popup
-	selector.popup = new Window('palette','',undefined,{borderless:true});
-	selector.popup.margins = 2;
-	selector.popup.spacing = 0;
-	DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
-	selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
-	selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
-	selector.popup.onDeactivate = function () { selector.popup.hide(); };
+	//create popup, but not on CS6 (bug)
+	if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
+	{
+		selector.popup = new Window('palette','',undefined,{borderless:true});
+		selector.popup.margins = 2;
+		selector.popup.spacing = 0;
+		DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
+		selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
+		selector.popup.onDeactivate = function () { selector.popup.hide(); };
+	}
 
 	//add default button
 	selector.items = [];
 	selector.index = -1;
 
-	//show popup on click
-	selector.menuButton.clicked = function (e)
-	{
-		var x = e.screenX-e.clientX;
-		var y = e.screenY-e.clientY;
-		selector.popup.location = [x,y];
-		selector.popup.show();
-	}
-
 	selector.clicked = function (e)
 	{
-		if (e.target === selector.menuButton) return;
+		var popup = false;
 
-		if (e.altKey)
+		if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
+		{
+			if (e.target === selector.menuButton) popup = true;
+			if (e.altKey) popup = true;
+		}
+
+		if (popup)
 		{
 			var x = e.screenX-e.clientX;
 			var y = e.screenY-e.clientY;
@@ -1189,7 +1193,6 @@ DuAEF.DuScriptUI.addSelector = function(container)
 		selector.addEventListener("mouseout",selector.mouseOut);
 	}
 	selector.addEventListener("click",selector.clicked,true);
-	selector.menuButton.addEventListener("click",selector.menuButton.clicked,false);
 
 	selector.onChange = function(){};
 
