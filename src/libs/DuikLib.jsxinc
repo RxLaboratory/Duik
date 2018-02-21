@@ -4410,6 +4410,52 @@ DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,ma
 DuAEF.Duik.Camera = {};
 
 /**
+* Rigs q 3D Camera with handy controllers
+* @param {CameraLayer} camera - The camera to rig.
+* @return {Controller[]} The camera controllers
+*/
+DuAEF.Duik.Camera.rigCamera = function(camera)
+{
+	//creer le target
+	var targetCtrl = Duik.addController(undefined,false,false,true,true);
+	var target = targetCtrl.layer;
+	target.name = camera.name + tr(" target");
+	target.threeDLayer = true;
+	target.position.setValue(camera.transform.pointOfInterest.value);
+
+	//creer la cam
+	var camCtrl = Duik.addController(undefined,false,false,true,true);
+	var cam = camCtrl.layer;
+	cam.name = camera.name + tr(" position");
+	cam.threeDLayer = true;
+	cam.position.setValue(camera.transform.position.value);
+
+	//creer celui tout en haut
+	var controleurCtrl = Duik.addController();
+	controleurCtrl.camera = true;
+	controleurCtrl.update();
+	var controleur = controleurCtrl.layer;
+	controleur.name = tr("Control_") + camera.name;
+	controleur.threeDLayer = true;
+	controleur.position.setValue(camera.transform.position.value);
+
+	cam.parent = controleur;
+	target.parent = controleur;
+
+	//definir les expressions
+	camera.position.expression = 'thisComp.layer(\'' + cam.name + '\').toWorld(thisComp.layer(\'' + cam.name + '\').transform.anchorPoint)';
+	camera.pointOfInterest.expression = 'thisComp.layer(\'' + target.name + '\').toWorld(thisComp.layer(\'' + target.name + '\').transform.anchorPoint)';
+	camera.orientation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.orientation';
+	camera.xRotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.xRotation';
+	camera.yRotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.yRotation';
+	camera.rotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.rotation';
+
+	//bloquer la camera
+	camera.locked = true;
+
+}
+
+/**
 * Creates a new 2D Multiplane Camera
 * @param {CompItem} [comp] - The containing comp. Ignored if layers are provided.
 * @param {Layers[]|LayerCollection|null|undefined} [layers=comp.selectedLayers] - The layers to automatically link to the controllers.<br />
