@@ -4412,47 +4412,47 @@ DuAEF.Duik.Camera = {};
 /**
 * Rigs q 3D Camera with handy controllers
 * @param {CameraLayer} camera - The camera to rig.
-* @return {Controller[]} The camera controllers
+* @return {Controller[]} The camera controllers [target, camera, main]
 */
 DuAEF.Duik.Camera.rigCamera = function(camera)
 {
-	//creer le target
-	var targetCtrl = Duik.addController(undefined,false,false,true,true);
-	var target = targetCtrl.layer;
-	target.name = camera.name + tr(" target");
-	target.threeDLayer = true;
-	target.position.setValue(camera.transform.pointOfInterest.value);
+	var comp = camera.containingComp;
+	//create target
+	var targetCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.POSITION);
+	var targetLayer = targetCtrl.layer;
+	targetLayer.name = "C | Target | " + camera.name;
+	targetLayer.threeDLayer = true;
+	targetLayer.position.setValue(camera.transform.pointOfInterest.value);
 
-	//creer la cam
-	var camCtrl = Duik.addController(undefined,false,false,true,true);
-	var cam = camCtrl.layer;
-	cam.name = camera.name + tr(" position");
-	cam.threeDLayer = true;
-	cam.position.setValue(camera.transform.position.value);
+	//create cam
+	var camCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.POSITION);
+	var camLayer = camCtrl.layer;
+	camLayer.name = "C | Position | " + camera.name;
+	camLayer.threeDLayer = true;
+	camLayer.position.setValue(camera.transform.position.value);
 
-	//creer celui tout en haut
-	var controleurCtrl = Duik.addController();
-	controleurCtrl.camera = true;
-	controleurCtrl.update();
-	var controleur = controleurCtrl.layer;
-	controleur.name = tr("Control_") + camera.name;
-	controleur.threeDLayer = true;
-	controleur.position.setValue(camera.transform.position.value);
+	//create main
+	var mainCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.CAMERA);
+	var mainLayer = mainCtrl.layer;
+	mainLayer.name = "C | " + camera.name;
+	mainLayer.threeDLayer = true;
+	mainLayer.position.setValue(camera.transform.position.value);
 
-	cam.parent = controleur;
-	target.parent = controleur;
+	camLayer.parent = mainLayer;
+	targetLayer.parent = mainLayer;
 
 	//definir les expressions
-	camera.position.expression = 'thisComp.layer(\'' + cam.name + '\').toWorld(thisComp.layer(\'' + cam.name + '\').transform.anchorPoint)';
-	camera.pointOfInterest.expression = 'thisComp.layer(\'' + target.name + '\').toWorld(thisComp.layer(\'' + target.name + '\').transform.anchorPoint)';
-	camera.orientation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.orientation';
-	camera.xRotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.xRotation';
-	camera.yRotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.yRotation';
-	camera.rotation.expression = 'value + thisComp.layer(\'' + cam.name + '\').transform.rotation';
+	camera.position.expression = '//Duik.CameraRig\nthisComp.layer(\'' + camLayer.name + '\').toWorld(thisComp.layer(\'' + camLayer.name + '\').transform.anchorPoint)';
+	camera.pointOfInterest.expression = '//Duik.CameraRig\nthisComp.layer(\'' + targetLayer.name + '\').toWorld(thisComp.layer(\'' + targetLayer.name + '\').transform.anchorPoint)';
+	camera.orientation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.orientation';
+	camera.xRotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.xRotation';
+	camera.yRotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.yRotation';
+	camera.rotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.rotation';
 
 	//bloquer la camera
 	camera.locked = true;
 
+	return [targetCtrl,camCtrl,mainCtrl];
 }
 
 /**
