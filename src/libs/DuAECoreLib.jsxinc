@@ -779,6 +779,27 @@ DuAEF.DuAE.Comp.addAdjustmentLayer = function(comp)
 }
 
 /**
+* Links all orphan layers in the comp to a layer
+* @param {Layer} layer - The parent layer
+* @param {bool} [includeLockedLayers=false] - True to parent layers even if they are locked
+*/
+DuAEF.DuAE.Comp.parentAllOrphans = function(layer,includeLockedLayers)
+{
+	if (typeof includeLockedLayers === "undefined") includeLockedLayers = false;
+	var comp = layer.containingComp;
+	for (var i = 1,num = comp.numLayers;i<=num;i++)
+	{
+		if (i == layer.index) continue;
+		var l = comp.layer(i);
+		if (DuAEF.DuAE.Layer.getRelation(l,layer) < 0) continue;
+		var locked = l.locked;
+		if (locked && includeLockedLayers) l.locked = false;
+		if (!locked && l.parent == null) l.parent = layer;
+		if (locked && includeLockedLayers) l.locked = locked;
+	}
+}
+
+/**
 * After Effects layer methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -933,6 +954,41 @@ DuAEF.DuAE.Layer.getChildren = function(layer)
 		if (l.parent.index == layer.index) children.push(l);
 	}
 	return children;
+}
+
+/**
+ * Checks if a layer is a descendant of another layer
+ * @param {Layer} layer1 - The first layer
+ * @param {Layer} layer2 - The second layer
+ * @return {int|null} the degree of relation. 0 if layer1 is not a relative of layer2,<br />
+ * negative if layer2 is a descendant of layer1, positive if layer2 is an ancestor.<br />
+ * null if the two layers are not in the same composition or if they are the same layer.
+ */
+DuAEF.DuAE.Layer.getRelation = function(layer1,layer2)
+{
+	var comp1 = layer1.containingComp;
+	var comp2 = layer2.containingComp;
+	if (comp1 !== comp2) return null;
+	if (layer1.index == layer2.index) return null;
+	if (layer1.parent == null && layer2.parent == null) return 0;
+	//check
+	var degree = 0;
+	var parent = layer1.parent;
+	while (parent)
+	{
+		degree++;
+		if (layer2.index == parent.index) return degree;
+		parent = parent.parent;
+	}
+	var parent = layer2.parent;
+	degree = 0;
+	while(parent)
+	{
+		degree++;
+		if (layer1.index == parent.index) return -degree;
+		parent = parent.parent;
+	}
+	return 0;
 }
 
 /**
