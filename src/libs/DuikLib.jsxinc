@@ -4410,6 +4410,18 @@ DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,ma
 DuAEF.Duik.Camera = {};
 
 /**
+ * How to import TVPaint Cameras
+ * @enum {int}
+ * @readonly
+ */
+DuAEF.Duik.Camera.TVPaintImportMethods =
+{
+	CREATE_CONTROLLER: 0,
+	PRECOMPOSE: 1,
+	USE_SELECTED: 2
+}
+
+/**
 * Rigs a 3D Camera with handy controllers
 * @param {CameraLayer} camera - The camera to rig.
 * @return {Controller[]} The camera controllers [target, camera, main]
@@ -4660,6 +4672,46 @@ DuAEF.Duik.Camera.toggleScaleZLink = function (layers)
 			layer.name = 'SZL | ' + layer.name;
 		}
 	})
+}
+
+/**
+ * Imports a TVPaint Camera
+ * @param {File} camFile - The .cpt tvpaint camera file
+ * @param {CompItem} [comp=app.project.activeItem] - The composition where to import the camera
+ * @param {DuAEF.Duik.Camera.TVPaintImportMethods} [method=DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER] - How to import the camera
+ * @param {bool} [linkLayers=false] - true to link all orphan layers to the camera
+ * @param {bool} [useAnchorPoint=false] - true to animate the anchor point instead of the position
+*/
+DuAEF.Duik.Camera.importTVPaintCamera = function (camFile,comp,method,linkLayers,useAnchorPoint)
+{
+	if (!camFile) return;
+	if (typeof method === "undefined") method = DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER;
+	if (typeof linkLayers === "undefined") linkLayers = false;
+	if (typeof useAnchorPoint === "undefined") useAnchorPoint = false;
+	if (typeof comp === "undefined") comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var cam = DuAEF.TVPaint.loadCamera(camFile);
+	if (method == DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER)
+	{
+		var camCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.CAMERA);
+		camCtrl.layer.name = "C | TVPaint Camera";
+		cam.applyToLayer(camCtrl.layer,linkLayers,useAnchorPoint);
+	}
+	else if (method == DuAEF.Duik.Camera.TVPaintImportMethods.USE_SELECTED)
+	{
+		if (comp.selectedLayers.length)
+		{
+			var layer = comp.selectedLayers[0];
+			cam.applyToLayer(layer,linkLayers,useAnchorPoint);
+		}
+	}
+	else
+	{
+		var tvpComp = app.project.items.addComp("TVPaint Camera",comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+		var camLayer = tvpComp.layers.add(comp);
+		cam.applyToLayer(camLayer,false,useAnchorPoint);
+	}
 }
 
 /**
