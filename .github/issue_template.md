@@ -2,21 +2,22 @@
 The more precise you are in your post, the more useful it will be.
 -->
 
-# Tool & Version
+# Environement
 <!-- Remove what is not concerned by this issue and keep only the tool this is about -->
+### Tool & Version
 - DuAEF
 - Duik 15.52
 - Duik 16.0.1-Alpha-5
-- Dugr
-- WuStoryboarder
+- Dugr 2.0
+- WuStoryboarder 1.0
 
-# After Effects
+### After Effects
 <!-- State the After Effects version concerned by this issue. Use "All" if it's for all ;) -->
 <!-- Also state the language of your Adobe Applications -->
 - CC2018 (15.0)
 - English
 
-# OS
+### OS
 <!-- Write your os version here. For Macintosh, please specify the version number and not (only) its name ;) -->
 - Windows 10
 - Mac OS 10.13
