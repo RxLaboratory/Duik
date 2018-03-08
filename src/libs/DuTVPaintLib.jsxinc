@@ -1,0 +1,330 @@
+/*
+DuStoryboarderLib
+Library for interchange with TVPaint
+Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/**
+* @class
+* @name TVPCamera
+* @classdesc For use with {@link DuAEF.TVPaint}.<br />
+* A TVPaint camera.<br />
+* Do not instanciate this class,<br />
+* Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
+* @property {TVPCameraPoint[]} points - the points of the animation (keyframe values)
+* @property {int} pointCout - the number of points
+* @property {TVPProfileprof} profileprof - the profileprof (animation interpolations)
+*/
+function TVPCamera ()
+{
+	this.points = [];
+	this.pointCount = 0;
+	this.profileprof = {};
+	this.profileprof.points = [];
+	this.profileprof.linear = false;
+	this.profileprof.pointCount = 0;
+}
+
+/**
+ * Applies a TVPCamera animation on an After Effects layer
+ * @memberof TVPCamera
+ * @param {Layer} layer - The layer to animate
+ * @param {bool} link - true to automatically all un-parented layers in the composition to the camera.
+ * @param {bool} useAnchorPoint - true to animate the anchor point instead of the position.
+ */
+TVPCamera.prototype.applyToLayer = function(layer,link,useAnchorPoint)
+{
+	var comp = layer.containingComp;
+	var numPoints = this.pointCount;
+
+	if (typeof link === "undefined") link = false;
+	if (typeof useAnchorPoint === "undefined") useAnchorPoint = false;
+
+	var moveProp = layer.transform.anchorPoint;
+	var rotationLayer = layer;
+
+	// Move
+	if (!useAnchorPoint)
+	{
+		moveProp = layer.transform.position;
+		rotationLayer = layer.containingComp.layers.addNull();
+		rotationLayer.name = "TVPaint Rotation & Scale";
+	}
+	var startPos = layer.transform.position.value;
+	var intialDif = [0,0];
+	for (var i = 0;i< numPoints;i++)
+	{
+		var point = this.points[i];
+		var time = (comp.duration-comp.frameDuration)/(numPoints-1)*i;
+
+		if (i == 0) initialDif = startPos - [point.x,point.y];
+		var val;
+		useAnchorPoint ? val = [point.x,point.y] : val = 2*startPos-[point.x,point.y]-initialDif;
+
+		moveProp.setValueAtTime(time,val);
+
+		if (i == 0 || i == numPoints-1)
+		{
+			moveProp.setSpatialTangentsAtKey(i+1,[0,0,0],[0,0,0]);
+		}
+		else
+		{
+			moveProp.setSpatialAutoBezierAtKey(i+1,true);
+			var inTangent = moveProp.keyInSpatialTangent(i+1);
+			var outTangent = moveProp.keyOutSpatialTangent(i+1);
+		}
+	}
+
+	//rotation & scale
+	for (var i =0; i < numPoints;i++)
+	{
+		var point = this.points[i];
+		moveProp.setRovingAtKey(i+1,true);
+		time = moveProp.keyTime(i+1);
+		rotationLayer.transform.rotation.setValueAtTime(time,point.rotation);
+		var zoom = (1+(1-point.zoom))*100;
+		rotationLayer.transform.scale.setValueAtTime(time,[zoom,zoom,zoom]);
+	}
+
+	//Morpher
+	var morpher = layer.Effects.addProperty("ADBE Slider Control");
+	morpher.name = "Camera Interpolation";
+
+	var exp = "//Duik.TVPCamera\nvalueAtTime((thisComp.layer(\"" + layer.name +"\").effect(\"Camera Interpolation\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
+	moveProp.expression = exp;
+	rotationLayer.transform.rotation.expression = exp;
+	rotationLayer.transform.scale.expression = exp;
+
+	//add morpher keys
+	var numProfPoints = this.profileprof.pointCount;
+	for (var i = 0;i<numProfPoints;i++)
+	{
+		var point = this.profileprof.points[i];
+		morpher(1).setValueAtTime((comp.duration-comp.frameDuration)*point.u,(comp.duration-comp.frameDuration)/comp.frameDuration*point.v);
+	}
+	//bezier
+	if (!this.profileprof.linear)
+	{
+		for (var i = 1;i<= morpher(1).numKeys;i++)
+		{
+			morpher(1).setInterpolationTypeAtKey(i,KeyframeInterpolationType.BEZIER);
+			if (i != 1 && i != morpher(1).numKeys)
+			{
+				morpher(1).setTemporalContinuousAtKey(i, true);
+				morpher(1).setTemporalAutoBezierAtKey(i, true);
+			}
+			else
+			{
+				var easeIn = new KeyframeEase(0,100/3);
+				morpher(1).setTemporalEaseAtKey(i,[easeIn]);
+			}
+		}
+	}
+
+	if (!useAnchorPoint) layer.parent = rotationLayer;
+
+	if (link) DuAEF.DuAE.Comp.parentAllOrphans(layer);
+}
+
+/**
+* @class
+* @name TVPCameraPoint
+* @classdesc For use with {@link DuAEF.TVPaint}.<br />
+* A TVPaint camera point (keyframe value).<br />
+* This is not a real class, and cannot be instanciated.<br />
+* Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
+* @property {float} x - the X coordinate
+* @property {float} y - the y coordinate
+* @property {float} zoom - the zoom value
+* @property {float} rotation - the rotation angle
+*/
+
+/**
+* @class
+* @name TVPProfileprof
+* @classdesc For use with {@link DuAEF.TVPaint}.<br />
+* A TVPaint camera profileprof (animation interpolation).<br />
+* This is not a real class, and cannot be instanciated.<br />
+* Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
+* @property {TVPProfileprofPoint[]} points - the interpolation tangents for each TVPCameraPoint (keyframe)
+* @property {bool} linear - the interpolation (bezier when false)
+* @property {int} pointCount - the number of points
+*/
+
+/**
+* @class
+* @name TVPProfileprofPoint
+* @classdesc For use with {@link DuAEF.TVPaint}.<br />
+* A TVPaint camera profileprof point (keyframe tangents).<br />
+* This is not a real class, and cannot be instanciated.<br />
+* Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
+* @property {float} u - the first coordinate
+* @property {float} v - the second coordinate
+*/
+
+/**
+* TVPaint interchange tools<br />
+* Dependencies: JSON.jsxinc; DuAEFLib.jsxinc; DuJSLib.jsxinc
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.TVPaint = {};
+
+/**
+ * Loads a TVPaint Camera
+ * @memberof DuAEF.TVPaint
+ * @param {File} camFile - The .cpt TVPaint camera file
+ * @return {TVPCamera} The TVPaint camera
+ */
+DuAEF.TVPaint.loadCamera = function(camFile)
+{
+	var camString = "";
+	if (camFile.open("r"))
+	{
+		camString = camFile.read();
+		camFile.close();
+	}
+	if (camString == "") return;
+
+	return DuAEF.TVPaint.parseCam(camString);
+}
+
+/**
+ * Parses a TVPaint Camera from its string representation in a .cpt file
+ * @memberof DuAEF.TVPaint
+ * @param {String} camString - The camera as a .cpt string
+ * @return {TVPCamera} The TVPaint camera
+ */
+DuAEF.TVPaint.parseCam = function(camString)
+{
+	var camera = new TVPCamera();
+
+	function createTVPaintCameraPoint()
+	{
+		var point = {};
+		point.x = 0.0;
+		point.y = 0.0;
+		point.zoom = 1.0;
+		point.rotation = 0.0;
+		return point;
+	}
+
+	var lines = camString.split("\n");
+
+	var reXPoint = /point\.(\d+)\.x=(-?\d+\.?\d*)/i;
+	var reYPoint = /point\.(\d+)\.y=(-?\d+\.?\d*)/i;
+	var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
+	var reRPoint = /point\.(\d+)\.rotation=(-?\d+\.?\d*)/i;
+	var reLinear = /profileprof_linear=([01])/i;
+	var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
+	var rePointCout = /pointcount=(\d+)/i;
+	var reProfPointCount = /profileprof_numpoint=(\d+)/i;
+	for (var i=0;i<lines.length;i++ )
+	{
+		var line = lines[i];
+		var count = line.match(rePointCout);
+		if (count != null)
+		{
+			camera.pointCount = parseInt(count[1]);
+		}
+		var xPoint = line.match(reXPoint);
+		if (xPoint != null)
+		{
+			var index = parseInt(xPoint[1]);
+			var value = parseFloat(xPoint[2]);
+			var point = camera.points[index];
+			if (point === undefined) point = createTVPaintCameraPoint();
+			point.x = value ;
+			camera.points[index] = point;
+		}
+		var yPoint = line.match(reYPoint);
+		if (yPoint != null)
+		{
+			var index = parseInt(yPoint[1]);
+			var value = parseFloat(yPoint[2]);
+			var point = camera.points[index];
+			if (point == undefined) point = createTVPaintCameraPoint();
+			point.y = value ;
+			camera.points[index] = point;
+		}
+		var zPoint = line.match(reZPoint);
+		if (zPoint != null)
+		{
+			var index = parseInt(zPoint[1]);
+			var value = parseFloat(zPoint[2]);
+			var point = camera.points[index];
+			if (point == undefined) point = createTVPaintCameraPoint();
+			point.zoom = value ;
+			camera.points[index] = point;
+		}
+		var rPoint = line.match(reRPoint);
+		if (rPoint != null)
+		{
+			var index = parseInt(rPoint[1]);
+			var value = parseFloat(rPoint[2]);
+			var point = camera.points[index];
+			if (point == undefined) point = createTVPaintCameraPoint();
+			point.rotation = value ;
+			camera.points[index] = point;
+		}
+		var linear = line.match(reLinear);
+		if (linear != null)
+		{
+			var lin = parseInt(linear[1]);
+			camera.profileprof.linear = (lin == 1);
+		}
+		var profPoint = line.match(reProfPoint);
+		if (profPoint != null)
+		{
+			var index = parseInt(profPoint[1]);
+			var u = parseFloat(profPoint[2]);
+			var v = parseFloat(profPoint[3]);
+			var point = {};
+			point.u = u;
+			point.v = v;
+			camera.profileprof.points[index] = point;
+		}
+		var profCount = line.match(reProfPointCount);
+		if (profCount != null)
+		{
+			camera.profileprof.pointCount = parseInt(profCount[1]);
+		}
+	}
+
+	return camera;
+}
