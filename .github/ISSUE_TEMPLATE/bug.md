@@ -26,6 +26,13 @@ The more precise you are in your post, the more useful it will be.
 # What's the issue?
 <!-- Please describe precisely here what is the bug you've found. -->
 
+### Error Message
+<!-- Please write here the error message which is displayed, if any... -->
+
+### Error Location
+<!-- If the error contains some info about the location... -->
+- File:
+- Line:
 
 ### Steps to reproduce
 <!-- Explain exactly here what you're doing -->
