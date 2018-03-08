@@ -1,1 +1,39 @@
-### Issue
+<!-- Thanks for posting an issue! Your feedback, suggestions, bug reports... are very welcome!
+The more precise you are in your post, the more useful it will be.
+-->
+
+# Tool & Version
+<!-- Remove what is not concerned by this issue and keep only the tool this is about -->
+- DuAEF
+- Duik 15.52
+- Duik 16.0.1-Alpha-5
+- Dugr
+- WuStoryboarder
+
+# After Effects
+<!-- State the After Effects version concerned by this issue. Use "All" if it's for all ;) -->
+<!-- Also state the language of your Adobe Applications -->
+- CC2018 (15.0)
+- English
+
+# OS
+<!-- Write your os version here. For Macintosh, please specify the version number and not (only) its name ;) -->
+- Windows 10
+- Mac OS 10.13
+
+# What's the issue?
+<!-- Please describe precisely here what is the bug you've found, the feature request your making... -->
+- Bug Report
+- Feature Request
+
+### Steps to reproduce
+<!-- Explain exactly here what you're doing -->
+1. 
+2. 
+3. 
+
+### Expected behaviour
+<!-- Tell us what you expect the software to do -->
+
+### Actual behaviour
+<!-- Telle us what it's actually doing instead of what you expect -->
