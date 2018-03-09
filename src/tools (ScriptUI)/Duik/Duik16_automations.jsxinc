@@ -15,12 +15,15 @@ function initAutomationsUI()
 
 function randomCheckSelection()
 {
-	if (!ui_randomLayerTimesButton.checked && !ui_randomLayerIndicesButton.checked && !ui_randomLayerInButton.checked && !ui_randomLayerOutButton.checked && !ui_randomKeyTimesButton.checked && !ui_randomKeyValuesButton.checked)
+	if (!ui_randomLayerTimesButton.checked && !ui_randomLayerIndicesButton.checked && !ui_randomLayerInButton.checked && !ui_randomLayerOutButton.checked)
 	{
-		ui_randomPropertiesButton.setChecked(true);
-		return true;
+		ui_randomLayerTimesButton.setChecked(true);
+		ui_randomKeyValuesButton.setChecked(true);
 	}
-	else return false;
+	if (!ui_randomKeyTimesButton.checked && !ui_randomKeyValuesButton.checked)
+	{
+		ui_randomKeyValuesButton.setChecked(true);
+	}
 }
 
 //=========== EVENTS ============
@@ -84,52 +87,34 @@ function ui_wheelButton_clicked()
 	app.endUndoGroup();
 }
 
-function ui_randomPropertiesButton_clicked()
+function ui_randomSelector_changed()
 {
-	ui_randomPropertiesButton.setChecked(true);
-	ui_randomLayerTimesButton.setChecked(false);
-	ui_randomLayerIndicesButton.setChecked(false);
-	ui_randomLayerInButton.setChecked(false);
-	ui_randomLayerOutButton.setChecked(false);
-	ui_randomKeyTimesButton.setChecked(false);
-	ui_randomKeyValuesButton.setChecked(false);
+	var index = ui_randomSelector.index;
+	ui_randomLayersGroup.visible = index == 1;
+	ui_randomKeysGroup.visible = index == 2;
 }
 
 function ui_randomLayerTimesButton_clicked()
 {
-	if (randomCheckSelection()) return;
-	ui_randomPropertiesButton.setChecked(false);
-	ui_randomKeyTimesButton.setChecked(false);
-	ui_randomKeyValuesButton.setChecked(false);
+	randomCheckSelection();
 }
 
 function ui_randomKeyTimesButton_clicked()
 {
-	if (randomCheckSelection()) return;
-	ui_randomPropertiesButton.setChecked(false);
-	ui_randomLayerTimesButton.setChecked(false);
-	ui_randomLayerIndicesButton.setChecked(false);
-	ui_randomLayerInButton.setChecked(false);
-	ui_randomLayerOutButton.setChecked(false);
-}
-
-function ui_randomOffsetButton_clicked()
-{
-	if (ui_randomOffsetButton.checked) ui_randomOffsetButton.label.text = "Offset values";
-	else ui_randomOffsetButton.label.text = "Absolute values";
+	randomCheckSelection();
 }
 
 function ui_randomValidButton_clicked()
 {
-	var fromCurrentVal = ui_randomOffsetButton.checked;
-	var xMin = ui_randomXMinSlider.value;
-	var xMax = ui_randomXMaxSlider.value;
-	var yMin = ui_randomYMinSlider.value;
-	var yMax = ui_randomYMaxSlider.value;
-	var zMin = ui_randomZMinSlider.value;
-	var zMax = ui_randomZMaxSlider.value;
+	var fromCurrentVal = ui_randomOffsetSelector.index == 0;
+	var xMin = parseFloat(ui_randomXMinSlider.text);
+	var xMax = parseFloat(ui_randomXMaxSlider.text);
+	var yMin = parseFloat(ui_randomYMinSlider.text);
+	var yMax = parseFloat(ui_randomYMaxSlider.text);
+	var zMin = parseFloat(ui_randomZMinSlider.text);
+	var zMax = parseFloat(ui_randomZMaxSlider.text);
 
-	if (ui_randomPropertiesButton.checked)
+	if (ui_randomSelector.index == 0)
 	{
 		var props = DuAEF.DuAE.Comp.getSelectedProps();
 		if (props.length == 0) return;
@@ -140,75 +125,81 @@ function ui_randomValidButton_clicked()
 
 		app.endUndoGroup();
 	}
-	if (ui_randomLayerTimesButton.checked)
+	if (ui_randomSelector.index == 1)
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-		var layers = comp.selectedLayers;
+		if (ui_randomLayerTimesButton.checked)
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+			var layers = comp.selectedLayers;
 
-		app.beginUndoGroup('Duik | ' + "Randomize layer times");
+			app.beginUndoGroup('Duik | ' + "Randomize layer times");
 
-		DuAEF.Duik.Automation.Randomize.startTimes(layers,fromCurrentVal,xMin,xMax);
+			DuAEF.Duik.Automation.Randomize.startTimes(layers,fromCurrentVal,xMin,xMax);
 
-		app.endUndoGroup();
+			app.endUndoGroup();
+		}
+		if (ui_randomLayerIndicesButton.checked)
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+			var layers = comp.selectedLayers;
+
+			app.beginUndoGroup('Duik | ' + "Randomize layer indices");
+
+			DuAEF.Duik.Automation.Randomize.indices(layers,fromCurrentVal,xMin,xMax);
+
+			app.endUndoGroup();
+		}
+		if (ui_randomLayerInButton.checked)
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+			var layers = comp.selectedLayers;
+
+			app.beginUndoGroup('Duik | ' + "Randomize layer in points");
+
+			DuAEF.Duik.Automation.Randomize.inPoints(layers,fromCurrentVal,xMin,xMax);
+
+			app.endUndoGroup();
+		}
+		if (ui_randomLayerOutButton.checked)
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+			var layers = comp.selectedLayers;
+
+			app.beginUndoGroup('Duik | ' + "Randomize layer out points");
+
+			DuAEF.Duik.Automation.Randomize.outPoints(layers,fromCurrentVal,xMin,xMax);
+
+			app.endUndoGroup();
+		}
 	}
-	if (ui_randomLayerIndicesButton.checked)
+	else
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-		var layers = comp.selectedLayers;
+		if (ui_randomKeyTimesButton.checked)
+		{
+			var props = DuAEF.DuAE.Comp.getSelectedProps();
+			if (props.length == 0) return;
 
-		app.beginUndoGroup('Duik | ' + "Randomize layer indices");
+			app.beginUndoGroup('Duik | ' + "Randomize selected key times");
 
-		DuAEF.Duik.Automation.Randomize.indices(layers,fromCurrentVal,xMin,xMax);
+			DuAEF.Duik.Automation.Randomize.selectedKeyTimes(props,fromCurrentVal,xMin,xMax);
 
-		app.endUndoGroup();
-	}
-	if (ui_randomLayerInButton.checked)
-	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-		var layers = comp.selectedLayers;
+			app.endUndoGroup();
+		}
+		if (ui_randomKeyValuesButton.checked)
+		{
+			var props = DuAEF.DuAE.Comp.getSelectedProps();
+			if (props.length == 0) return;
 
-		app.beginUndoGroup('Duik | ' + "Randomize layer in points");
+			app.beginUndoGroup('Duik | ' + "Randomize selected key values");
 
-		DuAEF.Duik.Automation.Randomize.inPoints(layers,fromCurrentVal,xMin,xMax);
+			DuAEF.Duik.Automation.Randomize.selectedKeys(props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax);
 
-		app.endUndoGroup();
-	}
-	if (ui_randomLayerOutButton.checked)
-	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-		var layers = comp.selectedLayers;
-
-		app.beginUndoGroup('Duik | ' + "Randomize layer out points");
-
-		DuAEF.Duik.Automation.Randomize.outPoints(layers,fromCurrentVal,xMin,xMax);
-
-		app.endUndoGroup();
-	}
-	if (ui_randomKeyTimesButton.checked)
-	{
-		var props = DuAEF.DuAE.Comp.getSelectedProps();
-		if (props.length == 0) return;
-
-		app.beginUndoGroup('Duik | ' + "Randomize selected key times");
-
-		DuAEF.Duik.Automation.Randomize.selectedKeyTimes(props,fromCurrentVal,xMin,xMax);
-
-		app.endUndoGroup();
-	}
-	if (ui_randomKeyValuesButton.checked)
-	{
-		var props = DuAEF.DuAE.Comp.getSelectedProps();
-		if (props.length == 0) return;
-
-		app.beginUndoGroup('Duik | ' + "Randomize selected key values");
-
-		DuAEF.Duik.Automation.Randomize.selectedKeys(props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax);
-
-		app.endUndoGroup();
+			app.endUndoGroup();
+		}
 	}
 }
 
@@ -226,7 +217,7 @@ function ui_effectorButton_clicked()
 
 	var layers = DuAEF.DuAE.Comp.unselectLayers();
 	if (layers.length == 0) return;
-	
+
 	var it = new Iterator(layers);
 	it.do(function (layer)
 	{
@@ -311,6 +302,7 @@ function ui_paintRigButton_clicked()
 
 	app.endUndoGroup();
 }
+
 //========== UI =============
 var ui_automationsMainGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
 
@@ -361,13 +353,14 @@ var ui_wiggleValidButton = DuAEF.DuScriptUI.addImageButton(ui_wiggleValidGroup,'
 //Random
 var ui_randomOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'column');
 if (!settings.data.expert) DuAEF.DuScriptUI.addSeparator(ui_randomOptionsGroup,'Random');
-var ui_randomSelectionGroup = DuAEF.DuScriptUI.addGroup(ui_randomOptionsGroup,'column');
-ui_randomSelectionGroup.alignment = ['center','top'];
-ui_randomSelectionGroup.alignChildren = ['left','top'];
-var ui_randomPropertiesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomSelectionGroup,"Selected values",DuAEF.DuBinary.toFile(w18_randomize_l),"Randomizes the selected values (adding a keyframe if necessary)",DuAEF.DuBinary.toFile(w18_randomize_r));
-ui_randomPropertiesButton.setChecked(true);
-var sep = DuAEF.DuScriptUI.addSeparator(ui_randomSelectionGroup,"Layers");
+var ui_randomSelector = DuAEF.DuScriptUI.addSelector(ui_randomOptionsGroup);
+ui_randomSelector.addButton("Current values",DuAEF.DuBinary.toFile(w32_randomize_l),"Randomizes the selected values (adding a keyframe if necessary)",DuAEF.DuBinary.toFile(w32_randomize_r));
+ui_randomSelector.addButton("Layers",DuAEF.DuBinary.toFile(w32_aelayers_l),"Randomizes layer properties",DuAEF.DuBinary.toFile(w32_aelayers_r));
+ui_randomSelector.addButton("Keyframes",DuAEF.DuBinary.toFile(w32_klin_l),"Randomizes keyframe properties",DuAEF.DuBinary.toFile(w32_klin_l));
+
+var ui_randomSelectionGroup = DuAEF.DuScriptUI.addGroup(ui_randomOptionsGroup,'stack');
 var ui_randomLayersGroup = DuAEF.DuScriptUI.addGroup(ui_randomSelectionGroup,'row');
+ui_randomLayersGroup.alignment = ['center','top'];
 var ui_randomLayersLeftGroup = DuAEF.DuScriptUI.addGroup(ui_randomLayersGroup,'column');
 ui_randomLayersLeftGroup.alignChildren = ['left','top'];
 var ui_randomLayersRightGroup = DuAEF.DuScriptUI.addGroup(ui_randomLayersGroup,'column');
@@ -376,36 +369,45 @@ var ui_randomLayerTimesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomLayer
 var ui_randomLayerIndicesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomLayersRightGroup,"Indices",DuAEF.DuBinary.toFile(w18_randomlayerindex_l),"Randomizes the indices of the layers",DuAEF.DuBinary.toFile(w18_randomlayerindex_r));
 var ui_randomLayerInButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomLayersLeftGroup,"In points",DuAEF.DuBinary.toFile(w18_randomlayerin_l),"Randomizes the in points of the layers",DuAEF.DuBinary.toFile(w18_randomlayerin_r));
 var ui_randomLayerOutButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomLayersRightGroup,"Out points",DuAEF.DuBinary.toFile(w18_randomlayerout_l),"Randomizes the out points of the layers",DuAEF.DuBinary.toFile(w18_randomlayerout_r));
-DuAEF.DuScriptUI.addSeparator(ui_randomSelectionGroup,"Keyframes");
+
 var ui_randomKeysGroup = DuAEF.DuScriptUI.addGroup(ui_randomSelectionGroup,'row');
+ui_randomKeysGroup.alignment = ['center','top'];
 var ui_randomKeyTimesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomKeysGroup,"Times",DuAEF.DuBinary.toFile(w18_randomkeytime_l),"Randomizes the times of the keyframes (moving them in time)",DuAEF.DuBinary.toFile(w18_randomkeytime_r));
 var ui_randomKeyValuesButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomKeysGroup,"Values",DuAEF.DuBinary.toFile(w18_randomize_l),"Randomizes the values of the keyframes",DuAEF.DuBinary.toFile(w18_randomize_r));
-DuAEF.DuScriptUI.addSeparator(ui_randomOptionsGroup,"X|Y|Z Min and max");
+
+DuAEF.DuScriptUI.addSeparator(ui_randomOptionsGroup,"Min and max");
 var ui_randomMinMaxGroup = DuAEF.DuScriptUI.addGroup(ui_randomOptionsGroup,'column');
-ui_randomMinMaxGroup.alignment = ['fill','top'];
-ui_randomMinMaxGroup.alignChildren = ['fill','top'];
 var ui_randomXGroup = DuAEF.DuScriptUI.addGroup(ui_randomMinMaxGroup);
-var ui_randomXMinSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomXGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
-var ui_randomXMaxSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomXGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
+ui_randomXGroup.add('statictext',undefined,"X ").alignment = ['fill','center'];
+var ui_randomXMinSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomXGroup,'','','','0.0');
+ui_randomXMinSlider.alignment = ['fill','top'];
+var ui_randomXMaxSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomXGroup,'','','','0.0');
+ui_randomXMaxSlider.alignment = ['fill','top'];
 var ui_randomYGroup = DuAEF.DuScriptUI.addGroup(ui_randomMinMaxGroup);
-var ui_randomYMinSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomYGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
-var ui_randomYMaxSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomYGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
+ui_randomYGroup.add('statictext',undefined,"Y ").alignment = ['fill','center'];
+var ui_randomYMinSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomYGroup,'','','','0.0');
+ui_randomYMinSlider.alignment = ['fill','top'];
+var ui_randomYMaxSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomYGroup,'','','','0.0');
+ui_randomYMaxSlider.alignment = ['fill','top'];
 var ui_randomZGroup = DuAEF.DuScriptUI.addGroup(ui_randomMinMaxGroup);
-var ui_randomZMinSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomZGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
-var ui_randomZMaxSlider = DuAEF.DuScriptUI.addNiceSlider(ui_randomZGroup,0,-1000,1000,settings.data.expert ? 'row' : 'column');
-var ui_randomOffsetButton = DuAEF.DuScriptUI.addImageCheckBox(ui_randomMinMaxGroup,"Offset values",DuAEF.DuBinary.toFile(w18_absolute_l),"Randomizes from the current values or with absolute values",DuAEF.DuBinary.toFile(w18_moveaway_r));
-ui_randomOffsetButton.label.minimumSize.width = 100;
-ui_randomOffsetButton.setChecked(true);
+ui_randomZGroup.add('statictext',undefined,"Z ").alignment = ['fill','center'];
+var ui_randomZMinSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomZGroup,'','','','0.0');
+ui_randomZMinSlider.alignment = ['fill','top'];
+var ui_randomZMaxSlider = DuAEF.DuScriptUI.addNiceEditText(ui_randomZGroup,'','','','0.0');
+ui_randomZMaxSlider.alignment = ['fill','top'];
+var ui_randomOffsetSelector = DuAEF.DuScriptUI.addSelector(ui_randomMinMaxGroup);
+ui_randomOffsetSelector.addButton("Offset current values",DuAEF.DuBinary.toFile(w25_moveaway_l),"Randomizes from the current values",DuAEF.DuBinary.toFile(w25_moveaway_r));
+ui_randomOffsetSelector.addButton("Absolute values",DuAEF.DuBinary.toFile(w25_absolute_l),"Randomizes with absolute values",DuAEF.DuBinary.toFile(w25_absolute_r));
 var ui_randomValidGroup = DuAEF.DuScriptUI.addGroup(ui_randomOptionsGroup);
-ui_wiggleValidGroup.alignment = ['fill','top'];
-ui_randomValidGroup.alignment = ['center','top'];
-ui_randomValidGroup.alignChildren = ['left','top'];
 var ui_randomCancelButton = DuAEF.DuScriptUI.addImageButton(ui_randomValidGroup,'Cancel',DuAEF.DuBinary.toFile(w25_cancel_m),"Back to automations",DuAEF.DuBinary.toFile(w25_cancel_r));
 var ui_randomValidButton = DuAEF.DuScriptUI.addImageButton(ui_randomValidGroup,'Randomize',DuAEF.DuBinary.toFile(w25_check_g),"Randomize!",DuAEF.DuBinary.toFile(w25_check_r));
 
 
 //=========== INIT ==============
-setCurrentAutomationPanel();
+setCurrentAutomationPanel(0);
+ui_randomOffsetSelector.setCurrentIndex(0);
+ui_randomSelector.setCurrentIndex(0);
+ui_randomSelector_changed();
 
 //====== CONNECT EVENTS ===========
 
@@ -420,10 +422,9 @@ ui_swingButton.onClick = ui_swingButton_clicked;
 ui_wheelButton.onClick = ui_wheelButton_clicked;
 
 ui_randomButton.onClick = function(){setCurrentAutomationPanel(2);};
-ui_randomPropertiesButton.onClick = ui_randomPropertiesButton_clicked;
+ui_randomSelector.onChange = ui_randomSelector_changed;
 ui_randomLayerTimesButton.onClick = ui_randomLayerIndicesButton.onClick = ui_randomLayerInButton.onClick = ui_randomLayerOutButton.onClick = ui_randomLayerTimesButton_clicked;
 ui_randomKeyTimesButton.onClick = ui_randomKeyValuesButton.onClick = ui_randomKeyTimesButton_clicked;
-ui_randomOffsetButton.onClick = ui_randomOffsetButton_clicked;
 ui_randomCancelButton.onClick = function(){setCurrentAutomationPanel(0);};
 ui_randomValidButton.onClick = ui_randomValidButton_clicked;
 
