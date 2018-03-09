@@ -554,7 +554,7 @@
 		ui_helpButton.setChecked(ui_helpGroup.visible);
 
 		//save settings
-		settings.data.currentPanel = panel;
+		if (panel != 1 && panel != 0) settings.data.currentPanel = panel;
 		settings.save();
 	}
 
