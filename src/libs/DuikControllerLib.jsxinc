@@ -136,6 +136,14 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	var ctrl = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
+	if (layer)
+	{
+		//center the controller and name it after the layer
+		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
+		var newName = DuAEF.Duik.generateName('C',layer.name);
+		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+	}
+
 	var effect = null;
 
 	if (type != DuAEF.Duik.Controller.Types.SQUARE && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
@@ -650,33 +658,49 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
 		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
 
-		iconGroup.transform.position.expression = '[value[0],0];';
 		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
-		//Set initial keyframe
-		iconGroup.transform.position.setValueAtTime(0,[0,0]);
+
+		ctrl.position.expression = '[value[0],0];';
 
 		//create anchor
-		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		var ctrlBG = comp.layers.addShape();
+		ctrl.parent = ctrlBG;
+		ctrlBG.moveAfter(ctrl);
+		DuAEF.Duik.setDuikMarker(ctrlBG,"Controller Background",DuAEF.Duik.LayerTypes.CONTROLLER);
+		ctrlBG.selected = false;
+		ctrl.selected = true;
+
+		//name
+		if (!layer)
+		{
+			ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Slider',comp);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName('CBG | Slider',comp);
+		}
+		else
+		{
+			var newName = DuAEF.Duik.generateName('CBG',ctrl.name);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+		}
+
+		var anchorGroup = ctrlBG("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
-		rectangle("ADBE Vector Rect Size").expression = 'c = effect("Slider")(3)/100*20;\nx = effect("Slider")(8)+c;\n[x,c]';
-		rectangle("ADBE Vector Rect Roundness").expression = 'effect("Slider")(3)/100*10';
+		rectangle("ADBE Vector Rect Size").expression = 'var fx = thisComp.layer("' + ctrl.name + '").effect("Slider");\nc = fx(3).value/100*20;\nx = fx(8).value+c;\n[x,c]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(3)/100*10';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'effect("Slider")(7)';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(7).value';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'x = content("Icon").transform.position[0];\n' +
-						'c = effect("Slider")(3)/100*20;\n' +
-						'h = effect("Slider")(8)+c;\n' +
+		effect(18).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+						'x = ctrl.transform.position[0];\n' +
+						'c = ctrl.effect("Slider")(3).value/100*20;\n' +
+						'h = ctrl.effect("Slider")(8).value+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
 
-
-
-		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Slider',comp);
 	}
 	else if (type == DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)
 	{
@@ -686,36 +710,55 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
 
 		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
-		//Set initial keyframe
-		iconGroup.transform.position.setValueAtTime(0,[0,0]);
 
 		//create anchor
-		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		var ctrlBG = comp.layers.addShape();
+		ctrl.parent = ctrlBG;
+		ctrlBG.moveAfter(ctrl);
+		DuAEF.Duik.setDuikMarker(ctrlBG,"Controller Background",DuAEF.Duik.LayerTypes.CONTROLLER);
+		ctrlBG.selected = false;
+		ctrl.selected = true;
+
+		//name
+		if (!layer)
+		{
+			ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | 2D Slider',comp);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName('CBG | 2D Slider',comp);
+		}
+		else
+		{
+			var newName = DuAEF.Duik.generateName('CBG',ctrl.name);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+		}
+
+		//create anchor
+		var anchorGroup = ctrlBG("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
-		rectangle("ADBE Vector Rect Size").expression = 'c = effect("Slider")(3)/100*20;\nx = effect("Slider")(8)+c;\n[x,x]';
-		rectangle("ADBE Vector Rect Roundness").expression = 'effect("Slider")(3)/100*10';
+		rectangle("ADBE Vector Rect Size").expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\nc = ctrl.effect("Slider")(3)/100*20;\nx = ctrl.effect("Slider")(8)+c;\n[x,x]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(3)/100*10';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'effect("Slider")(7)';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(7)';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'x = content("Icon").transform.position[0];\n' +
-						'c = effect("Slider")(3)/100*20;\n' +
-						'h = effect("Slider")(8)+c;\n' +
+		effect(18).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+						'x = ctrl.transform.position[0];\n' +
+						'c = ctrl.effect("Slider")(3)/100*20;\n' +
+						'h = ctrl.effect("Slider")(8)+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
-		effect(19).expression = 'x = content("Icon").transform.position[1];\n' +
-						'c = effect("Slider")(3)/100*20;\n' +
-						'h = effect("Slider")(8)+c;\n' +
+		effect(19).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+						'x = ctrl.transform.position[1];\n' +
+						'c = ctrl.effect("Slider")(3)/100*20;\n' +
+						'h = ctrl.effect("Slider")(8)+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
 		effect(20).expression = '[effect("Slider")(18),effect("Slider")(19)]';
 
-		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Slider',comp);
 	}
 	else if (type == DuAEF.Duik.Controller.Types.ANGLE)
 	{
@@ -733,34 +776,41 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 
 		iconGroup.transform.opacity.expression = 'effect("Angle")(4)';
 		iconGroup.transform.scale.expression = '[effect("Angle")(3)*2,effect("Angle")(3)*2]';
-		iconGroup.transform.rotation.setValueAtTime(0,0);
 
 		//create anchor
-		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		var ctrlBG = comp.layers.addShape();
+		ctrl.parent = ctrlBG;
+		ctrlBG.moveAfter(ctrl);
+		DuAEF.Duik.setDuikMarker(ctrlBG,"Controller Background",DuAEF.Duik.LayerTypes.CONTROLLER);
+		ctrlBG.selected = false;
+		ctrl.selected = true;
+
+		//name
+		if (!layer)
+		{
+			ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Angle',comp);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName('CBG | Angle',comp);
+		}
+		else
+		{
+			var newName = DuAEF.Duik.generateName('CBG',ctrl.name);
+			ctrlBG.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+		}
+
+		//create anchor
+		var anchorGroup = ctrlBG("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var circle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
-		circle("ADBE Vector Ellipse Size").expression = 'x = effect("Angle")(8);\n[x,x]';
+		circle("ADBE Vector Ellipse Size").expression = 'x = thisComp.layer("' + ctrl.name + '").effect("Angle")(8);\n[x,x]';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'effect("Angle")(7)';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Angle")(7)';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'content("Icon").transform.rotation';
-
-		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Angle',comp);
+		effect(18).expression = 'thisComp.layer("' + ctrl.name + '").transform.rotation';
 	}
 
-	if (layer)
-	{
-		//center the controller and name it after the layer
-		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
-		var newName = layer.name;
-		if (newName.indexOf(' | ') >= 0) newName = newName.substring(newName.indexOf(' | ') + 3);
-		if (newName.indexOf('_') == 1 || newName.indexOf(' ') == 1) newName = newName.substring(2);
-		newName = 'C | ' + newName;
-		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
-	}
 
 	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
