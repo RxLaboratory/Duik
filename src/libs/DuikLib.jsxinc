@@ -378,23 +378,41 @@ DuAEF.Duik.setDuikMarker = function(layer,displayName,layerType)
 }
 
 //undocumented low-level function used by Duik
+DuAEF.Duik.getDuikMarker = function(layer)
+{
+	var markerProp = layer.property('ADBE Marker');
+	for (var i = 1, num = markerProp.numKeys; i <= num; i++)
+	{
+		var marker = markerProp.keyValue(i);
+		var params = marker.getParameters();
+		if (params.duik) return marker;
+	}
+	return null;
+}
+
+//undocumented low-level function used by Duik
 DuAEF.Duik.getDuikMarkerParameters = function(layer)
 {
-	var marker = layer.property('ADBE Marker').valueAtTime(0,true);
-	var params = marker.getParameters();
-	if (params.duik) return params;
-	return null;
+	var marker = DuAEF.Duik.getDuikMarker(layer);
+	if (!marker) return null;
+	return marker.getParameters();
 }
 
 //undocumented low-level function used by Duik
 DuAEF.Duik.setDuikMarkerParameter = function(layer,name,key)
 {
-	var marker = layer.property('ADBE Marker').valueAtTime(0,true);
-	var params = marker.getParameters();
-	if (!params) params = {};
-	params[name] = key;
-	marker.setParameters(params);
-	layer.property('ADBE Marker').setValueAtTime(0,marker);
+	var markerProp = layer.property('ADBE Marker');
+	for (var i = 1, num = markerProp.numKeys; i <= num; i++)
+	{
+		var marker = markerProp.keyValue(i);
+		var params = marker.getParameters();
+		if (params.duik)
+		{
+			params[name] = key;
+			marker.setParameters(params);
+			layer.property('ADBE Marker').setValueAtTime(markerProp.keyTime(i),marker);
+		}
+	}
 }
 
 /**
