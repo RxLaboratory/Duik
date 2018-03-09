@@ -1,0 +1,646 @@
+﻿/**
+* Constructs a Controller
+* @class Controller
+* @classdesc A Controller.
+* @param {ShapeLayer} layer - The layer of the controller
+* @property {ShapeLayer} layer - The Shape layer of the controller
+* @property {DuAEF.Duik.Controller.Types} type - The type of the controller
+* @property {PropertyGroup} effect - The effect on the layer
+*/
+function Controller(layer)
+{
+	this.layer = layer;
+	var effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER);
+	if (!effect) effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER);
+	if (!effect) effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE);
+	if (!effect) effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER);
+	if (effect) this.effect = effect;
+	else
+	{
+		this.effect = {};
+		this.effect.name = '';
+	}
+}
+
+/**
+* Sets a new display size for the controller
+* @memberof Controller
+* @param {int} [size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Controller.sizeHint
+*/
+Controller.prototype.setSize = function (size)
+{
+	if (this.layer == null) return;
+	if (size == undefined)
+	{
+		var comp = this.layer.containingComp;
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.Controller.sizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+		else if (DuAEF.Duik.Controller.sizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+		else if (DuAEF.Duik.Controller.sizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+		else if (DuAEF.Duik.Controller.sizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.Controller.size;
+	}
+	var index1 = 4;
+	var index2 = 10;
+	if (this.effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER || this.effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER || this.effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE)
+	{
+		index1 = 3;
+		index2 = 8;
+	}
+
+	this.effect(index1).setValue(size);
+	this.effect(index2).setValue(size);
+}
+
+/**
+* Sets a new display color for the controller
+* @memberof Controller
+* @param {float[]} color - The new color
+*/
+Controller.prototype.setColor = function (color)
+{
+	if (color == undefined) color = DuAEF.Duik.Controller.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM) color = DuAEF.DuJS.Color.random();
+
+	this.effect(2).setValue(color);
+}
+
+
+/**
+* Controllers
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Controller = {};
+
+/**
+* Size hint of controllers
+* @type {int}
+* @default DuAEF.Duik.Sizes.SMALL
+*/
+DuAEF.Duik.Controller.sizeHint = DuAEF.Duik.Sizes.SMALL;
+/**
+* The default size for new controllers if controllerSizeHint is DuAEF.Duik.Sizes.CUSTOM
+* @type {int}
+* @default 100
+*/
+DuAEF.Duik.Controller.size = 100;
+/**
+* The default color for new controllers
+* @type {float[]}
+* @default DuAEF.DuJS.Color.Colors.RAINBOX_RED
+*/
+DuAEF.Duik.Controller.color = DuAEF.DuJS.Color.Colors.RAINBOX_RED;
+
+/**
+ * The shapes/type/icon of the controllers
+ * @enum {int}
+ * @readonly
+ */
+DuAEF.Duik.Controller.Types =
+{
+	ROTATION: 1,
+	X_POSITION: 2,
+	Y_POSITION: 3,
+	POSITION: 4,
+	TRANSFORM: 5,
+	SLIDER: 6,
+	DOUBLE_SLIDER: 7,
+	ANGLE: 8,
+	CAMERA: 9,
+	HEAD: 10,
+	HAND: 11,
+	FOOT: 12,
+	CLAWS: 13,
+	HOOF: 14,
+	EYE: 15,
+	EYES: 16,
+	FACE: 17,
+	SQUARE: 18,
+	HIPS: 19,
+	BODY: 20,
+	SHOULDERS: 21
+}
+
+/**
+* Creates a new controller
+* @param {CompItem} comp - The composition
+* @param {DuAEF.Duik.Controller.Types} [type=DuAEF.Duik.Controller.Types.TRANSFORM] - The type of Controller
+* @param {Layer} [layer] - The layer where to create the controller.
+* @param {float}	[size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Controller.sizeHint
+* @return {Controller} The controller
+*/
+DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
+{
+	if (comp == undefined) return;
+	var ctrl = comp.layers.addShape();
+	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
+
+	var effect = null;
+
+	if (type != DuAEF.Duik.Controller.Types.SQUARE && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
+	{
+		//add effect
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER,'Controller');
+
+		//create anchor
+		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+		var centerCircle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
+		centerCircle("ADBE Vector Ellipse Size").setValue([2,2]);
+		var biggerCircle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
+		biggerCircle("ADBE Vector Ellipse Size").setValue([10,10]);
+		var star = anchorContent.addProperty("ADBE Vector Shape - Star");
+		star("ADBE Vector Star Points").setValue(4);
+		star("ADBE Vector Star Inner Radius").setValue(0);
+		star("ADBE Vector Star Outer Radius").setValue(10);
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Controller")(9)';
+		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+		anchorGroup.transform.scale.expression = '[effect("Controller")(10),effect("Controller")(10)]';
+	}
+	else if (type == DuAEF.Duik.Controller.Types.SLIDER)
+	{
+		//add effect
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER,'Slider');
+	}
+	else if (type == DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)
+	{
+		//add effect
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER,'Slider');
+	}
+	else if (type == DuAEF.Duik.Controller.Types.ANGLE)
+	{
+		//add effect
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE,'Angle');
+	}
+
+	var iconGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	iconGroup.name = 'Icon';
+	var iconContent = iconGroup.property("ADBE Vectors Group");
+
+	if (type != DuAEF.Duik.Controller.Types.SQUARE && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
+	{
+		iconGroup.transform.scale.expression = '[effect("Controller")(4)*2,effect("Controller")(4)*2]';
+		iconGroup.transform.position.expression = 'effect("Controller")(3)';
+		iconGroup.transform.rotation.expression = 'effect("Controller")(5)';
+		iconGroup.transform.opacity.expression = 'effect("Controller")(6)';
+	}
+
+	if (type == DuAEF.Duik.Controller.Types.ROTATION)
+	{
+		var shape = iconContent.addProperty("ADBE Vector Shape - Group");
+		var rotationShape = new Shape();
+		rotationShape.vertices = [[-8, 0.3499755859375], [0, 8.3499755859375], [8, 0.3499755859375], [0, -7.6500244140625], [4.80000305175781, -11.8499755859375]];
+		rotationShape.inTangents = [[0, 0], [-4.41830444335938, 0], [0, 4.4183349609375], [4.41830444335938, 0], [0, 0]];
+		rotationShape.outTangents = [[0, 4.4183349609375], [4.41830444335938, 0], [0, -4.4183349609375], [0, 0], [0, 0]];
+		rotationShape.closed = false;
+		shape('ADBE Vector Shape').setValue(rotationShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Controller")(2)';
+		stroke("ADBE Vector Stroke Width").setValue(1.5);
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Rotation',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.X_POSITION)
+	{
+		var shape = iconContent.addProperty("ADBE Vector Shape - Group");
+		var xPosShape = new Shape();
+		xPosShape.vertices = [[12.5158386230469, -0.320068359375], [6.05984497070313, -6.776123046875], [5.74093627929688, -6.914794921875], [5.42213439941406, -6.776123046875], [4.729736328125, -6.083740234375], [4.59104919433594, -5.764892578125], [4.729736328125, -5.446044921875], [9.067138671875, -1.108642578125], [-9.05496215820313, -1.108642578125], [-4.74685668945313, -5.416748046875], [-4.60865783691406, -5.734619140625], [-4.74685668945313, -6.052490234375], [-5.43826293945313, -6.743896484375], [-5.75605773925781, -6.882080078125], [-6.07395935058594, -6.743896484375], [-12.516357421875, -0.301513671875], [-12.6545562744141, 0.016357421875], [-12.516357421875, 0.334228515625], [-6.07395935058594, 6.776611328125], [-5.75605773925781, 6.914794921875], [-5.43826293945313, 6.776611328125], [-4.74685668945313, 6.085205078125], [-4.60865783691406, 5.767333984375], [-4.74685668945313, 5.449462890625], [-9.30496215820313, 0.891357421875], [9.28193664550781, 0.891357421875], [4.729736328125, 5.443603515625], [4.59104919433594, 5.762451171875], [4.729736328125, 6.081298828125], [5.42213439941406, 6.773681640625], [5.74093627929688, 6.912353515625], [6.05984497070313, 6.773681640625], [12.5158386230469, 0.317626953125], [12.654541015625, -0.001220703125]];
+		xPosShape.inTangents = [[0.08349609375, 0.08349609375], [0, 0], [0.11090087890625, 0], [0.08351135253906, -0.08349609375], [0, 0], [0, -0.11083984375], [-0.08349609375, -0.08349609375], [0, 0], [0, 0], [0, 0], [0, 0.1103515625], [0.08299255371094, 0.0830078125], [0, 0], [0.11030578613281, 0], [0.0830078125, -0.0830078125], [0, 0], [0, -0.1103515625], [-0.0830078125, -0.0830078125], [0, 0], [-0.11039733886719, 0], [-0.08299255371094, 0.0830078125], [0, 0], [0, 0.12451171875], [0.08299255371094, 0.0830078125], [0, 0], [0, 0], [0, 0], [0, -0.11083984375], [-0.08349609375, -0.08349609375], [0, 0], [-0.11079406738281, 0], [-0.08349609375, 0.08349609375], [0, 0], [0, 0.11083984375]];
+		xPosShape.outTangents = [[0, 0], [-0.08349609375, -0.08349609375], [-0.11079406738281, 0], [0, 0], [-0.08349609375, 0.08349609375], [0, 0.11083984375], [0, 0], [0, 0], [0, 0], [0.08299255371094, -0.0830078125], [0, -0.1103515625], [0, 0], [-0.08299255371094, -0.0830078125], [-0.11039733886719, 0], [0, 0], [-0.0830078125, 0.0830078125], [0, 0.1103515625], [0, 0], [0.0830078125, 0.0830078125], [0.11030578613281, 0], [0, 0], [0.08299255371094, -0.0830078125], [0, -0.1103515625], [0, 0], [0, 0], [0, 0], [-0.08349609375, 0.08349609375], [0, 0.12451171875], [0, 0], [0.08351135253906, 0.08349609375], [0.11090087890625, 0], [0, 0], [0.08349609375, -0.08349609375], [0, -0.11083984375]];
+		xPosShape.closed = true;
+		shape('ADBE Vector Shape').setValue(xPosShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C X',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.Y_POSITION)
+	{
+		var shape = iconContent.addProperty("ADBE Vector Shape - Group");
+		var yPosShape = new Shape();
+		yPosShape.vertices = [[0.32005310058594, 12.5158538818359], [6.776123046875, 6.05986022949219], [6.914794921875, 5.74095153808594], [6.776123046875, 5.42214965820313], [6.083740234375, 4.72975158691406], [5.764892578125, 4.591064453125], [5.446044921875, 4.72975158691406], [1.108642578125, 9.06715393066406], [1.108642578125, -9.05496215820313], [5.416748046875, -4.74685668945313], [5.734619140625, -4.60865783691406], [6.052490234375, -4.74685668945313], [6.743896484375, -5.43826293945313], [6.882080078125, -5.75605773925781], [6.743896484375, -6.07395935058594], [0.301513671875, -12.516357421875], [-0.01637268066406, -12.6545562744141], [-0.33424377441406, -12.516357421875], [-6.77662658691406, -6.07395935058594], [-6.91481018066406, -5.75605773925781], [-6.77662658691406, -5.43826293945313], [-6.08522033691406, -4.74685668945313], [-5.76734924316406, -4.60865783691406], [-5.44947814941406, -4.74685668945313], [-0.89137268066406, -9.30496215820313], [-0.89137268066406, 9.28195190429688], [-5.44361877441406, 4.72975158691406], [-5.76246643066406, 4.591064453125], [-6.08131408691406, 4.72975158691406], [-6.77369689941406, 5.42214965820313], [-6.91236877441406, 5.74095153808594], [-6.77369689941406, 6.05986022949219], [-0.31764221191406, 12.5158538818359], [0.001220703125, 12.6545562744141]];
+		yPosShape.inTangents = [[-0.08348083496094, 0.08349609375], [0, 0], [0, 0.11079406738281], [0.08349609375, 0.08351135253906], [0, 0], [0.11083984375, 0], [0.08349609375, -0.08349609375], [0, 0], [0, 0], [0, 0], [-0.1103515625, 0], [-0.0830078125, 0.08299255371094], [0, 0], [0, 0.11039733886719], [0.0830078125, 0.0830078125], [0, 0], [0.11036682128906, 0], [0.0830078125, -0.0830078125], [0, 0], [0, -0.11030578613281], [-0.0830078125, -0.08299255371094], [0, 0], [-0.12451171875, 0], [-0.0830078125, 0.08299255371094], [0, 0], [0, 0], [0, 0], [0.11083984375, 0], [0.08349609375, -0.08349609375], [0, 0], [0, -0.11090087890625], [-0.08349609375, -0.08349609375], [0, 0], [-0.11085510253906, 0]];
+		yPosShape.outTangents = [[0, 0], [0.08349609375, -0.08349609375], [0, -0.11079406738281], [0, 0], [-0.08349609375, -0.08349609375], [-0.11083984375, 0], [0, 0], [0, 0], [0, 0], [0.0830078125, 0.08299255371094], [0.1103515625, 0], [0, 0], [0.0830078125, -0.08299255371094], [0, -0.11038208007813], [0, 0], [-0.0830078125, -0.0830078125], [-0.1103515625, 0], [0, 0], [-0.0830078125, 0.0830078125], [0, 0.11032104492188], [0, 0], [0.0830078125, 0.08299255371094], [0.1103515625, 0], [0, 0], [0, 0], [0, 0], [-0.08349609375, -0.08349609375], [-0.12451171875, 0], [0, 0], [-0.08349609375, 0.08351135253906], [0, 0.11090087890625], [0, 0], [0.08351135253906, 0.08349609375], [0.11083984375, 0]];
+		yPosShape.closed = true;
+		shape('ADBE Vector Shape').setValue(yPosShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Y',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.POSITION)
+	{
+		var shape = iconContent.addProperty("ADBE Vector Shape - Group");
+		var posShape = new Shape();
+		posShape.vertices = [[12.4787292480469, -0.23583984375], [7.58624267578125, -5.12841796875], [7.34503173828125, -5.23291015625], [7.10372924804688, -5.12841796875], [6.57843017578125, -4.60302734375], [6.47393798828125, -4.36181640625], [6.57843017578125, -4.12060546875], [9.663330078125, -1.03564453125], [1.05203247070313, -1.03564453125], [1.05203247070313, -9.6510009765625], [4.10723876953125, -6.59619140625], [4.34793090820313, -6.49169921875], [4.58865356445313, -6.59619140625], [5.11203002929688, -7.11962890625], [5.216552734375, -7.35986328125], [5.11203002929688, -7.60107421875], [0.234130859375, -12.47900390625], [-0.00656127929688, -12.58349609375], [-0.24725341796875, -12.47900390625], [-5.12525939941406, -7.60107421875], [-5.22966003417969, -7.35986328125], [-5.12525939941406, -7.11962890625], [-4.60176086425781, -6.59619140625], [-4.36105346679688, -6.49169921875], [-4.120361328125, -6.59619140625], [-0.94796752929688, -9.7681884765625], [-0.94796752929688, -1.03564453125], [-9.65106201171875, -1.03564453125], [-6.59596252441406, -4.0908203125], [-6.491455078125, -4.33154296875], [-6.59596252441406, -4.572265625], [-7.11935424804688, -5.095703125], [-7.36006164550781, -5.2001953125], [-7.60075378417969, -5.095703125], [-12.478759765625, -0.2177734375], [-12.583251953125, 0.02294921875], [-12.478759765625, 0.263671875], [-7.60075378417969, 5.1416015625], [-7.36006164550781, 5.24609375], [-7.11935424804688, 5.1416015625], [-6.59596252441406, 4.6181640625], [-6.491455078125, 4.37744140625], [-6.59596252441406, 4.13671875], [-9.76824951171875, 0.96435546875], [-0.94796752929688, 0.96435546875], [-0.94796752929688, 9.74560546875], [-4.11495971679688, 6.57861328125], [-4.35615539550781, 6.47412109375], [-4.59735107421875, 6.57861328125], [-5.12275695800781, 7.10400390625], [-5.22724914550781, 7.34521484375], [-5.12275695800781, 7.58642578125], [-0.23016357421875, 12.47900390625], [0.01104736328125, 12.58349609375], [0.25225830078125, 12.47900390625], [5.14483642578125, 7.58642578125], [5.24932861328125, 7.34521484375], [5.14483642578125, 7.10400390625], [4.61944580078125, 6.57861328125], [4.37823486328125, 6.47412109375], [4.13705444335938, 6.57861328125], [1.05203247070313, 9.66357421875], [1.05203247070313, 0.96435546875], [9.74533081054688, 0.96435546875], [6.57843017578125, 4.13134765625], [6.47393798828125, 4.37255859375], [6.57843017578125, 4.61376953125], [7.10372924804688, 5.13916015625], [7.34503173828125, 5.24365234375], [7.58624267578125, 5.13916015625], [12.4787292480469, 0.24658203125], [12.583251953125, 0.00537109375]];
+		posShape.inTangents = [[0.0625, 0.0625], [0, 0], [0.08392333984375, 0], [0.0625, -0.0625], [0, 0], [0, -0.083984375], [-0.0625, -0.0625], [0, 0], [0, 0], [0, 0], [0, 0], [-0.083984375, 0], [-0.06301879882813, 0.0634765625], [0, 0], [0, 0.083984375], [0.06301879882813, 0.0634765625], [0, 0], [0.08401489257813, 0], [0.06298828125, -0.0625], [0, 0], [0, -0.083984375], [-0.06289672851563, -0.0625], [0, 0], [-0.09420776367188, 0], [-0.06298828125, 0.0634765625], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0.083984375], [0.06300354003906, 0.06298828125], [0, 0], [0.08399963378906, 0], [0.06289672851563, -0.06298828125], [0, 0], [0, -0.083984375], [-0.06300354003906, -0.06298828125], [0, 0], [-0.08399963378906, 0], [-0.06300354003906, 0.06298828125], [0, 0], [0, 0.09423828125], [0.06300354003906, 0.06298828125], [0, 0], [0, 0], [0, 0], [0, 0], [0.08399963378906, 0], [0.0625, -0.0625], [0, 0], [0, -0.083984375], [-0.0625, -0.0625], [0, 0], [-0.08401489257813, 0], [-0.0625, 0.0625], [0, 0], [0, 0.083984375], [0.0625, 0.0625], [0, 0], [0.08392333984375, 0], [0.0625, -0.0625], [0, 0], [0, 0], [0, 0], [0, 0], [0, -0.083984375], [-0.0625, -0.0625], [0, 0], [-0.083984375, 0], [-0.0625, 0.0625], [0, 0], [0, 0.083984375]];
+		posShape.outTangents = [[0, 0], [-0.0625, -0.0625], [-0.083984375, 0], [0, 0], [-0.0625, 0.0625], [0, 0.083984375], [0, 0], [0, 0], [0, 0], [0, 0], [0.06301879882813, 0.0634765625], [0.08401489257813, 0], [0, 0], [0.06301879882813, -0.0625], [0, -0.083984375], [0, 0], [-0.06298828125, -0.0625], [-0.083984375, 0], [0, 0], [-0.06289672851563, 0.0634765625], [0, 0.083984375], [0, 0], [0.06300354003906, 0.0634765625], [0.08399963378906, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0.06300354003906, -0.06298828125], [0, -0.083984375], [0, 0], [-0.06300354003906, -0.06298828125], [-0.08399963378906, 0], [0, 0], [-0.06300354003906, 0.06298828125], [0, 0.083984375], [0, 0], [0.06289672851563, 0.06298828125], [0.08399963378906, 0], [0, 0], [0.06300354003906, -0.06298828125], [0, -0.083984375], [0, 0], [0, 0], [0, 0], [0, 0], [-0.0625, -0.0625], [-0.09469604492188, 0], [0, 0], [-0.0625, 0.0625], [0, 0.083984375], [0, 0], [0.0625, 0.0625], [0.083984375, 0], [0, 0], [0.0625, -0.0625], [0, -0.083984375], [0, 0], [-0.0625, -0.0625], [-0.083984375, 0], [0, 0], [0, 0], [0, 0], [0, 0], [-0.0625, 0.0625], [0, 0.0947265625], [0, 0], [0.0625, 0.0625], [0.08392333984375, 0], [0, 0], [0.0625, -0.0625], [0, -0.083984375]];
+		posShape.closed = true;
+		shape('ADBE Vector Shape').setValue(posShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Position',comp);
+	}
+	if (type == DuAEF.Duik.Controller.Types.TRANSFORM)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var transformShape1 = new Shape();
+		transformShape1.vertices = [[-11.066650390625, 0.0479736328125], [0.18746948242188, 11.302001953125], [11.441650390625, 0.0479736328125], [0.18746948242188, -11.2061767578125], [6.93994140625, -17.114501953125]];
+		transformShape1.inTangents = [[0, 0], [-6.21542358398438, 0], [0, 6.2154541015625], [6.21548461914063, 0], [0, 0]];
+		transformShape1.outTangents = [[0, 6.2154541015625], [6.21548461914063, 0], [0, -6.215576171875], [0, 0], [0, 0]];
+		transformShape1.closed = false;
+		shape1('ADBE Vector Shape').setValue(transformShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var transformShape2 = new Shape();
+		transformShape2.vertices = [[0.0625, -7.545654296875], [0.0625, 7.5455322265625]];
+		transformShape2.inTangents = [[0, 0], [0, 0]];
+		transformShape2.outTangents = [[0, 0], [0, 0]];
+		transformShape2.closed = false;
+		shape2('ADBE Vector Shape').setValue(transformShape2);
+		var shape3 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var transformShape3 = new Shape();
+		transformShape3.vertices = [[7.54559326171875, 0], [-7.54559326171875, 0]];
+		transformShape3.inTangents = [[0, 0], [0, 0]];
+		transformShape3.outTangents = [[0, 0], [0, 0]];
+		transformShape3.closed = false;
+		shape3('ADBE Vector Shape').setValue(transformShape3);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Controller")(2)';
+		stroke("ADBE Vector Stroke Width").setValue(1.5);
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C transform',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.EYE)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var eyeShape1 = new Shape();
+		eyeShape1.vertices = [[-16.5059204101563, 0.3309326171875], [16.5059509277344, 0.3309326171875]];
+		eyeShape1.inTangents = [[9.71759033203125, -9.3309326171875], [-6.15141296386719, 8.6690673828125]];
+		eyeShape1.outTangents = [[7.75308227539063, 7.74267578125], [-7.94126892089844, -8.66920471191406]];
+		eyeShape1.closed = true;
+		shape1('ADBE Vector Shape').setValue(eyeShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var eyeShape2 = new Shape();
+		eyeShape2.vertices = [[2.90478515625, 2.90478515625], [-2.90478515625, 2.90478515625], [-2.90478515625, -2.9046630859375], [2.90478515625, -2.9046630859375]];
+		eyeShape2.inTangents = [[1.60421752929688, -1.604248046875], [1.60427856445313, 1.6043701171875], [-1.60421752929688, 1.604248046875], [-1.60427856445313, -1.6043701171875]];
+		eyeShape2.outTangents = [[-1.60427856445313, 1.6043701171875], [-1.60421752929688, -1.604248046875], [1.60427856445313, -1.6043701171875], [1.60421752929688, 1.604248046875]];
+		eyeShape2.closed = true;
+		shape2('ADBE Vector Shape').setValue(eyeShape2);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Eye',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.CAMERA)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var camShape = new Shape();
+		camShape.vertices = [[7.78106689453125, -11.2048645019531], [0.37507629394531, -11.2048645019531], [-1.12208557128906, -8.09188842773438], [-1.89707946777344, -9.25259399414063], [-6.99104309082031, -9.25259399414063], [-6.99104309082031, -4.15861511230469], [-4.88467407226563, -3.14591979980469], [-5.13864135742188, -2.09954833984375], [-5.13864135742188, -0.74296569824219], [-8.45230102539063, -4.04814147949219], [-8.82221984863281, -4.2044677734375], [-9.02810668945313, -4.1634521484375], [-9.34848022460938, -3.67823791503906], [-9.34848022460938, 5.26766967773438], [-9.02810668945313, 5.75288391113281], [-8.82221984863281, 5.79389953613281], [-8.45230102539063, 5.6375732421875], [-5.13864135742188, 2.32426452636719], [-5.13864135742188, 3.68898010253906], [-2.77058410644531, 6.0570068359375], [3.01792907714844, 6.0570068359375], [5.385986328125, 3.68898010253906], [5.385986328125, -2.09954833984375], [5.35285949707031, -2.42805480957031], [7.78106689453125, -3.79896545410156]];
+		camShape.inTangents = [[2.04505920410156, 2.04513549804688], [2.045166015625, -2.04508972167969], [0.1282958984375, -1.13729858398438], [0.343017578125, 0.34303283691406], [1.40667724609375, -1.40669250488281], [-1.40667724609375, -1.40669250488281], [-0.76953125, -0.09449768066406], [0, -0.37754821777344], [0, 0], [0, 0], [0.14004516601563, 0], [0.06578063964844, -0.02436828613281], [0, -0.21397399902344], [0, 0], [-0.18881225585938, -0.08242797851563], [-0.06576538085938, 0], [-0.09828186035156, 0.107177734375], [0, 0], [0, 0], [-1.30706787109375, 0], [0, 0], [0, 1.30744934082031], [0, 0], [0.01513671875, 0.10833740234375], [-0.69538879394531, 0.69540405273438]];
+		camShape.outTangents = [[-2.04507446289063, -2.04513549804688], [-0.87216186523438, 0.87214660644531], [-0.17568969726563, -0.42166137695313], [-1.40667724609375, -1.40669250488281], [-1.40667724609375, 1.40669250488281], [0.59068298339844, 0.59065246582031], [-0.15728759765625, 0.31680297851563], [0, 0], [0, 0], [-0.09828186035156, -0.107177734375], [-0.06576538085938, 0], [-0.18881225585938, 0.08241271972656], [0, 0], [0, 0.21397399902344], [0.06578063964844, 0.02436828613281], [0.14004516601563, 0], [0, 0], [0, 0], [0, 1.30744934082031], [0, 0], [1.30706787109375, 0], [0, 0], [0, -0.11250305175781], [0.88937377929688, -0.22248840332031], [2.04510498046875, -2.04513549804688]];
+		camShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(camShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Camera',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.HAND)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var handShape = new Shape();
+		handShape.vertices = [[-2.68119812011719, -16.7185821533203], [-2.68119812011719, -6.20103454589844], [-3.5106201171875, -6.87979125976563], [-3.5106201171875, -15.3451690673828], [-5.46514892578125, -16.4479370117188], [-6.83721923828125, -15.0365142822266], [-6.83721923828125, -6.57102966308594], [-7.27908325195313, -2.08331298828125], [-9.7742919921875, -5.36949157714844], [-11.4263000488281, -6.1875], [-13.5, -4.13543701171875], [-13.0783996582031, -2.90132141113281], [-6.85746765136719, 5.30699157714844], [-5.20538330078125, 6.125], [5.93984985351563, 6.125], [7.47970581054688, 4.87457275390625], [8.710205078125, -1.61825561523438], [8.79170227050781, -2.56480407714844], [8.79170227050781, -10.5487518310547], [6.97669982910156, -12.34375], [5.68247985839844, -10.5487518310547], [5.68247985839844, -6.1875], [4.64437866210938, -6.1875], [4.64437866210938, -14.6528778076172], [2.82939147949219, -16.4479370117188], [1.46612548828125, -14.6528778076172], [1.46612548828125, -6.1875], [0.4970703125, -6.1875], [0.4970703125, -16.7050018310547], [-1.31791687011719, -18.5]];
+		handShape.inTangents = [[0, -0.99331665039063], [0, 0], [0, 0], [0, 0], [1.00485229492188, 0], [0, -0.99331665039063], [0, 0], [0, 0], [0, 0], [0.64822387695313, 0], [0, -1.12187194824219], [-0.27630615234375, -0.35185241699219], [0, 0], [-0.64830017089844, 0], [0, 0], [-0.14645385742188, 0.72105407714844], [0, 0], [0, 0.32136535644531], [0, 0], [1.00485229492188, 0], [0, -0.99336242675781], [0, 0], [0, 0], [0, 0], [1.00494384765625, 0], [0, -0.99337768554688], [0, 0], [0, 0], [0, 0], [1.00494384765625, 0]];
+		handShape.outTangents = [[0, 0], [0, 0], [0, 0], [0, -0.99337768554688], [-1.0037841796875, 0], [0, 0], [0, 0], [0, 0], [-0.38844299316406, -0.51301574707031], [-1.15025329589844, 0], [0, 0.44880676269531], [0, 0], [0.38853454589844, 0.51301574707031], [0, 0], [0.74624633789063, 0], [0, 0], [0.04949951171875, -0.30499267578125], [0, 0], [0, -0.99336242675781], [-1.0037841796875, 0], [0, 0], [0, 0], [0, 0], [0, -0.99337768554688], [-1.00379943847656, 0], [0, 0], [0, 0], [0, 0], [0, -0.99336242675781], [-1.00379943847656, 0]];
+		handShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(handShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Hand',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.HEAD)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var headShape1 = new Shape();
+		headShape1.vertices = [[0.07601928710938, 4.5526123046875], [0.56736755371094, 4.49830627441406], [2.057373046875, 4.99415588378906], [2.75151062011719, 5.75994873046875], [2.7535400390625, 5.76361083984375], [2.92665100097656, 6.15760803222656], [3.485595703125, 7.86418151855469], [7.72793579101563, 8.93666076660156], [12.2799072265625, 7.73506164550781], [12.2053833007813, 7.41508483886719], [11.2237243652344, 6.51840209960938], [11.0206451416016, 6.49006652832031], [10.7710266113281, 6.26759338378906], [11.5906677246094, 3.20623779296875], [11.25732421875, 2.13850402832031], [11.1351928710938, 2.03802490234375], [10.8557434082031, 1.77583312988281], [10.8630828857422, 1.49192810058594], [2.74903869628906, -5.74658203125], [1.78193664550781, -5.72299194335938], [-6.7783203125, 4.7183837890625], [-1.06082153320313, 8.6998291015625], [-1.51547241210938, 7.1868896484375], [-1.24484252929688, 5.54035949707031]];
+		headShape1.inTangents = [[-0.55696105957031, 0.12583923339844], [-0.16351318359375, 0], [-0.42343139648438, -0.30520629882813], [-0.17152404785156, -0.30897521972656], [-0.00068664550781, -0.00119018554688], [-0.04542541503906, -0.13873291015625], [0, 0], [-1.26594543457031, 0], [-0.27592468261719, 0.14794921875], [0, 0], [0.48114013671875, 0.06709289550781], [0, 0], [0.030517578125, 0.117919921875], [-0.29583740234375, 1.03759765625], [0.31387329101563, 0.25784301757813], [0, 0], [0, 0], [0, 0.09513854980469], [5.11787414550781, 0.00019836425781], [0.33038330078125, -0.01560974121094], [0, -5.89620971679688], [-3.58978271484375, -0.12089538574219], [0, 0], [-0.28395080566406, 0.49546813964844]];
+		headShape1.outTangents = [[0.16314697265625, -0.036865234375], [0.53974914550781, 0], [0.28424072265625, 0.19630432128906], [0.00054931640625, 0.00119018554688], [0.06857299804688, 0.12416076660156], [0, 0], [1.52705383300781, 0.80026245117188], [2.49287414550781, 0], [0, 0], [-0.11029052734375, -0.4732666015625], [0, 0], [-0.12055969238281, -0.01675415039063], [-0.02224731445313, -0.08599853515625], [0.11137390136719, -0.390625], [0, 0], [0, 0], [0.00440979003906, -0.09413146972656], [0, -5.14309692382813], [-0.31462097167969, 0], [-5.17431640625, 0.24435424804688], [0, 3.22795104980469], [0, 0], [-0.16680908203125, -0.54611206054688], [0.28395080566406, -0.49546813964844]];
+		headShape1.closed = true;
+		shape1('ADBE Vector Shape').setValue(headShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var headShape2 = new Shape();
+		headShape2.vertices = [[12.6515502929688, 9.70046997070313], [12.5136108398438, 9.10829162597656], [9.61198425292969, 10.0135955810547], [7.72348022460938, 10.1756134033203], [7.48377990722656, 10.1730346679688], [3.73471069335938, 9.40110778808594], [4.123046875, 10.5869445800781], [4.16423034667969, 10.7126007080078], [4.41374206542969, 10.9648895263672], [6.05886840820313, 11.5229797363281], [6.36839294433594, 11.9959411621094], [5.93084716796875, 12.3849792480469], [5.78929138183594, 12.3614044189453], [4.13058471679688, 11.7986450195313], [3.32719421386719, 10.9866790771484], [1.82598876953125, 6.43150329589844], [1.42034912109375, 5.91969299316406], [0.75732421875, 5.71040344238281], [0.49372863769531, 5.74131774902344], [-0.24122619628906, 6.29109191894531], [-0.37342834472656, 7.08253479003906], [1.14744567871094, 11.6554565429688], [4.58695983886719, 14.1050262451172], [10.8408813476563, 14.1362457275391], [10.8547058105469, 14.1362457275391], [12.0494689941406, 13.6215515136719], [12.1658477783203, 11.652587890625], [12.1540069580078, 11.6359405517578], [12.2690582275391, 10.8446807861328]];
+		headShape2.inTangents = [[0.09844970703125, 0.42301940917969], [0, 0], [1.37258911132813, -0.236328125], [0.70187377929688, 0], [0.08065795898438, 0.00177001953125], [1.33784484863281, 0.54164123535156], [0, 0], [0, 0], [-0.11827087402344, -0.04013061523438], [0, 0], [0.02670288085938, -0.20907592773438], [0.21180725097656, -0.00009155273438], [0.04692077636719, 0.01605224609375], [0, 0], [0.12445068359375, 0.38002014160156], [0, 0], [0.19952392578125, 0.14932250976563], [0.23930358886719, 0], [0.08790588378906, -0.02090454101563], [0.15794372558594, -0.27578735351563], [-0.05113220214844, -0.26933288574219], [0, 0], [-1.54896545410156, -0.00772094726563], [0, 0], [0, 0], [-0.30189514160156, 0.33651733398438], [0.41867065429688, 0.58851623535156], [0, 0], [-0.23722839355469, 0.19879150390625]];
+		headShape2.outTangents = [[0, 0], [-0.49571228027344, 0.23722839355469], [-0.54867553710938, 0.09452819824219], [-0.07907104492188, 0], [-1.12916564941406, -0.02476501464844], [0, 0], [0, 0], [0.03889465332031, 0.11871337890625], [0, 0], [0.19963073730469, 0.06777954101563], [-0.03012084960938, 0.23484802246094], [-0.04692077636719, 0], [0, 0], [-0.37858581542969, -0.12841796875], [0, 0], [-0.05796813964844, -0.17678833007813], [-0.1923828125, -0.13348388671875], [-0.08735656738281, 0], [-0.30906677246094, 0.07362365722656], [-0.13734436035156, 0.23970031738281], [0, 0], [0.51370239257813, 1.46122741699219], [0, 0], [0, 0], [0.45205688476563, 0], [0.50735473632813, -0.56571960449219], [0, 0], [-0.17930603027344, -0.25199890136719], [0.33305358886719, -0.27864074707031]];
+		headShape2.closed = true;
+		shape2('ADBE Vector Shape').setValue(headShape2);
+		var shape3 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var headShape3 = new Shape();
+		headShape3.vertices = [[6.95457458496094, 1.12509155273438], [9.45245361328125, 3.99214172363281], [6.95457458496094, 6.85928344726563], [4.08747863769531, 3.99214172363281]];
+		headShape3.inTangents = [[-1.58345031738281, 0], [0, -1.58349609375], [1.58345031738281, 0], [0, 1.58349609375]];
+		headShape3.outTangents = [[1.58345031738281, 0], [0, 1.58349609375], [-1.58345031738281, 0], [0, -1.58349609375]];
+		headShape3.closed = true;
+		shape3('ADBE Vector Shape').setValue(headShape3);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Head',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.FOOT)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var footShape1 = new Shape();
+		footShape1.vertices = [[6.88278198242188, -9.7200927734375], [3.90739440917969, -3.1824951171875], [-0.44120788574219, 5.78070068359375], [-3.75990295410156, 1.52886962890625], [-2.35670471191406, -5.4683837890625], [-4.10319519042969, -10.984130859375], [-1.69999694824219, -14.7761840820313], [3.56410217285156, -14.0867919921875]];
+		footShape1.inTangents = [[-0.34330749511719, -2.06842041015625], [0.114501953125, -4.7113037109375], [3.20420837402344, 0.22979736328125], [-0.22880554199219, 1.72369384765625], [0, 3.3323974609375], [0.45779418945313, 2.06842041015625], [-1.71659851074219, 0], [-2.05990600585938, -1.37890625]];
+		footShape1.outTangents = [[0.34330749511719, 2.068359375], [-0.11439514160156, 4.71136474609375], [-3.20419311523438, -0.22991943359375], [0.22889709472656, -1.72369384765625], [0, -3.3323974609375], [-0.45770263671875, -2.0684814453125], [1.71659851074219, 0], [2.05987548828125, 1.37896728515625]];
+		footShape1.closed = true;
+		shape1('ADBE Vector Shape').setValue(footShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var footShape2 = new Shape();
+		footShape2.vertices = [[-3.22090148925781, -21.7741088867188], [-5.585205078125, -18.3458251953125], [-4.04840087890625, -15.9813842773438], [-1.5657958984375, -18.9368286132813]];
+		footShape2.inTangents = [[0, 0], [-0.11819458007813, -1.773193359375], [0, 0], [-0.11820983886719, 3.0736083984375]];
+		footShape2.outTangents = [[-1.65499877929688, 0.23651123046875], [0.11820983886719, 1.7733154296875], [0, 0], [0.11819458007813, -3.07366943359375]];
+		footShape2.closed = true;
+		shape2('ADBE Vector Shape').setValue(footShape2);
+		var shape3 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var footShape3 = new Shape();
+		footShape3.vertices = [[2.27139282226563, -18.6461791992188], [0.14349365234375, -19.7100830078125], [0.49819946289063, -16.7546997070313]];
+		footShape3.inTangents = [[-0.35459899902344, 1.18218994140625], [0.35470581054688, -1.06402587890625], [-0.472900390625, 0]];
+		footShape3.outTangents = [[0.35470581054688, -1.18212890625], [-0.35459899902344, 1.06390380859375], [0.47279357910156, 0]];
+		footShape3.closed = true;
+		shape3('ADBE Vector Shape').setValue(footShape3);
+		var shape4 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var footShape4 = new Shape();
+		footShape4.vertices = [[5.67475891113281, -17.3997802734375], [3.91279602050781, -18.6842041015625], [3.78520202636719, -15.959228515625]];
+		footShape4.inTangents = [[-0.49983215332031, 1.0146484375], [0.48190307617188, -0.90777587890625], [-0.42739868164063, -0.0716552734375]];
+		footShape4.outTangents = [[0.49983215332031, -1.01470947265625], [-0.48190307617188, 0.90789794921875], [0.42739868164063, 0.07183837890625]];
+		footShape4.closed = true;
+		shape4('ADBE Vector Shape').setValue(footShape4);
+		var shape5 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var footShape5 = new Shape();
+		footShape5.vertices = [[8.37980651855469, -15.9772338867188], [6.87852478027344, -16.8713989257813], [6.978759765625, -14.6873779296875]];
+		footShape5.inTangents = [[-0.3236083984375, 0.8468017578125], [0.31723022460938, -0.76019287109375], [-0.34637451171875, -0.0255126953125]];
+		footShape5.outTangents = [[0.32359313964844, -0.8468017578125], [-0.31721496582031, 0.76019287109375], [0.34637451171875, 0.02545166015625]];
+		footShape5.closed = true;
+		shape5('ADBE Vector Shape').setValue(footShape5);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Foot',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.CLAWS)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var clawsShape1 = new Shape();
+		clawsShape1.vertices = [[-7.32080078125, -4.333740234375], [-9.80509948730469, -1.18695068359375], [-9.80509948730469, 5.76904296875], [-5.16769409179688, 1.1317138671875], [-7.81759643554688, -1.683837890625]];
+		clawsShape1.inTangents = [[0, 0], [0, 0], [-2.98109436035156, -0.828125], [0.82809448242188, 2.8155517578125], [0, 0]];
+		clawsShape1.outTangents = [[0, 0], [0, 0], [2.981201171875, 0.828125], [-0.82810974121094, -2.8155517578125], [0, 0]];
+		clawsShape1.closed = true;
+		shape1('ADBE Vector Shape').setValue(clawsShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var clawsShape2 = new Shape();
+		clawsShape2.vertices = [[-2.02090454101563, -14.5528564453125], [-3.67709350585938, -11.4060668945313], [-7.15510559082031, -6.10626220703125], [-2.18649291992188, -3.45623779296875], [-1.19279479980469, -10.9092407226563]];
+		clawsShape2.inTangents = [[0, 0], [0, 0], [-0.91690063476563, -3.66741943359375], [-1.99610900878906, 1.24749755859375], [2.31869506835938, 1.98748779296875]];
+		clawsShape2.outTangents = [[0, 0], [0, 0], [0.66239929199219, 2.6500244140625], [2.64990234375, -1.65618896484375], [0, 0]];
+		clawsShape2.closed = true;
+		shape2('ADBE Vector Shape').setValue(clawsShape2);
+		var shape3 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var clawsShape3 = new Shape();
+		clawsShape3.vertices = [[3.06401062011719, -14.5528564453125], [2.23580932617188, -10.9092407226563], [2.73269653320313, -2.95947265625], [7.86689758300781, -6.10626220703125], [4.72019958496094, -10.9092407226563]];
+		clawsShape3.inTangents = [[0, 0], [0, 0], [-3.66999816894531, -3.05828857421875], [0.66250610351563, 3.47808837890625], [0, 0]];
+		clawsShape3.outTangents = [[0, 0], [0, 0], [1.98750305175781, 1.65618896484375], [-0.66239929199219, -3.47796630859375], [0, 0]];
+		clawsShape3.closed = true;
+		shape3('ADBE Vector Shape').setValue(clawsShape3);
+		var shape4 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var clawsShape4 = new Shape();
+		clawsShape4.vertices = [[8.97689819335938, -3.45623779296875], [9.97061157226563, -0.80633544921875], [9.47380065917969, 6.31536865234375], [5.00199890136719, 2.83721923828125], [7.98320007324219, -0.80633544921875]];
+		clawsShape4.inTangents = [[0, 0], [0, 0], [3.31240844726563, -2.981201171875], [-0.49679565429688, 1.987548828125], [0, 0]];
+		clawsShape4.outTangents = [[0, 0], [0, 0], [-3.31239318847656, 2.9810791015625], [0.49690246582031, -1.98736572265625], [0, 0]];
+		clawsShape4.closed = true;
+		shape4('ADBE Vector Shape').setValue(clawsShape4);
+		var shape5 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var clawsShape5 = new Shape();
+		clawsShape5.vertices = [[-0.4873046875, 3.38055419921875], [2.30580139160156, 6.5460205078125], [5.65750122070313, 11.2012329101563], [-6.44589233398438, 11.2012329101563], [-4.58389282226563, 6.17364501953125]];
+		clawsShape5.inTangents = [[-2.42070007324219, 0], [-1.48970031738281, -0.93096923828125], [1.86199951171875, -3.3516845703125], [2.32418823242188, 2.61480712890625], [-2.60690307617188, 1.1171875]];
+		clawsShape5.outTangents = [[2.42060852050781, 0], [1.48960876464844, 0.93115234375], [-1.86209106445313, 3.3516845703125], [-2.97930908203125, -3.3516845703125], [2.42048645019531, -1.03729248046875]];
+		clawsShape5.closed = true;
+		shape5('ADBE Vector Shape').setValue(clawsShape5);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Claws',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.HOOF)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape1 = new Shape();
+		hoofShape1.vertices = [[10.866455078125, -5.94781494140625], [0.00125122070313, -12.45849609375], [-10.8229522705078, -6.30657958984375], [-7.03684997558594, 11.4263305664063], [-4.93815612792969, 12.45849609375], [-3.32534790039063, 11.9097290039063], [-2.841552734375, 8.19818115234375], [-6.07394409179688, -3.9677734375], [0.00125122070313, -7.16497802734375], [6.07255554199219, -3.70172119140625], [2.90756225585938, 8.11767578125], [3.24736022949219, 11.845703125], [4.94076538085938, 12.45849609375], [6.97445678710938, 11.5062866210938]];
+		hoofShape1.inTangents = [[2.40040588378906, 5.125], [4.89360046386719, 0], [1.92530822753906, -3.90972900390625], [-4.85060119628906, -6.30621337890625], [-0.82818603515625, 0], [-0.46730041503906, 0.3592529296875], [0.89019775390625, 1.15631103515625], [-1.49661254882813, 3.04046630859375], [-2.85989379882813, 0], [-1.03079223632813, -2.2010498046875], [3.48818969726563, -4.185546875], [-1.12161254882813, -0.9345703125], [-0.61720275878906, 0], [-0.50389099121094, 0.60504150390625]];
+		hoofShape1.outTangents = [[-1.90959167480469, -4.07659912109375], [-4.95359802246094, 0], [-2.44389343261719, 4.96380615234375], [0.50540161132813, 0.65570068359375], [0.58781433105469, 0], [1.15669250488281, -0.89019775390625], [-3.52099609375, -4.57708740234375], [1.00099182128906, -2.03173828125], [2.82760620117188, 0], [1.50630187988281, 3.2154541015625], [-0.93360900878906, 1.12115478515625], [0.47459411621094, 0.3955078125], [0.78849792480469, 0], [4.83740234375, -5.80419921875]];
+		hoofShape1.closed = true;
+		shape1('ADBE Vector Shape').setValue(hoofShape1);
+		var shape2 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape2 = new Shape();
+		hoofShape2.vertices = [[-10.4445953369141, -4.091796875], [-9.95089721679688, -4.515625], [-9.87429809570313, -4.50982666015625], [-7.89720153808594, -4.20562744140625], [-7.57009887695313, -4.00732421875], [-7.47920227050781, -3.63531494140625], [-7.78340148925781, -1.658203125], [-7.98170471191406, -1.33111572265625], [-8.27760314941406, -1.234375], [-8.35369873046875, -1.24017333984375], [-10.3307952880859, -1.54437255859375], [-10.7488098144531, -2.11468505859375]];
+		hoofShape2.inTangents = [[0, 0], [-0.24270629882813, 0], [-0.02580261230469, -0.00384521484375], [0, 0], [-0.07859802246094, -0.10699462890625], [0.02000427246094, -0.13128662109375], [0, 0], [0.10700988769531, -0.07861328125], [0.10549926757813, 0], [0.02529907226563, 0.00384521484375], [0, 0], [-0.0419921875, 0.27288818359375]];
+		hoofShape2.outTangents = [[0.0380859375, -0.24713134765625], [0.025390625, 0], [0, 0], [0.13090515136719, 0.0201416015625], [0.07820129394531, 0.10693359375], [0, 0], [-0.02009582519531, 0.13092041015625], [-0.08639526367188, 0.06298828125], [-0.02540588378906, 0], [0, 0], [-0.27290344238281, -0.04205322265625], [0, 0]];
+		hoofShape2.closed = true;
+		shape2('ADBE Vector Shape').setValue(hoofShape2);
+		var shape3 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape3 = new Shape();
+		hoofShape3.vertices = [[-7.70234680175781, 3.169921875], [-9.65644836425781, 3.5947265625], [-9.76335144042969, 3.60601806640625], [-10.2516479492188, 3.21240234375], [-10.6764526367188, 1.25830078125], [-10.2941436767578, 0.6630859375], [-8.34004211425781, 0.23828125], [-8.233154296875, 0.22698974609375], [-7.74484252929688, 0.62060546875], [-7.32005310058594, 2.57470703125]];
+		hoofShape3.inTangents = [[0.26950073242188, -0.05914306640625], [0, 0], [0.03509521484375, 0], [0.05130004882813, 0.23388671875], [0, 0], [-0.26950073242188, 0.05914306640625], [0, 0], [-0.03509521484375, 0], [-0.05130004882813, -0.23388671875], [0, 0]];
+		hoofShape3.outTangents = [[0, 0], [-0.03610229492188, 0.00775146484375], [-0.22999572753906, 0], [0, 0], [-0.05859375, -0.27001953125], [0, 0], [0.03608703613281, -0.00775146484375], [0.23001098632813, 0], [0, 0], [0.05860900878906, 0.27001953125]];
+		hoofShape3.closed = true;
+		shape3('ADBE Vector Shape').setValue(hoofShape3);
+		var shape4 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape4 = new Shape();
+		hoofShape4.vertices = [[-5.20234680175781, -6.921875], [-6.45675659179688, -5.36376953125], [-6.84684753417969, -5.17730712890625], [-7.15985107421875, -5.28759765625], [-8.71795654296875, -6.5419921875], [-8.79414367675781, -7.2451171875], [-7.53974914550781, -8.80322265625], [-7.14964294433594, -8.98980712890625], [-6.83665466308594, -8.87939453125], [-5.27854919433594, -7.625]];
+		hoofShape4.inTangents = [[0.17289733886719, -0.21484375], [0, 0], [0.14649963378906, 0], [0.09230041503906, 0.07421875], [0, 0], [-0.17280578613281, 0.21484375], [0, 0], [-0.14649963378906, 0], [-0.09230041503906, -0.07421875], [0, 0]];
+		hoofShape4.outTangents = [[0, 0], [-0.09909057617188, 0.12255859375], [-0.10990905761719, 0], [0, 0], [-0.21539306640625, -0.17327880859375], [0, 0], [0.09910583496094, -0.12255859375], [0.10989379882813, 0], [0, 0], [0.21539306640625, 0.17327880859375]];
+		hoofShape4.closed = true;
+		shape4('ADBE Vector Shape').setValue(hoofShape4);
+		var shape5 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape5 = new Shape();
+		hoofShape5.vertices = [[10.0544586181641, -4.72412109375], [10.3503570556641, -4.62738037109375], [10.5486602783203, -4.30029296875], [10.8528594970703, -2.32318115234375], [10.4348602294922, -1.75286865234375], [8.45785522460938, -1.44866943359375], [8.38165283203125, -1.44287109375], [8.08575439453125, -1.53961181640625], [7.887451171875, -1.8671875], [7.58375549316406, -3.84417724609375], [8.00175476074219, -4.41412353515625], [9.97836303710938, -4.71832275390625]];
+		hoofShape5.inTangents = [[-0.02540588378906, 0], [-0.08639526367188, -0.06298828125], [-0.02000427246094, -0.13092041015625], [0, 0], [0.27299499511719, -0.04205322265625], [0, 0], [0.02540588378906, 0], [0.08641052246094, 0.06298828125], [0.02011108398438, 0.13140869140625], [0, 0], [-0.27290344238281, 0.04205322265625], [0, 0]];
+		hoofShape5.outTangents = [[0.10549926757813, 0], [0.10699462890625, 0.07861328125], [0, 0], [0.0419921875, 0.27288818359375], [0, 0], [-0.025390625, 0.00384521484375], [-0.10598754882813, 0], [-0.10690307617188, -0.07861328125], [0, 0], [-0.0419921875, -0.27252197265625], [0, 0], [0.025390625, -0.00384521484375]];
+		hoofShape5.closed = true;
+		shape5('ADBE Vector Shape').setValue(hoofShape5);
+		var shape6 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape6 = new Shape();
+		hoofShape6.vertices = [[7.06625366210938, -5.17730712890625], [7.012451171875, -5.18017578125], [6.67655944824219, -5.36376953125], [5.42265319824219, -6.921875], [5.49885559082031, -7.625], [7.05696105957031, -8.87939453125], [7.37045288085938, -8.98980712890625], [7.42416381835938, -8.98681640625], [7.76005554199219, -8.80322265625], [9.01396179199219, -7.2451171875], [8.93775939941406, -6.5419921875], [7.37965393066406, -5.28759765625]];
+		hoofShape6.inTangents = [[0.11370849609375, 0], [0.01811218261719, 0.001953125], [0.08349609375, 0.10345458984375], [0, 0], [-0.21539306640625, 0.17327880859375], [0, 0], [-0.11380004882813, 0], [-0.01811218261719, -0.001953125], [-0.08349609375, -0.10345458984375], [0, 0], [0.21539306640625, -0.17327880859375], [0, 0]];
+		hoofShape6.outTangents = [[-0.01809692382813, 0], [-0.13179016113281, -0.01409912109375], [0, 0], [-0.17289733886719, -0.21533203125], [0, 0], [0.08929443359375, -0.07177734375], [0.01800537109375, 0], [0.13179016113281, 0.01409912109375], [0, 0], [0.17289733886719, 0.21533203125], [0, 0], [-0.08929443359375, 0.07177734375]];
+		hoofShape6.closed = true;
+		shape6('ADBE Vector Shape').setValue(hoofShape6);
+		var shape7 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var hoofShape7 = new Shape();
+		hoofShape7.vertices = [[10.4714660644531, 3.21240234375], [9.983154296875, 3.60601806640625], [9.87625122070313, 3.5947265625], [7.92216491699219, 3.169921875], [7.53985595703125, 2.57470703125], [7.96466064453125, 0.62060546875], [8.45295715332031, 0.22698974609375], [8.55935668945313, 0.23828125], [10.5139617919922, 0.6630859375], [10.8284606933594, 0.88128662109375], [10.8967590332031, 1.25830078125]];
+		hoofShape7.inTangents = [[0, 0], [0.23001098632813, 0], [0.03610229492188, 0.00775146484375], [0, 0], [-0.05859375, 0.27001953125], [0, 0], [-0.22999572753906, 0], [-0.03559875488281, -0.00775146484375], [0, 0], [-0.07130432128906, -0.11126708984375], [0.02789306640625, -0.1298828125]];
+		hoofShape7.outTangents = [[-0.05120849609375, 0.23388671875], [-0.03509521484375, 0], [0, 0], [-0.26950073242188, -0.05914306640625], [0, 0], [0.05130004882813, -0.23388671875], [0.03509521484375, 0], [0, 0], [0.12989807128906, 0.0283203125], [0.07170104980469, 0.1119384765625], [0, 0]];
+		hoofShape7.closed = true;
+		shape7('ADBE Vector Shape').setValue(hoofShape7);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Hoof',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.SLIDER)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Ellipse");
+		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(3))/5-2;\n[c, c]';
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
+
+		iconGroup.transform.position.expression = '[value[0],0];';
+		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
+		//Set initial keyframe
+		iconGroup.transform.position.setValueAtTime(0,[0,0]);
+
+		//create anchor
+		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
+		rectangle("ADBE Vector Rect Size").expression = 'c = effect("Slider")(3)/100*20;\nx = effect("Slider")(8)+c;\n[x,c]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'effect("Slider")(3)/100*10';
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Slider")(7)';
+		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		effect(18).expression = 'x = content("Icon").transform.position[0];\n' +
+						'c = effect("Slider")(3)/100*20;\n' +
+						'h = effect("Slider")(8)+c;\n' +
+						'h = h-c;\n' +
+						'h = h/2;\n' +
+						'linear(x,-h,h,-100,100);';
+
+
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Slider',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Ellipse");
+		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(3))/5-2;\n[c, c]';
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
+
+		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
+		//Set initial keyframe
+		iconGroup.transform.position.setValueAtTime(0,[0,0]);
+
+		//create anchor
+		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
+		rectangle("ADBE Vector Rect Size").expression = 'c = effect("Slider")(3)/100*20;\nx = effect("Slider")(8)+c;\n[x,x]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'effect("Slider")(3)/100*10';
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Slider")(7)';
+		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		effect(18).expression = 'x = content("Icon").transform.position[0];\n' +
+						'c = effect("Slider")(3)/100*20;\n' +
+						'h = effect("Slider")(8)+c;\n' +
+						'h = h-c;\n' +
+						'h = h/2;\n' +
+						'linear(x,-h,h,-100,100);';
+		effect(19).expression = 'x = content("Icon").transform.position[1];\n' +
+						'c = effect("Slider")(3)/100*20;\n' +
+						'h = effect("Slider")(8)+c;\n' +
+						'h = h-c;\n' +
+						'h = h/2;\n' +
+						'linear(x,-h,h,-100,100);';
+		effect(20).expression = '[effect("Slider")(18),effect("Slider")(19)]';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Slider',comp);
+	}
+	else if (type == DuAEF.Duik.Controller.Types.ANGLE)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var angleShape = new Shape();
+		angleShape.vertices = [[0, 0.25], [0, -24.5]];
+		angleShape.inTangents = [[0, 0], [0, 0]];
+		angleShape.outTangents = [[0, 0], [0, 0]];
+		angleShape.closed = false;
+		shape1('ADBE Vector Shape').setValue(angleShape);
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Angle")(2)';
+		stroke("ADBE Vector Stroke Width").setValue(1.5);
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		iconGroup.transform.opacity.expression = 'effect("Angle")(4)';
+		iconGroup.transform.scale.expression = '[effect("Angle")(3)*2,effect("Angle")(3)*2]';
+		iconGroup.transform.rotation.setValueAtTime(0,0);
+
+		//create anchor
+		var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		anchorGroup.name = 'Anchor';
+		var anchorContent = anchorGroup.property("ADBE Vectors Group");
+		var circle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
+		circle("ADBE Vector Ellipse Size").expression = 'x = effect("Angle")(8);\n[x,x]';
+		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
+		stroke("ADBE Vector Stroke Color").expression = 'effect("Angle")(7)';
+		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
+		stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+		effect(18).expression = 'content("Icon").transform.rotation';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C Angle',comp);
+	}
+
+	if (layer)
+	{
+		//center the controller and name it after the layer
+		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
+		var newName = layer.name;
+		if (newName.indexOf(' | ') >= 0) newName = newName.substring(newName.indexOf(' | ') + 3);
+		if (newName.indexOf('_') == 1 || newName.indexOf(' ') == 1) newName = newName.substring(2);
+		newName = 'C | ' + newName;
+		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+	}
+
+	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
+
+	DuAEF.Dugr.addLayerToGroup(ctrl,"Controllers");
+	ctrl.guideLayer = true;
+	DuAEF.DuAE.Layer.lockScale(ctrl);
+	ctrl = new Controller(ctrl,type);
+	ctrl.setSize(size);
+	ctrl.setColor(color);
+	return ctrl;
+}
+
+/**
+ * Gets Controllers in the comp or the selection.
+ * @param {CompItem}	comp	- The composition where to get the controllers
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {Controller[]}	The controllers.
+ */
+DuAEF.Duik.Controller.getControllers = function (comp,selectedOnly)
+{
+	if (selectedOnly == undefined) selectedOnly = false;
+
+	var ctrls = [];
+	//get layers
+	var ctrlLayers = DuAEF.Duik.getLayers(DuAEF.Duik.LayerTypes.CONTROLLER,selectedOnly,comp);
+	if (ctrlLayers.length == 0) return ctrls;
+	//convert layers to Controller
+	var it = new Iterator(ctrlLayers);
+	it.do(function(layer){
+		ctrls.push(new Controller(layer));
+	})
+	return ctrls;
+}

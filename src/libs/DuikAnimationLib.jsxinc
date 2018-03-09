@@ -1,0 +1,550 @@
+﻿/**
+* Animation tools
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Animation = {};
+
+/**
+* Automatically adjust the best bezier interpolations on the keyframes
+* @param {Property|PropertyInfo} prop - The property containing the keyframes
+* @param {boolean} [easeStart=true] - true to ease the first keyframe, false to set it to linear
+* @param {boolean} [easeEnd=true] - true to ease the last keyframe, false to set it to linear
+* @todo ability to change ease influence (only when velocity is 0?)
+* @todo implement a better multidimensionnal algo
+*/
+DuAEF.Duik.Animation.smartInterpolation = function (prop,easeStart,easeEnd)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (!prop.canVaryOverTime) return;
+
+	//set all keys to linear
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+		prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+		if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+	}
+
+	//smooth!
+	for (var k=0;k<prop.selectedKeys.length;k++)
+	{
+		var key = prop.selectedKeys[k];
+		var easeIn = [];
+		var easeOut = [];
+		//Compute base velocity
+		for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+		{
+			var speedIn = prop.keyInTemporalEase(key)[l].speed;
+			var speedOut = prop.keyOutTemporalEase(key)[l].speed;
+			var speed = 0;
+
+			if ( Math.abs(speedIn) <= Math.abs(speedOut) ) speed = speedIn;
+			else speed = speedOut;
+			if (( speedIn > 0 && speedOut < 0 ) || ( speedIn < 0 && speedOut > 0 )) speed = 0;
+			if (key == prop.numKeys) speed = 0;
+			if (key == 1) speed = 0;
+
+			easeIn.push(new KeyframeEase(speed,33));
+			easeOut.push(new KeyframeEase(speed, 33));
+		}
+		prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+
+		//depending on options, remove ease on first and last keyframes
+		if (key == prop.numKeys && !easeEnd)
+		{
+			prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+			if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+		}
+		if (key == 1 && !easeStart)
+		{
+			prop.setInterpolationTypeAtKey(prop.selectedKeys[k],KeyframeInterpolationType.LINEAR);
+			if (prop.isSpatial) prop.setRovingAtKey(prop.selectedKeys[k],false);
+		}
+	}
+
+	//Adjust velocities
+	for (var k=prop.selectedKeys.length-1;k>=0;k--)
+	{
+		var key = prop.selectedKeys[k];
+		var easeIn = [];
+		var easeOut = [];
+		if (key < prop.numKeys && key > 1)
+		{
+			for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+			{
+
+				var nextSpeed = prop.keyInTemporalEase(key+1)[l].speed;
+				var speed = prop.keyOutTemporalEase(key)[l].speed;
+				var defaultSpeed = ( prop.valueAtTime(prop.keyTime(key+1),true)-prop.valueAtTime(prop.keyTime(key),true) ) / (prop.keyTime(key+1) - prop.keyTime(key));
+
+				var nextAbsSpeed = Math.abs(nextSpeed);
+				var absSpeed = Math.abs(speed);
+
+				var nextDif = nextSpeed - defaultSpeed;
+				var dif = speed - defaultSpeed;
+
+				if (speed != 0)
+				{
+					if (nextAbsSpeed < absSpeed)
+					{
+						var fix = (1-nextAbsSpeed/absSpeed)*absSpeed;
+					}
+					else if (nextAbsSpeed != 0)
+					{
+						var fix = (1-absSpeed/nextAbsSpeed)*absSpeed;
+					}
+
+					if (-nextDif > dif) speed += fix;
+					else speed -= fix;
+
+				}
+				easeIn.push(new KeyframeEase(speed,33));
+				easeOut.push(new KeyframeEase(speed, 33));
+			}
+			prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+		}
+	}
+}
+
+/**
+* Creates a motion trail for the layer
+* @param {CompItem} [comp] - The comp where to create the trails, can be omitted if you provide a layer
+* @param {Layer} [layer] - The layer source of the motion. If not provided, will just create an empty motion trail control
+* @param {ShapeLayer|null} [trailLayer] - An existing shape layer containing the trails
+* @param {float[]|null} [color] - A color for the motion trail. If not provided, random
+* @return {ShapeLayer} The layer containing the motion trail created
+*/
+DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
+{
+	if (comp == undefined && layer == undefined) return;
+	if (comp == undefined) comp = layer.containingComp;
+	if (color == undefined || color == null) color = DuAEF.DuJS.Color.random();
+
+	//create layer
+	if (trailLayer == undefined || trailLayer == null)
+	{
+		trailLayer = comp.layers.addShape();
+		DuAEF.Duik.setDuikMarker(trailLayer,"Motion Trail",DuAEF.Duik.LayerTypes.MOTION_TRAIL);
+		trailLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName('Motion Trails',comp);
+	}
+
+	//Effect
+
+	var newEffectName = DuAEF.DuAE.Layer.newUniqueEffectName('Motion trail 1',trailLayer);
+	//trailLayer.applyPreset(DuAEF.Duik.PseudoEffects.MOTION_TRAIL);
+	var effect = DuAEF.DuAE.Layer.addPseudoEffect(trailLayer,DuAEF.Duik.PseudoEffects.MOTION_TRAIL,DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL);
+	effect.name = newEffectName;
+
+	//create shape
+	var trailGroup = trailLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	trailGroup.name = effect.name;
+	var trailPath = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group");
+	trailPath = trailPath.property("ADBE Vector Shape");
+	trailPath.expression = '//Duik.motionTrail\n' +
+						'var fx = effect("' + effect.name + '");\n' +
+						'var layer = null;\n' +
+						'try {layer = fx(1);} catch(e){}\n' +
+						'if (layer != null) {\n' +
+						'var inFrame = fx(2).value;\n' +
+						'var outFrame = fx(3).value;\n' +
+						'var method = fx(5).value;\n' +
+						'var samples = fx(10).value;\n' +
+						'var points = [];\n' +
+						'var currentFrame = timeToFrames(time);\n' +
+						'if (inFrame > outFrame) inFrame = -inFrame;\n' +
+						'else if (inFrame == outFrame) inFrame = -1;\n' +
+						'var prevPos = null;\n' +
+						'var autoSampleLimit = 1/(20*samples)*(thisComp.width+thisComp.height);\n' +
+						'for (var i = currentFrame+outFrame ; i >= currentFrame+inFrame; i--)\n' +
+						'{\n' +
+						'var t = framesToTime(i);\n' +
+						'var pos = layer.toWorld( layer.anchorPoint, t );\n' +
+						'var subSamples = 0;\n' +
+						'if (method == 2 && prevPos)\n' +
+						'{\n' +
+						'var step = length(pos,prevPos);\n' +
+						'var stepRatio = step/autoSampleLimit;\n' +
+						'if (stepRatio > 1) subSamples = Math.floor(stepRatio);\n' +
+						'}\n' +
+						'else if (method == 3) subSamples = samples;\n' +
+						'if (method == 2 || method == 3)\n' +
+						'{\n' +
+						't = t+thisComp.frameDuration;\n' +
+						'for (var j = 0;j < subSamples ; j++)\n' +
+						'{\n' +
+						't = t-thisComp.frameDuration/subSamples;\n' +
+						'var subPos = layer.toWorld( layer.anchorPoint, t );\n' +
+						'subPos = subPos - position;\n' +
+						'points.push( subPos );\n' +
+						'}\n' +
+						'}\n' +
+						'prevPos = pos;\n' +
+						'pos = pos - position;\n' +
+						'points.push( pos );\n' +
+						'}\n' +
+						'createPath(points,[],[], false);\n' +
+						'} else value';
+
+	var trailStroke = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Stroke");
+
+	trailStroke('ADBE Vector Stroke Color').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(13);';
+
+	trailStroke('ADBE Vector Stroke Opacity').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(14);';
+
+	trailStroke('ADBE Vector Stroke Width').expression = '//Duik.motionTrail\n' +
+													'var fx = effect("' + effect.name + '");\n' +
+													'fx(15);';
+
+	//set layer
+	if (layer != undefined) effect(1).setValue(layer.index);
+	//set color
+	effect(13).setValue(color);
+
+	return trailLayer;
+}
+
+/**
+* Adds animation exposure controls
+* @param {CompItem} comp - The comp where to create the X-Sheet
+* @param {Property|PropertyInfo} [prop] - The property controlled. If not provided, will add an X-Sheet adjustment layer in the comp.
+* @param {PropertyGroup|null} [effect] - an X-Sheet effect already created to use as a control for the prop
+* @return {PropertyGroup} The effect used to control
+*/
+DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
+{
+	var createLayer = prop == undefined;
+	if (effect == undefined) effect = null;
+	if (!createLayer)
+	{
+		if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+		if (!prop.riggable) return effect;
+
+		var layer = prop.layer;
+		comp = layer.containingComp;
+
+		//add effect
+		if (effect == null) effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,prop.getProperty().name + " X-Sheet");
+		var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,true);
+		prop.getProperty().expression = '//Duik.XSheet\n' + effectLink + '\n' +
+					'var mode = fx(7);\n' +
+					'var frameDuration = fx(14).value;\n' +
+					'var xSheet = fx(19);\n' +
+					'var result = value;\n' +
+					'function getValAtKey(prop)\n' +
+					'{\n' +
+					'if (prop.numKeys > 0)\n' +
+					'{\n' +
+					'var k = prop.nearestKey(time);\n' +
+					'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+					'return valueAtTime(k.time);\n' +
+					'}\n' +
+					'else return value;\n' +
+					'}\n' +
+					'if (mode == 1)\n' +
+					'{\n' +
+					'frameDuration = Math.round(frameDuration);\n' +
+					'timef = timeToFrames(time);\n' +
+					'result = valueAtTime(framesToTime( timef - timef%frameDuration ))\n' +
+					'}\n' +
+					'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+					'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+					'else result = getValAtKey(thisComp.marker);\n' +
+					'result;';
+	}
+	else
+	{
+		if (comp == undefined) return effect;
+		var newName = DuAEF.DuAE.Comp.newUniqueLayerName("X-Sheet",comp);
+		var layer = DuAEF.DuAE.Comp.addAdjustmentLayer(comp);
+		layer.name = newName;
+		DuAEF.Duik.setDuikMarker(layer,"X-Sheet",DuAEF.Duik.LayerTypes.X_SHEET);
+
+		//add Effects
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,"X-Sheet");
+
+		var timeWarp = layer('ADBE Effect Parade').addProperty('ADBE Timewarp');
+		timeWarp(1).setValue(1);
+		timeWarp(2).setValue(2);
+
+		timeWarp(4).expression = '//Duik.XSheet\n' +
+										'var fx = effect("X-Sheet")\n' +
+										'var mode = fx(7);\n' +
+										'var frameDuration = fx(14).value;\n' +
+										'var xSheet = fx(19);\n' +
+										'var result = timeToFrames(time);\n' +
+										'function getValAtKey(prop)\n' +
+										'{\n' +
+										'if (prop.numKeys > 0)\n' +
+										'{\n' +
+										'var k = prop.nearestKey(time);\n' +
+										'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+										'return timeToFrames(k.time);\n' +
+										'}\n' +
+										'else return timeToFrames(time);\n' +
+										'}\n' +
+										'if (mode == 1)\n' +
+										'{\n' +
+										'frameDuration = Math.round(frameDuration);\n' +
+										'timef = timeToFrames(time);\n' +
+										'result = timef - timef%frameDuration;\n' +
+										'}\n' +
+										'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+										'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+										'else result = getValAtKey(thisComp.marker);\n' +
+										'result;\n';
+	}
+
+	return effect;
+}
+
+/**
+* Activate the time remapping on the layers, adding some useful controls or expressions
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {string} [loopType] - Looping time, 'in' or 'out'
+*/
+DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+	var it = new Iterator(layers);
+	while (!it.atEnd)
+	{
+		it.next();
+		var layer = layers[it.current];
+		if (!layer.canSetTimeRemapEnabled) continue;
+
+		var comp = layer.containingComp;
+		var lastValueTime = layer.outPoint - comp.frameDuration;
+
+		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
+
+		layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+		layer.timeRemap.removeKey(3);
+		if (loopType == "out")
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+			layer.timeRemap.expression = "loopOut();";
+		}
+		if (loopType == "in")
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+			layer.timeRemap.expression = "loopIn();";
+			layer.inPoint = 0;
+		}
+	}
+}
+
+/**
+* An onion skin
+* @typedef {Object} OnionSkin
+* @property {boolean} activated - Is it activated
+* @property {int} duration - Duration in frames
+* @property {int} exposure - Animation exposure
+* @property {int} outOpacity - out opacity
+* @property {int} inOpacity - in opacity
+*/
+
+/**
+* Cel animation tools
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.CelAnimation = {};
+
+/**
+* Creates a new animation cel on the layer
+* @param {CompItem} comp - The composition
+* @param {AVLayer|null} [layer] - The layer where to create the cel
+*/
+DuAEF.Duik.CelAnimation.createCel = function (comp,layer)
+{
+	if (comp == undefined) return;
+
+	if (layer == undefined || layer == null)
+	{
+		//create solid
+		layer = comp.layers.addSolid([0,0,0], DuAEF.DuAE.Comp.newUniqueLayerName("Cel",comp) , comp.width, comp.height, comp.pixelAspect , comp.duration);
+		DuAEF.Duik.setDuikMarker(layer,"Cel",DuAEF.Duik.LayerTypes.CEL);
+	}
+
+	var first = true;
+	for (var i = 1 ; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		if (layer.effect(i).matchName == 'ADBE Paint')
+		{
+			first = false;
+			break;
+		}
+	}
+
+	var newName = DuAEF.DuAE.Layer.newUniqueEffectName('Celluloid',layer);
+	var paint = layer('ADBE Effect Parade').addProperty('ADBE Paint');
+	paint.name = newName;
+
+	if (first) paint.property('ADBE Paint On Transparent').setValue(true);
+
+}
+
+/**
+* Activates or deactivates the onion skin on a cel
+* @param {AVLayer} layer - The layer with the cel
+* @param {OnionSkin} onionSkin - Onion skin parameters
+*/
+DuAEF.Duik.CelAnimation.onionSkin = function (layer,onionSkin)
+{
+	if (layer == undefined) return;
+	if (onionSkin == undefined)
+	{
+		onionSkin = new OnionSkin();
+		onionSkin.activated = true;
+	}
+	activate = onionSkin.activated;
+	onionDuration = onionSkin.duration;
+	exposure = onionSkin.exposure;
+	inOpacity = onionSkin.inOpacity;
+	outOpacity = onionSkin.outOpacity;
+
+	var comp = layer.containingComp;
+	for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+	{
+		var paint = layer.effect(i);
+		if (!paint) continue;
+		if (paint.matchName != "ADBE Paint") continue;
+		if (paint.name.indexOf('Celluloid') < 0) continue;
+		for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+		{
+			var stroke = paint.property("ADBE Paint Group")(j);
+			if (stroke.matchName != "ADBE Paint Atom") continue;
+
+			var inPoint = stroke.property("ADBE Paint Duration").value[0];
+			var duration = stroke.property("ADBE Paint Duration").value[1];
+
+			//adjust expo
+			if (stroke.name.indexOf("#Duik") < 0)
+			{
+				duration = exposure*comp.frameDuration;
+				stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				stroke.name = stroke.name + " #Duik";
+			}
+
+			if (activate)
+			{
+				//stroke.property("ADBE Paint Transfer Mode") : blending mode
+				var outPoint = duration + inPoint;
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				//if keyframes (already activated)
+				if (opacity.numKeys > 0)
+				{
+					if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+					{
+						outPoint = opacity.keyTime(2) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+						outPoint = opacity.keyTime(5) - layer.startTime;
+					}
+
+					//remove keys
+					while (opacity.numKeys>0)
+					{
+						opacity.removeKey(1);
+					}
+					opacity.setValue(100);
+					stroke.name = stroke.name.replace(/ #Out/g,"");
+					stroke.name = stroke.name.replace(/ #In/g,"");
+				}
+
+				//set duration
+				if (outOpacity > 0 && inOpacity <= 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				}
+				else if (outOpacity <= 0 && inOpacity > 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+				else
+				{
+					duration = outPoint - inPoint + 2*onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+
+
+				//add keyframes
+				if (outOpacity > 0)
+				{
+				opacity.setValueAtTime(outPoint-comp.frameDuration+layer.startTime,100);
+				opacity.setValueAtTime(outPoint+layer.startTime,outOpacity);
+				opacity.setValueAtTime(outPoint + onionDuration*comp.frameDuration+layer.startTime,0);
+				stroke.name = stroke.name + " #Out";
+				}
+				if (inOpacity > 0)
+				{
+				opacity.setValueAtTime(inPoint+layer.startTime,100);
+				opacity.setValueAtTime(inPoint-onionDuration*comp.frameDuration+layer.startTime,0);
+				opacity.setValueAtTime(inPoint-comp.frameDuration+layer.startTime,inOpacity);
+				stroke.name = stroke.name + " #In";
+				}
+
+			}
+			else
+			{
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				if (opacity.numKeys > 0)
+				{
+				inPoint = 0;
+				outPoint = 1;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+				{
+				inPoint = stroke.property("ADBE Paint Duration").value[0];
+				outPoint = opacity.keyTime(2);
+				}
+				else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				outPoint = stroke.property("ADBE Paint Duration").value[0] + stroke.property("ADBE Paint Duration").value[1];
+				inPoint = opacity.keyTime(3);
+				}
+				else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				inPoint = opacity.keyTime(3);
+				outPoint = opacity.keyTime(5);
+				}
+
+
+				while (opacity.numKeys>0)
+				{
+				opacity.removeKey(1);
+				}
+				opacity.setValue(100);
+				//set duration
+				var o = outPoint-inPoint;
+				var i = inPoint;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0) o = o-layer.startTime;
+				else if (stroke.name.indexOf("#Out") < 0) o = o + layer.startTime;
+				if (stroke.name.indexOf("#In") >= 0) i = i-layer.startTime;
+
+				stroke.property("ADBE Paint Duration").setValue([i,o]);
+
+				stroke.name = stroke.name.replace(/ #In/g,"");
+				stroke.name = stroke.name.replace(/ #Out/g,"");
+				}
+			}
+		}
+	}
+	//deselect
+	while(layer.selectedProperties.length > 0)
+	{
+		layer.selectedProperties[0].selected = false;
+	}
+}

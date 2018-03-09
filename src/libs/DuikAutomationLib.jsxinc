@@ -1,0 +1,1125 @@
+﻿/**
+* Automations
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Automation = {};
+
+/**
+* Adds a list on a property
+ * @memberof DuAEF.Duik.Automation
+* @param {PropertyInfo} prop - The Property
+*/
+DuAEF.Duik.Automation.list = function (prop)
+{
+	if (prop == undefined) throw "Missing Param 1: list needs a Property";
+	if (!prop.riggable) return;
+
+	var dim = prop.dimensions;
+
+	var layer =prop.layer;
+	var comp = layer.containingComp;
+
+	layer.selected = true;
+	if (dim == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_LIST);
+	else if (dim == 2)layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_LIST);
+	else if (dim == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_LIST);
+	else { layer.selected = false; return;}
+	layer.selected = false;
+
+
+	var effect = layer.effect("List");
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' List',layer);
+
+	//set animation with expression
+	var anim = DuAEF.DuAE.Property.getAnim(prop,false);
+	if (anim) DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,true);
+	DuAEF.DuAE.Property.removeAnim(prop);
+
+	prop.getProperty().expression =  "//Duik.list\r\n" +
+					"var fx = effect(\"" + effect.name + "\");\n" +
+					"var v1 = fx(2);\n" +
+					"var w1 = fx(3);\n" +
+					"var v2 = fx(6);\n" +
+					"var w2 = fx(7);\n" +
+					"var v3 = fx(10);\n" +
+					"var w3 = fx(11);\n" +
+					"var v4 = fx(14);\n" +
+					"var w4 = fx(15);\n" +
+					"var v5 = fx(18);\n" +
+					"var w5 = fx(19);\n" +
+					"v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;";
+}
+
+/**
+ * Adds a wiggle to a property
+ * @memberof DuAEF.Duik.Automation
+ * @param {PropertyInfo}	prop 				- The property.
+ * @param {boolean}		[separateDimensions] 	- Set to true to separate the dimensions (to adjust amplitude and frequency) if the property is multi-dimensionnal.
+ * @param {PropertyGroup|null}	[effect]	- A wiggle effect already created by Duik to use as a controller for this wiggle
+ * @return {PropertyGroup} The effect created (or provided)
+ */
+DuAEF.Duik.Automation.wiggle = function (prop,separateDimensions,effect)
+{
+	if (separateDimensions == undefined) separateDimensions = false;
+	if (effect == undefined) effect = null;
+	if (!prop) return effect;
+	if (!prop.riggable) return effect;
+
+	//dimensions
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
+	var comp = layer.containingComp;
+
+	if (effect == null)
+	{
+		layer.selected = true;
+		if (!separateDimensions && dimensions > 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_MULTIWIGGLE);
+		else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_WIGGLE);
+		else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_WIGGLE);
+		else layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_WIGGLE);
+		layer.selected = false;
+
+		effect = layer.effect("Wiggle");
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Wiggle',layer);
+	}
+
+	var compEffect = DuAEF.DuAE.Property.getComp(effect);
+	var sameComp = compEffect.name == comp.name;
+
+	if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.ONED_MULTIWIGGLE) effect(3).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.THREED_WIGGLE) effect(13).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.TWOD_WIGGLE) effect(9).setValue(comp.duration);
+	else if (effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.ONED_WIGGLE) effect(3).setValue(comp.duration);
+	//TODO Wiggle for other types of properties
+	var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,sameComp);
+
+	if (!separateDimensions && dimensions > 1)
+	{
+		prop.getProperty().expression = "//Duik.1DMultiWiggle\n" + effectLink + "\n" +
+				"freq = fx(2);\n" +
+				"amp = fx(1);\n" +
+				"linked = fx(4).value;\n" +
+				"loop = fx(3);\n" +
+				"if (loop == 0) loop = thisComp.duration;\n" +
+				"t = (time % loop)-loop;\n" +
+				"w1 = wiggle(freq,amp, 1, 0.5, t);\n" +
+				"w2 = wiggle(freq,amp, 1, 0.5, t - loop);\n" +
+				"w = ease(t, -loop,  0, w1, w2);\n" +
+				"result = [];\n" +
+				"if(linked) while (result.length < value.length) result.push(w[0]);\n" +
+				"else result = w;\n" +
+				"result + value - valueAtTime(0);";
+	}
+	else if (dimensions == 3)
+	{
+		prop.getProperty().expression = "//Duik.3DWiggle\n" + effectLink + "\n" +
+				"Xfreq = fx(3);\n" +
+				"Yfreq = fx(7);\n" +
+				"Zfreq = fx(11);\n" +
+				"Xamp = fx(2);\n" +
+				"Yamp = fx(6);\n" +
+				"Zamp = fx(10);\n" +
+				"loop = fx(13);\n" +
+				"if (loop == 0) loop = thisComp.duration;\n" +
+				"t = (time % loop)-loop;\n" +
+				"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" +
+				"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" +
+				"Z1 = wiggle(Zfreq,Zamp, 1, 0.5, t);\n" +
+				"w1 = [X1[0],Y1[1],Z1[2]];\n" +
+				"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" +
+				"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" +
+				"Z2 = wiggle(Zfreq,Zamp, 1, 0.5, t - loop);\n" +
+				"w2 = [X2[0],Y2[1],Z2[2]];\n" +
+				"w = ease(t, -loop,  0, w1, w2);\n" +
+				"w + value - valueAtTime(0)";
+	}
+	else if (dimensions == 2)
+	{
+	 	prop.getProperty().expression = "//Duik.2DWiggle\n" + effectLink + "\n" +
+				"Xfreq = fx(3);\n" +
+				"Yfreq = fx(7);\n" +
+				"Xamp = fx(2);\n" +
+				"Yamp = fx(6);\n" +
+				"loop = fx(9);\n" +
+				"if (loop == 0) loop = thisComp.duration;\n" +
+				"t = (time % loop)-loop;\n" +
+				"X1 = wiggle(Xfreq,Xamp, 1, 0.5, t);\n" +
+				"Y1 = wiggle(Yfreq,Yamp, 1, 0.5, t);\n" +
+				"w1 = [X1[0],Y1[1]];\n" +
+				"X2 = wiggle(Xfreq,Xamp, 1, 0.5, t - loop);\n" +
+				"Y2 = wiggle(Yfreq,Yamp, 1, 0.5, t - loop);\n" +
+				"w2 = [X2[0],Y2[1]];\n" +
+				"w = ease(t, -loop,  0, w1, w2);\n" +
+				"w + value - valueAtTime(0)";
+	}
+	else if (dimensions == 1)
+	{
+		prop.getProperty().expression = "//Duik.1DWiggle\n" + effectLink + "\n" +
+				"freq = fx(2);\n" +
+				"amp = fx(1);\n" +
+				"loop = fx(3);\n" +
+				"if (loop == 0) loop = thisComp.duration;\n" +
+				"t = (time % loop)-loop;\n" +
+				"w1 = wiggle(freq,amp, 1, 0.5, t);\n" +
+				"w2 = wiggle(freq,amp, 1, 0.5, t - loop);\n" +
+				"w = ease(t, -loop,  0, w1, w2);\n" +
+				"w + value - valueAtTime(0)";
+	}
+
+	return effect;
+}
+
+/**
+ * Adds a swing to a property
+ * @memberof DuAEF.Duik.Automation
+ * @param {PropertyInfo}	prop 				- The property.
+ */
+DuAEF.Duik.Automation.swing = function (prop)
+{
+	if (!prop) return;
+	if (!prop.riggable) return;
+
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
+
+	if (dimensions < 1 || dimensions > 3) return;
+
+	layer.selected = true;
+	if (prop.getProperty().isSpatial) layer.applyPreset(DuAEF.Duik.PseudoEffects.SPATIAL_SWING);
+	else if (dimensions == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_SWING);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_SWING);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_SWING);
+	layer.selected = false;
+	var effect = layer.effect("Swing");
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Swing',layer);
+
+
+
+	if (prop.getProperty().isSpatial)
+	{
+		prop.getProperty().expression = 	'//Duik.spatialSwing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = Math.abs(fx(4));\n' +
+					'var angle = fx(5)/180*Math.PI;\n' +
+					'var result = [0,0];\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'sin = sin*amp;\n' +
+					'result = [0,sin];\n' +
+					'var x = -sin*Math.sin(angle);\n' +
+					'var y = sin*Math.cos(angle);\n' +
+					'result = [ x,y ] ;\n' +
+					'}\n' +
+					'result + value;\n';
+	}
+	else if (dimensions == 1)
+	{
+		prop.getProperty().expression = '//Duik.Swing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'result + value;';
+	}
+	else if (dimensions == 2)
+	{
+		prop.getProperty().expression = '//Duik.Swing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var axis = fx(5);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'if (axis == 1) result = [result,result];\n' +
+					'else if (axis == 2) result =[result,0];\n' +
+					'else if (axis == 3) result =[0,result];\n' +
+					'result+value;';
+	}
+	else if (dimensions == 3)
+	{
+		prop.getProperty().expression = '//Duik.Swing\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var amp = fx(1);\n' +
+					'var freq = fx(2);\n' +
+					'var offset = fx(3);\n' +
+					'var ease = fx(4);\n' +
+					'var axis = fx(5);\n' +
+					'var result = 0;\n' +
+					'if (freq > 0)\n' +
+					'{\n' +
+					'offset = offset/100/freq;\n' +
+					'sin = Math.sin((time+offset)*freq*2*Math.PI);\n' +
+					'for(i=0;i<ease;i++) {\n' +
+					'sin = Math.sin(sin*Math.PI/2);\n' +
+					'}\n' +
+					'result = sin*amp;\n' +
+					'}\n' +
+					'if (axis == 1) result = [result,result,result];\n' +
+					'else if (axis == 2) result =[result,0,0];\n' +
+					'else if (axis == 3) result =[0,result,0];\n' +
+					'else if (axis == 4) result =[0,0,result];\n' +
+					'result+value;';
+	}
+}
+
+/**
+ * Automates the rotation of a layer as a wheel
+ * @memberof DuAEF.Duik.Automation
+ * @param {Layer}	layer - The layer.
+* @param {int}	[radius] - The radius of the wheel, in pixels. Will be auto-detected if possible
+ */
+DuAEF.Duik.Automation.wheel = function (layer,radius)
+{
+	if (!layer) throw "Missing Param 1: Wheel needs a Layer";
+	if (radius == undefined)
+	{
+		var parent = layer.parent;
+		layer.parent = null;
+		var rect = layer.sourceRectAtTime(0,false);
+		radius = rect.width/2*layer.transform.scale.value[0]/100;
+		layer.parent = parent;
+	}
+	var rotation = layer.transform.rotation;
+	if (layer.threeDLayer) rotation = layer.transform.zRotation;
+
+	var effectName = DuAEF.DuAE.Layer.newUniqueEffectName('Wheel',layer);
+	layer.selected = true;
+	layer.applyPreset(DuAEF.Duik.PseudoEffects.WHEEL);
+	layer.selected = false;
+	var effect = layer.effect("Wheel");
+	effect.name = effectName;
+	effect(1).setValue(radius);
+
+	rotation.expression = '//Duik.Wheel\n' +
+						'var fx = thisLayer.effect("' + effect.name + '");\n' +
+						'var R = fx(1);\n' +
+						'var Rev = fx(2);\n' +
+						'var curved = fx(3) == 2;\n' +
+						'function pos(frame)\n' +
+						'{\n' +
+						'return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n' +
+						'}\n' +
+						'var result = 0;\n' +
+						'if (R>0)\n' +
+						'{\n' +
+						'var distance = 0;\n' +
+						'if (curved)\n' +
+						'{\n' +
+						'var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n' +
+						'var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n' +
+						'for(i=start;i<end;i++)\n' +
+						'{\n' +
+						'if (pos(i+1)[0] - pos(i)[0] > 0) distance += length(pos(i+1),pos(i));\n' +
+						'else distance -= length(pos(i+1),pos(i));\n' +
+						'}\n' +
+						'}\n' +
+						'else\n' +
+						'{\n' +
+						'distance = pos(timeToFrames(time))[0];\n' +
+						'}\n' +
+						'result = radiansToDegrees(distance/R);\n' +
+						'}\n' +
+						'Rev == 1 ? value - result : value + result;';
+
+}
+
+/**
+* Links a property to an effector controller
+* @param {PropertyInfo} prop - The property to rig
+* @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
+* @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
+* @return {object} A custom object with two attributes:<br />
+* - effectorLayer: the effector layer
+* - effect: the layer expression control on the rigged layer used to link to the effector
+*/
+DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
+{
+	if (effect == undefined) effect = null;
+	if (ctrlLayer == undefined) ctrlLayer = null;
+	var effector = {};
+	effector.effectorLayer = ctrlLayer;
+	effector.effect = effect;
+	if (!prop) return effector;
+	if (!prop.riggable) return effector;
+
+	var layer = prop.layer;
+	var comp = layer.containingComp;
+
+	//create effector
+	if (ctrlLayer == null)
+	{
+		ctrlLayer = comp.layers.addShape();
+		DuAEF.Duik.setDuikMarker(ctrlLayer,"Effector",DuAEF.Duik.LayerTypes.EFFECTOR);
+		ctrlLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName("Effector",comp);
+		//effect
+		ctrlLayer.selected = true;
+		layer.applyPreset(DuAEF.Duik.PseudoEffects.EFFECTOR);
+		//content
+		var centerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		centerGroup.name = "Center";
+		var centerContent = centerGroup.property("ADBE Vectors Group");
+		var centerCircle = centerContent.addProperty("ADBE Vector Shape - Ellipse");
+		centerCircle("ADBE Vector Ellipse Size").setValue([4,4]);
+		var centerFill = centerContent.addProperty("ADBE Vector Graphic - Fill");
+		centerFill("ADBE Vector Fill Color").setValue(DuAEF.DuJS.Color.Colors.BLACK);
+		centerFill("ADBE Vector Fill Opacity").setValue(50);
+		var innerGroup =  ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		innerGroup.name = "Inner";
+		var innerContent = innerGroup.property("ADBE Vectors Group");
+		var innerCircle = innerContent.addProperty("ADBE Vector Shape - Ellipse");
+		innerCircle("ADBE Vector Ellipse Size").expression = '//Duik.effector.inner\nvar inner = effect("Effector")(1)*2;\n[inner,inner];';
+		var innerStroke = innerContent.addProperty("ADBE Vector Graphic - Stroke");
+		innerStroke("ADBE Vector Stroke Color").setValue(DuAEF.DuJS.Color.Colors.GREEN);
+		var outerGroup =  ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		outerGroup.name = "Outer";
+		var outerContent = outerGroup.property("ADBE Vectors Group");
+		var outerCircle = outerContent.addProperty("ADBE Vector Shape - Ellipse");
+		outerCircle("ADBE Vector Ellipse Size").expression = '//Duik.effector.outer\nvar outer = effect("Effector")(2)*2;\n[outer,outer];';
+		var outerStroke = outerContent.addProperty("ADBE Vector Graphic - Stroke");
+		outerStroke("ADBE Vector Stroke Color").setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		//unselect
+		ctrlLayer.selected = false;
+		//set Defaults
+		var distance = DuAEF.DuAE.Layer.getDistance(layer,ctrlLayer);
+		ctrlLayer.effect("Effector")(1).setValue(distance/4);
+		ctrlLayer.effect("Effector")(2).setValue(distance*3/4);
+	}
+
+	//create effect
+	if (effect == null)
+	{
+		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
+	}
+
+	//Set effect
+	effect(1).setValue(ctrlLayer.index);
+
+	//set expression
+	prop.getProperty().expression = '//Duik.effector\n' +
+				'var ctrl = null;\n' +
+				'var result = value;\n' +
+				'try { ctrl = effect("' + effect.name + '")(1) } catch (e) {}\n' +
+				'if (ctrl && numKeys >= 2)\n' +
+				'{\n' +
+				'function p(l){ return l.toWorld(l.anchorPoint) };\n' +
+				'try { var fx = ctrl.effect("Effector"); } catch (e) {}\n' +
+				'if (fx)\n' +
+				'{\n' +
+				'var min = fx(1);\n' +
+				'var max = fx(2);\n' +
+				'var mode = fx(3);\n' +
+				'var reverse = fx(4).value;\n' +
+				'var t = 0;\n' +
+				'var beginTime = key(1).time;\n' +
+				'var endTime = key(numKeys).time;\n' +
+				'var distance = length ( p(thisLayer), p(ctrl) );\n' +
+				'if (mode == 1)\n' +
+				'{\n' +
+				'if (!reverse) t = linear(distance, min, max, endTime, beginTime);\n' +
+				'else t = linear(distance, min, max, beginTime, endTime);\n' +
+				'}\n' +
+				'else\n' +
+				'{\n' +
+				'var mid = (min + max)/2;\n' +
+				'if (!reverse)\n' +
+				'{\n' +
+				'if (distance > mid) t = linear(distance, mid, max, endTime, beginTime);\n' +
+				'else t = linear(distance, min, mid, beginTime, endTime);\n' +
+				'}\n' +
+				'else\n' +
+				'{\n' +
+				'if (distance > mid) t = linear(distance, mid, max, beginTime, endTime);\n' +
+				'else t = linear(distance, min, mid, endTime, beginTime);\n' +
+				'}\n' +
+				'}\n' +
+				'result = valueAtTime(t);\n' +
+				'}\n' +
+				'}\n' +
+				'result;\n';
+
+	effector.effectorLayer = ctrlLayer;
+	effector.effect = effect;
+
+	return effector;
+}
+
+/**
+* Adds a spring effect on the property
+* @param {PropertyInfo} prop - The property to rig
+*/
+DuAEF.Duik.Automation.spring = function (prop)
+{
+	if (!prop) return;
+	if (!prop.riggable) return;
+
+	//search for one dimension effects, to know if we need a "bounce" checkbox
+	var bounce = false;
+	if (prop.dimensions == 1) bounce = true;
+
+	//check if it's spatial
+	var spatial = prop.getProperty().isSpatial;
+	var layer = prop.layer;
+
+	var effect = null;
+
+	layer.selected = true;
+	if (bounce) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_SPRING);
+	else if (spatial) layer.applyPreset(DuAEF.Duik.PseudoEffects.SPATIAL_SPRING);
+	else layer.applyPreset(DuAEF.Duik.PseudoEffects.MULTID_SPRING);
+	layer.selected = false;
+	effect = layer.effect("Spring");
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().parentProperty.name + ' Spring',layer);
+
+	if (bounce)
+	{
+		prop.getProperty().expression = "//Duik.Spring\n" +
+					'var fx = effect("' + effect.name + '")\n' +
+					"damping = fx(2).value;\n" +
+					"elasticity = fx(1).value;\n" +
+					"speedLimit = 0.1;\n" +
+					"bounce = fx(3).value;\n\n" +
+					"if (numKeys > 1 && elasticity != 0 ){\n" +
+					"if (nearestKey(time).index == 1) { value }\n" +
+					"else {\n\n" +
+					"if (length(velocity) <= speedLimit ) {\n\n" +
+					"tempsClefProx = nearestKey(time).time;\n\n" +
+					"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" +
+					"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" +
+					"temps = time - tempsDebut;\n\n" +
+					"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
+					"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" +
+					"if (!bounce) valueAtTime(tempsDebut) + spring;\n\n" +
+					"if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" +
+					"if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" +
+					"}\n" +
+					"else { value }\n" +
+					"}\n" +
+					"}\n" +
+					"else { value }";
+	}
+	else if (spatial)
+	{
+		var toWorldFunc = '';
+		if (prop.getProperty().matchName == 'ADBE Position')
+		{
+			toWorldFunc = "function worldVelocity(temps) {\n" +
+			"worldVelocityX = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[0]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[0])*100;\n" +
+			"worldVelocityY = (thisLayer.toWorld(thisLayer.anchorPoint,temps)[1]-thisLayer.toWorld(thisLayer.anchorPoint,temps-.01)[1])*100;\n" +
+			"return [worldVelocityX,worldVelocityY];\n" +
+			"}\n";
+		}
+		else
+		{
+			toWorldFunc = "function worldVelocity(temps) {\n" +
+			"worldVelocityX = (thisLayer.toWorld(value,temps)[0]-thisLayer.toWorld(value,temps-.01)[0])*100;\n" +
+			"worldVelocityY = (thisLayer.toWorld(value,temps)[1]-thisLayer.toWorld(value,temps-.01)[1])*100;\n" +
+			"return [worldVelocityX,worldVelocityY];\n" +
+			"}\n";
+		}
+		prop.getProperty().expression = "//Duik.spring\n" +
+					'var fx = effect("' + effect.name + '")\n' +
+					"damping = fx(2).value;\n" +
+					"elasticity = fx(1).value;\n" +
+					'simulation = fx(3).value;\n' +
+					"speedLimit = 0.1;\n" +
+					"if (damping == 0) damping = 0.01;\n" +
+					"if (elasticity == 0) elasticity = 0.01;\n" +
+					"retard = elasticity/damping;\n" +
+					"poids = 1/damping/10;\n" +
+					"precision = thisComp.frameDuration;\n" +
+					toWorldFunc +
+					"function worldSpeed(temps) {\n" +
+					"return length(worldVelocity(temps));\n" +
+					"}\n" +
+					'if (simulation == 2)\n' +
+					'{\n' +
+						"tempsDebut = 0;\n" +
+						"tempsRedemarrage = 0;\n" +
+						"stop = false;\n" +
+						"arrete = false;\n" +
+						"for (i=timeToFrames(time);i>=0;i--) {\n" +
+						"var instant = framesToTime(i);\n" +
+						"var instantSuivant = instant-precision;\n" +
+						"if (worldSpeed(instant) == 0 ) {\n" +
+						"if (tempsRedemarrage == 0) tempsRedemarrage = instant;\n" +
+						"if (worldSpeed(instantSuivant) !=0 ) {\n" +
+						"tempsDebut = instantSuivant;\n" +
+						"break;\n" +
+						"}\n" +
+						"}\n" +
+						"}\n" +
+						"temps = time-tempsDebut;\n" +
+						"frameRedemarre = timeToFrames( time-tempsRedemarrage);\n" +
+						"valeur = value\n" +
+						"if ( frameRedemarre <= retard)\n" +
+						"valeur = value - worldVelocity(time)*poids*(frameRedemarre/retard);\n" +
+						"else\n" +
+						"valeur = value - worldVelocity(time)*poids;\n" +
+						"if (worldSpeed(time) == 0) {\n" +
+						"spring = worldVelocity(tempsDebut) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
+						"valeur + spring;\n" +
+						"}else{ valeur; }\n" +
+					'}\n' +
+					'else\n' +
+					'{\n' +
+						"if (numKeys > 1 && elasticity != 0 ){\n" +
+						"if (nearestKey(time).index == 1) { value }\n" +
+						"else {\n\n" +
+						"if (length(velocity) <= speedLimit ) {\n\n" +
+						"tempsClefProx = nearestKey(time).time;\n\n" +
+						"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" +
+						"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" +
+						"temps = time - tempsDebut;\n\n" +
+						"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
+						"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" +
+						"valueAtTime(tempsDebut) + spring;\n\n" +
+						"}\n" +
+						"else { value }\n" +
+						"}\n" +
+						"}\n" +
+						"else { value }\n" +
+					'}\n';
+
+	}
+	else
+	{
+		prop.getProperty().expression = "//Duik.Spring\r\n" +
+					'var fx = effect("' + effect.name + '")\n' +
+					"damping = fx(2).value;\n" +
+					"elasticity = fx(1).value;\n" +
+					"speedLimit = 0.1;\n" +
+					"if (numKeys > 1 && elasticity != 0 ){\n" +
+					"if (nearestKey(time).index == 1) { value }\n" +
+					"else {\n\n" +
+					"if (length(velocity) <= speedLimit ) {\n\n" +
+					"tempsClefProx = nearestKey(time).time;\n\n" +
+					"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" +
+					"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" +
+					"temps = time - tempsDebut;\n\n" +
+					"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
+					"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" +
+					"valueAtTime(tempsDebut) + spring;\n\n" +
+					"}\n" +
+					"else { value }\n" +
+					"}\n" +
+					"}\n" +
+					"else { value }";
+	}
+}
+
+/**
+* Adds a blink effect on the property
+* @param {PropertyInfo} prop - The property to rig
+*/
+DuAEF.Duik.Automation.blink = function (prop)
+{
+	if (!prop) return;
+	if (!prop.riggable) return;
+
+	var dimensions = prop.dimensions;
+	var layer = prop.layer;
+
+	layer.selected = true;
+	if (dimensions == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_BLINK);
+	else if (dimensions == 2) layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_BLINK);
+	else if (dimensions == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_BLINK);
+	else if (dimensions == 4) layer.applyPreset(DuAEF.Duik.PseudoEffects.COLOR_BLINK);
+	layer.selected = false;
+
+	var effect = layer.effect('Blink');
+	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Blink',layer);
+	DuAEF.DuAE.Property.setValue(effect(1),prop.getProperty().value);
+
+	prop.getProperty().expression = "//Duik.blink\n" +
+		'var fx = effect("' + effect.name + '")\n' +
+		"var phase = fx(3).value;\n" +
+		"var timeOn = fx(4).value;\n" +
+		"var offset = fx(5).value;\n" +
+		"var valueA = fx(1).value;\n" +
+		"var valueB = fx(2).value;\n" +
+		"freq= timeToFrames(1)/phase;\n" +
+		"var currentFrame = timeToFrames(time+offset/phase/100);\n" +
+		"if (currentFrame%freq > freq*timeOn/100) valueB;\n" +
+		"else valueA;";
+}
+
+/**
+* Adds a move away effect on the layer
+* @param {Layer} layer - The layer to rig
+*/
+DuAEF.Duik.Automation.moveAway = function (layer)
+{
+	if (layer == undefined) return;
+	var effect = layer.Effects.addProperty("ADBE Slider Control");
+	effect.name =  DuAEF.DuAE.Layer.newUniqueEffectName('Move away from parent',layer);
+
+	layer.transform.position.expression = "//Duik.moveAway\n" +
+						"if (thisLayer.hasParent)\n" +
+						"{\n" +
+						"thisWorldPos = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+						"parentWorldPos = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);\n" +
+						"depl = effect(\"" + effect.name  + "\")(1)\n" +
+						"dist = length(parentWorldPos ,thisWorldPos )\n" +
+						"coef = (dist+depl)/dist\n" +
+						"newWorldPos = (thisWorldPos-parentWorldPos)*coef+parentWorldPos\n" +
+						"thisLayer.parent.fromWorld(newWorldPos)\n" +
+						"}\n" +
+						"else\n" +
+						"{\n" +
+						"value\n" +
+						"}\n";
+}
+
+/**
+* Rigs the paint effects found on the layer to animate all the strokes as if there was only one
+* @param {Layer} layer - The layer to rig
+*/
+DuAEF.Duik.Automation.paintRig = function (layer)
+{
+	if (layer == undefined) return;
+
+	//if there's no paint effect
+	var paintEffect = layer("ADBE Effect Parade")("ADBE Paint");
+	if (paintEffect == null) return;
+
+	//add effect
+	var newName = DuAEF.DuAE.Layer.newUniqueEffectName('Paint Rig',layer);
+	layer.selected = true;
+	layer.applyPreset(DuAEF.Duik.PseudoEffects.PAINT_RIG);
+	layer.selected = false;
+	var effect = layer.effect('Paint Rig');
+	effect.name = newName;
+
+	//need to get the paint effect again after addProperty, After Effects bug.......
+	var paintEffect = layer("Effects")("ADBE Paint");
+
+	//the first diameter and color
+	var defaultDiam = 0;
+	var defaultCol = [0,0,0,0];
+
+	//for each stroke
+	var nbre = paintEffect.property(2).numProperties;
+	for (var j=1;j<=nbre;j++)
+	{
+		var stroke = paintEffect.property(2).property(j);
+		var propStart = stroke.property(4).property(1);
+		var propEnd = stroke.property(4).property(2);
+		var propCol = stroke.property(4).property(3);
+		var propDiam = stroke.property(4).property(4);
+
+		if (defaultDiam == 0)
+		{
+			defaultDiam = propDiam.value;
+			effect(13).setValue(defaultDiam);
+			effect(14).setValue(defaultDiam);
+		}
+		if (defaultCol[3] == 0)
+		{
+			defaultCol = propCol.value;
+			effect(9).setValue(defaultCol);
+			effect(10).setValue(defaultCol);
+		}
+
+		propStart.expression = '//Duik.PaintRig\n' +
+					'var ctrl = effect("' + effect.name + '")(1);\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex\n' +
+					'result = ctrl - ((100/total)*(ind-1));\n' +
+					'result = result * total;\n' +
+					'result;';
+
+		propEnd.expression = '//Duik.PaintRig\n' +
+					'var ctrl = effect("' + effect.name + '")(2);\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'result = ctrl - ((100/total)*(ind-1));\n' +
+					'result = result * total;\n' +
+					'result;';
+
+		propDiam.expression = '//Duik.PaintRig\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var ctrlA = fx(13).value;\n' +
+					'var ctrlB = fx(14).value;\n' +
+					'var reverse = fx(6).value;\n' +
+					'var interpolation =fx(5).value;\n' +
+					'var mode = fx(4).value;\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'if (reverse)\n' +
+					'{\n' +
+					'var t = ctrlA;\n' +
+					'ctrlA = ctrlB;\n' +
+					'ctrlB = t;\n' +
+					'}\n' +
+					'var result = ctrlA;\n' +
+					'if (mode == 2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else if (mode == 3)\n' +
+					'{\n' +
+					'if (ind < total /2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'}\n' +
+					'}\n' +
+					'result;';
+
+		propCol.expression = '//Duik.PaintRig\n' +
+					'var fx = effect("' + effect.name + '");\n' +
+					'var ctrlA = fx(9).value;\n' +
+					'var ctrlB = fx(10).value;\n' +
+					'var reverse = fx(6).value;\n' +
+					'var interpolation = fx(5).value;\n' +
+					'var mode = fx(4).value;\n' +
+					'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+					'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+					'if (reverse)\n' +
+					'{\n' +
+					'var t = ctrlA;\n' +
+					'ctrlA = ctrlB;\n' +
+					'ctrlB = t;\n' +
+					'}\n' +
+					'var result = ctrlA;\n' +
+					'if (mode == 2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else if (mode == 3)\n' +
+					'{\n' +
+					'if (ind < total /2)\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+					'}\n' +
+					'else\n' +
+					'{\n' +
+					'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+					'}\n' +
+					'}\n' +
+					'result;';
+	}
+}
+
+/**
+* Randomize tools
+* @namespace
+* @memberof DuAEF.Duik.Automation
+*/
+DuAEF.Duik.Automation.Randomize = {};
+
+/**
+* Randomizes the values at current time of the Properties
+* @param {PropertyBase[]|PropertyInfo[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} xMin - X minimum value
+* @param {float} xMax - X maximum value
+* @param {float} [yMin] - Y minimum value
+* @param {float} [yMax] - Y maximum value
+* @param {float} [zMin] - Z minimum value
+* @param {float} [zMax] - Z maximum value
+*/
+DuAEF.Duik.Automation.Randomize.properties = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+{
+	if (props == undefined) throw "You must select the properties you want to randomize";
+	if (props.length == 0) throw "You must select the properties you want to randomize";
+	var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+	var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+	var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			var xval = 0;
+			var yval = 0;
+			var zval = 0;
+			//X
+			if (x) xval = DuAEF.DuJS.Math.random(xMin,xMax);
+			else if (dim == 1) xval = prop.value;
+			else xval = prop.value[0];
+			//Y
+			if (dim == 2 || dim == 3 && y) yval = DuAEF.DuJS.Math.random(yMin,yMax);
+			else if (dim == 3 || dim == 2) yval = 0;
+			//Z
+			if (dim == 3 && z) zval = DuAEF.DuJS.Math.random(zMin,zMax);
+			else if (dim == 3) zval = 0;
+			//SET VALUE
+			var val;
+			if (dim == 1) val = xval;
+			if (dim == 2) val = [xval,yval];
+			if (dim == 3) val = [xval,yval,zval];
+			if (fromCurrentVal) val = val + prop.value;
+			prop.numKeys ? prop.setValueAtTime(comp.time,val) : prop.setValue(val);
+		}
+	}
+}
+
+/**
+* Randomizes the values of the selected keys of the Properties
+* @param {PropertyBase[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} xMin - X minimum value
+* @param {float} xMax - X maximum value
+* @param {float} [yMin] - Y minimum value
+* @param {float} [yMax] - Y maximum value
+* @param {float} [zMin] - Z minimum value
+* @param {float} [zMax] - Z maximum value
+*/
+DuAEF.Duik.Automation.Randomize.selectedKeys = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax)
+{
+	if (props == undefined) throw "You must select the keyframes you want to randomize";
+	if (props.length == 0) throw "You must select the keyframes you want to randomize";
+	var x = (xMin != undefined && xMax != undefined && !isNaN(xMin) && !isNaN(xMax));
+	var y = (yMin != undefined && yMax != undefined && !isNaN(yMin) && !isNaN(yMax));
+	var z = (zMin != undefined && zMax != undefined && !isNaN(zMin) && !isNaN(zMax));
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp and dimensions
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			//loop through selected keyframes
+			for (var j = 0 ; j < prop.selectedKeys.length; j++)
+			{
+				var key = prop.selectedKeys[j];
+				var xval = 0;
+				var yval = 0;
+				var zval = 0;
+				//X
+				if (x) xval = DuAEF.DuJS.Math.random(xMin,xMax);
+				else xval = 0;
+				//Y
+				if (dim == 2 || dim == 3 && y) yval = DuAEF.DuJS.Math.random(yMin,yMax);
+				else if (dim == 3 || dim == 2) yval = 0;
+				//Z
+				if (dim == 3 && z) zval = DuAEF.DuJS.Math.random(zMin,zMax);
+				else if (dim == 3) zval = 0;
+				//SET VALUE
+				var val;
+				if (dim == 1) val = xval;
+				if (dim == 2) val = [xval,yval];
+				if (dim == 3) val = [xval,yval,zval];
+				if (fromCurrentVal) val = val + prop.keyValue(key);
+				prop.setValueAtKey(key,val);
+			}
+		}
+	}
+}
+
+/**
+* Randomizes the times of the selected keys of the Properties
+* @param {PropertyBase[]} props - The Properties
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.selectedKeyTimes = function (props,fromCurrentVal,min,max)
+{
+	if (props == undefined) throw "You must select the keyframes you want to randomize";
+	if (props.length == 0) throw "You must select the keyframes you want to randomize";
+	var x = (min != undefined && max != undefined && !isNaN(min) && !isNaN(max));
+	if (!x) throw "You must define a randomizing range";
+
+	//array to list keys to be removed
+	var krKeys = [];
+
+
+	for (var i = 0;i<props.length;i++)
+	{
+		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		var krK = [];
+		if (prop.propertyType == PropertyType.PROPERTY)
+		{
+			//Get containing comp and dimensions
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			var dim = DuAEF.DuAE.Property.getDimensions(prop);
+			//loop through selected keyframes
+			for (var j = 0 ; j < prop.selectedKeys.length; j++)
+			{
+				var key = prop.selectedKeys[j];
+				var t = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+				//SET VALUE
+				if (fromCurrentVal) r += prop.keyTime(key);
+				var oldKey = DuAEF.DuAE.Property.getKeyFrameAtIndex(prop,key);
+				krK.push(prop.keyTime(key));
+				DuAEF.DuAE.Property.setKey(prop,oldKey,t);
+			}
+		}
+		krKeys.push(krK);
+	}
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		var prop = props[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		for (var j = 0 ; j < krKeys[i].length ; j++)
+		{
+			prop.removeKey(prop.nearestKeyIndex(krKeys[i][j]));
+		}
+	}
+}
+
+/**
+* Randomizes the start times of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.startTimes = function (layers,fromCurrentVal,min,max)
+{
+		if (layers == undefined) return;
+		if (layers.length == 0 ) return;
+
+		var it = new Iterator(layers);
+
+		while (!it.atEnd)
+		{
+			it.next();
+			var l = layers[it.current];
+			var comp = l.containingComp;
+			var startTime = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+			if (fromCurrentVal) l.startTime = l.startTime + startTime;
+			else l.startTime = startTime;
+		}
+	}
+
+/**
+* Randomizes the in points of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.inPoints = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = new Iterator(layers);
+
+	while (!it.atEnd)
+	{
+		it.next();
+		var l = layers[it.current];
+		var comp = l.containingComp;
+		var inPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+		if (fromCurrentVal) l.inPoint = l.inPoint + inPoint;
+		else l.inPoint = inPoint;
+	}
+}
+
+/**
+* Randomizes the out points of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum time (in frames)
+* @param {float} max - maximum time (in frames)
+*/
+DuAEF.Duik.Automation.Randomize.outPoints = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = new Iterator(layers);
+
+	for (var i = it.min; i<= it.max;i++)
+	{
+		it.next();
+		var l = layers[it.current];
+		var comp = l.containingComp;
+		var outPoint = DuAEF.DuJS.Math.random(min,max)*comp.frameDuration;
+		if (fromCurrentVal) l.outPoint = l.outPoint + outPoint;
+		else l.outPoint = outPoint;
+	}
+}
+
+/**
+* Randomizes the indices of the layers
+* @param {Layer[]|LayerCollection} layers - The layers
+* @param {boolean} [fromCurrentVal] - true to offset the current value
+* @param {float} min - minimum index
+* @param {float} max - maximum index
+*/
+DuAEF.Duik.Automation.Randomize.indices = function (layers,fromCurrentVal,min,max)
+{
+	if (layers == undefined) return;
+	if (layers.length == 0 ) return;
+
+	var it = new Iterator(layers);
+
+	while (!it.atEnd)
+	{
+		it.next();
+		var l = layers[it.current];
+		var index = parseInt(DuAEF.DuJS.Math.random(min,max));
+		if (fromCurrentVal) index = l.index + index;
+		if (index == l.index) continue;
+		var comp = l.containingComp;
+		if (index >= comp.numLayers) l.moveToEnd();
+		else if (index < 2) l.moveToBeginning();
+		else l.moveBefore(comp.layer(index));
+	}
+}
