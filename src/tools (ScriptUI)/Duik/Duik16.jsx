@@ -145,8 +145,6 @@
 	#include 'icons/w18_zero_l.jsxinc'
 	#include 'icons/w18_list_r.jsxinc'
 	#include 'icons/w18_list_l.jsxinc'
-	#include 'icons/w18_moveaway_r.jsxinc'
-	#include 'icons/w18_absolute_l.jsxinc'
 	#include 'icons/w18_randomkeytime_r.jsxinc'
 	#include 'icons/w18_randomkeytime_l.jsxinc'
 	#include 'icons/w18_randomlayerout_r.jsxinc'
@@ -410,6 +408,9 @@
 	#include 'icons/w25_updatecode_l.png.jsxinc'
 	#include 'icons/w25_parenttocam_l.png.jsxinc'
 	#include 'icons/w25_parenttocam_r.png.jsxinc'
+	#include 'icons/w25_absolute_l.png.jsxinc'
+	#include 'icons/w25_absolute_r.png.jsxinc'
+
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
@@ -499,6 +500,12 @@
 	#include 'icons/w32_moveanchor_r.png.jsxinc'
 	#include 'icons/w32_pos_l.png.jsxinc'
 	#include 'icons/w32_pos_r.png.jsxinc'
+	#include 'icons/w32_randomize_r.png.jsxinc'
+	#include 'icons/w32_randomize_l.png.jsxinc'
+	#include 'icons/w32_klin_r.png.jsxinc'
+	#include 'icons/w32_klin_l.png.jsxinc'
+	#include 'icons/w32_aelayers_r.png.jsxinc'
+	#include 'icons/w32_aelayers_l.png.jsxinc'
 
 	#include 'icons/illustrations_tail.jsxinc'
 	#include 'icons/illustrations_spine.jsxinc'
