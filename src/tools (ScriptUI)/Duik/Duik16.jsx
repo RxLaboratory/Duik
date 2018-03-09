@@ -410,6 +410,12 @@
 	#include 'icons/w25_parenttocam_r.png.jsxinc'
 	#include 'icons/w25_absolute_l.png.jsxinc'
 	#include 'icons/w25_absolute_r.png.jsxinc'
+	#include 'icons/w25_hips_r.png.jsxinc'
+	#include 'icons/w25_hips_l.png.jsxinc'
+	#include 'icons/w25_body_r.png.jsxinc'
+	#include 'icons/w25_body_l.png.jsxinc'
+	#include 'icons/w25_shoulders_r.png.jsxinc'
+	#include 'icons/w25_shoulders_l.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
