@@ -473,6 +473,8 @@ DuAEF.Duik.Autorig.rig = function (layers)
 				arms.push(arm);
 			}
 
+			arm.type = params[DuAEF.Duik.MarkerParameters.AUTORIG_ANIMAL_TYPE];
+
 			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.SHOULDER)
 			{
 				arm.shoulder = layer;
@@ -800,7 +802,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 	var itLegs = new Iterator(legs);
 	itLegs.do(function(leg){
 
-		//TODO DIGITIGRADE and ungulate
+		//TODO ungulate
 
 		//unparent
 		if (leg.tibia && leg.femur) leg.tibia.parent = null;
@@ -1058,7 +1060,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 				arm.tip.transform.position.setValue([clawsNull.transform.position.value[0] + handSize/2,clawsNull.transform.position.value[1]]);
 			}
 
-			if (!arm.palm)
+			if (!arm.palm && arm.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE)
 			{
 				arm.palm = DuAEF.DuAE.Layer.addNull(arm.claws);
 				arm.palm.name = "FootRoll | Heel";
@@ -1072,14 +1074,18 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		}
 
 		//Controller for the arm
+		var ctrlType = DuAEF.Duik.Controller.Types.HAND;
+		if (handNull && arm.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) ctrlType = DuAEF.Duik.Controller.Types.FOOT;
+		else if (arm.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) ctrlType = DuAEF.Duik.Controller.Types.CLAWS;
+		else if (arm.type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE) ctrlType = DuAEF.Duik.Controller.Types.HOOF;
 		var ctrl = null;
-		if (arm.hand && ((arm.humerus || arm.radius || arm.shoulder) || (!arm.claws && !arm.tip))) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.hand);
-		else if (arm.claws && ((arm.humerus || arm.radius || arm.shoulder) || !arm.tip)) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.claws);
-		else if (arm.tip) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.tip);
-		else if (arm.palm) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.palm);
-		else if (arm.radius) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.radius);
-		else if (arm.humerus) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.humerus);
-		else if (arm.shoulder) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HAND,arm.shoulder);
+		if (arm.hand && ((arm.humerus || arm.radius || arm.shoulder) || (!arm.claws && !arm.tip))) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.hand);
+		else if (arm.claws && ((arm.humerus || arm.radius || arm.shoulder) || !arm.tip)) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.claws);
+		else if (arm.tip) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.tip);
+		else if (arm.palm) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.palm);
+		else if (arm.radius) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.radius);
+		else if (arm.humerus) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.humerus);
+		else if (arm.shoulder) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,arm.shoulder);
 
 		//parenting
 		if (arm.claws)
@@ -1149,7 +1155,8 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		{
 			handNull.parent = clawsNull;
 			clawsNull.parent = arm.tip;
-			arm.palm.parent = ctrl.layer;
+			if (arm.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) arm.palm.parent = ctrl.layer;
+			else if(arm.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) arm.tip.parent = ctrl.layer;
 		}
 
 		//IKs
@@ -1209,13 +1216,15 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			else if (arm.shoulder && arm.humerus) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.humerus,ctrl);
 			else if (arm.shoulder && arm.radius) DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,arm.radius,ctrl);
 		}
+
+		//shoulder rotation
 		if (arm.shoulder && arm.humerus && arm.radius)
 		{
 			DuAEF.Duik.Rigging.oneLayerIK(arm.shoulder,undefined,ctrl);
 			var ikShoulderEffect = ctrl.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK);
 			var oldName = ikShoulderEffect.name;
-			ikShoulderEffect.name = arm.shoulder.name + " rotation";
-			app.project.autoFixExpressions(oldName,arm.shoulder.name + " rotation");
+			ikShoulderEffect.name = DuAEF.Duik.generateName('',arm.shoulder.name + " rotation");
+			app.project.autoFixExpressions(oldName,ikShoulderEffect.name);
 			ikShoulderEffect(2).setValue(20);
 			ikShoulderEffect(3).setValue(-arm.shoulder.transform.rotation.value);
 			ikShoulderEffect(5).setValue(1);
@@ -1235,20 +1244,33 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			//tiptoe, heel and footroll
 			var handCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.FOOT_ROLL,DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL,"Foot roll");
 			arm.tip.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);";
-			var op  = right ? "<" : ">";
-			arm.palm.transform.rotation.expression = "//Duik.footRoll\n" +
-			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);\n" +
-			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
-			"roll " + op + " 0 ? roll+ctrl : ctrl;";
-			op = right ? ">" : "<";
-			clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
-			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
-			"ctrl " + op + " 0 ? ctrl : 0;";
+			if (arm.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE)
+			{
+				var op  = right ? "<" : ">";
+				arm.palm.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);\n" +
+				"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
+				"roll " + op + " 0 ? roll+ctrl : ctrl;";
+				op = right ? ">" : "<";
+				clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
+				"ctrl " + op + " 0 ? ctrl : 0;";
+			}
+			else if (arm.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE)
+			{
+				clawsNull.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(3);\n" +
+				"var tiptoe = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(1);\n" +
+				"ctrl-tiptoe;";
+				arm.tip.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK)(3).expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + handCtrl.name + "\")(2);";
+			}
 		}
 
 		if (arm.shoulder)
 		{
-			var shoulderCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.SHOULDER,DuAEF.Duik.PseudoEffectsMatchNames.SHOULDER,arm.shoulder.name + " position");
+			var shoulderCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.SHOULDER,DuAEF.Duik.PseudoEffectsMatchNames.SHOULDER,DuAEF.Duik.generateName('',arm.shoulder.name + " position"));
+
+			if (arm.type != DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) shoulderCtrl(9).setValue(10);
 
 			arm.shoulder.transform.position.expression = '//Duik.shoulder\n' +
 				'var c = thisComp.layer("' + ctrl.layer.name + '");\n' +
