@@ -416,6 +416,8 @@
 	#include 'icons/w25_body_l.png.jsxinc'
 	#include 'icons/w25_shoulders_r.png.jsxinc'
 	#include 'icons/w25_shoulders_l.png.jsxinc'
+	#include 'icons/w25_foxtail_l.png.jsxinc'
+	#include 'icons/w25_foxtail_r.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
