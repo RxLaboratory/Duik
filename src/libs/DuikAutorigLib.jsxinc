@@ -802,8 +802,6 @@ DuAEF.Duik.Autorig.rig = function (layers)
 	var itLegs = new Iterator(legs);
 	itLegs.do(function(leg){
 
-		//TODO ungulate
-
 		//unparent
 		if (leg.tibia && leg.femur) leg.tibia.parent = null;
 		if (leg.foot && (leg.tibia || leg.femur)) leg.foot.parent = null;
@@ -823,7 +821,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		//add nulls and controllers for the footRoll
 		var toesNull, footNull;
 		//the foot roll needs all parts
-		if (leg.toes && leg.foot && leg.tibia && leg.femur)
+		if (leg.toes && leg.foot && leg.tibia && leg.femur && leg.type != DuAEF.Duik.Autorig.AnimalTypes.UNGULATE)
 		{
 			//claws
 			toesNull = DuAEF.DuAE.Layer.addNull(leg.toes);
@@ -857,8 +855,9 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) ctrlType = DuAEF.Duik.Controller.Types.CLAWS;
 		if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE) ctrlType = DuAEF.Duik.Controller.Types.HOOF;
 		var ctrl = null;
-		if (leg.foot && ((leg.femur || leg.tibia) || (!leg.toes && !leg.tip))) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.foot);
+		if (leg.foot && ((leg.femur || leg.tibia) || (!leg.toes && !leg.tip)) && leg.type != DuAEF.Duik.Autorig.AnimalTypes.UNGULATE) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.foot);
 		else if (leg.toes && ((leg.femur || leg.tibia) || !leg.tip)) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.toes);
+		else if (leg.foot && leg.type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.foot);
 		else if (leg.tip) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.tip);
 		else if (leg.heel) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.heel);
 		else if (leg.tibia) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.tibia);
@@ -910,6 +909,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		if (leg.tip)
 		{
 			if (leg.heel) leg.tip.parent = leg.heel;
+			else if (leg.toes) leg.tip.parent = leg.toes;
 			else if (leg.foot) leg.tip.parent = leg.foot;
 			else if (leg.tibia) leg.tip.parent = leg.tibia;
 			else if (leg.femur) leg.tip.parent = leg.femur;
@@ -934,7 +934,22 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		}
 		else
 		{
-			if (leg.foot)
+			if (leg.toes && leg.type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE)
+			{
+				if (leg.foot && leg.tibia)
+				{
+					DuAEF.Duik.Rigging.twoLayerIK(leg.tibia,leg.foot,leg.toes,ctrl);
+					if (leg.femur)
+					{
+						DuAEF.Duik.Rigging.oneLayerIK(leg.femur,undefined,ctrl);
+						ctrl.layer.effect(3)(2).setValue(20);
+						ctrl.layer.effect(3)(3).setValue(-leg.femur.transform.rotation.value);
+					}
+				}
+				else if (leg.foot && leg.femur) DuAEF.Duik.Rigging.twoLayerIK(leg.femur,leg.foot,leg.toes,ctrl);
+				else if (leg.tibia && leg.femur)	DuAEF.Duik.Rigging.twoLayerIK(leg.femur,leg.tibia,arm.claws,ctrl);
+			}
+			else if (leg.foot)
 			{
 				if (leg.femur && leg.tibia) DuAEF.Duik.Rigging.twoLayerIK(leg.femur,leg.tibia,leg.foot,ctrl);
 				else if (leg.femur) DuAEF.Duik.Rigging.oneLayerIK(leg.femur,leg.foot,ctrl);
