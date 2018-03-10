@@ -532,6 +532,8 @@ DuAEF.Duik.Autorig.rig = function (layers)
 				legs.push(leg);
 			}
 
+			leg.type = params[DuAEF.Duik.MarkerParameters.AUTORIG_ANIMAL_TYPE];
+
 			if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ELEMENT] == DuAEF.Duik.Autorig.Elements.FEMUR)
 			{
 				leg.femur = layer;
@@ -835,7 +837,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 				leg.tip.transform.position.setValue([toesNull.transform.position.value[0] + footSize/2,toesNull.transform.position.value[1]]);
 			}
 
-			if (!leg.heel)
+			if (!leg.heel && leg.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE)
 			{
 				leg.heel = DuAEF.DuAE.Layer.addNull(leg.toes);
 				leg.heel.name = "FootRoll | Heel";
@@ -849,13 +851,16 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		}
 
 		//Controller for the leg
+		var ctrlType = DuAEF.Duik.Controller.Types.FOOT;
+		if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) ctrlType = DuAEF.Duik.Controller.Types.CLAWS;
+		if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE) ctrlType = DuAEF.Duik.Controller.Types.HOOF;
 		var ctrl = null;
-		if (leg.foot && ((leg.femur || leg.tibia) || (!leg.toes && !leg.tip))) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.foot);
-		else if (leg.toes && ((leg.femur || leg.tibia) || !leg.tip)) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.toes);
-		else if (leg.tip) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.tip);
-		else if (leg.heel) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.heel);
-		else if (leg.tibia) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.tibia);
-		else if (leg.femur) ctrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.FOOT,leg.femur);
+		if (leg.foot && ((leg.femur || leg.tibia) || (!leg.toes && !leg.tip))) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.foot);
+		else if (leg.toes && ((leg.femur || leg.tibia) || !leg.tip)) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.toes);
+		else if (leg.tip) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.tip);
+		else if (leg.heel) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.heel);
+		else if (leg.tibia) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.tibia);
+		else if (leg.femur) ctrl = DuAEF.Duik.Controller.create(comp,ctrlType,leg.femur);
 
 		//parenting
 		if (leg.toes)
@@ -911,7 +916,8 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		{
 			footNull.parent = toesNull;
 			toesNull.parent = leg.tip;
-			leg.heel.parent = ctrl.layer;
+			if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) leg.heel.parent = ctrl.layer;
+			else if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) leg.tip.parent = ctrl.layer;
 		}
 
 		//IKs
@@ -968,17 +974,30 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			DuAEF.DuAE.Property.linkProperties(ikEffect,ikCtrl);
 
 			//tiptoe, heel and footroll
-			var footCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.FOOT_ROLL,DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL,"Foot roll");
+			var footCtrl;
+			if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) footCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.FOOT_ROLL,DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL,"Foot roll");
+			if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE) footCtrl = DuAEF.DuAE.Layer.addPseudoEffect(ctrl.layer,DuAEF.Duik.PseudoEffects.DIGI_FOOT_ROLL,DuAEF.Duik.PseudoEffectsMatchNames.DIGI_FOOT_ROLL,"Foot roll");
 			leg.tip.transform.rotation.expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);";
-			var op  = right ? "<" : ">";
-			leg.heel.transform.rotation.expression = "//Duik.footRoll\n" +
-			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" +
-			"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
-			"roll " + op + " 0 ? roll+ctrl : ctrl;";
-			op = right ? ">" : "<";
-			toesNull.transform.rotation.expression = "//Duik.footRoll\n" +
-			"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
-			"ctrl " + op + " 0 ? ctrl : 0;";
+			if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE)
+			{
+				var op  = right ? "<" : ">";
+				leg.heel.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);\n" +
+				"var roll = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
+				"roll " + op + " 0 ? roll+ctrl : ctrl;";
+				op = right ? ">" : "<";
+				toesNull.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
+				"ctrl " + op + " 0 ? ctrl : 0;";
+			}
+			else if (leg.type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE)
+			{
+				toesNull.transform.rotation.expression = "//Duik.footRoll\n" +
+				"var ctrl = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
+				"var tiptoe = thisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(1);\n" +
+				"ctrl-tiptoe;";
+				leg.tip.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK)(3).expression = "//Duik.footRoll\nthisComp.layer(\"" + ctrl.layer.name + "\").effect(\"" + footCtrl.name + "\")(2);";
+			}
 		}
 
 		//hide and lock
