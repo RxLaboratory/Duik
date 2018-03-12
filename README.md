@@ -8,6 +8,7 @@ It is very easy to use and **[documented](https://rainbox-dev.github.io/DuAEF_Du
 
 ## Links
 
+- **Contributing guide**: [wiki/Contributing-Guide](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Contributing-Guide)
 - Tools: [rainboxprod.coop/en/tools/](https://rainboxprod.coop/en/tools/)
 - User forum: [forum.rainboxprod.coop](http://forum.rainboxprod.coop)
     - You can create private threads on the forum if you need.    
