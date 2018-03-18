@@ -418,6 +418,8 @@
 	#include 'icons/w25_shoulders_l.png.jsxinc'
 	#include 'icons/w25_foxtail_l.png.jsxinc'
 	#include 'icons/w25_foxtail_r.png.jsxinc'
+	#include 'icons/w25_fk_r.png.jsxinc'
+	#include 'icons/w25_fk_l.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'

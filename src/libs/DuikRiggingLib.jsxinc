@@ -417,16 +417,7 @@ DuAEF.Duik.Rigging.ik = function (layers,controller,forceBezier)
 	layers = DuAEF.DuAE.Layer.sortByParent(layers);
 	//reset rotation and scale if structures
 	var it = new Iterator(layers)
-	it.do(function(layer){
-		if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
-		var children = DuAEF.DuAE.Layer.getChildren(layer);
-		if (children.length == 0) return;
-		var it = new Iterator(children);
-		it.do(function(child){child.parent = null;});
-		layer.transform.rotation.setValue(0);
-		layer.transform.scale.setValue([100,100,100]);
-		it.do(function(child){child.parent = layer;});
-	});
+	it.do(DuAEF.Duik.Structure.resetTransform);
 	DuAEF.DuAE.Layer.parentChain(layers);
 
 	//check if the last one is a goal
@@ -1854,4 +1845,113 @@ DuAEF.Duik.Rigging.goal = function (layers, controller)
 			"}\n" +
 			"result;";
 	}
+}
+
+/**
+* Creates a FK with auto-overlapping and its controller on the layers/the structure.
+* @param {Layer[]|Structure} layers - The layers, already parented or ordered from root (at index 0) to end
+* @param {Layer|Controller|null} [controller] - An already existing controller.
+* @return {Controller|Controller[]} The controller of the FK.
+*/
+DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
+{
+	if (typeof controller === 'undefined') controller = null;
+
+	var comp = layers[0].containingComp;
+
+	//check if there is a controller in the selection
+	if (controller == null)
+	{
+		for (var i = 0,num = layers.length; i < num ; i++)
+		{
+			var l = layers[i];
+			if (DuAEF.Duik.isLayerType(l,DuAEF.Duik.LayerTypes.CONTROLLER))
+			{
+				controller = l;
+				layers.splice(i,1);
+				break;
+			}
+		}
+	}
+
+	//sort layers and parent them
+	layers = DuAEF.DuAE.Layer.sortByParent(layers);
+	//reset rotation and scale if structures
+	var it = new Iterator(layers)
+	it.do(DuAEF.Duik.Structure.resetTransform);
+	DuAEF.DuAE.Layer.parentChain(layers);
+
+	//Create controller
+	if (controller == null)
+	{
+		controller = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.ROTATION,layers[0]);
+	}
+	if (!(controller instanceof Controller))
+	{
+		controller = new Controller(controller);
+	}
+
+	var name = layers[0].name;
+	var fkEffect = DuAEF.DuAE.Layer.addPseudoEffect(controller.layer,DuAEF.Duik.PseudoEffects.FK_OVERLAP,DuAEF.Duik.PseudoEffectsMatchNames.FK_OVERLAP,DuAEF.Duik.generateName('FK Overlap',name));
+	fkEffect(6).setValue(-180);
+	fkEffect(1).setValue(100);
+	fkEffect(2).setValue(10);
+
+	//rig layers
+	var it = new Iterator(layers);
+	it.do(function(layer) {
+		//add Data
+		var layerData = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.IK,DuAEF.Duik.PseudoEffectsMatchNames.IK,"FK Overlap");
+		layerData(1).setValue(controller.layer.index);
+
+		//add expression
+		if (it.current == 0)
+		{
+			layer.transform.rotation.expression = '//Duik.fkOverlap\n' +
+				'var controller = null;\n' +
+				'var result = value;\n' +
+				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n' +
+				'if (controller !=null)\n' +
+				'{\n' +
+				'result += controller.transform.rotation.value + controller.effect("' + fkEffect.name + '")(3).value ;\n' +
+				'}\n' +
+				'result;';
+		}
+		else
+		{
+			var exp = '//Duik.fkOverlap\n' +
+				'var controller = null;\n' +
+				'var result = value;\n' +
+				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n' +
+				'if (controller !=null && hasParent)\n' +
+				'{\n' +
+				'var fx = controller.effect("' + fkEffect.name + '");\n' +
+				'var ctrlRot = controller.transform.rotation;\n' +
+				'var parentRot = parent.transform.rotation ;\n' +
+				'var delay = fx(2).value ;\n' +
+				'var amp = fx(1).value ;\n' +
+				'var uLimit = fx(5).value ;\n' +
+				'var lLimit = fx(6).value ;\n' +
+				'var manual = fx(3).value ;\n' +
+				'delay = delay / 100;\n' +
+				'amp = amp / 100 ;\n' +
+				'result = parentRot.valueAtTime(time-delay);\n';
+
+			if (it.current == 1) exp += 'result = result - ctrlRot.value ;\n';
+
+			exp += 'result = result * amp;\n';
+
+			if (it.current == 1) exp += 'result = result - ctrlRot.velocity*(delay/5);\n';
+
+			exp += 'if (result > uLimit) result = uLimit;\n' +
+				'if (result < lLimit) result = lLimit;\n' +
+				'result = result + value + manual ;\n' +
+				'}\n' +
+				'result;';
+
+			layer.transform.rotation.expression = exp;
+		}
+	});
+
+	return controller;
 }
