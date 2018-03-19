@@ -42,9 +42,11 @@
 DuAEF.DuBinary = {};
 
 /**
- * Creates a file from a DuBinaryFile object representation
+ * Creates a file from a DuBinaryFile object representation.
  * @memberof DuAEF.DuBinary
- * @param {DuBinaryFile}	duBinaryFile  	- The DuBinaryFile object containing the string representation
+ * @param {DuBinaryFile}	duBinaryFile  	- The DuBinaryFile object containing the string representation.<br />
+ * This object will be replaced by the File object created.<br />
+ * If a file object is provided (the file has already been extracted), does nothing.
  * @param {string}			[outputFileName=Folder.userData/DuAEF/category/binaryfilename]	- The output filename.
  * @return {File} The file created
  * @example
@@ -64,31 +66,11 @@ DuAEF.DuBinary = {};
  */
 DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 {
+	if (duBinaryFile instanceof File) return;
 	if (outputFileName === undefined) outputFileName = Folder.userData.absoluteURI + '/DuAEF/' + duBinaryFile.category + '/' + duBinaryFile.fileName;
 	var file = new File(outputFileName);
-	var update = true;
-	if (file.exists)
-	{
-		//check last modification
-		var modifiedDate = file.modified;
-		var currentDate = new Date();
 
-		update = (currentDate.getTime() - modifiedDate.getTime()) > 3600000;
-
-		//if debug mode, check content
-		if (update && DuAEF.debug)
-		{
-			file.encoding = 'BINARY';
-			if (file.open('r', 'TEXT', '????'))
-			{
-				fileContent = file.read();
-
-				file.close();
-			}
-			update = fileContent != duBinaryFile.binAsString;
-		}
-	}
-	else
+	if (!file.exists)
 	{
 		var folder = new Folder(file.path);
 		if (!folder.exists)
@@ -97,15 +79,14 @@ DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 		}
 	}
 
-	if (update)
+	file.encoding = 'BINARY';
+	if (file.open('w'))
 	{
-		file.encoding = 'BINARY';
-		if (file.open('w'))
-		{
-			success = file.write(duBinaryFile.binAsString);
-			file.close();
-		}
+		success = file.write(duBinaryFile.binAsString);
+		file.close();
 	}
+
+	duBinaryFile = file;
 
 	return file;
 }
@@ -142,23 +123,17 @@ DuAEF.DuBinary.toObj = function(binaryFile,category)
  * @param {string}  [category]        - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @param {string}  [outputFileName=Same folder, same name with .json extension]  - The file name for the output.
  * @param {string}	[varName=File name without extension]	- The name of the variable used to store the javascript object.
- * @param {bool}	[autoExtract=false]	- Adds code to extract the file as soon as it is included (instead of just creating a variable).
  * @return {File} The json file created
  */
-DuAEF.DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName,autoExtract)
+DuAEF.DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName)
 {
 	if (typeof  outputFileName === 'undefined') outputFileName = binaryFile.absoluteURI + '.jsxinc';
-	if (typeof autoExtract === 'undefined') autoExtract = false;
 	if (typeof varName === 'undefined') varName = binaryFile.name.replace(/\..+/,'');
 	varName = DuAEF.DuJS.String.replace(varName,'%20','_');
 	var duBinary = this.toObj(binaryFile,category);
 	var jsString = 'var ' + varName + ' = ';
 	jsString += '{"binAsString":"' + duBinary.binAsString + '","fileName":"' + duBinary.fileName + '","category":"' + duBinary.category + '"}'
 	jsString += ';\r\n';
-	if (autoExtract)
-	{
-		jsString += varName + ' = DuAEF.DuBinary.toFile(' + varName + ');';
-	}
 	jsString += varName + ';\r\n';
 	var outputFile = new File(outputFileName);
 	outputFile.encoding = 'UTF8';
