@@ -15,7 +15,7 @@
 
 for (var i = 0 ; i < file.length ; i++)
 {
-DuAEF.DuBinary.convertToIncludeFile(file[i],undefined,undefined,undefined,false);
+DuAEF.DuBinary.convertToIncludeFile(file[i]);
 }
 
 
