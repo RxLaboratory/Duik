@@ -142,17 +142,23 @@ DuAEF.DuBinary.toObj = function(binaryFile,category)
  * @param {string}  [category]        - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @param {string}  [outputFileName=Same folder, same name with .json extension]  - The file name for the output.
  * @param {string}	[varName=File name without extension]	- The name of the variable used to store the javascript object.
+ * @param {bool}	[autoExtract=false]	- Adds code to extract the file as soon as it is included (instead of just creating a variable).
  * @return {File} The json file created
  */
-DuAEF.DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName)
+DuAEF.DuBinary.convertToIncludeFile = function(binaryFile,category,outputFileName,varName,autoExtract)
 {
-	if (outputFileName === undefined) outputFileName = binaryFile.absoluteURI + '.jsxinc';
-	if (varName === undefined) varName = binaryFile.name.replace(/\..+/,'');
+	if (typeof  outputFileName === 'undefined') outputFileName = binaryFile.absoluteURI + '.jsxinc';
+	if (typeof autoExtract === 'undefined') autoExtract = false;
+	if (typeof varName === 'undefined') varName = binaryFile.name.replace(/\..+/,'');
 	varName = DuAEF.DuJS.String.replace(varName,'%20','_');
 	var duBinary = this.toObj(binaryFile,category);
 	var jsString = 'var ' + varName + ' = ';
 	jsString += '{"binAsString":"' + duBinary.binAsString + '","fileName":"' + duBinary.fileName + '","category":"' + duBinary.category + '"}'
 	jsString += ';\r\n';
+	if (autoExtract)
+	{
+		jsString += varName + ' = DuAEF.DuBinary.toFile(' + varName + ');';
+	}
 	jsString += varName + ';\r\n';
 	var outputFile = new File(outputFileName);
 	outputFile.encoding = 'UTF8';
