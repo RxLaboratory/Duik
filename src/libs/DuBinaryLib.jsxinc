@@ -66,14 +66,17 @@ DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 {
 	if (outputFileName === undefined) outputFileName = Folder.userData.absoluteURI + '/DuAEF/' + duBinaryFile.category + '/' + duBinaryFile.fileName;
 	var file = new File(outputFileName);
+	var update = true;
 	if (file.exists)
 	{
 		//check last modification
 		var modifiedDate = file.modified;
 		var currentDate = new Date();
 
+		update = (currentDate.getTime() - modifiedDate.getTime()) > 3600000;
+
 		//if debug mode, check content
-		if (DuAEF.debug)
+		if (update && DuAEF.debug)
 		{
 			file.encoding = 'BINARY';
 			if (file.open('r', 'TEXT', '????'))
@@ -94,11 +97,14 @@ DuAEF.DuBinary.toFile = function(duBinaryFile,outputFileName)
 		}
 	}
 
-	file.encoding = 'BINARY';
-	if (file.open('w'))
+	if (update)
 	{
-		success = file.write(duBinaryFile.binAsString);
-		file.close();
+		file.encoding = 'BINARY';
+		if (file.open('w'))
+		{
+			success = file.write(duBinaryFile.binAsString);
+			file.close();
+		}
 	}
 
 	return file;
@@ -205,7 +211,7 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
     while(!file.eof )
     {
           var line = file.readln();
-          
+
           if (line.indexOf("#include", 0) == 0) continue;
 
           // Detect strings
@@ -243,7 +249,7 @@ DuAEF.DuBinary.parseFilePaths = function(filePath)
                 // Dumb check
                 var indexPoint = currentString.lastIndexOf('.');
                 if(indexPoint != -1 && indexPoint != currentString.length - 1)
-                {  
+                {
                     paths.push(currentString);
                 }
 
