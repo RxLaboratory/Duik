@@ -84,7 +84,7 @@
 	//TODO get the version of Duik, update settings if changed
 	settings.data.duikVersion = version;
 	//set settings if new
-	if (settings.data.expert == undefined) settings.data.expert = false;
+	if (settings.data.uiMode == undefined) settings.data.uiMode = 0;
 	if (settings.data.debug == undefined) settings.data.debug = false;
 	DuAEF.debug = settings.data.debug;
 
@@ -420,6 +420,8 @@
 	#include 'icons/w25_foxtail_r.png.jsxinc'
 	#include 'icons/w25_fk_r.png.jsxinc'
 	#include 'icons/w25_fk_l.png.jsxinc'
+	#include 'icons/w25_babybottle_l.png.jsxinc'
+	#include 'icons/w25_babybottle_r.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
