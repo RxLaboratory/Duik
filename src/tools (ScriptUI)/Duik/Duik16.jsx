@@ -422,6 +422,12 @@
 	#include 'icons/w25_fk_l.png.jsxinc'
 	#include 'icons/w25_babybottle_l.png.jsxinc'
 	#include 'icons/w25_babybottle_r.png.jsxinc'
+	#include 'icons/w25_ikfk_r.png.jsxinc'
+	#include 'icons/w25_ikfk_l.png.jsxinc'
+	#include 'icons/w25_ik2fk_r.png.jsxinc'
+	#include 'icons/w25_ik2fk_l.png.jsxinc'
+	#include 'icons/w25_fk2ik_r.png.jsxinc'
+	#include 'icons/w25_fk2ik_l.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
