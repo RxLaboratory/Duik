@@ -359,7 +359,7 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 
 	//deactivate IK
 	var active = ikEffect(1).value;
-	ikEffect(1).setValue(0);
+	ikEffect(1).setValueAtTime(comp.time,0);
 
 	//snap
 	if (ikType == 2)
@@ -380,7 +380,7 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 	}
 
 	//restore activation
-	ikEffect(1).setValue(active);
+	ikEffect(1).setValueAtTime(comp.time,active);
 }
 
 /**
@@ -402,17 +402,9 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 
 	if (!ikEffect) return;
 
-	var type = 'Duik.twoLayerIK';
-	var threeLayer = false;
-	if (ikEffect.matchName == Duik.effects.Three_Layer_IK)
-	{
-		type = 'Duik.threeLayerIK';
-		threeLayer = true;
-	}
-
 	//activate IK
 	var active = ikEffect(1).value;
-	ikEffect(1).setValue(1);
+	ikEffect(1).setValueAtTime(comp.time,1);
 
 	//get upper, middle, lower rot value
 	if (ikType == 2)
@@ -433,7 +425,36 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 	}
 
 	//restore activation
-	ikEffect(1).setValue(active);
+	ikEffect(1).setValueAtTime(comp.time,active);
+}
+
+/**
+* Automatically witches between IK and FK
+* @param {Controller|Layer} controller - The IK Controller
+*/
+DuAEF.Duik.Animation.switchIkFk = function (controller)
+{
+	if (controller instanceof Controller) controller = controller.layer;
+	var comp = controller.containingComp;
+
+	var ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+	if (!ikEffect) ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffectsMatchNames.THREELAYER_IK);
+	if (!ikEffect) return;
+
+	//check which one :
+	var ik = ikEffect(1).value;
+
+	//snap and switch
+	if (ik == 1)
+	{
+		DuAEF.Duik.Animation.fk2ik(controller);
+		ikEffect(1).setValueAtTime(comp.time,0);
+	}
+	else
+	{
+		DuAEF.Duik.Animation.ik2fk(controller);
+		ikEffect(1).setValueAtTime(comp.time,1);
+	}
 }
 
 /**
