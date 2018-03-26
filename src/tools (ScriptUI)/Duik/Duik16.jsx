@@ -202,6 +202,8 @@
 	#include 'icons/w18_shape_r.png.jsxinc'
 	#include 'icons/w18_allproperties_l.png.jsxinc'
 	#include 'icons/w18_allproperties_r.png.jsxinc'
+	#include 'icons/w18_eyedropper_r.png.jsxinc'
+	#include 'icons/w18_eyedropper_l.png.jsxinc'
 
 	#include 'icons/w25_plantigrade_r.jsxinc'
 	#include 'icons/w25_plantigrade_l.jsxinc'
@@ -388,8 +390,6 @@
 	#include 'icons/w25_timerange_r.png.jsxinc'
 	#include 'icons/w25_update_r.png.jsxinc'
 	#include 'icons/w25_update_l.png.jsxinc'
-	#include 'icons/w25_eyedropper_r.png.jsxinc'
-	#include 'icons/w25_eyedropper_l.png.jsxinc'
 	#include 'icons/w25_opacity_l.png.jsxinc'
 	#include 'icons/w25_opacity_r.png.jsxinc'
 	#include 'icons/w25_allproperties_l.png.jsxinc'
