@@ -307,7 +307,7 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 	//bone group
 	var elementGroup = element("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 	elementGroup.name = "Structure Element";
-	elementGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = '//Duik.structure.size\nif(!enabled) value;\nelse\n{\nvar s = effect("Structure")(2);\n[s,s];\n}';
+	elementGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = '//Duik.structure.size\nif(!active) value;\nelse\n{\nvar s = effect("Structure")(2);\n[s,s];\n}';
 	//target group
 	var targetGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
 	targetGroup.name = "Target";
@@ -335,11 +335,12 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 	star("ADBE Vector Star Outer Roundess").setValue(100);
 
 	var roundExp = '//Duik.structure.roundness\n' +
+				'if (active){\n' +
 				'var child = null;\n' +
 				'var childIndex = -1;\n' +
 				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
 				'catch (e) {}\n' +
-				'if(!enabled || childIndex == thisLayer.index || effect("Structure")(2) == 0) value;\n' +
+				'if(childIndex == thisLayer.index || effect("Structure")(2) == 0) value;\n' +
 				'else\n' +
 				'{\n' +
 				'function isBone(layer)\n' +
@@ -375,20 +376,22 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 				'value/(dist/60)*s/80;\n' +
 				'}\n' +
 				'else value;\n' +
-				'}';
+				'}\n' +
+				'} else value;';
 
 	star("ADBE Vector Star Outer Roundess").expression = roundExp;
 
 	var stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
-	stretchBoneFill("ADBE Vector Fill Color").expression = '//Duik.structure.color\neffect("Structure")(4);';
+	stretchBoneFill("ADBE Vector Fill Color").expression = '//Duik.structure.color\neffect("Structure")(4).value;';
 	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
 
 	var scaExpr = "//Duik.structure.stretch\n" +
+				'if (active){\n' +
 				'var child = null;\n' +
 				'var childIndex = -1;\n' +
 				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
 				'catch (e) {}\n' +
-				'if(!enabled || childIndex == thisLayer.index || effect("Structure")(2) == 0) [0,0];\n' +
+				'if(childIndex == thisLayer.index || effect("Structure")(2) == 0) [0,0];\n' +
 				'else\n' +
 				'{\n' +
 				"var X = 100;\n" +
@@ -424,16 +427,18 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 				"Y = dist/30*100;\n" +
 				"}\n" +
 				"[X,Y*100/content(\"Structure Element\").transform.scale[1]];\n" +
-				'}';
+				'}\n' +
+				'} else value;';
 
 	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
 
 	var rotExpr = "//Duik.structure.orientation\n" +
+			'if (active){\n' +
 			'var child = null;\n' +
 			'var childIndex = -1;\n' +
 			'try { child = effect("Structure")(3);childIndex = child.index || effect("Structure")(2) == 0}\n' +
 			'catch (e) {}\n' +
-			'if(!enabled || childIndex == thisLayer.index) value;\n' +
+			'if(childIndex == thisLayer.index) value;\n' +
 			'else\n' +
 			'{\n' +
 			"var R = 45;\n" +
@@ -478,7 +483,8 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 			"result += (ik-90-rotation)\n" +
 			"}\n" +
 			"result;\n" +
-			"}";
+			"}\n" +
+			'} else value;';
 
 	elementGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
 
@@ -489,6 +495,7 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 	circle("ADBE Vector Ellipse Size").setValue([40,40]);
 
 	var editModeExpr = '//Duik.structure.editMode\n' +
+					'if (active){\n' +
 					'var child = null;\n' +
 					'for (var i = 1 ; i <= thisComp.numLayers ; i++)\n' +
 					'{\n' +
@@ -496,7 +503,8 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 					'if (thisComp.layer(i).parent.index == thisLayer.index) {child = thisComp.layer(i); break;}\n' +
 					'}\n' +
 					'if (child) [0,0];\n' +
-					'else value;';
+					'else value;\n' +
+					'} else value;';
 
 	circle("ADBE Vector Ellipse Size").expression = editModeExpr;
 
