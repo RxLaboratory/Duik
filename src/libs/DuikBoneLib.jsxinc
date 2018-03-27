@@ -215,10 +215,11 @@ DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
 * Links the property to a bone
 * @param {Property|PropertyInfo} prop - The property
 * @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
-* @param {Layer} bone - An already existing bone
+* @param {Layer} [bone] - An already existing bone
+* @param {bool} [tangents=true] - True to create bones for the tangents if prop is a Shape
 * @return {Bone|Bone[]} The bone(s) created. An Array if prop is a Shape
 */
-DuAEF.Duik.Bone.addBone = function (prop,size,bone)
+DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 {
 	if (bone == undefined) bone == null;
 
@@ -289,15 +290,11 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 		for (var i = 0; i < pathPoints.length; i++)
 		{
 			var nullName = 'B | ' + layer.name + " | " + prop.parentProperty.name + " - " + i;
-			var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
-			var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
 
 			var newBone = DuAEF.Duik.Bone.getBoneByName(comp,nullName);
-			var newBoneIn = DuAEF.Duik.Bone.getBoneByName(comp,nullNameIn);
-			var newBoneOut = DuAEF.Duik.Bone.getBoneByName(comp,nullNameOut);
 
 			// Get names of nulls that don't exist yet and create them
-			if(newBone == null)
+			if(newBone === null)
 			{
 				//Create nulls
 				newBone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.VERTEX);
@@ -313,72 +310,89 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone)
 			newBone.layer.position.setValue(newBone.layer.position.value);
 			newBone.layer.position.expression = '';
 
-
-			if (newBoneOut == null)
-			{
-				var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
-				newBoneOut.layer.parent = newBone.layer;
-				newBoneOut.layer.name = nullNameOut;
-				newBoneOut.layer.label = 14;
-				newBoneOut.layer.position.setValue(pathOutTangents[i]);
-			}
-
-			if (newBoneIn == null)
-			{
-				var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
-				newBoneIn.layer.parent = newBone.layer;
-				newBoneIn.layer.name = nullNameIn;
-				newBoneIn.layer.label = 14;
-				newBone.layer.moveBefore(newBoneIn.layer);
-				newBoneIn.layer.position.setValue(pathInTangents[i]);
-			}
-
-
 			//add effect
 			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
 			var effect = createControl(layer,effectName);
 			effect(1).setValue(newBone.layer.index);
-			var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
-			var effectIn = createControl(layer,effectNameIn);
-			effectIn(1).setValue(newBoneIn.layer.index);
-			var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
-			var effectOut = createControl(layer,effectNameOut);
-			effectOut(1).setValue(newBoneOut.layer.index);
-
 			nullSet.push(effectName);
-			nullSetIn.push(effectNameIn);
-			nullSetOut.push(effectNameOut);
-
 			bones.push(newBone);
-			bones.push(newBoneIn);
-			bones.push(newBoneOut);
+
+			if (tangents)
+			{
+				var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
+				var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
+
+				var newBoneIn = DuAEF.Duik.Bone.getBoneByName(comp,nullNameIn);
+				var newBoneOut = DuAEF.Duik.Bone.getBoneByName(comp,nullNameOut);
+
+				if (newBoneOut === null)
+				{
+					var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
+					newBoneOut.layer.parent = newBone.layer;
+					newBoneOut.layer.name = nullNameOut;
+					newBoneOut.layer.label = 14;
+					newBoneOut.layer.position.setValue(pathOutTangents[i]);
+				}
+
+				if (newBoneIn === null)
+				{
+					var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
+					newBoneIn.layer.parent = newBone.layer;
+					newBoneIn.layer.name = nullNameIn;
+					newBoneIn.layer.label = 14;
+					newBone.layer.moveBefore(newBoneIn.layer);
+					newBoneIn.layer.position.setValue(pathInTangents[i]);
+				}
+
+				var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
+				var effectIn = createControl(layer,effectNameIn);
+				effectIn(1).setValue(newBoneIn.layer.index);
+				nullSetIn.push(effectNameIn);
+				bones.push(newBoneIn);
+
+				var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
+				var effectOut = createControl(layer,effectNameOut);
+				effectOut(1).setValue(newBoneOut.layer.index);
+				nullSetOut.push(effectNameOut);
+				bones.push(newBoneOut);
+			}
 		}
 
-		prop.expression = "var nullLayerNames = [\"" + nullSet.join("\",\"") + "\"]; \r" +
-						"var nullLayerNamesIn = [\"" + nullSetIn.join("\",\"") + "\"]; \r" +
-						"var nullLayerNamesOut = [\"" + nullSetOut.join("\",\"") + "\"]; \r" +
-						"var origPath = thisProperty; \r" +
-						"var origPoints = origPath.points(); \r" +
-						"var origInTang = origPath.inTangents(); \r" +
-						"var origOutTang = origPath.outTangents(); \r" +
-						"var getNullLayers = []; \r" +
-						"var getNullLayersIn = []; \r" +
-						"var getNullLayersOut = []; \r" +
-						"for (var i = 0; i < nullLayerNames.length; i++){ \r" +
+		var exp = "var nullLayerNames = [\"" + nullSet.join("\",\"") + "\"]; \n";
+
+		if (tangents) exp += "var nullLayerNamesIn = [\"" + nullSetIn.join("\",\"") + "\"]; \n" +
+						"var nullLayerNamesOut = [\"" + nullSetOut.join("\",\"") + "\"]; \n";
+
+		exp += "var origPath = thisProperty; \n" +
+						"var origPoints = origPath.points(); \n" +
+						"var origInTang = origPath.inTangents(); \n" +
+						"var origOutTang = origPath.outTangents(); \n" +
+						"var getNullLayers = []; \n";
+
+		if (tangents) exp += "var getNullLayersIn = []; \n" +
+						"var getNullLayersOut = []; \n";
+
+		exp += "for (var i = 0; i < nullLayerNames.length; i++){ \r" +
 						"    try{  \r" +
-						"        getNullLayers.push(effect(nullLayerNames[i])(1)); \r" +
-						"        getNullLayersIn.push(effect(nullLayerNamesIn[i])(1)); \r" +
-						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(1)); \r" +
-						"    } catch(err) { \r" +
+						"        getNullLayers.push(effect(nullLayerNames[i])(1)); \r";
+
+		if (tangents) exp += "        getNullLayersIn.push(effect(nullLayerNamesIn[i])(1)); \r" +
+						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(1)); \r";
+
+		exp += "    } catch(err) { \r" +
 						"        getNullLayers.push(null); \r" +
 						"    }} \r" +
 						"for (var i = 0; i < getNullLayers.length; i++){ \r" +
 						"    if (getNullLayers[i] != null && getNullLayers[i].index != thisLayer.index){ \r" +
-						"        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  \r" +
-						"        origInTang[i] = fromCompToSurface(getNullLayersIn[i].toComp(getNullLayersIn[i].anchorPoint)) - origPoints[i];  \r" +
-						"        origOutTang[i] = fromCompToSurface(getNullLayersOut[i].toComp(getNullLayersOut[i].anchorPoint)) - origPoints[i];  \r" +
-						"    }} \r" +
+						"        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  \r";
+
+		if (tangents) exp += "        origInTang[i] = fromCompToSurface(getNullLayersIn[i].toComp(getNullLayersIn[i].anchorPoint)) - origPoints[i];  \r" +
+						"        origOutTang[i] = fromCompToSurface(getNullLayersOut[i].toComp(getNullLayersOut[i].anchorPoint)) - origPoints[i];  \r";
+
+		exp += "    }} \r" +
 						"createPath(origPoints,origInTang,origOutTang,origPath.isClosed());";
+
+		prop.expression = exp;
 
 		return bones;
 	}
