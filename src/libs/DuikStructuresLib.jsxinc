@@ -129,7 +129,7 @@ Structure.prototype.showHide = function ()
 	var comp = this.elements[0].containingComp;
 	var show = !this.elements[0].enabled;
 
-	for (var i = 0 ; i < this.elements.length ; i++)
+	for (var i = 0,num = this.elements.length ; i < num ; i++)
 	{
 		this.elements[i].enabled = show;
 	}
@@ -147,6 +147,19 @@ Structure.prototype.getId = function ()
 	if (!params) return -1;
 	if (params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID]) return params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID];
 	return -1;
+}
+
+/**
+ * "Bakes" the appearance of the Structure,<br />
+ * in order to improve performance and simplify the use of the rig when animating.
+ * @memberof Structure
+ */
+Structure.prototype.bakeAppearence = function()
+{
+	for (var i = 0,num = this.elements.length ; i < num ; i++)
+	{
+		DuAEF.Duik.Structure.bakeAppearence(this.elements[i]);
+	}
 }
 
 
@@ -1064,4 +1077,41 @@ DuAEF.Duik.Structure.resetTransform = function(layer)
 	layer.transform.rotation.setValue(0);
 	layer.transform.scale.setValue([100,100,100]);
 	it.do(function(child){child.parent = layer;});
+}
+
+/**
+ * "Bakes" the appearance of the Structure,<br />
+ * in order to improve performance and simplify the use of the rig when animating.
+ * @memberof DuAEF.Duik.Structure
+ * @param {Layer} layer - the element
+ */
+DuAEF.Duik.Structure.bakeAppearence = function(layer)
+{
+	if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
+
+	var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT);
+	if (!effect) return;
+
+	//bake all
+	var elementGroup = layer.property('ADBE Root Vectors Group')("Structure Element");
+	DuAEF.DuAE.Property.removeExpression( elementGroup.property('ADBE Vector Transform Group')('ADBE Vector Scale') );
+	DuAEF.DuAE.Property.removeExpression( elementGroup.property("ADBE Vector Transform Group")("ADBE Vector Rotation") );
+
+	var displayGroup = elementGroup.property('ADBE Vectors Group')("Display");
+	var stretchBoneGroup = displayGroup.property('ADBE Vectors Group')("Link");
+	var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
+
+	DuAEF.DuAE.Property.removeExpression( stretchBoneContent.property("ADBE Vector Shape - Star")("ADBE Vector Star Outer Roundess") );
+	DuAEF.DuAE.Property.removeExpression( stretchBoneContent.property("ADBE Vector Graphic - Fill")("ADBE Vector Fill Color") );
+	DuAEF.DuAE.Property.removeExpression( stretchBoneGroup.property("ADBE Vector Transform Group")("ADBE Vector Scale") );
+
+	var editModeGroup = displayGroup.property('ADBE Vectors Group')("Edit Mode");
+	var editModeContent = editModeGroup.property("ADBE Vectors Group");
+
+	DuAEF.DuAE.Property.removeExpression( editModeContent.property("ADBE Vector Shape - Ellipse")("ADBE Vector Ellipse Size") );
+	DuAEF.DuAE.Property.removeExpression( editModeContent.property("ADBE Vector Graphic - Fill")("ADBE Vector Fill Color") );
+
+	//remove effect
+	effect.remove();
+
 }
