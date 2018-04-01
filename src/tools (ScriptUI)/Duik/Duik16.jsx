@@ -428,6 +428,8 @@
 	#include 'icons/w25_ik2fk_l.png.jsxinc'
 	#include 'icons/w25_fk2ik_r.png.jsxinc'
 	#include 'icons/w25_fk2ik_l.png.jsxinc'
+	#include 'icons/w25_oven_l.png.jsxinc'
+	#include 'icons/w25_oven_r.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
