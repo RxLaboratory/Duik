@@ -1028,14 +1028,33 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 */
 DuAEF.DuAE.Layer.getWorldPos = function (layer)
 {
-	//parents
-	var layerParent = layer.parent;
-	//unlink
-	layer.parent = null;
-	var pos = layer.transform.position.value;
-	//re-link
-	layer.parent = layerParent;
+	var comp = layer.containingComp;
+	//add a null
+	var n = comp.layers.addNull();
+	n.transform.position.expression = 'thisComp.layer(' + layer.index + ').toWorld(thisComp.layer(' + layer.index + ').anchorPoint);';
+	var pos = n.transform.position.value;
+	n.remove();
 	return pos;
+}
+
+/**
+ * Adds an animation preset on the layer
+ * @param {Layer} layer - The layer
+ * @param {File} preset - The preset file
+ * @param {string} matchName - The pseudo Effect matchName
+ * @return {PropertyGroup|null} The effect or null if anything went wrong
+ */
+DuAEF.DuAE.Layer.applyPreset = function (layer,preset,matchName)
+{
+	if (typeof layer === 'undefined') return null;
+	if (typeof preset === 'undefined') return null;
+	if (!preset.exists) throw new Error("The pseudo effect file does not exist");
+
+	layer.applyPreset(preset);
+
+	var effect = layer("ADBE Effect Parade")(matchName);
+
+	return effect;
 }
 
 /**
