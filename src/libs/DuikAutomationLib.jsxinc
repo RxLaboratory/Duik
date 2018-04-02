@@ -854,6 +854,159 @@ DuAEF.Duik.Automation.paintRig = function (layer)
 }
 
 /**
+* Create a procedural walk cycle on the controllers
+* @param {Controller[]} controllers - The controllers
+* @param {CompItem} [comp] - The comp where to add the walk cycle
+*/
+DuAEF.Duik.Automation.walk = function(controllers,comp)
+{
+	if (typeof controllers === 'undefined') controllers = [];
+	if (controllers.length > 0) comp = controllers[0].layer.containingComp;
+
+	var mainController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.WALK_CYCLE);
+	var mainControllerLayer = mainController.layer;
+	var mainControllerName = mainControllerLayer.name;
+
+	//add effect
+	var effect = DuAEF.DuAE.Layer.applyPreset(mainControllerLayer,DuAEF.Duik.PseudoEffects.WALK_CYCLE,DuAEF.Duik.PseudoEffectsMatchNames.WALK_CYCLE);
+	var effectName = effect.name;
+
+	if (controllers.length > 0)
+	{
+		//set up
+		var exp1 = '//Duik.walkCycle\n' + 'thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")(';
+		var exp2 = ') + value;';
+		var top = 0;
+		var foot = 0;
+		var hips = 0;
+		var right = 0;
+		var firstArm = true;
+		var firstLeg = true;
+		var it = new Iterator(controllers);
+		it.do(function(controller)
+		{
+			var layer = controller.layer;
+
+			if (top == 0) top = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+			else
+			{
+				var ctrlPos = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+				if (top > ctrlPos) top = ctrlPos;
+			}
+
+			var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+			var id = params[DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE];
+
+			//head
+			if (id == DuAEF.Duik.Controller.Types.HEAD)
+			{
+				layer.transform.rotation.expression = exp1 + '55' + exp2;
+			}
+
+			//neck
+			if (id == DuAEF.Duik.Controller.Types.SHOULDERS)
+			{
+				layer.transform.rotation.expression = exp1 + '56' + exp2;
+				layer.transform.position.expression = exp1 + '57' + exp2;
+			}
+
+			//body
+			if (id == DuAEF.Duik.Controller.Types.BODY)
+			{
+				layer.transform.position.expression = exp1 + '58' + exp2;
+				if (hips == 0) hips = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+			}
+
+			//hips
+			if (id == DuAEF.Duik.Controller.Types.HIPS)
+			{
+				layer.transform.rotation.expression = exp1 + '59' + exp2;
+				hips = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+			}
+
+			//arm
+			if (id == DuAEF.Duik.Controller.Types.HAND)
+			{
+				var clavIndex = '67';
+				var armIndex = '68';
+				var forearmIndex = '69';
+				var handIndex = '70';
+
+				if (firstArm)
+				{
+					var clavIndex = '61';
+					var armIndex = '62';
+					var forearmIndex = '63';
+					var handIndex = '64';
+
+					firstArm = false;
+				}
+
+				//look for clavicle
+				var clavEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK);
+				if (clavEffect)
+				{
+					//TODO IK2FK
+					clavEffect(3).expression = exp1 + clavIndex + exp2;
+				}
+				//look for FK
+				var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+				if (ikEffect)
+				{
+					var ik = ikEffect(1).value;
+					if (ik == 1) DuAEF.Duik.Animation.switchIkFk(controller);
+					ikEffect(4).expression = exp1 + armIndex + exp2;
+					ikEffect(5).expression = exp1 + forearmIndex + exp2;
+				}
+				layer.transform.rotation.expression = exp1 + handIndex + exp2;
+			}
+
+			//leg
+			if (id == DuAEF.Duik.Controller.Types.FOOT)
+			{
+				foot = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+
+				var posIndex = '78';
+				var rotIndex = '79';
+				var rollIndex = '80';
+
+				if (firstLeg)
+				{
+					var posIndex = '73';
+					var rotIndex = '74';
+					var rollIndex = '75';
+
+					firstLeg = false;
+				}
+
+				var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+				if (ikEffect)
+				{
+					var ik = ikEffect(1).value;
+					if (ik == 0) DuAEF.Duik.Animation.switchIkFk(controller);
+					right = ikEffect(2).value;
+				}
+
+				layer.transform.position.expression = exp1 + posIndex + exp2;
+				layer.transform.rotation.expression = exp1 + rotIndex + exp2;
+
+				var footRollEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL);
+				if (footRollEffect)
+				{
+					footRollEffect(3).expression = exp1 + rollIndex + exp2;
+				}
+			}
+		});
+
+		var characterHeight = Math.abs(foot - top);
+		var legHeight = Math.abs(foot - hips);
+		if (legHeight > 0) effect(86).setValue(legHeight);
+		if (characterHeight > 0) effect(87).setValue(characterHeight);
+		if (right == 0) effect(22).setValue(-3.5);
+	}
+}
+
+/**
 * Randomize tools
 * @namespace
 * @memberof DuAEF.Duik.Automation
