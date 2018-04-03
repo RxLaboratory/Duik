@@ -1023,11 +1023,13 @@ DuAEF.DuAE.Layer.getWorldPos = function (layer)
 }
 
 /**
- * Adds an animation preset on the layer
+ * Adds an animation preset on the layer.<br />
+ * Be careful as layer selection will be kept but not properties selection,<br />
+ * and this can result in an "invalid object" if referencing a property.
  * @param {Layer} layer - The layer
  * @param {File} preset - The preset file
  * @param {string} matchName - The pseudo Effect matchName
- * @return {PropertyGroup|null} The effect or null if anything went wrong
+ * @return {PropertyGroup|null} The effect corresponding to matchName or null if anything went wrong
  */
 DuAEF.DuAE.Layer.applyPreset = function (layer,preset,matchName)
 {
@@ -1035,9 +1037,26 @@ DuAEF.DuAE.Layer.applyPreset = function (layer,preset,matchName)
 	if (typeof preset === 'undefined') return null;
 	if (!preset.exists) throw new Error("The pseudo effect file does not exist");
 
-	layer.applyPreset(preset);
+	//remove layer selection
+	var comp = layer.containingComp;
+	var selection = [];
+	for (var i = 1,num = comp.numLayers; i <= num;i++)
+	{
+		var l = comp.layer(i);
+		selection.push(l.selected);
+		l.selected = false;
+	}
 
-	var effect = layer("ADBE Effect Parade")(matchName);
+	layer.selected = true;
+	layer.applyPreset(preset);
+	var effect = layer.property("ADBE Effect Parade")(matchName);
+
+	//restore selection
+	for (var i = 1,num = comp.numLayers; i <= num;i++)
+	{
+		var l = comp.layer(i);
+		l.selected = selection[i-1];
+	}
 
 	return effect;
 }
