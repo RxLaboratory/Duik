@@ -25,6 +25,10 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 
 #include "icons/w14_menu_l.png.jsxinc"
 #include "icons/w14_menu_m.png.jsxinc"
+#include "icons/w14_layers_m.png.jsxinc"
+#include "icons/w14_layers_l.png.jsxinc"
+#include "icons/w14_update_l.png.jsxinc"
+#include "icons/w14_update_m.png.jsxinc"
 
 /**
 * ScriptUI tools
@@ -1072,13 +1076,11 @@ DuAEF.DuScriptUI.addSelector = function(container)
 
 		var index = selector.items.length;
 		selector.items.push([text,image,helpTip,imageOver]);
-		//add it to popup if not CS6
-		if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
-		{
-			var button = DuAEF.DuScriptUI.addImageButton(selector.popup,text,image,helpTip,imageOver);
-			button.onClick = function () { selector.setCurrentIndex(index); selector.popup.hide(); };
-			button.icon.alignment = ['left','center'];
-		}
+		//add to popup
+		var button = DuAEF.DuScriptUI.addImageButton(selector.popup,text,image,helpTip,imageOver);
+		button.onClick = function () { selector.setCurrentIndex(index); selector.popup.hide(); };
+		button.icon.alignment = ['left','center'];
+
 	}
 
 	selector.setCurrentIndex = function (index)
@@ -1120,37 +1122,36 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	//the image over
 	selector.imageOver = '';
 
-	//create popup, but not on CS6 (bug)
-	if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
-	{
-		selector.popup = new Window('palette','',undefined,{borderless:true});
-		selector.popup.margins = 2;
-		selector.popup.spacing = 0;
-		DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
-		selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
-		selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
-		selector.popup.onDeactivate = function () { selector.popup.hide(); };
-	}
+	//create popup
+	selector.popup = new Window('palette','',undefined,{borderless:true});
+	selector.popup.margins = 2;
+	selector.popup.spacing = 0;
+	DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+	selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
+	selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
+	//Deactivate bugs on CS6, needs a try/catch
+	selector.popup.onDeactivate = function () { try { selector.popup.hide(); } catch (e) {} };
 
 	//add default button
 	selector.items = [];
 	selector.index = -1;
 
+
 	selector.clicked = function (e)
 	{
 		var popup = false;
 
-		if (DuAEF.DuAE.App.version >= 12 || DuAEF.DuAE.App.version < 11)
-		{
-			if (e.target === selector.menuButton) popup = true;
-			if (e.altKey) popup = true;
-		}
+		if (e.target === selector.menuButton) popup = true;
+		if (e.altKey) popup = true;
 
 		if (popup)
 		{
-			var x = e.screenX-e.clientX;
-			var y = e.screenY-e.clientY;
-			selector.popup.location = [x,y];
+			if (DuAEF.DuAE.App.version < 11 || DuAEF.DuAE.App.version >= 12)
+			{
+				var x = e.screenX-e.clientX;
+				var y = e.screenY-e.clientY;
+				selector.popup.location = [x,y];
+			}
 			selector.popup.show();
 		}
 		else
@@ -1191,6 +1192,160 @@ DuAEF.DuScriptUI.addSelector = function(container)
 		selector.addEventListener("mouseout",selector.mouseOut);
 	}
 	selector.addEventListener("click",selector.clicked,true);
+
+	selector.onChange = function(){};
+
+	return selector;
+}
+
+DuAEF.DuScriptUI.addLayerSelector = function(container)
+{
+	//create main group
+	var selector = container.add('group');
+	selector.orientation = 'row';
+	selector.margins = 2;
+	selector.spacing = 5;
+	selector.alignment = ['fill','top'];
+	selector.alignChildren = ['center','center'];
+
+	//init
+	selector.index = 0;
+	selector.comp = null;
+	selector.selectedOnly = false;
+	selector.pauseRefresh = false;
+
+	var cs6 = DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12;
+
+	//CS6
+	if (cs6)
+	{
+		//the dropdownlist
+		selector.popup = {};
+		selector.popup.list = selector.add('dropdownlist');
+		selector.popup.list.alignment = ['fill','center'];
+
+		//the refresh button
+		selector.refreshImage = DuAEF.DuBinary.toFile(w14_update_m);
+		selector.refreshImageOver = DuAEF.DuBinary.toFile(w14_update_l);
+		selector.refreshButton = selector.add('image',undefined,selector.refreshImage);
+		selector.refreshButton.alignment = ['right','center'];
+	}
+	else
+	{
+		//the menu button
+		selector.menuImage = DuAEF.DuBinary.toFile(w14_layers_m);
+		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_layers_l);
+		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton.alignment = ['left','center'];
+
+		//the text
+		selector.label = selector.add('statictext',undefined,'None');
+		selector.label.helpTip = '';
+		selector.label.alignment = ['fill','center'];
+
+		//create popup
+		selector.popup = new Window('palette','',undefined,{borderless:true});
+		selector.popup.margins = 2;
+		selector.popup.spacing = 0;
+		DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
+		selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
+		selector.popup.onDeactivate = function () { selector.popup.hide(); };
+		selector.popup.list = selector.popup.add('listbox',undefined);
+
+		selector.clicked = function (e)
+		{
+			selector.refresh();
+
+			selector.popup.list.minimumSize.width = selector.popup.list.maximumSize.width = selector.size.width;
+			selector.popup.list.minimumSize.height = selector.popup.list.maximumSize.height = selector.size.height * 10;
+
+			selector.popup.layout.layout();
+			selector.popup.layout.resize();
+
+			var x = e.screenX-e.clientX;
+			var y = e.screenY-e.clientY;
+			selector.popup.location = [x,y];
+
+			selector.popup.show();
+		}
+
+		selector.mouseOver = function (e)
+		{
+			selector.menuButton.image = selector.menuImageOver;
+			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		}
+
+		selector.mouseOut = function (e)
+		{
+			selector.menuButton.image = selector.menuImage;
+			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		}
+
+		selector.addEventListener("mouseover",selector.mouseOver);
+		selector.addEventListener("mouseout",selector.mouseOut);
+
+		selector.addEventListener("click",selector.clicked,true);
+	}
+
+	selector.popup.list.add('item',"None");
+	selector.popup.list.selection = 0;
+
+	selector.refresh = function()
+	{
+		var comp = selector.comp;
+		if (!comp) comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+
+		selector.pauseRefresh = true;
+
+		var layers;
+		if (selector.selectedOnly) layers = comp.selectedLayers;
+		else layers = comp.layers;
+
+		var prevIndex = 0;
+		if (selector.popup.list.selection) prevIndex = selector.popup.list.selection.index;
+		if (prevIndex > 0) prevIndex = parseInt(selector.popup.list.selection.text.split(' | ')[0]);
+		else prevIndex = 0;
+		selector.popup.list.removeAll();
+		selector.popup.list.add('item',"None");
+		var it = new Iterator(layers);
+		it.do(function(layer)
+		{
+			selector.popup.list.add('item',layer.index + ' | ' + layer.name);
+			if (layer.index == prevIndex) selector.popup.list.selection = selector.popup.list.items.length-1;
+		});
+		if (prevIndex == 0) selector.popup.list.selection = 0;
+
+		selector.pauseRefresh = false;
+	}
+
+	selector.setCurrentIndex = function (index)
+	{
+		if (index < 0) return;
+		if (index >= selector.popup.list.items.length) return;
+
+		selector.pauseRefresh = true;
+		selector.popup.list.selection = index;
+
+		if (!cs6) selector.label.text = selector.popup.list.selection.text;
+
+		selector.index = index;
+		selector.pauseRefresh = false;
+
+		selector.onChange();
+	}
+
+	selector.popup.list.onChange = function()
+	{
+		if (selector.pauseRefresh) return;
+		selector.setCurrentIndex(selector.popup.list.selection.index);
+		if (!cs6) selector.popup.hide();
+	};
+
+	if (cs6) selector.refreshButton.addEventListener("mousedown",selector.refresh,false);
 
 	selector.onChange = function(){};
 
