@@ -23,6 +23,8 @@ You should have received a copy of the GNU General Public License
 along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "pseudoEffects/duaef_magic.ffx.jsxinc"
+
 /**
 * Constructs a new KeySpatialProperty
 * @class KeySpatialProperties
@@ -640,12 +642,59 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 */
 DuAEF.DuAE.Project = {};
 
+//undocumented flags
+DuAEF.DuAE.Project.progressMode = false;
+DuAEF.DuAE.Project.activeComp = null;
+DuAEF.DuAE.Project.progressComp = null;
+DuAEF.DuAE.Project.viewerMaximized = false;
+
+/**
+ * Sets the project in "waiting mode" to speed up things.
+ * @param {bool} inProgress - True to set progress mode, false to stop it.
+*/
+DuAEF.DuAE.Project.setProgressMode = function(inProgress)
+{
+	if (inProgress && DuAEF.DuAE.Project.progressMode) return;
+	if (!inProgress && !DuAEF.DuAE.Project.progressMode) return;
+
+	if (inProgress)
+	{
+		//store the current comp
+		DuAEF.DuAE.Project.activeComp = DuAEF.DuAE.Project.getActiveComp();
+		DuAEF.DuAE.Project.viewerMaximized = app.activeViewer.maximized;
+
+		//create a temp comp, open it
+		DuAEF.DuAE.Project.progressComp = app.project.items.addComp("MAGIC IS HAPPENING...", 500, 500, 1, 1, 1);
+
+		var tempL = DuAEF.DuAE.Project.progressComp.layers.addShape();
+		tempL.applyPreset(DuAEF.DuBinary.toFile(duaef_magic));
+		tempL.selected = false;
+
+		DuAEF.DuAE.Project.progressComp.openInViewer();
+		app.activeViewer.maximized = true;
+
+		DuAEF.DuAE.Project.progressMode = true;
+	}
+	else
+	{
+		//remove temp comp
+		DuAEF.DuAE.Project.progressComp.remove();
+		//re-activate previous comp
+		if (DuAEF.DuAE.Project.activeComp != null) DuAEF.DuAE.Project.activeComp.openInViewer();
+		app.activeViewer.maximized = DuAEF.DuAE.Project.viewerMaximized;
+
+		DuAEF.DuAE.Project.progressMode = false;
+	}
+
+}
+
 /**
 * Gets the After Effects current composition
 * @return {CompItem|null} The current composition or null if there's no current comp
 */
 DuAEF.DuAE.Project.getActiveComp = function()
 {
+	if (DuAEF.DuAE.Project.progressMode) return DuAEF.DuAE.Project.activeComp;
 	var comp = app.project.activeItem;
 	if (!comp) return null;
 	if (!(comp instanceof CompItem)) return null;
