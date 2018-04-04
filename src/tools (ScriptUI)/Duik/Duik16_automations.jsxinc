@@ -6,6 +6,7 @@ function setCurrentAutomationPanel(panel)
 	ui_automationsBaseGroup.visible = panel == 0;
 	ui_wiggleOptionsGroup.visible = panel == 1;
 	ui_randomOptionsGroup.visible = panel == 2;
+	ui_walkCycleOptionsGroup.visible = panel == 3;
 }
 
 function initAutomationsUI()
@@ -303,12 +304,110 @@ function ui_paintRigButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_walkOptionsButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	var ctrls = comp.selectedLayers;
+	var selectedOnly = true;
+	if(ctrls.length == 0)
+	{
+		ctrls = comp.layers;
+		selectedOnly = false;
+	}
+
+	ui_walkHeadSelector.setCurrentIndex(0);
+	ui_walkNeckSelector.setCurrentIndex(0);
+	ui_walkBodySelector.setCurrentIndex(0);
+	ui_walkHipsSelector.setCurrentIndex(0);
+	ui_walkRHandSelector.setCurrentIndex(0);
+	ui_walkLHandSelector.setCurrentIndex(0);
+	ui_walkRFootSelector.setCurrentIndex(0);
+	ui_walkLFootSelector.setCurrentIndex(0);
+	ui_walkHeadSelector.selectedOnly = selectedOnly;
+	ui_walkNeckSelector.selectedOnly = selectedOnly;
+	ui_walkBodySelector.selectedOnly = selectedOnly;
+	ui_walkHipsSelector.selectedOnly = selectedOnly;
+	ui_walkRHandSelector.selectedOnly = selectedOnly;
+	ui_walkLHandSelector.selectedOnly = selectedOnly;
+	ui_walkRFootSelector.selectedOnly = selectedOnly;
+	ui_walkLFootSelector.selectedOnly = selectedOnly;
+	ui_walkHeadSelector.refresh();
+	ui_walkNeckSelector.refresh();
+	ui_walkBodySelector.refresh();
+	ui_walkHipsSelector.refresh();
+	ui_walkRHandSelector.refresh();
+	ui_walkLHandSelector.refresh();
+	ui_walkRFootSelector.refresh();
+	ui_walkLFootSelector.refresh();
+
+	//side
+	DuAEF.Duik.Autorig.detectCharacterSide(ctrls);
+
+	//populate selectors
+	var it = new Iterator(ctrls);
+	it.do(function(layer)
+	{
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		var type = params[DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE];
+		if (type == DuAEF.Duik.Controller.Types.HEAD) ui_walkHeadSelector.setCurrentIndex(layer.index);
+		else if (type == DuAEF.Duik.Controller.Types.SHOULDERS) ui_walkNeckSelector.setCurrentIndex(layer.index);
+		else if (type == DuAEF.Duik.Controller.Types.BODY) ui_walkBodySelector.setCurrentIndex(layer.index);
+		else if (type == DuAEF.Duik.Controller.Types.HIPS) ui_walkHipsSelector.setCurrentIndex(layer.index);
+		else if (type == DuAEF.Duik.Controller.Types.HAND)
+		{
+			if (DuAEF.Duik.Autorig.isRight(layer)) ui_walkRHandSelector.setCurrentIndex(layer.index);
+			else ui_walkLHandSelector.setCurrentIndex(layer.index);
+		}
+		else if (type == DuAEF.Duik.Controller.Types.FOOT)
+		{
+			if (DuAEF.Duik.Autorig.isRight(layer)) ui_walkRFootSelector.setCurrentIndex(layer.index);
+			else ui_walkLFootSelector.setCurrentIndex(layer.index);
+		}
+
+	});
+	setCurrentAutomationPanel(3);
+}
+
+function ui_walkValidButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var numLayers = comp.numLayers;
+
+	var headCtrl = null;
+	var neckCtrl = null;
+	var bodyCtrl = null;
+	var hipsCtrl = null;
+	var rHandCtrl = null;
+	var lHandCtrl = null;
+	var rFootCtrl = null;
+	var lFootCtrl = null;
+
+	if (ui_walkHeadSelector.index > 0 && ui_walkHeadSelector.index < numLayers) headCtrl = comp.layer(ui_walkHeadSelector.index);
+	if (ui_walkNeckSelector.index > 0 && ui_walkHeadSelector.index < numLayers) neckCtrl = comp.layer(ui_walkNeckSelector.index);
+	if (ui_walkBodySelector.index > 0 && ui_walkHeadSelector.index < numLayers) bodyCtrl = comp.layer(ui_walkBodySelector.index);
+	if (ui_walkHipsSelector.index > 0 && ui_walkHeadSelector.index < numLayers) hipsCtrl = comp.layer(ui_walkHipsSelector.index);
+	if (ui_walkRHandSelector.index > 0 && ui_walkHeadSelector.index < numLayers) rHandCtrl = comp.layer(ui_walkRHandSelector.index);
+	if (ui_walkLHandSelector.index > 0 && ui_walkHeadSelector.index < numLayers) lHandCtrl = comp.layer(ui_walkLHandSelector.index);
+	if (ui_walkRFootSelector.index > 0 && ui_walkHeadSelector.index < numLayers) rFootCtrl = comp.layer(ui_walkRFootSelector.index);
+	if (ui_walkLFootSelector.index > 0 && ui_walkHeadSelector.index < numLayers) lFootCtrl = comp.layer(ui_walkLFootSelector.index);
+
+	app.beginUndoGroup('Duik | ' + "Walk cycle");
+	DuAEF.Duik.Automation.walk(headCtrl,neckCtrl,bodyCtrl,hipsCtrl,rHandCtrl,lHandCtrl,rFootCtrl,lFootCtrl,comp);
+	app.endUndoGroup();
+
+	setCurrentAutomationPanel(0);
+
+}
+
 function ui_proceduralWalkButton_clicked()
 {
 	var ctrls = DuAEF.Duik.Controller.getControllers(undefined,true);
 
 	app.beginUndoGroup('Duik | ' + "Walk cycle");
-	DuAEF.Duik.Automation.walk(ctrls);
+	DuAEF.Duik.Automation.autoWalk(ctrls);
 	app.endUndoGroup();
 }
 
@@ -331,7 +430,10 @@ ui_wiggleOptionsButton.group.alignment = ['right','center'];
 var ui_swingButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Swing",DuAEF.DuBinary.toFile(w25_swing_l),"Make the property swing between two values",DuAEF.DuBinary.toFile(w25_swing_r));
 var ui_wheelButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Wheel",DuAEF.DuBinary.toFile(w25_wheel_l),"Automate the rotation of a wheel",DuAEF.DuBinary.toFile(w25_wheel_r));
 var ui_randomButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Random...",DuAEF.DuBinary.toFile(w25_randomize_l),"Randomizes all types of values and properties",DuAEF.DuBinary.toFile(w25_randomize_r));
-var ui_proceduralWalkButton = DuAEF.DuScriptUI.addImageButton(ui_automationsLeftGroup,"Walk cycle",DuAEF.DuBinary.toFile(w25_proceduralwalk_l),"Procedural walk cycle tool",DuAEF.DuBinary.toFile(w25_proceduralwalk_r));
+var ui_walkGroup = DuAEF.DuScriptUI.addGroup(ui_automationsLeftGroup);
+var ui_proceduralWalkButton = DuAEF.DuScriptUI.addImageButton(ui_walkGroup,"Walk cycle",DuAEF.DuBinary.toFile(w25_proceduralwalk_l),"Procedural walk cycle tool",DuAEF.DuBinary.toFile(w25_proceduralwalk_r));
+var ui_walkOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_walkGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Walk cycle options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_walkOptionsButton.group.alignment = ['right','center'];
 
 var ui_automationsRightGroup = DuAEF.DuScriptUI.addGroup(ui_automationsGroup,'column');
 ui_automationsRightGroup.alignChildren = ['fill','top'];
@@ -340,6 +442,31 @@ var ui_springButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGroup,"
 var ui_blinkButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGroup,"Blink",DuAEF.DuBinary.toFile(w25_blink_l),"Make a property blink",DuAEF.DuBinary.toFile(w25_blink_r));
 var ui_moveAwayButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGroup,"Move away",DuAEF.DuBinary.toFile(w25_moveaway_l),"Move a layer away from its parent",DuAEF.DuBinary.toFile(w25_moveaway_r));
 var ui_paintRigButton = DuAEF.DuScriptUI.addImageButton(ui_automationsRightGroup,"Paint rig",DuAEF.DuBinary.toFile(w25_paintrig_l),"Rig brush strokes",DuAEF.DuBinary.toFile(w25_paintrig_r));
+
+
+//WALK CYCLE
+var ui_walkCycleOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_walkCycleOptionsGroup,'Walk cycle');
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Head controller:")
+var ui_walkHeadSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Neck & shoulders controller:")
+var ui_walkNeckSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Body controller:")
+var ui_walkBodySelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Hips controller:")
+var ui_walkHipsSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Right hand controller:")
+var ui_walkRHandSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Left hand controller:")
+var ui_walkLHandSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Right foot controller:")
+var ui_walkRFootSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+ui_walkCycleOptionsGroup.add('statictext',undefined,"Left foot controller:")
+var ui_walkLFootSelector = DuAEF.DuScriptUI.addLayerSelector(ui_walkCycleOptionsGroup);
+var ui_walkValidGroup = DuAEF.DuScriptUI.addGroup(ui_walkCycleOptionsGroup);
+ui_walkValidGroup.alignment = ['fill','top'];
+var ui_walkCancelButton = DuAEF.DuScriptUI.addImageButton(ui_walkValidGroup,'Cancel',DuAEF.DuBinary.toFile(w25_back_m),"Cancel",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_walkValidButton = DuAEF.DuScriptUI.addImageButton(ui_walkValidGroup,'Create',DuAEF.DuBinary.toFile(w25_check_g),"Walk cycle",DuAEF.DuBinary.toFile(w25_check_r));
 
 
 //WIGGLE
@@ -447,3 +574,6 @@ ui_moveAwayButton.onClick = ui_moveAwayButton_clicked;
 ui_paintRigButton.onClick = ui_paintRigButton_clicked;
 
 ui_proceduralWalkButton.onClick = ui_proceduralWalkButton_clicked;
+ui_walkCancelButton.onClick = function () {setCurrentAutomationPanel(0);};
+ui_walkValidButton.onClick = ui_walkValidButton_clicked;
+ui_walkOptionsButton.onClick = ui_walkOptionsButton_clicked;
