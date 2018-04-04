@@ -1198,6 +1198,51 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	return selector;
 }
 
+/**
+ * @class
+ * @name LayerSelector
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * A drop down selector.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.DuScriptUI.addLayerSelector} to create a Selector.<br />
+ * The Selector inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {int} [index=0]  - The current layer index, 0 if None
+ * @property {CompItem|null} [comp=null] - The composition linked to the selector.<br />
+ * If set to null, the seletor will use the current active composition.
+ * @property {boolean} [selectedOnly=false] - True to list only selected layers in the composition
+ * @property {Selector~onChange} onChange  - The function to execute when the index changes.<br />
+ * You can set your own function here, which must take no argument.<br />
+ * The method is called after the index has changed.
+ */
+
+/**
+ * The function to execute when the index changes.<br />
+ * The method is called after the index has changed.
+ * @callback LayerSelector~onChange
+ * @memberof LayerSelector
+ */
+
+/**
+ * Changes the selection and the current layer index of the selector
+ * @method
+ * @memberof LayerSelector
+ * @name setCurrentIndex
+ * @param {int} index - The new layer index
+ */
+
+/**
+* Force the refresh of the layer list
+* @method
+* @memberof LayerSelector
+* @name refresh
+*/
+
+/**
+ * Creates a drop down selector for layers
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group} container - The ScriptUI Object which will contain and display the selector.
+ * @return {Selector} - The selector
+ */
 DuAEF.DuScriptUI.addLayerSelector = function(container)
 {
 	//create main group
@@ -1207,6 +1252,7 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	selector.spacing = 5;
 	selector.alignment = ['fill','top'];
 	selector.alignChildren = ['center','center'];
+	DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 
 	//init
 	selector.index = 0;
@@ -1219,6 +1265,11 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	//CS6
 	if (cs6)
 	{
+		//the menu button
+		selector.menuImage = DuAEF.DuBinary.toFile(w14_layers_m);
+		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton.alignment = ['left','center'];
+
 		//the dropdownlist
 		selector.popup = {};
 		selector.popup.list = selector.add('dropdownlist');
@@ -1305,22 +1356,18 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		if (selector.selectedOnly) layers = comp.selectedLayers;
 		else layers = comp.layers;
 
-		var prevIndex = 0;
-		if (selector.popup.list.selection) prevIndex = selector.popup.list.selection.index;
-		if (prevIndex > 0) prevIndex = parseInt(selector.popup.list.selection.text.split(' | ')[0]);
-		else prevIndex = 0;
+		var prevIndex = selector.index;
 		selector.popup.list.removeAll();
 		selector.popup.list.add('item',"None");
 		var it = new Iterator(layers);
 		it.do(function(layer)
 		{
 			selector.popup.list.add('item',layer.index + ' | ' + layer.name);
-			if (layer.index == prevIndex) selector.popup.list.selection = selector.popup.list.items.length-1;
 		});
-		if (prevIndex == 0) selector.popup.list.selection = 0;
+		selector.setCurrentIndex(prevIndex);
 
 		selector.pauseRefresh = false;
-	}
+	};
 
 	selector.setCurrentIndex = function (index)
 	{
@@ -1328,15 +1375,32 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		if (index >= selector.popup.list.items.length) return;
 
 		selector.pauseRefresh = true;
-		selector.popup.list.selection = index;
+
+		if (index == 0)
+		{
+			selector.popup.list.selection = 0;
+		}
+		else
+		{
+			for(var i = 0,num = selector.popup.list.items.length ; i < num ; i++)
+			{
+				var t = selector.popup.list.items[i].text;
+				if (index == parseInt(t.split(' | ')[0]))
+				{
+					selector.popup.list.selection = i;
+					break;
+				}
+			}
+		}
 
 		if (!cs6) selector.label.text = selector.popup.list.selection.text;
 
 		selector.index = index;
+
 		selector.pauseRefresh = false;
 
 		selector.onChange();
-	}
+	};
 
 	selector.popup.list.onChange = function()
 	{
