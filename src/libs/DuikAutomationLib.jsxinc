@@ -854,14 +854,119 @@ DuAEF.Duik.Automation.paintRig = function (layer)
 }
 
 /**
-* Create a procedural walk cycle on the controllers
-* @param {Controller[]} controllers - The controllers
+* Create a procedural walk cycle on the controllers.<br />
+* This methods automatically detects the limbs, the sides, etc.
+* @param {Controller[]|Layer[]} controllers - The controllers
 * @param {CompItem} [comp] - The comp where to add the walk cycle
 */
-DuAEF.Duik.Automation.walk = function(controllers,comp)
+DuAEF.Duik.Automation.autoWalk = function(controllers,comp)
 {
-	if (typeof controllers === 'undefined') controllers = [];
-	if (controllers.length > 0) comp = controllers[0].layer.containingComp;
+	var headCtrl = null;
+	var neckCtrl = null;
+	var bodyCtrl = null;
+	var hipsCtrl = null;
+	var rHandCtrl = null;
+	var lHandCtrl = null;
+	var rFootCtrl = null;
+	var lFootCtrl = null;
+
+	var it = new Iterator(controllers);
+	it.do(function(controller)
+	{
+		var layer = controller;
+		if (controller instanceof Controller) layer = controller.layer;
+
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		var type = params[DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE];
+
+		//head
+		if (type == DuAEF.Duik.Controller.Types.HEAD) headCtrl = layer;
+		if (type == DuAEF.Duik.Controller.Types.SHOULDERS) neckCtrl = layer;
+		if (type == DuAEF.Duik.Controller.Types.BODY) bodyCtrl = layer;
+		if (type == DuAEF.Duik.Controller.Types.HIPS) hipsCtrl = layer;
+		if (type == DuAEF.Duik.Controller.Types.HAND)
+		{
+			if (DuAEF.Duik.Autorig.isRight(layer)) rHandCtrl = layer;
+			else lHandCtrl = layer;
+		}
+		if (type == DuAEF.Duik.Controller.Types.FOOT)
+		{
+			if (DuAEF.Duik.Autorig.isRight(layer)) rFootCtrl = layer;
+			else lFootCtrl = layer;
+		}
+	});
+
+	DuAEF.Duik.Automation.walk(headCtrl,neckCtrl,bodyCtrl,hipsCtrl,rHandCtrl,lHandCtrl,rFootCtrl,lFootCtrl,comp);
+
+}
+
+/**
+* Create a procedural walk cycle.
+* @param {Controller[]|Layer[]} controllers - The controllers
+* @param {Controller|Layer|null} [headCtrl=null] - The head controller
+* @param {Controller|Layer|null} [neckCtrl=null] - The neck/shoulders controller
+* @param {Controller|Layer|null} [bodyCtrl=null] - The body controller
+* @param {Controller|Layer|null} [hipsCtrl=null] - The hips controller
+* @param {Controller|Layer|null} [rHandCtrl=null] - The right hand controller
+* @param {Controller|Layer|null} [lHandCtrl=null] - The left hand controller
+* @param {Controller|Layer|null} [rFootCtrl=null] - The right foot controller
+* @param {Controller|Layer|null} [lFootCtrl=null] - The left foot controller
+* @param {CompItem} [comp] - The comp where to add the walk cycle
+*/
+DuAEF.Duik.Automation.walk = function(headCtrl, neckCtrl, bodyCtrl, hipsCtrl, rHandCtrl, lHandCtrl, rFootCtrl, lFootCtrl, comp)
+{
+	if (typeof headCtrl == 'undefined') headCtrl == null;
+	if (typeof neckCtrl == 'undefined') neckCtrl == null;
+	if (typeof bodyCtrl == 'undefined') bodyCtrl == null;
+	if (typeof hipsCtrl == 'undefined') hipsCtrl == null;
+	if (typeof rHandCtrl == 'undefined') rHandCtrl == null;
+	if (typeof lHandCtrl == 'undefined') lHandCtrl == null;
+	if (typeof rFootCtrl == 'undefined') rFootCtrl == null;
+	if (typeof lFootCtrl == 'undefined') lFootCtrl == null;
+
+	if (headCtrl != null)
+	{
+		if (headCtrl instanceof Controller) headCtrl = headCtrl.layer;
+		comp = headCtrl.containingComp;
+	}
+	else if (neckCtrl != null)
+	{
+		if (neckCtrl instanceof Controller) neckCtrl = neckCtrl.layer;
+		comp = neckCtrl.containingComp;
+	}
+	else if (bodyCtrl != null)
+	{
+		if (bodyCtrl instanceof Controller) bodyCtrl = bodyCtrl.layer;
+		comp = bodyCtrl.containingComp;
+	}
+	else if (hipsCtrl != null)
+	{
+		if (hipsCtrl instanceof Controller) hipsCtrl = hipsCtrl.layer;
+		comp = hipsCtrl.containingComp;
+	}
+	else if (rHandCtrl != null)
+	{
+		if (rHandCtrl instanceof Controller) rHandCtrl = rHandCtrl.layer;
+		comp = rHandCtrl.containingComp;
+	}
+	else if (lHandCtrl != null)
+	{
+		if (lHandCtrl instanceof Controller) lHandCtrl = lHandCtrl.layer;
+		comp = lHandCtrl.containingComp;
+	}
+	else if (rFootCtrl != null)
+	{
+		if (rFootCtrl instanceof Controller) rFootCtrl = rFootCtrl.layer;
+		comp = rFootCtrl.containingComp;
+	}
+	else if (lFootCtrl != null)
+	{
+		if (lFootCtrl instanceof Controller) lFootCtrl = lFootCtrl.layer;
+		comp = lFootCtrl.containingComp;
+	}
+
+	if (!comp) comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
 
 	var mainController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.WALK_CYCLE);
 	var mainControllerLayer = mainController.layer;
@@ -871,168 +976,145 @@ DuAEF.Duik.Automation.walk = function(controllers,comp)
 	var effect = DuAEF.DuAE.Layer.applyPreset(mainControllerLayer,DuAEF.Duik.PseudoEffects.WALK_CYCLE,DuAEF.Duik.PseudoEffectsMatchNames.WALK_CYCLE);
 	var effectName = effect.name;
 
-	if (controllers.length > 0)
+
+	//set up
+	var exp1 = '//Duik.walkCycle\n' + 'thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")(';
+	var exp2 = ') + value;';
+	var top = 0;
+	var foot = 0;
+	var hips = 0;
+	var right = 0;
+
+	function updateTop(layer)
 	{
-		//set up
-		var exp1 = '//Duik.walkCycle\n' + 'thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")(';
-		var exp2 = ') + value;';
-		var top = 0;
-		var foot = 0;
-		var hips = 0;
-		var right = 0;
-		var it = new Iterator(controllers);
-
-		//detect left and right
-		var h1 = null;
-		var f1 = null;
-		var h2 = null;
-		var f2 = null;
-		it.do(function(controller)
+		if (top == 0) top = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+		else
 		{
-			var layer = controller.layer;
-			var params = DuAEF.Duik.getDuikMarkerParameters(layer);
-			var type = params[DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE];
-			if (type == DuAEF.Duik.Controller.Types.HAND)
-			{
-				if (h1 == null) h1 = controller;
-				else h2 = controller;
-			}
-			if (type == DuAEF.Duik.Controller.Types.FOOT)
-			{
-				if (f1 == null) f1 = controller;
-				else f2 = controller;
-			}
-		});
+			var ctrlPos = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+			if (top > ctrlPos) top = ctrlPos;
+		}
+	}
 
-		if (h1 != null && h2 != null && f1 != null && f2 != null )
+	//head
+	if (headCtrl)
+	{
+		updateTop(headCtrl);
+		headCtrl.transform.rotation.expression = exp1 + '55' + exp2;
+	}
+
+	//neck
+	if (neckCtrl)
+	{
+		updateTop(neckCtrl);
+		neckCtrl.transform.rotation.expression = exp1 + '56' + exp2;
+		neckCtrl.transform.position.expression = exp1 + '57' + exp2;
+	}
+
+	//body
+	if (bodyCtrl)
+	{
+		updateTop(bodyCtrl);
+		bodyCtrl.transform.position.expression = exp1 + '58' + exp2;
+		if (hips == 0) hips = DuAEF.DuAE.Layer.getWorldPos(bodyCtrl)[1];
+	}
+
+	//hips
+	else if (hipsCtrl)
+	{
+		updateTop(hipsCtrl);
+		hipsCtrl.transform.rotation.expression = exp1 + '59' + exp2;
+		hips = DuAEF.DuAE.Layer.getWorldPos(hipsCtrl)[1];
+	}
+
+	//arm
+	function rigHand (layer,isRight)
+	{
+		updateTop(layer);
+		DuAEF.Duik.Autorig.setSide(layer,isRight);
+		var sideEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.SIDE);
+
+		//look for clavicle
+		var clavEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK);
+		if (clavEffect)
 		{
-			DuAEF.Duik.Autorig.detectLimbSide(h1,h2,f1,f2);
+			//TODO IK2FK
+			clavEffect(3).expression = '//Duik.walkCycle\n' +
+				'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+				'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+				'sideFx == 1 ? walkFx(61).value + value : walkFx(67).value + value';
+		}
+		//look for FK
+		var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+		if (ikEffect)
+		{
+			var ik = ikEffect(1).value;
+			if (ik == 1) DuAEF.Duik.Animation.switchIkFk(layer);
+
+			ikEffect(4).expression = '//Duik.walkCycle\n' +
+				'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+				'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+				'sideFx == 1 ? walkFx(62).value + value : walkFx(68).value + value';
+
+			ikEffect(5).expression = '//Duik.walkCycle\n' +
+				'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+				'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+				'sideFx == 1 ? walkFx(63).value + value : walkFx(69).value + value';
+		}
+		layer.transform.rotation.expression = '//Duik.walkCycle\n' +
+			'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+			'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+			'sideFx == 1 ? walkFx(64).value + value : walkFx(70).value + value';
+	}
+
+	if (rHandCtrl) rigHand(rHandCtrl,true)
+	if (lHandCtrl) rigHand(lHandCtrl,false)
+
+	//leg
+	function rigFoot (layer,isRight)
+	{
+		foot = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
+
+		DuAEF.Duik.Autorig.setSide(layer,isRight);
+		var sideEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.SIDE);
+
+		var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
+		if (ikEffect)
+		{
+			var ik = ikEffect(1).value;
+			if (ik == 0) DuAEF.Duik.Animation.switchIkFk(layer);
+			right = ikEffect(2).value;
 		}
 
-		it.do(function(controller)
+		layer.transform.position.expression = '//Duik.walkCycle\n' +
+			'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+			'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+			'sideFx == 1 ? walkFx(73).value + value : walkFx(78).value + value';
+
+		layer.transform.rotation.expression = '//Duik.walkCycle\n' +
+			'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+			'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+			'sideFx == 1 ? walkFx(74).value + value : walkFx(79).value + value';
+
+		var footRollEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL);
+		if (footRollEffect)
 		{
-			var layer = controller.layer;
-
-			if (top == 0) top = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
-			else
-			{
-				var ctrlPos = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
-				if (top > ctrlPos) top = ctrlPos;
-			}
-
-			var params = DuAEF.Duik.getDuikMarkerParameters(layer);
-			var id = params[DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE];
-
-			//head
-			if (id == DuAEF.Duik.Controller.Types.HEAD)
-			{
-				layer.transform.rotation.expression = exp1 + '55' + exp2;
-			}
-
-			//neck
-			if (id == DuAEF.Duik.Controller.Types.SHOULDERS)
-			{
-				layer.transform.rotation.expression = exp1 + '56' + exp2;
-				layer.transform.position.expression = exp1 + '57' + exp2;
-			}
-
-			//body
-			if (id == DuAEF.Duik.Controller.Types.BODY)
-			{
-				layer.transform.position.expression = exp1 + '58' + exp2;
-				if (hips == 0) hips = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
-			}
-
-			//hips
-			if (id == DuAEF.Duik.Controller.Types.HIPS)
-			{
-				layer.transform.rotation.expression = exp1 + '59' + exp2;
-				hips = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
-			}
-
-			//arm
-			if (id == DuAEF.Duik.Controller.Types.HAND)
-			{
-				var sideEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.SIDE);
-				if (!sideEffect) sideEffect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.SIDE,DuAEF.Duik.PseudoEffectsMatchNames.SIDE,"Arm");
-
-				//look for clavicle
-				var clavEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.ONELAYER_IK);
-				if (clavEffect)
-				{
-					//TODO IK2FK
-					clavEffect(3).expression = '//Duik.walkCycle\n' +
-						'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-						'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-						'sideFx == 1 ? walkFx(61).value + value : walkFx(67).value + value';
-				}
-				//look for FK
-				var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
-				if (ikEffect)
-				{
-					var ik = ikEffect(1).value;
-					if (ik == 1) DuAEF.Duik.Animation.switchIkFk(controller);
-
-					ikEffect(4).expression = '//Duik.walkCycle\n' +
-						'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-						'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-						'sideFx == 1 ? walkFx(62).value + value : walkFx(68).value + value';
-
-					ikEffect(5).expression = '//Duik.walkCycle\n' +
-						'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-						'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-						'sideFx == 1 ? walkFx(63).value + value : walkFx(69).value + value';
-				}
-				layer.transform.rotation.expression = '//Duik.walkCycle\n' +
-					'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-					'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-					'sideFx == 1 ? walkFx(64).value + value : walkFx(70).value + value';
-			}
-
-			//leg
-			if (id == DuAEF.Duik.Controller.Types.FOOT)
-			{
-				foot = DuAEF.DuAE.Layer.getWorldPos(layer)[1];
-
-				var sideEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.SIDE);
-				if (!sideEffect) sideEffect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.SIDE,DuAEF.Duik.PseudoEffectsMatchNames.SIDE,"Arm");
-
-				var ikEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.TWOLAYER_IK);
-				if (ikEffect)
-				{
-					var ik = ikEffect(1).value;
-					if (ik == 0) DuAEF.Duik.Animation.switchIkFk(controller);
-					right = ikEffect(2).value;
-				}
-
-				layer.transform.position.expression = '//Duik.walkCycle\n' +
-					'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-					'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-					'sideFx == 1 ? walkFx(73).value + value : walkFx(78).value + value';
-
-				layer.transform.rotation.expression = '//Duik.walkCycle\n' +
-					'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-					'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-					'sideFx == 1 ? walkFx(74).value + value : walkFx(79).value + value';
-
-				var footRollEffect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.FOOT_ROLL);
-				if (footRollEffect)
-				{
-					footRollEffect(3).expression = '//Duik.walkCycle\n' +
-						'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
-						'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
-						'sideFx == 1 ? walkFx(75).value + value : walkFx(80).value + value';
-				}
-			}
-		});
-
-		var characterHeight = Math.abs(foot - top);
-		var legHeight = Math.abs(foot - hips);
-		if (characterHeight < legHeight) characterHeight = legHeight;
-		if (legHeight > 0) effect(86).setValue(legHeight);
-		if (characterHeight > 0) effect(87).setValue(characterHeight);
-		if (right == 0) effect(22).setValue(-3.5);
+			footRollEffect(3).expression = '//Duik.walkCycle\n' +
+				'var sideFx = effect("' + sideEffect.name + '")(1).value;\n' +
+				'var walkFx = thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")\n' +
+				'sideFx == 1 ? walkFx(75).value + value : walkFx(80).value + value';
+		}
 	}
+
+	if (rFootCtrl) rigFoot(rFootCtrl,true)
+	if (lFootCtrl) rigFoot(lFootCtrl,false)
+
+	var characterHeight = Math.abs(foot - top);
+	var legHeight = Math.abs(foot - hips);
+	if (characterHeight < legHeight) characterHeight = legHeight;
+	if (legHeight > 0) effect(86).setValue(legHeight);
+	if (characterHeight > 0) effect(87).setValue(characterHeight);
+	if (right == 0) effect(22).setValue(-3.5);
+
 }
 
 /**
