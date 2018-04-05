@@ -1617,8 +1617,9 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	{
 		controller = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.TRANSFORM,goal);
 		goal.parent = null;
-		if (goal) controller.layer.transform.rotation.setValue(goal.transform.rotation.value);
+		controller.layer.transform.rotation.setValue(goal.transform.rotation.value);
 	}
+
 	if (goal) goal.parent = controller.layer;
 
 	//add effect
@@ -1887,7 +1888,7 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 	}
 
 	//sort layers and parent them
-	layers = DuAEF.DuAE.Layer.sortByParent(layers);
+	var layers = DuAEF.DuAE.Layer.sortByParent(layers);
 	//reset rotation and scale if structures
 	var it = new Iterator(layers)
 	it.do(DuAEF.Duik.Structure.resetTransform);
@@ -1905,7 +1906,7 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 
 	var name = layers[0].name;
 	var fkEffect = DuAEF.DuAE.Layer.addPseudoEffect(controller.layer,DuAEF.Duik.PseudoEffects.FK_OVERLAP,DuAEF.Duik.PseudoEffectsMatchNames.FK_OVERLAP,DuAEF.Duik.generateName('FK Overlap',name));
-	fkEffect(6).setValue(-180);
+	fkEffect(7).setValue(-180);
 	fkEffect(1).setValue(100);
 	fkEffect(2).setValue(10);
 
@@ -1919,51 +1920,101 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 		//add expression
 		if (it.current == 0)
 		{
-			layer.transform.rotation.expression = '//Duik.fkOverlap\n' +
-				'var controller = null;\n' +
-				'var result = value;\n' +
-				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n' +
-				'if (controller !=null)\n' +
-				'{\n' +
-				'result += controller.transform.rotation.value + controller.effect("' + fkEffect.name + '")(3).value ;\n' +
-				'}\n' +
+			layer.parent = controller.layer;
+			layer.transform.rotation.expression = '//Duik.fkOverlap\n ' +
+				'var controller = null;\n ' +
+				'var result = value;\n ' +
+				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n ' +
+				'if (controller !=null)\n ' +
+				'{\n ' +
+				'var fx = controller.effect("' + fkEffect.name + '");\n ' +
+				'result += controller.transform.rotation.value + fx(3).value ;\n ' +
+				'var follow = fx(4).value;\n ' +
+				'var p = thisLayer;\n ' +
+				'while(p.hasParent)\n ' +
+				'{\n ' +
+				'p = p.parent;\n ' +
+				'result -= p.rotation.value;\n ' +
+				'}\n ' +
+				'if (follow)\n ' +
+				'{\n ' +
+				'var cP = controller;\n ' +
+				'while(cP.hasParent)\n ' +
+				'{\n ' +
+				'cP = cP.parent;\n ' +
+				'result += cP.rotation.value;\n ' +
+				'}\n ' +
+				'}\n ' +
+				'}\n ' +
+				'result;';
+		}
+		else if (it.current == 1)
+		{
+			layer.transform.rotation.expression = '//Duik.fkOverlap\n ' +
+				'var controller = null;\n ' +
+				'var result = value;\n ' +
+				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n ' +
+				'if (controller !=null && hasParent)\n ' +
+				'{\n ' +
+				'var fx = controller.effect("' + fkEffect.name + '");\n ' +
+				'var ctrlRot = controller.transform.rotation;\n ' +
+				'var delay = fx(2).value ;\n ' +
+				'var amp = fx(1).value ;\n ' +
+				'var uLimit = fx(6).value ;\n ' +
+				'var lLimit = fx(7).value ;\n ' +
+				'var manual = fx(3).value ;\n ' +
+				'var follow = fx(4).value;\n ' +
+				'delay = delay / 100;\n ' +
+				'amp = amp / 100 ;\n ' +
+				'result = ctrlRot.valueAtTime(time-delay) + fx(3).valueAtTime(time-delay);\n ' +
+				'if (follow)\n ' +
+				'{\n ' +
+				'var cP = controller;\n ' +
+				'while(cP.hasParent)\n ' +
+				'{\n ' +
+				'cP = cP.parent;\n ' +
+				'result -= cP.rotation.value - cP.rotation.valueAtTime(time-delay) ;\n ' +
+				'}\n ' +
+				'}\n ' +
+				'result = result - ctrlRot.value ;\n ' +
+				'result = result * amp;\n ' +
+				'result = result - ctrlRot.velocity*(delay/5);\n ' +
+				'if (result > uLimit) result = uLimit;\n ' +
+				'if (result < lLimit) result = lLimit;\n ' +
+				'result = result + value + manual - parent.transform.rotation.valueAtTime(0);\n ' +
+				'}\n ' +
 				'result;';
 		}
 		else
 		{
-			var exp = '//Duik.fkOverlap\n' +
-				'var controller = null;\n' +
-				'var result = value;\n' +
-				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n' +
-				'if (controller !=null && hasParent)\n' +
-				'{\n' +
-				'var fx = controller.effect("' + fkEffect.name + '");\n' +
-				'var ctrlRot = controller.transform.rotation;\n' +
-				'var parentRot = parent.transform.rotation ;\n' +
-				'var delay = fx(2).value ;\n' +
-				'var amp = fx(1).value ;\n' +
-				'var uLimit = fx(5).value ;\n' +
-				'var lLimit = fx(6).value ;\n' +
-				'var manual = fx(3).value ;\n' +
-				'delay = delay / 100;\n' +
-				'amp = amp / 100 ;\n' +
-				'result = parentRot.valueAtTime(time-delay);\n';
-
-			if (it.current == 1) exp += 'result = result - ctrlRot.value ;\n';
-
-			exp += 'result = result * amp;\n';
-
-			if (it.current == 1) exp += 'result = result - ctrlRot.velocity*(delay/5);\n';
-
-			exp += 'if (result > uLimit) result = uLimit;\n' +
-				'if (result < lLimit) result = lLimit;\n' +
-				'result = result + value + manual - parent.transform.rotation.valueAtTime(0);\n' +
-				'}\n' +
+			layer.transform.rotation.expression = '//Duik.fkOverlap\n ' +
+				'var controller = null;\n ' +
+				'var result = value;\n ' +
+				'try{controller=effect("' + layerData.name + '")(1)}catch(e){}\n ' +
+				'if (controller !=null && hasParent)\n ' +
+				'{\n ' +
+				'var fx = controller.effect("' + fkEffect.name + '");\n ' +
+				'var ctrlRot = controller.transform.rotation;\n ' +
+				'var parentRot = parent.transform.rotation ;\n ' +
+				'var delay = fx(2).value ;\n ' +
+				'var amp = fx(1).value ;\n ' +
+				'var uLimit = fx(6).value ;\n ' +
+				'var lLimit = fx(7).value ;\n ' +
+				'var manual = fx(3).value ;\n ' +
+				'delay = delay / 100;\n ' +
+				'amp = amp / 100 ;\n ' +
+				'result = parentRot.valueAtTime(time-delay);\n ' +
+				'result = result * amp;\n ' +
+				'if (result > uLimit) result = uLimit;\n ' +
+				'if (result < lLimit) result = lLimit;\n ' +
+				'result = result + value + manual - parent.transform.rotation.valueAtTime(0);\n ' +
+				'}\n ' +
 				'result;';
 
-			layer.transform.rotation.expression = exp;
 		}
 	});
+
+	controller.layer.selected = true;
 
 	return controller;
 }
