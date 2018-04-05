@@ -352,10 +352,13 @@ DuAEF.Duik.Autorig.tagTail = function (tail,tip)
  * Rigs the layers according to the tags found
  * @memberof DuAEF.Duik.Autorig
  * @param {Layer[]} layers - The layers to rig
+ * @param {boolean} [ikTail=false] - True to use an IK to rig tails, false will create FK Controls
  * @return {Controller[]} The controllers created (empty if the layers can not be rigged)
  */
-DuAEF.Duik.Autorig.rig = function (layers)
+DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 {
+	if (typeof ikTail === 'undefined') ikTail = false;
+
 	if (layers.length == 0) return false;
 
 	//what we expect
@@ -629,6 +632,7 @@ DuAEF.Duik.Autorig.rig = function (layers)
 		if (spine.hips)
 		{
 			bigHipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.BODY,spine.hips);
+			bigHipsCtrl.layer.name = "C | Body";
 			hipsCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.HIPS,spine.hips);
 		}
 		else if (spine.spine.length > 0)
@@ -781,37 +785,58 @@ DuAEF.Duik.Autorig.rig = function (layers)
 			return;
 		}
 
-		//controllers
-		var tailCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.TAIL,tail.tip);
-
-		tailsCtrl.push(tailCtrl);
 
 		//ik
-		if(tail.tail.length > 1)
+		if (ikTail)
 		{
-			var layers = tail.tail;
-			var ctrls = DuAEF.Duik.Rigging.bezierIK(tail.tail,tail.tip,tailCtrl);
+			//controllers
+			var tailCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.TAIL,tail.tip);
 
-			tailsCtrl.push(ctrls[0]);
+			tailsCtrl.push(tailCtrl);
 
-			//parent
-			if (spineRoot)
+			if(tail.tail.length > 1)
 			{
-				ctrls[0].layer.parent = bigHipsCtrl.layer;
-				ctrls[1].layer.parent = bigHipsCtrl.layer;
-				tail.tail[0].parent = spineRoot;
+				var layers = tail.tail;
+				var ctrls = DuAEF.Duik.Rigging.bezierIK(tail.tail,tail.tip,tailCtrl);
+
+				tailsCtrl.push(ctrls[0]);
+
+				//parent
+				if (spineRoot)
+				{
+					ctrls[0].layer.parent = bigHipsCtrl.layer;
+					ctrls[1].layer.parent = bigHipsCtrl.layer;
+					tail.tail[0].parent = spineRoot;
+				}
+			}
+			else
+			{
+				DuAEF.Duik.Rigging.oneLayerIK(tail.tail[0],tail.tip,tailCtrl);
+				//parent
+				if (spineRoot)
+				{
+					tailCtrl.layer.parent = bigHipsCtrl.layer;
+					tail.tail[0].parent = spineRoot;
+				}
 			}
 		}
 		else
 		{
-			DuAEF.Duik.Rigging.oneLayerIK(tail.tail[0],tail.tip,tailCtrl);
+			//controllers
+			var tailCtrl = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.TAIL,tail.tail[0]);
+
+			tailsCtrl.push(tailCtrl);
+
+			tail.tail.push(tail.tip);
+
+			DuAEF.Duik.Rigging.fkOverlap(tail.tail.reverse(),tailCtrl);
 			//parent
 			if (spineRoot)
 			{
-				tailCtrl.layer.parent = bigHipsCtrl.layer;
-				tail.tail[0].parent = spineRoot;
+				tailCtrl.layer.parent = hipsCtrl.layer;
 			}
 		}
+
 
 	});
 
