@@ -9,6 +9,7 @@ function setCurrentConstraintsPanel(panel)
 	ui_pathConstraintGroup.visible = panel == 1;
 	ui_bonesGroup.visible = panel == 2;
 	ui_connectorGroup.visible = panel == 3;
+	ui_autorigOptionsGroup.visible = panel == 4;
 }
 
 function initConstraintsUI()
@@ -540,11 +541,31 @@ function ui_autorigButton_clicked()
 
 	DuAEF.DuAE.Project.setProgressMode(true);
 
-	DuAEF.Duik.Autorig.rig(layers);
+	DuAEF.Duik.Autorig.rig(layers,settings.data.autorigTailIK);
+
+	if (ui_autorigBakeStructuresButton.checked)
+	{
+		var structure = new Structure(layers);
+		structure.bakeAppearence();
+	}
 
 	DuAEF.DuAE.Project.setProgressMode(false);
 
+	setCurrentConstraintsPanel(0);
+
 	app.endUndoGroup();
+}
+
+function ui_autorigBakeStructuresButton_clicked ()
+{
+	settings.data.autorigBakeStructures = ui_autorigBakeStructuresButton.checked;
+	settings.save();
+}
+
+function ui_autorigTailSelector_changed ()
+{
+	settings.data.autorigTailIK = ui_autorigTailSelector.index == 0;
+	settings.save();
 }
 
 function ui_fkButton_clicked()
@@ -555,7 +576,6 @@ function ui_fkButton_clicked()
 	app.beginUndoGroup('Duik | ' + "FK Overlap");
 
 	var ctrl = DuAEF.Duik.Rigging.fkOverlap(layers);
-	ctrl.layer.selected = true;
 
 	app.endUndoGroup();
 }
@@ -568,7 +588,10 @@ DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup,settings.data.uiMode ==
 
 var ui_IKMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 if (settings.data.uiMode == 2) ui_IKMainGroup.alignment = ['center','top'];
-var ui_autorigButton = DuAEF.DuScriptUI.addImageButton(ui_IKMainGroup,settings.data.uiMode == 2 ? '' : "Auto-rig",DuAEF.DuBinary.toFile(w32_autorig_l),"Automatically rig structures",DuAEF.DuBinary.toFile(w32_autorig_r));
+var ui_autorigGroup = DuAEF.DuScriptUI.addGroup(ui_IKMainGroup,settings.data.uiMode == 2 ? 'column' : 'row');
+var ui_autorigButton = DuAEF.DuScriptUI.addImageButton(ui_autorigGroup,settings.data.uiMode == 2 ? '' : "Auto-rig",DuAEF.DuBinary.toFile(w32_autorig_l),"Automatically rig structures",DuAEF.DuBinary.toFile(w32_autorig_r));
+var ui_autorigOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_autorigGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Autorig options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_autorigOptionsButton.alignment = settings.data.uiMode == 2 ? ['center','center'] : ['right','center'];
 var ui_IKGroup = DuAEF.DuScriptUI.addGroup(ui_IKMainGroup,settings.data.uiMode == 2 ? 'column' : 'row');
 var ui_IKButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,settings.data.uiMode == 2 ? '' : "IK",DuAEF.DuBinary.toFile(w25_ik_l),"Add an IK to the selected structure",DuAEF.DuBinary.toFile(w25_ik_r));
 var ui_IKOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"IK options",DuAEF.DuBinary.toFile(w14_plus_r));
@@ -624,6 +647,19 @@ if (settings.data.uiMode != 0)
 	var ui_listConstaintsButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add list",DuAEF.DuBinary.toFile(w18_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w18_list_r));
 	var ui_zeroButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer",DuAEF.DuBinary.toFile(w18_zero_r));
 }
+
+//autorig options
+var ui_autorigOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_autorigOptionsGroup,"Autorig");
+var ui_autorigBakeStructuresButton = DuAEF.DuScriptUI.addImageCheckBox(ui_autorigOptionsGroup,"Bake Structures",DuAEF.DuBinary.toFile(w25_oven_l),"Bake the appearance of the Structures, to improve performance",DuAEF.DuBinary.toFile(w25_oven_r));
+var ui_autorigTailSelector = DuAEF.DuScriptUI.addSelector(ui_autorigOptionsGroup);
+ui_autorigTailSelector.addButton("IK Tail",DuAEF.DuBinary.toFile(w25_ik_l),"Rig tails with an IK",DuAEF.DuBinary.toFile(w25_ik_r));
+ui_autorigTailSelector.addButton("FK Tail",DuAEF.DuBinary.toFile(w25_fk_l),"Rig tails with an FK",DuAEF.DuBinary.toFile(w25_fk_r));
+var ui_autorigValidGroup = DuAEF.DuScriptUI.addGroup(ui_autorigOptionsGroup);
+ui_autorigValidGroup.alignment = ['fill','top'];
+var ui_autorigCancelButton = DuAEF.DuScriptUI.addImageButton(ui_autorigValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_autorigValidButton = DuAEF.DuScriptUI.addImageButton(ui_autorigValidGroup,"Autorig",DuAEF.DuBinary.toFile(w25_check_g),"Automatically rig structures",DuAEF.DuBinary.toFile(w25_check_r));
+
 
 //path constraint options
 var ui_pathConstraintGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
@@ -735,10 +771,20 @@ bonesEditInit();
 setCurrentConstraintsPanel();
 var pathConstraintPathProp = null;
 var connectorMasterProp = null;
+if (settings.data.autorigBakeStructures == undefined) settings.data.autorigBakeStructures = true;
+ui_autorigBakeStructuresButton.setChecked(settings.data.autorigBakeStructures);
+if (settings.data.autorigTailIK == undefined) settings.data.autorigTailIK = false;
+ui_autorigTailSelector.setCurrentIndex(1);
+if (settings.data.autorigTailIK) ui_autorigTailSelector.setCurrentIndex(0);
 
 //=========== CONNECT EVENTS ===========
 
-ui_autorigButton.onClick = ui_autorigButton_clicked;
+ui_autorigButton.onClick = ui_autorigValidButton.onClick = ui_autorigButton_clicked;
+ui_autorigOptionsButton.onClick = function (){ setCurrentConstraintsPanel(4); };
+ui_autorigCancelButton.onClick = function () { setCurrentConstraintsPanel(0); };
+ui_autorigBakeStructuresButton.onClick = ui_autorigBakeStructuresButton_clicked;
+ui_autorigTailSelector.onChange = ui_autorigTailSelector_changed;
+
 ui_IKButton.onClick = shared.createIK;
 if (settings.data.uiMode != 0) ui_bezierIKButton.onClick = shared.createBezierIK;
 ui_fkButton.onClick = ui_fkButton_clicked;
