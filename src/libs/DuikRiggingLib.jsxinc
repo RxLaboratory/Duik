@@ -1925,7 +1925,6 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 		//add expression
 		if (it.current == 0)
 		{
-			layer.parent = controller.layer;
 			layer.transform.rotation.expression = '//Duik.fkOverlap\n ' +
 				'var controller = null;\n ' +
 				'var result = value;\n ' +
@@ -1936,18 +1935,12 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 				'result += controller.transform.rotation.value + fx(3).value ;\n ' +
 				'var follow = fx(4).value;\n ' +
 				'var p = thisLayer;\n ' +
+				'if (!follow)\n ' +
+				'{\n ' +
 				'while(p.hasParent)\n ' +
 				'{\n ' +
 				'p = p.parent;\n ' +
 				'result -= p.rotation.value;\n ' +
-				'}\n ' +
-				'if (follow)\n ' +
-				'{\n ' +
-				'var cP = controller;\n ' +
-				'while(cP.hasParent)\n ' +
-				'{\n ' +
-				'cP = cP.parent;\n ' +
-				'result += cP.rotation.value;\n ' +
 				'}\n ' +
 				'}\n ' +
 				'for (var i = 1 ; i <= controller("Effects").numProperties ; i++)\n ' +
@@ -1981,12 +1974,13 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 				'delay = delay / 100;\n ' +
 				'amp = amp / 100 ;\n ' +
 				'result = ctrlRot.valueAtTime(time-delay) + fx(3).valueAtTime(time-delay);\n ' +
-				'if (follow)\n ' +
+				'if (follow && hasParent)\n ' +
 				'{\n ' +
-				'var cP = controller;\n ' +
+				'var cP = parent;\n ' +
 				'while(cP.hasParent)\n ' +
 				'{\n ' +
 				'cP = cP.parent;\n ' +
+				'if (cP.index = controller.index) follow = false;\n ' +
 				'result -= cP.rotation.value - cP.rotation.valueAtTime(time-delay) ;\n ' +
 				'}\n ' +
 				'}\n ' +
@@ -1995,7 +1989,8 @@ DuAEF.Duik.Rigging.fkOverlap = function (layers,controller)
 				'result = result - ctrlRot.velocity*(delay/5);\n ' +
 				'if (result > uLimit) result = uLimit;\n ' +
 				'if (result < lLimit) result = lLimit;\n ' +
-				'result = result + value + manual - parent.transform.rotation.valueAtTime(0);\n ' +
+				'result = result + value + manual;\n ' +
+				'if (follow) result -= parent.transform.rotation.valueAtTime(0);\n ' +
 				'for (var i = 1 ; i <= controller("Effects").numProperties ; i++)\n ' +
 				'{\n ' +
 				'var fk = controller("Effects")(i);\n ' +
