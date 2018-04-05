@@ -31,7 +31,7 @@ Structure.prototype.setSize = function (size)
 	for (var i = 0 ; i < this.elements.length ; i++)
 	{
 		var layer = this.elements[i];
-		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(2).setValue(size);
+		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(2).setValue(size);
 	}
 }
 
@@ -51,7 +51,7 @@ Structure.prototype.setColor = function (color)
 	for (var i = 0 ; i < this.elements.length ; i++)
 	{
 		var layer = this.elements[i];
-		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(color);
+		layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(color);
 	}
 }
 
@@ -312,218 +312,14 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 	var element = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(element,"Structure",DuAEF.Duik.LayerTypes.STRUCTURE);
 	DuAEF.Duik.setDuikMarkerParameter(element,DuAEF.Duik.MarkerParameters.STRUCTURE_ID,id);
+
 	//add effect
+	var elementEffect = DuAEF.DuAE.Layer.addPseudoEffect(element,DuAEF.Duik.PseudoEffects.STRUCTURE,DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE,"Structure");
+	elementEffect(2).setValue(size);
+	elementEffect(4).setValue(color);
 
-	element.applyPreset(DuAEF.Duik.PseudoEffects.STRUCTURE_ELEMENT);
-	element.effect("Structure")(2).setValue(size);
-	element.effect("Structure")(4).setValue(color);
-
-	//bone group
-	var elementGroup = element("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
-	elementGroup.name = "Structure Element";
-	elementGroup("ADBE Vector Transform Group")("ADBE Vector Scale").expression = '//Duik.structure.size\nif(!active) value;\nelse\n{\nvar s = effect("Structure")(2);\n[s,s];\n}';
-	//target group
-	var targetGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-	targetGroup.name = "Target";
-	var targetGroupContent = targetGroup.property("ADBE Vectors Group");
-	var ellipse = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
-	ellipse("ADBE Vector Ellipse Size").setValue([15,15]);
-	var ellipse2 = targetGroupContent.addProperty("ADBE Vector Shape - Ellipse");
-	ellipse2("ADBE Vector Ellipse Size").setValue([1,1]);
-	var targetStroke = targetGroupContent.addProperty("ADBE Vector Graphic - Stroke");
-	targetStroke("ADBE Vector Stroke Color").setValue([0.1,0.1,0.1,1]);
-	targetStroke("ADBE Vector Stroke Width").setValue(2);
-
-
-	var displayGroup = elementGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-	displayGroup.name = "Display";
-	displayGroup.property("ADBE Vector Transform Group").property("ADBE Vector Group Opacity").setValue(50);
-	//stretch group
-	var stretchBoneGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-	stretchBoneGroup.name = "Link";
-	var stretchBoneContent = stretchBoneGroup.property("ADBE Vectors Group");
-	var star = stretchBoneContent.addProperty("ADBE Vector Shape - Star");
-	star("ADBE Vector Star Type").setValue(2);
-	star("ADBE Vector Star Points").setValue(3);
-	star("ADBE Vector Star Outer Radius").setValue(20);
-	star("ADBE Vector Star Outer Roundess").setValue(100);
-
-	var roundExp = '//Duik.structure.roundness\n' +
-				'if (active){\n' +
-				'var child = null;\n' +
-				'var childIndex = -1;\n' +
-				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
-				'catch (e) {}\n' +
-				'if(childIndex == thisLayer.index || effect("Structure")(2) == 0) value;\n' +
-				'else\n' +
-				'{\n' +
-				'function isBone(layer)\n' +
-				'{\n' +
-				'var ok = false;\n' +
-				'try { layer.content("Structure Element"); ok = true;}\n' +
-				'catch (e) { ok = false;}\n' +
-				'return ok;\n' +
-				'}\n' +
-				'if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n' +
-				'if (!isBone(child)) child = null;\n' +
-				'if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n' +
-				'if (!isBone(child)) child = null;\n' +
-				'if (!child)\n' +
-				'{\n' +
-				'for (var i = thisComp.numLayers  ; i > 0 ; i--)\n' +
-				'{\n' +
-				'if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n' +
-				'{\n' +
-				'child = thisComp.layer(i);\n' +
-				'if (!isBone(child)) child = null;\n' +
-				'if (child) break;\n' +
-				'}\n' +
-				'}\n' +
-				'}\n' +
-				'if (child)\n' +
-				'{\n' +
-				'var A = child.toWorld(child.anchorPoint);\n' +
-				'var B = thisLayer.toWorld(thisLayer.anchorPoint);\n' +
-				'var dist = length(A,B);\n' +
-				'if (dist < 20) dist = 20;\n' +
-				'var s = content("Structure Element").transform.scale[0];\n' +
-				'value/(dist/60)*s/80;\n' +
-				'}\n' +
-				'else value;\n' +
-				'}\n' +
-				'} else value;';
-
-	star("ADBE Vector Star Outer Roundess").expression = roundExp;
-
-	var stretchBoneFill = stretchBoneContent.addProperty("ADBE Vector Graphic - Fill");
-	stretchBoneFill("ADBE Vector Fill Color").expression = '//Duik.structure.color\neffect("Structure")(4).value;';
-	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Anchor").setValue([0,10]);
-
-	var scaExpr = "//Duik.structure.stretch\n" +
-				'if (active){\n' +
-				'var child = null;\n' +
-				'var childIndex = -1;\n' +
-				'try { child = effect("Structure")(3);childIndex = child.index}\n' +
-				'catch (e) {}\n' +
-				'if(childIndex == thisLayer.index || effect("Structure")(2) == 0) [0,0];\n' +
-				'else\n' +
-				'{\n' +
-				"var X = 100;\n" +
-				"var Y = 60;\n" +
-				"function isBone(layer)\n" +
-				"{\n" +
-				"var ok = false;\n" +
-				"try { layer.content(\"Structure Element\"); ok = true;}\n" +
-				"catch (e) { ok = false;}\n" +
-				"return ok;\n" +
-				"}\n" +
-				"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
-				"if (!isBone(child)) child = null;\n" +
-				"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
-				"if (!isBone(child)) child = null;\n" +
-				"if (!child)\n" +
-				"{\n" +
-				"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
-				"{\n" +
-				"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
-				"{\n" +
-				"child = thisComp.layer(i);\n" +
-				"if (!isBone(child)) child = null;\n" +
-				"if (child) break;\n" +
-				"}\n" +
-				"}\n" +
-				"}\n" +
-				"if (child)\n" +
-				"{\n" +
-				"var A = child.toWorld(child.anchorPoint);\n" +
-				"var B = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-				"var dist = length(A,B);\n" +
-				"Y = dist/30*100;\n" +
-				"}\n" +
-				"[X,Y*100/content(\"Structure Element\").transform.scale[1]];\n" +
-				'}\n' +
-				'} else value;';
-
-	stretchBoneGroup.property("ADBE Vector Transform Group").property("ADBE Vector Scale").expression = scaExpr;
-
-	var rotExpr = "//Duik.structure.orientation\n" +
-			'if (active){\n' +
-			'var child = null;\n' +
-			'var childIndex = -1;\n' +
-			'try { child = effect("Structure")(3);childIndex = child.index || effect("Structure")(2) == 0}\n' +
-			'catch (e) {}\n' +
-			'if(childIndex == thisLayer.index) value;\n' +
-			'else\n' +
-			'{\n' +
-			"var R = 45;\n" +
-			"function isBone(layer)\n" +
-			"{\n" +
-			"var ok = false;\n" +
-			"try { layer.content(\"Structure Element\"); ok = true;}\n" +
-			"catch (e) { ok = false;}\n" +
-			"return ok;\n" +
-			"}\n" +
-			"if (!child) if (index > 1) if (thisComp.layer(index-1).hasParent) if (thisComp.layer(index-1).parent.index == index) child = thisComp.layer(index-1);\n" +
-			"if (!isBone(child)) child = null;\n" +
-			"if (!child) if (index < thisComp.numLayers) if (thisComp.layer(index+1).hasParent) if (thisComp.layer(index+1).parent.index == index) child = thisComp.layer(index+1);\n" +
-			"if (!isBone(child)) child = null;\n" +
-			"if (!child)\n" +
-			"{\n" +
-			"for (var i = thisComp.numLayers  ; i > 0 ; i--)\n" +
-			"{\n" +
-			"if (thisComp.layer(i).hasParent) if (thisComp.layer(i).parent.index == thisLayer.index)\n" +
-			"{\n" +
-			"child = thisComp.layer(i);\n" +
-			"if (!isBone(child)) child = null;\n" +
-			"if (child) break;\n" +
-			"}\n" +
-			"}\n" +
-			"}\n" +
-			"var result = value;\n" +
-			"var layer = thisLayer;\n" +
-			"while (layer.hasParent)\n" +
-			"{\n" +
-			"layer = layer.parent;\n" +
-			"result = result - layer.rotation;\n" +
-			"}\n" +
-			"if (child)\n" +
-			"if (child.index != index)\n" +
-			"{\n" +
-			"C = child.toWorld(child.anchorPoint);\n" +
-			"O =  thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-			"var vec = O-C;\n" +
-			"var angle = Math.atan2(vec[1], vec[0]);\n" +
-			"var ik = radiansToDegrees(angle);\n" +
-			"result += (ik-90-rotation)\n" +
-			"}\n" +
-			"result;\n" +
-			"}\n" +
-			'} else value;';
-
-	elementGroup.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = rotExpr;
-
-	var editModeGroup = displayGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-	editModeGroup.name = "Edit Mode";
-	var editModeContent = editModeGroup.property("ADBE Vectors Group");
-	var circle = editModeContent.addProperty("ADBE Vector Shape - Ellipse");
-	circle("ADBE Vector Ellipse Size").setValue([40,40]);
-
-	var editModeExpr = '//Duik.structure.editMode\n' +
-					'if (active){\n' +
-					'var child = null;\n' +
-					'for (var i = 1 ; i <= thisComp.numLayers ; i++)\n' +
-					'{\n' +
-					'if (i != thisLayer.index && thisComp.layer(i).hasParent)\n' +
-					'if (thisComp.layer(i).parent.index == thisLayer.index) {child = thisComp.layer(i); break;}\n' +
-					'}\n' +
-					'if (child) [0,0];\n' +
-					'else value;\n' +
-					'} else value;';
-
-	circle("ADBE Vector Ellipse Size").expression = editModeExpr;
-
-	var editModeFill = editModeContent.addProperty("ADBE Vector Graphic - Fill");
-	editModeFill("ADBE Vector Fill Color").setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+	//content
+	DuAEF.DuAE.Layer.applyPreset(element,DuAEF.Duik.PseudoEffects.STRUCTURE_ELEMENT)
 
 	element.guideLayer = true;
 
@@ -583,7 +379,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 			var childLayer = layer;
 			while (childLayer != null)
 			{
-				var childIndex = childLayer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				var childIndex = childLayer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(3).value;
 				if (childIndex == childLayer.index) break;
 				var currentIndex = childLayer.index;
 				childLayer = null;
@@ -628,7 +424,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 				if (testParent == null) break;
 				else if (!DuAEF.Duik.isLayerType(testParent,DuAEF.Duik.LayerTypes.STRUCTURE)) break;
 
-				var testIndex = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(3).value;
+				var testIndex = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(3).value;
 
 				parentLayer = null;
 
@@ -713,7 +509,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 		//set limb position and name
 		var element = structure.elements[currentElement];
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Shoulder",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 		//position of the next limb
 		element.transform.position.setValue(nextPosition);
 		shoulderLayer = element;
@@ -729,7 +525,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Arm",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
 		humerusLayer = element;
 		if (plantigrade) nextPosition = [size/6,size];
 		else if (digitigrade) nextPosition = [size*3/4,size*3/4];
@@ -741,7 +537,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Forearm",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
 		radiusLayer = element;
 		if (plantigrade) nextPosition = [-size/6,size];
 		else if (digitigrade) nextPosition = [-size/3,size*4/3];
@@ -753,7 +549,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hand",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
 		handLayer = element;
 		if (plantigrade)
 		{
@@ -770,7 +566,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 		element.transform.position.setValue(nextPosition);
 		if (ungulate) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hoof",comp);
 		else element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Claws",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
 		clawsLayer = element;
 		if (plantigrade) nextPosition = [-size/4,0];
 		else if (digitigrade) nextPosition = [-size/4,0];
@@ -860,7 +656,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Thigh",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
 		femurLayer = element;
 		if (plantigrade) nextPosition = [-size/6,size];
 		else if (digitigrade) nextPosition = [-size*3/4,size*3/4];
@@ -872,7 +668,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Calf",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
 		tibiaLayer = element;
 		if (plantigrade) nextPosition = [size/6,size];
 		else if (digitigrade) nextPosition = [size*3/4,size*3/4];
@@ -884,7 +680,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Foot",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
 		footLayer = element;
 		if (plantigrade)nextPosition = [-size*3/8,size/6];
 		else if (digitigrade) nextPosition = [0,size/2];
@@ -898,7 +694,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 		if (plantigrade) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Toes",comp);
 		else if (digitigrade) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Claws",comp);
 		else element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hoof",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
 		toesLayer = element;
 		if (plantigrade) nextPosition = [-size/8,0];
 		else if (digitigrade) nextPosition = [-size/4,0];
@@ -979,7 +775,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hips",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
 		hipsLayer = element;
 		nextPosition = [0,-size/6];
 		currentElement++;
@@ -989,7 +785,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Spine",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
 		spineLayer.push(element);
 		nextPosition = [0,-size/spineCount];
 		currentElement++;
@@ -999,7 +795,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Neck",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
 		neckLayer.push(element);
 		nextPosition = [0,-size/6/neckCount];
 		currentElement++;
@@ -1009,7 +805,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 		var element = structure.elements[currentElement];
 		element.transform.position.setValue(nextPosition);
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Head",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
 		headLayer = element;
 		nextPosition = [0,-size/3];
 		currentElement++;
@@ -1048,9 +844,9 @@ DuAEF.Duik.Structure.createTail = function(elementCount,comp)
 	for (var i = 0 ; i < elementCount ; i++)
 	{
 		var element = structure.elements[i];
-		if (i < elementCount/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
-		else if (i < elementCount*2/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
-		else element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+		if (i < elementCount/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+		else if (i < elementCount*2/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+		else element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
 		tailLayer.push(element);
 	}
 
@@ -1088,7 +884,7 @@ DuAEF.Duik.Structure.bakeAppearence = function(layer)
 {
 	if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
 
-	var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE_ELEMENT);
+	var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
 	if (!effect) return;
 
 	//bake all
