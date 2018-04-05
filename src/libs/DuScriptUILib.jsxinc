@@ -29,6 +29,10 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 #include "icons/w14_layers_l.png.jsxinc"
 #include "icons/w14_update_l.png.jsxinc"
 #include "icons/w14_update_m.png.jsxinc"
+#include "icons/w14_checked_m.png.jsxinc"
+#include "icons/w14_checked_l.png.jsxinc"
+#include "icons/w14_unchecked_l.png.jsxinc"
+#include "icons/w14_emptysquare_m.png.jsxinc"
 
 /**
 * ScriptUI tools
@@ -439,7 +443,14 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 
 	if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
 
-	var imageButton = {};
+	var group = container.add('group');
+	group.orientation = 'row';
+	group.margins = 2;
+	group.spacing = 5;
+	var imageButton = group;
+	imageButton.group = group;
+
+	DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 
 	imageButton.standardImage = image;
 	imageButton.imageOver = imageOver;
@@ -449,11 +460,18 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.textChecked = textChecked;
 	imageButton.defaultText = text;
 
-	var group = container.add('group');
-	group.orientation = 'row';
-	group.margins = 0;
-	group.spacing =5;
-	imageButton.group = group;
+	imageButton.iconChecked = DuAEF.DuBinary.toFile(w14_checked_m);
+	imageButton.iconCheckedOver = DuAEF.DuBinary.toFile(w14_checked_l);
+	imageButton.iconUnchecked = DuAEF.DuBinary.toFile(w14_emptysquare_m);
+	imageButton.iconUncheckedOver = DuAEF.DuBinary.toFile(w14_unchecked_l);
+
+	//add checkbox
+	if (text != '')
+	{
+		imageButton.checkbox = group.add('image',undefined,imageButton.iconChecked);
+		imageButton.checkbox.alignment = ['left','center'];
+		imageButton.checkbox.helpTip = helpTip;
+	}
 
 	if (image != '')
 	{
@@ -502,19 +520,30 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.setChecked = function (c)
 	{
 		imageButton.checked = imageButton.value = c;
-		if (imageButton.imageChecked != '')
+
+		if (imageButton.label)
 		{
 			if (imageButton.checked)
 			{
-				if (imageButton.textChecked != '' && imageButton.label) imageButton.label.text = imageButton.textChecked;
-				if (imageButton.image) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-				if (imageButton.label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+				if (imageButton.textChecked != '') imageButton.label.text = imageButton.textChecked;
+				imageButton.checkbox.image = imageButton.iconChecked;
 			}
 			else
 			{
-				if (imageButton.label) imageButton.label.text = imageButton.defaultText;
-				if (imageButton.image) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-				if (imageButton.label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+				imageButton.label.text = imageButton.defaultText;
+				imageButton.checkbox.image = imageButton.iconUnchecked;
+			}
+		}
+
+		if (imageButton.image)
+		{
+			if (imageButton.checked)
+			{
+				if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
+			}
+			else
+			{
+				if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
 			}
 		}
 	}
@@ -528,20 +557,26 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.mouseOver = function (e)
 	{
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
-		if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		if (label)
+		{
+			DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.DARK_GREY);
+			if (imageButton.checked) imageButton.checkbox.image = imageButton.iconCheckedOver;
+			else imageButton.checkbox.image = imageButton.iconUncheckedOver;
+		}
 	}
 
 	imageButton.mouseOut = function (e)
 	{
+		if (label) DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 		if (imageButton.checked)
 		{
 			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-			if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+			if (label) imageButton.checkbox.image = imageButton.iconChecked;
 		}
 		else
 		{
 			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-			if (label) DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			if (label) imageButton.checkbox.image = imageButton.iconUnchecked;
 		}
 	}
 
