@@ -526,6 +526,8 @@
 	#include 'icons/w32_klin_l.png.jsxinc'
 	#include 'icons/w32_aelayers_r.png.jsxinc'
 	#include 'icons/w32_aelayers_l.png.jsxinc'
+	#include 'icons/w32_human_l.png.jsxinc'
+	#include 'icons/w32_human_r.png.jsxinc'
 
 	#include 'icons/illustrations_tail.jsxinc'
 	#include 'icons/illustrations_spine.jsxinc'
