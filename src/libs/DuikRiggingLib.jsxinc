@@ -664,6 +664,9 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 	//rotation limit
 	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.fullRotationLimitAngle).setValue(-180);
 
+	//inherit parent rotation
+	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.parentRotationCheckbox).setValue(1);
+
 	//get some useful coordinates
 	var goalPos = [0,0];
 	if (goal != null)
@@ -845,24 +848,24 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 		'try{controller=effect("' + layer1Data.name + '")(1)}catch(e){}\n' +
 		'if (controller !=null)\n' +
 		'{\n' +
-		'var fx = controller.effect("' + ikEffect.name + '");\n' +
+		'var fx = controller.effect("' + ikEffect.name  + '");\n' +
+		'IKFK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
+		'function ik() \n' +
+		'{\n' +
 		'layer1 = thisLayer;\n' +
 		'layer2 = null;\n' +
-		'try{ layer2 = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerLayer + '); }  catch (e){}\n' +
+		'try{ layer2 = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerLayer + '); }  catch (e){return value;}\n' +
 		'if (layer2 != null)\n' +
 		'{\n' +
 		'endPos = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalPositionPoint + ').value;\n' +
 		'limit = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.fullRotationLimitAngle + ').value;\n' +
-		'FK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperAngle + ').value;\n' +
-		'IKFK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
 		'cw = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.reverseCheckbox + ').value;\n' +
 		'function getWorldPos(L){\n' +
 		'return L.toWorld(L.anchorPoint);\n' +
 		'}\n' +
-		'function ik() {\n' +
 		'A = getWorldPos(layer1);\n' +
-		'B = getWorldPos(layer2);\n' +
 		'C = layer2.toWorld(endPos);\n' +
+		'B = getWorldPos(layer2);\n' +
 		'E = getWorldPos(controller);\n' +
 		'a = length(B,C);\n' +
 		'b = length(E,A);\n' +
@@ -878,10 +881,25 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 		'if (IK < limit) IK+=360;\n' +
 		'return IK;\n' +
 		'}\n' +
-		'result = IKFK ? ik() : FK;\n' +
 		'}\n' +
+		'function fk() {\n' +
+		'var follow = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.parentRotationCheckbox + ').value;\n' +
+		'var FK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperAngle + ').value + fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.fkAngle + ').value;\n' +
+		'var p = thisLayer;\n' +
+		'if (!follow)\n' +
+		'{\n' +
+		'while(p.hasParent)\n' +
+		'{\n' +
+		'p = p.parent;\n' +
+		'FK -= p.rotation.value;\n' +
+		'}\n' +
+		'}\n' +
+		'return FK;\n' +
+		'}\n' +
+		'result = IKFK ? ik() : fk();\n' +
 		'}\n' +
 		'result;';
+
 
 	var layer2Data = DuAEF.DuAE.Layer.addPseudoEffect(layer2,DuAEF.Duik.PseudoEffects.IK,DuAEF.Duik.PseudoEffectsMatchNames.IK,"IK");
 	layer2Data(1).setValue(controller.layer.index);
@@ -893,20 +911,21 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 		'try{controller=effect("' + layer2Data.name + '")(1)}catch(e){}\n' +
 		'if (controller !=null)\n' +
 		'{\n' +
-		'var fx = controller.effect("' + ikEffect.name + '");\n' +
+		'var fx = controller.effect("' + ikEffect.name  + '");\n' +
+		'IKFK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
 		'layer1 = null;\n' +
 		'layer2 = thisLayer;\n' +
 		'try{ layer1 = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperLayer + '); }  catch (e){}\n' +
 		'if (layer1 != null)\n' +
 		'{\n' +
+		'function ik()\n' +
+		'{\n' +
 		'endPos = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalPositionPoint + ').value;\n' +
-		'FK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerAngle + ').value;\n' +
-		'IKFK = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
 		'cw = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.reverseCheckbox + ').value;\n' +
-		'function getWorldPos(L){\n' +
-		'return L.toWorld(L.anchorPoint);\n' +
+		'function getWorldPos(L)\n' +
+		'{\n' +
+		'	return L.toWorld(L.anchorPoint);\n' +
 		'}\n' +
-		'function ik() {\n' +
 		'A = getWorldPos(layer1);\n' +
 		'B = getWorldPos(layer2);\n' +
 		'C = layer2.toWorld(endPos);\n' +
@@ -925,10 +944,35 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 		'IK = result +  adj1 - adj2 + value;\n' +
 		'return IK;\n' +
 		'}\n' +
-		'result = IKFK ? ik() : FK;\n' +
+		'function fk()\n' +
+		'{\n' +
+		'var ctrlRot = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.fkAngle + ');\n' +
+		'var delay = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.resistanceSlider + ').value ;\n' +
+		'var amp = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.flexibilitySlider + ').value ;\n' +
+		'var follow = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.parentRotationCheckbox + ').value;\n' +
+		'delay = delay / 100;\n' +
+		'amp = amp / 100 ;\n' +
+		'FK = ctrlRot.valueAtTime(time-delay);\n' +
+		'if (follow && hasParent)\n' +
+		'{\n' +
+		'var cP = layer1;\n' +
+		'while(cP.hasParent)\n' +
+		'{\n' +
+		'cP = cP.parent;\n' +
+		'FK -= cP.rotation.value - cP.rotation.valueAtTime(time-delay);\n' +
 		'}\n' +
 		'}\n' +
-		'result;\n';
+		'FK = FK - ctrlRot.value ;\n' +
+		'FK = FK * amp;\n' +
+		'FK = FK - ctrlRot.velocity*(delay/5);\n' +
+		'if (follow) FK -= layer1.transform.rotation.valueAtTime(0);\n' +
+		'FK += fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperAngle + ').value + fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerAngle + ').value;\n' +
+		'return FK;\n' +
+		'}\n' +
+		'result = IKFK ? ik() : fk();\n' +
+		'}\n' +
+		'}\n' +
+		'result;';
 
 	layer2.transform.position.expression = '//Duik.twoLayerIK.stretch\n' +
 		'var ctrl = null;\n' +
@@ -978,23 +1022,40 @@ DuAEF.Duik.Rigging.twoLayerIK = function (layer1,layer2,goal,controller)
 
 		var rotExpr = '//Duik.goal\n' +
 			'var ctrl = null;\n' +
-			'var result = value;\n' +
 			'try { ctrl = effect("' + goalData.name + '")(1); } catch (e){};\n' +
 			'if (ctrl != null)\n' +
 			'{\n' +
-			'var goal = ctrl.effect("' + ikEffect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
-			'result += ctrl.rotation.value;\n' +
-			'if (goal)\n' +
+			'var fx = ctrl.effect("' + ikEffect.name +'");\n' +
+			'var ikfk = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox + ').value;\n' +
+			'function ik()\n' +
 			'{\n' +
+			'var IK = ctrl.rotation.value;\n' +
 			'var layer = thisLayer;\n' +
 			'while (layer.hasParent)\n' +
 			'{\n' +
 			'layer = layer.parent;\n' +
-			'result = result - layer.rotation;\n' +
+			'IK = IK - layer.rotation;\n' +
 			'}\n' +
+			'return IK;\n' +
 			'}\n' +
+			'function fk()\n' +
+			'{\n' +
+			'var FK = value;\n' +
+			'var parentRot = parent.transform.rotation ;\n' +
+			'var delay = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.resistanceSlider + ').value ;\n' +
+			'var amp = fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.flexibilitySlider + ').value ;\n' +
+			'delay = delay / 100;\n' +
+			'amp = amp / 100 ;\n' +
+			'FK = parentRot.valueAtTime(time-delay);\n' +
+			'FK = FK * amp;\n' +
+			'FK = FK + value + ctrl.transform.rotation + fx(' + DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalAngle + ') - parentRot.valueAtTime(0);\n' +
+			'return FK;\n' +
 			'}\n' +
-			'result;';
+			'ikfk ? ik() : fk();\n' +
+			'}\n' +
+			'else value;\n';
+
+
 		DuAEF.DuAE.Property.setExpression(goal.transform.rotation,rotExpr);
 
 		goal.transform.position.expression = 'var ctrl = null;\n' +
