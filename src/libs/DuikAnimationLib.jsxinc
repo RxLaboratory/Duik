@@ -482,6 +482,60 @@ DuAEF.Duik.Animation.switchIkFk = function (controller)
 }
 
 /**
+* Extracts the controllers from the precomposition,< br/>
+* and copies them to the composition, linking all precomposed controllers<br />
+* to the new ones.
+* @param {AVLayer} preComposition - The precomposition layer
+* @param {boolean} [useMasterProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
+* instead of expressions to link the controllers. Ignored on previous versions of After Effects.
+* @return {int} Error code:<br >
+* -3: No controllers found in the precomp
+* -2: The layer is not a precomposition
+* -1: Some controllers are not parented to other controllers
+* 0: Unknown error
+* 1: OK
+*/
+DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMasterProperties)
+{
+	if (DuAEF.DuAE.App.version < 15.1) useMasterProperties = false;
+	if (typeof useMasterProperties === 'undefined') useMasterProperties = true;
+
+	//get precomp.
+	var preComp = preComposition.source;
+	if (!preComp) return -2
+	if (!(preComp instanceof CompItem)) return -2;
+
+	//get all controllers from precomposition.
+	var controllers = DuAEF.Duik.Controller.getControllers(preComp);
+	if (controllers.length == 0) return -3;
+
+	//check for parenting, return -1 if a controller is not parented to another controller or nothing.
+	var itCtrls = new Iterator(controllers);
+	var controller;
+	while (controller = itCtrls.next())
+	{
+		var parent = controller.layer.parent;
+		if (!parent) continue;
+		if (!DuAEF.Duik.isLayerType(parent,DuAEF.Duik.LayerTypes.CONTROLLER)) return -1;
+	}
+
+	//copy controllers
+	//TODO
+	//implement a method for this as Layer.copyToComp() is broken
+	//which activates the precomp, copy using app.executeCommand, then activates the comp,
+	//and pastes the same way.
+	//maybe copying with linked attributes can work if not using Master Properties
+
+	//Add null at position precomp.width/2 precomp.height/2
+	//parent unparented controllers to the null
+	//parent the null to the precomp using parentWithJump 
+	//remove the null (check if controllers stay parented to precomp)
+	//create Master Props or Expressions
+
+	return 1;
+}
+
+/**
 * An onion skin
 * @typedef {Object} OnionSkin
 * @property {boolean} activated - Is it activated
