@@ -277,6 +277,7 @@ DuAEF.DuAE.Types =
 * @example
 * DuAEF.DuAE.compactExpressions["ADBE Transform Group"]
 * //returns "'transform'"
+* @type {Object}
 */
 DuAEF.DuAE.compactExpressions =
 {
@@ -539,6 +540,25 @@ DuAEF.DuAE.compactExpressions =
 };
 
 /**
+* Menu Command Ids<br />
+* These are the ids which can be found using <code>app.findMenuCommandID("insertMenuNameHere");</code><br />
+* Use <code>app.executeCommand(id)</code> to run them.
+* @enum {int}
+* @readonly
+* @example
+* app.executeCommand(DuAEF.DuAE.menuCommandID.COPY); //copies the selection
+* app.executeCommand(DuAEF.DuAE.menuCommandID.PASTE); //pastes the selection
+*/
+DuAEF.DuAE.menuCommandID =
+{
+	//EDIT menu
+	CUT: 18,
+	COPY: 19,
+	COPY_WITH_PROPERTY_LINKS: 10310,
+	PASTE: 20
+}
+
+/**
 * Checks if the param is an AE collection or an Array
 * @param {Array|Collection} collection - The list to check
 * @return {boolean} true if collection is a collection, false if it's an array
@@ -669,6 +689,41 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 	if (versionAsFloat >= 14 && versionAsFloat < 15) return "CC2017";
 	if (versionAsFloat >= 15 && versionAsFloat < 16) return "CC2018";
 	else return "Unknown";
+}
+
+/**
+* Cuts the selection (runs the cut menu command)
+*/
+DuAEF.DuAE.App.cut = function()
+{
+	app.executeCommand(DuAEF.DuAE.menuCommandID.CUT);
+}
+
+/**
+* Copies the selection (runs the copy menu command)
+*/
+DuAEF.DuAE.App.copy = function()
+{
+	app.executeCommand(DuAEF.DuAE.menuCommandID.COPY);
+}
+
+/**
+* Copies the selection with property links (runs the copy menu command)<br />
+* Only on versions of After Effects greater than 11.0 (CS6)<br />
+* On CS6 and below, a standard copy will be done.
+*/
+DuAEF.DuAE.App.copyWithPropertyLinks = function()
+{
+	if (DuAEF.DuAE.App.version >= 12.0) app.executeCommand(DuAEF.DuAE.menuCommandID.COPY_WITH_PROPERTY_LINKS);
+	else DuAEF.DuAE.App.copy();
+}
+
+/**
+* Pastes the selection (runs the paste menu command)
+*/
+DuAEF.DuAE.App.paste = function()
+{
+	app.executeCommand(DuAEF.DuAE.menuCommandID.PASTE);
 }
 
 /**
@@ -823,13 +878,15 @@ DuAEF.DuAE.Comp.unselectProperties = function()
 }
 
 /**
-* Deselects all layers in the current composition
+* Deselects all layers in a composition
+* @param {CompItem} [comp=app.project.activeItem] - The composition
 * @return {Layer[]} The previously selected layers.<br />
 * A custom attribute, Layer.props is added on each layer object which is an array of all previously selected properties as PropertyInfo objects
 */
-DuAEF.DuAE.Comp.unselectLayers = function()
+DuAEF.DuAE.Comp.unselectLayers = function(comp)
 {
-	var comp = app.project.activeItem;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
 
 	var layers = [];
 
@@ -855,7 +912,7 @@ DuAEF.DuAE.Comp.unselectLayers = function()
 */
 DuAEF.DuAE.Comp.selectLayers = function (layers)
 {
-	for (var i = 0 ; i < layers.length ; i++)
+	for (var i = 0, num = layers.length; i < num ; i++)
 	{
 		if (layers[i] == undefined) continue;
 		if (layers[i] == null) continue;
@@ -1439,6 +1496,71 @@ DuAEF.DuAE.Layer.lockScale = function (layer,allAEVersions)
 }
 
 /**
+* Copies the layers to another comp
+* @param {Layer[]} layers - The layers to copy and paste
+* @param {CompItem} destinationComp - The composition to copy to
+* @param {boolean} [withPropertyLinks=false] - Add expressions on the properties to link them to the orriginal layers<br />
+* Works only on 12.0 and above, ignored on 11.0 (CS6) and below
+* @return {Layer[]} The new layers
+*/
+DuAEF.DuAE.Layer.copyToComp = function (layers, destinationComp, withPropertyLinks)
+{
+	if (DuAEF.DuAE.App.version < 12.0) withPropertyLinks = false;
+	if (typeof withPropertyLinks === 'undefined') withPropertyLinks = false;
+
+	if (layers.length == 0) return;
+
+	var it = new Iterator(layers);
+
+	var previousActiveComp = DuAEF.DuAE.Project.getActiveComp();
+
+	//activate the origin comp
+	var originComp = it.firstItem().containingComp;
+	originComp.openInViewer();
+
+	//select the layers
+	var previousSelection = DuAEF.DuAE.Comp.unselectLayers(originComp);
+	DuAEF.DuAE.Comp.selectLayers(layers);
+
+	//copy
+	if (withPropertyLinks) DuAEF.DuAE.App.copyWithPropertyLinks();
+	else DuAEF.DuAE.App.copy();
+
+	//destination
+	destinationComp.openInViewer();
+
+	//unselect layers in destination
+	var previousSelectionDestination = DuAEF.DuAE.Comp.unselectLayers(destinationComp);
+
+	//paste
+	DuAEF.DuAE.App.paste();
+
+	//keep new layers to return them
+	var newLayers = destinationComp.selectedLayers;
+
+	//restore previous state
+	DuAEF.DuAE.Comp.selectLayers(previousSelection);
+	previousActiveComp.openInViewer();
+	DuAEF.DuAE.Comp.selectLayers(previousSelectionDestination);
+
+	return newLayers;
+}
+
+/**
+* Parents all unparented layers
+* @param {Layer[]} layers - The layers to parent
+* @param {Layer} parent - The parent
+*/
+DuAEF.DuAE.Layer.parent = function(layers, parent)
+{
+	var it = new Iterator (layers);
+	it.do(function(layer)
+	{
+		if (layer.parent == null) layer.parent = parent;
+	});
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -1916,7 +2038,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 		//set the expression
 		if (prop.canSetExpression && setExpression)
 		{
-			try { prop.expression = anim.expression; } catch(e) {};
+			try { prop.expression = anim.expression; } catch(e) { if (DuAEF.debug) alert(e.description); };
 		}
 	}
 
@@ -2610,7 +2732,7 @@ DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
 		if (parentComp.id == childComp.id) useThisComp = true;
 		else useThisComp = false;
 	}
-	childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp);
+	try { childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp); } catch (e) { if (DuAEF.debug) alert(e.description); };
 }
 
 /**
@@ -2618,7 +2740,7 @@ DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
  * @memberof DuAEF.DuAE.Property
  * @param {PropertyBase}	childProp			- The child property
  * @param {PropertyBase}	parentProp			- The parent property
- * @param {bool}		[useThisComp]				- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ * @param {bool}		[useThisComp]			- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
  */
 DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 {
@@ -2637,6 +2759,53 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 			DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
 		}
 	}
+}
+
+/**
+ * Adds all the (supported) properties found in a property to the essential graphics panel
+ * @memberof DuAEF.DuAE.Property
+ * @param {PropertyBase}	prop			- The property
+ * @return {int} The number of properties added
+ */
+DuAEF.DuAE.Property.addToEGP = function(prop)
+{
+	var numProps = 0;
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		var comp = DuAEF.DuAE.Property.getComp(prop);
+		var layer = DuAEF.DuAE.Property.getLayer(prop);
+		//set the link
+		if (prop.canAddToMotionGraphicsTemplate(comp) && !prop.elided && prop.canSetExpression)
+		{
+			prop.addToMotionGraphicsTemplate(comp);
+			//rename the master property if >=15.1
+			if (DuAEF.DuAE.App.version >= 15.1)
+			{
+				var it = new Iterator(comp.usedIn);
+				it.do(function (mainComp)
+				{
+					//search the layer of the precomp
+					for (var i = 1, num = mainComp.numLayers; i <= num; i++)
+					{
+						var l = mainComp.layer(i);
+						if (l.source) if (l.source.id == comp.id)
+						{
+							 l('ADBE Layer Overrides')(1).name = layer.name + ' / ' + DuAEF.DuAE.Property.getExpressionLink(prop,true,false);
+						}
+					}
+				});
+			}
+			numProps++;
+		}
+	}
+	else
+	{
+		for (var p = 1 ; p <= prop.numProperties ; p++)
+		{
+			numProps += DuAEF.DuAE.Property.addToEGP(prop(p));
+		}
+	}
+	return numProps;
 }
 
 /**
