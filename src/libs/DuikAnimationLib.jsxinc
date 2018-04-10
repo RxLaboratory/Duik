@@ -500,6 +500,8 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	if (DuAEF.DuAE.App.version < 15.1) useMasterProperties = false;
 	if (typeof useMasterProperties === 'undefined') useMasterProperties = true;
 
+	var comp = preComposition.containingComp;
+
 	//get precomp.
 	var preComp = preComposition.source;
 	if (!preComp) return -2
@@ -510,27 +512,78 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	if (controllers.length == 0) return -3;
 
 	//check for parenting, return -1 if a controller is not parented to another controller or nothing.
+
+	app.beginUndoGroup('Duik | ' + "Extract controllers - Preparing controllers");
+
 	var itCtrls = new Iterator(controllers);
 	var controller;
+	var ctrlLayers = [];
 	while (controller = itCtrls.next())
 	{
 		var parent = controller.layer.parent;
+		ctrlLayers.push(controller.layer);
+		controller.bakeAppearance();
 		if (!parent) continue;
 		if (!DuAEF.Duik.isLayerType(parent,DuAEF.Duik.LayerTypes.CONTROLLER)) return -1;
 	}
 
+	app.endUndoGroup();
+
 	//copy controllers
-	//TODO
-	//implement a method for this as Layer.copyToComp() is broken
-	//which activates the precomp, copy using app.executeCommand, then activates the comp,
-	//and pastes the same way.
-	//maybe copying with linked attributes can work if not using Master Properties
+	var newCtrlLayers = DuAEF.DuAE.Layer.copyToComp(ctrlLayers, comp);
+
+	app.beginUndoGroup('Duik | ' + "Extract controllers");
 
 	//Add null at position precomp.width/2 precomp.height/2
+	var nullLayer = comp.layers.addNull();
+	nullLayer.transform.position.setValue([preComp.width/2,preComp.height/2]);
+
 	//parent unparented controllers to the null
-	//parent the null to the precomp using parentWithJump 
+	DuAEF.DuAE.Layer.parent(newCtrlLayers, nullLayer);
+	//parent the null to the precomp using parentWithJump
+	nullLayer.setParentWithJump(preComposition);
 	//remove the null (check if controllers stay parented to precomp)
+	nullLayer.remove();
 	//create Master Props or Expressions
+	//sort by index to be sure to link layers correctly
+	ctrlLayers = DuAEF.DuAE.Layer.sortByIndex(ctrlLayers);
+	newCtrlLayers = DuAEF.DuAE.Layer.sortByIndex(newCtrlLayers);
+	//link transformations and effects (only)
+	for (var i = 0, num = ctrlLayers.length; i < num; i++)
+	{
+		var ctrlLayer = ctrlLayers[i];
+		var newCtrlLayer = newCtrlLayers[i];
+		if (useMasterProperties)
+		{
+			//transform
+			var numProps = DuAEF.DuAE.Property.addToEGP(ctrlLayer.transform);
+			//effects
+			numProps += DuAEF.DuAE.Property.addToEGP(ctrlLayer('ADBE Effect Parade'));
+			//links
+			for (var p = 1; p <= numProps; p++)
+			{
+				var mp = preComposition('ADBE Layer Overrides')(p);
+				//get prop name
+				var nameArray = mp.name.split(' / ');
+				var pLink = nameArray[1];
+				var layerName = nameArray[0];
+				var newProp = eval('newCtrlLayer' + pLink);
+				//link
+				DuAEF.DuAE.Property.pickWhip(mp,newProp,true);
+			}
+
+		}
+		else
+		{
+			//transform
+			DuAEF.DuAE.Property.linkProperties(ctrlLayer.transform,newCtrlLayer.transform);
+			//effects
+			DuAEF.DuAE.Property.linkProperties(ctrlLayer('ADBE Effect Parade'),newCtrlLayer('ADBE Effect Parade'));
+		}
+	}
+
+
+	app.endUndoGroup();
 
 	return 1;
 }
