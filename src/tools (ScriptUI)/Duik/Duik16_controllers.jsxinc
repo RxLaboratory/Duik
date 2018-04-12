@@ -19,6 +19,18 @@ function ui_controllersShowButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_extractControllersMPCtrlSelector_changed()
+{
+	shared.extractUsingMP = ui_extractControllersMPCtrlSelector.index == 1;
+}
+
+function ui_extractControllersCtrlOptionsButton_clicked()
+{
+	if (shared.extractUsingMP) ui_extractControllersMPCtrlSelector.setCurrentIndex(1);
+	else ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
+	setCurrentRiggingPanel(7);
+}
+
 //================= UI ========================
 var ui_controllersGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
 DuAEF.DuScriptUI.addSeparator(ui_controllersGroup,settings.data.uiMode == 2 ? '' : "Controllers");
@@ -53,13 +65,37 @@ var ui_ctrlShouldersButton = DuAEF.DuScriptUI.addImageButton(ui_ctrl4Group,'',Du
 var ui_ctrlTailButton = DuAEF.DuScriptUI.addImageButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_foxtail_l),'',DuAEF.DuBinary.toFile(w25_foxtail_r));
 
 var ui_controllersShowButton = DuAEF.DuScriptUI.addImageButton(ui_controllersGroup,settings.data.uiMode == 2 ? "" : "Show/hide",DuAEF.DuBinary.toFile(w25_showhand_l),"Show or hide controllers",DuAEF.DuBinary.toFile(w25_hidehand_r));
-var ui_extractControllersCtrlButton = DuAEF.DuScriptUI.addImageButton(ui_controllersGroup,"Extract controllers",DuAEF.DuBinary.toFile(w25_extractcontrollers_l),"Extract all the controllers from the precomposition",DuAEF.DuBinary.toFile(w25_extractcontrollers_r));
+var ui_extractControllersCtrlGroup = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
+ui_extractControllersCtrlGroup.alignment = ['fill','top'];
+var ui_extractControllersCtrlButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersCtrlGroup,"Extract controllers",DuAEF.DuBinary.toFile(w25_extractcontrollers_l),"Extract all the controllers from the precomposition",DuAEF.DuBinary.toFile(w25_extractcontrollers_r));
+if (DuAEF.DuAE.App.version >= 15.1)
+{
+	var ui_extractControllersCtrlOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersCtrlGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Extract controllers options",DuAEF.DuBinary.toFile(w14_plus_r));
+	ui_extractControllersCtrlOptionsButton.group.alignment = ['right','center'];
+}
+
 
 if (settings.data.uiMode != 0)
 {
 	DuAEF.DuScriptUI.addSeparator(ui_controllersGroup);
 	var ui_editControllersButton = DuAEF.DuScriptUI.addImageButton(ui_controllersGroup,"Edit...",DuAEF.DuBinary.toFile(w18_settings_l),"Edit existing controllers",DuAEF.DuBinary.toFile(w18_settings_r));
 }
+
+// Extract Controllers
+var ui_extractControllersCtrlOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_extractControllersCtrlOptionsGroup,"Extract Controllers");
+var ui_extractControllersMPCtrlSelector = DuAEF.DuScriptUI.addSelector(ui_extractControllersCtrlOptionsGroup);
+ui_extractControllersMPCtrlSelector.addButton("Use expressions",DuAEF.DuBinary.toFile(w25_js_l),"Use expressions to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_js_r));
+ui_extractControllersMPCtrlSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
+var ui_extractControllersCtrlValidGroup = DuAEF.DuScriptUI.addGroup(ui_extractControllersCtrlOptionsGroup);
+ui_extractControllersCtrlValidGroup.alignment = ['fill','top'];
+var ui_extractControllersCtrlCancelButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersCtrlValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_extractControllersCtrlValidButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersCtrlValidGroup,"Extract!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
+
+
+// ============ INITIALIZE ==============
+
+ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
 
 // ============ CONNECT EVENTS ==========
 
@@ -89,6 +125,14 @@ ui_ctrlShouldersButton.onClick = function () {shared.createController(DuAEF.Duik
 ui_ctrlTailButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.TAIL);};
 
 ui_controllersShowButton.onClick = ui_controllersShowButton_clicked;
+
+ui_extractControllersCtrlValidButton.onClick = function () { shared.extractControllers(); setCurrentRiggingPanel(1); };
 ui_extractControllersCtrlButton.onClick = shared.extractControllers;
+if (DuAEF.DuAE.App.version >= 15.1)
+{
+	ui_extractControllersCtrlOptionsButton.onClick = ui_extractControllersCtrlOptionsButton_clicked;
+}
+ui_extractControllersCtrlCancelButton.onClick = function () {setCurrentRiggingPanel(1);};
+ui_extractControllersMPCtrlSelector.onChange = ui_extractControllersMPCtrlSelector_changed;
 
 if (settings.data.uiMode != 0) ui_editControllersButton.onClick = function() { setCurrentRiggingPanel(5);};
