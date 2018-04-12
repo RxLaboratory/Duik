@@ -1,22 +1,6 @@
 
 
 //========== FUNCTIONS =============
-function getStructures()
-{
-	var structures = [];
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return structures;
-
-	var selectionMode = DuAEF.Duik.Structure.SelectionModes.STRUCTURE;
-	if (ui_structuresEditSelectChildrenButton.checked) selectionMode = DuAEF.Duik.Structure.SelectionModes.CHILDREN;
-	else if (ui_structuresEditSelectElementsButton.checked) selectionMode = DuAEF.Duik.Structure.SelectionModes.ELEMENT;
-	else if (ui_structuresEditSelectAllButton.checked) selectionMode = DuAEF.Duik.Structure.SelectionModes.ALL;
-
-	structures = DuAEF.Duik.Structure.getStructures(comp,selectionMode);
-
-	return structures;
-}
-
 function structuresEditInit()
 {
 	if (settings.data.structureSizeHint == undefined) settings.data.structureSizeHint = 0;
@@ -44,38 +28,6 @@ function structuresEditInit()
 }
 
 //========== EVENTS =================
-function ui_structuresEditSelectAllButton_clicked()
-{
-	ui_structuresEditSelectAllButton.setChecked(true);
-	ui_structuresEditSelectChainsButton.setChecked(false);
-	ui_structuresEditSelectChildrenButton.setChecked(false);
-	ui_structuresEditSelectElementsButton.setChecked(false);
-}
-
-function ui_structuresEditSelectChainsButton_clicked()
-{
-	ui_structuresEditSelectAllButton.setChecked(false);
-	ui_structuresEditSelectChainsButton.setChecked(true);
-	ui_structuresEditSelectChildrenButton.setChecked(false);
-	ui_structuresEditSelectElementsButton.setChecked(false);
-}
-
-function ui_structuresEditSelectChildrenButton_clicked()
-{
-	ui_structuresEditSelectAllButton.setChecked(false);
-	ui_structuresEditSelectChainsButton.setChecked(false);
-	ui_structuresEditSelectChildrenButton.setChecked(true);
-	ui_structuresEditSelectElementsButton.setChecked(false);
-}
-
-function ui_structuresEditSelectElementsButton_clicked()
-{
-	ui_structuresEditSelectAllButton.setChecked(false);
-	ui_structuresEditSelectChainsButton.setChecked(false);
-	ui_structuresEditSelectChildrenButton.setChecked(false);
-	ui_structuresEditSelectElementsButton.setChecked(true);
-}
-
 function ui_structuresEditSizeList_changed()
 {
 	var index = ui_structuresEditSizeList[1].selection.index;
@@ -104,7 +56,7 @@ function ui_structuresEditSizeEdit_changed()
 
 function ui_structuresEditSizeValidButton_clicked()
 {
-	var structures = getStructures();
+	var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 	if (structures.length == 0) return;
 
 	app.beginUndoGroup('Duik - ' + "Set structure size");
@@ -146,7 +98,7 @@ function ui_structuresEditColor_clicked()
 
 function ui_structuresEditColorValidButton_clicked()
 {
-	var structures = getStructures();
+	var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 	if (structures.length == 0) return;
 
 	var color = DuAEF.DuJS.Color.hexToRGB(ui_structuresEditColor.text);
@@ -167,10 +119,8 @@ function ui_structuresEditSetButton_clicked()
 
 function ui_structuresEditGetButton_clicked()
 {
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return;
 	//get from first element
-	var structures = DuAEF.Duik.Structure.getStructures(comp,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+	var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 
 	if (structures[0].elements.length >= 0)
 	{
@@ -186,10 +136,8 @@ function ui_structuresEditGetButton_clicked()
 
 function ui_structuresEditBakeButton_clicked()
 {
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return;
 	//get from first element
-	var structures = getStructures();
+	var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 
 	app.beginUndoGroup('Duik - ' + "Bake structures appearance");
 	for (var i = 0 ; i < structures.length ; i++)
@@ -202,17 +150,6 @@ function ui_structuresEditBakeButton_clicked()
 //========== UI =============
 var ui_structuresEditGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
 if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_structuresEditGroup,'Edit structures');
-
-var ui_structuresEditSelectionGroup = DuAEF.DuScriptUI.addGroup(ui_structuresEditGroup,'row');
-DuAEF.DuScriptUI.setBackgroundColor(ui_structuresEditSelectionGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
-ui_structuresEditSelectionGroup.alignment = ['fill','top'];
-ui_structuresEditSelectionGroup.alignChildren = ['center','top'];
-
-var ui_structuresEditSelectAllButton = DuAEF.DuScriptUI.addImageCheckBox(ui_structuresEditSelectionGroup,'',DuAEF.DuBinary.toFile(w25_allstructures_l),"All structures found in the current composition",DuAEF.DuBinary.toFile(w25_allstructures_r));
-var ui_structuresEditSelectChainsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_structuresEditSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectedchain_l),"Selected structures",DuAEF.DuBinary.toFile(w25_selectedchain_r));
-var ui_structuresEditSelectChildrenButton = DuAEF.DuScriptUI.addImageCheckBox(ui_structuresEditSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectedchildren_l),"Selected elements and children",DuAEF.DuBinary.toFile(w25_selectedchildren_r));
-var ui_structuresEditSelectElementsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_structuresEditSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectedelement_l),"Selected elements",DuAEF.DuBinary.toFile(w25_selectedelement_r));
-ui_structuresEditSelectChainsButton.setChecked(true);
 
 DuAEF.DuScriptUI.addSeparator(ui_structuresEditGroup);
 
@@ -266,11 +203,6 @@ var ui_structuresEditBackButton = DuAEF.DuScriptUI.addImageButton(ui_structuresE
 structuresEditInit();
 
 //============== CONNECT EVENTS ===============
-
-ui_structuresEditSelectAllButton.onClick = ui_structuresEditSelectAllButton_clicked;
-ui_structuresEditSelectChainsButton.onClick = ui_structuresEditSelectChainsButton_clicked;
-ui_structuresEditSelectChildrenButton.onClick = ui_structuresEditSelectChildrenButton_clicked;
-ui_structuresEditSelectElementsButton.onClick = ui_structuresEditSelectElementsButton_clicked;
 
 ui_structuresEditSizeList[1].onChange = ui_structuresEditSizeList_changed;
 ui_structuresEditSizeEdit.onChange = ui_structuresEditSizeEdit_changed;
