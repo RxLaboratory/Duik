@@ -438,6 +438,14 @@
 	#include 'icons/w25_oven_r.png.jsxinc'
 	#include 'icons/w25_extractcontrollers_l.png.jsxinc'
 	#include 'icons/w25_extractcontrollers_r.png.jsxinc'
+	#include 'icons/w25_bug_r.png.jsxinc'
+	#include 'icons/w25_bug_l.png.jsxinc'
+	#include 'icons/w25_user_r.png.jsxinc'
+	#include 'icons/w25_user_l.png.jsxinc'
+	#include 'icons/w25_masterprops_r.png.jsxinc'
+	#include 'icons/w25_masterprops_l.png.jsxinc'
+	#include 'icons/w25_js_r.png.jsxinc'
+	#include 'icons/w25_js_l.png.jsxinc'
 
 
 	#include 'icons/w32_autorig_r.jsxinc'
