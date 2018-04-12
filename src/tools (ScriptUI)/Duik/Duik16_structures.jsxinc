@@ -316,7 +316,13 @@ function ui_structuresCustomValidButton_clicked(randomColor)
 
 function ui_structuresShowButton_clicked()
 {
-	var structures = getStructures();
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var structures;
+	if (comp.selectedLayers.length == 0) structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ALL);
+	else structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+
 	if (structures.length == 0) return;
 
 	app.beginUndoGroup('Duik - ' + "Show/hide structures");
@@ -329,12 +335,10 @@ function ui_structuresShowButton_clicked()
 
 function ui_structuresEditModeButton_clicked()
 {
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return;
 	//get from first element
-	var structures = DuAEF.Duik.Structure.getStructures(comp,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+	var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 
-	app.beginUndoGroup('Duik - ' + "Show/hide structures");
+	app.beginUndoGroup('Duik - ' + "Edit structures");
 	for (var i = 0 ; i < structures.length ; i++)
 	{
 		structures[i].toggleEditMode();
@@ -342,23 +346,12 @@ function ui_structuresEditModeButton_clicked()
 	app.endUndoGroup();
 }
 
-function ui_structuresSelectAllButton_clicked()
+function ui_structuresSelectButton_clicked()
 {
+	app.beginUndoGroup('Duik - ' + "Select structures");
 	DuAEF.Duik.Structure.selectStructures(undefined, DuAEF.Duik.Structure.SelectionModes.ALL);
+	app.endUndoGroup();
 }
-
-function ui_structuresSelectChainsButton_clicked()
-{
-	DuAEF.Duik.Structure.selectStructures(undefined, DuAEF.Duik.Structure.SelectionModes.STRUCTURE);
-}
-
-function ui_structuresSelectChildrenButton_clicked()
-{
-	DuAEF.Duik.Structure.selectStructures(undefined, DuAEF.Duik.Structure.SelectionModes.CHILDREN);
-}
-
-
-
 
 // ============= UI =================
 
@@ -400,14 +393,6 @@ ui_legOptionsButton.group.alignment = settings.data.uiMode == 2 ? ['center','top
 ui_spineOptionsButton.group.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['right','center'];
 ui_tailOptionsButton.group.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['right','center'];
 
-var ui_structuresSelectionGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,'row');
-DuAEF.DuScriptUI.setBackgroundColor(ui_structuresSelectionGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
-ui_structuresSelectionGroup.alignment = ['fill','top'];
-ui_structuresSelectionGroup.alignChildren = ['center','top'];
-var ui_structuresSelectAllButton = DuAEF.DuScriptUI.addImageButton(ui_structuresSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectallstructures_l),"Select all structures found in the current composition",DuAEF.DuBinary.toFile(w25_selectallstructures_r));
-var ui_structuresSelectChainsButton = DuAEF.DuScriptUI.addImageButton(ui_structuresSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectchain_l),"Select whole chain from selected element",DuAEF.DuBinary.toFile(w25_selectchain_r));
-var ui_structuresSelectChildrenButton = DuAEF.DuScriptUI.addImageButton(ui_structuresSelectionGroup,'',DuAEF.DuBinary.toFile(w25_selectchildren_l),"Select children elements",DuAEF.DuBinary.toFile(w25_selectchildren_r));
-
 var ui_structuresToolsGroup = DuAEF.DuScriptUI.addGroup(ui_structuresMainPanelGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 ui_structuresToolsGroup.alignment = ['fill','top'];
 ui_structuresToolsGroup.alignChildren = ['fill','top'];
@@ -416,7 +401,9 @@ if (settings.data.uiMode != 0)
 	var ui_structuresEditModeButton = DuAEF.DuScriptUI.addImageButton(ui_structuresToolsGroup,settings.data.uiMode == 2 ? "" : "Toggle edit mode",DuAEF.DuBinary.toFile(w25_structureedit_l),"Unlink elements' children to easily edit anchor points",DuAEF.DuBinary.toFile(w25_structureedit_r));
 	ui_structuresEditModeButton.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['fill','top'];
 }
-var ui_structuresShowButton = DuAEF.DuScriptUI.addImageButton(ui_structuresToolsGroup,settings.data.uiMode == 2 ? "" : "Show/hide",DuAEF.DuBinary.toFile(w25_structureshow_l),"Show or hide structures",DuAEF.DuBinary.toFile(w25_structurehide_r));
+var ui_structuresSelectButton = DuAEF.DuScriptUI.addImageButton(ui_structuresToolsGroup,settings.data.uiMode == 2 ? '' : "Select structures",DuAEF.DuBinary.toFile(w25_selectallstructures_l),"Select all structures found in the current composition",DuAEF.DuBinary.toFile(w25_selectallstructures_r));
+ui_structuresSelectButton.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['fill','top'];
+var ui_structuresShowButton = DuAEF.DuScriptUI.addImageButton(ui_structuresToolsGroup,settings.data.uiMode == 2 ? '' : "Show/hide",DuAEF.DuBinary.toFile(w25_structureshow_l),"Show or hide structures",DuAEF.DuBinary.toFile(w25_structurehide_r));
 ui_structuresShowButton.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['fill','top'];
 
 if (settings.data.uiMode != 0)
@@ -615,7 +602,4 @@ if (settings.data.uiMode != 0)
 }
 
 ui_structuresShowButton.onClick = ui_structuresShowButton_clicked;
-
-ui_structuresSelectAllButton.onClick = ui_structuresSelectAllButton_clicked;
-ui_structuresSelectChainsButton.onClick = ui_structuresSelectChainsButton_clicked;
-ui_structuresSelectChildrenButton.onClick = ui_structuresSelectChildrenButton_clicked;
+ui_structuresSelectButton.onClick = ui_structuresSelectButton_clicked;
