@@ -332,22 +332,22 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 /**
  * Gets structures in the comp. If some layers are selected, uses selectionMode, else returns all structure elements found.
  * @memberof DuAEF.Duik.Structure
- * @param {CompItem}	comp	- The composition where to get the structures
+ * @param {CompItem}	[comp=app.project.activeItem]	- The composition where to get the structures
  * @param {int} [structureSelectionMode=DuAEF.Duik.Structure.SelectionModes.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.Structure.SelectionModes}
  * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.Structure.SelectionModes.ELEMENT, will be one structure with all elements found
  */
 DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 {
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
 	if (selectionMode == undefined) selectionMode = DuAEF.Duik.Structure.SelectionModes.STRUCTURE;
 	var layers = comp.selectedLayers;
-	var i = 0;
-	var m = layers.length-1;
+
 	if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ALL)
 	{
 		layers = comp.layers;
 		selectionMode = DuAEF.Duik.Structure.SelectionModes.STRUCTURE;
-		i = 1;
-		m = layers.length;
 	}
 
 	var structures = [];
@@ -357,20 +357,22 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 
 	var structure = new Structure();
 
-	for ( i ; i <= m ; i++)
+	var it = new Iterator(layers);
+
+	it.do(function(layer)
 	{
-		var layer = layers[i];
-		if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) continue;
-		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) continue;
+		if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
+		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) return;
 
 		indexed.push(layer.index);
 
 		if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ELEMENT)
 		{
 			structure.elements.push(layer);
-			continue;
+			return;
 		}
-		var structure = new Structure();
+
+		structure = new Structure();
 		structure.elements.push(layer);
 		//get children
 		if (selectionMode == DuAEF.Duik.Structure.SelectionModes.CHILDREN || selectionMode == DuAEF.Duik.Structure.SelectionModes.STRUCTURE)
@@ -444,11 +446,39 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 
 		structures.push(structure);
 
-	}
+	});
 
 	if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ELEMENT) structures.push(structure);
 
 	return structures;
+}
+
+/**
+ * Selects structures in the comp. If some layers are selected, uses selectionMode, else returns selects all structure elements found.
+ * @memberof DuAEF.Duik.Structure
+ * @param {CompItem}	[comp=app.project.activeItem]	- The composition where to select the structures
+ * @param {int} [structureSelectionMode=DuAEF.Duik.Structure.SelectionModes.STRUCTURE]	- The selection mode. One of {@link DuAEF.Duik.Structure.SelectionModes}
+ * @return {Structure[]}	The structures. If selectionMode is DuAEF.Duik.Structure.SelectionModes.ELEMENT, will be one structure with all elements found
+ */
+DuAEF.Duik.Structure.selectStructures = function (comp, selectionMode)
+{
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var structures = DuAEF.Duik.Structure.getStructures(comp, selectionMode);
+	if (structures.length == 0) return;
+
+	DuAEF.DuAE.Comp.unselectLayers(comp);
+
+	var itStr = new Iterator(structures);
+	itStr.do(function (structure)
+	{
+		var itElmts = new Iterator(structure.elements);
+		itElmts.do(function (element)
+		{
+			element.selected = true;
+		});
+	});
 }
 
 /**
