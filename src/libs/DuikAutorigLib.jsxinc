@@ -379,10 +379,6 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 
 	var comp = layers[0].containingComp;
 
-	//check if layers are tagged, if not return false
-	var wrongLayers = DuAEF.Duik.Autorig.checkLayerTags(layers);
-	if (wrongLayers.length > 0) return false;
-
 	app.beginSuppressDialogs();
 
 	//the controllers which may be created
@@ -404,6 +400,8 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 	var it = new Iterator(layers);
 	it.do(function (layer){
 		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		if (!params) return;
+		if (!params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB]) return;
 
 		if (params[DuAEF.Duik.MarkerParameters.AUTORIG_LIMB] == DuAEF.Duik.Autorig.Limbs.SPINE)
 		{
@@ -1449,11 +1447,19 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 
 	//ctrl list
 	var allCtrls = [];
-	allCtrls.push(hipsCtrl,bigHipsCtrl,shoulderCtrl,headCtrl);
+	if (hipsCtrl != null) allCtrls.push(hipsCtrl);
+	if (bigHipsCtrl != null) allCtrls.push(bigHipsCtrl);
+	if (shoulderCtrl != null) allCtrls.push(shoulderCtrl);
+	if (headCtrl != null) allCtrls.push(headCtrl);
 	allCtrls = allCtrls.concat(legsCtrl);
 	allCtrls = allCtrls.concat(armsCtrl);
 	allCtrls = allCtrls.concat(tailsCtrl);
 
+	//if nothing were rigged, try adding IKs...
+	if (allCtrls.length == 0)
+	{
+		allCtrls = DuAEF.Duik.Rigging.ik(layers);
+	}
 
 	//try to detect left and right
 	DuAEF.Duik.Autorig.detectCharacterSide(allCtrls);
