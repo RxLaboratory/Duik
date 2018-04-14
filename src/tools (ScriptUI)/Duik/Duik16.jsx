@@ -688,5 +688,4 @@
 	DuAEF.DuScriptUI.showUI(ui_palette);
 
 	debugLog.checkTimer("Duik successfully loaded.");
-
 })(this);
