@@ -816,7 +816,12 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 	//if no filter, get all using AE native API
 	if (typeof filter === 'undefined')
 	{
-		props = comp.selectedProperties;
+		var layers = comp.selectedLayers;
+		var itLayers = new Iterator(layers);
+		itLayers.do(function(layer)
+		{
+			props = props.concat(layer.selectedProperties);
+		});
 	}
 	else
 	{
@@ -830,6 +835,17 @@ DuAEF.DuAE.Comp.getSelectedProps = function(filter,strict,caseSensitive)
 	}
 
 	return DuAEF.DuAE.getPropertyInfos(props);
+}
+
+/**
+* Gets the selected layers in the current comp
+* @return {Layer[]} The selected layers
+*/
+DuAEF.DuAE.Comp.getSelectedLayers = function()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+	return comp.selectedLayers;
 }
 
 /**
@@ -1561,6 +1577,61 @@ DuAEF.DuAE.Layer.parent = function(layers, parent)
 }
 
 /**
+ * Gets all the (selected) puppet pins found on the layer.<br />
+ * Will return all puppet pins if there is no puppet selection.
+ * @param {Layer} layer - The layer
+ * @return {PropertyInfo[]} The properties
+ */
+DuAEF.DuAE.Layer.getPuppetPins = function (layer)
+{
+	var pins = [];
+	var selectedProps = layer.selectedProperties;
+
+	function getPins(puppet)
+	{
+		//get pins
+		var mesh = puppet.property("ADBE FreePin3 ARAP Group").property("ADBE FreePin3 Mesh Group").property("ADBE FreePin3 Mesh Atom").property("ADBE FreePin3 PosPins");
+		for (var i = 1, num = mesh.numProperties ; i <= num; i++)
+		{
+			pins.push(new PropertyInfo(mesh.property(i)));
+		}
+	}
+
+	if (selectedProps == 0)
+	{
+		//look for puppet effects
+		for (var i = 1, num = layer('ADBE Effect Parade').numProperties; i <= num; i++)
+		{
+			var effect = layer.effect(i);
+			if (effect.matchName == 'ADBE FreePin3')
+			{
+				getPins(effect);
+			}
+		}
+	}
+	else
+	{
+		//get any selected pin
+		var itProps = new Iterator(selectedProps);
+		itProps.do(function(prop)
+		{
+			if (prop.matchName == 'ADBE FreePin3 PosPin Atom') pins.push(new PropertyInfo(prop));
+		});
+		//try to find selected puppets
+		if (pins.length == 0)
+		{
+			itProps.do(function(prop)
+			{
+				if (prop.matchName == 'ADBE FreePin3') getPins(prop);
+			});
+		}
+	}
+
+
+	return pins;
+}
+
+/**
 * After Effects properties methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -1628,7 +1699,7 @@ DuAEF.DuAE.Property.getLayer = function (prop)
 	if (prop == undefined) throw "You must provide a property.";
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	var parentProp = prop;
-	while (parentProp.parentProperty !== null)
+	while (parentProp.parentProperty)
 	{
 		// Traverse up the property tree
 		parentProp = parentProp.parentProperty;
