@@ -1447,31 +1447,30 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 		ctrl.layer.selected = true;
 	})
 
-	//try to detect left and right
-	if (legsCtrl.length > 1 && armsCtrl.length > 1)
-	{
-		DuAEF.Duik.Autorig.detectLimbSide(armsCtrl[0],armsCtrl[1],legsCtrl[0],legsCtrl[1]);
-	}
-
-
-	app.endSuppressDialogs(false);
-
 	//ctrl list
 	var allCtrls = [];
 	allCtrls.push(hipsCtrl,bigHipsCtrl,shoulderCtrl,headCtrl);
 	allCtrls = allCtrls.concat(legsCtrl);
 	allCtrls = allCtrls.concat(armsCtrl);
 	allCtrls = allCtrls.concat(tailsCtrl);
+
+
+	//try to detect left and right
+	DuAEF.Duik.Autorig.detectCharacterSide(allCtrls);
+
+	app.endSuppressDialogs(false);
+
 	return allCtrls;
 }
 
 /**
- * Tries to detect and adds a "side" effect (or set the existing one) specifying if the limbs are on the right or on the left.
+ * Tries to detect and adds a "side" effect (or set the existing one) specifying if the limbs are on the right or on the left.<br />
+ * You must at least provide two hands or two feet for the function to be able to detect the side.
  * @memberof DuAEF.Duik.Autorig
- * @param {Controller|Layer} handCtrl1 - The first hand controller
- * @param {Controller|Layer} handCtrl2 - The second hand controller
- * @param {Controller|Layer} footCtrl1 - The first foot controller
- * @param {Controller|Layer} footCtrl2 - The second foot controller
+ * @param {Controller|Layer} [handCtrl1] - The first hand controller
+ * @param {Controller|Layer} [handCtrl2] - The second hand controller
+ * @param {Controller|Layer} [footCtrl1] - The first foot controller
+ * @param {Controller|Layer} [footCtrl2] - The second foot controller
  */
 DuAEF.Duik.Autorig.detectLimbSide = function (handCtrl1,handCtrl2,footCtrl1,footCtrl2)
 {
@@ -1483,6 +1482,40 @@ DuAEF.Duik.Autorig.detectLimbSide = function (handCtrl1,handCtrl2,footCtrl1,foot
 	if (handCtrl2 instanceof Controller) hand2 = handCtrl2.layer;
 	if (footCtrl1 instanceof Controller) foot1 = footCtrl1.layer;
 	if (footCtrl2 instanceof Controller) foot2 = footCtrl2.layer;
+
+	if ( (hand1 && hand2) && !(foot1 && foot2) )
+	{
+		var pos1 = DuAEF.DuAE.Layer.getWorldPos(hand1);
+		var pos2 = DuAEF.DuAE.Layer.getWorldPos(hand2);
+		if (pos1[0] < pos2[0])
+		{
+			DuAEF.Duik.Autorig.setRight(hand1);
+			DuAEF.Duik.Autorig.setLeft(hand2);
+		}
+		else
+		{
+			DuAEF.Duik.Autorig.setRight(hand2);
+			DuAEF.Duik.Autorig.setLeft(hand1);
+		}
+		return;
+	}
+
+	if ( !(hand1 && hand2) && (foot1 && foot2) )
+	{
+		var pos1 = DuAEF.DuAE.Layer.getWorldPos(foot1);
+		var pos2 = DuAEF.DuAE.Layer.getWorldPos(foot2);
+		if (pos1[0] < pos2[0])
+		{
+			DuAEF.Duik.Autorig.setRight(foot1);
+			DuAEF.Duik.Autorig.setLeft(foot2);
+		}
+		else
+		{
+			DuAEF.Duik.Autorig.setRight(foot2);
+			DuAEF.Duik.Autorig.setLeft(foot1);
+		}
+		return;
+	}
 
 	//effects
 	var foot2Effect = foot2.effect(DuAEF.Duik.PseudoEffectsMatchNames.SIDE);
@@ -1503,8 +1536,18 @@ DuAEF.Duik.Autorig.detectLimbSide = function (handCtrl1,handCtrl2,footCtrl1,foot
 	//arbitrarily choose one left and one right
 	if (foot2Effect(1).value == foot1Effect(1).value && hand1Effect(1).value == hand2Effect(1).value)
 	{
-		if (foot1Effect(1).value == 1) foot2Effect(1).setValue(2);
-		else foot2Effect(1).setValue(1);
+		var pos1 = DuAEF.DuAE.Layer.getWorldPos(foot1);
+		var pos2 = DuAEF.DuAE.Layer.getWorldPos(foot2);
+		if (pos1[0] < pos2[0])
+		{
+			DuAEF.Duik.Autorig.setRight(foot1);
+			DuAEF.Duik.Autorig.setLeft(foot2);
+		}
+		else
+		{
+			DuAEF.Duik.Autorig.setRight(foot2);
+			DuAEF.Duik.Autorig.setLeft(foot1);
+		}
 	}
 
 
@@ -1584,10 +1627,9 @@ DuAEF.Duik.Autorig.detectCharacterSide = function (controllers)
 		}
 	});
 
-	if (h1 != null && h2 != null && f1 != null && f2 != null )
-	{
-		DuAEF.Duik.Autorig.detectLimbSide(h1,h2,f1,f2);
-	}
+
+	DuAEF.Duik.Autorig.detectLimbSide(h1,h2,f1,f2);
+	return;
 }
 
 /**
