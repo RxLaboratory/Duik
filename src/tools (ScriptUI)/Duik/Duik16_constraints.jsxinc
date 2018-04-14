@@ -10,6 +10,7 @@ function setCurrentConstraintsPanel(panel)
 	ui_bonesGroup.visible = panel == 2;
 	ui_connectorGroup.visible = panel == 3;
 	ui_autorigOptionsGroup.visible = panel == 4;
+	ui_IKOptionsGroup.visible = panel == 5;
 }
 
 function initConstraintsUI()
@@ -602,6 +603,12 @@ function ui_autorigTailSelector_changed ()
 	settings.save();
 }
 
+function ui_ikOptionsSelector_changed()
+{
+	settings.data.ik3Layer = ui_ikOptionsSelector.index == 1;
+	settings.save();
+}
+
 function ui_fkButton_clicked()
 {
 	var layers = DuAEF.DuAE.Comp.unselectLayers();
@@ -678,7 +685,6 @@ if (settings.data.uiMode > 0)
 	var ui_IKGroup = DuAEF.DuScriptUI.addGroup(ui_autorigOptionsIKGroup,settings.data.uiMode == 2 ? 'column' : 'row');
 	var ui_IKButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,settings.data.uiMode == 2 ? '' : "IK",DuAEF.DuBinary.toFile(w25_ik_l),"Add an IK to the selected structure",DuAEF.DuBinary.toFile(w25_ik_r));
 	var ui_IKOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_IKGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"IK options",DuAEF.DuBinary.toFile(w14_plus_r));
-	ui_IKOptionsButton.enabled = false;
 	ui_IKOptionsButton.alignment = settings.data.uiMode == 2 ? ['center','center'] : ['right','center'];
 
 	var ui_bezierIKGroup = DuAEF.DuScriptUI.addGroup(ui_autorigOptionsIKGroup,settings.data.uiMode == 2 ? 'column' : 'row');
@@ -690,7 +696,15 @@ if (settings.data.uiMode > 0)
 var ui_fkButton = DuAEF.DuScriptUI.addImageButton(ui_autorigOptionsIKGroup,settings.data.uiMode == 2 ? '' : "FK Overlap",DuAEF.DuBinary.toFile(w25_fk_l),"FK with auto-overlap",DuAEF.DuBinary.toFile(w25_fk_r));
 var ui_autorigCancelButton = DuAEF.DuScriptUI.addImageButton(ui_autorigOptionsGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 
-
+var ui_IKOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_IKOptionsGroup,"IK Options");
+var ui_ikOptionsSelector = DuAEF.DuScriptUI.addSelector(ui_IKOptionsGroup);
+ui_ikOptionsSelector.addButton("1 and 2-Layer IK",DuAEF.DuBinary.toFile(w25_12layerik_l),"Rig long limbs combining 1-layer and 2-layer IKs",DuAEF.DuBinary.toFile(w25_12layerik_r));
+ui_ikOptionsSelector.addButton("3-Layer IK",DuAEF.DuBinary.toFile(w25_3layerik_l),"Rig long limbs using 3-layer IK",DuAEF.DuBinary.toFile(w25_3layerik_r));
+var ui_IKOptionsValidGroup = DuAEF.DuScriptUI.addGroup(ui_IKOptionsGroup);
+ui_IKOptionsValidGroup.alignment = ['fill','top'];
+var ui_IKOptionsCancelButton = DuAEF.DuScriptUI.addImageButton(ui_IKOptionsValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_IKOptionsValidButton = DuAEF.DuScriptUI.addImageButton(ui_IKOptionsValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Create IK",DuAEF.DuBinary.toFile(w25_check_r));
 
 //path constraint options
 var ui_pathConstraintGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
@@ -807,6 +821,9 @@ ui_autorigBakeStructuresButton.setChecked(settings.data.autorigBakeStructures);
 if (settings.data.autorigTailIK == undefined) settings.data.autorigTailIK = false;
 ui_autorigTailSelector.setCurrentIndex(1);
 if (settings.data.autorigTailIK) ui_autorigTailSelector.setCurrentIndex(0);
+if (settings.data.ik3Layer == undefined) settings.data.ik3Layer = false;
+ui_ikOptionsSelector.setCurrentIndex(0);
+if (settings.data.ik3Layer) ui_ikOptionsSelector.setCurrentIndex(1);
 
 //=========== CONNECT EVENTS ===========
 
@@ -816,7 +833,13 @@ ui_autorigCancelButton.onClick = function () { setCurrentConstraintsPanel(0); };
 ui_autorigBakeStructuresButton.onClick = ui_autorigBakeStructuresButton_clicked;
 ui_autorigTailSelector.onChange = ui_autorigTailSelector_changed;
 
-if (settings.data.uiMode > 0) ui_IKButton.onClick = shared.createIK;
+if (settings.data.uiMode > 0)
+{
+	ui_IKOptionsValidButton.onClick = ui_IKButton.onClick = shared.createIK;
+	ui_IKOptionsButton.onClick = function (){ setCurrentConstraintsPanel(5); };
+	ui_IKOptionsCancelButton.onClick = function () { setCurrentConstraintsPanel(0); };
+}
+ui_ikOptionsSelector.onChange = ui_ikOptionsSelector_changed;
 if (settings.data.uiMode > 0) ui_bezierIKButton.onClick = shared.createBezierIK;
 ui_fkButton.onClick = ui_fkButton_clicked;
 

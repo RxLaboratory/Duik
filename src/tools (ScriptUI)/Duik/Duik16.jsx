@@ -442,6 +442,10 @@
 	#include 'icons/w25_js_l.png.jsxinc'
 	#include 'icons/w25_selectcontroller_l.png.jsxinc'
 	#include 'icons/w25_selectcontroller_r.png.jsxinc'
+	#include 'icons/w25_3layerik_r.png.jsxinc'
+	#include 'icons/w25_3layerik_l.png.jsxinc'
+	#include 'icons/w25_12layerik_r.png.jsxinc'
+	#include 'icons/w25_12layerik_l.png.jsxinc'
 
 	#include 'icons/w32_autorig_r.jsxinc'
 	#include 'icons/w32_autorig_l.jsxinc'
