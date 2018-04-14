@@ -2736,7 +2736,8 @@ DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
 }
 
 /**
- * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)
+ * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)<br />
+ * Note: any Property or PropertyGroup (and its subproperties) named "Data" will be ignored.
  * @memberof DuAEF.DuAE.Property
  * @param {PropertyBase}	childProp			- The child property
  * @param {PropertyBase}	parentProp			- The parent property
@@ -2744,7 +2745,8 @@ DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
  */
 DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 {
-	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided)
+	if (parentProp.name.toLowerCase() == 'data') return;
+	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
 		//copy paste the animation / value
 		var anim = DuAEF.DuAE.Property.getAnim(childProp,false);
@@ -2754,15 +2756,43 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 	}
 	else
 	{
-		for (var p = 1 ; p <= childProp.numProperties ; p++)
+		if (parentProp.isEffect)
 		{
-			DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
+			var insideData = 0;
+			for (var p = 1, num =  childProp.numProperties; p <= num ; p++)
+			{
+				var subProp = parentProp(p);
+				if (subProp.propertyValueType == PropertyValueType.NO_VALUE)
+				{
+					if (subProp.name.toLowerCase() == 'data')
+					{
+						insideData++;
+						continue;
+					}
+
+					if (insideData > 0)
+					{
+						if (subProp.name == parentProp.name) insideData--;
+						else insideData++;
+						continue;
+					}
+				}
+				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp);
+			}
+		}
+		else
+		{
+			for (var p = 1, num = childProp.numProperties ; p <= num ; p++)
+			{
+				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
+			}
 		}
 	}
 }
 
 /**
- * Adds all the (supported) properties found in a property to the essential graphics panel
+ * Adds all the (supported) properties found in a property to the essential graphics panel<br />
+ * Note: any Property or PropertyGroup (and its subproperties) named "Data" will be ignored.
  * @memberof DuAEF.DuAE.Property
  * @param {PropertyBase}	prop			- The property
  * @return {int} The number of properties added
@@ -2770,7 +2800,8 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 DuAEF.DuAE.Property.addToEGP = function(prop)
 {
 	var numProps = 0;
-	if (prop.propertyType == PropertyType.PROPERTY)
+	if (prop.name.toLowerCase() == 'data') return numProps;
+	if (prop.propertyType == PropertyType.PROPERTY && prop.propertyValueType != PropertyValueType.NO_VALUE)
 	{
 		var comp = DuAEF.DuAE.Property.getComp(prop);
 		var layer = DuAEF.DuAE.Property.getLayer(prop);
@@ -2800,9 +2831,36 @@ DuAEF.DuAE.Property.addToEGP = function(prop)
 	}
 	else
 	{
-		for (var p = 1 ; p <= prop.numProperties ; p++)
+		if (prop.isEffect)
 		{
-			numProps += DuAEF.DuAE.Property.addToEGP(prop(p));
+			var insideData = 0;
+			for (var p = 1, num =  prop.numProperties; p <= num ; p++)
+			{
+				var subProp = prop(p);
+				if (subProp.propertyValueType == PropertyValueType.NO_VALUE)
+				{
+					if (subProp.name.toLowerCase() == 'data')
+					{
+						insideData++;
+						continue;
+					}
+
+					if (insideData > 0)
+					{
+						if (subProp.name == prop.name) insideData--;
+						else insideData++;
+						continue;
+					}
+				}
+				if (insideData == 0) numProps += DuAEF.DuAE.Property.addToEGP(subProp);
+			}
+		}
+		else
+		{
+			for (var p = 1 ; p <= prop.numProperties ; p++)
+			{
+				numProps += DuAEF.DuAE.Property.addToEGP(prop(p));
+			}
 		}
 	}
 	return numProps;
