@@ -263,13 +263,14 @@ DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
 * Links the property to a bone
 * @param {Property|PropertyInfo} prop - The property
 * @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
-* @param {Layer} [bone] - An already existing bone
 * @param {bool} [tangents=true] - True to create bones for the tangents if prop is a Shape
-* @return {Bone|Bone[]} The bone(s) created. An Array if prop is a Shape
+* @return {Bone[]} The bones created.
 */
-DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
+DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 {
-	if (bone == undefined) bone == null;
+	var bones = [];
+
+	if (!Object.isValid(prop)) return bones;
 
 	var propInfo;
 	if (prop instanceof PropertyInfo)
@@ -279,21 +280,21 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 	}
 	else propInfo = new PropertyInfo(prop);
 
-	try { prop.matchName; } catch (e) {return bone;}
+	try { prop.matchName; } catch (e) {return bones;}
 
-	if (prop.matchName == "ADBE FreePin3 PosPin Atom")
+	if (prop.matchName == 'ADBE FreePin3 PosPin Atom')
 	{
 		prop = prop.position;
-		if (!prop.canSetExpression) return bone;
+		if (!prop.canSetExpression) return bones;
 		propInfo = new PropertyInfo(prop);
 	}
 
 	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD && prop.propertyValueType != PropertyValueType.SHAPE)
 	{
-		return bone;
+		return bones;
 	}
 
-	if (prop.propertyValueType == PropertyValueType.SHAPE && DuAEF.DuAE.App.version < 15) return bone;
+	if (prop.propertyValueType == PropertyValueType.SHAPE && DuAEF.DuAE.App.version < 15) return bones;
 
 
 	var layer = DuAEF.DuAE.Property.getLayer(prop);
@@ -331,8 +332,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 		var nullSet = [];
 		var nullSetIn = [];
 		var nullSetOut = [];
-
-		var bones = [];
 
 		//For each path point
 		for (var i = 0; i < pathPoints.length; i++)
@@ -449,6 +448,7 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 		//add effect
 		var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
 		var effect = createControl(layer,effectName);
+		var bone = null;
 
 		if (effect(1).value != 0 && effect(1).value != layer.index ) bone = new Bone(comp.layer(effect(1).value));
 		prop = propInfo.getProperty();
@@ -466,8 +466,15 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 		}
 
 		//move the bone to the prop : use an expression to get its world position
-		prop.expression = "";
-		posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+		try
+		{
+			prop.expression = "";
+			posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
+		}
+		catch(e)
+		{
+			return bones;
+		}
 
 		if (!(layer instanceof ShapeLayer))
 		{
@@ -506,8 +513,45 @@ DuAEF.Duik.Bone.addBone = function (prop,size,bone,tangents)
 							'result;';
 		}
 
-		return bone;
+		return [bone];
 	}
+}
+
+/**
+* Links the spatial child properties to bones
+* @param {PropertyGroup|PropertyInfo} prop - The property
+* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+* @param {bool} [tangents=true] - True to create bones for the tangents if prop is a Shape
+* @return {Bone[]} The bones created.
+*/
+DuAEF.Duik.Bone.addBones = function (propertyGroup,size,tangents)
+{
+	var propInfo;
+	if (propertyGroup instanceof PropertyInfo)
+	{
+		propInfo = propertyGroup;
+		propertyGroup = propInfo.getProperty();
+	}
+	else propInfo = new PropertyInfo(propertyGroup);
+
+	var bones = [];
+	if (propertyGroup.propertyType == PropertyType.PROPERTY)
+	{
+		bones.push(DuAEF.Duik.Bone.addBone(propertyGroup,size,tangents));
+	}
+	else
+	{
+		for (var i = 1, num = propertyGroup.numProperties; i <= num; i++)
+		{
+			if (Object.isValid(propertyGroup))
+			{
+				bones = bones.concat(DuAEF.Duik.Bone.addBones(prop,size,tangents));
+			}
+			propertyGroup = propInfo.getProperty();
+		}
+	}
+
+	return bones;
 }
 
 /**

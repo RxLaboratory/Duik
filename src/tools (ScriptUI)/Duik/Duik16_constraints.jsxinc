@@ -427,7 +427,6 @@ function ui_bonesEditBakeButton_clicked()
 function ui_bonesButton_clicked(randomColor,tangents)
 {
 	var props = DuAEF.DuAE.Comp.getSelectedProps();
-	if (props.length == 0) return;
 
 	app.beginUndoGroup('Duik | ' + "Create bones");
 
@@ -436,10 +435,39 @@ function ui_bonesButton_clicked(randomColor,tangents)
 	if (randomColor) DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.random();
 	else DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.hexToRGB(settings.data.boneColor);
 	var bones = [];
-	for (var i = 0 ; i < props.length ; i++)
+	var itProps = new Iterator(props);
+	itProps.do(function (prop)
 	{
-		bones.push(DuAEF.Duik.Bone.addBone(props[i],undefined,undefined,tangents));
+		bones = bones.concat(DuAEF.Duik.Bone.addBone(prop,undefined,tangents));
+	});
+	//if nothing was created
+	if (bones.length == 0)
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		var itLayers = new Iterator(layers);
+
+		//Try to find puppet pins
+		itLayers.do(function(layer)
+		{
+			var pins = DuAEF.DuAE.Layer.getPuppetPins(layer);
+			var itPins = new Iterator(pins);
+			itPins.do(function(pin)
+			{
+				bones.push(DuAEF.Duik.Bone.addBone(pin,undefined,tangents));
+			});
+		});
+
+		//Try any spatial property
+		if (bones.length == 0)
+		{
+			itProps.do(function (prop)
+			{
+				bones = bones.concat(DuAEF.Duik.Bone.addBones(prop,undefined,tangents));
+			});
+		}
+
 	}
+
 	DuAEF.DuAE.Comp.selectLayers(bones);
 
 	DuAEF.DuAE.Project.setProgressMode(false);
