@@ -309,7 +309,12 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
 		{
 			var fx = layer('ADBE Effect Parade').property(i);
-			if (fx.matchName == DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER && fx.name == name )
+			if (fx.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName && fx.name == name && prop.propertyValueType == PropertyValueType.SHAPE)
+			{
+				effect = fx;
+				break;
+			}
+			else if (fx.matchName == DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER && fx.name == name)
 			{
 				effect = fx;
 				break;
@@ -317,7 +322,46 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		}
 		if (effect == null)
 		{
-			effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER);
+			if (prop.propertyValueType == PropertyValueType.SHAPE)
+			{
+				effect = DuAEF.Duik.PseudoEffects.SHAPE_LINKER.apply(l);
+				//expressions
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).expression = '//Duik.bone\n' +
+					'var l = null;\n' +
+					'try {l = thisProperty.propertyGroup()(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer + ')} catch (e) {};\n' +
+					'var result = value;\n' +
+					'if (l != null) {\n' +
+					'result = l.toWorld(l.anchorPoint);\n' +
+					'result = fromWorld(result);\n' +
+					'}\n' +
+					'result;';
+
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).expression = '//Duik.bone\n' +
+					'var l = null;\n' +
+					'var fx = thisProperty.propertyGroup();\n' +
+					'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer + ')} catch (e) {};\n' +
+					'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
+					'if (l != null) {\n' +
+					'result = l.toWorld(l.anchorPoint);\n' +
+					'result = fromWorld(result);\n' +
+					'}\n' +
+					'result;';
+
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).expression = '//Duik.bone\n' +
+					'var l = null;\n' +
+					'var fx = thisProperty.propertyGroup();\n' +
+					'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer + ')} catch (e) {};\n' +
+					'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
+					'if (l != null) {\n' +
+					'result = l.toWorld(l.anchorPoint);\n' +
+					'result = fromWorld(result);\n' +
+					'}\n' +
+					'result;';
+			}
+			else
+			{
+				effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER);
+			}
 			effect.name = name;
 		}
 		return effect;
@@ -329,9 +373,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		var pathPoints = prop.value.vertices;
 		var pathInTangents = prop.value.inTangents;
 		var pathOutTangents = prop.value.outTangents;
-		var nullSet = [];
-		var nullSetIn = [];
-		var nullSetOut = [];
 
 		//For each path point
 		for (var i = 0; i < pathPoints.length; i++)
@@ -349,20 +390,21 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 				newBone.layer.label = 11;
 			}
 
+			//add effect
+			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
+			var effect = createControl(layer,effectName);
+			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(newBone.layer.index);
+			bones.push(newBone);
+
 			// Set position using layer space transforms, then remove expressions
 			newBone.layer.position.setValue(pathPoints[i]);
 			newBone.layer.position.expression = "var srcLayer = thisComp.layer(\"" + layer.name + "\"); \r" +
 										"var srcPath = " + pathPath + ".points()[" + i + "]; \r" +
 										"srcLayer.toComp(srcPath);";
-			newBone.layer.position.setValue(newBone.layer.position.value);
+			var newPos = newBone.layer.position.value;
+			newBone.layer.position.setValue(newPos);
+			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).setValue([newPos[0],newPos[1]]);
 			newBone.layer.position.expression = '';
-
-			//add effect
-			var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
-			var effect = createControl(layer,effectName);
-			effect(1).setValue(newBone.layer.index);
-			nullSet.push(effectName);
-			bones.push(newBone);
 
 			if (tangents)
 			{
@@ -391,55 +433,30 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 					newBoneIn.layer.position.setValue(pathInTangents[i]);
 				}
 
-				var effectNameIn = 'B | ' + prop.parentProperty.name + " | In - " + i;
-				var effectIn = createControl(layer,effectNameIn);
-				effectIn(1).setValue(newBoneIn.layer.index);
-				nullSetIn.push(effectNameIn);
-				bones.push(newBoneIn);
-
-				var effectNameOut = 'B | ' + prop.parentProperty.name + " | Out - " + i;
-				var effectOut = createControl(layer,effectNameOut);
-				effectOut(1).setValue(newBoneOut.layer.index);
-				nullSetOut.push(effectNameOut);
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(newBoneIn.layer.index);
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(newBoneOut.layer.index);
 				bones.push(newBoneOut);
 			}
 		}
 
-		var exp = "var nullLayerNames = [\"" + nullSet.join("\",\"") + "\"]; \n";
-
-		if (tangents) exp += "var nullLayerNamesIn = [\"" + nullSetIn.join("\",\"") + "\"]; \n" +
-						"var nullLayerNamesOut = [\"" + nullSetOut.join("\",\"") + "\"]; \n";
-
-		exp += "var origPath = thisProperty; \n" +
-						"var origPoints = origPath.points(); \n" +
-						"var origInTang = origPath.inTangents(); \n" +
-						"var origOutTang = origPath.outTangents(); \n" +
-						"var getNullLayers = []; \n";
-
-		if (tangents) exp += "var getNullLayersIn = []; \n" +
-						"var getNullLayersOut = []; \n";
-
-		exp += "for (var i = 0; i < nullLayerNames.length; i++){ \r" +
-						"    try{  \r" +
-						"        getNullLayers.push(effect(nullLayerNames[i])(1)); \r";
-
-		if (tangents) exp += "        getNullLayersIn.push(effect(nullLayerNamesIn[i])(1)); \r" +
-						"        getNullLayersOut.push(effect(nullLayerNamesOut[i])(1)); \r";
-
-		exp += "    } catch(err) { \r" +
-						"        getNullLayers.push(null); \r" +
-						"    }} \r" +
-						"for (var i = 0; i < getNullLayers.length; i++){ \r" +
-						"    if (getNullLayers[i] != null && getNullLayers[i].index != thisLayer.index){ \r" +
-						"        origPoints[i] = fromCompToSurface(getNullLayers[i].toComp(getNullLayers[i].anchorPoint));  \r";
-
-		if (tangents) exp += "        origInTang[i] = fromCompToSurface(getNullLayersIn[i].toComp(getNullLayersIn[i].anchorPoint)) - origPoints[i];  \r" +
-						"        origOutTang[i] = fromCompToSurface(getNullLayersOut[i].toComp(getNullLayersOut[i].anchorPoint)) - origPoints[i];  \r";
-
-		exp += "    }} \r" +
-						"createPath(origPoints,origInTang,origOutTang,origPath.isClosed());";
-
-		prop.expression = exp;
+		prop.expression = '//Duik.shapeLinker\n' +
+			'var origPath = thisProperty;\n' +
+			'var origPoints = origPath.points();\n' +
+			'var origInTang = origPath.inTangents();\n' +
+			'var origOutTang = origPath.outTangents();\n' +
+			'var closed = origPath.isClosed();\n' +
+			'var fxName = "B | " + origPath.propertyGroup().name;\n' +
+			'for (var i = 1, num = thisLayer("Effects").numProperties ; i <= num; i++)\n' +
+			'{\n' +
+			'var fx = effect(i);\n' +
+			'if (fx.name.indexOf(fxName) == 0)\n' +
+			'{\n' +
+			'origPoints[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
+			'origInTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint + ')-fx(1);\n' +
+			'origOutTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint + ')-fx(1);\n' +
+			'}\n' +
+			'}\n' +
+			'createPath(origPoints,origInTang,origOutTang,closed);';
 
 		return bones;
 	}
