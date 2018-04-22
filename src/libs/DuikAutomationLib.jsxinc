@@ -901,6 +901,59 @@ DuAEF.Duik.Automation.autoWalk = function(controllers,comp)
 }
 
 /**
+* Loops the property
+* @param {Property|PropertyInfo}	prop - The property.
+* @param {PropertyGroup|null}	[effect]	- A looper effect already created by Duik to use as a controller for this looper
+*/
+DuAEF.Duik.Automation.loop = function(prop,ctrlEffect)
+{
+	if (typeof ctrlEffect === 'undefined') ctrlEffect = null;
+	if (!prop) return ctrlEffect;
+	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+	if (!prop.riggable) return ctrlEffect;
+
+	var layer = prop.layer;
+
+	if (!ctrlEffect)
+	{
+		ctrlEffect = DuAEF.Duik.PseudoEffects.LOOPER.apply(layer);
+		ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inCheckbox).setValue(1);
+		ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outCheckbox).setValue(1);
+	}
+
+	prop.getProperty().expression = '//Duik.looper\n' +
+		'var fx = ' + DuAEF.DuAE.Property.getExpressionLink(ctrlEffect,true) + '\n' +
+		'var isIn = fx(' + DuAEF.Duik.PseudoEffects.LOOPER.inCheckbox + ').value;\n' +
+		'var isOut = fx(' + DuAEF.Duik.PseudoEffects.LOOPER.outCheckbox + ').value;\n' +
+		'var inType = fx(' + DuAEF.Duik.PseudoEffects.LOOPER.inTypePopup + ').value;\n' +
+		'var outType = fx(' + DuAEF.Duik.PseudoEffects.LOOPER.outTypePopup + ').value;\n' +
+		'var result = value;\n' +
+		'if (numKeys > 1)\n' +
+		'{\n' +
+		'if (time < key(1).time && isIn)\n' +
+		'{\n' +
+		'if (inType == 1) inType = "cycle";\n' +
+		'else if (inType == 2) inType = "offset";\n' +
+		'else if (inType == 3) inType = "pingpong";\n' +
+		'else if (inType == 4) inType = "continue";\n' +
+		'result = loopIn(inType);\n' +
+		'}\n' +
+		'else if (time > key(numKeys).time && isOut)\n' +
+		'{\n' +
+		'if (outType == 1) outType = "cycle";\n' +
+		'else if (outType == 2) outType = "offset";\n' +
+		'else if (outType == 3) outType = "pingpong";\n' +
+		'else if (outType == 4) outType = "continue";\n' +
+		'result = loopOut(outType);\n' +
+		'}\n' +
+		'}\n' +
+		'\n' +
+		'result;';
+
+		return ctrlEffect;
+}
+
+/**
 * Create a procedural walk cycle.
 * @param {Controller[]|Layer[]} controllers - The controllers
 * @param {Controller|Layer|null} [headCtrl=null] - The head controller
