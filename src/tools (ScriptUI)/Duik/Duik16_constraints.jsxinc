@@ -111,7 +111,6 @@ function ui_connectorPickButton_clicked()
 		}
 	}
 
-
 	var props = DuAEF.DuAE.Comp.getSelectedProps();
 	if (props.length > 0)
 	{
@@ -184,6 +183,7 @@ function ui_connectorPickButton_clicked()
 			ui_connectorSeparator3.enabled = true;
 			ui_connectorSeparator2.enabled = true;
 		}
+		ui_connectorAxisList_changed();
 	}
 	else
 	{
@@ -198,17 +198,32 @@ function ui_connectorPickButton_clicked()
 	}
 }
 
+function ui_connectorAxisList_changed()
+{
+	if (!connectorMasterProp) return;
+	var axis = 0;
+	if (ui_connectorAxisList.selection) axis = ui_connectorAxisList.selection.index;
+	var range = DuAEF.DuAE.Property.getRange(connectorMasterProp,axis,false);
+	if (range.length != 2) return;
+	if (range[0] == range[1]) return;
+	ui_connectorMinimumEdit.setText(Math.floor(range[0]));
+	ui_connectorMaximumEdit.setText(Math.floor(range[1]));
+}
+
 function ui_connectorTypeList_changed()
 {
 	if (ui_connectorTypeList.selection.index == 0)
 	{
 		ui_connectorAxisList.enabled = true;
-		//TODO get min and max values
+		ui_connectorAxisList_changed();
 	}
 	else if (ui_connectorTypeList.selection.index == 1)
 	{
 		ui_connectorAxisList.enabled = false;
-		//TODO get max velocity
+		if (!connectorMasterProp) return;
+		var vel = DuAEF.DuAE.Property.getMaxVelocity(connectorMasterProp);
+		ui_connectorMinimumEdit.setText('0');
+		ui_connectorMaximumEdit.setText(Math.floor(vel*100)/100);
 	}
 }
 
@@ -805,7 +820,7 @@ ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.hei
 ui_connectorTypeLabel.minimumSize.height = ui_connectorTypeLabel.maximumSize.height = ui_connectorTypeList.preferredSize[1];
 if (settings.data.uiMode != 2) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
 var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,settings.data.uiMode == 2 ? 'row' : 'column');
-ui_connectorChildrenGroup.alignment = ['fill','top'];
+ui_connectorChildrenGroup.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['fill','top'];
 var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addImageButton(ui_connectorChildrenGroup,settings.data.uiMode == 2 ? '' : 'Connect to properties',DuAEF.DuBinary.toFile(w25_allproperties_l),"Connect selected properties",DuAEF.DuBinary.toFile(w25_allproperties_r))
 var ui_connectorOpacitiesButton = DuAEF.DuScriptUI.addImageButton(ui_connectorChildrenGroup,settings.data.uiMode == 2 ? '' : 'Connect to opacities',DuAEF.DuBinary.toFile(w25_opacity_l),"Connect selected layers opacity",DuAEF.DuBinary.toFile(w25_opacity_r))
 DuAEF.DuScriptUI.addSeparator(ui_connectorGroup);
@@ -848,6 +863,7 @@ ui_connectorSliderButton.onClick = function () {shared.createController(DuAEF.Du
 ui_connectorDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.DOUBLE_SLIDER); ui_connectorPickButton_clicked(); }
 ui_connectorAngleButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.ANGLE); ui_connectorPickButton_clicked(); }
 ui_connectorTypeList.onChange = ui_connectorTypeList_changed;
+ui_connectorAxisList.onChange = ui_connectorAxisList_changed;
 ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
 ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
 
