@@ -179,6 +179,7 @@ DuAEF.Duik.Bone.createBone = function(comp,size,type)
 			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1).value';
 
 			bone.transform.scale.expression = '[value[0],value[0]];';
+			bone.label = 11;
 		}
 		else if (type == DuAEF.Duik.Bone.BoneTypes.TANGENT)
 		{
@@ -186,12 +187,14 @@ DuAEF.Duik.Bone.createBone = function(comp,size,type)
 			circle("ADBE Vector Ellipse Size").expression = '[20,20] * effect("Bone")(2).value/100';
 
 			var line = iconContent.addProperty("ADBE Vector Shape - Group");
-			line('ADBE Vector Shape').expression = "if (active) createPath([[0,0], -transform.position], [[0,0],[0,0]], [[0,0],[0,0]], false) else value;";
+			line('ADBE Vector Shape').expression = "if (active && hasParent) createPath([[0,0], -transform.position], [[0,0],[0,0]], [[0,0],[0,0]], false) else value;";
 			var pathStroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
 			pathStroke.property("Color").expression = 'effect("Bone")(1)-[0.2,0.2,0.2,0]';
 			pathStroke.property("Stroke Width").setValue(6);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
 			fill("ADBE Vector Fill Color").expression = 'effect("Bone")(1)-[0.2,0.2,0.2,0]';
+
+			bone.label = 14;
 		}
 
 		if (type != DuAEF.Duik.Bone.BoneTypes.TANGENT) iconGroup.transform.scale.expression = '[effect("Bone")(2).value,effect("Bone")(2).value]';
@@ -371,7 +374,6 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 			//Create nulls
 			newBone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.VERTEX);
 			newBone.layer.name = nullName;
-			newBone.layer.label = 11;
 		}
 
 		//add effect
@@ -406,7 +408,6 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 				var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
 				newBoneOut.layer.parent = newBone.layer;
 				newBoneOut.layer.name = nullNameOut;
-				newBoneOut.layer.label = 14;
 				newBoneOut.layer.position.setValue(pathOutTangents[i]);
 			}
 
@@ -415,7 +416,6 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 				var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
 				newBoneIn.layer.parent = newBone.layer;
 				newBoneIn.layer.name = nullNameIn;
-				newBoneIn.layer.label = 14;
 				newBone.layer.moveBefore(newBoneIn.layer);
 				newBoneIn.layer.position.setValue(pathInTangents[i]);
 			}
@@ -515,6 +515,46 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 			effect.name = name;
 		}
 		return effect;
+	}
+
+	//if Shape controller Effect
+	var parentProp = prop.parentProperty;
+	if (parentProp.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName)
+	{
+		//create bone
+		var bone;
+		if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint || prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint)
+		{
+			bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
+		}
+		else
+		{
+			bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.VERTEX);
+		}
+
+		//position
+		bone.layer.transform.position.expression = 'thisComp.layer(' + layer.index + ').toWorld(thisComp.layer(' + layer.index + ').effect(' + parentProp.propertyIndex + ')(' + prop.propertyIndex + '));';
+		DuAEF.DuAE.Property.removeExpression(bone.layer.transform.position);
+
+		var baseName = DuAEF.Duik.generateName('B',' | ' + layer.name + ' | ' + DuAEF.Duik.removeDuikPrefix(parentProp.name));
+
+		if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint)
+		{
+			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(bone.layer.index);
+			bone.layer.name = baseName;
+		}
+		else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint)
+		{
+			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(bone.layer.index);
+			bone.layer.name = baseName + " | In";
+		}
+		else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint)
+		{
+			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(bone.layer.index);
+			bone.layer.name = baseName + " | Out";
+		}
+
+		return [bone];
 	}
 
 	//add effect
