@@ -209,7 +209,9 @@ function PropertyInfo(property)
 	if (!property.canSetExpression) riggable = false;
 	if (property.elided) riggable = false;
 	this.riggable = riggable;
+	this.numerical = DuAEF.DuAE.Property.isNumerical(property);
 	this.layer = DuAEF.DuAE.Property.getLayer(property);
+	this.comp = this.layer.containingComp;
 	this.dimensions = DuAEF.DuAE.Property.getDimensions(property);
 }
 
@@ -2976,7 +2978,7 @@ DuAEF.DuAE.Property.isAnimated = function(prop)
 
 /**
 * Gets the After Effects animated (with keyframes) properties in the propertyGroup
-* @param {PropertyGroup}	 [prop]	- The parent propertyGroup where to search for animations
+* @param {PropertyGroup}	 prop	- The parent propertyGroup where to search for animations
 * @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
 * A function which take one PropertyBase as argument can be used to filter the properties: the Property will be returned if the function returns true.
 * @param {boolean}	[strict=false]	- If a string filter is provided, wether to search for the exact name/matchName or if it contains the filter.
@@ -3032,6 +3034,132 @@ DuAEF.DuAE.Property.getAnimatedProps = function(prop, filter, strict, caseSensit
 
 
 	return DuAEF.DuAE.getPropertyInfos(props);
+}
+
+/**
+* Checks if the property value is a number or an Array of Number.<br >
+* I.e if its value type is one of: one D, two D, three D (spatial or not), Color.
+* @param {Property}	 prop	- The property
+* @return {bool}
+*/
+DuAEF.DuAE.Property.isNumerical = function (prop)
+{
+	if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL) return true;
+	if (prop.propertyValueType == PropertyValueType.ThreeD) return true;
+	if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL) return true;
+	if (prop.propertyValueType == PropertyValueType.TwoD) return true;
+	if (prop.propertyValueType == PropertyValueType.OneD) return true;
+	if (prop.propertyValueType == PropertyValueType.COLOR) return true;
+	return false;
+}
+
+/**
+* Gets the value range of the animated property.<br >
+* The property type must be one of: one D, two D, three D (spatial or not), Color.
+* If the property is not one of these types, returns an empty Array.
+* @param {Property|PropertyInfo}	 prop	- The property
+* @param {int}	 [axis=0]	- The axis (or the color channel) to get the range
+* @param {bool}	 [preExpression=true]	- True to get the range from keyframes instead of the result of the exression
+* @return {float[]} The minimum and maximum value.<br />
+* The first item in the Array is not necesarily the lowest value, it is the first in time.
+*/
+DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
+{
+	if (typeof axis === 'undefined') axis = 0;
+	if (typeof preExpression === 'undefined') preExpression = true;
+
+	var propInfo = prop;
+	if (!prop instanceof PropertyInfo)
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+	else
+	{
+		propInfo = prop;
+		prop = prop.getProperty();
+	}
+
+
+	if (!propInfo.numerical) return [];
+
+	if (prop.expression == '') preExpression = true;
+
+	var comp = propInfo.comp;
+	var frames = comp.duration/comp.frameDuration;
+	var min = prop.valueAtTime(0,preExpression);
+	var minTime = 0;
+	var max = prop.valueAtTime(0,preExpression);
+	var maxTime = 0;
+
+	if (propInfo.dimensions > 1)
+	{
+		max = max[axis];
+		min = min[axis];
+	}
+
+	for (var i = 1; i < frames; i++)
+	{
+		var val = prop.valueAtTime(i*comp.frameDuration,preExpression);
+		if (propInfo.dimensions > 1) val = val[axis];
+		if (val < min)
+		{
+			min = val;
+			minTime = i;
+		}
+		if (val > max)
+		{
+			max = val;
+			maxTime = i;
+		}
+	}
+
+	if (minTime < maxTime) return [min,max];
+	else return [max,min];
+}
+
+/**
+* Gets the maximum velocity of the animated property.<br >
+* The property type must be one of: one D, two D, three D (spatial or not), Color.
+* If the property is not one of these types, returns 0.
+* @param {Property|PropertyInfo}	 prop	- The property
+* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+* @return {float} The velocity.
+*/
+DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
+{
+	if (typeof preExpression === 'undefined') preExpression = true;
+
+	var propInfo = prop;
+	if (!prop instanceof PropertyInfo)
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+	else
+	{
+		propInfo = prop;
+		prop = prop.getProperty();
+	}
+
+	var velocity = 0;
+	if (!propInfo.numerical) return velocity;
+
+	if (prop.expression == '') preExpression = true;
+
+	var comp = propInfo.comp;
+	var frames = comp.duration/comp.frameDuration;
+
+	var prevVal = prop.valueAtTime(0,preExpression);
+
+	for (var i = 1; i < frames; i++)
+	{
+		var val = prop.valueAtTime(i*comp.frameDuration, preExpression);
+		var vel = DuAEF.DuJS.Math.getLength(val,prevVal);
+		if (vel > velocity) velocity = vel;
+		prevVal = val;
+	}
+
+	return velocity;
+
 }
 
 /**
