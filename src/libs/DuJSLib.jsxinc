@@ -427,7 +427,7 @@ DuAEF.DuJS.Fs.switchExtension = function(pathOrFile, newExtension)
 {
     if (pathOrFile instanceof File) pathOrFile = pathOrFile.absoluteURI;
     var point = pathOrFile.lastIndexOf(".");
-    if(point == -1) return pathOrFile;
+    if (point == -1) return pathOrFile + "." + newExtension;
     return pathOrFile.slice(0, point) + "." + newExtension;
 }
 
@@ -441,6 +441,67 @@ DuAEF.DuJS.Fs.fileExists = function(path)
 {
     var file = new File(path);
     return file.exists;
+}
+
+/**
+* Reads a whole file and return its content
+* @memberof DuAEF.DuJS.Fs
+* @param {File}	 file	- The file
+* @return {string} The content
+*/
+DuAEF.DuJS.Fs.readFile = function(file)
+{
+	//open and parse file
+	if (!file.open('r')) return '';
+	var data = file.read();
+	file.close();
+	return data;
+}
+
+/**
+* Parses a JSON file
+* @memberof DuAEF.DuJS.Fs
+* @param {File}	 file	- The file
+* @return {Object|null} The content or null if the file couldn't be parsed
+*/
+DuAEF.DuJS.Fs.parseJSON = function(file)
+{
+	//open and parse file
+	var data = DuAEF.DuJS.Fs.readFile(file);
+	if (data = '') return null;
+	return JSON.parse(data);
+}
+
+/**
+* Parses a CSV file
+* @memberof DuAEF.DuJS.Fs
+* @param {File}	 file	- The file
+* @param {string}	 [delimiter=',']	- The delimiter used
+* @param {string}	 [textSeparator='"']	- The separator for texts
+* @return {string[]|null} The content (a two-dimensionnal Array) or null if the file couldn't be parsed
+*/
+DuAEF.DuJS.Fs.parseCSV = function(file,delimiter,textSeparator)
+{
+	if (typeof delimiter === 'undefined') delimiter = ',';
+	if (typeof textSeparator === 'undefined') textSeparator = '"';
+	var reQuotesB = new RegExp("^" + textSeparator);
+	var reQuotesE = new RegExp(textSeparator + "$");
+	//open and parse file
+	var data = DuAEF.DuJS.Fs.readFile(file);
+	if (data == '') return null;
+	data = data.split('\n');
+	for (var i = 0, num = data.length; i < num; i++)
+	{
+		data[i] = data[i].split(delimiter);
+		for (var j = 0, numJ = data[i].length; j < numJ; j++)
+		{
+			data[i][j] = DuAEF.DuJS.String.trim(data[i][j]);
+			data[i][j] = data[i][j].replace(reQuotesB,'');
+			data[i][j] = data[i][j].replace(reQuotesE,'');
+		}
+
+	}
+	return data;
 }
 
 /**
@@ -639,7 +700,8 @@ DuAEF.DuJS.String.generateUnique = function ( newString , stringList , increment
 * @param {String}	[sep=/]	- The separator to use. If not defined, will look for the first sep in the path.
 * @return {String} The final path
 */
-DuAEF.DuJS.String.pathJoin = function(parts, sep){
+DuAEF.DuJS.String.pathJoin = function(parts, sep)
+{
    var separator = sep || false;
    if(!separator)
    {
@@ -650,6 +712,47 @@ DuAEF.DuJS.String.pathJoin = function(parts, sep){
    if(!separator) separator = '/';
    var replace   = new RegExp(separator+'{1,}', 'g');  // Replace ///// with /
    return parts.join(separator).replace(replace, separator);
+}
+
+/**
+* Returns a copy of the string without leading and trailing white spaces.
+* @param {string}	 str	- The string to trim
+* @return {String} The trimmed string
+*/
+DuAEF.DuJS.String.trim = function(str)
+{
+	return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+}
+
+/**
+* Returns a copy of the string without leading white spaces.
+* @param {string}	 str	- The string to trim
+* @return {String} The trimmed string
+*/
+DuAEF.DuJS.String.leftTrim = function(str)
+{
+	return str.replace(/^[\s\uFEFF\xA0]+/, '');
+}
+
+/**
+* Returns a copy of the string without trailing white spaces.
+* @param {string}	 str	- The string to trim
+* @return {String} The trimmed string
+*/
+DuAEF.DuJS.String.rightTrim = function(str)
+{
+	return str.replace(/[\s\uFEFF\xA0]+$/, '');
+}
+
+/**
+* Returns a copy of the string without leading and trailing white spaces, and without any new line, leaving only standard spaces.
+* @param {string}	 str	- The string to trim
+* @return {String} The trimmed string
+*/
+DuAEF.DuJS.String.fullTrim = function(str)
+{
+	var newStr = str.replace(/[\s\uFEFF\xA0]+/g,' ');
+	return DuAEF.DuJS.String.trim(newStr);
 }
 
 /**
