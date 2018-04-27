@@ -484,22 +484,32 @@ DuAEF.DuJS.Fs.parseCSV = function(file,delimiter,textSeparator)
 {
 	if (typeof delimiter === 'undefined') delimiter = ',';
 	if (typeof textSeparator === 'undefined') textSeparator = '"';
-	var reQuotesB = new RegExp("^" + textSeparator);
-	var reQuotesE = new RegExp(textSeparator + "$");
+	var reQuoted = new RegExp("(" + textSeparator + ")((?:\\\\\\1|(?:(?!\\1).))*)\\1");
 	//open and parse file
 	var data = DuAEF.DuJS.Fs.readFile(file);
 	if (data == '') return null;
 	data = data.split('\n');
 	for (var i = 0, num = data.length; i < num; i++)
 	{
-		data[i] = data[i].split(delimiter);
+		//get quoted values
+		var quotedValues = [];
+		var line = data[i];
+		var quoted = reQuoted.exec(line);
+		while (quoted)
+		{
+			quotedValues.push(quoted[2]);
+			line = line.replace(quoted[0],'%%');
+			quoted = reQuoted.exec(line);
+		}
+		data[i] = line.split(delimiter);
 		for (var j = 0, numJ = data[i].length; j < numJ; j++)
 		{
 			data[i][j] = DuAEF.DuJS.String.trim(data[i][j]);
-			data[i][j] = data[i][j].replace(reQuotesB,'');
-			data[i][j] = data[i][j].replace(reQuotesE,'');
+			if (data[i][j] == '%%')
+			{
+				data[i][j] = quotedValues.shift();
+			}
 		}
-
 	}
 	return data;
 }
