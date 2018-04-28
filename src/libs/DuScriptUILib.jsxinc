@@ -82,16 +82,40 @@ DuAEF.DuScriptUI = {};
 })();
 
 /**
+ * Adjust the color according to the brightness setting of After Effects
+ * @memberof DuAEF.DuScriptUI
+ * @param {float[]} color - The color [R,V,B,A] Array
+ * @return {float[]} - The new color [R,V,B,A] Array
+ */
+DuAEF.DuScriptUI.adjustColor = function (color)
+{
+	//gets the main application color
+	var q = app.themeColor(78)[0];
+	//the darkest one is 0.15000000596046
+	q = q - 0.15000000596046;
+	var newColor = color + [q,q,q,0];
+	for (var i = 0; i < 3; i++)
+	{
+		if (newColor[i] < 0) newColor[i] = 0;
+		else if (newColor[i] > 1) newColor[i] = 1;
+	}
+	return newColor;
+}
+
+/**
  * Changes the color of the text of a ScriptUI Object
  * @memberof DuAEF.DuScriptUI
  * @param {ScriptUI}		text	- The ScriptUI Object
- * @param {Array}				color	- The new color [R,V,B,A] Array
+ * @param {float[]}				color	- The new color [R,V,B,A] Array
+ * @param {bool}				[adjusted=true]	- lightens the color if the brightness setting of Ae is not set on the darkest one
  */
-DuAEF.DuScriptUI.setTextColor = function (text,color)
+DuAEF.DuScriptUI.setTextColor = function (text,color,adjusted)
 {
+	if (typeof adjusted === 'undefined') adjusted = true;
 	if (!text) throw "You must provide a ScriptUI Control to change the color of the text";
+	if (adjusted) c = DuAEF.DuScriptUI.adjustColor(color);
 	var g = text.graphics;
-	var textPen = g.newPen(g.PenType.SOLID_COLOR,color,1);
+	var textPen = g.newPen(g.PenType.SOLID_COLOR,c,1);
 	g.foregroundColor = textPen;
 }
 
@@ -100,12 +124,15 @@ DuAEF.DuScriptUI.setTextColor = function (text,color)
  * @memberof DuAEF.DuScriptUI
  * @param {ScriptUI} uiItem - The ScriptUI Object
  * @param {Array} color - The new color [R,V,B,A] Array
+ * @param {bool} [adjusted=true] - lightens the color if the brightness setting of Ae is not set on the darkest one
  */
-DuAEF.DuScriptUI.setBackgroundColor = function (uiItem,color)
+DuAEF.DuScriptUI.setBackgroundColor = function (uiItem,color,adjusted)
 {
+	if (typeof adjusted === 'undefined') adjusted = true;
 	if (!uiItem) throw "You must provide a ScriptUI Control to change the color of the background";
+	if (adjusted) c = DuAEF.DuScriptUI.adjustColor(color);
 	var g = uiItem.graphics;
-	var brush = g.newBrush(g.BrushType.SOLID_COLOR,color);
+	var brush = g.newBrush(g.BrushType.SOLID_COLOR,c);
 	g.backgroundColor = brush;
 }
 
@@ -1445,4 +1472,59 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	selector.onChange = function(){};
 
 	return selector;
+}
+
+/**
+* @class
+* @name HelpPopup
+* @classdesc A popup to display some help, with a button which opens a link to a webpage.<br />
+* This is not a real class, and cannot be instanciated.<br />
+* Use {@link DuAEF.DuScriptUI.createHelpPopup} to create a HelpPopup.<br />
+* The HelpPopup inherits the Window (palette) object from ScriptUI and has all of its properties and methods.
+*/
+
+/**
+* Creates a new HelpPopup<br />
+* @memberof DuAEF.DuScriptUI
+* @param {string} title - A title.
+* @param {string} text - The help text.
+* @param {string} link - The http link to a webpage
+* @return {HelpPopup} - The HelpPopup
+*/
+DuAEF.DuScriptUI.createHelpPopup = function (title,text,link)
+{
+	if (typeof link === 'undefined') link = '';
+
+	var popup = new Window('palette','',undefined,{borderless:true,resizeable:true});
+	popup.margins = 2;
+	popup.spacing = 0;
+	DuAEF.DuScriptUI.setBackgroundColor(popup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	//add title
+	popup.add('statictext',undefined,title);
+
+	//add spacer
+	DuAEF.DuScriptUI.addSeparator(popup);
+
+	//add text
+	popup.add('statictext',undefined,text,{multiline:true});
+
+	//add buttons
+	var buttonsGroup = DuAEF.DuScriptUI.addGroup(popup,'row');
+	popup.closeButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"Close");
+	popup.closeButton.onClick = function () { popup.hide(); };
+	if (link != '')
+	{
+		popup.helpButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"More...");
+		popup.helpButton.onClick = function()
+		{
+
+			popup.hide();
+		}
+	}
+
+	//Deactivate bugs on CS6, needs a try/catch
+	popup.onDeactivate = function () { try { popup.hide(); } catch (e) {} };
+
+	return popup;
 }
