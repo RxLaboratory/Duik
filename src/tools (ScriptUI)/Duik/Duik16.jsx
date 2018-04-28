@@ -170,6 +170,9 @@
 
 	//=========== UI =============
 
+	//HELP
+	#include Duik16_helpStrings.jsxinc
+
 	debugLog.checkTimer("Building UI");
 
 	//main palette
