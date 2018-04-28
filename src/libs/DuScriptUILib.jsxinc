@@ -382,7 +382,19 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	//events
 	imageButton.clicked = function (e)
 	{
-		try { imageButton.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured in file at line ' + e.line + '\n\n' + e.description); }
+		DuAEF.DuScriptUI.updateHelpPopup(imageButton.help.title, imageButton.help.text, imageButton.help.link);
+		if (e.shiftKey)
+		{
+			if (imageButton.help.text != '')
+			{
+				DuAEF.DuScriptUI.helpPanel.show();
+			}
+			return;
+		}
+		else
+		{
+			try { imageButton.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured in file at line ' + e.line + '\n\n' + e.description); }
+		}
 	}
 
 	imageButton.mouseOver = function (e)
@@ -406,7 +418,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	}
 
 	//add events
-	imageButton.addEventListener("mousedown",imageButton.clicked,true);
+	imageButton.addEventListener('click',imageButton.clicked,true);
 	// Hack - CS6 Bug on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
@@ -419,6 +431,18 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		imageButton.addEventListener("mouseout",imageButton.mouseOut);
 	}
 
+	imageButton.help = {};
+	imageButton.help.title = '';
+	imageButton.help.text = '';
+	imageButton.help.link = '';
+
+	//help popup
+	imageButton.setHelp = function(title,text,link)
+	{
+		imageButton.help.title = title;
+		imageButton.help.text = text;
+		imageButton.help.link = link;
+	}
 
 	return imageButton;
 }
@@ -577,6 +601,15 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 
 	imageButton.clicked = function (e)
 	{
+		DuAEF.DuScriptUI.updateHelpPopup(imageButton.help.title, imageButton.help.text, imageButton.help.link);
+		if (e.shiftKey)
+		{
+			if (imageButton.help.text != '')
+			{
+				DuAEF.DuScriptUI.helpPanel.show();
+			}
+			return;
+		}
 		imageButton.setChecked(!imageButton.checked);
 		try { imageButton.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
 	}
@@ -618,6 +651,19 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	{
 		imageButton.group.addEventListener("mouseover",imageButton.mouseOver);
 		imageButton.group.addEventListener("mouseout",imageButton.mouseOut);
+	}
+
+	imageButton.help = {};
+	imageButton.help.title = '';
+	imageButton.help.text = '';
+	imageButton.help.link = '';
+
+	//help popup
+	imageButton.setHelp = function(title,text,link)
+	{
+		imageButton.help.title = title;
+		imageButton.help.text = text;
+		imageButton.help.link = link;
 	}
 
 	return imageButton;
@@ -1185,7 +1231,7 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	selector.popup = new Window('palette','',undefined,{borderless:true});
 	selector.popup.margins = 2;
 	selector.popup.spacing = 0;
-	DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+	//DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
 	selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
 	selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
 	//Deactivate bugs on CS6, needs a try/catch
@@ -1475,56 +1521,57 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 }
 
 /**
-* @class
-* @name HelpPopup
-* @classdesc A popup to display some help, with a button which opens a link to a webpage.<br />
-* This is not a real class, and cannot be instanciated.<br />
-* Use {@link DuAEF.DuScriptUI.createHelpPopup} to create a HelpPopup.<br />
-* The HelpPopup inherits the Window (palette) object from ScriptUI and has all of its properties and methods.
+* The panel where the help is displayed
 */
+DuAEF.DuScriptUI.helpPanel = new Window('palette',"Help panel",undefined,{resizeable:true});
+
+//Initializes the help panel
+(function(){
+	DuAEF.DuScriptUI.helpPanel.margins = 2;
+	DuAEF.DuScriptUI.helpPanel.spacing = 0;
+	//DuAEF.DuScriptUI.setBackgroundColor(popup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	//add title
+	DuAEF.DuScriptUI.helpPanel.title = DuAEF.DuScriptUI.helpPanel.add('statictext',undefined,'');
+	DuAEF.DuScriptUI.helpPanel.title.alignment = ['fill','top'];
+
+	//add spacer
+	DuAEF.DuScriptUI.addSeparator(DuAEF.DuScriptUI.helpPanel);
+
+	//add text
+	DuAEF.DuScriptUI.helpPanel.help = DuAEF.DuScriptUI.helpPanel.add('edittext',undefined,'',{multiline:true});
+	DuAEF.DuScriptUI.helpPanel.help.alignment = ['fill','fill'];
+
+	//add buttons
+	var buttonsGroup = DuAEF.DuScriptUI.addGroup(DuAEF.DuScriptUI.helpPanel,'row');
+	buttonsGroup.alignment = ['fill','bottom'];
+	DuAEF.DuScriptUI.helpPanel.closeButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"Close");
+	DuAEF.DuScriptUI.helpPanel.closeButton.onClick = function () { DuAEF.DuScriptUI.helpPanel.hide(); };
+	DuAEF.DuScriptUI.helpPanel.helpButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"More...");
+	DuAEF.DuScriptUI.helpPanel.helpButton.onClick = function()
+	{
+		DuAEF.DuScriptUI.helpPanel.hide();
+	}
+
+	DuAEF.DuScriptUI.helpPanel.onResizing = DuAEF.DuScriptUI.helpPanel.onResize = function () {DuAEF.DuScriptUI.helpPanel.layout.resize();};
+})();
 
 /**
-* Creates a new HelpPopup<br />
+* Updates the helpPopup with new information
 * @memberof DuAEF.DuScriptUI
 * @param {string} title - A title.
 * @param {string} text - The help text.
 * @param {string} link - The http link to a webpage
-* @return {HelpPopup} - The HelpPopup
 */
-DuAEF.DuScriptUI.createHelpPopup = function (title,text,link)
+DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
 {
 	if (typeof link === 'undefined') link = '';
 
-	var popup = new Window('palette','',undefined,{borderless:true,resizeable:true});
-	popup.margins = 2;
-	popup.spacing = 0;
-	DuAEF.DuScriptUI.setBackgroundColor(popup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	DuAEF.DuScriptUI.helpPanel.title.text = title;
+	DuAEF.DuScriptUI.helpPanel.help.text = text;
+	if (link != '') DuAEF.DuScriptUI.helpPanel.helpButton.show();
+	else DuAEF.DuScriptUI.helpPanel.helpButton.hide();
 
-	//add title
-	popup.add('statictext',undefined,title);
-
-	//add spacer
-	DuAEF.DuScriptUI.addSeparator(popup);
-
-	//add text
-	popup.add('statictext',undefined,text,{multiline:true});
-
-	//add buttons
-	var buttonsGroup = DuAEF.DuScriptUI.addGroup(popup,'row');
-	popup.closeButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"Close");
-	popup.closeButton.onClick = function () { popup.hide(); };
-	if (link != '')
-	{
-		popup.helpButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"More...");
-		popup.helpButton.onClick = function()
-		{
-
-			popup.hide();
-		}
-	}
-
-	//Deactivate bugs on CS6, needs a try/catch
-	popup.onDeactivate = function () { try { popup.hide(); } catch (e) {} };
-
-	return popup;
+	DuAEF.DuScriptUI.helpPanel.layout.layout(true);
+	DuAEF.DuScriptUI.helpPanel.layout.resize();
 }
