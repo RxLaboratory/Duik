@@ -52,7 +52,7 @@ Each file will be converted to a string, stored in a variable named after the fi
 			data += 'var ' + file.name + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + file.name + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name + '/"\n\n';
+			data += 'var ' + file.name + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name + '"\n\n';
 		}
 	}
 
