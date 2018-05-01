@@ -1,0 +1,61 @@
+//=========== SETTINGS ===========
+
+var settingsFile;
+if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
+var settings = new DuSettings("Duik",settingsFile);
+//TODO get the version of Duik, update settings if changed
+settings.data.duikVersion = version;
+//set settings if new
+if (settings.data.uiMode == undefined) settings.data.uiMode = 0;
+if (settings.data.debug == undefined) settings.data.debug = false;
+DuAEF.debug = settings.data.debug;
+
+//create Debug log
+var settingsPath = settings.file.path;
+var debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
+debugLog.startTimer("Loading Duik");
+
+//this file
+var thisScriptFile = new File($.fileName);
+//settings folder
+var settingsPath = settings.file.parent.absoluteURI + '/';
+
+//============= Translations =====
+
+#include "translation/Duik Bassel_fr.json.jsxinc"
+DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
+
+DuAEF.Dutranslator.Settings.folder = settingsPath;
+DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
+DuAEF.Dutranslator.getAvailable();
+
+//if language has never been set
+if (settings.data.language == undefined)
+{
+	// Create the window
+	var languageDialog = new Window('dialog', "Choose the Duik Bassel language", undefined, {resizeable:false});
+	languageDialog.orientation = 'column';
+	languageDialog.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.");
+	languageDialog.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
+	var lDdd = languageDialog.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+
+	// Show window
+	lDdd.selection = 0;
+	var lDok = languageDialog.add('button', undefined, "Ok");
+	languageDialog.layout.resize();
+	languageDialog.center();
+	languageDialog.show(); // Pause the execution while the dialog is open
+
+	// Set language based on user choice
+	if (lDdd.selection != null)
+	{
+		var languageChoosed = lDdd.selection.text;
+		DuAEF.Dutranslator.setPrettyLanguage(settings.data.language);
+		settings.data.language = DuAEF.Dutranslator.current;
+		settings.save();
+	}
+}
+else
+{
+	DuAEF.Dutranslator.setLanguage(settings.data.language);
+}
