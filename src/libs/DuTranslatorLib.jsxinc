@@ -1,0 +1,353 @@
+/*
+DuTranslatorLib
+Translator Framework Library
+Copyright (c) 2017,2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+_Contributors:_
+Nicolas Dufresne - Lead developer
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+ * The Javascript translator part of the Dutranslator Framework<br />
+ * see {@link https://github.com/Rainbox-dev/Dutranslator}
+ * @namespace
+ * @memberof DuAEF
+ */
+DuAEF.Dutranslator = {};
+
+/**
+ * The current language id (fr, en, ..)
+ * @memberof DuAEF.Dutranslator
+ */
+DuAEF.Dutranslator.current = '';
+
+/**
+ * A map containing available languages.
+ * There is a language name and a file name for each language id.
+ * languages["fr_FR"] ["name"] is "Francais" for example.
+ *
+ * Will be filled when executing Dutranslator.getAvailable().
+ *
+ * @memberof DuAEF.Dutranslator
+ */
+DuAEF.Dutranslator.languages = {};
+
+/**
+ * The translated strings  of the current language
+ *
+ * An array of compounds containing the source, the translation and the context
+ *
+ * @memberof DuAEF.Dutranslator
+ */
+DuAEF.Dutranslator.localizedStrings = [];
+
+/**
+ * Some Settings for the translator
+ * @namespace
+ * @memberof DuAEF.Dutranslator
+ */
+DuAEF.Dutranslator.Settings = {}
+
+/**
+ * {string} The folder containing the translation files
+ * Default: this translator path
+ * @memberof DuAEF.Dutranslator.Settings
+ *
+ */
+DuAEF.Dutranslator.Settings.folder = File($.fileName).path + "/";
+
+/**
+ * {string} The prefix in the translation filenames
+ * Default: this translator filename + "_"
+ * @memberof DuAEF.Dutranslator.Settings
+ */
+DuAEF.Dutranslator.Settings.prefix = File($.fileName).name.substring(0,File($.fileName).name.lastIndexOf('.')) + "_";
+
+/**
+ * {string} The suffix (including file extension) in the translation filenames
+ * Default: ".json"
+ * @memberof DuAEF.Dutranslator.Settings
+ */
+DuAEF.Dutranslator.Settings.suffix = ".json";
+
+/**
+ * {string} The application name (root of the json translations)
+ * Default: "duik"
+ * @memberof DuAEF.Dutranslator.Settings
+ */
+DuAEF.Dutranslator.Settings.name = "duik";
+
+/**
+ * The original languageId
+ * @memberof DuAEF.Dutranslator.Settings
+ */
+DuAEF.Dutranslator.Settings.originalLanguageId = "en";
+
+/**
+ * The original language name
+ * @memberof DuAEF.Dutranslator.Settings
+ */
+DuAEF.Dutranslator.Settings.originalLanguageName = "English";
+
+/**
+ * Load the list of available languages
+ *
+ * If the language id and or the language name can't be found in the file, the file name will be used
+ * to determine the language id and the name will be set as the id.
+ *
+ * @return A success code
+ * 0    Success
+ * 1    One of the file haven't been correctly opened
+ */
+DuAEF.Dutranslator.getAvailable = function ()
+{
+    DuAEF.Dutranslator.languages = {};
+	//Add original language
+    DuAEF.Dutranslator.languages[DuAEF.Dutranslator.Settings.originalLanguageId] = {
+        "name": DuAEF.Dutranslator.Settings.originalLanguageName,
+        "file": undefined
+    };
+
+
+    var folder = new Folder(DuAEF.Dutranslator.Settings.folder);
+
+	// Get the list of translations
+	languageFiles = folder.getFiles(DuAEF.Dutranslator.Settings.prefix + '*' + DuAEF.Dutranslator.Settings.suffix);
+	for (var i = 0 ; i < languageFiles.length ; i++)
+	{
+          var fileName = languageFiles[i].name;
+          var langId = langName = "";
+
+          // Determine the language name and the language id by reading the file
+          // Values are stored at the top so it should be fase
+          var file = new File(folder + "/" + fileName);
+          if(!file.open("r")) return 1; // Unable to open the file
+
+          // Line by line reading
+          while(langName == "" || langId == "" && !file.eof )
+          {
+              var line = file.readln();
+              var indexName = line.lastIndexOf("languageName");
+              var indexId = line.lastIndexOf("languageId");
+
+              var index;
+              if(indexName != -1 && langName == "") index = indexName;
+              else if(indexId != -1 && langId == "") index = indexId;
+              else continue;
+              // ..... "lang" : "value"
+              line = line.substring(index, line.length);
+              // .lang" : "value"
+              line = line.substring(line.indexOf("\"") + 1, line.length);
+              // : "value"
+              line = line.substring(line.indexOf("\"") + 1, line.length);
+              // value"
+              line = line.substring(0, line.indexOf("\""));
+              // value
+               if(indexName != -1 && langName == "") langName = line ;
+              else if(indexId != -1 && langId == "") langId = line ;
+              else continue;
+          }
+
+          file.close();
+
+
+          if(langId == "") langId = fileName.replace(DuAEF.Dutranslator.Settings.prefix, "").replace(DuAEF.Dutranslator.Settings.suffix, "");
+          if(langName == "") langName = langId;
+
+          DuAEF.Dutranslator.languages[langId] = {
+              "name": langName,
+              "file":  DuAEF.Dutranslator.Settings.folder + "/" + fileName
+          };
+
+	}
+
+}
+
+/**
+  * Returns the pretty name of a given language
+  * @param {string} langId - The id of the request language
+ */
+DuAEF.Dutranslator.getPrettyName = function(langId)
+{
+    if(!DuAEF.Dutranslator.languages[langId]) return 1;
+    return DuAEF.Dutranslator.languages[langId]["name"];
+}
+
+/**
+  * Returns the language id of a given language name
+  * @param {string} prettyName - The pretty name of the request language
+ */
+DuAEF.Dutranslator.getLanguageId= function(prettyName)
+{
+    for(var langId in DuAEF.Dutranslator.languages)
+    {
+        if(DuAEF.Dutranslator.languages[langId]["name"] == prettyName) return langId;
+    }
+    return 1;
+}
+
+/**
+  * Returns a list containing pretty names of all languages
+  * @param {string} langId - The id of the request language
+ */
+DuAEF.Dutranslator.getPrettyNames = function()
+{
+    var res = [];
+    for(var langId in DuAEF.Dutranslator.languages)
+    {
+        res[res.length] = DuAEF.Dutranslator.languages[langId]["name"];
+    }
+
+    // Order the list by name
+    res.sort ();
+    return res;
+}
+
+/**
+ * Set the current language
+ * @param {string} languageId - The id of the language to set
+ * @return success code
+ * 0    Everything went ok
+ * 1    The file linked to the given id can't be opened
+ * 2    The json content doesn't match a translation file
+ */
+DuAEF.Dutranslator.setLanguage = function (languageId) {
+
+	for (var langId in DuAEF.Dutranslator.languages)
+	{
+		if (langId == languageId)
+		{
+			DuAEF.Dutranslator.current = languageId;
+
+              if(languageId == DuAEF.Dutranslator.Settings.originalLanguageId) return 0;  // Default language, no translation
+
+            // Parse process
+
+            var fPath = DuAEF.Dutranslator.languages[langId]["file"];
+            var file = new File(fPath);
+
+            if(!file.open("r")) return 1; // Unable to open the file
+
+            var data = file.read();
+            file.close();
+            var jsonData = JSON.parse(data);
+
+            if(!jsonData[DuAEF.Dutranslator.Settings.name] ||
+                jsonData[DuAEF.Dutranslator.Settings.name].length != 2 ||
+                !jsonData[DuAEF.Dutranslator.Settings.name][1]["translations"]) return 2; // Wrong json format
+
+            var translations = jsonData[DuAEF.Dutranslator.Settings.name][1]["translations"];
+            DuAEF.Dutranslator.localizedStrings = translations;
+
+            return 0;
+
+		}
+	}
+}
+
+/**
+ * Set the current language with a given pretty name
+ * @param {string} languageName - The pretty name of the language to set
+ * @return success code
+ * 0    Everything went ok
+ * -1   Can't find any language with the given pretty name
+ * >0  Call to setLanguage(languageId) failed
+ */
+DuAEF.Dutranslator.setPrettyLanguage = function (languageName) {
+
+    var langId = DuAEF.Dutranslator.getLanguageId(languageName);
+    if(langId == 1) return -1;
+
+    return DuAEF.Dutranslator.setLanguage(langId);
+}
+
+/**
+ * Translate a given string based on the current seted language
+ *
+ * @param {string} s - 		The text to be translated
+ * @param {int} or {string} context - 	Can be an integer or a string which is related to contextId or context in a translation file
+ * @param {string array} args -	Args to format into the translated string, default is []
+ *								For example, when calling tr("Welcome {#}", -1, "Paul"), the output will be "Welcome Paul"
+ *								If too many args are given, there are ignored
+ *								If not enough args are give, the {#} are replaced with ?
+ * @return {string} The translated text or s if nothing is set or available
+ */
+function tr(s, context, args) {
+	// Default args
+    var useContextId = true;
+    $.writeln (typeof(context));
+    if(typeof(context) === 'string' || context instanceof String) useContextId = false;
+    if(typeof(context) === 'undefined') context = -1;
+    else if(context < 0) context = -1;
+	if(typeof(args) == 'undefined') args = [];
+	if(typeof(args) == 'string' || args instanceof String) args = [args];
+
+	var languageNumber = -1;
+
+	var res = s;
+	// If a language is set, search for the translation
+	if (DuAEF.Dutranslator.current != DuAEF.Dutranslator.Settings.originalLanguageId){
+		var stringNumber = -1;
+
+		// Get the translation
+		for (var i = 0 ; i < DuAEF.Dutranslator.localizedStrings.length ; i++)
+		{
+             var tr = DuAEF.Dutranslator.localizedStrings[i];
+             if(tr["source"] == s)
+             {
+				// Check context
+				if (useContextId && context > -1) {
+					if (tr["contextId"] == context) {
+						stringNumber =i;
+						break;
+					}
+				}
+                  else if(!useContextId)
+                  {
+                      if (tr["context"] == context) {
+						stringNumber =i;
+						break;
+					}
+                  }
+				else {
+					stringNumber =i;
+					break;
+				}
+			}
+		}
+
+		// If a translation is found, set it to res
+		if (stringNumber > -1) res = DuAEF.Dutranslator.localizedStrings[stringNumber]["translation"];
+		if (res == "") res = s;
+	}
+
+
+
+	// Args process
+	while(res.indexOf("{#}") !== -1){ // While there is stuff to format
+		if(args.length < 1){ // If no more args, replace with ?
+			res = res.replace("{#}", "?"); // Will replace the first occurence
+		}else{
+			var arg = args.shift(); // Take the first arg and remove it
+			res = res.replace("{#}", arg);
+		}
+	}
+
+	return res;
+}
