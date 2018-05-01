@@ -71,7 +71,7 @@
 (function(obj)
 {
 	//=========================
-	var version = '16.0.1-Alpha-9';
+	var version = '16.0.1-Alpha-10';
 	//=========================
 	#include DuAEF.jsxinc
 	#include Duik16_shared.jsxinc
