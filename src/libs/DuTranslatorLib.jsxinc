@@ -24,6 +24,34 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
+ * Creates a new string translation.
+ * @class
+ * @classdesc An translation for a string.
+ * @param {string} source - The source string
+ * @param {string} [translation=''] - The translated string
+ * @param {string} [comment=''] - A comment to explain what needs to be explained
+ * @param {string} [context=''] - The context where the string is used
+ * @param {int} [contextId=0] - A unique id for the couple source/context
+ * @property {string} source - The source string
+ * @property {string} translation - The translated string
+ * @property {string} comment - A comment to explain what needs to be explained
+ * @property {string} context - The context where the string is used
+ * @property {int} contextId - A unique id for the couple source/context
+ */
+function Translation(source,translation,comment,context,contextId)
+{
+	if (typeof translation === 'undefined') translation = '';
+	if (typeof comment === 'undefined') comment = '';
+	if (typeof context === 'undefined') context = '';
+	if (typeof contextId === 'undefined') contextId = 0;
+	this.source = source;
+	this.translation = translation;
+	this.comment = comment;
+	this.context = context;
+	this.contextId = contextId;
+}
+
+/**
  * The Javascript translator part of the Dutranslator Framework<br />
  * see {@link https://github.com/Rainbox-dev/Dutranslator}
  * @namespace
@@ -65,7 +93,7 @@ DuAEF.Dutranslator.localizedStrings = [];
 DuAEF.Dutranslator.Settings = {}
 
 /**
- * {string} The folder containing the translation files
+ * @type {string} The folder containing the translation files
  * Default: this translator path
  * @memberof DuAEF.Dutranslator.Settings
  *
@@ -129,6 +157,7 @@ DuAEF.Dutranslator.getAvailable = function ()
 
 	// Get the list of translations
 	languageFiles = folder.getFiles(DuAEF.Dutranslator.Settings.prefix + '*' + DuAEF.Dutranslator.Settings.suffix);
+
 	for (var i = 0 ; i < languageFiles.length ; i++)
 	{
           var fileName = languageFiles[i].name;
@@ -136,7 +165,7 @@ DuAEF.Dutranslator.getAvailable = function ()
 
           // Determine the language name and the language id by reading the file
           // Values are stored at the top so it should be fase
-          var file = new File(folder + "/" + fileName);
+          var file = new File(folder.absoluteURI + "/" + fileName);
           if(!file.open("r")) return 1; // Unable to open the file
 
           // Line by line reading
@@ -227,7 +256,8 @@ DuAEF.Dutranslator.getPrettyNames = function()
  * 1    The file linked to the given id can't be opened
  * 2    The json content doesn't match a translation file
  */
-DuAEF.Dutranslator.setLanguage = function (languageId) {
+DuAEF.Dutranslator.setLanguage = function (languageId)
+{
 
 	for (var langId in DuAEF.Dutranslator.languages)
 	{
@@ -269,7 +299,8 @@ DuAEF.Dutranslator.setLanguage = function (languageId) {
  * -1   Can't find any language with the given pretty name
  * >0  Call to setLanguage(languageId) failed
  */
-DuAEF.Dutranslator.setPrettyLanguage = function (languageName) {
+DuAEF.Dutranslator.setPrettyLanguage = function (languageName)
+{
 
     var langId = DuAEF.Dutranslator.getLanguageId(languageName);
     if(langId == 1) return -1;
@@ -278,31 +309,88 @@ DuAEF.Dutranslator.setPrettyLanguage = function (languageName) {
 }
 
 /**
- * Translate a given string based on the current seted language
- *
+ * Creates a file for translation with the given base strings.
+ * @memberof DuAEF.Dutranslator
+ * @param {Translation[]|strings} translations - The translations or source strings to be included in the translation file.
+ * @param {File|string} file - The file or URI
+ * @param {string} [appName="dutranslator"] - A name for the app using this translation file.
+ * @param {string} [version="0.0"] - A version (as a string) for this translation file or app.
+ * @param {string} [languageId="new"] - A version (as a string) for this translation file or app.
+ * @param {string} [languageName="New Translation"] - A version (as a string) for this translation file or app.
+ */
+DuAEF.Dutranslator.generateTranslationFile = function (translations,file,appName,version,languageId,languageName)
+{
+	if (!(file instanceof File)) file = new File(file);
+	if (typeof appName === 'undefined') appName = 'dutranslator';
+	else appName = appName.toLowerCase();
+	if (typeof version === 'undefined') version = '0.0';
+	if (typeof languageId === 'undefined') languageId = 'new';
+	if (typeof languageName === 'undefined') languageName = 'New Translation';
+	if (!translations.length) return;
+
+	//if translations is an array of strings, convert to translations
+	if (typeof translations[0] === 'string') translations = DuAEF.Dutranslator.generateTranslations(translations);
+
+	var data = {};
+	data[appName] = [];
+	var metaData = {};
+	metaData.languageId = languageId;
+	metaData.languageName = languageName;
+	metaData.version = version;
+	data[appName].push(metaData);
+	var translationsObject = {};
+	translationsObject.translations = translations;
+	data[appName].push(translationsObject);
+
+	DuAEF.DuJS.Fs.saveJSON(data,file);
+}
+
+/**
+ * Converts an Array of strings to an Array of empty translations
+ * @memberof DuAEF.Dutranslator
+ * @param {string[]} strings - The base strings to convert.
+ * @return {Translation[]} The empty translations
+ */
+DuAEF.Dutranslator.generateTranslations = function (strings)
+{
+	DuAEF.DuJS.Array.removeDuplicates(strings);
+	var translations = [];
+	for (var i = 0, num = strings.length; i < num ; i++)
+	{
+		translations.push(new Translation(strings[i]));
+	}
+	return translations;
+}
+
+/**
+ * Translate a given string based on the current seted language<br />
+ * see {@link DuAEF.Dutranslator} for more details about the translation framework.
+ * @function
  * @param {string} s - 		The text to be translated
  * @param {int} or {string} context - 	Can be an integer or a string which is related to contextId or context in a translation file
- * @param {string array} args -	Args to format into the translated string, default is []
- *								For example, when calling tr("Welcome {#}", -1, "Paul"), the output will be "Welcome Paul"
- *								If too many args are given, there are ignored
- *								If not enough args are give, the {#} are replaced with ?
+ * @param {string array} args -	Args to format into the translated string, default is []<br />
+ * For example, when calling tr("Welcome {#}", -1, "Paul"), the output will be "Welcome Paul"<br />
+ * If too many args are given, there are ignored<br />
+ * If not enough args are given, the {#} are replaced with ?
  * @return {string} The translated text or s if nothing is set or available
  */
-function tr(s, context, args) {
+function tr(s, context, args)
+{
 	// Default args
     var useContextId = true;
     $.writeln (typeof(context));
     if(typeof(context) === 'string' || context instanceof String) useContextId = false;
     if(typeof(context) === 'undefined') context = -1;
     else if(context < 0) context = -1;
-	if(typeof(args) == 'undefined') args = [];
-	if(typeof(args) == 'string' || args instanceof String) args = [args];
+	if(typeof(args) === 'undefined') args = [];
+	if(typeof(args) === 'string' || args instanceof String) args = [args];
 
 	var languageNumber = -1;
 
 	var res = s;
 	// If a language is set, search for the translation
-	if (DuAEF.Dutranslator.current != DuAEF.Dutranslator.Settings.originalLanguageId){
+	if (DuAEF.Dutranslator.current != DuAEF.Dutranslator.Settings.originalLanguageId)
+	{
 		var stringNumber = -1;
 
 		// Get the translation
