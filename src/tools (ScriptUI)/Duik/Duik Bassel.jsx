@@ -76,26 +76,10 @@
 	#include DuAEF.jsxinc
 	#include Duik16_shared.jsxinc
 
-	//=========== SETTINGS ===========
 
-	var settingsFile;
-	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
-	var settings = new DuSettings("Duik",settingsFile);
-	//TODO get the version of Duik, update settings if changed
-	settings.data.duikVersion = version;
-	//set settings if new
-	if (settings.data.uiMode == undefined) settings.data.uiMode = 0;
-	if (settings.data.debug == undefined) settings.data.debug = false;
-	DuAEF.debug = settings.data.debug;
+	//============= INIT ==============
 
-	//create Debug log
-	var settingsPath = settings.file.path;
-	var debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
-	debugLog.startTimer("Loading Duik");
-
-	//this file
-	var thisScriptFile = new File($.fileName);
-
+	#include Duik16_init.jsxinc
 
 	//============= ICONS =============
 
@@ -174,7 +158,7 @@
 	debugLog.checkTimer("Building UI");
 
 	//main palette
-	var ui_palette = DuAEF.DuScriptUI.createUI(obj,'Duik 16');
+	var ui_palette = DuAEF.DuScriptUI.createUI(obj,'Duik Bassel');
 
 	//layout
 	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
