@@ -138,8 +138,6 @@
 		ui_ioButton.setChecked(ui_ioGroup.visible);
 		ui_settingsGroup.visible = panel == 1;
 		ui_settingsButton.setChecked(ui_settingsGroup.visible);
-		ui_helpGroup.visible = panel == 0;
-		ui_helpButton.setChecked(ui_helpGroup.visible);
 
 		//save settings
 		if (panel != 1 && panel != 0) settings.data.currentPanel = panel;
@@ -201,7 +199,8 @@
 	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
 	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
 	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
-	var ui_helpButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
+	var ui_helpButton = DuAEF.DuScriptUI.addImageButton(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
+	ui_helpButton.setHelp('Duik Bassel (v' + version + ')',helpHelp,'https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide');
 
 	//=== BOTTOM ===
 
@@ -222,7 +221,9 @@
 	#include Duik16_camera.jsxinc
 	#include Duik16_io.jsxinc
 	#include Duik16_settings.jsxinc
-	#include Duik16_help.jsxinc
+
+	//=== HELP PANEL ===
+	DuAEF.DuScriptUI.helpPanel.text = 'Duik Bassel ' + "help";
 
 	//=== CONNECT EVENTS ===
 
@@ -235,7 +236,7 @@
 	ui_cameraButton.onClick = function(){setCurrentPanel(3)};
 	ui_ioButton.onClick = function(){setCurrentPanel(2)};
 	ui_settingsButton.onClick = function(){setCurrentPanel(1)};
-	ui_helpButton.onClick = function(){setCurrentPanel(0)};
+	ui_helpButton.onClick = function(){ DuAEF.DuScriptUI.helpPanel.show(); };
 
 	//bottom
 	ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
