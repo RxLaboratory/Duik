@@ -131,8 +131,6 @@ DuAEF.Duik.Rigging.extractLocators = function (preCompLayer)
 	var preComp = preCompLayer.source;
 	if (!preComp instanceof CompItem) return;
 
-	var comp = preCompLayer.containingComp;
-
 	//get locators in precomp
 	var preCompLocs = DuAEF.Duik.getLayers(DuAEF.Duik.LayerTypes.LOCATOR,false,preComp);
 
@@ -141,15 +139,96 @@ DuAEF.Duik.Rigging.extractLocators = function (preCompLayer)
 	var it = new Iterator(preCompLocs);
 	it.do(function(preCompLoc)
 	{
-		//create a null in the comp
-		var loc = comp.layers.addNull();
-		loc.name = DuAEF.DuAE.Comp.newUniqueLayerName(preCompLoc.name,comp);
-		loc.parent = preCompLayer;
-		DuAEF.DuAE.Property.linkProperties(loc.transform,preCompLoc.transform);
-		locs.push(loc);
+		locs.push(DuAEF.Duik.Rigging.extractLocator(preCompLoc,preCompLayer));
 	});
 
 	return locs;
+}
+
+/**
+* Extracts one locator from a precomposition
+* @param {AVLayer} [preCompLayer] - The precomposition layer
+* @param {AVLayer} [locator] - The locator to extract
+* @return {AVLayer} The extracted locator
+*/
+DuAEF.Duik.Rigging.extractLocator = function(locator,preCompLayer)
+{
+	var comp = preCompLayer.containingComp;
+	//create a null in the comp
+	var loc = comp.layers.addNull();
+	loc.name = DuAEF.DuAE.Comp.newUniqueLayerName(locator.name,comp);
+	loc.parent = preCompLayer;
+	DuAEF.DuAE.Property.linkProperties(loc.transform,locator.transform);
+	return loc;
+}
+
+/**
+* Parents two layers even if the parent is in the parent comp or a precomp.
+* @param {Layer[]} childs - The child layer(s)
+* @param {Layer} parent - The parent layer
+*/
+DuAEF.Duik.Rigging.parent = function(childs,parent)
+{
+	var parentComp = parent.containingComp;
+
+	new Iterator(childs).do(function(child)
+	{
+		var childComp = child.containingComp;
+
+		//if precomp
+		var precomps = DuAEF.DuAE.Comp.getPrecomps(childComp);
+
+		if (DuAEF.DuJS.Array.indexOf(precomps,parentComp) >= 0)
+		{
+			//select the first precomp layer
+			var precompLayer;
+			for (var i = 1, num = childComp.numLayers; i <= num; i++)
+			{
+				var l = childComp.layer(i);
+				if (l.source.id == parentComp.id)
+				{
+					precompLayer = l;
+					break;
+				}
+			}
+			//create a locator and extract it
+			var locator = DuAEF.Duik.Rigging.addLocator(parent);
+			var childLocator = DuAEF.Duik.Rigging.extractLocator(locator,precompLayer);
+			child.parent = childLocator;
+			return;
+		}
+
+		//if parent comp
+		var parentComps = DuAEF.DuAE.Comp.getParentComps(childComp);
+		if (DuAEF.DuJS.Array.indexOf(parentComps,parentComp) >= 0)
+		{
+			//select the first precomp layer
+			var precompLayer;
+			for (var i = 1, num = parentComp.numLayers; i <= num; i++)
+			{
+				var l = parentComp.layer(i);
+				if (l.source == childComp)
+				{
+					precompLayer = l;
+					break;
+				}
+			}
+
+			//create a locator and extract it
+			var locator = DuAEF.Duik.Rigging.addLocator(parent);
+			locator.parent = precompLayer;
+			//create a null in the comp
+			var childLocator = childComp.layers.addNull();
+			childLocator.name = DuAEF.DuAE.Comp.newUniqueLayerName(locator.name,childComp);
+			DuAEF.DuAE.Property.linkProperties(childLocator.transform,locator.transform);
+			child.parent = childLocator;
+
+			return;
+		}
+
+	});
+
+
 }
 
 /**
