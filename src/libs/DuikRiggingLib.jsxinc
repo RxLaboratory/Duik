@@ -40,6 +40,89 @@ DuAEF.Duik.Rigging.addZero = function (layer)
 }
 
 /**
+* Adds a locator to a layer
+* @param {Layer|CompItem} [layerOrComp=DuAEF.DuAE.Project.getActiveComp()] - The layer or the containing comp, to add a standalone locator.
+* @return {AVLayer} The locator, a null object
+*/
+DuAEF.Duik.Rigging.addLocator = function (layerOrComp)
+{
+	var layer = null;
+	var comp = null;
+	if (typeof layerOrComp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	else if (layerOrComp instanceof CompItem) comp = layerOrComp;
+	else
+	{
+		layer = layerOrComp;
+		comp = layer.containingComp;
+	}
+	if (!comp) return;
+
+	//create null object
+	var loc = comp.layers.addNull();
+	var name = 'LOC';
+	if (layer) name = DuAEF.Duik.generateName('LOC', layer.name);
+	loc.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+	DuAEF.Dugr.addLayerToGroup(loc,"Locators");
+
+	//add layer control
+	var layerfx = loc.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
+	layerfx.name = "Locator";
+	if (layer) layerfx(1).setValue(layer.index);
+
+	//add expressions
+	loc.transform.rotation.expression = 'var result = 0;\n' +
+		'var l = null;\n' +
+		'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }\n' +
+		'if (l)\n' +
+		'{\n' +
+		'result = l.rotation;\n' +
+		'while(l.hasParent)\n' +
+		'{\n' +
+		'l = l.parent;\n' +
+		'result += l.rotation;\n' +
+		'}\n' +
+		'}\n' +
+		'if (hasParent)\n' +
+		'{\n' +
+		'var p =thisLayer;\n' +
+		'while (p.hasParent)\n' +
+		'{\n' +
+		'p = p.parent;\n' +
+		'result -= p.rotation;\n' +
+		'}\n' +
+		'}\n' +
+		'result;';
+
+	loc.transform.position.expression = 'var result = [thisComp.width/2,thisComp.height/2];\n' +
+		'var l = null;\n' +
+		'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }\n' +
+		'if (l)\n' +
+		'{\n' +
+		'result = l.toWorld(l.anchorPoint);\n' +
+		'}\n' +
+		'if (hasParent)\n' +
+		'{\n' +
+		'result = parent.fromWorld(result);\n' +
+		'}\n' +
+		'result;';
+
+	loc.transform.anchorPoint.expression = 'var result = value;\n' +
+		'var l = null;\n' +
+		'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }\n' +
+		'if (l)\n' +
+		'{\n' +
+		'result =l.anchorPoint.value - l.anchorPoint.valueAtTime(0);\n' +
+		'}\n' +
+		'result;';
+
+	DuAEF.Duik.setDuikMarker(loc,"Locator",DuAEF.Duik.LayerTypes.LOCATOR);
+
+
+	return loc;
+}
+
+
+/**
 * Adds an orientation constraint to a layer
 * @param {Layer} layer - The layer
 */
