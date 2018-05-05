@@ -79,6 +79,8 @@
 
 	//============= INIT ==============
 
+	//this file
+	var thisScriptFile = new File($.fileName);
 	#include Duik16_init.jsxinc
 
 	//============= ICONS =============
