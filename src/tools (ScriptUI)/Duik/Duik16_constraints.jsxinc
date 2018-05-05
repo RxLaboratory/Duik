@@ -11,6 +11,7 @@ function setCurrentConstraintsPanel(panel)
 	ui_connectorGroup.visible = panel == 3;
 	ui_autorigOptionsGroup.visible = panel == 4;
 	ui_IKOptionsGroup.visible = panel == 5;
+	ui_parentCompGroup.visible = panel == 6;
 }
 
 function initConstraintsUI()
@@ -673,6 +674,47 @@ function ui_extractLocatorsButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_parentCompButton_clicked()
+{
+	//populate the comp selector
+	ui_parentCompCompSelector.setComps(DuAEF.DuAE.Comp.getRelatives());
+
+	setCurrentConstraintsPanel(6);
+}
+
+function ui_parentCompCompSelector_changed()
+{
+	var comp = DuAEF.DuAE.Project.getItemById(ui_parentCompCompSelector.id);
+	if (!comp) return;
+	ui_parentCompLayerSelector.comp = comp;
+	ui_parentCompLayerSelector.refresh();
+}
+
+function ui_parentCompLayerSelector_changed()
+{
+	if ( ui_parentCompLayerSelector.index > 0 ) ui_parentCompValidButton.enabled = true;
+	else ui_parentCompValidButton.enabled = false;
+}
+
+function ui_parentCompValidButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	if (layers.length == 0) return;
+
+	//get comp and layer
+	var comp = DuAEF.DuAE.Project.getItemById(ui_parentCompCompSelector.id);
+	var layer = comp.layer(ui_parentCompLayerSelector.index);
+
+	app.beginUndoGroup('Duik | ' + "Parent");
+
+	DuAEF.Duik.Rigging.parent(layers,layer);
+
+	app.endUndoGroup();
+
+	setCurrentConstraintsPanel(0);
+
+}
+
 //========== UI ==============
 var ui_constraintsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
 
@@ -700,6 +742,7 @@ if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_constraintsGener
 var ui_constraintsMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 if (settings.data.uiMode == 2) ui_constraintsMainGroup.alignment = ['center','top'];
 var ui_parentButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.uiMode == 2 ? '' : "Parent link",DuAEF.DuBinary.toFile(w25_parent_l),"Link layers together (animatable)",DuAEF.DuBinary.toFile(w25_parent_r));
+var ui_parentCompButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsMainGroup,settings.data.uiMode == 2 ? '' : "Parent between comps",DuAEF.DuBinary.toFile(w25_parentcomp_l),"Parent layers between compositions",DuAEF.DuBinary.toFile(w25_parentcomp_r));
 
 if (settings.data.uiMode != 0)
 {
@@ -719,9 +762,26 @@ if (settings.data.uiMode != 0)
 	var ui_constraintsToolsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 	var ui_listConstaintsButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add list",DuAEF.DuBinary.toFile(w18_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w18_list_r));
 	var ui_zeroButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer",DuAEF.DuBinary.toFile(w18_zero_r));
-	var ui_locatorButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add locator",DuAEF.DuBinary.toFile(w18_target_l),"Add a \"locator\" in the composition",DuAEF.DuBinary.toFile(w18_target_r));
-	var ui_extractLocatorsButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Extract locators",DuAEF.DuBinary.toFile(w18_extractloc_l),"Extract \"locators\" from the precomposition",DuAEF.DuBinary.toFile(w18_extractloc_r));
 }
+
+//parent between comps
+var ui_parentCompGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_parentCompGroup,"Parent between comps");
+ui_parentCompGroup.add('statictext',undefined,"Composition:")
+var ui_parentCompCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_parentCompGroup);
+ui_parentCompGroup.add('statictext',undefined,"Layer:")
+var ui_parentCompLayerSelector = DuAEF.DuScriptUI.addLayerSelector(ui_parentCompGroup);
+var ui_parentCompValidButton = DuAEF.DuScriptUI.addImageButton(ui_parentCompGroup,"Parent",DuAEF.DuBinary.toFile(w25_check_g),"Parent the selected layers to the chosen layer.",DuAEF.DuBinary.toFile(w25_check_r));
+ui_parentCompValidButton.enabled = false;
+if (settings.data.uiMode != 0)
+{
+	DuAEF.DuScriptUI.addSeparator(ui_parentCompGroup,settings.data.uiMode == 2 ? '': "Tools");
+	var ui_parentCompToolsGroup = DuAEF.DuScriptUI.addGroup(ui_parentCompGroup,settings.data.uiMode == 2 ? 'row' : 'column');
+	var ui_locatorButton = DuAEF.DuScriptUI.addImageButton(ui_parentCompToolsGroup,"Add locator",DuAEF.DuBinary.toFile(w18_target_l),"Add a \"locator\" in the composition",DuAEF.DuBinary.toFile(w18_target_r));
+	var ui_extractLocatorsButton = DuAEF.DuScriptUI.addImageButton(ui_parentCompToolsGroup,"Extract locators",DuAEF.DuBinary.toFile(w18_extractloc_l),"Extract \"locators\" from the precomposition",DuAEF.DuBinary.toFile(w18_extractloc_r));
+}
+var ui_parentCompCancelButton = DuAEF.DuScriptUI.addImageButton(ui_parentCompGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+
 
 //autorig options
 var ui_autorigOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
@@ -934,6 +994,11 @@ ui_bonesEditGetButton.onClick = ui_bonesEditGetButton_clicked;
 ui_bonesEditBakeButton.onClick = ui_bonesEditBakeButton_clicked;
 
 ui_parentButton.onClick = ui_parentButton_clicked;
+ui_parentCompButton.onClick = ui_parentCompButton_clicked;
+ui_parentCompCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+ui_parentCompCompSelector.onChange = ui_parentCompCompSelector_changed;
+ui_parentCompLayerSelector.onChange = ui_parentCompLayerSelector_changed;
+ui_parentCompValidButton.onClick = ui_parentCompValidButton_clicked;
 
 if (settings.data.uiMode != 0) ui_pathConstraintButton.onClick = ui_pathConstraintButton_clicked;
 ui_pathConstraintCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
