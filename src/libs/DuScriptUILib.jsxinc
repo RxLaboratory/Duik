@@ -37,6 +37,8 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 #include "icons/w14_url_l.png.jsxinc"
 #include "icons/w14_cancel_m.png.jsxinc"
 #include "icons/w14_cancel_l.png.jsxinc"
+#include "icons/w14_comp_l.png.jsxinc"
+#include "icons/w14_comp_m.png.jsxinc"
 
 /**
 * ScriptUI tools
@@ -1559,7 +1561,15 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 			}
 		}
 
-		if (!cs6) selector.label.text = selector.popup.list.selection.text;
+		if (!cs6)
+		{
+			if ( selector.popup.list.selection) selector.label.text = selector.popup.list.selection.text;
+			else
+			{
+				selector.popup.list.selection = 0;
+				selector.label.text = "None";
+			}
+		}
 
 		selector.index = index;
 
@@ -1646,4 +1656,213 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
 
 	DuAEF.DuScriptUI.helpPanel.layout.layout(true);
 	DuAEF.DuScriptUI.helpPanel.layout.resize();
+}
+
+/**
+ * @class
+ * @name CompSelector
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * A drop down selector.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.DuScriptUI.addCompSelector} to create a Selector.<br />
+ * The Selector inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {int} [id=0]  - The current compitem id, 0 if None
+ * @property {CompItem[]} [comps] - The compositions listed in the selector.
+ * @property {Selector~onChange} onChange  - The function to execute when the index changes.<br />
+ * You can set your own function here, which must take no argument.<br />
+ * The method is called after the index has changed.
+ */
+
+/**
+ * The function to execute when the index changes.<br />
+ * The method is called after the index has changed.
+ * @callback CompSelector~onChange
+ * @memberof CompSelector
+ */
+
+/**
+ * Changes the selection and the current comp id of the selector
+ * @method
+ * @memberof CompSelector
+ * @name setCurrentId
+ * @param {int} index - The new comp id
+ */
+
+/**
+* Sets the comp list
+* @method
+* @memberof CompSelector
+* @name setComps
+* @param {CompItem[]} comps - The list of compositions
+*/
+
+/**
+ * Creates a drop down selector for compositions
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group} container - The ScriptUI Object which will contain and display the selector.
+ * @return {Selector} - The selector
+ */
+DuAEF.DuScriptUI.addCompSelector = function(container)
+{
+	//create main group
+	var selector = container.add('group');
+	selector.orientation = 'row';
+	selector.margins = 2;
+	selector.spacing = 5;
+	selector.alignment = ['fill','top'];
+	selector.alignChildren = ['center','center'];
+	DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	//init
+	selector.id = 0;
+	selector.comp = null;
+	selector.selectedOnly = false;
+	selector.pauseRefresh = false;
+
+	var cs6 = DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12;
+
+	//CS6
+	if (cs6)
+	{
+		//the menu button
+		selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
+		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton.alignment = ['left','center'];
+
+		//the dropdownlist
+		selector.popup = {};
+		selector.popup.list = selector.add('dropdownlist');
+		selector.popup.list.alignment = ['fill','center'];
+	}
+	else
+	{
+		//the menu button
+		selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
+		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_comp_l);
+		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton.alignment = ['left','center'];
+
+		//the text
+		selector.label = selector.add('statictext',undefined,'None');
+		selector.label.helpTip = '';
+		selector.label.alignment = ['fill','center'];
+
+		//create popup
+		selector.popup = new Window('palette','',undefined,{borderless:true});
+		selector.popup.margins = 2;
+		selector.popup.spacing = 0;
+		DuAEF.DuScriptUI.setBackgroundColor(selector.popup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		selector.popup.closeButton = DuAEF.DuScriptUI.addImageButton(selector.popup,"Cancel");
+		selector.popup.closeButton.onClick = function () { selector.popup.hide(); };
+		selector.popup.onDeactivate = function () { selector.popup.hide(); };
+		selector.popup.list = selector.popup.add('listbox',undefined);
+
+		selector.clicked = function (e)
+		{
+			selector.popup.list.minimumSize.width = selector.popup.list.maximumSize.width = selector.size.width;
+			selector.popup.list.minimumSize.height = selector.popup.list.maximumSize.height = selector.size.height * 10;
+
+			selector.popup.layout.layout();
+			selector.popup.layout.resize();
+
+			var x = e.screenX-e.clientX;
+			var y = e.screenY-e.clientY;
+			selector.popup.location = [x,y];
+
+			selector.popup.show();
+		}
+
+		selector.mouseOver = function (e)
+		{
+			selector.menuButton.image = selector.menuImageOver;
+			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		}
+
+		selector.mouseOut = function (e)
+		{
+			selector.menuButton.image = selector.menuImage;
+			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		}
+
+		selector.addEventListener("mouseover",selector.mouseOver);
+		selector.addEventListener("mouseout",selector.mouseOut);
+
+		selector.addEventListener("click",selector.clicked,true);
+	}
+
+	var itemNone = selector.popup.list.add('item',"None");
+	itemNone.id = 0;
+	selector.popup.list.selection = 0;
+
+	selector.setComps = function(comps)
+	{
+		if (typeof comps === 'undefined') comps = DuAEF.DuAE.Project.getComps();
+		selector.pauseRefresh = true;
+
+		var prevId = selector.id;
+		selector.popup.list.removeAll();
+		selector.popup.list.add('item',"None");
+		var it = new Iterator(comps);
+		it.do(function(comp)
+		{
+			var item = selector.popup.list.add('item', comp.name);
+			item.id = comp.id;
+		});
+		selector.setCurrentId(prevId);
+
+		selector.pauseRefresh = false;
+	};
+
+	selector.setCurrentId = function (id)
+	{
+		if (id < 0) return;
+
+		selector.pauseRefresh = true;
+
+		if (id == 0)
+		{
+			selector.popup.list.selection = 0;
+		}
+		else
+		{
+			for(var i = 0,num = selector.popup.list.items.length ; i < num ; i++)
+			{
+				var item = selector.popup.list.items[i];
+				if (id == item.id)
+				{
+					selector.popup.list.selection = i;
+					break;
+				}
+			}
+		}
+
+		if (!cs6)
+		{
+			if ( selector.popup.list.selection) selector.label.text = selector.popup.list.selection.text;
+			else
+			{
+				selector.popup.list.selection = 0;
+				selector.label.text = "None";
+			}
+		}
+
+		selector.id = id;
+
+		selector.pauseRefresh = false;
+
+		selector.onChange();
+	};
+
+	selector.popup.list.onChange = function()
+	{
+		if (selector.pauseRefresh) return;
+		selector.setCurrentId(selector.popup.list.selection.id);
+		if (!cs6) selector.popup.hide();
+	};
+
+	selector.onChange = function(){};
+
+	return selector;
 }
