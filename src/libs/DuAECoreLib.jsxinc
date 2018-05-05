@@ -809,6 +809,21 @@ DuAEF.DuAE.Project.getActiveComp = function()
 }
 
 /**
+* Retrieves an item by its Item ID
+* @return {Item|null} The item
+*/
+DuAEF.DuAE.Project.getItemById = function (id)
+{
+
+	var it = new Iterator(app.project.items);
+	while(item = it.next())
+	{
+		if (item.id == id) return item;
+	}
+	return null;
+}
+
+/**
 * After Effects composition methods
 * @namespace
 * @memberof DuAEF.DuAE
@@ -1002,6 +1017,74 @@ DuAEF.DuAE.Comp.parentAllOrphans = function(layer,includeLockedLayers)
 		if (!locked && l.parent == null) l.parent = layer;
 		if (locked && includeLockedLayers) l.locked = locked;
 	}
+}
+
+/**
+ * Gets all precomps and parent comps of the composition
+ * @param {CompItem} [comp=DuAEF.DuAE.Project.getActiveComp()] - The composition
+ * @param {bool} [recursive=false] - True to search to more than one level of precomposition
+ * @return {CompItem[]} The related compositons
+ */
+DuAEF.DuAE.Comp.getRelatives = function(comp, recursive)
+{
+	if (typeof recursive === 'undefined') recursive = false;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+	//get precomps
+	var precomps = DuAEF.DuAE.Comp.getPrecomps(comp,recursive);
+	//get parent
+	var parentComps = [];
+	if (recursive)
+	{
+		parentComps = DuAEF.DuAE.Comp.getParentComps(comp);
+	}
+	else
+	{
+		parentComps = comp.usedIn;
+	}
+
+	return precomps.concat(parentComps);
+}
+
+/**
+* Gets all the precomposition found in the comp.
+* @param {CompItem} comp - The composition
+* @param {bool} [recursive=false] - True to get nested compositions
+* @return {CompItem[]} The precompositions
+*/
+DuAEF.DuAE.Comp.getPrecomps = function(comp,recursive)
+{
+	if (typeof recursive === 'undefined') recursive = true;
+	var precomps = [];
+	var it = new Iterator(comp.layers);
+	it.do(function(layer)
+	{
+		var precomp = layer.source;
+		if (precomp instanceof CompItem)
+		{
+			precomps.push(precomp);
+			if (recursive) precomps = precomps.concat(DuAEF.DuAE.Comp.getPrecomps(precomp));
+		}
+	});
+	//remove duplicates
+	DuAEF.DuJS.Array.removeDuplicates(precomps);
+	return precomps;
+}
+
+/**
+* Recursively gets all compositions where this item is used
+* @param {AVItem} item - The item
+* @return {CompItem[]} The compositions
+*/
+DuAEF.DuAE.Comp.getParentComps = function(item)
+{
+	var parentComps = item.usedIn;
+	new Iterator(parentComps).do(function(parentComp)
+	{
+		parentComps = parentComps.concat(DuAEF.DuAE.Comp.getParentComps(parentComp));
+	});
+	DuAEF.DuJS.Array.removeDuplicates(parentComps);
+	return parentComps;
 }
 
 /**
