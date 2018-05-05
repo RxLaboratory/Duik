@@ -781,6 +781,20 @@ DuAEF.DuAE.Project.setProgressMode = function(inProgress)
 
 }
 
+/** Gets all compositions in the project
+* @return {CompItem[]} The compositions
+*/
+DuAEF.DuAE.Project.getComps = function()
+{
+	var comps = [];
+	var it = new Iterator(app.project.items);
+	it.do(function(comp)
+	{
+		if (comp instanceof CompItem) comps.push(comp);
+	});
+	return comps;
+}
+
 /**
 * Gets the After Effects current composition
 * @return {CompItem|null} The current composition or null if there's no current comp
@@ -2090,23 +2104,23 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 		}
 		else //set the start value
 		{
-			try
+			var value = anim.startValue;
+			if (value instanceof Array)
 			{
-				var value = anim.startValue;
-				if (value instanceof Array)
+				while (value.length < dimensions)
 				{
-					while (value.length < dimensions)
-					{
-						value.push(0);
-					}
-					while (value.length > dimensions)
-					{
-						value.pop();
-					}
+					value.push(0);
 				}
-				if (anim.startValue != null) prop.setValue(anim.startValue);
-				ok = true;
-			} catch (err) { if (DuAEF.debug) alert(err.description); };
+				while (value.length > dimensions)
+				{
+					value.pop();
+				}
+			}
+			if (anim.startValue != null)
+			{
+				try { prop.setValue(anim.startValue); } catch (e) {};
+			}
+			ok = true;
 		}
 		//set the expression
 		if (prop.canSetExpression && setExpression)
@@ -2825,8 +2839,8 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
 		//copy paste the animation / value
-		var anim = DuAEF.DuAE.Property.getAnim(childProp,false);
-		if (anim != null) DuAEF.DuAE.Property.setAnim(parentProp,anim,0,true,true);
+		var anim = DuAEF.DuAE.Property.getAnim(parentProp,false);
+		if (anim != null) DuAEF.DuAE.Property.setAnim(childProp,anim,0,true,true);
 		//set the link
 		DuAEF.DuAE.Property.pickWhip(childProp,parentProp,useThisComp);
 	}
