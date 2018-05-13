@@ -476,7 +476,7 @@ A Benchmark for After Effects
 			'"CPU Cores" , "N/A"\n' +
 			'"GPU" , "N/A"\n' +
 			'"GPU RAM" , "N/A"\n' +
-			'"After Effects", "' + data.ae.versionName + ' (' + data.ae.versionAsFloat + '")\n' +
+			'"After Effects", "' + data.ae.versionName + ' (' + data.ae.versionAsFloat + ')"\n' +
 			'"ExtendScript Version" , "' + data.extendScript.version + '"\n' +
 			'"" , ""\n' +
 			'"Total Score" , ' + data.total + '\n' +
