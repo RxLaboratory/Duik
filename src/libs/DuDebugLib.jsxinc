@@ -31,23 +31,20 @@
 */
 DuAEF.Debug = {};
 
-//init
-(function ()
+/**
+ * The log levels
+ * @enum {int}
+ * @readonly
+ */
+DuAEF.Debug.LogLevel =
 {
-	/**
-	 * The log levels
-	 * @enum {int}
-	 * @readonly
-	 */
-	DuAEF.Debug.LogLevel =
-	{
-		NO_DEBUG: 0,
-		DEBUG: 1,
-		WARNING: 2,
-		CRITICAL: 3,
-		FATAL: 4
-	}
-})();
+	VERBOSE: 0,
+	DEBUG: 1,
+	WARNING: 2,
+	CRITICAL: 3,
+	FATAL: 4,
+	NO_DEBUG: 5
+}
 
 /**
  * Constructs a new debug logger
@@ -72,17 +69,20 @@ function DebugLog(pathOrFile,clear,logLevel,enabled)
 	if (enabled == undefined) enabled = DuAEF.debug;
 	this.enabled = enabled;
 
-	this.timerDate = new Date();
-
 	if (clear == undefined) clear = true;
 	var openOption = 'a';
 	if (clear || !this.file.exists) openOption = 'w';
-	if (this.file.open(openOption))
+	if (this.level <= DuAEF.Debug.LogLevel.DEBUG)
 	{
-		var currentDate = new Date();
-		this.file.writeln('[' + currentDate.toString() + '] == Debugger started. ==');
-		this.file.close();
+		if (this.file.open(openOption))
+		{
+			var currentDate = new Date();
+			this.file.writeln('[' + currentDate.toString() + '] == Debugger started. ==');
+			this.file.close();
+		}
 	}
+
+	this.elapsed = 0;
 }
 
 /**
@@ -114,16 +114,22 @@ DebugLog.prototype.log = function (message,level)
 */
 DebugLog.prototype.startTimer = function(message)
 {
-	this.timerDate = new Date();
-	var currentDate = new Date();
-
 	if (!this.enabled) return;
-	if (!this.file.open('a')) return;
 
 	if (message == undefined) message = '';
 
-	this.file.writeln('[' + currentDate.toString() + '] == Timer started. == ' + message);
-	this.file.close();
+	if (this.level == DuAEF.Debug.LogLevel.VERBOSE)
+	{
+		if (this.file.open('a'))
+		{
+			var currentDate = new Date();
+			this.file.writeln('[' + currentDate.toString() + '] == Timer started. == ' + message);
+			this.file.close();
+		}
+	}
+
+	this.elapsed = 0;
+	$.hiresTimer;
 }
 
 /**
@@ -133,16 +139,16 @@ DebugLog.prototype.startTimer = function(message)
 */
 DebugLog.prototype.checkTimer = function(message)
 {
-	var currentDate = new Date();
-	var elapsed = currentDate.getTime() - this.timerDate.getTime();
+	this.elapsed += Math.round($.hiresTimer/1000);
 
 	if (!this.enabled) return -1;
 	if (!this.file.open('a')) return -1;
 
 	if (message == undefined) message = '';
 
-	this.file.writeln('[' + currentDate.toString() + '] == Time elapsed | ' + elapsed + 'ms | == ' + message);
+	var currentDate = new Date();
+	this.file.writeln('[' + currentDate.toString() + '] == Time elapsed | ' + this.elapsed + 'ms | == ' + message);
 	this.file.close();
 
-	return elapsed;
+	return this.elapsed;
 }
