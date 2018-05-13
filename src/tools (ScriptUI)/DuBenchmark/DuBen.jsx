@@ -240,6 +240,7 @@ A Benchmark for After Effects
 		data.shapes.total = data.shapes.solid + data.shapes.solidCT + data.shapes.shapeLayer;
 		data.total += data.shapes.total;
 		data.renderer += data.shapes.total;
+		data.ux += data.shapes.total;
 	}
 
 	function testEffects()
@@ -451,7 +452,7 @@ A Benchmark for After Effects
 		var comp = createTestComp();
 		comp.openInViewer();
 		app.activeViewer.maximized = false;
-		for (var i = 0; i < 50; i++)
+		for (var i = 0; i < 25; i++)
 		{
 			var l = comp.layers.addShape();
 			var group =l("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -459,8 +460,22 @@ A Benchmark for After Effects
 			content.addProperty("ADBE Vector Shape - Ellipse");
 			content.addProperty("ADBE Vector Graphic - Stroke");
 		}
-
 		comp.remove();
+
+		DuAEF.DuAE.Project.setProgressMode(true);
+
+		var comp = createTestComp();
+		for (var i = 0; i < 25; i++)
+		{
+			var l = comp.layers.addShape();
+			var group =l("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+			var content = group("ADBE Vectors Group")
+			content.addProperty("ADBE Vector Shape - Ellipse");
+			content.addProperty("ADBE Vector Graphic - Stroke");
+		}
+		comp.remove();
+
+		DuAEF.DuAE.Project.setProgressMode(false);
 
 		data.ui.total = log.checkTimer("Ae UI");
 		data.total += data.ui.total;
@@ -502,7 +517,9 @@ A Benchmark for After Effects
 			'"" , ""\n' +
 			'"Scripts (Total)" , ' + data.script.total + '\n' +
 			'"Scripts (Computation)" , ' + data.script.compute + '\n' +
-			'"Scripts (UI)" , ' + data.script.ui + '\n';
+			'"Scripts (UI)" , ' + data.script.ui + '\n' +
+			'"" , ""\n' +
+			'"After Effects UI" , ' + data.ui.total + '\n';
 
 		if (file.open('w'))
 		{
