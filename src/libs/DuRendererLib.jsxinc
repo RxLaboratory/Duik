@@ -337,3 +337,36 @@ function DuRendererItem(comp,outputPath,outputTemplate,postRenderAction)
 	this.outputTemplate = outputTemplate;
 	this.postRenderAction = postRenderAction;
 }
+
+/**
+* Renderer tools
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.DuRenderer = {};
+
+/**
+ * Loads the outputModules found in the project and recreates them to make them available in the current Ae installation
+ * @memberof DuAEF.Renderer
+ * @param {file|string} project - An After Effects project file containing one render queue item with the modules to load
+ */
+DuAEF.DuRenderer.loadOutputModules = function(project)
+{
+	if (!(project instanceof File)) project = new File(project);
+	if (!project.exists) return;
+	//import project
+	var importedProject = app.project.importFile(new ImportOptions(project));
+
+	//the last rqItem contains the modules
+	var rqItem = app.project.renderQueue.item(app.project.renderQueue.numItems);
+
+	//load modules
+	for (var i = 1, num =  rqItem.outputModules.length; i <= num; i++)
+	{
+		var om = rqItem.outputModule(i);
+		om.saveAsTemplate(om.name);
+	}
+
+	//remove project
+	importedProject.remove();
+}
