@@ -182,7 +182,7 @@ A Benchmark for After Effects
 			layer.transform.rotation.setValue(30);
 
 			var current = render(comp,"Shape - Solid | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -207,7 +207,7 @@ A Benchmark for After Effects
 			layer.collapseTransformation = true;
 
 			var current = render(comp,"Shape - Solid w/ Collapse Transformation | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 
 			layer.source.remove();
 			comp.remove();
@@ -232,7 +232,7 @@ A Benchmark for After Effects
 			layer.transform.rotation.setValue(30);
 
 			var current = render(comp,"Shape - Shape Layer | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			comp.remove();
 		}
 		data.shapes.shapeLayer = Math.round(total/data.numPasses);
@@ -256,7 +256,7 @@ A Benchmark for After Effects
 			fx('ADBE Gaussian Blur-0001').setValue(1000);
 
 			var current = render(comp,"Effects - Gaussian Blur | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -281,7 +281,7 @@ A Benchmark for After Effects
 			fx('ADBE Gaussian Blur 2-0001').setValue(1000);
 
 			var current = render(comp,"Effects - Gaussian Blur GPU | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -300,7 +300,7 @@ A Benchmark for After Effects
 			fx('ADBE Fast Blur-0001').setValue(1000);
 
 			var current = render(comp,"Effects - Fast Blur | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -325,7 +325,7 @@ A Benchmark for After Effects
 			fx('ADBE Camera Lens Blur-0001').setValue(20);
 
 			var current = render(comp,"Effects - Lens Blur | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -343,7 +343,7 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('VISINF Grain Implant');
 
 			var current = render(comp,"Effects - Add Grain | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
@@ -362,7 +362,7 @@ A Benchmark for After Effects
 			fx('ADBE Median-0001').setValue(5);
 
 			var current = render(comp,"Effects - Median | Pass " + i);
-			if (i > 0) total += current;
+			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
