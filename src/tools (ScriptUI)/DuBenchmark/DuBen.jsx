@@ -24,7 +24,9 @@ A Benchmark for After Effects
 	data.ux = 0;
 	data.expressions = {};
 	data.expressions.total = 0;
+	data.expressions.reference = 1700;
 	data.effects = {};
+	data.effects.reference = 5000;
 	data.effects.gaussianBlur = 0;
 	data.effects.gaussianBlurGPU = 0;
 	data.effects.fastBlur = 0;
@@ -33,15 +35,18 @@ A Benchmark for After Effects
 	data.effects.median = 0;
 	data.effects.total = 0;
 	data.shapes = {};
+	data.shapes.reference = 2500;
 	data.shapes.shapeLayer = 0;
 	data.shapes.solid = 0;
 	data.shapes.solidCT = 0;
 	data.shapes.total = 0;
 	data.script = {};
+	data.script.reference = 2000;
 	data.script.total = 0;
 	data.script.compute = 0;
 	data.script.ui = 0;
 	data.ui = {};
+	data.ui.reference = 5000;
 	data.ui.total = 0;
 	data.output = {};
 	data.output.total = 0;
@@ -148,9 +153,8 @@ A Benchmark for After Effects
 			total += render(comp,"Expressions | Pass " + (i+1));
 		}
 
-		data.expressions.total = Math.round(total/data.numPasses);
-		data.total += data.expressions.total;
-		data.renderer += data.expressions.total;
+		data.expressions.total = total/data.numPasses;
+		if (data.expressions.total > 0) data.expressions.total = Math.round(data.expressions.reference / data.expressions.total * 100);
 
 		layer1.source.remove();
 		layer2.source.remove();
@@ -186,7 +190,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.shapes.solid = Math.round(total/data.numPasses);
+		data.shapes.solid = total/data.numPasses;
+		if (data.shapes.solid > 0) data.shapes.solid = Math.round(data.shapes.reference / data.shapes.solid * 100);
 
 		// SOLID CT
 		var total = 0;
@@ -212,7 +217,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.shapes.solidCT = Math.round(total/data.numPasses);
+		data.shapes.solidCT = total/data.numPasses;
+		if (data.shapes.solidCT > 0) data.shapes.solidCT = Math.round(data.shapes.reference / data.shapes.solidCT * 100);
 
 		//Shape Layer
 		var total = 0;
@@ -235,12 +241,11 @@ A Benchmark for After Effects
 			total += current;
 			comp.remove();
 		}
-		data.shapes.shapeLayer = Math.round(total/data.numPasses);
+		data.shapes.shapeLayer =total/data.numPasses;
+		if (data.shapes.shapeLayer > 0) data.shapes.shapeLayer = Math.round(data.shapes.reference / data.shapes.shapeLayer * 100);
 
-		data.shapes.total = data.shapes.solid + data.shapes.solidCT + data.shapes.shapeLayer;
-		data.total += data.shapes.total;
-		data.renderer += data.shapes.total;
-		data.ux += data.shapes.total;
+		data.shapes.total = Math.round( (data.shapes.solid + data.shapes.solidCT + data.shapes.shapeLayer)/3 );
+
 	}
 
 	function testEffects()
@@ -261,7 +266,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.gaussianBlur = Math.round(total/data.numPasses);
+		data.effects.gaussianBlur = total/data.numPasses;
+		if (data.effects.gaussianBlur > 0) data.effects.gaussianBlur = Math.round(data.effects.reference / data.effects.gaussianBlur * 100);
 		data.effects.total += data.effects.gaussianBlur;
 
 		// Gaussian Blur (GPU)
@@ -286,7 +292,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.gaussianBlurGPU = Math.round(total/data.numPasses);
+		data.effects.gaussianBlurGPU = total/data.numPasses;
+		if (data.effects.gaussianBlurGPU > 0) data.effects.gaussianBlurGPU = Math.round(data.effects.reference / data.effects.gaussianBlurGPU * 100);
 		data.effects.total += data.effects.gaussianBlurGPU;
 
 		// Fast Blur
@@ -305,7 +312,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.fastBlur = Math.round(total/data.numPasses);
+		data.effects.fastBlur = total/data.numPasses;
+		if (data.effects.fastBlur > 0) data.effects.fastBlur = Math.round(data.effects.reference / data.effects.fastBlur * 100);
 		data.effects.total += data.effects.fastBlur;
 
 		// Lens Blur
@@ -330,7 +338,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.lensBlur = Math.round(total/data.numPasses);
+		data.effects.lensBlur = total/data.numPasses;
+		if (data.effects.lensBlur > 0) data.effects.lensBlur = Math.round(data.effects.reference / data.effects.lensBlur * 100);
 		data.effects.total += data.effects.lensBlur;
 
 		// Add Grain
@@ -348,7 +357,8 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.addGrain = Math.round(total/data.numPasses);
+		data.effects.addGrain = total/data.numPasses;
+		if (data.effects.addGrain > 0) data.effects.addGrain = Math.round(data.effects.reference / data.effects.addGrain * 100);
 		data.effects.total += data.effects.addGrain;
 
 		// median
@@ -367,16 +377,17 @@ A Benchmark for After Effects
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.median = Math.round(total/data.numPasses);
+		data.effects.median = total/data.numPasses;
+		if (data.effects.median > 0) data.effects.median = Math.round(data.effects.reference / data.effects.median * 100);
 		data.effects.total += data.effects.median;
 
 		//normalize results
-		if (data.gpuTest && data.lensBlurTest) data.effects.total = data.effects.total / 5;
-		else if (data.gpuTest || data.lensBlurTest) data.effects.total = data.effects.total / 4;
-		else data.effects.total = data.effects.total / 3;
+		if (data.gpuTest && data.lensBlurTest) data.effects.total = data.effects.total / 6;
+		else if (data.lensBlurTest) data.effects.total = data.effects.total / 5;
+		else if (data.gpuTest) data.effects.total = data.effects.total / 5;
+		else data.effects.total = data.effects.total / 4;
+		data.effects.total = Math.round(data.effects.total);
 
-		data.total += data.effects.total;
-		data.renderer += data.effects.total;
 	}
 
 	function testScriptComputing()
@@ -411,6 +422,7 @@ A Benchmark for After Effects
 		}
 
 		data.script.compute = log.checkTimer("Script Computing");
+		if (data.script.compute > 0) data.script.compute = Math.round( data.script.reference / data.script.compute * 100 );
 		data.script.total += data.script.compute;
 
 		log.startTimer("ScriptUI");
@@ -434,9 +446,9 @@ A Benchmark for After Effects
 		delete testUI;
 
 		data.script.ui = log.checkTimer("Script UI");
+		if (data.script.ui > 0) data.script.ui = Math.round(data.script.reference / data.script.ui * 100);
 		data.script.total += data.script.ui;
-		data.total += data.script.total;
-		data.ux += data.script.total;
+		data.script.total = Math.round(data.script.total/2);
 	}
 
 	function testUI()
@@ -449,77 +461,72 @@ A Benchmark for After Effects
 
 		log.startTimer("Ae UI");
 
+		//run tests in the viewer
+
 		var comp = createTestComp();
 		comp.openInViewer();
 		app.activeViewer.maximized = false;
-		for (var i = 0; i < 25; i++)
+
+		//create one layer
+		var l = comp.layers.addShape();
+		var group =l("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+		var content = group("ADBE Vectors Group")
+		content.addProperty("ADBE Vector Shape - Ellipse");
+		content.addProperty("ADBE Vector Graphic - Stroke");
+
+		//and duplicate to get 512 layers.
+		//the duplicate command depends a lot on the UI performance
+		//as Ae struggles to display the layers' handles.
+		for (var i = 0; i < 9; i++)
 		{
-			var l = comp.layers.addShape();
-			var group =l("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
-			var content = group("ADBE Vectors Group")
-			content.addProperty("ADBE Vector Shape - Ellipse");
-			content.addProperty("ADBE Vector Graphic - Stroke");
+			DuAEF.DuAE.Comp.selectLayers(comp.layers);
+			DuAEF.DuAE.App.duplicate();
 		}
+
 		comp.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		var comp = createTestComp();
-		for (var i = 0; i < 25; i++)
-		{
-			var l = comp.layers.addShape();
-			var group =l("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
-			var content = group("ADBE Vectors Group")
-			content.addProperty("ADBE Vector Shape - Ellipse");
-			content.addProperty("ADBE Vector Graphic - Stroke");
-		}
-		comp.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
 
 		data.ui.total = log.checkTimer("Ae UI");
-		data.total += data.ui.total;
-		data.ux += data.ui.total;
+		if (data.ui.total > 0) data.ui.total = Math.round(data.ui.reference / data.ui.total * 100);
 	}
 
 	function saveCSV(file)
 	{
 		var csvString = '"OS" , "' + data.os + '"\n' +
-			'"RAM" , "N/A"\n' +
-			'"CPU" , "N/A"\n' +
-			'"CPU Frequency" , "N/A"\n' +
-			'"CPU Cores" , "N/A"\n' +
-			'"GPU" , "N/A"\n' +
-			'"GPU RAM" , "N/A"\n' +
-			'"After Effects", "' + data.ae.versionName + ' (' + data.ae.versionAsFloat + ')"\n' +
-			'"ExtendScript Version" , "' + data.extendScript.version + '"\n' +
+			'"RAM","N/A"\n' +
+			'"CPU","N/A"\n' +
+			'"CPU Frequency","N/A"\n' +
+			'"CPU Cores","N/A"\n' +
+			'"GPU","N/A"\n' +
+			'"GPU RAM","N/A"\n' +
+			'"After Effects","' + data.ae.versionName + ' (' + data.ae.versionAsFloat + ')"\n' +
+			'"ExtendScript Version","' + data.extendScript.version + '"\n' +
+			'"",""\n' +
+			'"Total Score",' + data.total + '\n' +
+			'"",""\n' +
+			'"Renderer Score",' + data.renderer + '\n' +
 			'"" , ""\n' +
-			'"Total Score" , ' + data.total + '\n' +
+			'"UX/UI Score",' + data.ux + '\n' +
 			'"" , ""\n' +
-			'"Renderer Score" , ' + data.renderer + '\n' +
+			'"Expressions",' + data.expressions.total + '\n' +
 			'"" , ""\n' +
-			'"UX/UI Score" , ' + data.ux + '\n' +
+			'"Effects (Total)",' + data.effects.total + '\n' +
+			'"Effects (Gaussian Blur)",' + data.effects.gaussianBlur + '\n' +
+			'"Effects (Gaussian Blur - GPU)",' + data.effects.gaussianBlurGPU + '\n' +
+			'"Effects (Fast Blur)",' + data.effects.fastBlur + '\n' +
+			'"Effects (Lens Blur)",' + data.effects.lensBlur + '\n' +
+			'"Effects (Add Grain)",' + data.effects.addGrain + '\n' +
+			'"Effects (Median)",' + data.effects.median + '\n' +
 			'"" , ""\n' +
-			'"Expressions" , ' + data.expressions.total + '\n' +
-			'"" , ""\n' +
-			'"Effects (Total)" , ' + data.effects.total + '\n' +
-			'"Effects (Gaussian Blur)" , ' + data.effects.gaussianBlur + '\n' +
-			'"Effects (Gaussian Blur - GPU)" , ' + data.effects.gaussianBlurGPU + '\n' +
-			'"Effects (Fast Blur)" , ' + data.effects.fastBlur + '\n' +
-			'"Effects (Lens Blur)" , ' + data.effects.lensBlur + '\n' +
-			'"Effects (Add Grain)" , ' + data.effects.addGrain + '\n' +
-			'"Effects (Median)" , ' + data.effects.median + '\n' +
-			'"" , ""\n' +
-			'"Shapes (Total)" , ' + data.shapes.total + '\n' +
-			'"Shapes (Solid)" , ' + data.shapes.solid + '\n' +
-			'"Shapes (Solid - Collapse Transformation)" , ' + data.shapes.solidCT + '\n' +
+			'"Shapes (Total)",' + data.shapes.total + '\n' +
+			'"Shapes (Solid)",' + data.shapes.solid + '\n' +
+			'"Shapes (Solid - Collapse Transformation)",' + data.shapes.solidCT + '\n' +
 			'"Shapes (Shape Layer)" , ' + data.shapes.shapeLayer + '\n' +
-			'"" , ""\n' +
-			'"Scripts (Total)" , ' + data.script.total + '\n' +
-			'"Scripts (Computation)" , ' + data.script.compute + '\n' +
-			'"Scripts (UI)" , ' + data.script.ui + '\n' +
-			'"" , ""\n' +
-			'"After Effects UI" , ' + data.ui.total + '\n';
+			'"",""\n' +
+			'"Scripts (Total)",' + data.script.total + '\n' +
+			'"Scripts (Computation)",' + data.script.compute + '\n' +
+			'"Scripts (UI)",' + data.script.ui + '\n' +
+			'"",""\n' +
+			'"After Effects UI",' + data.ui.total + '\n';
 
 		if (file.open('w'))
 		{
@@ -532,7 +539,7 @@ A Benchmark for After Effects
 	function runButton_clicked()
 	{
 		//ask for a file where to save results
-		var file = new File(Folder.myDocuments.absoluteURI + "/Ae_benchmark.json");
+		var file = new File(Folder.myDocuments.absoluteURI + "/Ae_benchmark");
 		file = file.saveDlg("Where do you want to save the results?","CSV:*.csv,Json:*.json");
 		if (file == null) return;
 
@@ -565,11 +572,59 @@ A Benchmark for After Effects
 		if (isNaN(numPasses)) numPasses = 1;
 		data.numPasses = numPasses;
 
-		if (expressionsButton.checked) textExpressions();
-		if (shapesButton.checked) testShapes();
-		if (effectsButton.checked) testEffects();
-		if (scriptsButton.checked) testScriptComputing();
-		if (uiButton.checked) testUI();
+		var numRendererTests = 0;
+		var numUXTests = 0;
+		var numTests = 0;
+
+		if (expressionsButton.checked)
+		{
+			textExpressions();
+			data.total += data.expressions.total;
+			data.renderer += data.expressions.total;
+			numRendererTests++;
+			numTests++;
+		}
+		if (shapesButton.checked)
+		{
+			testShapes();
+			data.total += data.shapes.total;
+			data.renderer += data.shapes.total;
+			data.ux += data.shapes.total;
+			numRendererTests++;
+			numUXTests++;
+			numTests++;
+		}
+		if (effectsButton.checked)
+		{
+			testEffects();
+			data.total += data.effects.total;
+			data.renderer += data.effects.total;
+			numRendererTests++;
+			numTests++;
+		}
+		if (scriptsButton.checked)
+		{
+			testScriptComputing();
+			data.total += data.script.total;
+			data.ux += data.script.total;
+			numUXTests++;
+			numTests++;
+		}
+		if (uiButton.checked)
+		{
+			testUI();
+			//twice, as the ui has a bigger impact
+			data.total += data.ui.total*2;
+			data.ux += data.ui.total*2;
+			numUXTests += 2;
+			numTests += 2;
+		}
+
+		//normalize results
+
+		data.renderer = Math.round(data.renderer / numRendererTests);
+		data.ux = Math.round(data.ux / numUXTests);
+		data.total = Math.round(data.total / numTests);
 
 		app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
 
@@ -588,7 +643,7 @@ A Benchmark for After Effects
 
 	// ============ UI CONTENT =================
 
-	var runButton = DuAEF.DuScriptUI.addImageButton(ui,"Run Benchmark...",undefined,"Runs a bunch of tests to evaluate this System/Ae performance",undefined);
+	var runButton = DuAEF.DuScriptUI.addImageButton(ui,"Benchmark...",undefined,"Runs a bunch of tests to evaluate this System/Ae performance",undefined);
 
 	//options
 	var expressionsButton = DuAEF.DuScriptUI.addImageCheckBox(ui,"Expressions",undefined,"Tests expressions performance",undefined);
