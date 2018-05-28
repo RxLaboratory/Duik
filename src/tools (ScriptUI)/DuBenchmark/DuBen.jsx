@@ -6,7 +6,7 @@ A Benchmark for After Effects
 (function (thisObj) {
 
 	//================
-	var version = '0.0.1';
+	var version = '1.0.0';
 	var scriptName = "DuBenchmark";
 	//================
 
@@ -20,37 +20,12 @@ A Benchmark for After Effects
 
 	// the data collected.
 	var data = {};
-	data.renderer = 0;
-	data.ux = 0;
 	data.expressions = {};
-	data.expressions.total = 0;
-	data.expressions.reference = 1700;
 	data.effects = {};
-	data.effects.reference = 5000;
-	data.effects.gaussianBlur = 0;
-	data.effects.gaussianBlurGPU = 0;
-	data.effects.fastBlur = 0;
-	data.effects.lensBlur = 0;
-	data.effects.addGrain = 0;
-	data.effects.median = 0;
-	data.effects.total = 0;
 	data.shapes = {};
-	data.shapes.reference = 2500;
-	data.shapes.shapeLayer = 0;
-	data.shapes.solid = 0;
-	data.shapes.solidCT = 0;
-	data.shapes.total = 0;
 	data.script = {};
-	data.script.reference = 2000;
-	data.script.total = 0;
-	data.script.compute = 0;
-	data.script.ui = 0;
 	data.ui = {};
-	data.ui.reference = 5000;
-	data.ui.total = 0;
 	data.output = {};
-	data.output.total = 0;
-	data.total = 0;
 
 	//versions
 	data.ae = {};
@@ -65,7 +40,7 @@ A Benchmark for After Effects
 	data.extendScript.version = $.version;
 
 	//settings
-	data.numPasses = 3;
+	data.numPasses = 2;
 	data.gpuTest = true;
 	data.lensBlurTest = true;
 
@@ -73,12 +48,47 @@ A Benchmark for After Effects
 	DuAEF.DuRenderer.loadOutputModules(DuAEF.DuBinary.toFile(outputModules));
 
 	// ================ FUNCTIONS =============
+
 	//UTILS
+	function init()
+	{
+		data.emptyComp = 0;
+		data.renderer = 0;
+		data.ux = 0;
+		data.reference = 3000;
+
+		data.expressions.total = 0;
+		data.expressions.ui = 0;
+
+		data.effects.gaussianBlur = 0;
+		data.effects.gaussianBlurGPU = 0;
+		data.effects.fastBlur = 0;
+		data.effects.lensBlur = 0;
+		data.effects.addGrain = 0;
+		data.effects.median = 0;
+		data.effects.total = 0;
+
+		data.shapes.shapeLayer = 0;
+		data.shapes.solid = 0;
+		data.shapes.solidCT = 0;
+		data.shapes.total = 0;
+
+		data.script.total = 0;
+		data.script.compute = 0;
+		data.script.ui = 0;
+
+		data.ui.reference = 7000;
+		data.ui.total = 0;
+
+		data.output.total = 0;
+		data.total = 0;
+	}
+
 	function createTestComp(width,height)
 	{
 		if (typeof width === 'undefined') width = 5000;
 		if (typeof height === 'undefined') height = 5000;
-		return app.project.items.addComp("duben", width, height, 1, 45, 60);
+		return app.project.items.addComp("duben", width, height, 1, 120, 60);
 	}
 
 	function createTestSolid(comp)
@@ -86,13 +96,26 @@ A Benchmark for After Effects
 		return comp.layers.addSolid([0,0,0], "Layer", 5000, 5000, 1);
 	}
 
-	//MAIN
-	function render(comp,testName)
+	function testEmptyComp()
 	{
+		var comp = createTestComp();
+		data.emptyComp = render(comp,"Empty Comp",1);
+	}
+
+	function normalize(value)
+	{
+		return Math.round(value / data.reference * 100);
+	}
+
+	//MAIN
+	function render(comp,testName,numFrames)
+	{
+		if (typeof numFrames === 'undefined') numFrames = 1;
+
 		//add Comp to render queue
 		var rqItem = app.project.renderQueue.items.add(comp);
-		rqItem.timeSpanStart = comp.duration - comp.frameDuration;
-		rqItem.timeSpanDuration = comp.frameDuration;
+		rqItem.timeSpanStart = comp.duration - (comp.frameDuration*numFrames);
+		rqItem.timeSpanDuration = comp.frameDuration*numFrames;
 		//set output module
 		rqItem.outputModule(1).applyTemplate('DuBen EXR');
 		var outputFile = new File(Folder.myDocuments.absoluteURI + "/DuBen_renderTest_[#####].exr");
@@ -110,16 +133,15 @@ A Benchmark for After Effects
 		//get time
 		var elapsed = log.checkTimer(testName);
 
-		var frameNum = comp.duration/comp.frameDuration -2;
-		var frameNum2 = comp.duration/comp.frameDuration -1;
-		frameNum = DuAEF.DuJS.Number.convertToString(frameNum,5);
-		frameNum2 = DuAEF.DuJS.Number.convertToString(frameNum2,5);
+		//remove rendered frames
+		for (var i = 1, num = numFrames + 1; i <= num; i++)
+		{
+			var frameNum = comp.duration/comp.frameDuration - i;
+			frameNum = DuAEF.DuJS.Number.convertToString(frameNum,5);
+			outputFile = new File(Folder.myDocuments.absoluteURI + "/DuBen_renderTest_" + frameNum + ".exr");
+			outputFile.remove();
+		}
 
-		//remove outputmodule, comp and test frame
-		outputFile = new File(Folder.myDocuments.absoluteURI + "/DuBen_renderTest_" + frameNum + ".exr");
-		outputFile.remove();
-		outputFile = new File(Folder.myDocuments.absoluteURI + "/DuBen_renderTest_" + frameNum2 + ".exr");
-		outputFile.remove();
 		rqItem.remove();
 
 		return elapsed;
@@ -128,33 +150,71 @@ A Benchmark for After Effects
 	function textExpressions()
 	{
 		//create comp
-		var comp = createTestComp(4,4);
-		var layer2 = comp.layers.addSolid([0,0,0], "Layer2", 4, 4, 1);
-		var layer1 = comp.layers.addSolid([0,0,0], "Layer1", 4, 4, 1);
-		//add expressions
-		layer1.transform.position.expression = 'value*time;';
-		layer2.transform.position.expression = 'var result = [2,2];\n' +
-			'//not optimized loop\n' +
-			'for (var i = 0;  i < time/thisComp.frameDuration; i++)\n' +
-			'{\n' +
-			'//failing try catch\n' +
-			'try { fail } catch (e)\n' +
-			'{\n' +
-			'//compute using previous frame value on other layer\n' +
-			'result += thisComp.layer("Layer1").position.valueAtTime(i*thisComp.frameDuration);\n' +
-			'}\n' +
-			'}\n' +
-			'result;';
+		var comp = createTestComp();
+		var layer2 = createTestSolid(comp);
+		var layer1 = createTestSolid(comp);
 
 		//test render time
 		var total = 0;
+		var totalui = 0;
 		for (var i = 0; i < data.numPasses; i++)
 		{
-			total += render(comp,"Expressions | Pass " + (i+1));
+			log.startTimer("Ae Expressions");
+
+			//add expressions
+			layer1.transform.position.expression = 'value*time;';
+			layer2.transform.position.expression = 'var result = [2,2];\n' +
+				'//not optimized loop\n' +
+				'for (var i = 0;  i < time/thisComp.frameDuration; i++)\n' +
+				'{\n' +
+				'//failing try catch\n' +
+				'try { fail } catch (e)\n' +
+				'{\n' +
+				'//compute using previous frame value on other layer\n' +
+				'result += thisComp.layer(1).position.valueAtTime(i*thisComp.frameDuration);\n' +
+				'}\n' +
+				'}\n' +
+				'var testArray = [];\n' +
+				'for (var i = 0; i < 100; i++)\n' +
+				'{\n' +
+				'	var str = "";\n' +
+				'	for (var j = 0; j < i; j++)\n' +
+				'	{\n' +
+				'		str += "a";\n' +
+				'	}\n' +
+				'	testArray.push(str);\n' +
+				'}\n' +
+				'for (var i = 0; i < testArray.length; i++)\n' +
+				'{\n' +
+				'	try\n' +
+				'	{\n' +
+				'		var val = parseFloat(testArray[i]);\n' +
+				'		val = 1 / val;\n' +
+				'	}\n' +
+				'	catch (e)\n' +
+				'	{\n' +
+				'		for (var j = 0; j < testArray[i].length; j++)\n' +
+				'		{\n' +
+				'			Math.round(i/1000);\n' +
+				'		}\n' +
+				'	}\n' +
+				'}\n' +
+				'result;';
+
+			var current = log.checkTimer("Ae Expressions");
+			totalui += current;
+
+			current += render(comp,"Expressions | Pass " + (i+1)) - data.emptyComp;
+			total += current;
+
+			layer1.transform.position.expression = '';
+			layer2.transform.position.expression = '';
 		}
 
 		data.expressions.total = total/data.numPasses;
-		if (data.expressions.total > 0) data.expressions.total = Math.round(data.expressions.reference / data.expressions.total * 100);
+		data.expressions.ui = totalui/data.numPasses;
+		if (data.expressions.total > 0) data.expressions.total = normalize( data.expressions.total );
+		if (data.expressions.ui > 0) data.expressions.ui = normalize( data.expressions.ui );
 
 		layer1.source.remove();
 		layer2.source.remove();
@@ -171,61 +231,72 @@ A Benchmark for After Effects
 
 		// SOLID
 		var total = 0;
-		var numPasses = data.numPasses+1;
+		var numPasses = data.numPasses;
 		for (var i = 0; i < numPasses; i++)
 		{
 			var comp = createTestComp();
+
+			log.startTimer("Ae Shape - Solid");
+
 			var layer = createTestSolid(comp);
 			//add mask
 			var mask = layer('ADBE Mask Parade').addProperty('ADBE Mask Atom');
 			mask.property('ADBE Mask Shape').setValue(shape);
 			layer('ADBE Effect Parade').addProperty('ADBE Fill');
 			var stroke = layer('ADBE Effect Parade').addProperty('ADBE Stroke');
-			stroke('ADBE Stroke-0003').setValue(100);
+			stroke('ADBE Stroke-0003').setValue(50);
 			layer.transform.scale.setValue([200,200]);
 			layer.transform.rotation.setValue(30);
 
-			var current = render(comp,"Shape - Solid | Pass " + i);
-			total += current;
+			var current = log.checkTimer("Ae Shape - Solid");
+			current += render(comp,"Shape - Solid | Pass " + i,3) - data.emptyComp;
+			total += current/3;
 			layer.source.remove();
 			comp.remove();
 		}
 		data.shapes.solid = total/data.numPasses;
-		if (data.shapes.solid > 0) data.shapes.solid = Math.round(data.shapes.reference / data.shapes.solid * 100);
+		if (data.shapes.solid > 0) data.shapes.solid = normalize( data.shapes.solid );
 
 		// SOLID CT
 		var total = 0;
-		var numPasses = data.numPasses+1;
+		var numPasses = data.numPasses;
 		for (var i = 0; i < numPasses; i++)
 		{
 			var comp = createTestComp();
+
+			log.startTimer("Ae Shape - Solid CT");
+
 			var layer = createTestSolid(comp);
 			//add mask
 			var mask = layer('ADBE Mask Parade').addProperty('ADBE Mask Atom');
 			mask.property('ADBE Mask Shape').setValue(shape);
 			layer('ADBE Effect Parade').addProperty('ADBE Fill');
 			var stroke = layer('ADBE Effect Parade').addProperty('ADBE Stroke');
-			stroke('ADBE Stroke-0003').setValue(100);
+			stroke('ADBE Stroke-0003').setValue(50);
 			layer.transform.scale.setValue([200,200]);
 			layer.transform.rotation.setValue(30);
 
 			layer.collapseTransformation = true;
 
-			var current = render(comp,"Shape - Solid w/ Collapse Transformation | Pass " + i);
-			total += current;
+			var current = log.checkTimer("Ae Shape - Solid CT");
+			current += render(comp,"Shape - Solid w/ Collapse Transformation | Pass " + i,3) - data.emptyComp;
+			total += current/3;
 
 			layer.source.remove();
 			comp.remove();
 		}
 		data.shapes.solidCT = total/data.numPasses;
-		if (data.shapes.solidCT > 0) data.shapes.solidCT = Math.round(data.shapes.reference / data.shapes.solidCT * 100);
+		if (data.shapes.solidCT > 0) data.shapes.solidCT = normalize( data.shapes.solidCT );
 
 		//Shape Layer
 		var total = 0;
-		var numPasses = data.numPasses+1;
+		var numPasses = data.numPasses;
 		for (var i = 0; i < numPasses; i++)
 		{
 			var comp = createTestComp();
+
+			log.startTimer("Ae Shape - Shape Layer");
+
 			var layer = comp.layers.addShape();
 			//add mask
 			var group = layer('ADBE Root Vectors Group').addProperty('ADBE Vector Group');
@@ -233,16 +304,17 @@ A Benchmark for After Effects
 			mask.property('ADBE Vector Shape').setValue(shape);
 			group.property('ADBE Vectors Group').addProperty('ADBE Vector Graphic - Fill');
 			var stroke = group.property('ADBE Vectors Group').addProperty('ADBE Vector Graphic - Stroke');
-			stroke('ADBE Vector Stroke Width').setValue(100);
+			stroke('ADBE Vector Stroke Width').setValue(50);
 			layer.transform.scale.setValue([200,200]);
 			layer.transform.rotation.setValue(30);
 
-			var current = render(comp,"Shape - Shape Layer | Pass " + i);
-			total += current;
+			var current = log.checkTimer("Ae Shape - Shape Layer");
+			current += render(comp,"Shape - Shape Layer | Pass " + i,3) - data.emptyComp;
+			total += current/3;
 			comp.remove();
 		}
 		data.shapes.shapeLayer =total/data.numPasses;
-		if (data.shapes.shapeLayer > 0) data.shapes.shapeLayer = Math.round(data.shapes.reference / data.shapes.shapeLayer * 100);
+		if (data.shapes.shapeLayer > 0) data.shapes.shapeLayer = normalize( data.shapes.shapeLayer );
 
 		data.shapes.total = Math.round( (data.shapes.solid + data.shapes.solidCT + data.shapes.shapeLayer)/3 );
 
@@ -261,13 +333,13 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('ADBE Gaussian Blur');
 			fx('ADBE Gaussian Blur-0001').setValue(1000);
 
-			var current = render(comp,"Effects - Gaussian Blur | Pass " + i);
+			var current = render(comp,"Effects - Gaussian Blur | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.gaussianBlur = total/data.numPasses;
-		if (data.effects.gaussianBlur > 0) data.effects.gaussianBlur = Math.round(data.effects.reference / data.effects.gaussianBlur * 100);
+		data.effects.gaussianBlur = total/numPasses;
+		if (data.effects.gaussianBlur > 0) data.effects.gaussianBlur = normalize( data.effects.gaussianBlur );
 		data.effects.total += data.effects.gaussianBlur;
 
 		// Gaussian Blur (GPU)
@@ -287,13 +359,13 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('ADBE Gaussian Blur 2');
 			fx('ADBE Gaussian Blur 2-0001').setValue(1000);
 
-			var current = render(comp,"Effects - Gaussian Blur GPU | Pass " + i);
+			var current = render(comp,"Effects - Gaussian Blur GPU | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.gaussianBlurGPU = total/data.numPasses;
-		if (data.effects.gaussianBlurGPU > 0) data.effects.gaussianBlurGPU = Math.round(data.effects.reference / data.effects.gaussianBlurGPU * 100);
+		data.effects.gaussianBlurGPU = total/numPasses;
+		if (data.effects.gaussianBlurGPU > 0) data.effects.gaussianBlurGPU = normalize( data.effects.gaussianBlurGPU );
 		data.effects.total += data.effects.gaussianBlurGPU;
 
 		// Fast Blur
@@ -307,13 +379,13 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('ADBE Fast Blur');
 			fx('ADBE Fast Blur-0001').setValue(1000);
 
-			var current = render(comp,"Effects - Fast Blur | Pass " + i);
+			var current = render(comp,"Effects - Fast Blur | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.fastBlur = total/data.numPasses;
-		if (data.effects.fastBlur > 0) data.effects.fastBlur = Math.round(data.effects.reference / data.effects.fastBlur * 100);
+		data.effects.fastBlur = total/numPasses;
+		if (data.effects.fastBlur > 0) data.effects.fastBlur = normalize( data.effects.fastBlur );
 		data.effects.total += data.effects.fastBlur;
 
 		// Lens Blur
@@ -333,13 +405,13 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('ADBE Camera Lens Blur');
 			fx('ADBE Camera Lens Blur-0001').setValue(20);
 
-			var current = render(comp,"Effects - Lens Blur | Pass " + i);
+			var current = render(comp,"Effects - Lens Blur | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.lensBlur = total/data.numPasses;
-		if (data.effects.lensBlur > 0) data.effects.lensBlur = Math.round(data.effects.reference / data.effects.lensBlur * 100);
+		data.effects.lensBlur = total/numPasses;
+		if (data.effects.lensBlur > 0) data.effects.lensBlur = normalize( data.effects.lensBlur );
 		data.effects.total += data.effects.lensBlur;
 
 		// Add Grain
@@ -352,13 +424,13 @@ A Benchmark for After Effects
 			//add effect
 			var fx = layer('ADBE Effect Parade').addProperty('VISINF Grain Implant');
 
-			var current = render(comp,"Effects - Add Grain | Pass " + i);
+			var current = render(comp,"Effects - Add Grain | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.addGrain = total/data.numPasses;
-		if (data.effects.addGrain > 0) data.effects.addGrain = Math.round(data.effects.reference / data.effects.addGrain * 100);
+		data.effects.addGrain = total/numPasses;
+		if (data.effects.addGrain > 0) data.effects.addGrain = normalize( data.effects.addGrain );
 		data.effects.total += data.effects.addGrain;
 
 		// median
@@ -372,13 +444,13 @@ A Benchmark for After Effects
 			var fx = layer('ADBE Effect Parade').addProperty('ADBE Median');
 			fx('ADBE Median-0001').setValue(5);
 
-			var current = render(comp,"Effects - Median | Pass " + i);
+			var current = render(comp,"Effects - Median | Pass " + i) - data.emptyComp;
 			total += current;
 			layer.source.remove();
 			comp.remove();
 		}
-		data.effects.median = total/data.numPasses;
-		if (data.effects.median > 0) data.effects.median = Math.round(data.effects.reference / data.effects.median * 100);
+		data.effects.median = total/numPasses;
+		if (data.effects.median > 0) data.effects.median = normalize( data.effects.median );
 		data.effects.total += data.effects.median;
 
 		//normalize results
@@ -422,7 +494,7 @@ A Benchmark for After Effects
 		}
 
 		data.script.compute = log.checkTimer("Script Computing");
-		if (data.script.compute > 0) data.script.compute = Math.round( data.script.reference / data.script.compute * 100 );
+		if (data.script.compute > 0) data.script.compute = normalize( data.script.compute );
 		data.script.total += data.script.compute;
 
 		log.startTimer("ScriptUI");
@@ -446,7 +518,7 @@ A Benchmark for After Effects
 		delete testUI;
 
 		data.script.ui = log.checkTimer("Script UI");
-		if (data.script.ui > 0) data.script.ui = Math.round(data.script.reference / data.script.ui * 100);
+		if (data.script.ui > 0) data.script.ui = normalize( data.script.ui );
 		data.script.total += data.script.ui;
 		data.script.total = Math.round(data.script.total/2);
 	}
@@ -464,8 +536,11 @@ A Benchmark for After Effects
 		//run tests in the viewer
 
 		var comp = createTestComp();
-		comp.openInViewer();
-		app.activeViewer.maximized = false;
+		if (DuAEF.DuAE.App.version >= 11)
+		{
+			comp.openInViewer();
+			app.activeViewer.maximized = false;
+		}
 
 		//create one layer
 		var l = comp.layers.addShape();
@@ -486,18 +561,18 @@ A Benchmark for After Effects
 		comp.remove();
 
 		data.ui.total = log.checkTimer("Ae UI");
-		if (data.ui.total > 0) data.ui.total = Math.round(data.ui.reference / data.ui.total * 100);
+		if (data.ui.total > 0) data.ui.total = normalize( data.ui.total );
 	}
 
 	function saveCSV(file)
 	{
 		var csvString = '"OS" , "' + data.os + '"\n' +
-			'"RAM","N/A"\n' +
+			'"RAM (GB)","N/A"\n' +
 			'"CPU","N/A"\n' +
-			'"CPU Frequency","N/A"\n' +
+			'"CPU Frequency (GHz)","N/A"\n' +
 			'"CPU Cores","N/A"\n' +
 			'"GPU","N/A"\n' +
-			'"GPU RAM","N/A"\n' +
+			'"GPU RAM (GB)","N/A"\n' +
 			'"After Effects","' + data.ae.versionName + ' (' + data.ae.versionAsFloat + ')"\n' +
 			'"ExtendScript Version","' + data.extendScript.version + '"\n' +
 			'"",""\n' +
@@ -567,21 +642,23 @@ A Benchmark for After Effects
 		//purge disk cache
 		app.executeCommand(10200);
 
-		//set num passes
-		var numPasses = parseInt(passesEdit.text);
-		if (isNaN(numPasses)) numPasses = 1;
-		data.numPasses = numPasses;
 
 		var numRendererTests = 0;
 		var numUXTests = 0;
 		var numTests = 0;
+
+		init();
+
+		testEmptyComp();
 
 		if (expressionsButton.checked)
 		{
 			textExpressions();
 			data.total += data.expressions.total;
 			data.renderer += data.expressions.total;
+			data.ux += data.expressions.ui;
 			numRendererTests++;
+			numUXTests++;
 			numTests++;
 		}
 		if (shapesButton.checked)
@@ -597,10 +674,11 @@ A Benchmark for After Effects
 		if (effectsButton.checked)
 		{
 			testEffects();
-			data.total += data.effects.total;
-			data.renderer += data.effects.total;
-			numRendererTests++;
-			numTests++;
+			//twice, as the effects are a big part of the time spent by Ae rendering a frame.
+			data.total += data.effects.total*2;
+			data.renderer += data.effects.total*2;
+			numRendererTests += 2;
+			numTests += 2;
 		}
 		if (scriptsButton.checked)
 		{
@@ -621,7 +699,6 @@ A Benchmark for After Effects
 		}
 
 		//normalize results
-
 		data.renderer = Math.round(data.renderer / numRendererTests);
 		data.ux = Math.round(data.ux / numUXTests);
 		data.total = Math.round(data.total / numTests);
@@ -636,6 +713,13 @@ A Benchmark for After Effects
 		{
 			saveCSV(file);
 		}
+	}
+
+	function helpButton_clicked()
+	{
+		if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return;
+		if(DuAEF.mac) system.callSystem('open https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duben');
+		else system.callSystem('explorer https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duben');
 	}
 
 	// _______ UI SETUP _______
@@ -656,10 +740,12 @@ A Benchmark for After Effects
 	effectsButton.setChecked(true);
 	scriptsButton.setChecked(true);
 	uiButton.setChecked(true);
-	var passesEdit = DuAEF.DuScriptUI.addNiceEditText(ui,"3","Run "," passes","1");
+	var helpButton = DuAEF.DuScriptUI.addImageButton(ui,"?",undefined,"Get some help with Duben",undefined);
+	helpButton.alignment = ['right','top'];
 
 	//Connect events
 	runButton.onClick = runButton_clicked;
+	helpButton.onClick = helpButton_clicked;
 
 	//Show UI
 	DuAEF.DuScriptUI.showUI(ui);
