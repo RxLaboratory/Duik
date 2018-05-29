@@ -183,6 +183,7 @@
 	var ui_riggingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_rig_l),"Rigging",DuAEF.DuBinary.toFile(w18_rig_r));
 	var ui_animationButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_kbez_l),"Animation",DuAEF.DuBinary.toFile(w18_kbez_r));
 	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
+	ui_cameraButton.setHelp('Camera',cameraHelp,cameraLink);
 	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
 	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
 	var ui_helpButton = DuAEF.DuScriptUI.addImageButton(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
