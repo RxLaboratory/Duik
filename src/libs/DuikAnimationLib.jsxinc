@@ -589,6 +589,137 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 }
 
 /**
+* Animation Blender
+* @namespace
+* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.AnimationBlender = {};
+
+/**
+* Creates a blender controller in the control composition, and sets all the properties of the setup comp up.
+* @param {CompItem} setupComp - The comp
+* @param {CompItem} controlComp - The comp where to create the blender controller
+* @param {boolean} [selectedProperties=false] - true to set only the selected properties up. When false, sets all animated (without expression) properties up.
+*/
+DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedProperties)
+{
+	if (typeof selectedProperties === 'undefined') selectedProperties = false;
+
+	//create blender
+	var blenderCtrl = DuAEF.Duik.Controller.create(controlComp,DuAEF.Duik.Controller.Types.BLENDER);
+	blenderCtrl.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName("C | Blender | " + setupComp.name, controlComp);
+
+//Store setupComp name into Duik marker of the controller
+//set the duikmarker at -1
+//fix blending (getAnim) in the expression
+
+	var blenderFx = DuAEF.Duik.PseudoEffects.BLENDER.apply(blenderCtrl.layer);
+
+	//default values
+	blenderFx(DuAEF.Duik.PseudoEffects.BLENDER.loopCheckbox).setValue(0);
+
+	function getSelectedPropFilter(prop)
+	{
+		//check if there is an expression
+		if (prop.propertyType != PropertyType.PROPERTY) return false;
+		if (!prop.canSetExpression) return false;
+		if (prop.expression != '') return false;
+		if (selectedProperties) return prop.selected;
+		return true;
+	}
+
+	var props = DuAEF.DuAE.Comp.getAnimatedProps(getSelectedPropFilter,undefined,undefined,undefined,setupComp);
+
+	var exp = '//Duik.blender\n' +
+		'var ctrl = comp("' + controlComp.name + '").layer("' + blenderCtrl.layer.name + '");\n' +
+		'var fx = ctrl.effect("' + blenderFx.name + '");\n' +
+		'var loop = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.loopCheckbox + ').value;\n' +
+		'var blending = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.blendingCheckbox + ').value;\n' +
+		'var blendingDuration = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.durationSlider + ').value;\n' +
+		'var blendingEasing = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.interpolationPopup + ').value;\n' +
+		'if (!blending) blendingDuration = 0;\n' +
+		'function getAnim(ind)\n' +
+		'{\n' +
+		'anim = 0;\n' +
+		'var animStartTime = ctrl.marker.key(ind).time;\n' +
+		'var animName = ctrl.marker.key(ind).comment;\n' +
+		'var animMarker = null;\n' +
+		'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n' +
+		'if (animMarker)\n' +
+		'{\n' +
+		'var start = animMarker.time;\n' +
+		'var end = animMarker.time + animMarker.duration;\n' +
+		'var dur = animMarker.duration;\n' +
+		'anim = linear(time, animStartTime , animStartTime + dur, start, end);\n' +
+		'if (loop)\n' +
+		'{\n' +
+		'var loopNumber = Math.ceil((time-animStartTime)/dur);\n' +
+		'if (loopNumber > 1) anim =  linear(time,animStartTime+dur*(loopNumber-1), animStartTime+dur*loopNumber,start,end);\n' +
+		'}\n' +
+		'}\n' +
+		'return valueAtTime(anim);\n' +
+		'}\n' +
+		'result = value;\n' +
+		'if (ctrl.marker.numKeys > 0 && fx.enabled) {\n' +
+		'var currentMarker = ctrl.marker.nearestKey(time).index;\n' +
+		'if (ctrl.marker.key(currentMarker).time > time) currentMarker--;\n' +
+		'if (currentMarker > 0)\n' +
+		'{\n' +
+		'var animA = getAnim(currentMarker);\n' +
+		'result = animA;\n' +
+		'if (blendingDuration != 0)\n' +
+		'{\n' +
+		'var prevMarker = currentMarker -1;\n' +
+		'animB = value;\n' +
+		'if (prevMarker > 0)\n' +
+		'{\n' +
+		'var markerTime = ctrl.marker.key(currentMarker).time;\n' +
+		'if (!loop)\n' +
+		'{\n' +
+		'var prevMarkerTime = ctrl.marker.key(prevMarker).time;\n' +
+		'var prevMarkerName = ctrl.marker.key(prevMarker).comment;\n' +
+		'var animMarker = null;\n' +
+		'try { animMarker = thisComp.marker.key(prevMarkerName); } catch(e) {}\n' +
+		'if (animMarker)\n' +
+		'{\n' +
+		'var prevDuration = animMarker.duration;\n' +
+		'var prevEndTime = animMarker.time + prevDuration;\n' +
+		'var maxBlendingDuration = prevEndTime-markerTime;\n' +
+		'if (maxBlendingDuration < 0) blendingDuration = 0;\n' +
+		'else if (maxBlendingDuration < blendingDuration) blendingDuration = maxBlendingDuration;\n' +
+		'}\n' +
+		'}\n' +
+		'\n' +
+		'if (blendingDuration != 0)\n' +
+		'{\n' +
+		'animB = getAnim(prevMarker);\n' +
+		'if (blendingEasing == 2) result = linear(time,markerTime , markerTime+blendingDuration, animB, animA);\n' +
+		'else result = ease(time,markerTime , markerTime+blendingDuration, animB, animA);\n' +
+		'}\n' +
+		'}\n' +
+		'}\n' +
+		'\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		'currentMarker++;\n' +
+		'markerName = ctrl.marker.key(currentMarker).comment;\n' +
+		'var animMarker = null;\n' +
+		'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n' +
+		'if (animMarker) result = valueAtTime(animMarker.time);\n' +
+		'}\n' +
+		'}\n' +
+		'result;';
+
+	//set expression
+	new Iterator(props).do(function(prop)
+	{
+		prop = prop.getProperty();
+		prop.expression = exp;
+	});
+}
+
+/**
 * An onion skin
 * @typedef {Object} OnionSkin
 * @property {boolean} activated - Is it activated
