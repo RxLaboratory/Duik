@@ -1689,10 +1689,18 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
 */
 
 /**
+* Gets the selected comp
+* @method
+* @memberof CompSelector
+* @name getComp
+* @return {CompItem|null} the selected comp
+*/
+
+/**
  * Creates a drop down selector for compositions
  * @memberof DuAEF.DuScriptUI
  * @param {Window|Panel|Group} container - The ScriptUI Object which will contain and display the selector.
- * @return {Selector} - The selector
+ * @return {CompSelector} - The selector
  */
 DuAEF.DuScriptUI.addCompSelector = function(container)
 {
@@ -1785,7 +1793,9 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	}
 
 	var itemNone = selector.popup.list.add('item',"None");
-	itemNone.id = 0;
+	itemNone.id = -1;
+	var itemActive = selector.popup.list.add('item',"Active Composition");
+	itemActive.id = 0;
 	selector.popup.list.selection = 0;
 
 	selector.setComps = function(comps)
@@ -1795,7 +1805,10 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 
 		var prevId = selector.id;
 		selector.popup.list.removeAll();
-		selector.popup.list.add('item',"None");
+		var itemNone = selector.popup.list.add('item',"None");
+		itemNone.id = -1;
+		var itemActive = selector.popup.list.add('item',"Active composition");
+		itemActive.id = 0;
 		var it = new Iterator(comps);
 		it.do(function(comp)
 		{
@@ -1807,15 +1820,26 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 		selector.pauseRefresh = false;
 	};
 
+	selector.getComp = function ()
+	{
+		if (selector.id == -1) return null;
+		if (selector.id == 0) return DuAEF.DuAE.Project.getActiveComp();
+		return DuAEF.DuAE.Project.getItemById(selector.id);
+	}
+
 	selector.setCurrentId = function (id)
 	{
-		if (id < 0) return;
+		if (id < -1) id = -1;
 
 		selector.pauseRefresh = true;
 
-		if (id == 0)
+		if (id == -1)
 		{
 			selector.popup.list.selection = 0;
+		}
+		else if (id == 0)
+		{
+			selector.popup.list.selection = 1;
 		}
 		else
 		{
