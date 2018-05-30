@@ -17,7 +17,8 @@ function setCurrentAnimationPanel(panel)
 	ui_ikFkOptionsGroup.visible = panel == 9;
 	ui_interpolationOptionsGroup.visible = panel == 10;
 	ui_extractControllersOptionsGroup.visible = panel == 11;
-	if (panel == 7 || panel == 5 || panel == 4 || panel == 3 || panel == 1 || panel == 9)
+	ui_blenderGroup.visible = panel == 12;
+	if (panel == 7 || panel == 5 || panel == 4 || panel == 3 || panel == 1 || panel == 9 || panel == 11 || panel == 12)
 	{
 		ui_animationKeysButton.setChecked(false);
 		ui_animationToolsButton.setChecked(true);
@@ -26,6 +27,25 @@ function setCurrentAnimationPanel(panel)
 	{
 		ui_animationKeysButton.setChecked(true);
 		ui_animationToolsButton.setChecked(false);
+	}
+}
+
+function setCurrentBlenderPanel(panel)
+{
+	if (panel == undefined) panel = 0;
+
+	ui_blenderAnimateGroup.visible = panel == 0;
+	ui_blenderSetupGroup.visible = panel == 1;
+
+	if (panel == 1)
+	{
+		ui_blenderAnimateButton.setChecked(false);
+		ui_blenderSetupButton.setChecked(true);
+	}
+	else
+	{
+		ui_blenderAnimateButton.setChecked(true);
+		ui_blenderSetupButton.setChecked(false);
 	}
 }
 
@@ -977,6 +997,19 @@ function ui_extractControllersOptionsButton_clicked()
 	setCurrentAnimationPanel(11);
 }
 
+function ui_blenderSetupValidButton_clicked()
+{
+	var animComp = ui_blenderCompSelector.getComp();
+	var controlComp = ui_blenderCtrlCompSelector.getComp();
+	var selectedProps = ui_blenderPropsSelector.index == 1;
+
+	app.beginUndoGroup('Duik | ' + "Animation blender setup");
+
+	if (animComp && controlComp) DuAEF.Duik.AnimationBlender.setup(animComp,controlComp,selectedProps);
+
+	app.endUndoGroup();
+}
+
 //============ UI ===============
 
 var ui_animationMainGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'column');
@@ -1083,6 +1116,7 @@ var ui_ikFkGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,'row');
 var ui_ikFkButton = DuAEF.DuScriptUI.addImageButton(ui_ikFkGroup,"IK/FK Switch",DuAEF.DuBinary.toFile(w25_ikfk_l),"IK/FK Switch",DuAEF.DuBinary.toFile(w25_ikfk_r));
 var ui_ikFkOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_ikFkGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"IK/FK Options",DuAEF.DuBinary.toFile(w14_plus_r));
 ui_ikFkOptionsButton.group.alignment = ['right','center'];
+var ui_blenderButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,"Animation blender...",DuAEF.DuBinary.toFile(w25_blender_l),"Blends different animations together,\nin an event-driven way.",DuAEF.DuBinary.toFile(w25_blender_r));
 var ui_motionTrailGroup = DuAEF.DuScriptUI.addGroup(ui_animToolsGroup,'row');
 var ui_motionTrailButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,"Motion trail",DuAEF.DuBinary.toFile(w25_anim_l),"Add a motion trail for the selected layer",DuAEF.DuBinary.toFile(w25_anim_r));
 var ui_motionTrailOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_motionTrailGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Motion trail options",DuAEF.DuBinary.toFile(w14_plus_r));
@@ -1109,9 +1143,48 @@ if (DuAEF.DuAE.App.version >= 15.1)
 }
 var ui_celAnimButton = DuAEF.DuScriptUI.addImageButton(ui_animToolsGroup,"Cel animation...",DuAEF.DuBinary.toFile(w25_cel_l),"Cel animation",DuAEF.DuBinary.toFile(w25_cel_r));
 
+// Animation Blender
+var ui_blenderGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
+DuAEF.DuScriptUI.addSeparator(ui_blenderGroup,settings.data.uiMode != 2 ? "Animation blender" : "");
+var ui_blenderTabsGroup = DuAEF.DuScriptUI.addGroup(ui_blenderGroup);
+var ui_blenderAnimateButton = DuAEF.DuScriptUI.addImageCheckBox(ui_blenderTabsGroup,"Animate",DuAEF.DuBinary.toFile(w25_blenderanim_l),"Animate with the blender",DuAEF.DuBinary.toFile(w25_blenderanim_r));
+var ui_blenderSetupButton = DuAEF.DuScriptUI.addImageCheckBox(ui_blenderTabsGroup,"Set up",DuAEF.DuBinary.toFile(w25_blenderedit_l),"Set up blender",DuAEF.DuBinary.toFile(w25_blenderedit_r));
+var ui_blenderStackGroup = DuAEF.DuScriptUI.addGroup(ui_blenderGroup,'stack');
+//animate
+var ui_blenderAnimateGroup = DuAEF.DuScriptUI.addGroup(ui_blenderStackGroup,'column');
+DuAEF.DuScriptUI.addSeparator(ui_blenderAnimateGroup);
+var ui_blenderAnimSelectorGroup = DuAEF.DuScriptUI.addGroup(ui_blenderAnimateGroup);
+var ui_blenderAnimSelector = DuAEF.DuScriptUI.addSelector(ui_blenderAnimSelectorGroup);
+var ui_blenderAnimRefreshSelector = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimSelectorGroup,'',DuAEF.DuBinary.toFile(w14_update_m),"Refresh the list of animations",DuAEF.DuBinary.toFile(w14_update_l));
+ui_blenderAnimRefreshSelector.alignment = ['right','top'];
+var ui_blenderAnimValidGroup = DuAEF.DuScriptUI.addGroup(ui_blenderAnimateGroup);
+ui_blenderAnimValidGroup.alignment = ['fill','center'];
+var ui_blenderAnimCancelButton = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_blenderAnimValidButton = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimValidGroup,"Set Anim",DuAEF.DuBinary.toFile(w25_check_g),"Sets the animation to the blender layer.",DuAEF.DuBinary.toFile(w25_check_r));
+//setup
+var ui_blenderSetupGroup = DuAEF.DuScriptUI.addGroup(ui_blenderStackGroup,'column');
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup,settings.data.uiMode != 2 ? "Animations setup" : "");
+var ui_blenderAnimSetupGroup = DuAEF.DuScriptUI.addGroup(ui_blenderSetupGroup);
+var ui_blenderAnimNameEdit = DuAEF.DuScriptUI.addNiceEditText(ui_blenderAnimSetupGroup,'','','',"Animation name");
+ui_blenderAnimNameEdit.alignment = ['fill','fill'];
+var ui_blenderAnimSetButton = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimSetupGroup,"Set",DuAEF.DuBinary.toFile(w25_check_g),"Sets the animation, using the workarea.",DuAEF.DuBinary.toFile(w25_check_r));
+ui_blenderAnimSetButton.alignment = ['left','fill'];
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup,settings.data.uiMode != 2 ? "Blender setup" : "");
+ui_blenderSetupGroup.add('statictext',undefined,"Composition to set up:");
+var ui_blenderCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_blenderSetupGroup);
+ui_blenderSetupGroup.add('statictext',undefined,"Control from:");
+var ui_blenderCtrlCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_blenderSetupGroup);
+var ui_blenderPropsSelector = DuAEF.DuScriptUI.addSelector(ui_blenderSetupGroup);
+ui_blenderPropsSelector.addButton("All animated properties",DuAEF.DuBinary.toFile(w25_allprops_l),"Sets all the animated properties of the composition up.",DuAEF.DuBinary.toFile(w25_allprops_r));
+ui_blenderPropsSelector.addButton("Selected properties",DuAEF.DuBinary.toFile(w25_selectedprops_l),"Sets all the selected properties of the composition up.",DuAEF.DuBinary.toFile(w25_selectedprops_r));
+var ui_blenderSetupValidButton = DuAEF.DuScriptUI.addImageButton(ui_blenderSetupGroup,"Set the blender up",DuAEF.DuBinary.toFile(w25_check_g),"Sets the properties and the blender up.",DuAEF.DuBinary.toFile(w25_check_r));
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup);
+var ui_blenderSetupCancelButton = DuAEF.DuScriptUI.addImageButton(ui_blenderSetupGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+ui_blenderSetupGroup.visible = false;
+
 // Extract Controllers
 var ui_extractControllersOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
-if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_extractControllersOptionsGroup,"Extract Controllers");
+DuAEF.DuScriptUI.addSeparator(ui_extractControllersOptionsGroup,settings.data.uiMode != 2 ? "Extract Controllers" : "");
 var ui_extractControllersMPSelector = DuAEF.DuScriptUI.addSelector(ui_extractControllersOptionsGroup);
 ui_extractControllersMPSelector.addButton("Use expressions",DuAEF.DuBinary.toFile(w25_js_l),"Use expressions to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_js_r));
 ui_extractControllersMPSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
@@ -1119,7 +1192,6 @@ var ui_extractControllersValidGroup = DuAEF.DuScriptUI.addGroup(ui_extractContro
 ui_extractControllersValidGroup.alignment = ['fill','top'];
 var ui_extractControllersCancelButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 var ui_extractControllersValidButton = DuAEF.DuScriptUI.addImageButton(ui_extractControllersValidGroup,"Extract!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
-
 
 // Interpolation options
 var ui_interpolationOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
@@ -1254,7 +1326,6 @@ DuAEF.DuScriptUI.addSeparator(ui_celAnimGroup);
 var ui_celAnimCancelButton = DuAEF.DuScriptUI.addImageButton(ui_celAnimGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 ui_celAnimCancelButton.alignment = ['center','top'];
 
-
 //Select keys
 var ui_selectKeysGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,'column');
 if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_selectKeysGroup,"Select keyframes");
@@ -1303,7 +1374,6 @@ var ui_ikToFkButton = DuAEF.DuScriptUI.addImageButton(ui_ikFkOptionsGroup,"Snap 
 var ui_ikFkSwitchButton = DuAEF.DuScriptUI.addImageButton(ui_ikFkOptionsGroup,"IK/FK Switch",DuAEF.DuBinary.toFile(w25_ikfk_l),"IK/FK Switch",DuAEF.DuBinary.toFile(w25_ikfk_r));
 var ui_ikFkCancelButton = DuAEF.DuScriptUI.addImageButton(ui_ikFkOptionsGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 
-
 //========= INIT ===================
 
 if (settings.data.motionTrailColor == undefined) settings.data.motionTrailColor = "EC1818";
@@ -1341,7 +1411,9 @@ ui_smartEaseEndButton.setChecked(true);
 ui_interpolationOptionsLayersSelector.setCurrentIndex(0);
 ui_interpolationOptionsPropsSelector.setCurrentIndex(1);
 ui_extractControllersMPSelector.setCurrentIndex(0);
+ui_blenderPropsSelector.setCurrentIndex(0);
 setCurrentAnimationPanel(0);
+setCurrentBlenderPanel(0);
 
 //========== CONNECT EVENTS ========
 
@@ -1419,6 +1491,13 @@ ui_copyPasteAllLayersSelector.onChange = ui_copyPasteAllLayersSelector_changed;
 ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
 ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 
+ui_blenderButton.onClick = function () { ui_blenderCompSelector.setComps(); ui_blenderCtrlCompSelector.setComps(); setCurrentAnimationPanel(12); };
+ui_blenderAnimateButton.onClick = function () { setCurrentBlenderPanel(0); };
+ui_blenderSetupButton.onClick = function () { ui_blenderCompSelector.setComps(); ui_blenderCtrlCompSelector.setComps(); setCurrentBlenderPanel(1); };
+ui_blenderAnimCancelButton.onClick = function () { setCurrentAnimationPanel(7); };
+ui_blenderSetupCancelButton.onClick = function () { setCurrentAnimationPanel(7); };
+ui_blenderSetupValidButton.onClick = ui_blenderSetupValidButton_clicked;
+
 ui_extractControllersButton.onClick = shared.extractControllers;
 ui_extractControllersValidButton.onClick = function () { shared.extractControllers(); setCurrentAnimationPanel(7); };
 if (DuAEF.DuAE.App.version >= 15.1)
@@ -1427,7 +1506,6 @@ if (DuAEF.DuAE.App.version >= 15.1)
 }
 ui_extractControllersCancelButton.onClick = function () {setCurrentAnimationPanel(7);};
 ui_extractControllersMPSelector.onChange = ui_extractControllersMPSelector_changed;
-
 
 ui_exposureButton.onClick = ui_exposureValidButton.onClick = ui_exposureButton_clicked;
 ui_exposureCancelButton.onClick = function() {setCurrentAnimationPanel(7);};
