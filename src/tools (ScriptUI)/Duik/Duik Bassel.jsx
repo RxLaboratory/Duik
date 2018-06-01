@@ -163,12 +163,12 @@
 	var ui_palette = DuAEF.DuScriptUI.createUI(obj,'Duik Bassel');
 
 	//layout
-	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
+	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette.contents);
 	DuAEF.DuScriptUI.setBackgroundColor(ui_topGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 	//DuAEF.DuScriptUI.addSeparator(ui_palette);
-	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
+	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette.contents,'stack');
 	ui_mainGroup.alignment = ['fill','top'];
-	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
+	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette.contents);
 	ui_bottomGroup.alignment = ['fill','bottom'];
 
 	//=== TOP LEFT TOOLS ===

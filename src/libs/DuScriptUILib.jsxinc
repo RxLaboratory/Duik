@@ -93,6 +93,18 @@ DuAEF.DuScriptUI.defaultMargins = 2;
 */
 DuAEF.DuScriptUI.uiStrings = [];
 
+
+DuAEF.DuScriptUI.highlightedControls = [];
+
+DuAEF.DuScriptUI.dimControls = function(e)
+{
+	for (var i = DuAEF.DuScriptUI.highlightedControls.length-1; i >= 0; i--)
+	{
+		DuAEF.DuScriptUI.highlightedControls[i].dim();
+		DuAEF.DuScriptUI.highlightedControls.pop();
+	}
+}
+
 /**
  * Adjust the color according to the brightness setting of After Effects
  * @memberof DuAEF.DuScriptUI
@@ -175,11 +187,45 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 
 	if (myPal == null) throw "Failed to create User Interface.";
 
-	// Margins and alignment
-	myPal.margins = DuAEF.DuScriptUI.defaultMargins;
-	myPal.spacing = DuAEF.DuScriptUI.defaultSpacing;
-	myPal.alignChildren = DuAEF.DuScriptUI.defaultColumnAlignment;
-	myPal.orientation = "column";
+	myPal.margins = 0;
+	myPal.spacing = 0;
+
+	//create margins to dim buttons
+	var topMargin = myPal.add('group');
+	topMargin.minimumSize.height = DuAEF.DuScriptUI.defaultMargins;
+	topMargin.alignment = ['fill','top'];
+	topMargin.margins = 0;
+	topMargin.spacing = 0;
+
+	var mainRow = myPal.add('group');
+	mainRow.alignment = DuAEF.DuScriptUI.defaultColumnAlignment;
+	mainRow.alignChildren = DuAEF.DuScriptUI.defaultColumnAlignment;
+	mainRow.margins = 0;
+	mainRow.spacing = 0;
+
+	var leftMargin = mainRow.add('group');
+	leftMargin.minimumSize.width = leftMargin.preferredSize.width = DuAEF.DuScriptUI.defaultMargins;
+	leftMargin.alignment = ['left','fill'];
+	leftMargin.margins = 0;
+	leftMargin.spacing = 0;
+
+	myPal.contents = mainRow.add('group');
+	myPal.contents.margins = 0;
+	myPal.contents.spacing = DuAEF.DuScriptUI.defaultSpacing;
+	myPal.contents.alignChildren = DuAEF.DuScriptUI.defaultColumnAlignment;
+	myPal.contents.orientation = "column";
+
+	var rightMargin = mainRow.add('group');
+	rightMargin.minimumSize.width = rightMargin.preferredSize.width = DuAEF.DuScriptUI.defaultMargins;
+	rightMargin.alignment = ['right','fill'];
+	rightMargin.margins = 0;
+	rightMargin.spacing = 0;
+
+	var bottomMargin = myPal.add('group');
+	bottomMargin.minimumSize.height = bottomMargin.preferredSize.height = DuAEF.DuScriptUI.defaultMargins;
+	bottomMargin.alignment = ['fill','bottom'];
+	bottomMargin.margins = 0;
+	bottomMargin.spacing = 0;
 
 	myPal.refreshUI = function (scriptFile)
 	{
@@ -223,6 +269,12 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 
 		return refresh.call(myPal);
 	}
+
+	myPal.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
+	//topMargin.addEventListener("mouseover",myPal.dimButtons);
+	//leftMargin.addEventListener("mouseover",myPal.dimButtons);
+	//rightMargin.addEventListener("mouseover",myPal.dimButtons);
+	//bottomMargin.addEventListener("mouseover",myPal.dimButtons);
 
 	return myPal;
 }
@@ -426,17 +478,20 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		}
 	}
 
-	imageButton.mouseOver = function (e)
+	imageButton.highlight = function (e)
 	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
 		if (label)
 		{
 			DuAEF.DuScriptUI.setTextColor(imageButton.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
 			DuAEF.DuScriptUI.setBackgroundColor(imageButton.group,DuAEF.DuJS.Color.Colors.DARK_GREY);
 		}
+		DuAEF.DuScriptUI.highlightedControls.push(imageButton);
 	}
 
-	imageButton.mouseOut = function (e)
+	imageButton.dim = function ()
 	{
 		if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
 		if (label)
@@ -451,14 +506,13 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 	// Hack - CS6 Bug on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
-		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
-		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.highlight);
 	}
 	else
 	{
-		imageButton.addEventListener("mouseover",imageButton.mouseOver);
-		imageButton.addEventListener("mouseout",imageButton.mouseOut);
+		imageButton.addEventListener("mouseover",imageButton.highlight);
 	}
+
 
 	imageButton.help = {};
 	imageButton.help.title = '';
@@ -639,8 +693,10 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		try { imageButton.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
 	}
 
-	imageButton.mouseOver = function (e)
+	imageButton.highlight = function (e)
 	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
 		if (label)
 		{
@@ -648,9 +704,10 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 			if (imageButton.checked) imageButton.checkbox.image = imageButton.iconCheckedOver;
 			else imageButton.checkbox.image = imageButton.iconUncheckedOver;
 		}
+		DuAEF.DuScriptUI.highlightedControls.push(imageButton);
 	}
 
-	imageButton.mouseOut = function (e)
+	imageButton.dim = function (e)
 	{
 		if (label) DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 		if (imageButton.checked)
@@ -669,13 +726,11 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	// Hack - CS6 Bug on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
-		if (label) imageButton.label.addEventListener("mouseover",imageButton.mouseOver);
-		if (label) imageButton.label.addEventListener("mouseout",imageButton.mouseOut);
+		if (label) imageButton.label.addEventListener("mouseover",imageButton.highlight);
 	}
 	else
 	{
-		imageButton.group.addEventListener("mouseover",imageButton.mouseOver);
-		imageButton.group.addEventListener("mouseout",imageButton.mouseOut);
+		imageButton.group.addEventListener("mouseover",imageButton.highlight);
 	}
 
 	imageButton.help = {};
@@ -773,20 +828,22 @@ DuAEF.DuScriptUI.addNiceCheckBox = function (container,text,helpTip,color)
 		try { niceCheckBox.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured at line ' + e.line + '\n\n' + e.description); }
 	}
 
-	niceCheckBox.mouseOver = function (e)
+	niceCheckBox.highlight = function (e)
 	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
 		DuAEF.DuScriptUI.setTextColor(niceCheckBox.label,DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		DuAEF.DuScriptUI.highlightedControls.push(niceCheckBox);
 	}
 
-	niceCheckBox.mouseOut = function (e)
+	niceCheckBox.dim = function (e)
 	{
 		DuAEF.DuScriptUI.setTextColor(niceCheckBox.label,niceCheckBox.color);
 	}
 
 	niceCheckBox.label.addEventListener("mousedown",niceCheckBox.labelClicked,false);
 	niceCheckBox.checkBox.onClick = niceCheckBox.checkBoxClicked;
-	niceCheckBox.addEventListener("mouseover",niceCheckBox.mouseOver);
-	niceCheckBox.addEventListener("mouseout",niceCheckBox.mouseOut);
+	niceCheckBox.addEventListener("mouseover",niceCheckBox.highlight);
 
 	return niceCheckBox;
 }
@@ -1325,15 +1382,18 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	}
 
 	//mouse over
-	selector.mouseOver = function (e)
+	selector.highlight = function (e)
 	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
 		selector.menuButton.image = selector.menuImageOver;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
 		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
 		if (selector.imageOver != '') selector.icon.image = selector.imageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
 	}
 
-	selector.mouseOut = function (e)
+	selector.dim = function (e)
 	{
 		selector.menuButton.image = selector.menuImage;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
@@ -1344,13 +1404,11 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	// Hack - CS6 Bugs on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
-		selector.label.addEventListener("mouseover",selector.mouseOver);
-		selector.label.addEventListener("mouseout",selector.mouseOut);
+		selector.label.addEventListener("mouseover",selector.highlight);
 	}
 	else
 	{
-		selector.addEventListener("mouseover",selector.mouseOver);
-		selector.addEventListener("mouseout",selector.mouseOut);
+		selector.addEventListener("mouseover",selector.highlight);
 	}
 	selector.addEventListener("click",selector.clicked,true);
 
@@ -1576,6 +1634,36 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		selector.setCurrentIndex(selector.popup.list.selection.index);
 		if (!cs6) selector.popup.hide();
 	};
+
+	//mouse over
+	selector.highlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+		selector.menuButton.image = selector.menuImageOver;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		if (selector.imageOver != '') selector.icon.image = selector.imageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
+	}
+
+	selector.dim = function (e)
+	{
+		selector.menuButton.image = selector.menuImage;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		if (selector.image != '') selector.icon.image = selector.image;
+	}
+
+	// Hack - CS6 Bugs on mouseover with images
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
+	{
+		selector.label.addEventListener("mouseover",selector.highlight);
+	}
+	else
+	{
+		selector.addEventListener("mouseover",selector.highlight);
+	}
 
 	if (cs6) selector.refreshButton.addEventListener("mousedown",selector.refresh,false);
 
@@ -1879,6 +1967,36 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	};
 
 	selector.onChange = function(){};
+
+	//mouse over
+	selector.highlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+		selector.menuButton.image = selector.menuImageOver;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
+		if (selector.imageOver != '') selector.icon.image = selector.imageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
+	}
+
+	selector.dim = function (e)
+	{
+		selector.menuButton.image = selector.menuImage;
+		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		if (selector.image != '') selector.icon.image = selector.image;
+	}
+
+	// Hack - CS6 Bugs on mouseover with images
+	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
+	{
+		selector.label.addEventListener("mouseover",selector.highlight);
+	}
+	else
+	{
+		selector.addEventListener("mouseover",selector.highlight);
+	}
 
 	return selector;
 }
