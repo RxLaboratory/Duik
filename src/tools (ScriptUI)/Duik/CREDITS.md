@@ -25,6 +25,7 @@ __Thanks to:__
     Assia Chioukh and Quentin Saint-Georges – User Guides composition
     Motion Cafe – Ideas and feedback
     Fous d’anim – Ideas and feedback
+    Lars Jandel - Helping fix the "modal dialog" bug
     All 258 Duik 15 indiegogo backers for making this libDuik possible!
 
 __Duik makes use of:__
