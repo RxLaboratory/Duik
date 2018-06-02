@@ -39,6 +39,8 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 #include "icons/w14_cancel_l.png.jsxinc"
 #include "icons/w14_comp_l.png.jsxinc"
 #include "icons/w14_comp_m.png.jsxinc"
+#include "icons/w14_eyedropper_m.png.jsxinc"
+#include "icons/w14_eyedropper_l.png.jsxinc"
 
 /**
 * ScriptUI tools
@@ -93,9 +95,10 @@ DuAEF.DuScriptUI.defaultMargins = 2;
 */
 DuAEF.DuScriptUI.uiStrings = [];
 
-
+//low-level undocumented list: keeps the currently highlighted controls
 DuAEF.DuScriptUI.highlightedControls = [];
 
+//low-level undocumented function: dims all currently highlighted controls
 DuAEF.DuScriptUI.dimControls = function(e)
 {
 	for (var i = DuAEF.DuScriptUI.highlightedControls.length-1; i >= 0; i--)
@@ -271,10 +274,10 @@ DuAEF.DuScriptUI.createUI = function (container, scriptName)
 	}
 
 	myPal.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
-	//topMargin.addEventListener("mouseover",myPal.dimButtons);
-	//leftMargin.addEventListener("mouseover",myPal.dimButtons);
-	//rightMargin.addEventListener("mouseover",myPal.dimButtons);
-	//bottomMargin.addEventListener("mouseover",myPal.dimButtons);
+	topMargin.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
+	leftMargin.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
+	rightMargin.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
+	bottomMargin.addEventListener("mouseover",DuAEF.DuScriptUI.dimControls);
 
 	return myPal;
 }
@@ -1332,10 +1335,12 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	//the image
 	selector.image = '';
 	selector.icon = selector.add('image');
+	selector.icon.alignment = ['left','center'];
 
 	//the text
 	selector.label = selector.add('statictext',undefined,'');
 	selector.label.helpTip = '';
+	selector.label.alignment = ['fill','center'];
 
 	//the image over
 	selector.imageOver = '';
@@ -1470,7 +1475,12 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	selector.margins = 2;
 	selector.spacing = 5;
 	selector.alignment = ['fill','top'];
-	selector.alignChildren = ['center','center'];
+	selector.mainGroup =  selector.add('group');
+	selector.mainGroup.orientation = 'row';
+	selector.mainGroup.margins = 0;
+	selector.mainGroup.spacing = 5;
+	selector.mainGroup.alignment = ['fill','fill'];
+	selector.mainGroup.alignChildren = ['center','center'];
 	DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 
 	//init
@@ -1486,12 +1496,12 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	{
 		//the menu button
 		selector.menuImage = DuAEF.DuBinary.toFile(w14_layers_m);
-		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
 		selector.menuButton.alignment = ['left','center'];
 
 		//the dropdownlist
 		selector.popup = {};
-		selector.popup.list = selector.add('dropdownlist');
+		selector.popup.list = selector.mainGroup.add('dropdownlist');
 		selector.popup.list.alignment = ['fill','center'];
 
 		//the refresh button
@@ -1505,11 +1515,11 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		//the menu button
 		selector.menuImage = DuAEF.DuBinary.toFile(w14_layers_m);
 		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_layers_l);
-		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
 		selector.menuButton.alignment = ['left','center'];
 
 		//the text
-		selector.label = selector.add('statictext',undefined,'None');
+		selector.label = selector.mainGroup.add('statictext',undefined,'None');
 		selector.label.helpTip = '';
 		selector.label.alignment = ['fill','center'];
 
@@ -1540,25 +1550,14 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 			selector.popup.show();
 		}
 
-		selector.mouseOver = function (e)
-		{
-			selector.menuButton.image = selector.menuImageOver;
-			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
-			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
-		}
-
-		selector.mouseOut = function (e)
-		{
-			selector.menuButton.image = selector.menuImage;
-			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
-			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
-		}
-
-		selector.addEventListener("mouseover",selector.mouseOver);
-		selector.addEventListener("mouseout",selector.mouseOut);
-
-		selector.addEventListener("click",selector.clicked,true);
+		selector.mainGroup.addEventListener("click",selector.clicked,true);
 	}
+
+	//the pick button
+	selector.pickImage = DuAEF.DuBinary.toFile(w14_eyedropper_m);
+	selector.pickImageOver = DuAEF.DuBinary.toFile(w14_eyedropper_l);
+	selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	selector.pickButton.alignment = ['right','center'];
 
 	selector.popup.list.add('item',"None");
 	selector.popup.list.selection = 0;
@@ -1646,24 +1645,41 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		DuAEF.DuScriptUI.highlightedControls.push(selector);
 	}
 
+	selector.pickHighlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+		selector.pickButton.image = selector.pickImageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
+	}
+
 	selector.dim = function (e)
 	{
 		selector.menuButton.image = selector.menuImage;
+		selector.pickButton.image = selector.pickImage;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	}
+
+	selector.pick = function ()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length > 0) selector.setCurrentIndex(layers[0].index);
 	}
 
 	// Hack - CS6 Bugs on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
 		selector.label.addEventListener("mouseover",selector.highlight);
+		selector.refreshButton.addEventListener("mousedown",selector.refresh,false);
 	}
 	else
 	{
-		selector.addEventListener("mouseover",selector.highlight);
+		selector.mainGroup.addEventListener("mouseover",selector.highlight);
+		selector.pickButton.addEventListener("mouseover",selector.pickHighlight);
 	}
 
-	if (cs6) selector.refreshButton.addEventListener("mousedown",selector.refresh,false);
+	selector.pickButton.addEventListener("click",selector.pick);
 
 	selector.onChange = function(){};
 
@@ -1749,6 +1765,10 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
  * @property {Selector~onChange} onChange  - The function to execute when the index changes.<br />
  * You can set your own function here, which must take no argument.<br />
  * The method is called after the index has changed.
+ * @property {Selector~filterComps} filterComps - A function which gets the comps to set in the selector.<br />
+ * The default function will get all the comps in the project,<br />
+ * You can set your own function here, which must take no argument.<br />
+ * The function must return an array of CompItem.
  */
 
 /**
@@ -1757,6 +1777,17 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
  * @callback CompSelector~onChange
  * @memberof CompSelector
  */
+
+
+ /**
+  * A function which gets the comps to set in the selector.<br />
+  * The default function will get all the comps in the project,<br />
+  * assign another function to this callback if you need to filter these comps.<br />
+  * The function must return an array of CompItem.
+  * @callback CompSelector~filterComps
+  * @memberof CompSelector
+  * @return {CompItem[]} The compositions to set in the selector.
+  */
 
 /**
  * Changes the selection and the current comp id of the selector
@@ -1771,7 +1802,7 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
 * @method
 * @memberof CompSelector
 * @name setComps
-* @param {CompItem[]} comps - The list of compositions
+* @param {CompItem[]} [comps] - The list of compositions. By default, will use {@link CompSelector.filterComps()} to get the comps.
 */
 
 /**
@@ -1796,7 +1827,12 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	selector.margins = 2;
 	selector.spacing = 5;
 	selector.alignment = ['fill','top'];
-	selector.alignChildren = ['center','center'];
+	selector.mainGroup =  selector.add('group');
+	selector.mainGroup.orientation = 'row';
+	selector.mainGroup.margins = 0;
+	selector.mainGroup.spacing = 5;
+	selector.mainGroup.alignment = ['fill','fill'];
+	selector.mainGroup.alignChildren = ['center','center'];
 	DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 
 	//init
@@ -1812,12 +1848,12 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	{
 		//the menu button
 		selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
-		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
 		selector.menuButton.alignment = ['left','center'];
 
 		//the dropdownlist
 		selector.popup = {};
-		selector.popup.list = selector.add('dropdownlist');
+		selector.popup.list = selector.mainGroup.add('dropdownlist');
 		selector.popup.list.alignment = ['fill','center'];
 	}
 	else
@@ -1825,11 +1861,11 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 		//the menu button
 		selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
 		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_comp_l);
-		selector.menuButton = selector.add('image',undefined,selector.menuImage);
+		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
 		selector.menuButton.alignment = ['left','center'];
 
 		//the text
-		selector.label = selector.add('statictext',undefined,'None');
+		selector.label = selector.mainGroup.add('statictext',undefined,'None');
 		selector.label.helpTip = '';
 		selector.label.alignment = ['fill','center'];
 
@@ -1857,44 +1893,33 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 
 			selector.popup.show();
 		}
-
-		selector.mouseOver = function (e)
-		{
-			selector.menuButton.image = selector.menuImageOver;
-			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
-			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
-		}
-
-		selector.mouseOut = function (e)
-		{
-			selector.menuButton.image = selector.menuImage;
-			DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
-			DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
-		}
-
-		selector.addEventListener("mouseover",selector.mouseOver);
-		selector.addEventListener("mouseout",selector.mouseOut);
-
-		selector.addEventListener("click",selector.clicked,true);
 	}
 
+	//the pick button
+	selector.pickImage = DuAEF.DuBinary.toFile(w14_eyedropper_m);
+	selector.pickImageOver = DuAEF.DuBinary.toFile(w14_eyedropper_l);
+	selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	selector.pickButton.alignment = ['right','center'];
+
+	//the refresh button
+	selector.refreshImage = DuAEF.DuBinary.toFile(w14_update_m);
+	selector.refreshImageOver = DuAEF.DuBinary.toFile(w14_update_l);
+	selector.refreshButton = selector.add('image',undefined,selector.refreshImage);
+	selector.refreshButton.alignment = ['right','center'];
+
 	var itemNone = selector.popup.list.add('item',"None");
-	itemNone.id = -1;
-	var itemActive = selector.popup.list.add('item',"Active Composition");
-	itemActive.id = 0;
+	itemNone.id = 0;
 	selector.popup.list.selection = 0;
 
-	selector.setComps = function(comps)
+	selector.setComps = function()
 	{
-		if (typeof comps === 'undefined') comps = DuAEF.DuAE.Project.getComps();
+		var comps = selector.filterComps();
 		selector.pauseRefresh = true;
 
 		var prevId = selector.id;
 		selector.popup.list.removeAll();
 		var itemNone = selector.popup.list.add('item',"None");
-		itemNone.id = -1;
-		var itemActive = selector.popup.list.add('item',"Active composition");
-		itemActive.id = 0;
+		itemNone.id = 0;
 		var it = new Iterator(comps);
 		it.do(function(comp)
 		{
@@ -1915,15 +1940,11 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 
 	selector.setCurrentId = function (id)
 	{
-		if (id < -1) id = -1;
+		if (id < 0) id = 0;
 
 		selector.pauseRefresh = true;
 
-		if (id == -1)
-		{
-			selector.popup.list.selection = 0;
-		}
-		else if (id == 0)
+		if (id == 0)
 		{
 			selector.popup.list.selection = 1;
 		}
@@ -1977,11 +1998,35 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 		DuAEF.DuScriptUI.highlightedControls.push(selector);
 	}
 
+	selector.refreshHighlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+		selector.refreshButton.image = selector.refreshImageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
+	}
+
+	selector.pickHighlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+		selector.pickButton.image = selector.pickImageOver;
+		DuAEF.DuScriptUI.highlightedControls.push(selector);
+	}
+
 	selector.dim = function (e)
 	{
 		selector.menuButton.image = selector.menuImage;
+		selector.refreshButton.image = selector.refreshImage;
+		selector.pickButton.image = selector.pickImage;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	}
+
+	selector.pick = function ()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (comp) selector.setCurrentId(comp.id);
 	}
 
 	// Hack - CS6 Bugs on mouseover with images
@@ -1991,8 +2036,17 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	}
 	else
 	{
-		selector.addEventListener("mouseover",selector.highlight);
+		selector.mainGroup.addEventListener("mouseover",selector.highlight);
+		selector.refreshButton.addEventListener("mouseover",selector.refreshHighlight);
+		selector.pickButton.addEventListener("mouseover",selector.pickHighlight);
 	}
+
+	selector.mainGroup.addEventListener("click",selector.clicked,true);
+	selector.refreshButton.addEventListener("click",selector.setComps);
+	selector.pickButton.addEventListener("click",selector.pick);
+
+	selector.onChange = function(){};
+	selector.filterComps = function(){ var comps = DuAEF.DuAE.Project.getComps(); alert(comps); return comps; };
 
 	return selector;
 }
