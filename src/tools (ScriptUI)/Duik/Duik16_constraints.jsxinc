@@ -734,11 +734,28 @@ function ui_blenderAnimSetButton_clicked()
 	var comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return;
 	var name = ui_blenderAnimNameEdit.text;
-	if (name == '') name = DuAEF.DuAE.Comp.newUniqueMarkerName("anim", comp);
-	else name = DuAEF.DuAE.Comp.newUniqueMarkerName(name, comp);
+	var markerProp = null;
+	if (DuAEF.DuAE.App.version >= 14.0)
+	{
+		markerProp = comp.markerProperty;
+		if (name == '') name = DuAEF.DuAE.Comp.newUniqueMarkerName("anim", comp);
+		else name = DuAEF.DuAE.Comp.newUniqueMarkerName(name, comp);
+	}
+	else
+	{
+		var markerLayer = comp.layer("Duik | Animation blender");
+		if (!markerLayer)
+		{
+			markerLayer = comp.layers.addNull();
+			markerLayer.name = "Duik | Animation blender";
+		}
+		if (name == '') name = DuAEF.DuAE.Layer.newUniqueMarkerName("anim", markerLayer);
+		else name = DuAEF.DuAE.Layer.newUniqueMarkerName(name, markerLayer);
+		markerProp = markerLayer.property('ADBE Marker');
+	}
 	var marker = new MarkerValue(name);
 	marker.duration = comp.workAreaDuration;
-	comp.markerProperty.setValueAtTime(comp.workAreaStart,marker);
+	markerProp.setValueAtTime(comp.workAreaStart,marker);
 }
 
 //========== UI ==============
