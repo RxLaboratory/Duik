@@ -49,10 +49,12 @@ Each file will be converted to a string, stored in a variable named after the fi
 		for (var j = 0, numJ = files.length; j < numJ; j++)
 		{
 			var file = files[j];
-			data += 'var ' + file.name + 'Help = ';
+			var re = /-/g;
+			var varName = file.name.replace(re,'');
+			data += 'var ' + varName + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + file.name + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name + '"\n\n';
+			data += 'var ' + varName + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name + '"\n\n';
 		}
 	}
 
