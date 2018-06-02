@@ -12,6 +12,7 @@ function setCurrentConstraintsPanel(panel)
 	ui_autorigOptionsGroup.visible = panel == 4;
 	ui_IKOptionsGroup.visible = panel == 5;
 	ui_parentCompGroup.visible = panel == 6;
+	ui_blenderSetupGroup.visible = panel == 7;
 }
 
 function initConstraintsUI()
@@ -715,6 +716,20 @@ function ui_parentCompValidButton_clicked()
 
 }
 
+function ui_blenderSetupValidButton_clicked()
+{
+	var animComp = ui_blenderCompSelector.getComp();
+	var controlComp = ui_blenderCtrlCompSelector.getComp();
+	var selectedProps = ui_blenderPropsSelector.index == 1;
+
+	app.beginUndoGroup('Duik | ' + "Animation blender setup");
+
+	if (animComp && controlComp) DuAEF.Duik.AnimationBlender.setup(animComp,controlComp,selectedProps);
+
+	app.endUndoGroup();
+}
+
+
 //========== UI ==============
 var ui_constraintsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'stack');
 
@@ -727,6 +742,8 @@ var ui_autorigOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_autorigGroup,''
 ui_autorigOptionsButton.alignment = ['right','center'];
 
 var ui_connectorButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsGeneralGroup,"Connector...",DuAEF.DuBinary.toFile(w32_constraint_l),"Connect any property to any master property",DuAEF.DuBinary.toFile(w32_constraint_r));
+
+var ui_blenderSetupButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsGeneralGroup,"Animation blender...",DuAEF.DuBinary.toFile(w25_blenderedit_l),"Setup a composition with the animation blender, to trigger animations with markers, and blend them together.",DuAEF.DuBinary.toFile(w25_blenderedit_r));
 
 var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,'row');
 //ui_bonesGroup.alignment = ['fill','top'];
@@ -764,9 +781,30 @@ if (settings.data.uiMode != 0)
 	var ui_zeroButton = DuAEF.DuScriptUI.addImageButton(ui_constraintsToolsGroup,"Add zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer",DuAEF.DuBinary.toFile(w18_zero_r));
 }
 
+//blender
+var ui_blenderSetupGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup,settings.data.uiMode != 2 ? "Blender animations" : "");
+var ui_blenderAnimSetupGroup = DuAEF.DuScriptUI.addGroup(ui_blenderSetupGroup);
+var ui_blenderAnimNameEdit = DuAEF.DuScriptUI.addNiceEditText(ui_blenderAnimSetupGroup,'','','',"Animation name");
+ui_blenderAnimNameEdit.alignment = ['fill','fill'];
+var ui_blenderAnimSetButton = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimSetupGroup,"Set",DuAEF.DuBinary.toFile(w25_check_g),"Sets the animation, using the workarea.",DuAEF.DuBinary.toFile(w25_check_r));
+ui_blenderAnimSetButton.alignment = ['left','fill'];
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup,settings.data.uiMode != 2 ? "Blender setup" : "");
+ui_blenderSetupGroup.add('statictext',undefined,"Composition to set up:");
+var ui_blenderCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_blenderSetupGroup);
+ui_blenderSetupGroup.add('statictext',undefined,"Control from:");
+var ui_blenderCtrlCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_blenderSetupGroup);
+var ui_blenderPropsSelector = DuAEF.DuScriptUI.addSelector(ui_blenderSetupGroup);
+ui_blenderPropsSelector.addButton("All animated properties",DuAEF.DuBinary.toFile(w14_allprops_l),"Sets all the animated properties of the composition up.",DuAEF.DuBinary.toFile(w14_allprops_r));
+ui_blenderPropsSelector.addButton("Selected properties",DuAEF.DuBinary.toFile(w14_selectedprops_l),"Sets all the selected properties of the composition up.",DuAEF.DuBinary.toFile(w14_selectedprops_r));
+var ui_blenderSetupValidButton = DuAEF.DuScriptUI.addImageButton(ui_blenderSetupGroup,"Set the blender up",DuAEF.DuBinary.toFile(w25_check_g),"Sets the properties and the blender up.",DuAEF.DuBinary.toFile(w25_check_r));
+DuAEF.DuScriptUI.addSeparator(ui_blenderSetupGroup);
+var ui_blenderSetupCancelButton = DuAEF.DuScriptUI.addImageButton(ui_blenderSetupGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+ui_blenderSetupGroup.visible = false;
+
 //parent between comps
 var ui_parentCompGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
-if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_parentCompGroup,"Parent accross comps");
+DuAEF.DuScriptUI.addSeparator(ui_parentCompGroup,settings.data.uiMode != 2 ? "Parent accross comps" : '');
 ui_parentCompGroup.add('statictext',undefined,"Composition:")
 var ui_parentCompCompSelector = DuAEF.DuScriptUI.addCompSelector(ui_parentCompGroup);
 ui_parentCompGroup.add('statictext',undefined,"Layer:")
@@ -956,6 +994,10 @@ if (settings.data.uiMode > 0)
 ui_ikOptionsSelector.onChange = ui_ikOptionsSelector_changed;
 if (settings.data.uiMode > 0) ui_bezierIKButton.onClick = shared.createBezierIK;
 ui_fkButton.onClick = ui_fkButton_clicked;
+
+ui_blenderSetupButton.onClick = function () { setCurrentConstraintsPanel(7); };
+ui_blenderSetupCancelButton.onClick = function () { setCurrentConstraintsPanel(0); };
+ui_blenderSetupValidButton.onClick = ui_blenderSetupValidButton_clicked;
 
 ui_connectorSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.SLIDER); ui_connectorPickButton_clicked(); }
 ui_connectorDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.DOUBLE_SLIDER); ui_connectorPickButton_clicked(); }
