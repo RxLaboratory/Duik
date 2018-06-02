@@ -978,6 +978,52 @@ function ui_extractControllersOptionsButton_clicked()
 	setCurrentAnimationPanel(11);
 }
 
+function ui_blenderAnimRefreshSelector_clicked()
+{
+	ui_blenderAnimSelector.removeAll();
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	if (layers.length == 0) return;
+	var layer = layers[0];
+	var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+	if (!params) return;
+	if (!params.animationBlenderComp) return;
+	var blenderComp = DuAEF.DuAE.Project.getItemById(params.animationBlenderComp);
+	if (!blenderComp) return;
+	//get all markers of the comp
+	var markers = null;
+	if (DuAEF.DuAE.App.version >= 14.0)
+	{
+		markers = blenderComp.markerProperty;
+	}
+	else
+	{
+		var markerLayer = blenderComp.layer("Duik | Animation blender");
+		if (!markerLayer)
+		{
+			markerLayer = blenderComp.layers.addNull();
+			markerLayer.name = "Duik | Animation blender";
+		}
+		markers = markerLayer.property('ADBE Marker');
+	}
+
+	for (var i = 1, num = markers.numKeys; i <= num; i++)
+	{
+		var name = markers.keyValue(i).comment;
+		ui_blenderAnimSelector.add('item',name);
+	}
+}
+
+function ui_blenderAnimValidButton_clicked()
+{
+	if (ui_blenderAnimSelector.selection < 0) return;
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	if (layers.length == 0) return;
+	var layer = layers[0];
+	var marker = new MarkerValue(ui_blenderAnimSelector.selection.text);
+	layer.property('ADBE Marker').setValueAtTime(layer.containingComp.time,marker);
+
+}
+
 //============ UI ===============
 
 var ui_animationMainGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'column');
@@ -1117,7 +1163,8 @@ DuAEF.DuScriptUI.addSeparator(ui_blenderGroup,settings.data.uiMode != 2 ? "Anima
 //animate
 var ui_blenderAnimateGroup = DuAEF.DuScriptUI.addGroup(ui_blenderGroup,'column');
 var ui_blenderAnimSelectorGroup = DuAEF.DuScriptUI.addGroup(ui_blenderAnimateGroup);
-var ui_blenderAnimSelector = DuAEF.DuScriptUI.addSelector(ui_blenderAnimSelectorGroup);
+var ui_blenderAnimSelector = ui_blenderAnimSelectorGroup.add("dropdownlist");
+ui_blenderAnimSelector.alignment = ['fill','fill'];
 var ui_blenderAnimRefreshSelector = DuAEF.DuScriptUI.addImageButton(ui_blenderAnimSelectorGroup,'',DuAEF.DuBinary.toFile(w14_update_m),"Refresh the list of animations",DuAEF.DuBinary.toFile(w14_update_l));
 ui_blenderAnimRefreshSelector.alignment = ['right','top'];
 var ui_blenderAnimValidGroup = DuAEF.DuScriptUI.addGroup(ui_blenderAnimateGroup);
@@ -1433,8 +1480,10 @@ ui_copyPasteAllLayersSelector.onChange = ui_copyPasteAllLayersSelector_changed;
 ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
 ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 
-ui_blenderButton.onClick = function () { setCurrentAnimationPanel(12); };
+ui_blenderButton.onClick = function () { ui_blenderAnimRefreshSelector_clicked(); setCurrentAnimationPanel(12); };
 ui_blenderAnimCancelButton.onClick = function () { setCurrentAnimationPanel(7); };
+ui_blenderAnimRefreshSelector.onClick = ui_blenderAnimRefreshSelector_clicked;
+ui_blenderAnimValidButton.onClick = ui_blenderAnimValidButton_clicked;
 
 ui_extractControllersButton.onClick = shared.extractControllers;
 ui_extractControllersValidButton.onClick = function () { shared.extractControllers(); setCurrentAnimationPanel(7); };
