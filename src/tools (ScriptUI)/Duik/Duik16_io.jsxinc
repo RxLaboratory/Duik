@@ -6,6 +6,7 @@ function setCurrentIOPanel(panel)
 	ui_importGroup.visible = panel == 0;
 	ui_exportGroup.visible = panel == 1;
 	ui_storyboarderGroup.visible = panel == 2;
+	ui_auditionGroup.visible = panel == 3;
 
 	if (panel == 0 || panel == 2)
 	{
@@ -67,6 +68,26 @@ function ui_storyboarderValidButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_exportAuditionButton_clicked()
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return null;
+
+	var saveFile = File.saveDialog("Where do you want to save the Audition session?","Audition: *.sesx");
+	if (!saveFile) return;
+
+	var audioActiveOnly = ui_auditionAudioActiveOnlyButton.checked;
+	var sampling = parseInt(ui_auditionSamplingButton.selection.text);
+	var bitrate = parseInt(ui_auditionBitrateButton.selection.text);
+	var master = ui_auditionMasterButton.selection.text;
+	var execute = ui_auditionExecuteButton.checked;
+	var transcode = ui_auditionTranscodeButton.checked;
+
+	if (master == '5.1') master = 'fivePointOne';
+
+	DuAEF.Audition.exportComp(saveFile,comp,audioActiveOnly,sampling,bitrate,master,execute,transcode);
+}
+
 //============ UI ===============
 
 var ui_ioGroup = DuAEF.DuScriptUI.addGroup(ui_mainGroup,'column');
@@ -88,7 +109,7 @@ var ui_importKritaButton = DuAEF.DuScriptUI.addImageButton(ui_importGroup,"Krita
 var ui_importStoryboardButtonGroup = DuAEF.DuScriptUI.addGroup(ui_importGroup);
 var ui_importStoryboardButton = DuAEF.DuScriptUI.addImageButton(ui_importStoryboardButtonGroup,"Storyboarder",DuAEF.DuBinary.toFile(w25_storyboard_l),"Import Storyboarder",DuAEF.DuBinary.toFile(w25_storyboard_r));
 var ui_importStoryboardOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_importStoryboardButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Storyboarder import options",DuAEF.DuBinary.toFile(w14_plus_r));
-ui_importStoryboardOptionsButton.group.alignment = ['right','center'];
+ui_importStoryboardOptionsButton.alignment = ['right','center'];
 
 ui_importAnimButton.enabled = false;
 ui_importRigButton.enabled = false;
@@ -97,14 +118,17 @@ ui_importTVPClipButton.enabled = false;
 
 var ui_exportGroup = DuAEF.DuScriptUI.addGroup(ui_ioTabsGroup,'column');
 DuAEF.DuScriptUI.addSeparator(ui_exportGroup,settings.data.uiMode != 2 ? "Export" : '');
-ui_exportGroup.alignment = ['center','top'];
-ui_exportGroup.alignChildren = ['left','top'];
 var ui_exportAnimButton = DuAEF.DuScriptUI.addImageButton(ui_exportGroup,"Animation",DuAEF.DuBinary.toFile(w25_exportanim_l),"Export animation",DuAEF.DuBinary.toFile(w25_exportanim_r));
 var ui_exportRigButton = DuAEF.DuScriptUI.addImageButton(ui_exportGroup,"Rig",DuAEF.DuBinary.toFile(w25_exportrig_l),"Export rig",DuAEF.DuBinary.toFile(w25_exportrig_r));
-var ui_exportAuditionButton = DuAEF.DuScriptUI.addImageButton(ui_exportGroup,"Audition",DuAEF.DuBinary.toFile(w25_audition_l),"Export to Audition",DuAEF.DuBinary.toFile(w25_audition_r));
+ui_auditionButtonGroup = DuAEF.DuScriptUI.addGroup(ui_exportGroup);
+var ui_exportAuditionButton = DuAEF.DuScriptUI.addImageButton(ui_auditionButtonGroup,"Audition...",DuAEF.DuBinary.toFile(w25_audition_l),"Export to Audition",DuAEF.DuBinary.toFile(w25_audition_r));
+var ui_exportAuditionOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_auditionButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Audition export options",DuAEF.DuBinary.toFile(w14_plus_r));
+ui_exportAuditionOptionsButton.alignment = ['right','center'];
 
-ui_exportGroup.enabled = false;
+ui_exportAnimButton.enabled = false;
+ui_exportRigButton.enabled = false;
 
+//Storyboarder
 var ui_storyboarderGroup = DuAEF.DuScriptUI.addGroup(ui_ioTabsGroup,'column');
 if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_storyboarderGroup,'Storyboarder');
 var ui_storyboarderTextSelector = DuAEF.DuScriptUI.addSelector(ui_storyboarderGroup);
@@ -120,8 +144,26 @@ ui_storyboarderValidGroup.alignment = ['fill','top'];
 var ui_storyboarderCancelButton = DuAEF.DuScriptUI.addImageButton(ui_storyboarderValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 var ui_storyboarderValidButton = DuAEF.DuScriptUI.addImageButton(ui_storyboarderValidGroup,"Import",DuAEF.DuBinary.toFile(w25_check_g),"Imports a storyboarder project",DuAEF.DuBinary.toFile(w25_check_r));
 
+//Audition
+var ui_auditionGroup = DuAEF.DuScriptUI.addGroup(ui_ioTabsGroup,'column');
+if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_auditionGroup,'Audition');
+var ui_auditionForm = DuAEF.DuScriptUI.addForm(ui_auditionGroup);
+var ui_auditionSamplingButton = DuAEF.DuScriptUI.addFormField(ui_auditionForm,"Audio sampling rate:",'dropdownlist',['192000','176400','96000','88200','64000','48000','44100','32000','22050','16000','11025','8000','6000'],"Sets the sampling rate of the exported audio files.")[1];
+var ui_auditionBitrateButton = DuAEF.DuScriptUI.addFormField(ui_auditionForm,"Audio sampling rate:",'dropdownlist',['32','24','16'],"Sets the bitrate of the exported audio files.")[1];
+var ui_auditionMasterButton = DuAEF.DuScriptUI.addFormField(ui_auditionForm,"Master:",'dropdownlist',['mono','stereo','5.1'],"Sets the channels of the master track.")[1];
+var ui_auditionAudioActiveOnlyButton = DuAEF.DuScriptUI.addImageCheckBox(ui_auditionGroup,"Audio active only",undefined,"Exports only the layers with active audio.",undefined);
+var ui_auditionTranscodeButton = DuAEF.DuScriptUI.addImageCheckBox(ui_auditionGroup,"Transcode and conform media",undefined,"Will transcode audio to ensure Audition compatibility.",undefined);
+var ui_auditionExecuteButton = DuAEF.DuScriptUI.addImageCheckBox(ui_auditionGroup,"Open session in Audtion",undefined,"Opens the session in Audition as soon as it is exported.",undefined);
+var ui_auditionValidGroup = DuAEF.DuScriptUI.addGroup(ui_auditionGroup);
+ui_storyboarderValidGroup.alignment = ['fill','top'];
+var ui_auditionCancelButton = DuAEF.DuScriptUI.addImageButton(ui_auditionValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+var ui_auditionValidButton = DuAEF.DuScriptUI.addImageButton(ui_auditionValidGroup,"Export",DuAEF.DuBinary.toFile(w25_check_g),"Exports a composition as an Audition session",DuAEF.DuBinary.toFile(w25_check_r));
+
 
 //========== INIT =================
+ui_auditionSamplingButton.selection = 5;
+ui_auditionBitrateButton.selection = 0;
+ui_auditionMasterButton.selection = 1;
 setCurrentIOPanel(0);
 
 
@@ -134,3 +176,7 @@ ui_importKritaButton.onClick = ui_importKritaButton_clicked;
 ui_importStoryboardOptionsButton.onClick = ui_importStoryboardOptionsButton_clicked;
 ui_storyboarderCancelButton.onClick = function(){setCurrentIOPanel(0);};
 ui_storyboarderValidButton.onClick = ui_importStoryboardButton.onClick = ui_storyboarderValidButton_clicked;
+
+ui_exportAuditionButton.onClick = ui_auditionValidButton.onClick = ui_exportAuditionButton_clicked;
+ui_auditionCancelButton.onClick = function(){setCurrentIOPanel(1);};
+ui_exportAuditionOptionsButton.onClick = function(){setCurrentIOPanel(3);};
