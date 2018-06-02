@@ -605,6 +605,20 @@ DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedPrope
 {
 	if (typeof selectedProperties === 'undefined') selectedProperties = false;
 
+	function getSelectedPropFilter(prop)
+	{
+		//check if there is an expression
+		if (prop.propertyType != PropertyType.PROPERTY) return false;
+		if (!prop.canSetExpression) return false;
+		if (prop.expression != '') return false;
+
+		if (selectedProperties) return prop.selected;
+		return true;
+	}
+
+	var props = DuAEF.DuAE.Comp.getAnimatedProps(getSelectedPropFilter,undefined,undefined,undefined,setupComp);
+
+
 	//create blender
 	var blenderCtrl = DuAEF.Duik.Controller.create(controlComp,DuAEF.Duik.Controller.Types.BLENDER);
 	blenderCtrl.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName("C | Blender | " + setupComp.name, controlComp);
@@ -629,18 +643,6 @@ DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedPrope
 	//default values
 	blenderFx(DuAEF.Duik.PseudoEffects.BLENDER.loopCheckbox).setValue(0);
 
-	function getSelectedPropFilter(prop)
-	{
-		//check if there is an expression
-		if (prop.propertyType != PropertyType.PROPERTY) return false;
-		if (!prop.canSetExpression) return false;
-		if (prop.expression != '') return false;
-		if (selectedProperties) return prop.selected;
-		return true;
-	}
-
-	var props = DuAEF.DuAE.Comp.getAnimatedProps(getSelectedPropFilter,undefined,undefined,undefined,setupComp);
-
 	var exp = '//Duik.blender\n' +
 		'var ctrl = comp("' + controlComp.name + '").layer("' + blenderCtrl.layer.name + '");\n' +
 		'var fx = ctrl.effect("' + blenderFx.name + '");\n' +
@@ -654,9 +656,10 @@ DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedPrope
 		'anim = 0;\n' +
 		'var animStartTime = ctrl.marker.key(ind).time;\n' +
 		'var animName = ctrl.marker.key(ind).comment;\n' +
-		'var animMarker = null;\n' +
-		'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n' +
-		'if (animMarker)\n' +
+		'var animMarker = null;\n';
+		if (DuAEF.DuAE.App.version >= 14.0) exp += 'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n';
+		else exp += 'try { animMarker = thisComp.layer("Duik | Animation blender").marker.key(animName); } catch(e) {}\n';
+		exp += 'if (animMarker)\n' +
 		'{\n' +
 		'var start = animMarker.time;\n' +
 		'var end = animMarker.time + animMarker.duration;\n' +
@@ -671,7 +674,7 @@ DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedPrope
 		'return valueAtTime(anim);\n' +
 		'}\n' +
 		'result = value;\n' +
-		'if (ctrl.marker.numKeys > 0 && fx.enabled) {\n' +
+		'if (ctrl.marker.numKeys > 1 && fx.enabled) {\n' +
 		'var currentMarker = ctrl.marker.nearestKey(time).index;\n' +
 		'if (ctrl.marker.key(currentMarker).time > time) currentMarker--;\n' +
 		'if (currentMarker > 0)\n' +
