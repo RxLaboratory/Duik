@@ -39,8 +39,11 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* A complete storyboard, as returned by DuAEF.WUStoryboarder.loadStoryboard
-* @typedef {Object} WUStoryboard
+* @class
+* @name WUStoryboard
+* @classdesc A complete Wonder Unit Storyboard, as returned by DuAEF.WUStoryboarder.loadStoryboard<br />
+* This is not a real class, and cannot be instanciated.<br />
+* Use DuAEF.WUStoryboarder.loadStoryboard to create it.
 * @property {string} version - The version of Storyboarder used to create this storyboard
 * @property {string} aspectRatio - The format of the board
 * @property {number} fps - The fps of the project
@@ -49,8 +52,10 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* A board
-* @typedef {Object} WUBoard
+* @class
+* @name WUBoard
+* @classdesc A board in a {@link WUStoryboard}<br />
+* This is not a real class, and cannot be instanciated.
 * @property {string} uid - A unique identifier for this board
 * @property {string} url - The file name of the main layer image
 * @property {boolean} newShot - Wether this board is a new shot or the next board of the previous shot
@@ -58,6 +63,20 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 * @property {int} number - The index of the board
 * @property {int} time - The time of the board, in ms
 * @property {int} duration - The duration of this board, in ms
+* @property {WULayer} layers - The layers of this board
+* @property {string|undefined} link - The file name of a linked psd, if any.
+*/
+
+/**
+* @class
+* @name WULayer
+* @classdesc A layer in a {@link WUBoard}<br />
+* This is not a real class, and cannot be instanciated.
+* @property {Object} reference - An object with two attributes:<br />
+* url (string) is the file name of the layer,<br />
+* opacity (flaot) its opacity, in the range [0.0, 1.0].
+* @property {Object} notes - An object with one attribute:<br />
+* url (string) is the file name of the layer.
 */
 
 /**
@@ -76,7 +95,7 @@ DuAEF.WUStoryboarder = {};
 DuAEF.WUStoryboarder.loadStoryboard = function(file)
 {
 	//open and parse file
-	data = DuAEF.DuJS.Fs.parseJSON(file);
+	var data = DuAEF.DuJS.Fs.parseJSON(file);
 
 	//check boards count
 	if (!data.boards) return null;
@@ -119,10 +138,23 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	if (!imagesFolder.exists) return -1;
 	//first board
 	var firstImageFile = new File(imagesPath + boards[0].url);
-	if (!firstImageFile.exists) return -1;
+	firstImageFile.psd = false;
+	if (!firstImageFile.exists)
+	{
+		//check if there is a psd
+		if (boards[0].link !== undefined)
+		{
+			firstImageFile = new File(imagesPath + boards[0].link);
+			firstImageFile.psd = true;
+			if (!firstImageFile.exists) return -1;
+		}
+		else return -1;
+	}
 	//size
 	//import first image to check size
-	var item = app.project.importFile(new ImportOptions(firstImageFile));
+	var importOptions = new ImportOptions(firstImageFile);
+	importOptions.importAs = ImportAsType.FOOTAGE;
+	var item = app.project.importFile(importOptions);
 	width = item.width;
 	height = overlayInfo ? item.height : item.height+200;
 	item.remove();
@@ -198,9 +230,36 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		}
 
 		//import
-		var mainFile = new File(imagesPath + board.url);
-		var mainItem = app.project.importFile(new ImportOptions(mainFile));
+		var mainFile;
+		var mainItem;
+		var psd = false;
+		//psd
+		if (board.link !== undefined)
+		{
+			var mainFile = new File(imagesPath + board.link);
+			var importOptions = new ImportOptions(mainFile);
+			importOptions.importAs = ImportAsType.COMP;
+			var mainItem = app.project.importFile(importOptions);
+			//move folder
+			for (var j = 1, num = app.project.numItems; j <= num; j++ )
+			{
+				var item = app.project.item(j);
+				if (item instanceof FolderItem && item.name.indexOf(mainItem.name) == 0)
+				{
+					item.parentFolder = imageFolder;
+					break;
+				}
+			}
+			psd = true;
+		}
+		//png
+		else
+		{
+			var mainFile = new File(imagesPath + board.url);
+			var mainItem = app.project.importFile(new ImportOptions(mainFile));
+		}
 		mainItem.parentFolder = imageFolder;
+
 		//add to comp
 		var shotLayer = shotComp.layers.add(mainItem,board.duration/1000);
 		shotLayer.label = 16;
@@ -282,7 +341,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		}
 
 		//add notes layer
-		if (board.layers.notes !== undefined)
+		if (board.layers.notes !== undefined && !psd)
 		{
 			var notesFile = new File(imagesPath + board.layers.notes.url);
 			var notesItem = app.project.importFile(new ImportOptions(notesFile));
@@ -296,7 +355,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		}
 
 		//add reference layer
-		if (board.layers.reference !== undefined)
+		if (board.layers.reference !== undefined && !psd)
 		{
 			var referenceFile = new File(imagesPath + board.layers.reference.url);
 			var referenceItem = app.project.importFile(new ImportOptions(referenceFile));
