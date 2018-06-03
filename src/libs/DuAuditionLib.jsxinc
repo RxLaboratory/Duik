@@ -103,7 +103,6 @@ DuAEF.Audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bit
 	}
 
 	//add clips and tracks to xml
-
 	var numTracks = 1;
 	for (var i = 0, num = audioLayers.length; i < num ; i++)
 	{
@@ -114,7 +113,7 @@ DuAEF.Audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bit
 		var trackChannelType = channelType;
 		//in 5.1, tracks are stereo anyway by default in Audition
 		if (trackChannelType == 'fivePointOne') trackChannelType = 'stereo';
-		var trackx = Duik.bridge.audition.createTrack('Track ' + index,10001+i,numTracks,trackChannelType);
+		var trackx = DuAEF.Audition.createTrack('Track ' + index,10001+i,numTracks,trackChannelType);
 
 		//get the source file
 		var sourceItem = layer.source;
@@ -156,22 +155,15 @@ DuAEF.Audition.exportComp = function (sesxFile,comp,audioActiveOnly,sampling,bit
 			}
 			var filex = DuAEF.Audition.createSourceFile(sourceFile,sourceId);
 			sesx.files.appendChild(filex);
-			sourceFiles.push([sourceFile,sourceId])
+			sourceFiles.push([sourceFile,sourceId]);
 		}
-
-		//gets cue points
-		var startPoint = layer.inPoint * sampling;
-		var endPoint = layer.outPoint * sampling;
-		var sourceInPoint = (layer.inPoint - layer.startTime) * sampling;
-		var sourceOutPoint = (layer.outPoint - layer.startTime) * sampling;
 
 		//create clip
 		var clipName = '';
-		if (Duik.mac) clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('/')+1,clipFile.fsName.lastIndexOf('.'));
-		else clipName = clipFile.fsName.substring(clipFile.fsName.lastIndexOf('\\')+1,clipFile.fsName.lastIndexOf('.'));
+		clipName = DuAEF.DuJS.Fs.getBasename(clipFile);
 		if (sourceItem.hasVideo) clipName = clipName + '_audio';
 
-		var clipx = DuAEF.Audition.createClip(clipName,sourceId,i,sourceInPoint,sourceOutPoint,startPoint,endPoint);
+		var clipx = DuAEF.Audition.createClip(clipName,sourceId,i,layer,sampling);
 
 		//add track and clipFile
 		trackx = trackx.appendChild(clipx[0]);
@@ -253,22 +245,77 @@ DuAEF.Audition.createSourceFile = function (file,id)
  * @param {string}  clipName			The clip name
  * @param {int}	 sourceId			The corresponding source file id
  * @param {int}	 id					A unique id for this clip
- * @param {float}   sourceInPoint	   The audio source in point
- * @param {float}   sourceOutPoint	  The audio source out point
- * @param {float}   startPoint		  The clip start point in the track
- * @param {float}   endPoint			The clip end point in the track
+ * @param {AVLayer}  [layer]			An After Effects layer to get infos
+ * @param {int}  [sampling=48000]		The audio sampling, in Hz.
+ * @param {float}   [sourceInPoint]	   The audio source in point
+ * @param {float}   [sourceOutPoint]	  The audio source out point
+ * @param {float}   [startPoint]		  The clip start point in the track
+ * @param {float}   [endPoint]			The clip end point in the track
  * @return {XML}  	The clip
  */
-DuAEF.Audition.createClip = function (clipName,sourceId,id,sourceInPoint,sourceOutPoint,startPoint,endPoint)
+DuAEF.Audition.createClip = function (clipName,sourceId,id,layer,sampling,sourceInPoint,sourceOutPoint,startPoint,endPoint)
 {
-	var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + clipName + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">' +
-		'<fadeIn crossFadeLinkType="linkedAsymmetric" endPoint="0" shape="0" startPoint="0" type="cosine"/>' +
+	if (typeof sampling === 'undefined') sampling = 48000;
+
+	var volume = 1;
+	var volumeKeyFrames = [];
+
+	if (typeof layer !== 'undefined')
+	{
+		//gets cue points
+		if (typeof startPoint === 'undefined') startPoint = layer.inPoint * sampling;
+		if (typeof endPoint === 'undefined') endPoint = layer.outPoint * sampling;
+		if (typeof sourceInPoint === 'undefined') sourceInPoint = (layer.inPoint - layer.startTime) * sampling;
+		if (typeof sourceOutPoint === 'undefined') sourceOutPoint = (layer.outPoint - layer.startTime) * sampling;
+
+		//get audio levels
+		var levels = layer.property('ADBE Audio Group').property('ADBE Audio Levels');
+		var val = levels.valueAtTime(0,false);
+		val = DuAEF.DuJS.Math.average(val);
+		volume = DuAEF.Audition.dBToVolume(val);
+
+		for (var i = 1, num = levels.numKeys; i <= num; i++)
+		{
+			var t = levels.keyTime(i)*sampling;
+			var v = levels.keyValue(i);
+			v = DuAEF.DuJS.Math.average(v);
+			v = DuAEF.Audition.dBToKeyFrame(v);
+			volumeKeyFrames.push([t,v]);
+		}
+	}
+
+	var xmlString = '<audioClip clipAutoCrossfade="true" crossFadeHeadClipID="-1" crossFadeTailClipID="-1" endPoint="' + endPoint + '" fileID="' + sourceId + '" hue="-1" id="' + id + '" lockedInTime="false" looped="false" name="' + clipName + '" offline="false" select="false" sourceInPoint="' + sourceInPoint + '" sourceOutPoint="' + sourceOutPoint + '" startPoint="' + startPoint + '" zOrder="0">';
+
+	//add volume
+	xmlString += '<component componentID="Audition.Fader" id="clipGain" name="volume" powered="true">' +
+		'<parameter index="0" name="volume" parameterValue="' + volume + '">';
+
+	//level keyframes
+	var numKeyframes = volumeKeyFrames.length;
+	if (numKeyframes > 0)
+	{
+		xmlString += '<parameterKeyframes enableSplines="false">';
+		for(var i = 0; i < numKeyframes; i++)
+		{
+			xmlString += '<parameterKeyframe sampleOffset="' + volumeKeyFrames[i][0] + '" select="false" type="linear" value="' + volumeKeyFrames[i][1] + '"/>';
+		}
+		xmlString += '</parameterKeyframes>';
+	}
+
+	//end volume
+	xmlString += '</parameter>' +
+		'<parameter index="1" name="static gain" parameterValue="1"/>' +
+		'</component>';
+
+	//end clip
+	xmlString += '<fadeIn crossFadeLinkType="linkedAsymmetric" endPoint="0" shape="0" startPoint="0" type="cosine"/>' +
 		'<fadeOut crossFadeLinkType="linkedAsymmetric" endPoint="' + (endPoint-startPoint) + '" shape="0" startPoint="' + (endPoint-startPoint) + '" type="cosine"/>' +
 		'<channelMap>' +
 		'<channel index="0" sourceIndex="0"/>' +
 		'<channel index="1" sourceIndex="1"/>' +
 		'</channelMap>' +
 		'</audioClip>';
+
 	var clipx = new XML(xmlString);
 
 	return clipx;
@@ -300,4 +347,46 @@ DuAEF.Audition.createMasterTrack = function (name,id,index,channelType)
 		'</masterTrack>';
 	var trackx = new XML(xmlString);
 	return trackx;
+}
+
+/**
+ * Converts an audio level in dB to a keyframe value used in .sesx files
+ * @memberof DuAEF.Audition
+ * @param {float}  dB		the level in dB
+ * @return {float}	The volume
+ */
+DuAEF.Audition.dBToKeyFrame = function (dB)
+{
+	if (dB == 0) return .65;
+
+	//get the absolute value
+	var absdB = Math.abs(dB);
+	//get the sign, 1 or -1
+	var sign = dB/absdB;
+	//conversion. The algorithm was obtained by reverse engineering a .sesx file
+	//this does not give the exact volume, but it's accurate enough.
+	var p = DuAEF.DuJS.Math.log10(1+absdB/11)*92.85;
+	//adjustments, and offset to set 0dB to 65%
+	//Audition max volume is 100% at 15dB
+	p = p*sign;
+	p = 65 + p;
+	//this gives a percent, we need a ratio
+	p = p/100;
+
+	return p;
+ }
+
+
+/**
+* Converts an audio level in dB to a volume used in .sesx files
+* @memberof DuAEF.Audition
+* @param {float}  dB		the level in dB
+* @return {float}	The volume
+*/
+DuAEF.Audition.dBToVolume = function (dB)
+{
+	//conversion. The algorithm was obtained by reverse engineering a .sesx file
+	//this does not give the exact volume, but it's accurate enough.
+	p = Math.pow(10,dB/20);
+	return p;
 }
