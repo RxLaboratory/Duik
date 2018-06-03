@@ -185,6 +185,7 @@
 	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
 	ui_cameraButton.setHelp('Camera',cameraHelp,cameraLink);
 	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
+	ui_ioButton.setHelp('Audition',ioHelp,ioLink);
 	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
 	var ui_helpButton = DuAEF.DuScriptUI.addImageButton(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
 	ui_helpButton.setHelp('Duik Bassel (v' + version + ')',helpHelp,'https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide');
