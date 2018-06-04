@@ -348,39 +348,43 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 	var comp = controller.containingComp;
 
 	var ikType = 2;
-	var ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.matchName);
+	var pseudoEffect = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+	var ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
 	if (!ikEffect)
 	{
-		ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.THREELAYER_IK.matchName);
+		pseudoEffect = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+		ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
 		ikType = 3;
 	}
 
 	if (!ikEffect) return;
 
 	//deactivate IK
-	var active = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).value;
-	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,0);
+	var active = ikEffect(pseudoEffect.ikCheckbox).value;
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
 
-	//snap
-	if (ikType == 2)
+	var parent = controller.parent;
+	controller.parent = null;
+	//position
+	controller.transform.position.setValueAtTime(comp.time,ikEffect(pseudoEffect.goalWorldPositionPoint).value);
+	controller.parent = parent;
+
+	//look for a goal and adjust
+	var goal = ikEffect(pseudoEffect.goalLayer).value;
+	if (goal > 0)
 	{
-		var parent = controller.parent;
-		controller.parent = null;
-		//position
-		controller.transform.position.setValueAtTime(comp.time,ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalWorldPositionPoint).value);
-		controller.parent = parent;
-	}
-	else if (ikType == 3)
-	{
-		var parent = controller.parent;
-		controller.parent = null;
-		//position
-		controller.transform.position.setValueAtTime(comp.time,ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.goalWorldPositionPoint).value);
-		controller.parent = parent;
+		var prevRot = comp.layer(goal).transform.rotation.value;
+		//Activate to adjust goal
+		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
+
+		controller.transform.rotation.setValueAtTime(comp.time,0);
+		//get difference
+		var newRot = prevRot - comp.layer(goal).transform.rotation.value;
+		controller.transform.rotation.setValueAtTime(comp.time,newRot);
 	}
 
 	//restore activation
-	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,active);
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,active);
 }
 
 /**
@@ -393,39 +397,47 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 	var comp = controller.containingComp;
 
 	var ikType = 2;
-	var ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.matchName);
+	var pseudoEffect = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+	var ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
 	if (!ikEffect)
 	{
-		ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.THREELAYER_IK.matchName);
+		pseudoEffect = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+		ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
 		ikType = 3;
 	}
 
 	if (!ikEffect) return;
 
 	//activate IK
-	var active = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).value;
-	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,1);
+	var active = ikEffect(pseudoEffect.ikCheckbox).value;
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
 
-	//get upper, middle, lower rot value
-	if (ikType == 2)
+	var layer1 = ikEffect(pseudoEffect.upperLayer).value;
+	var layer2 = ikEffect(pseudoEffect.lowerLayer).value;
+	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,comp.layer(layer1).transform.rotation.value);
+	if (ikType == 3)
 	{
-		var layer1 = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperLayer).value;
-		var layer2 = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerLayer).value;
-		ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.upperAngle).setValueAtTime(comp.time,comp.layer(layer1).transform.rotation.value);
-		ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.lowerAngle).setValueAtTime(comp.time,comp.layer(layer2).transform.rotation.value);
+		var layer3 = ikEffect(pseudoEffect.middleLayer).value;
+		ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,comp.layer(layer3).transform.rotation.value);
 	}
-	else if (ikType == 3)
+	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,comp.layer(layer2).transform.rotation.value);
+
+	//look for a goal and adjust
+	var goal = ikEffect(pseudoEffect.goalLayer).value;
+	if (goal > 0)
 	{
-		var layer1 = ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.upperLayer).value;
-		var layer2 = ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.middleLayer).value;
-		var layer3 = ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.lowerLayer).value;
-		ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.upperAngle).setValueAtTime(comp.time,comp.layer(layer1).transform.rotation.value);
-		ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.middleAngle).setValueAtTime(comp.time,comp.layer(layer2).transform.rotation.value);
-		ikEffect(DuAEF.Duik.PseudoEffects.THREELAYER_IK.lowerAngle).setValueAtTime(comp.time,comp.layer(layer3).transform.rotation.value);
+		var prevRot = comp.layer(goal).transform.rotation.value;
+		//Deactivate to adjust goal
+		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
+
+		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,0);
+		//get difference
+		var newRot = prevRot - comp.layer(goal).transform.rotation.value;
+		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,newRot);
 	}
 
 	//restore activation
-	ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,active);
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,active);
 }
 
 /**
@@ -437,47 +449,33 @@ DuAEF.Duik.Animation.switchIkFk = function (controller)
 	if (controller instanceof Controller) controller = controller.layer;
 	var comp = controller.containingComp;
 
+	var ikIndex = 1;
+
 	var ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.matchName);
-	if (!ikEffect) ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.THREELAYER_IK.matchName);
+	if (ikEffect)
+	{
+		ikIndex = DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox;
+	}
+	else
+	{
+		ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.THREELAYER_IK.matchName);
+		ikIndex = DuAEF.Duik.PseudoEffects.THREELAYER_IK.ikCheckbox;
+	}
+
 	if (!ikEffect) return;
 
-	//check which one :
-	var ik = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).value;
+	var ik = ikEffect(ikIndex).value;
 
 	//snap and switch
 	if (ik == 1)
 	{
 		DuAEF.Duik.Animation.fk2ik(controller);
-		//adjust goal value
-		var goalLayer = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalLayer).value;
-		if (goalLayer > 0)
-		{
-			var originalRot = comp.layer(goalLayer).transform.rotation.value;
-			ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,0);
-			var newRot = comp.layer(goalLayer).transform.rotation.value;
-			controller.transform.rotation.setValueAtTime(comp.time,controller.transform.rotation.value-newRot+originalRot);
-		}
-		else
-		{
-			ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,0);
-		}
+		ikEffect(ikIndex).setValueAtTime(comp.time,0);
 	}
 	else
 	{
 		DuAEF.Duik.Animation.ik2fk(controller);
-		//adjust goal value
-		var goalLayer = ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.goalLayer).value;
-		if (goalLayer > 0)
-		{
-			var originalRot = comp.layer(goalLayer).transform.rotation.value;
-			ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,1);
-			var newRot = comp.layer(goalLayer).transform.rotation.value;
-			controller.transform.rotation.setValueAtTime(comp.time,controller.transform.rotation.value-newRot+originalRot);
-		}
-		else
-		{
-			ikEffect(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox).setValueAtTime(comp.time,1);
-		}
+		ikEffect(ikIndex).setValueAtTime(comp.time,1);
 	}
 }
 
