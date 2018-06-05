@@ -164,6 +164,68 @@ Structure.prototype.bakeAppearence = function()
 }
 
 /**
+ * Duplicates a structure,<br />
+ * @memberof Structure
+ * @return {Structure} The new Structure
+ */
+Structure.prototype.duplicate = function()
+{
+	if (this.elements.length == 0) return;
+	//unselect all layers in the comp
+	var comp = this.elements[0].containingComp;
+	DuAEF.DuAE.Comp.unselectLayers(comp);
+	//select elements of the structure, then duplicate
+	DuAEF.DuAE.Comp.selectLayers(this.elements);
+	comp.openInViewer();
+	DuAEF.DuAE.App.duplicate();
+	//get topmost element
+	var topIndex = comp.numLayers;
+	var it = new Iterator(this.elements);
+	while (element = it.next())
+	{
+		if (element.index < topIndex) topIndex = element.index;
+		if (topIndex == 1) break;
+	};
+
+	oldLayers = DuAEF.DuAE.Layer.sortByIndex(this.elements).reverse();
+	var newLayers = DuAEF.DuAE.Layer.sortByIndex(comp.selectedLayers).reverse();
+
+	//adjustments
+	function layerInArray(layer,index)
+	{
+		return layer.index == index;
+	}
+
+	var id = new Date().getTime();
+
+	var autorigId = new Date().getTime() + 1;
+
+	new Iterator(newLayers).do(function(layer)
+	{
+		layer.moveBefore(comp.layer(topIndex));
+		//set display link
+		var effect = layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
+		$.writeln(oldLayers);
+		$.writeln(effect(3).value);
+		$.writeln(layerInArray);
+		var oldLinkIndex = DuAEF.DuJS.Array.indexOf(oldLayers,effect(3).value,layerInArray);
+		if (oldLinkIndex >= 0)
+		{
+			effect(3).setValue(newLayers[oldLinkIndex].index);
+		}
+		//set id
+		DuAEF.Duik.setDuikMarkerParameter(layer,DuAEF.Duik.MarkerParameters.STRUCTURE_ID,id);
+		var params = DuAEF.Duik.getDuikMarkerParameters(layer);
+		if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ID]) DuAEF.Duik.setDuikMarkerParameter(layer,DuAEF.Duik.MarkerParameters.AUTORIG_ID,autorigId);
+	});
+
+
+
+	//return
+	return new Structure(newLayers);
+}
+
+/**
 * Structures
 * @namespace
 * @memberof DuAEF.Duik
