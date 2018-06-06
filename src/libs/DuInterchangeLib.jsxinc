@@ -54,7 +54,7 @@ DuAEF.Interchange.animation = {};
 
 /**
  * Copies all the animations on selected layers, and saves them to a Json file.
- * @memberof DuAEF.Interchange
+ * @memberof DuAEF.Interchange.animation
  * @param {File}	file				The file to save the data
  * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
  * @param {boolean}	[selectedKeysOnly=false]	Wether to copy only selected keys or not
@@ -79,17 +79,34 @@ DuAEF.Interchange.animation.exportAnimToJson = function (file,layers,selectedKey
 }
 
 /**
+ * Loads the animation from a JSON file, and returns them.
+ * @memberof DuAEF.Interchange.animation
+ * @param {File}	file	The file to import
+ * @return {Array}	An array of LayerAnim
+ */
+DuAEF.Interchange.animation.loadAnimFromJson = function (file)
+{
+	var data = DuAEF.DuJS.Fs.parseJSON(file);
+	//TODO version check
+	var anim = data.layers;
+	//clean data
+	anim  = DuAEF.Interchange.animation.cleanAnimImportData(anim);
+	//return
+	return anim
+}
+
+/**
  * Cleans data from an After Effects animation before exporting it.<br />
  * This is a low-level function which you may need only if building your own export formats.<br />
  * It cleans the data returned by the "getAnim" functions  (see {@link DuAEF.DuAE.Layer.getAnim}, {@link DuAEF.DuAE.Layer.getAnims}, {@link DuAEF.DuAE.Property.getAnim}) to be able to store it in a text file.
- * @memberof DuAEF.Interchange
+ * @memberof DuAEF.Interchange.animation
  * @param {object}	data	The animation
  * @return {object}	The data cleaned
  */
 DuAEF.Interchange.animation.cleanAnimExportData = function (data)
 {
 	var newData = data;
-	if (newData instanceof PropertyAnim)
+	if (newData.keys)
 	{
 		for (var k = 0, num =  newData.keys.length ; k < num; k++)
 		{
@@ -97,14 +114,14 @@ DuAEF.Interchange.animation.cleanAnimExportData = function (data)
 			newData.keys[k]._outInterpolationType = DuAEF.Interchange.animation.keyframeInterpolationTypeToName(newData.keys[k]._outInterpolationType);
 		}
 	}
-	else if (newData.anims)
+	if (newData.anims)
 	{
 		for (var a = 0, num =  newData.anims.length ; a < num; a++)
 		{
 			newData.anims[a] = DuAEF.Interchange.animation.cleanAnimExportData(newData.anims[a]);
 		}
 	}
-	else if (newData instanceof Array)
+	if (newData instanceof Array)
 	{
 		for (var a = 0, num =  newData.length ; a < num; a++)
 		{
@@ -116,10 +133,48 @@ DuAEF.Interchange.animation.cleanAnimExportData = function (data)
 }
 
 /**
+ * Cleans data from a JSON before loading it.<br />
+ * This is a low-level function which you may need only if building your own import formats.<br />
+ * It cleans the data stored after having used {@link DuAEF.Interchange.animation.cleanAnimExportData}<br />
+ * to be able to set the animations using the "setAnim" functions (see {@link DuAEF.DuAE.Layer.setAnim}, {@link DuAEF.DuAE.Property.setAnim}).
+ * @memberof DuAEF.Interchange.animation
+ * @param {object}	data	The animation
+ * @return {object}	The data cleaned
+ */
+DuAEF.Interchange.animation.cleanAnimImportData = function (data)
+{
+	var newData = data;
+	if (newData.keys)
+	{
+		for (var k = 0, num =  newData.keys.length ; k < num; k++)
+		{
+			newData.keys[k]._inInterpolationType = DuAEF.Interchange.animation.keyframeInterpolationNameToType(newData.keys[k]._inInterpolationType);
+			newData.keys[k]._outInterpolationType = DuAEF.Interchange.animation.keyframeInterpolationNameToType(newData.keys[k]._outInterpolationType);
+		}
+	}
+	if (newData.anims)
+	{
+		for (var a = 0, num =  newData.anims.length ; a < num; a++)
+		{
+			newData.anims[a] = DuAEF.Interchange.animation.cleanAnimImportData(newData.anims[a]);
+		}
+	}
+	if (newData instanceof Array)
+	{
+		for (var a = 0, num =  newData.length ; a < num; a++)
+		{
+			newData[a] = DuAEF.Interchange.animation.cleanAnimImportData(newData[a]);
+		}
+	}
+
+	return newData;
+}
+
+/**
  * Gets the name of an After Effects interpolation type.<br />
  * This is a low-level function which you should not need.<br />
  * It used by {@link DuAEF.Interchange.cleanAnimExportData} to store interpolation with their names.
- * @memberof DuAEF.Interchange
+ * @memberof DuAEF.Interchange.animation
  * @param {KeyframeInterpolationType}	type	The After Effects interpolation type
  * @return {string}	The interpolation name or empty string if not found
  */
@@ -135,11 +190,11 @@ DuAEF.Interchange.animation.keyframeInterpolationTypeToName = function (type)
  * Gets the After Effects interpolation type with its name.<br />
  * This is a low-level function which you should not need.<br />
  * It used by {@link DuAEF.Interchange.cleanAnimImportData} to set interpolation from their names.
- * @memberof DuAEF.Interchange
+ * @memberof DuAEF.Interchange.animation
  * @param {string}	name	The interpolation name
  * @return {KeyframeInterpolationType}	The interpolation type or null if not found
  */
-DuAEF.Interchange.keyframeInterpolationNameToType = function (name)
+DuAEF.Interchange.animation.keyframeInterpolationNameToType = function (name)
 {
 	if (!name) return KeyframeInterpolationType.LINEAR;
 	name = name.toString();
