@@ -1,0 +1,150 @@
+/*
+DuInterchangeLib
+Library for interchange
+Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+__Contributors:__
+
+	Nicolas Dufresne - Lead developer
+	Kevin Masson - Developer
+
+__Thanks to:__
+
+	Dan Ebberts - Writing the first IK Expressions
+	Eric Epstein - making the IK's work with 3D Layers
+	Kevin Schires – Including images in the script
+	Matias Poggini – Bezier IK feature
+	Eric Epstein - Making the IK's work with 3D Layers
+	Assia Chioukh and Quentin Saint-Georges – User Guides composition
+	Motion Cafe – Ideas and feedback
+	Fous d’anim – Ideas and feedback
+	All 258 Duik 15 indiegogo backers for making this libDuik possible!
+
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* Interchange tools<br />
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.Interchange = {};
+
+/**
+* Animation interchange tools<br />
+* @namespace
+* @memberof DuAEF.Interchange
+*/
+DuAEF.Interchange.animation = {};
+
+/**
+ * Copies all the animations on selected layers, and saves them to a Json file.
+ * @memberof DuAEF.Interchange
+ * @param {File}	file				The file to save the data
+ * @param {Array}	layers 				An array of Layers or LayerCollection with the animation
+ * @param {boolean}	[selectedKeysOnly=false]	Wether to copy only selected keys or not
+ * @param {float[]}	[timeRange]			The time range, an array of two time values, in seconds.
+ * @return {Array}	An array of LayerAnim, the animations
+ */
+DuAEF.Interchange.animation.exportAnimToJson = function (file,layers,selectedKeysOnly,timeRange)
+{
+	var data = {};
+	data.duaef = {};
+	data.duaef.version = DuAEF.version;
+	data.duaef.animation = true;
+	data.duaef.rig = false;
+	data.layers = [];
+	//copy the animation
+	var anims  = DuAEF.DuAE.Layer.getAnims(layers,selectedKeysOnly,timeRange);
+	//clean data
+	anims = DuAEF.Interchange.animation.cleanAnimExportData(anims);
+	data.layers = anims;
+	//save data
+	DuAEF.DuJS.Fs.saveJSON(data,file);
+}
+
+/**
+ * Cleans data from an After Effects animation before exporting it.<br />
+ * This is a low-level function which you may need only if building your own export formats.<br />
+ * It cleans the data returned by the "getAnim" functions  (see {@link DuAEF.DuAE.Layer.getAnim}, {@link DuAEF.DuAE.Layer.getAnims}, {@link DuAEF.DuAE.Property.getAnim}) to be able to store it in a text file.
+ * @memberof DuAEF.Interchange
+ * @param {object}	data	The animation
+ * @return {object}	The data cleaned
+ */
+DuAEF.Interchange.animation.cleanAnimExportData = function (data)
+{
+	var newData = data;
+	if (newData instanceof PropertyAnim)
+	{
+		for (var k = 0, num =  newData.keys.length ; k < num; k++)
+		{
+			newData.keys[k]._inInterpolationType = DuAEF.Interchange.animation.keyframeInterpolationTypeToName(newData.keys[k]._inInterpolationType);
+			newData.keys[k]._outInterpolationType = DuAEF.Interchange.animation.keyframeInterpolationTypeToName(newData.keys[k]._outInterpolationType);
+		}
+	}
+	else if (newData.anims)
+	{
+		for (var a = 0, num =  newData.anims.length ; a < num; a++)
+		{
+			newData.anims[a] = DuAEF.Interchange.animation.cleanAnimExportData(newData.anims[a]);
+		}
+	}
+	else if (newData instanceof Array)
+	{
+		for (var a = 0, num =  newData.length ; a < num; a++)
+		{
+			newData[a] = DuAEF.Interchange.animation.cleanAnimExportData(newData[a]);
+		}
+	}
+
+	return newData;
+}
+
+/**
+ * Gets the name of an After Effects interpolation type.<br />
+ * This is a low-level function which you should not need.<br />
+ * It used by {@link DuAEF.Interchange.cleanAnimExportData} to store interpolation with their names.
+ * @memberof DuAEF.Interchange
+ * @param {KeyframeInterpolationType}	type	The After Effects interpolation type
+ * @return {string}	The interpolation name or empty string if not found
+ */
+DuAEF.Interchange.animation.keyframeInterpolationTypeToName = function (type)
+{
+	if (type == KeyframeInterpolationType.LINEAR) return 'linear';
+	if (type == KeyframeInterpolationType.BEZIER) return 'bezier';
+	if (type == KeyframeInterpolationType.HOLD) return 'hold';
+	else return '';
+}
+
+/**
+ * Gets the After Effects interpolation type with its name.<br />
+ * This is a low-level function which you should not need.<br />
+ * It used by {@link DuAEF.Interchange.cleanAnimImportData} to set interpolation from their names.
+ * @memberof DuAEF.Interchange
+ * @param {string}	name	The interpolation name
+ * @return {KeyframeInterpolationType}	The interpolation type or null if not found
+ */
+DuAEF.Interchange.keyframeInterpolationNameToType = function (name)
+{
+	if (!name) return KeyframeInterpolationType.LINEAR;
+	name = name.toString();
+	if (name.toLowerCase() == 'linear' || name == '6612') return KeyframeInterpolationType.LINEAR;
+	else if (name.toLowerCase() == 'bezier' || name == '6613') return KeyframeInterpolationType.BEZIER;
+	else if (name.toLowerCase() == 'hold' || name == '6614') return KeyframeInterpolationType.HOLD;
+	else return null;
+}
