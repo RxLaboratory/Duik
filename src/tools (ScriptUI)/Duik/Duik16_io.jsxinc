@@ -68,6 +68,38 @@ function ui_storyboarderValidButton_clicked()
 	app.endUndoGroup();
 }
 
+function ui_exportAnimButton_clicked()
+{
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	if (layers.length == 0) return;
+	var comp = layers[0].containingComp;
+
+	//Asks for a save file
+	var saveFile = File.saveDialog(tr("Where do you want to export the animation?"),"DuAEF JSON: *.duaef;*.json");
+	if (!saveFile) return;
+
+	//wether to store only selected keys if there are any
+	var selected = DuAEF.DuAE.Layer.haveSelectedKeys(layers);
+	//start time of the animation to store
+	var startTime = 86339;
+	//end time of the animation to store
+	var endTime = comp.workAreaDuration + comp.workAreaStart;
+
+	// If there are selected keys, look for the time of the first one
+	if (selected)
+	{
+		var testTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+		if (testTime < startTime) startTime = testTime;
+	}
+	//or the work area
+	else
+	{
+		startTime = app.project.activeItem.workAreaStart;
+	}
+
+	DuAEF.Interchange.animation.exportAnimToJson(saveFile,layers,selected,[startTime,endTime]);
+}
+
 function ui_exportAuditionButton_clicked()
 {
 	var comp = DuAEF.DuAE.Project.getActiveComp();
@@ -128,8 +160,6 @@ ui_exportAuditionButton.setHelp('Audition',auditionHelp,auditionLink);
 var ui_exportAuditionOptionsButton = DuAEF.DuScriptUI.addImageButton(ui_auditionButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Audition export options",DuAEF.DuBinary.toFile(w14_plus_r));
 ui_exportAuditionOptionsButton.setHelp('Audition',auditionHelp,auditionLink);
 ui_exportAuditionOptionsButton.alignment = ['right','center'];
-
-ui_exportAnimButton.enabled = false;
 ui_exportRigButton.enabled = false;
 
 //Storyboarder
@@ -181,6 +211,8 @@ ui_importKritaButton.onClick = ui_importKritaButton_clicked;
 ui_importStoryboardOptionsButton.onClick = ui_importStoryboardOptionsButton_clicked;
 ui_storyboarderCancelButton.onClick = function(){setCurrentIOPanel(0);};
 ui_storyboarderValidButton.onClick = ui_importStoryboardButton.onClick = ui_storyboarderValidButton_clicked;
+
+ui_exportAnimButton.onClick = ui_exportAnimButton_clicked;
 
 ui_exportAuditionButton.onClick = ui_auditionValidButton.onClick = ui_exportAuditionButton_clicked;
 ui_auditionCancelButton.onClick = function(){setCurrentIOPanel(1);};
