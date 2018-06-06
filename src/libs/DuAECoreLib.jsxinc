@@ -1268,6 +1268,24 @@ DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 }
 
 /**
+* Gets all animations on the layers in the whole timeline or in the time range<br />
+* The first KeyFrame._time will be adjusted relatively to the start of the time range (if provided) instead of the startTime of the composition.
+* @param {Layer[]|LayerCollection}	layers	- The layers.
+* @param {boolean}	[selected=false]	- true to get only selected keyframes.
+* @param {float[]}	[timeRange]	- The time range, an array of two time values, in seconds.
+* @return {LayerAnim[]}	The animations.
+*/
+DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
+{
+	var anims = [];
+	new Iterator(layers).do(function(layer)
+	{
+		anims.push(DuAEF.DuAE.Layer.getAnim(layer,selected,timeRange));
+	});
+	return anims;
+}
+
+/**
 * Sets the property animation on the property
 * @param {Layer}	layer	- The layer.
 * @param {PropertyAnim} anims	- The animation
@@ -1479,12 +1497,9 @@ DuAEF.DuAE.Layer.haveSelectedKeys = function (layers)
 {
 	var it = new Iterator(layers);
 	if (it.length == 0) return;
-	for (var i = it.min ; i <= it.max ; i++)
+	while(layer = it.next())
 	{
-		if (DuAEF.DuAE.Property.hasSelectedKeys(layers[i]))
-		{
-			return true;
-		}
+		if (DuAEF.DuAE.Property.hasSelectedKeys(layer)) return true;
 	}
 	return false;
 }
@@ -2078,16 +2093,18 @@ DuAEF.DuAE.Property.getKeyFrames = function(prop,selected,timeRange)
 DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 {
 	var comp = DuAEF.DuAE.Property.getComp(prop);
-	if (timeRange == undefined) timeRange = [0,comp.duration];
-	if (selected == undefined) selected = false;
+	if (typeof timeRange === 'undefined') timeRange = [0,comp.duration];
+	if (typeof selected === 'undefined') selected = false;
 
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+
+	if (selected && !DuAEF.DuAE.Property.hasSelectedKeys(prop)) return null;
+
 	if (prop.propertyType === PropertyType.PROPERTY)
 	{
 		if (prop.propertyValueType == PropertyValueType.NO_VALUE) return null;
 		if (prop.elided) return null;
 		if (!prop.canVaryOverTime) return null;
-		if (prop.selectedKeys.length == 0 && selected) return null;
 		var anim = new PropertyAnim();
 		anim._name = prop.name;
 		anim._matchName = prop.matchName;
