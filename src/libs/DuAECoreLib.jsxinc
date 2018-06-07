@@ -1297,15 +1297,17 @@ DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
 * @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
 * @param {string[]}	[propertyWhiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
 * Can be the matchName of a propertyGroup to set all the subproperties.
+* @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList)
+DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset)
 {
 	if (typeof time === 'undefined') time = layer.containingComp.time;
 	if (typeof ignoreName === 'undefined') ignoreName = false;
 	if (typeof setExpression === 'undefined') setExpression = false;
 	if (typeof onlyKeyframes === 'undefined') onlyKeyframes = false;
 	if (typeof replace === 'undefined') replace = false;
+	if (typeof offset === 'undefined') offset = false;
 
 	for (var i = 0 ; i < anim.anims.length ; i++)
 	{
@@ -1316,7 +1318,7 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 			if (subProp == null) continue;
 			if (subProp.matchName == subAnim._matchName && subProp.matchName != 'ADBE Marker')
 			{
-				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp, subAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList);
+				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp, subAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset);
 				if (ok) break;
 			}
 		}
@@ -1335,9 +1337,10 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 * @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
 * @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
 * Can be the matchName of a propertyGroup to set all the subproperties.
+* @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
 * @return {LayerAnim[]} The animations which were not set (no corresponding layers)
 */
-DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList)
+DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset)
 {
 	var remaining = anims;
 	//for each layeranim, search for the layer and apply anim
@@ -1350,7 +1353,7 @@ DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpress
 		{
 			if (layer.name == anim._name && layer.index == anim._index)
 			{
-				DuAEF.DuAE.Layer.setAnim(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList);
+				DuAEF.DuAE.Layer.setAnim(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset);
 				ok = true;
 				break;
 			}
@@ -2303,14 +2306,18 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[setExpression=false]	- Sets the expression too
 * @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
+* @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, offset)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
 	if (typeof setExpression === 'undefined') setExpression = false;
 	if (typeof replace === 'undefined') replace = false;
+	if (typeof offset === 'undefined') offset = false;
+
+	if (!DuAEF.DuAE.Property.isNumerical(prop)) offset = false;
 
 	var dimensions = anim.dimensions;
 
@@ -2321,12 +2328,13 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
 
 	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
 	{
+		var comp = DuAEF.DuAE.Property.getComp(prop);
+		//keep current value
+		var val = prop.valueAtTime(comp.time, true);
+
 		//remove keyframes
 		if (replace && prop.numKeys > 0)
 		{
-			var comp = DuAEF.DuAE.Property.getComp(prop);
-			//keep current value
-			var val = prop.valueAtTime(comp.time, true);
 			for (var i = prop.numKeys; i > 0; i--)
 			{
 				prop.removeKey(i);
@@ -2339,7 +2347,13 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
 		{
 			for (var iclef = 0; iclef < anim.keys.length;iclef++)
 			{
-				DuAEF.DuAE.Property.setKey(prop,anim.keys[iclef],time);
+				var key = anim.keys[iclef];
+				if (offset)
+				{
+					if (iclef == 0) key.value = val;
+					else key.value = val + (key.value - anim.startValue);
+				}
+				DuAEF.DuAE.Property.setKey(prop,key,time);
 				ok = true;
 			}
 		}
@@ -2358,7 +2372,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
 				}
 			}
 
-			if (anim.startValue != null)
+			if (anim.startValue != null && !offset)
 			{
 				if (prop.numKeys == 0)
 				{
@@ -2394,9 +2408,10 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
 * @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
 * Can be the matchName of a propertyGroup to set all the subproperties.<br />
 * Ignored if the list is empty.
+* @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, set )
+DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, set )
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
@@ -2405,6 +2420,7 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExp
 	if (typeof onlyKeyframes === 'undefined') onlyKeyframes = false;
 	if (typeof replace === 'undefined') replace = false;
 	if (typeof whiteList === 'undefined') whiteList = [];
+	if (typeof offset === 'undefined') offset = false;
 	if (typeof set === 'undefined') set = false;
 
 	if (whiteList.length == 0) set = true;
@@ -2426,7 +2442,7 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExp
 				if (onlyKeyframes && anim.keys.length == 0) okToSet = false;
 			}
 
-			if (okToSet) return DuAEF.DuAE.Property.setAnim(prop, anim, time, setExpression, replace);
+			if (okToSet) return DuAEF.DuAE.Property.setAnim(prop, anim, time, setExpression, replace, offset);
 		}
 	}
 	else
@@ -2446,7 +2462,7 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExp
 				}
 				if (okToSet)
 				{
-					ok = DuAEF.DuAE.Property.setGroupAnim(subProp, propAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, set );
+					ok = DuAEF.DuAE.Property.setGroupAnim(subProp, propAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, set );
 					break;
 				}
 			}
