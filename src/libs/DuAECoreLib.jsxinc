@@ -1288,7 +1288,7 @@ DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
 /**
 * Sets the property animation on the property
 * @param {Layer}	layer	- The layer.
-* @param {PropertyAnim} anims	- The animation
+* @param {LayerAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
 * @param {boolean}	[setExpression=false]	- Set the expression on the property
@@ -1296,9 +1296,9 @@ DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
 */
 DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 {
-	if (time == undefined) time = layer.containingComp.time;
-	if (ignoreName == undefined) ignoreName = false;
-	if (setExpression == undefined) setExpression = false;
+	if (typeof time === 'undefined') time = layer.containingComp.time;
+	if (typeof ignoreName === 'undefined') ignoreName = false;
+	if (typeof setExpression === 'undefined') setExpression = false;
 
 	for (var i = 0 ; i < anim.anims.length ; i++)
 	{
@@ -1314,6 +1314,32 @@ DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 			}
 		}
 	}
+}
+
+/**
+* Sets the animations on the layers
+* @param {Layer[]|LayerCollection}	layers	- The layers.
+* @param {LayerAnim[]} anims	- The layer animations
+* @param {float}	[time=comp.time]	- The time where to begin the animation
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[setExpression=false]	- Set the expression on the property
+* @return {boolean} true if the animation was actually set.
+*/
+DuAEF.DuAE.Layer.setAnims = function(layers,anims,time,ignoreName,setExpression)
+{
+	//for each layeranim, search for the layer and apply anim
+	new Iterator(anims).do(function(anim)
+	{
+		var it = new Iterator(layers);
+		while(layer = it.next())
+		{
+			if (layer.name == anim._name && layer.index == anim._index)
+			{
+				DuAEF.DuAE.Layer.setAnim(layer,anim,time,ignoreName,setExpression);
+				break;
+			}
+		}
+	});
 }
 
 /**
@@ -2214,45 +2240,38 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 		}
 	}
 
-	try
+	prop.setValueAtTime(time,val);
+
+	//get the index of the created key
+	var index = prop.nearestKeyIndex(time);
+
+	//set interpolations
+	if (key._spatial && (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL))
 	{
-		prop.setValueAtTime(time,val);
-
-		//get the index of the created key
-		var index = prop.nearestKeyIndex(time);
-
-		//set interpolations
-		if (key._spatial && (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType == PropertyValueType.TwoD_SPATIAL))
-		{
-			try{
-				prop.setSpatialContinuousAtKey(index,key.spatialProperties._continuous);
-				prop.setSpatialAutoBezierAtKey(index,key.spatialProperties._autoBezier);
-				prop.setRovingAtKey(index,key.spatialProperties._roving);
-				prop.setSpatialTangentsAtKey(index,key.spatialProperties.inTangent,key.spatialProperties.outTangent);
-			}
-			catch(err)
-			{
-				if (DuAEF.debug) alert(err.description);
-			};
-		}
-
-		try
-		{
-			prop.setTemporalContinuousAtKey(index,key._continuous);
-			prop.setTemporalAutoBezierAtKey(index,key._autoBezier);
-			prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
-			prop.setInterpolationTypeAtKey(index,key._inInterpolationType,key._outInterpolationType);
+		try{
+			prop.setSpatialContinuousAtKey(index,key.spatialProperties._continuous);
+			prop.setSpatialAutoBezierAtKey(index,key.spatialProperties._autoBezier);
+			prop.setRovingAtKey(index,key.spatialProperties._roving);
+			prop.setSpatialTangentsAtKey(index,key.spatialProperties.inTangent,key.spatialProperties.outTangent);
 		}
 		catch(err)
 		{
 			if (DuAEF.debug) alert(err.description);
-		}
-
+		};
 	}
-	catch (err)
+
+	try
+	{
+		prop.setTemporalContinuousAtKey(index,key._continuous);
+		prop.setTemporalAutoBezierAtKey(index,key._autoBezier);
+		prop.setTemporalEaseAtKey(index,key.inEase,key.outEase);
+		prop.setInterpolationTypeAtKey(index,key._inInterpolationType,key._outInterpolationType);
+	}
+	catch(err)
 	{
 		if (DuAEF.debug) alert(err.description);
 	}
+
 }
 
 /**
