@@ -1290,15 +1290,22 @@ DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
 * @param {Layer}	layer	- The layer.
 * @param {LayerAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
-* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the name of the animation.<br />
+* This way, only the type of property (i.e. matchName) is checked.
 * @param {boolean}	[setExpression=false]	- Set the expression on the property
+* @param {boolean}	[onlyKeyframes=true]	- If false, the value of properties without keyframes will be set too.
+* @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
+* @param {string[]}	[propertyWhiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
+* Can be the matchName of a propertyGroup to set all the subproperties.
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
+DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList)
 {
 	if (typeof time === 'undefined') time = layer.containingComp.time;
 	if (typeof ignoreName === 'undefined') ignoreName = false;
 	if (typeof setExpression === 'undefined') setExpression = false;
+	if (typeof onlyKeyframes === 'undefined') onlyKeyframes = false;
+	if (typeof replace === 'undefined') replace = false;
 
 	for (var i = 0 ; i < anim.anims.length ; i++)
 	{
@@ -1309,7 +1316,7 @@ DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 			if (subProp == null) continue;
 			if (subProp.matchName == subAnim._matchName && subProp.matchName != 'ADBE Marker')
 			{
-				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp,subAnim,time,ignoreName,setExpression);
+				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp, subAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList);
 				if (ok) break;
 			}
 		}
@@ -1321,11 +1328,16 @@ DuAEF.DuAE.Layer.setAnim = function(layer,anim,time,ignoreName,setExpression)
 * @param {Layer[]|LayerCollection}	layers	- The layers.
 * @param {LayerAnim[]} anims	- The layer animations
 * @param {float}	[time=comp.time]	- The time where to begin the animation
-* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the name animation.<br />
+* This way, only the type of property (i.e. matchName) is checked.
 * @param {boolean}	[setExpression=false]	- Set the expression on the property
+* @param {boolean}	[onlyKeyframes=true]	- If false, the value of properties without keyframes will be set too.
+* @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
+* @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
+* Can be the matchName of a propertyGroup to set all the subproperties.
 * @return {LayerAnim[]} The animations which were not set (no corresponding layers)
 */
-DuAEF.DuAE.Layer.setAnims = function(layers,anims,time,ignoreName,setExpression)
+DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList)
 {
 	var remaining = anims;
 	//for each layeranim, search for the layer and apply anim
@@ -1338,7 +1350,7 @@ DuAEF.DuAE.Layer.setAnims = function(layers,anims,time,ignoreName,setExpression)
 		{
 			if (layer.name == anim._name && layer.index == anim._index)
 			{
-				DuAEF.DuAE.Layer.setAnim(layer,anim,time,ignoreName,setExpression);
+				DuAEF.DuAE.Layer.setAnim(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList);
 				ok = true;
 				break;
 			}
@@ -2289,9 +2301,7 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {Property|PropertyInfo}	prop	- The property.
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
-* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
 * @param {boolean}	[setExpression=false]	- Sets the expression too
-* @param {boolean}	[ignoreMatchName=false]	- true to set the anim even if matchName of the property do not match the animation.
 * @return {boolean} true if the anim was actually set.
 */
 DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
@@ -2333,12 +2343,21 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 					value.pop();
 				}
 			}
+
 			if (anim.startValue != null)
 			{
-				try { prop.setValue(anim.startValue); } catch (e) {};
+				if (prop.numKeys == 0)
+				{
+					try { prop.setValue(anim.startValue); } catch (e) {};
+				}
+				else
+				{
+					try { prop.setValueAtTime(time,anim.startValue); } catch (e) {};
+				}
 			}
 			ok = true;
 		}
+
 		//set the expression
 		if (prop.canSetExpression && setExpression)
 		{
@@ -2356,14 +2375,26 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the animation.
 * @param {boolean}	[setExpression=false]	- Sets the expression too
+* @param {boolean}	[onlyKeyframes=true]	- If false, the value of properties without keyframes will be set too.
+* @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
+* @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
+* Can be the matchName of a propertyGroup to set all the subproperties.<br />
+* Ignored if the list is empty.
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpression)
+DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, set )
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
-	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
-	if (ignoreName == undefined) ignoreName = false;
-	if (setExpression == undefined) setExpression = false;
+	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
+	if (typeof ignoreName === 'undefined') ignoreName = false;
+	if (typeof setExpression === 'undefined') setExpression = false;
+	if (typeof onlyKeyframes === 'undefined') onlyKeyframes = false;
+	if (typeof replace === 'undefined') replace = false;
+	if (typeof whiteList === 'undefined') whiteList = [];
+	if (typeof set === 'undefined') set = false;
+
+	if (whiteList.length == 0) set = true;
+	if (DuAEF.DuJS.Array.indexOf(whiteList, anim._matchName) >= 0) set = true;
 
 	var ok = false;
 
@@ -2371,9 +2402,17 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpress
 
 	if (anim.type == 'anim')
 	{
-		if (prop.matchName == anim._matchName && (!ignoreName && prop.name == anim._name || ignoreName))
+		if (set)
 		{
-			return DuAEF.DuAE.Property.setAnim(prop,anim,time,setExpression);
+			var okToSet = false;
+			if (prop.matchName == anim._matchName)
+			{
+				if (!ignoreName && prop.name == anim._name) okToSet = true;
+				if (ignoreName) okToSet = true;
+				if (onlyKeyframes && anim.keys.length == 0) okToSet = false;
+			}
+
+			if (okToSet) return DuAEF.DuAE.Property.setAnim(prop, anim, time, setExpression);
 		}
 	}
 	else
@@ -2385,9 +2424,15 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop,anim,time,ignoreName,setExpress
 			for (var j = 1 ; j <= prop.numProperties ; j++)
 			{
 				var subProp = prop.property(j);
-				if (subProp.matchName == propAnim._matchName && (!ignoreName && subProp.name == propAnim._name || ignoreName))
+				var okToSet = false;
+				if (subProp.matchName == propAnim._matchName)
 				{
-					ok = DuAEF.DuAE.Property.setGroupAnim(subProp,propAnim,time,ignoreName,setExpression);
+					if (!ignoreName && subProp.name == propAnim._name) okToSet = true;
+					if (ignoreName) okToSet = true;
+				}
+				if (okToSet)
+				{
+					ok = DuAEF.DuAE.Property.setGroupAnim(subProp, propAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, set );
 					break;
 				}
 			}
