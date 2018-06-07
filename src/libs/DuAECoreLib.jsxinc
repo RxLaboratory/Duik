@@ -2302,13 +2302,15 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 * @param {PropertyAnim} anims	- The animation
 * @param {float}	[time=comp.time]	- The time where to begin the animation
 * @param {boolean}	[setExpression=false]	- Sets the expression too
+* @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
+DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
-	if (time == undefined) time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
-	if (setExpression == undefined) setExpression = false;
+	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
+	if (typeof setExpression === 'undefined') setExpression = false;
+	if (typeof replace === 'undefined') replace = false;
 
 	var dimensions = anim.dimensions;
 
@@ -2317,9 +2319,21 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression)
 	if (anim == null) return true;
 	if (anim.type == 'group') return false;
 
-	//find the property with the same name and matchname
 	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
 	{
+		//remove keyframes
+		if (replace && prop.numKeys > 0)
+		{
+			var comp = DuAEF.DuAE.Property.getComp(prop);
+			//keep current value
+			var val = prop.valueAtTime(comp.time, true);
+			for (var i = prop.numKeys; i > 0; i--)
+			{
+				prop.removeKey(i);
+			}
+			prop.setValue(val);
+		}
+
 		//if there are keys, set them
 		if (anim.keys.length > 0)
 		{
@@ -2412,7 +2426,7 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExp
 				if (onlyKeyframes && anim.keys.length == 0) okToSet = false;
 			}
 
-			if (okToSet) return DuAEF.DuAE.Property.setAnim(prop, anim, time, setExpression);
+			if (okToSet) return DuAEF.DuAE.Property.setAnim(prop, anim, time, setExpression, replace);
 		}
 	}
 	else
