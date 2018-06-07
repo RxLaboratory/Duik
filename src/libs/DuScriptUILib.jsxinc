@@ -41,6 +41,10 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 #include "icons/w14_comp_m.png.jsxinc"
 #include "icons/w14_eyedropper_m.png.jsxinc"
 #include "icons/w14_eyedropper_l.png.jsxinc"
+#include 'icons/w25_back_r.jsxinc'
+#include 'icons/w25_back_m.jsxinc'
+#include 'icons/w25_check_r.jsxinc'
+#include 'icons/w25_check_g.jsxinc'
 
 /**
 * ScriptUI tools
@@ -1705,6 +1709,15 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		if (layers.length > 0) selector.setCurrentIndex(layers[0].index);
 	}
 
+	selector.getLayer = function ()
+	{
+		if (selector.index < 1) return null;
+		var comp = selector.comp;
+		if (!comp) comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return null;
+		try { return comp.layer(selector.index)} catch(e){return null};
+	}
+
 	// Hack - CS6 Bugs on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{
@@ -1816,7 +1829,7 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
  */
 
 
- /**
+/**
   * A function which gets the comps to set in the selector.<br />
   * The default function will get all the comps in the project,<br />
   * assign another function to this callback if you need to filter these comps.<br />
@@ -2106,20 +2119,21 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
  * @name removeAll
  */
 
- /**
- * Adds a new line on the LayerPicker
- * @method
- * @memberof LayerPicker
- * @name addSelector
- * @return {LayerSelector} The added LayerSelector
- */
+/**
+* Adds a new line on the LayerPicker
+* @method
+* @memberof LayerPicker
+* @name addSelector
+* @return {LayerSelector} The added LayerSelector
+*/
 
 /**
  * Creates a two-columns group to allow the user to pick layers
  * @memberof DuAEF.DuScriptUI
  * @param {Window|Panel|Group} container - The ScriptUI Object which will contain and display the selector.
+ * @return {LayerPicker} The picker.
  */
-DuAEF.DuScriptUI.createLayerPicker = function(container)
+DuAEF.DuScriptUI.addLayerPicker = function(container)
 {
 	var name = "Select layers";
 	DuAEF.DuScriptUI.uiStrings.push(name);
@@ -2149,7 +2163,7 @@ DuAEF.DuScriptUI.createLayerPicker = function(container)
 	layerPicker.removeAll = function()
 	{
 		layerPicker.selectors = [];
-		layerPicker.inputs = inputs;
+		layerPicker.inputs = [];
 		for ( var i = layerPicker.labelsGroup.children.length - 1; i >= 0; i-- )
 		{
 			layerPicker.labelsGroup.remove( layerPicker.labelsGroup.children[ i ] );
@@ -2172,4 +2186,101 @@ DuAEF.DuScriptUI.createLayerPicker = function(container)
 	}
 
 	return layerPicker;
+}
+
+/**
+ * @class
+ * @name LayerPickerDialog
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * A picker for layers with labels.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.DuScriptUI.createLayerPicker} to create a picker.<br />
+ * The picker inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {LayerPicker} layerPicker The layer picker inside the dialog.
+ * @property {bool} accepted This property is true if the user has clicked the OK button, false otherwise.
+ */
+
+/**
+ * Empties the LayerPicker<br />
+ * This is a convenience function equivalent to {@link LayerPickerDialog.layerPicker.removeAll}.
+ * @method
+ * @memberof LayerPickerDialog
+ * @name removeAll
+ */
+
+/**
+* Adds a new line on the LayerPicker
+ * This is a convenience function equivalent to {@link LayerPickerDialog.layerPicker.addSelector}.
+* @method
+* @memberof LayerPickerDialog
+* @name addSelector
+* @return {LayerSelector} The added LayerSelector
+*/
+
+/**
+* Gets the layers picked by the user.
+* @method
+* @memberof LayerPickerDialog
+* @name getLayers
+* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
+*/
+
+/**
+* Gets the layers picked by the user.
+* @method
+* @memberof LayerPickerDialog
+* @name getLayers
+* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
+*/
+
+/**
+ * The function called when the dialog is accepted.
+ * @callback LayerPickerDialog~onAccept
+ * @memberof LayerPickerDialog
+ */
+
+
+/**
+ * Creates a dialog with a LayerPicker<br />
+ * Use {@link DuAEF.DuScriptUI.showUI} to show it after creation.
+ * @memberof DuAEF.DuScriptUI
+ * @param {string} title - The title of the dialog.
+ * @return {LayerPickerDialog} The dialog window.
+ */
+DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
+{
+	var dialog = new Window('palette', title, undefined, {resizeable:true});
+	dialog.minimumSize.width = 300;
+
+	dialog.margins = DuAEF.DuScriptUI.defaultMargins;
+	dialog.orientation = 'column';
+
+	dialog.layerPicker = DuAEF.DuScriptUI.addLayerPicker(dialog);
+
+	dialog.onAccept = function() {};
+	dialog.removeAll = dialog.layerPicker.removeAll;
+	dialog.addSelector = dialog.layerPicker.addSelector;
+	dialog.getLayers = function ()
+	{
+		var layers = [];
+		for (var i = 0, num = dialog.layerPicker.selectors.length; i < num; i++)
+		{
+			var sel = dialog.layerPicker.selectors[i];
+			layers.push(sel.getLayer());
+		}
+		return layers;
+	}
+
+	dialog.accepted = false;
+
+	//add buttons
+	var validGroup = dialog.add('group');
+	validGroup.alignment = ['fill', 'bottom'];
+	var validGroupCancelButton = DuAEF.DuScriptUI.addImageButton(validGroup,"Cancel",DuAEF.DuBinary.toFile(w25_back_m),"Cancel",DuAEF.DuBinary.toFile(w25_back_r));
+	var validGroupValidButton = DuAEF.DuScriptUI.addImageButton(validGroup,"OK",DuAEF.DuBinary.toFile(w25_check_g),"OK",DuAEF.DuBinary.toFile(w25_check_r));
+
+	validGroupValidButton.onClick = function() {dialog.accepted = true; dialog.hide(); dialog.onAccept(); };
+	validGroupCancelButton.onClick = function() {dialog.hide();};
+
+	return dialog;
 }
