@@ -26,6 +26,15 @@ function initIOUI()
 	setCurrentIOPanel(0);
 }
 
+function importAnims(anims, layers, whiteList)
+{
+	for (var i = 0, num  = anims.length; i < num; i++)
+	{
+		var layer = layers[i];
+		if (layer) DuAEF.DuAE.Layer.setAnim(layer, anims[i], undefined, undefined, undefined, ui_keyframesSelector.index == 0, undefined, whiteList);
+	}
+}
+
 //=========== EVENTS =============
 
 function ui_ioImportButton_clicked()
@@ -47,13 +56,52 @@ function ui_importAnimButton_clicked()
 	if (layers.length == 0) return;
 
 	//Ask for the file
-	var openFile = File.openDialog(tr("Please select the animation file."),"JSON: *.duaef;*.json,All: *.*");
+	var openFile = File.openDialog("Please select the animation file.","JSON: *.duaef;*.json,All: *.*");
 	if (!openFile) return;
 
-	app.beginUndoGroup('Duik | ' + "Import JSON Animation");
+	//white lists
+	var whiteList;
+	if (!ui_importAnimationKeysAllButton.checked)
+	{
+		whiteList = [];
+		if (ui_importAnimationKeysPosButton.checked)
+		{
+			whiteList.push('ADBE Position');
+			whiteList.push('ADBE Position_0');
+			whiteList.push('ADBE Position_1');
+			whiteList.push('ADBE Position_2');
+		}
+		if (ui_importAnimationKeysRotButton.checked)
+		{
+			whiteList.push('ADBE Orientation');
+			whiteList.push('ADBE Rotate X');
+			whiteList.push('ADBE Rotate Y');
+			whiteList.push('ADBE Rotate Z');
+		}
+		if (ui_importAnimationKeysScaleButton.checked)
+		{
+			whiteList.push('ADBE Scale');
+		}
+		if (ui_importAnimationKeysOpacityButton.checked)
+		{
+			whiteList.push('ADBE Opacity');
+		}
+		if (ui_importAnimationKeysMaskButton.checked)
+		{
+			whiteList.push('ADBE Mask Shape');
+			whiteList.push('ADBE Vector Shape');
+		}
+		if (ui_importAnimationKeysFXButton.checked)
+		{
+			whiteList.push('ADBE Effect Parade');
+		}
+	}
+
+	app.beginUndoGroup('Duik | ' + "Import Animation");
 
 	var data = DuAEF.Interchange.animation.loadAnimFromJson(openFile);
-	var remaining = DuAEF.DuAE.Layer.setAnims(layers,data);
+	var remaining = DuAEF.DuAE.Layer.setAnims(layers, data, undefined, undefined, undefined, ui_keyframesSelector.index == 0, undefined, whiteList);
+
 	if (remaining.length > 0)
 	{
 		var ui_importLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
@@ -75,21 +123,12 @@ function ui_importAnimButton_clicked()
 			if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
 		}
 
-		ui_importLayerPicker.onAccept = function () {importAnims(remaining, ui_importLayerPicker.getLayers()); };
+		ui_importLayerPicker.onAccept = function () {importAnims(remaining, ui_importLayerPicker.getLayers(), whiteList); };
 
 		DuAEF.DuScriptUI.showUI(ui_importLayerPicker);
 	}
 
 	app.endUndoGroup();
-}
-
-function importAnims(anims, layers)
-{
-	for (var i = 0, num  = anims.length; i < num; i++)
-	{
-		var layer = layers[i];
-		if (layer) DuAEF.DuAE.Layer.setAnim(layer,anims[i]);
-	}
 }
 
 function ui_importAnimationKeysAllButton_clicked()
