@@ -120,9 +120,11 @@ function KeyFrame(){
 * @property {string}	  [_name=""]     - The property name
 * @property {string}    [_matchName=""]  - The property matchName
 * @property {KeyFrame[]}   [keys=[]]  - The keyframes of the animation
-* @property {null|folat[]|float|MarkerValue|int|Shape|TextDocument}	[startValue=null]		- The value at the beginning of the animation
+* @property {null|float[]|float|MarkerValue|int|Shape|TextDocument}	[startValue=null]		- The value at the beginning of the animation
 * @property {string}	[expression=""]		- The expression on the property, if any.
 * @property {string}   [type="anim"]  - Read Only.
+* @property {float}   startTime  - Read Only. The starting time of the animation.
+* @property {float}   endTime  - Read Only. The ending time of the animation.
 */
 function PropertyAnim()
 {
@@ -133,6 +135,8 @@ function PropertyAnim()
 	this.type = "anim";
 	this.expression = "";
 	this.dimensions = 0;
+	this.startTime = null;
+	this.endTile = null;
 }
 
 /**
@@ -143,6 +147,8 @@ function PropertyAnim()
 * @property {string}    [_matchName=""]  - The property matchName
 * @property {PropertyAnim[]|PropertyGroupAnim[]}   [anims=[]]  - The animations in the group
 * @property {string}   [type="group"]  - Read Only.
+* @property {float}   startTime  - Read Only. The starting time of the animation.
+* @property {float}   endTime  - Read Only. The ending time of the animation.
 */
 function PropertyGroupAnim()
 {
@@ -150,6 +156,8 @@ function PropertyGroupAnim()
 	this._matchName = "";
 	this.anims = [];
 	this.type = "group";
+	this.startTime = null;
+	this.endTile = null;
 }
 
 /**
@@ -161,6 +169,8 @@ function PropertyGroupAnim()
 * @property {PropertyGroupAnim[]} [anims=[]] - All the animations of the layer
 * @property {float} [firstKeyFrameTime=0] - The time of the first keyframe
 * @property {string}   [type="layer"]  - Read Only.
+* @property {float}   startTime  - Read Only. The starting time of the animation.
+* @property {float}   endTime  - Read Only. The ending time of the animation.
 */
 function LayerAnim()
 {
@@ -168,6 +178,8 @@ function LayerAnim()
 	this._index = 0;
 	this.anims = [];
 	this.type = 'layer';
+	this.startTime = null;
+	this.endTile = null;
 }
 
 /**
@@ -1261,7 +1273,14 @@ DuAEF.DuAE.Layer.getAnim = function (layer,selected,timeRange)
 		if (prop.matchName == 'ADBE Marker') continue;
 
 		var subAnim = DuAEF.DuAE.Property.getAnim(prop,selected,timeRange);
-		if (subAnim != null) anim.anims.push(subAnim);
+		if (subAnim != null)
+		{
+			if (anim.startTime == null) anim.startTime = subAnim.startTime;
+			else if (anim.startTime > subAnim.startTime) anim.startTime = subAnim.startTime;
+			if (anim.endTime == null) anim.endTime = subAnim.endTime;
+			else if (anim.endTime > subAnim.endTime) anim.endTime = subAnim.endTimeendTime;
+			anim.anims.push(subAnim);
+		}
 
 	}
 	return anim;
@@ -1298,9 +1317,10 @@ DuAEF.DuAE.Layer.getAnims = function (layers,selected,timeRange)
 * @param {string[]}	[propertyWhiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
 * Can be the matchName of a propertyGroup to set all the subproperties.
 * @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
+* @param {boolean}	[reverse=false]	- true to reverse the keyframes (in time)
 * @return {boolean} true if the anim was actually set.
 */
-DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset)
+DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, reverse)
 {
 	if (typeof time === 'undefined') time = layer.containingComp.time;
 	if (typeof ignoreName === 'undefined') ignoreName = false;
@@ -1308,6 +1328,8 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 	if (typeof onlyKeyframes === 'undefined') onlyKeyframes = false;
 	if (typeof replace === 'undefined') replace = false;
 	if (typeof offset === 'undefined') offset = false;
+
+	if (reverse) DuAEF.DuAE.Layer.reverseAnims(anim);
 
 	for (var i = 0 ; i < anim.anims.length ; i++)
 	{
@@ -1318,7 +1340,7 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 			if (subProp == null) continue;
 			if (subProp.matchName == subAnim._matchName && subProp.matchName != 'ADBE Marker')
 			{
-				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp, subAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset);
+				var ok = DuAEF.DuAE.Property.setGroupAnim(subProp, subAnim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, reverse);
 				if (ok) break;
 			}
 		}
@@ -1326,7 +1348,43 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 }
 
 /**
-* Sets the animations on the layers
+* Sets the animations on the layers.<br />
+* If you need to set only on the same layers (same index, same name), use {@link DuAEF.DuAE.Layer.setAnims}.
+* @param {Layer[]|LayerCollection}	layers	- The layers.<br />
+* If there are more layers than animations, the layers array will be truncated.
+* @param {LayerAnim[]} anims	- The layer animations.<br />
+* If there are more animations than layers, the animations array will be truncated.
+* @param {float}	[time=comp.time]	- The time where to begin the animation
+* @param {boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the name animation.<br />
+* This way, only the type of property (i.e. matchName) is checked.
+* @param {boolean}	[setExpression=false]	- Set the expression on the property
+* @param {boolean}	[onlyKeyframes=true]	- If false, the value of properties without keyframes will be set too.
+* @param {boolean}	[replace=false]	- true to remove any existing keyframe on the properties before adding new keyframes
+* @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
+* Can be the matchName of a propertyGroup to set all the subproperties.
+* @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
+* @param {boolean}	[reverse=false]	- true to reverse the keyframes (in time)<br />
+* Note: the remaining animations which are returned will already be reversed, do not set this to true again if you plan to set them later.
+*/
+DuAEF.DuAE.Layer.setAllAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, reverse)
+{
+	layers = DuAEF.DuAE.convertCollectionToArray (layers);
+	var num = anims.length;
+	if (num > layers.length) num = layers.length;
+
+	if (reverse) DuAEF.DuAE.Layer.reverseAnims(anims);
+
+	for (var i = 0; i < num; i++)
+	{
+		var layer = layers[i];
+		if (layer) DuAEF.DuAE.Layer.setAnim(layer, anims[i], time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, false);
+	}
+}
+
+/**
+* Sets the animations on the corresponding layers.<br />
+* The animation will be set only on layers with the same name and index.<br />
+* To set all animations on all layers, not checking their names or indices, use {@link DuAEF.DuAE.Layer.setAllAnims}.
 * @param {Layer[]|LayerCollection}	layers	- The layers.
 * @param {LayerAnim[]} anims	- The layer animations
 * @param {float}	[time=comp.time]	- The time where to begin the animation
@@ -1338,11 +1396,17 @@ DuAEF.DuAE.Layer.setAnim = function(layer, anim, time, ignoreName, setExpression
 * @param {string[]}	[whiteList]	- A list of matchNames used as a white list for properties to set anims.<br />
 * Can be the matchName of a propertyGroup to set all the subproperties.
 * @param {boolean}	[offset=false]	- true to offset the current value, instead of replacing it
+* @param {boolean}	[reverse=false]	- true to reverse the keyframes (in time)<br />
+* Note: the remaining animations which are returned will already be reversed, do not set this to true again if you plan to set them later.
 * @return {LayerAnim[]} The animations which were not set (no corresponding layers)
 */
-DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset)
+DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, reverse)
 {
-	var remaining = anims;
+	//clone the array
+	var remaining = anims.slice();
+
+	if (reverse) DuAEF.DuAE.Layer.reverseAnims(anims);
+
 	//for each layeranim, search for the layer and apply anim
 	for (var i = remaining.length-1; i >= 0; i--)
 	{
@@ -1353,7 +1417,7 @@ DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpress
 		{
 			if (layer.name == anim._name && layer.index == anim._index)
 			{
-				DuAEF.DuAE.Layer.setAnim(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset);
+				DuAEF.DuAE.Layer.setAnim(layer, anim, time, ignoreName, setExpression, onlyKeyframes, replace, whiteList, offset, false);
 				ok = true;
 				break;
 			}
@@ -1362,6 +1426,62 @@ DuAEF.DuAE.Layer.setAnims = function(layers, anims, time, ignoreName, setExpress
 	}
 
 	return remaining;
+}
+
+/**
+* Reverses the times of the keyframes to reverse the animation
+* @param {LayerAnim[]|LayerAnim} anims The animation
+*/
+DuAEF.DuAE.Layer.reverseAnims = function(anims)
+{
+	if (anims instanceof LayerAnim) anims = [anims];
+
+	var it = new Iterator(anims);
+
+	//get times
+	var startTime = null;
+	var endTime = null;
+	it.do(function(anim)
+	{
+		$.writeln(anim.startTime);
+		$.writeln(anim.endTime);
+		if (startTime == null) startTime = anim.startTime;
+		else if (startTime > anim.startTime) startTime = anim.startTime;
+		if (endTime == null) endTime = anim.endTime;
+		else if (endTime > anim.endTime) endTime = anim.endTime;
+	});
+
+	var duration = endTime - startTime;
+
+
+	//recursive function to reverse keyframes in anim
+	function reverse(anim)
+	{
+		if (anim.type == 'anim')
+		{
+			//reverse the array
+			anim.keys = anim.keys.reverse();
+			//set the new times
+			for (var i = 0, num = anim.keys.length; i < num; i++)
+			{
+				var ratio = 1 - ( (anim.keys[i]._time - startTime) / duration);
+				anim.keys[i]._time = ratio * duration + startTime;
+				var sV = anim.endValue;
+				anim.endValue = anim.startValue;
+				anim.startValue = sV;
+			}
+		}
+		else if (anim.anims)
+		{
+			for (var i = 0, num = anim.anims.length; i < num; i++)
+			{
+				reverse(anim.anims[i]);
+			}
+		}
+	}
+
+	//reverse keyframes and times
+	it.do(reverse);
 }
 
 /**
@@ -2157,7 +2277,10 @@ DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 		anim._name = prop.name;
 		anim._matchName = prop.matchName;
 		anim.startValue = prop.valueAtTime(timeRange[0],true);
+		anim.endValue = prop.valueAtTime(timeRange[1],true);
 		anim.keys = DuAEF.DuAE.Property.getKeyFrames(prop,selected,timeRange);
+		anim.startTime = anim.keys[0]._time;
+		anim.endTime = anim.keys[anim.keys.length-1]._time;
 		anim.dimensions = DuAEF.DuAE.Property.getDimensions(prop);
 		if (prop.canSetExpression) anim.expression = prop.expression;
 		return anim;
@@ -2171,7 +2294,14 @@ DuAEF.DuAE.Property.getAnim = function (prop,selected,timeRange)
 		for (var propIndex = 1;propIndex <= prop.numProperties;propIndex++)
 		{
 			var anim = DuAEF.DuAE.Property.getAnim(prop.property(propIndex),selected,timeRange);
-			if (anim != null) groupAnim.anims.push(anim);
+			if (anim != null)
+			{
+				if (groupAnim.startTime == null) groupAnim.startTime = anim.startTime;
+				else if (groupAnim.startTime > anim.startTime) groupAnim.startTime = anim.startTime;
+				if (groupAnim.endTime == null) groupAnim.endTime = anim.endTime;
+				else if (groupAnim.endTime > anim.endTime) groupAnim.endTime = anim.endTimeendTime;
+				groupAnim.anims.push(anim);
+			}
 		}
 		return groupAnim;
 	}
@@ -2421,6 +2551,7 @@ DuAEF.DuAE.Property.setGroupAnim = function(prop, anim, time, ignoreName, setExp
 	if (typeof replace === 'undefined') replace = false;
 	if (typeof whiteList === 'undefined') whiteList = [];
 	if (typeof offset === 'undefined') offset = false;
+	if (typeof reverse === 'undefined') reverse = false;
 	if (typeof set === 'undefined') set = false;
 
 	if (whiteList.length == 0) set = true;
