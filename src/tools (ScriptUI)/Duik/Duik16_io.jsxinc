@@ -26,15 +26,6 @@ function initIOUI()
 	setCurrentIOPanel(0);
 }
 
-function importAnims(anims, layers, whiteList)
-{
-	for (var i = 0, num  = anims.length; i < num; i++)
-	{
-		var layer = layers[i];
-		if (layer) DuAEF.DuAE.Layer.setAnim(layer, anims[i], undefined, undefined, undefined, ui_keyframesSelector.index == 0, ui_importAnimationReplaceButton.checked, whiteList, ui_importAnimationOffsetSelector.index == 0);
-	}
-}
-
 //=========== EVENTS =============
 
 function ui_ioImportButton_clicked()
@@ -97,10 +88,15 @@ function ui_importAnimButton_clicked()
 		}
 	}
 
+	//options
+	var onlyKeyframes = ui_keyframesSelector.index == 0;
+	var replace = ui_importAnimationReplaceButton.checked;
+	var offset =  ui_importAnimationOffsetSelector.index == 0;
+
 	app.beginUndoGroup('Duik | ' + "Import Animation");
 
 	var data = DuAEF.Interchange.animation.loadAnimFromJson(openFile);
-	var remaining = DuAEF.DuAE.Layer.setAnims(layers, data, undefined, undefined, undefined, ui_keyframesSelector.index == 0, ui_importAnimationReplaceButton.checked, whiteList, ui_importAnimationOffsetSelector.index == 0);
+	var remaining = DuAEF.DuAE.Layer.setAnims(layers, data, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset);
 
 	if (remaining.length > 0)
 	{
@@ -123,7 +119,7 @@ function ui_importAnimButton_clicked()
 			if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
 		}
 
-		ui_importLayerPicker.onAccept = function () {importAnims(remaining, ui_importLayerPicker.getLayers(), whiteList); };
+		ui_importLayerPicker.onAccept = function () {app.beginUndoGroup('Duik | ' + "Import Animation"); DuAEF.DuAE.Layer.setAllAnims( ui_importLayerPicker.getLayers(), remaining, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset); app.endUndoGroup();};
 
 		DuAEF.DuScriptUI.showUI(ui_importLayerPicker);
 	}

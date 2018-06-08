@@ -600,45 +600,49 @@ function ui_pasteAnimButton_clicked()
 	var comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return;
 
-	var layers = comp.layers;
-	if (ui_copyPasteAllLayersSelector.index == 1) layers = comp.selectedLayers;
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	if (layers.length == 0) layers = comp.layers;
 	if (layers.length == 0) return;
+
+	//options
+	var time = comp.time-copiedAnim.firstKeyFrameTime;
+	var replace = ui_pasteAnimationReplaceButton.checked;
+	var offset =  ui_pasteAnimationOffsetSelector.index == 0;
+	var reverse = ui_pasteAnimationReverseButton.checked;
 
 	app.beginUndoGroup('Duik | ' + "Paste animation");
 
-	var it = new Iterator(layers);
-	it.do(function(layer)
+	var remaining = DuAEF.DuAE.Layer.setAnims(layers, copiedAnim, time, undefined, undefined, undefined, replace, undefined, offset, reverse);
+
+	if (remaining.length > 0)
 	{
-		for (var j = 0 ; j < copiedAnim.length ; j++)
+		var ui_pasteLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
+
+		for (var i = 0, num = remaining.length; i < num; i++)
 		{
-			//paste using indices
-			if (layer.index == copiedAnim[j]._index && ui_copyPasteNamesSelector.index == 1)
+			ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+			//try to preselect by name
+			var ok = false;
+			for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
 			{
-				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
-				break;
+				var l = comp.layer(j);
+				if (l.name == remaining[i]._name)
+				{
+					ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
+					ok = true;
+					break;
+				}
 			}
-			else if (layer.name == copiedAnim[j]._name && ui_copyPasteNamesSelector.index == 0)
-			{
-				DuAEF.DuAE.Layer.setAnim(layer,copiedAnim[j],comp.time-copiedAnim.firstKeyFrameTime);
-				break;
-			}
+			if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
 		}
-	});
+
+		ui_pasteLayerPicker.onAccept = function () {app.beginUndoGroup('Duik | ' + "Paste animation"); DuAEF.DuAE.Layer.setAllAnims(ui_pasteLayerPicker.getLayers(), copiedAnim, time, undefined, undefined, undefined, replace, undefined, offset, false); app.endUndoGroup();};
+
+		DuAEF.DuScriptUI.showUI(ui_pasteLayerPicker);
+	}
 
 	app.endUndoGroup();
 	setCurrentAnimationPanel(0);
-}
-
-function ui_copyPasteNamesSelector_changed()
-{
-	settings.data.copyPasteUseIndices = ui_copyPasteNamesSelector.index == 1;
-	settings.save();
-}
-
-function ui_copyPasteAllLayersSelector_changed()
-{
-	settings.data.copyPasteUseSelectedLayers = ui_copyPasteAllLayersSelector.index == 1;
-	settings.save();
 }
 
 function ui_exposureButton_clicked()
@@ -1232,14 +1236,11 @@ var ui_copyPasteOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_animationStackGroup,
 if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_copyPasteOptionsGroup,"Paste animation");
 ui_copyPasteOptionsGroup.alignment = ['fill','top'];
 ui_copyPasteOptionsGroup.alignChildren = ['center','top'];
-var ui_copyPasteNamesSelector = DuAEF.DuScriptUI.addSelector(ui_copyPasteOptionsGroup);
-ui_copyPasteNamesSelector.addButton("Use layer names",DuAEF.DuBinary.toFile(w32_layername_l),"Use layer names to paste keyframes.",DuAEF.DuBinary.toFile(w32_layername_r));
-ui_copyPasteNamesSelector.addButton("Use indices",DuAEF.DuBinary.toFile(w32_layerindex_l),"Use layer indices to paste keyframes.",DuAEF.DuBinary.toFile(w32_layerindex_r));
-ui_copyPasteNamesSelector.setCurrentIndex(0);
-var ui_copyPasteAllLayersSelector = DuAEF.DuScriptUI.addSelector(ui_copyPasteOptionsGroup);
-ui_copyPasteAllLayersSelector.addButton("All layers",DuAEF.DuBinary.toFile(w32_alllayers_l),"Paste on all layers.",DuAEF.DuBinary.toFile(w32_alllayers_r));
-ui_copyPasteAllLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w32_selectedlayers_l),"Paste on selected layers.",DuAEF.DuBinary.toFile(w32_selectedlayers_r));
-ui_copyPasteAllLayersSelector.setCurrentIndex(0);
+var ui_pasteAnimationOffsetSelector = DuAEF.DuScriptUI.addSelector(ui_copyPasteOptionsGroup);
+ui_pasteAnimationOffsetSelector.addButton("Offset",DuAEF.DuBinary.toFile(w14_moveaway_l),"Offset current values",DuAEF.DuBinary.toFile(w14_moveaway_r));
+ui_pasteAnimationOffsetSelector.addButton("Absolute",DuAEF.DuBinary.toFile(w14_absolute_l),"Replaces current values",DuAEF.DuBinary.toFile(w14_absolute_r));
+var ui_pasteAnimationReverseButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,'Reverse keyframes',undefined,"Reverts the animation in time",undefined);
+var ui_pasteAnimationReplaceButton = DuAEF.DuScriptUI.addImageCheckBox(ui_copyPasteOptionsGroup,'Replace existing keyframes',undefined,"Replaces any existing keyframe on the properties before loading the new animation",undefined);
 var ui_copyPasteValidGroup = DuAEF.DuScriptUI.addGroup(ui_copyPasteOptionsGroup);
 ui_copyPasteValidGroup.alignment = ['fill','top'];
 var ui_copyPasteCancelButton = DuAEF.DuScriptUI.addImageButton(ui_copyPasteValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
@@ -1362,10 +1363,7 @@ ui_motionTrailColorBox.selection = settings.data.motionTrailColorMode;
 ui_motionTrailColorGroup.enabled = settings.data.motionTrailColorMode == 1;
 var copiedAnim = [];
 copiedAnim.firstKeyFrameTime = 0;
-if (settings.data.copyPasteUseIndices == undefined) settings.data.copyPasteUseIndices = false;
-if (settings.data.copyPasteUseIndices) ui_copyPasteNamesSelector.setCurrentIndex(1);
-if (settings.data.copyPasteUseSelectedLayers == undefined) settings.data.copyPasteUseSelectedLayers = false;
-if (settings.data.copyPasteUseSelectedLayers) ui_copyPasteAllLayersSelector.setCurrentIndex(1);
+ui_pasteAnimationOffsetSelector.setCurrentIndex(1);
 ui_timeRemapLoopOutButton.setChecked(true);
 ui_onionSkinInSlider.enabled = false;
 ui_onionSkinOutButton.setChecked(true);
@@ -1462,8 +1460,6 @@ if (DuAEF.DuAE.App.version >= 15)
 
 ui_copyAnimButton.onClick = ui_copyAnimButton_clicked;
 ui_pasteAnimButton.onClick = ui_copyPasteValidButton.onClick = ui_pasteAnimButton_clicked;
-ui_copyPasteNamesSelector.onChange = ui_copyPasteNamesSelector_changed;
-ui_copyPasteAllLayersSelector.onChange = ui_copyPasteAllLayersSelector_changed;
 ui_copyPasteAnimOptionsButton.onClick = function() {setCurrentAnimationPanel(2);};
 ui_copyPasteCancelButton.onClick = function() {setCurrentAnimationPanel(0);};
 
