@@ -71,11 +71,10 @@
 (function(obj)
 {
 	//=========================
-	var version = '16.0.0-Annecy PreRelease';
+	var version = '16.0.0';
 	//=========================
 	#include DuAEF.jsxinc
 	#include Duik16_shared.jsxinc
-
 
 	//============= INIT ==============
 
