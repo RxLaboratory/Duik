@@ -1,0 +1,95 @@
+/*
+DuRSSLib
+Library for reading RSS feeds.
+Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
+https://rainboxprod.coop
+
+_Contributors:_
+Nicolas Dufresne - Lead developer
+
+This file is part of DuAEF.
+
+DuAEF is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+DuAEF is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* @class RSSItem
+* @name RSSItem
+* @classdesc an item from an RSS feed
+* This is not a real class, and cannot be instanciated, it does not have a constructor.<br />
+* Use {@link DuAEF.DuRSS.get} to get items from an RSS feed.<br />
+* @property {string} title - The title.
+* @property {string} link - The link to the article.
+* @property {string} comments - The link to the comments.
+* @property {string} description - The extract/description of the article.
+* @property {Date} pubDate - The date of publication.
+*/
+
+/**
+* @class RSSChannel
+* @name RSSChannel
+* @classdesc an RSS channel
+* This is not a real class, and cannot be instanciated, it does not have a constructor.<br />
+* Use {@link DuAEF.DuRSS.get} to get items from an RSS feed.<br />
+* @property {string} title - The title.
+* @property {string} link - The link to the site.
+* @property {string} description - The extract/description of the article.
+* @property {RSSItem[]} items - The items in the channel.
+*/
+
+/**
+* ScriptUI tools
+* @namespace
+* @memberof DuAEF
+*/
+DuAEF.DuRSS = {};
+
+/**
+* Gets the RSS content from a feed url, and returns it as a JS object
+* @memberof DuAEF.DuRSS
+* @param {string} url - The url of the server.
+* @param {string} [subfolder='feed'] - The subdirectory of the feed (without a leading '/')
+* @param {int} [port=80] - The server port.
+* @return {RSSChannel|null}	The content of the RSS feed
+*/
+DuAEF.DuRSS.get = function (url, subfolder, port)
+{
+	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return null;
+
+	if (typeof port === 'undefined') port = 80;
+	if (typeof subfolder === 'undefined') subfolder = 'feed';
+
+	//socket
+	conn = new Socket;
+	conn.encoding = 'UTF-8';
+	if (!conn.open (url + ':' + port)) return null;
+
+	var reply = '';
+
+	var userAgent = 'User-Agent: DuAEF/' + DuAEF.version + ' (' + $.os + ')' + ' AE/' + DuAEF.DuAE.App.version;
+
+	if (conn.writeln('GET /' + subfolder + '  HTTP/1.0\n' + userAgent + '\nHost: ' + url + '\n'))
+	{
+		reply = conn.read(100000);
+	}
+
+	conn.close();
+
+	//strip html header
+	reply = reply.substring(reply.indexOf('<?xml'));
+
+	reply = new XML(reply);
+
+	return reply;
+}
