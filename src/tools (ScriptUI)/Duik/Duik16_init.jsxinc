@@ -1,70 +1,110 @@
+//=========== GLOBAL VARIABLES =============
+var settingsFile, settings, settingsPath, debugLog;
+
 //=========== FILE AND NETWORK ACCESS ===========
 
-var accessExplanation = "Duik needs to be allowed to write files in order to:\n\n" +
-	"- Display icons\n" +
-	"- Run ffmpeg to transcode medias\n" +
-	"- Export animations and other formats\n" +
-	"- Save your settings.\n\n" +
-	"It also needs network access to check for updates.\n\n" +
-	"Please, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.";
-DuAEF.DuAE.App.askFilesAndNetworkAccess(true,accessExplanation);
-
-//=========== SETTINGS ===========
-
-var settingsFile;
-if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
-var settings = new DuSettings("Duik",settingsFile);
-//TODO get the version of Duik, update settings if changed
-settings.data.duikVersion = version;
-//set settings if new
-if (settings.data.uiMode == undefined) settings.data.uiMode = 0;
-if (settings.data.debug == undefined) settings.data.debug = false;
-DuAEF.debug = settings.data.debug;
-
-//create Debug log
-var settingsPath = settings.file.path;
-var debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
-debugLog.startTimer("Loading Duik");
-
-//settings folder
-var settingsPath = settings.file.parent.absoluteURI + '/';
-
-//============= Translations ==============
-
-#include "translation/Duik Bassel_fr.json.jsxinc"
-DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
-
-DuAEF.Dutranslator.Settings.folder = settingsPath;
-DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
-DuAEF.Dutranslator.getAvailable();
-
-//if language has never been set
-if (settings.data.language == undefined)
+if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 {
-	// Create the window
-	var languageDialog = new Window('dialog', "Choose the Duik Bassel language", undefined, {resizeable:false});
-	languageDialog.orientation = 'column';
-	languageDialog.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.");
-	languageDialog.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
-	var lDdd = languageDialog.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+	var ui_accessFileAndNetworkGroup = ui_mainPalette.contents.add('group');
+	ui_accessFileAndNetworkGroup.orientation = 'column';
+	var accessExplanation = "Duik needs to be allowed to write files in order to:\n\n" +
+		"- Display icons\n" +
+		"- Run ffmpeg to transcode medias\n" +
+		"- Export animations and other formats\n" +
+		"- Save your settings.\n\n" +
+		"It also needs network access to check for updates.\n\n" +
+		"Please, check the box called 'Allow Scripts to write files...' in the general preferences of After Effects.";
 
-	// Show window
-	lDdd.selection = 0;
-	var lDok = languageDialog.add('button', undefined, "Ok");
-	languageDialog.layout.resize();
-	languageDialog.center();
-	languageDialog.show(); // Pause the execution while the dialog is open
+	ui_accessFileAndNetworkGroup.add('statictext',undefined,accessExplanation,{multiline:true});
+	var ui_fileAndNetworkPrefButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Open preferences');
+	var ui_fileAndNetworkIgnoreButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Ignore');
 
-	// Set language based on user choice
-	if (lDdd.selection != null)
-	{
-		var languageChoosed = lDdd.selection.text;
-		DuAEF.Dutranslator.setPrettyLanguage(languageChoosed);
-		settings.data.language = DuAEF.Dutranslator.current;
-		settings.save();
+	ui_fileAndNetworkPrefButton.onClick = function () {
+		var ok = DuAEF.DuAE.App.askFilesAndNetworkAccess(false);
+		if (ok) ui_accessFileAndNetworkGroup.visible = false;
+		loadSettings();
 	}
+
+	ui_fileAndNetworkIgnoreButton.onClick = function ()
+	{
+		ui_accessFileAndNetworkGroup.visible = false;
+		loadSettings();
+	}
+
+	DuAEF.DuScriptUI.showUI(ui_mainPalette);
 }
 else
 {
-	DuAEF.Dutranslator.setLanguage(settings.data.language);
+	loadSettings();
+}
+
+//=========== SETTINGS ===========
+function loadSettings ()
+{
+	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
+	settings = new DuSettings("Duik",settingsFile);
+	//TODO get the version of Duik, update settings if changed
+	settings.data.duikVersion = version;
+	//set settings if new
+	if (settings.data.uiMode == undefined) settings.data.uiMode = 0;
+	if (settings.data.debug == undefined) settings.data.debug = false;
+	DuAEF.debug = settings.data.debug;
+
+	//create Debug log
+	var settingsPath = settings.file.path;
+	debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
+	debugLog.startTimer("Loading Duik");
+
+	//settings folder
+	var settingsPath = settings.file.parent.absoluteURI + '/';
+
+	//============= Translations ==============
+
+	#include "translation/Duik Bassel_fr.json.jsxinc"
+	DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
+
+	DuAEF.Dutranslator.Settings.folder = settingsPath;
+	DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
+	DuAEF.Dutranslator.getAvailable();
+
+	//if language has never been set
+	if (settings.data.language == undefined)
+	{
+		// Create the window
+		var languageDialog = new Window('dialog', "Choose the Duik Bassel language", undefined, {resizeable:false});
+		languageDialog.orientation = 'column';
+		languageDialog.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.");
+		languageDialog.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
+		var lDdd = languageDialog.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+
+		// Show window
+		lDdd.selection = 0;
+		var lDok = languageDialog.add('button', undefined, "Ok");
+		languageDialog.layout.resize();
+		languageDialog.center();
+		languageDialog.show(); // Pause the execution while the dialog is open
+
+		// Set language based on user choice
+		if (lDdd.selection != null)
+		{
+			var languageChoosed = lDdd.selection.text;
+			DuAEF.Dutranslator.setPrettyLanguage(languageChoosed);
+			settings.data.language = DuAEF.Dutranslator.current;
+			settings.save();
+		}
+	}
+	else
+	{
+		DuAEF.Dutranslator.setLanguage(settings.data.language);
+	}
+
+	checkUpdates();
+}
+
+//================== UPDATES ===================
+
+function checkUpdates()
+{
+	shared.checkForUpdate(version, true);
+	createUI();
 }

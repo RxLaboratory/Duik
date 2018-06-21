@@ -1,0 +1,155 @@
+function createUI()
+{
+	//============= ICONS =============
+
+	#include 'Duik16_w14icons.jsxinc'
+	#include 'Duik16_w18icons.jsxinc'
+	#include 'Duik16_w25icons.jsxinc'
+	#include 'Duik16_w32icons.jsxinc'
+	#include 'Duik16_illustrations.jsxinc'
+
+	debugLog.checkTimer("Icons created");
+
+	//========== MODULES =============
+
+	#include Duik16_notes.jsxinc
+	#include Duik16_calc.jsxinc
+
+	//=========== FUNCTIONS ==========
+	function setCurrentPanel(panel)
+	{
+		if (panel == undefined)
+		{
+			//get setting
+			panel = settings.data.currentPanel;
+			if (panel == undefined) panel = 1;
+		}
+
+		//reinit panels
+		initRiggingUI();
+		initAnimationUI();
+		initIOUI();
+		initCameraUI();
+
+		ui_riggingGroup.visible = panel == 5;
+		ui_riggingButton.setChecked(ui_riggingGroup.visible);
+		ui_animationMainGroup.visible = panel == 4;
+		ui_animationButton.setChecked(ui_animationMainGroup.visible);
+		ui_cameraGroup.visible = panel == 3;
+		ui_cameraButton.setChecked(ui_cameraGroup.visible);
+		ui_ioGroup.visible = panel == 2;
+		ui_ioButton.setChecked(ui_ioGroup.visible);
+		ui_settingsGroup.visible = panel == 1;
+		ui_settingsButton.setChecked(ui_settingsGroup.visible);
+
+		//save settings
+		if (panel != 1 && panel != 0) settings.data.currentPanel = panel;
+		settings.save();
+	}
+
+	//=========== EVENTS =============
+
+	//TOOLS
+	function ui_notesButton_clicked()
+	{
+		if(!notes_ui_palette.visible) DuAEF.DuScriptUI.showUI(notes_ui_palette);
+		else notes_ui_palette.hide();
+	}
+
+	function ui_calcButton_clicked()
+	{
+		if(!calc_ui_palette.visible) DuAEF.DuScriptUI.showUI(calc_ui_palette);
+		else calc_ui_palette.hide();
+	}
+
+	function ui_bottomGroup_clicked()
+	{
+		if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return;
+		if(DuAEF.mac) system.callSystem('open https://rainboxprod.coop');
+		else system.callSystem('explorer https://rainboxprod.coop');
+	}
+
+	//=========== UI =============
+
+	//HELP
+	#include Duik16_helpStrings.jsxinc
+
+	debugLog.checkTimer("Building UI");
+
+	var ui_palette = ui_mainPalette.contents.add('group');
+	ui_palette.orientation = 'column';
+
+	//layout
+	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
+	DuAEF.DuScriptUI.setBackgroundColor(ui_topGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	//DuAEF.DuScriptUI.addSeparator(ui_palette);
+	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
+	ui_mainGroup.alignment = ['fill','top'];
+	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
+	ui_bottomGroup.alignment = ['fill','bottom'];
+
+	//=== TOP LEFT TOOLS ===
+
+	var ui_notesButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'',DuAEF.DuBinary.toFile(w18_notes_l),"Simple notepad, with auto-save.",DuAEF.DuBinary.toFile(w18_notes_r));
+	var ui_calcButton = DuAEF.DuScriptUI.addImageButton(ui_topGroup,'',DuAEF.DuBinary.toFile(w18_smallcalc_l),"Calculator",DuAEF.DuBinary.toFile(w18_smallcalc_r));
+
+	//=== TOP RIGHT TOOLS ===
+
+	var ui_tabsGroup = DuAEF.DuScriptUI.addGroup(ui_topGroup,'row');
+	ui_tabsGroup.alignment = ['right','center'];
+	var ui_riggingButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_rig_l),"Rigging",DuAEF.DuBinary.toFile(w18_rig_r));
+	var ui_animationButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_kbez_l),"Animation",DuAEF.DuBinary.toFile(w18_kbez_r));
+	var ui_cameraButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
+	ui_cameraButton.setHelp('Camera',cameraHelp,cameraLink);
+	var ui_ioButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
+	ui_ioButton.setHelp('Audition',ioHelp,ioLink);
+	var ui_settingsButton = DuAEF.DuScriptUI.addImageCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
+	var ui_helpButton = DuAEF.DuScriptUI.addImageButton(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
+	ui_helpButton.setHelp('Duik Bassel (v' + version + ')',helpHelp,'https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide');
+
+	//=== BOTTOM ===
+
+	var ui_rainboxURL = ui_bottomGroup.add ('statictext',undefined,'rainboxprod.coop');
+	ui_rainboxURL.alignment = ['left','bottom'];
+	if (settings.data.debug)
+	{
+		var refreshButton = ui_bottomGroup.add('button',undefined,'R');
+		refreshButton.alignment = ['right','bottom'];
+		refreshButton.maximumSize = [20, 20];
+		refreshButton.onClick = function () { ui_palette.refreshUI( thisScriptFile ); };
+	}
+
+	//=== PANELS ===
+
+	#include Duik16_rigging.jsxinc
+	#include Duik16_animation.jsxinc
+	#include Duik16_camera.jsxinc
+	#include Duik16_io.jsxinc
+	#include Duik16_settings.jsxinc
+
+	//=== HELP PANEL ===
+	DuAEF.DuScriptUI.helpPanel.text = 'Duik Bassel ' + "help";
+
+	//=== CONNECT EVENTS ===
+
+	//top left tools
+	ui_notesButton.onClick = ui_notesButton_clicked;
+	ui_calcButton.onClick = ui_calcButton_clicked;
+	//tabs
+	ui_riggingButton.onClick = function(){setCurrentPanel(5)};
+	ui_animationButton.onClick = function(){setCurrentPanel(4)};
+	ui_cameraButton.onClick = function(){setCurrentPanel(3)};
+	ui_ioButton.onClick = function(){setCurrentPanel(2)};
+	ui_settingsButton.onClick = function(){setCurrentPanel(1)};
+	ui_helpButton.onClick = function(){ DuAEF.DuScriptUI.helpPanel.show(); };
+
+	//bottom
+	ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
+
+	//=== INIT ===
+	setCurrentPanel();
+	debugLog.checkTimer("Showing UI");
+	DuAEF.DuScriptUI.showUI(ui_mainPalette);
+
+	debugLog.checkTimer("Duik successfully loaded.");
+}

@@ -89,3 +89,28 @@ shared.extractControllers = function ()
 
 	if (result == -1) alert("To extract controllers, there must not be any controller parented to something else than another controller or nothing.");
 }
+
+shared.checkForUpdate = function (version, showAlert)
+{
+	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return '';
+	var reply = '';
+	//socket
+	conn = new Socket;
+	// connect to rainboxprod.coop
+	if (conn.open ('rainboxprod.net:80'))
+	{
+		// get current version
+		var userAgent = 'User-Agent: Duik/' + version + ' (' + $.os + ')' + ' AE/' + DuAEF.DuAE.App.version;
+		if (conn.writeln('GET /duik/version.txt  HTTP/1.0\n' + userAgent + '\nHost: rainboxprod.net\n'))
+			reply = conn.read(10000);
+		conn.close();
+		// get version
+		var rep = reply.lastIndexOf('version',reply.length);
+		if(rep != -1)
+		{
+			newVersion = reply.slice(rep+8,reply.length+1);
+			if (showAlert && version != newVersion) alert(tr("A new version of Duik is available,\ngo to http://rainboxprod.coop to download it"));
+			return newVersion;
+		}
+	}
+}
