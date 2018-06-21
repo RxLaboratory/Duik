@@ -5,8 +5,8 @@ var settingsFile, settings, settingsPath, debugLog;
 
 if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 {
-	var ui_accessFileAndNetworkGroup = ui_mainPalette.contents.add('group');
-	ui_accessFileAndNetworkGroup.orientation = 'column';
+	var ui_accessFileAndNetworkGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+
 	var accessExplanation = "Duik needs to be allowed to write files in order to:\n\n" +
 		"- Display icons\n" +
 		"- Run ffmpeg to transcode medias\n" +
@@ -19,10 +19,14 @@ if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	var ui_fileAndNetworkPrefButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Open preferences');
 	var ui_fileAndNetworkIgnoreButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Ignore');
 
-	ui_fileAndNetworkPrefButton.onClick = function () {
+	ui_fileAndNetworkPrefButton.onClick = function ()
+	{
 		var ok = DuAEF.DuAE.App.askFilesAndNetworkAccess(false);
-		if (ok) ui_accessFileAndNetworkGroup.visible = false;
-		loadSettings();
+		if (ok)
+		{
+			ui_accessFileAndNetworkGroup.visible = false;
+			loadSettings();
+		}
 	}
 
 	ui_fileAndNetworkIgnoreButton.onClick = function ()
@@ -70,35 +74,34 @@ function loadSettings ()
 	//if language has never been set
 	if (settings.data.language == undefined)
 	{
-		// Create the window
-		var languageDialog = new Window('dialog', "Choose the Duik Bassel language", undefined, {resizeable:false});
-		languageDialog.orientation = 'column';
-		languageDialog.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.");
-		languageDialog.add('statictext', undefined, "(This dialog will be prompt only on the first start, you can change the language at any time in the Duik settings tab)");
-		var lDdd = languageDialog.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+		var ui_languageSetGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
 
-		// Show window
+		ui_languageSetGroup.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.",{multiline:true});
+		ui_languageSetGroup.add('statictext', undefined, "You can also change the language at any time in the settings tab of Duik",{multiline:true});
+		var lDdd = ui_languageSetGroup.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
 		lDdd.selection = 0;
-		var lDok = languageDialog.add('button', undefined, "Ok");
-		languageDialog.layout.resize();
-		languageDialog.center();
-		languageDialog.show(); // Pause the execution while the dialog is open
-
-		// Set language based on user choice
-		if (lDdd.selection != null)
+		var lDok = ui_languageSetGroup.add('button', undefined, "Ok");
+		lDok.onClick = function ()
 		{
-			var languageChoosed = lDdd.selection.text;
-			DuAEF.Dutranslator.setPrettyLanguage(languageChoosed);
-			settings.data.language = DuAEF.Dutranslator.current;
-			settings.save();
+			if (lDdd.selection != null)
+			{
+				var languageChoosed = lDdd.selection.text;
+				DuAEF.Dutranslator.setPrettyLanguage(languageChoosed);
+				settings.data.language = DuAEF.Dutranslator.current;
+				settings.save();
+			}
+			ui_languageSetGroup.visible = false;
+			checkUpdates();
 		}
+
+		DuAEF.DuScriptUI.showUI(ui_mainPalette);
+
 	}
 	else
 	{
 		DuAEF.Dutranslator.setLanguage(settings.data.language);
+		checkUpdates();
 	}
-
-	checkUpdates();
 }
 
 //================== UPDATES ===================
