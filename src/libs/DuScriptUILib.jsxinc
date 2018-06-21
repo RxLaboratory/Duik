@@ -428,16 +428,16 @@ DuAEF.DuScriptUI.addSeparator = function (container,name,checkable,drawLine)
 DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOver)
 {
 	if (typeof text === 'undefined') text = '';
-	if (typeof image === 'undefined') image = '';
+	if (!image) image = '';
 	if (typeof helpTip === 'undefined') helpTip = '';
-	if (typeof imageOver === 'undefined') imageOver = '';
+	if (!imageOver) imageOver = '';
 
 	if (text != '') DuAEF.DuScriptUI.uiStrings.push(text);
 	if (helpTip != '') DuAEF.DuScriptUI.uiStrings.push(helpTip);
 	text = tr(text);
 	helpTip = tr(helpTip);
 
-	if (text == '' && image == '') throw "You must provide either a text or an icon to create the button";
+	if (image == '' && text == '') text = 'o';
 
 	var imageButton = container.add('group');
 	imageButton.orientation = 'row';
@@ -591,12 +591,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	if (!imageOver) imageOver = imageChecked;
 	if (textChecked == undefined) textChecked = '';
 
+	if (image == '' && text == '') text = '#';
+
 	if (text != '') DuAEF.DuScriptUI.uiStrings.push(text);
 	if (helpTip != '') DuAEF.DuScriptUI.uiStrings.push(helpTip);
 	text = tr(text);
 	helpTip = tr(helpTip);
-
-	if (text == '' && image == '') throw "You must provide either a text or an icon to create the checkbox";
 
 	var group = container.add('group');
 	group.orientation = 'row';
@@ -620,7 +620,7 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 	imageButton.iconUncheckedOver = DuAEF.DuBinary.toFile(w14_unchecked_l);
 
 	//add checkbox
-	if (text != '')
+	if (text != '' && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 		imageButton.checkbox = group.add('image',undefined,imageButton.iconUnchecked);
 		imageButton.checkbox.alignment = ['left','center'];
@@ -637,10 +637,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		icon.helpTip = helpTip;
 		imageButton.image = icon;
 	}
+
 	if (imageOver != '')
 	{
 		if (!DuAEF.DuJS.Fs.fileExists(imageOver)) throw new Error("Image does not exists: " + imageOver);
 	}
+
 	if (imageChecked != '')
 	{
 		if (!DuAEF.DuJS.Fs.fileExists(imageChecked)) throw new Error("Image does not exists: " + imageChecked);
@@ -655,7 +657,6 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 
 		if (text.length < textChecked.length) imageButton.label.minimumSize.width = textChecked.length*7;
 		else imageButton.label.minimumSize.width = text.length*7;
-
 	}
 
 	/**
@@ -672,12 +673,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 			if (imageButton.checked)
 			{
 				if (imageButton.textChecked != '') imageButton.label.text = imageButton.textChecked;
-				imageButton.checkbox.image = imageButton.iconChecked;
+				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconChecked;
 			}
 			else
 			{
 				imageButton.label.text = imageButton.defaultText;
-				imageButton.checkbox.image = imageButton.iconUnchecked;
+				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconUnchecked;
 			}
 		}
 
@@ -717,8 +718,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		if (label)
 		{
 			DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.DARK_GREY);
-			if (imageButton.checked) imageButton.checkbox.image = imageButton.iconCheckedOver;
-			else imageButton.checkbox.image = imageButton.iconUncheckedOver;
+			if (DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+			{
+				if (imageButton.checked) imageButton.checkbox.image = imageButton.iconCheckedOver;
+				else imageButton.checkbox.image = imageButton.iconUncheckedOver;
+			}
+
 		}
 		DuAEF.DuScriptUI.highlightedControls.push(imageButton);
 	}
@@ -729,12 +734,12 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		if (imageButton.checked)
 		{
 			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-			if (label) imageButton.checkbox.image = imageButton.iconChecked;
+			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconChecked;
 		}
 		else
 		{
 			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-			if (label) imageButton.checkbox.image = imageButton.iconUnchecked;
+			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconUnchecked;
 		}
 	}
 
@@ -1364,7 +1369,8 @@ DuAEF.DuScriptUI.addSelector = function(container)
 	//the menu button
 	selector.menuImage = DuAEF.DuBinary.toFile(w14_menu_m);
 	selector.menuImageOver = DuAEF.DuBinary.toFile(w14_menu_l);
-	selector.menuButton = selector.add('image',undefined,selector.menuImage);
+	if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.menuButton = selector.add('image',undefined,selector.menuImage);
+	else selector.menuButton = selector.add('statictext',undefined,'M');
 	selector.menuButton.alignment = ['left','center'];
 
 	//the image
@@ -1554,7 +1560,8 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 		//the menu button
 		selector.menuImage = DuAEF.DuBinary.toFile(w14_layers_m);
 		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_layers_l);
-		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
+		else selector.menuButton = selector.mainGroup.add('statictext',undefined,'L');
 		selector.menuButton.alignment = ['left','center'];
 
 		//the text
@@ -1595,7 +1602,8 @@ DuAEF.DuScriptUI.addLayerSelector = function(container)
 	//the pick button
 	selector.pickImage = DuAEF.DuBinary.toFile(w14_eyedropper_m);
 	selector.pickImageOver = DuAEF.DuBinary.toFile(w14_eyedropper_l);
-	selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	else selector.pickButton = selector.add('statictext',undefined,'P');
 	selector.pickButton.alignment = ['right','center'];
 
 	selector.popup.list.add('item',"None");
@@ -1908,10 +1916,14 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	else
 	{
 		//the menu button
-		selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
-		selector.menuImageOver = DuAEF.DuBinary.toFile(w14_comp_l);
-		selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
-		selector.menuButton.alignment = ['left','center'];
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+		{
+			selector.menuImage = DuAEF.DuBinary.toFile(w14_comp_m);
+			selector.menuImageOver = DuAEF.DuBinary.toFile(w14_comp_l);
+			selector.menuButton = selector.mainGroup.add('image',undefined,selector.menuImage);
+			selector.menuButton.alignment = ['left','center'];
+		}
+
 
 		//the text
 		selector.label = selector.mainGroup.add('statictext',undefined,'None');
@@ -1944,16 +1956,18 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 		}
 	}
 
-	//the pick button
+	//the pick & refresh buttons
 	selector.pickImage = DuAEF.DuBinary.toFile(w14_eyedropper_m);
 	selector.pickImageOver = DuAEF.DuBinary.toFile(w14_eyedropper_l);
-	selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.pickButton = selector.add('image',undefined,selector.pickImage);
+	else selector.pickButton = selector.add('statictext',undefined,'P');
 	selector.pickButton.alignment = ['right','center'];
 
 	//the refresh button
 	selector.refreshImage = DuAEF.DuBinary.toFile(w14_update_m);
 	selector.refreshImageOver = DuAEF.DuBinary.toFile(w14_update_l);
-	selector.refreshButton = selector.add('image',undefined,selector.refreshImage);
+	if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.refreshButton = selector.add('image',undefined,selector.refreshImage);
+	else selector.refreshButton = selector.add('statictext',undefined,'R');
 	selector.refreshButton.alignment = ['right','center'];
 
 	var itemNone = selector.popup.list.add('item',"None");
@@ -2040,7 +2054,7 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	{
 		e.stopPropagation();
 		DuAEF.DuScriptUI.dimControls();
-		selector.menuButton.image = selector.menuImageOver;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.menuButton.image = selector.menuImageOver;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
 		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.DARK_GREY);
 		DuAEF.DuScriptUI.highlightedControls.push(selector);
@@ -2050,7 +2064,7 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	{
 		e.stopPropagation();
 		DuAEF.DuScriptUI.dimControls();
-		selector.refreshButton.image = selector.refreshImageOver;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.refreshButton.image = selector.refreshImageOver;
 		DuAEF.DuScriptUI.highlightedControls.push(selector);
 	}
 
@@ -2058,15 +2072,15 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
 	{
 		e.stopPropagation();
 		DuAEF.DuScriptUI.dimControls();
-		selector.pickButton.image = selector.pickImageOver;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.pickButton.image = selector.pickImageOver;
 		DuAEF.DuScriptUI.highlightedControls.push(selector);
 	}
 
 	selector.dim = function (e)
 	{
-		selector.menuButton.image = selector.menuImage;
-		selector.refreshButton.image = selector.refreshImage;
-		selector.pickButton.image = selector.pickImage;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.menuButton.image = selector.menuImage;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.refreshButton.image = selector.refreshImage;
+		if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) selector.pickButton.image = selector.pickImage;
 		DuAEF.DuScriptUI.setTextColor(selector.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
 		DuAEF.DuScriptUI.setBackgroundColor(selector,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 	}
