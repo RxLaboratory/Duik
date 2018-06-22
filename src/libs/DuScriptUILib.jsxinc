@@ -41,6 +41,14 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 #include "icons/w14_comp_m.png.jsxinc"
 #include "icons/w14_eyedropper_m.png.jsxinc"
 #include "icons/w14_eyedropper_l.png.jsxinc"
+#include "icons/w14_back_l.png.jsxinc"
+#include "icons/w14_back_m.png.jsxinc"
+#include "icons/w14_next_m.png.jsxinc"
+#include "icons/w14_next_l.png.jsxinc"
+#include "icons/w14_news_l.png.jsxinc"
+#include "icons/w14_news_m.png.jsxinc"
+#include "icons/w14_help_m.png.jsxinc"
+#include "icons/w14_help_l.png.jsxinc"
 #include 'icons/w25_back_r.jsxinc'
 #include 'icons/w25_back_m.jsxinc'
 #include 'icons/w25_check_r.jsxinc'
@@ -75,7 +83,7 @@ DuAEF.DuScriptUI.defaultRowAlignment = ["left","center"];
 * @type {String[]}
 * @default ["fill","top"]
 */
-DuAEF.DuScriptUI.defaultStackAlignment = ["fill","top"];
+DuAEF.DuScriptUI.defaultStackAlignment = ["fill","fill"];
 
 /**
 * The default spacing of containers
@@ -484,7 +492,7 @@ DuAEF.DuScriptUI.addImageButton = function (container,text,image,helpTip,imageOv
 		{
 			if (imageButton.help.text != '')
 			{
-				DuAEF.DuScriptUI.helpPanel.show();
+				DuAEF.DuScriptUI.showHelp();
 			}
 			return;
 		}
@@ -702,7 +710,7 @@ DuAEF.DuScriptUI.addImageCheckBox = function (container,text,image,helpTip,image
 		{
 			if (imageButton.help.text != '')
 			{
-				DuAEF.DuScriptUI.helpPanel.show();
+				DuAEF.DuScriptUI.showHelp();
 			}
 			return;
 		}
@@ -1750,35 +1758,209 @@ DuAEF.DuScriptUI.helpPanel = new Window('palette',"Help panel",undefined,{resize
 
 //Initializes the help panel
 (function(){
-	DuAEF.DuScriptUI.helpPanel.maximumSize.height = 500;
+
+	DuAEF.DuScriptUI.helpPanel.link = '';
+	DuAEF.DuScriptUI.helpPanel.news = {};
+	DuAEF.DuScriptUI.helpPanel.news.link = '';
+	DuAEF.DuScriptUI.helpPanel.about = {};
+	DuAEF.DuScriptUI.helpPanel.about.link = '';
+	DuAEF.DuScriptUI.helpPanel.newsItems = [];
+	DuAEF.DuScriptUI.helpPanel.currentNewsItem = -1;
+
 	DuAEF.DuScriptUI.helpPanel.margins = 2;
 	DuAEF.DuScriptUI.helpPanel.spacing = 0;
+	DuAEF.DuScriptUI.helpPanel.maximumSize.height = 500;
+	DuAEF.DuScriptUI.helpPanel.alignChildren = ['fill','fill'];
 	//DuAEF.DuScriptUI.setBackgroundColor(popup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 
-	//add title
-	DuAEF.DuScriptUI.helpPanel.title = DuAEF.DuScriptUI.helpPanel.add('statictext',undefined,'');
-	DuAEF.DuScriptUI.helpPanel.title.alignment = ['fill','top'];
+	//add buttons for help/news/about tabs
+	DuAEF.DuScriptUI.uiStrings.push("Help");
+	DuAEF.DuScriptUI.uiStrings.push("News");
+	DuAEF.DuScriptUI.uiStrings.push("About");
+	var tabsGroup = DuAEF.DuScriptUI.addGroup(DuAEF.DuScriptUI.helpPanel,'row');
+	tabsGroup.alignment = ['fill','top'];
+	DuAEF.DuScriptUI.helpPanel.helpButton = DuAEF.DuScriptUI.addImageCheckBox(
+		tabsGroup,
+		tr("Help"),
+		DuAEF.DuBinary.toFile(w14_help_m),
+		'',
+		DuAEF.DuBinary.toFile(w14_help_l)
+	);
+	DuAEF.DuScriptUI.helpPanel.newsButton = DuAEF.DuScriptUI.addImageCheckBox(
+		tabsGroup,
+		tr("News"),
+		DuAEF.DuBinary.toFile(w14_news_m),
+		'',
+		DuAEF.DuBinary.toFile(w14_news_l)
+	);
+	DuAEF.DuScriptUI.helpPanel.aboutButton = DuAEF.DuScriptUI.addImageCheckBox(
+		tabsGroup,
+		tr("About"),
+		DuAEF.DuBinary.toFile(w14_help_m),
+		'',
+		DuAEF.DuBinary.toFile(w14_help_l)
+	);
 
-	//add spacer
-	DuAEF.DuScriptUI.addSeparator(DuAEF.DuScriptUI.helpPanel);
+	//add main panel
+	var mainGroup = DuAEF.DuScriptUI.addGroup(DuAEF.DuScriptUI.helpPanel,'stack');
+
+	//help panel
+	var helpGroup = DuAEF.DuScriptUI.addGroup(mainGroup,'column');
+	helpGroup.alignment = ['fill','fill'];
+
+	//add title
+	DuAEF.DuScriptUI.helpPanel.title = helpGroup.add('statictext',undefined,'');
+	DuAEF.DuScriptUI.helpPanel.title.alignment = ['fill','top'];
+	DuAEF.DuScriptUI.setTextColor(DuAEF.DuScriptUI.helpPanel.title, DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
 
 	//add text
-	DuAEF.DuScriptUI.helpPanel.help = DuAEF.DuScriptUI.helpPanel.add('edittext',undefined,'',{multiline:true});
+	DuAEF.DuScriptUI.helpPanel.help = helpGroup.add('edittext',undefined,'',{multiline:true});
 	DuAEF.DuScriptUI.helpPanel.help.alignment = ['fill','fill'];
+
+	//news panel
+	var newsGroup = DuAEF.DuScriptUI.addGroup(mainGroup,'column');
+	newsGroup.alignment = ['fill','fill'];
+
+	//add title
+	DuAEF.DuScriptUI.helpPanel.news.title = newsGroup.add('statictext',undefined,'');
+	DuAEF.DuScriptUI.helpPanel.news.title.alignment = ['fill','top'];
+	DuAEF.DuScriptUI.setTextColor(DuAEF.DuScriptUI.helpPanel.news.title, DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+	//add date
+	DuAEF.DuScriptUI.helpPanel.news.date = newsGroup.add('statictext',undefined,'');
+	DuAEF.DuScriptUI.helpPanel.news.date.alignment = ['fill','top'];
+
+	//add text
+	DuAEF.DuScriptUI.helpPanel.news.help = newsGroup.add('edittext',undefined,'',{multiline:true});
+	DuAEF.DuScriptUI.helpPanel.news.help.alignment = ['fill','fill'];
+
+	//add next and previous buttons
+	var newsNavGroup = DuAEF.DuScriptUI.addGroup(newsGroup,'row');
+	newsNavGroup.alignment = ['fill','bottom'];
+	DuAEF.DuScriptUI.uiStrings.push("Previous");
+	DuAEF.DuScriptUI.uiStrings.push("Next");
+	DuAEF.DuScriptUI.helpPanel.news.prevButton = DuAEF.DuScriptUI.addImageButton(
+		newsNavGroup,
+		tr("Previous"),
+		DuAEF.DuBinary.toFile(w14_back_m),
+		'',
+		DuAEF.DuBinary.toFile(w14_back_l)
+	);
+	DuAEF.DuScriptUI.helpPanel.news.nextButton = DuAEF.DuScriptUI.addImageButton(
+		newsNavGroup,
+		tr("Next"),
+		DuAEF.DuBinary.toFile(w14_next_m),
+		'',
+		DuAEF.DuBinary.toFile(w14_next_l)
+	);
+
+	//about panel
+	var aboutGroup = DuAEF.DuScriptUI.addGroup(mainGroup,'column');
+	aboutGroup.alignment = ['fill','fill'];
+
+	//add title
+	DuAEF.DuScriptUI.helpPanel.about.title = aboutGroup.add('statictext',undefined,'');
+	DuAEF.DuScriptUI.helpPanel.about.title.alignment = ['fill','top'];
+	DuAEF.DuScriptUI.setTextColor(DuAEF.DuScriptUI.helpPanel.about.title, DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+
+	//add text
+	DuAEF.DuScriptUI.helpPanel.about.help = aboutGroup.add('edittext',undefined,'',{multiline:true});
+	DuAEF.DuScriptUI.helpPanel.about.help.alignment = ['fill','fill'];
 
 	//add buttons
 	var buttonsGroup = DuAEF.DuScriptUI.addGroup(DuAEF.DuScriptUI.helpPanel,'row');
 	buttonsGroup.alignment = ['fill','bottom'];
 	DuAEF.DuScriptUI.helpPanel.closeButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"Close",DuAEF.DuBinary.toFile(w14_cancel_m),"Close this window",DuAEF.DuBinary.toFile(w14_cancel_l));
 	DuAEF.DuScriptUI.helpPanel.closeButton.onClick = function () { DuAEF.DuScriptUI.helpPanel.hide(); };
-	DuAEF.DuScriptUI.helpPanel.helpButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"More...",DuAEF.DuBinary.toFile(w14_url_m),"Read more details online",DuAEF.DuBinary.toFile(w14_url_l));
-	DuAEF.DuScriptUI.helpPanel.helpButton.onClick = function()
+	DuAEF.DuScriptUI.helpPanel.moreButton = DuAEF.DuScriptUI.addImageButton(buttonsGroup,"More...",DuAEF.DuBinary.toFile(w14_url_m),"Read more details online",DuAEF.DuBinary.toFile(w14_url_l));
+	DuAEF.DuScriptUI.helpPanel.moreButton.onClick = function()
 	{
-		if(DuAEF.mac) system.callSystem('open ' + DuAEF.DuScriptUI.helpPanel.link);
-		else system.callSystem('explorer ' + DuAEF.DuScriptUI.helpPanel.link);
+		var link = DuAEF.DuScriptUI.helpPanel.link;
+		if (DuAEF.DuScriptUI.helpPanel.newsButton.checked) link = DuAEF.DuScriptUI.helpPanel.news.link;
+		if (DuAEF.DuScriptUI.helpPanel.aboutButton.checked) link = DuAEF.DuScriptUI.helpPanel.about.link;
+		if(DuAEF.mac) system.callSystem('open ' + link);
+		else system.callSystem('explorer ' + link);
 	}
 
-	DuAEF.DuScriptUI.helpPanel.onResizing = DuAEF.DuScriptUI.helpPanel.onResize = function () {DuAEF.DuScriptUI.helpPanel.layout.resize();};
+	DuAEF.DuScriptUI.helpPanel.setPanel = function (panel)
+	{
+		if (typeof panel === 'undefined') panel = 0;
+
+		if (panel == 0)
+		{
+			helpGroup.visible = true;
+			DuAEF.DuScriptUI.helpPanel.helpButton.setChecked(true);
+			newsGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.newsButton.setChecked(false);
+			aboutGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.aboutButton.setChecked(false);
+
+			if (DuAEF.DuScriptUI.helpPanel.link != '') DuAEF.DuScriptUI.helpPanel.moreButton.show();
+			else DuAEF.DuScriptUI.helpPanel.moreButton.hide();
+		}
+		else if (panel == 1)
+		{
+			helpGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.helpButton.setChecked(false);
+			newsGroup.visible = true;
+			DuAEF.DuScriptUI.helpPanel.newsButton.setChecked(true);
+			aboutGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.aboutButton.setChecked(false);
+
+			if (DuAEF.DuScriptUI.helpPanel.news.link != '') DuAEF.DuScriptUI.helpPanel.moreButton.show();
+			else DuAEF.DuScriptUI.helpPanel.moreButton.hide();
+		}
+		else if (panel == 2)
+		{
+			helpGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.helpButton.setChecked(false);
+			newsGroup.visible = false;
+			DuAEF.DuScriptUI.helpPanel.newsButton.setChecked(false);
+			aboutGroup.visible = true;
+			DuAEF.DuScriptUI.helpPanel.aboutButton.setChecked(true);
+
+			if (DuAEF.DuScriptUI.helpPanel.about.link != '') DuAEF.DuScriptUI.helpPanel.moreButton.show();
+			else DuAEF.DuScriptUI.helpPanel.moreButton.hide();
+		}
+	}
+
+	DuAEF.DuScriptUI.helpPanel.displayNewsItem = function (ind)
+	{
+		if (ind < 0 || DuAEF.DuScriptUI.helpPanel.newsItems.length == 0)
+		{
+			DuAEF.DuScriptUI.helpPanel.news.title.text = '';
+			DuAEF.DuScriptUI.helpPanel.news.date.text = '';
+			DuAEF.DuScriptUI.helpPanel.news.help.text = '';
+			DuAEF.DuScriptUI.helpPanel.news.link = '';
+			DuAEF.DuScriptUI.helpPanel.currentNewsItem = -1;
+			return;
+		}
+
+		if (ind >= DuAEF.DuScriptUI.helpPanel.newsItems.length)
+		{
+			ind = DuAEF.DuScriptUI.helpPanel.newsItems.length -1;
+		}
+
+		var text = DuAEF.DuScriptUI.helpPanel.newsItems[ind].description.replace('![CDATA[','').replace(']]','');
+		var title = DuAEF.DuScriptUI.helpPanel.newsItems[ind].title;
+		var date = DuAEF.DuScriptUI.helpPanel.newsItems[ind].pubDate.toString();
+		var link = DuAEF.DuScriptUI.helpPanel.newsItems[ind].link;
+
+		DuAEF.DuScriptUI.helpPanel.news.title.text = title;
+		DuAEF.DuScriptUI.helpPanel.news.date.text = date;
+		DuAEF.DuScriptUI.helpPanel.news.help.text = text;
+		DuAEF.DuScriptUI.helpPanel.news.link = link;
+
+		DuAEF.DuScriptUI.helpPanel.currentNewsItem = ind;
+	}
+
+	DuAEF.DuScriptUI.helpPanel.news.prevButton.onClick = function () { DuAEF.DuScriptUI.helpPanel.displayNewsItem(DuAEF.DuScriptUI.helpPanel.currentNewsItem + 1); };
+	DuAEF.DuScriptUI.helpPanel.news.nextButton.onClick = function () { DuAEF.DuScriptUI.helpPanel.displayNewsItem(DuAEF.DuScriptUI.helpPanel.currentNewsItem - 1); };
+
+	DuAEF.DuScriptUI.helpPanel.helpButton.onClick = function () {DuAEF.DuScriptUI.helpPanel.setPanel(0);};
+	DuAEF.DuScriptUI.helpPanel.newsButton.onClick = function () {DuAEF.DuScriptUI.helpPanel.setPanel(1);};
+	DuAEF.DuScriptUI.helpPanel.aboutButton.onClick = function () {DuAEF.DuScriptUI.helpPanel.setPanel(2);};
+
+	DuAEF.DuScriptUI.helpPanel.onResizing = DuAEF.DuScriptUI.helpPanel.onResize = function () { DuAEF.DuScriptUI.helpPanel.layout.resize(); };
 })();
 
 /**
@@ -1788,7 +1970,7 @@ DuAEF.DuScriptUI.helpPanel = new Window('palette',"Help panel",undefined,{resize
 * @param {string} text - The help text.
 * @param {string} link - The http link to a webpage
 */
-DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
+DuAEF.DuScriptUI.updateHelpPopup = function (title, text, link)
 {
 	if (typeof link === 'undefined') link = '';
 
@@ -1802,11 +1984,93 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title,text,link)
 	DuAEF.DuScriptUI.helpPanel.title.text = title;
 	DuAEF.DuScriptUI.helpPanel.help.text = text;
 	DuAEF.DuScriptUI.helpPanel.link = link;
-	if (link != '') DuAEF.DuScriptUI.helpPanel.helpButton.show();
-	else DuAEF.DuScriptUI.helpPanel.helpButton.hide();
 
 	DuAEF.DuScriptUI.helpPanel.layout.layout(true);
 	DuAEF.DuScriptUI.helpPanel.layout.resize();
+}
+
+/**
+* Updates the About Popup with new information
+* @memberof DuAEF.DuScriptUI
+* @param {string} title - A title.
+* @param {string} text - The help text.
+* @param {string} link - The http link to a webpage
+*/
+DuAEF.DuScriptUI.updateAboutPopup = function (title,text,link)
+{
+	if (typeof link === 'undefined') link = '';
+
+	if (text == '') return;
+
+	if (text != '') DuAEF.DuScriptUI.uiStrings.push(text);
+	if (title != '') DuAEF.DuScriptUI.uiStrings.push(title);
+	text = tr(text);
+	title = tr(title);
+
+	text += '\n\nThis script is built with the Duduf After Effects Framework.\n(c) 2017-2018 Nicolas Dufresne, Rainbox Productions. All Rights Reserved.\nLicense: GNU GPL-3.0 (http://www.gnu.org/licenses/)\n\nSource & Documentation: https://github.com/Rainbox-dev/DuAEF_Duik';
+
+	DuAEF.DuScriptUI.helpPanel.about.title.text = title;
+	DuAEF.DuScriptUI.helpPanel.about.help.text = text;
+	DuAEF.DuScriptUI.helpPanel.about.link = link;
+
+	DuAEF.DuScriptUI.helpPanel.layout.layout(true);
+	DuAEF.DuScriptUI.helpPanel.layout.resize();
+}
+
+/**
+* Gets the RSS content from a feed url, and set the news in the Help popup
+* @memberof DuAEF.DuRSS
+* @param {string} url - The url of the server.
+* @param {string} [subfolder='feed'] - The subdirectory of the feed (without a leading '/')
+* @param {int} [port=80] - The server port.
+*/
+DuAEF.DuScriptUI.getNews = function (url, subfolder, port)
+{
+	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return;
+
+	if (typeof port === 'undefined') port = 80;
+	if (typeof subfolder === 'undefined') subfolder = 'feed';
+
+	var channel = DuAEF.DuRSS.get(url, subfolder, port);
+
+	DuAEF.DuScriptUI.helpPanel.newsItems = channel.items;
+
+	if (DuAEF.DuScriptUI.helpPanel.newsItems.length == 0) return;
+
+	DuAEF.DuScriptUI.helpPanel.displayNewsItem(0);
+
+	DuAEF.DuScriptUI.helpPanel.layout.layout(true);
+	DuAEF.DuScriptUI.helpPanel.layout.resize();
+}
+
+/**
+* Shows the help popup
+* @memberof DuAEF.DuScriptUI
+*/
+DuAEF.DuScriptUI.showHelp = function ()
+{
+	DuAEF.DuScriptUI.helpPanel.setPanel(0);
+	DuAEF.DuScriptUI.helpPanel.show();
+}
+
+/**
+* Shows the news popup
+* @memberof DuAEF.DuScriptUI
+*/
+DuAEF.DuScriptUI.showNews = function ()
+{
+	DuAEF.DuScriptUI.helpPanel.setPanel(1);
+	DuAEF.DuScriptUI.helpPanel.show();
+}
+
+/**
+* Shows the about popup
+* @memberof DuAEF.DuScriptUI
+*/
+DuAEF.DuScriptUI.showAbout = function ()
+{
+	DuAEF.DuScriptUI.helpPanel.setPanel(2);
+	DuAEF.DuScriptUI.helpPanel.show();
 }
 
 /**
