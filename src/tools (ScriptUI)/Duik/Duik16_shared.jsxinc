@@ -88,27 +88,20 @@ shared.extractControllers = function ()
 	var result = DuAEF.Duik.Animation.extractControllersFromComp(precomp,shared.extractUsingMP);
 }
 
-shared.checkForUpdate = function (version, showAlert)
+shared.checkForUpdate = function (showAlert)
 {
-	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return '';
-	var reply = '';
-	//socket
-	conn = new Socket;
-	// connect to rainboxprod.coop
-	if (conn.open ('rainboxprod.net:80'))
+	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return null;
+
+	if (typeof showAlert === 'undefined') showAlert = false;
+
+	//get the RSS feed
+	var channel = DuAEF.DuRSS.get('rainboxprod.net', 'wp/category/updates/feed/', 'DUIK/' + version);
+
+	if (showAlert && channel.items.length > 0)
 	{
-		// get current version
-		var userAgent = 'User-Agent: Duik/' + version + ' (' + $.os + ')' + ' AE/' + DuAEF.DuAE.App.version;
-		if (conn.writeln('GET /duik/version.txt  HTTP/1.0\n' + userAgent + '\nHost: rainboxprod.net\n'))
-			reply = conn.read(10000);
-		conn.close();
-		// get version
-		var rep = reply.lastIndexOf('version',reply.length);
-		if(rep != -1)
-		{
-			newVersion = reply.slice(rep+8,reply.length+1);
-			if (showAlert && version != newVersion) alert(tr("A new version of Duik is available,\ngo to http://rainboxprod.coop to download it"));
-			return newVersion;
-		}
+		var newVersion = channel.items[0].title;
+		if (version != newVersion) alert(tr("A new version of Duik is available,\ngo to http://rainboxprod.coop to download it"));
 	}
+
+	return channel;
 }
