@@ -497,15 +497,18 @@ DuAEF.Duik.Animation.switchIkFk = function (controller)
 /**
 * Extracts the controllers from the precomposition,< br/>
 * and copies them to the composition, linking all precomposed controllers<br />
-* to the new ones.
+* to the new ones.<br />
+* WARNING This method uses the native copy and paste commands of After Effects,<br />
+* DO NOT enclose it in an undoGroup.<br />
+* Undo groups will be handled by this method itself.
 * @param {AVLayer} preComposition - The precomposition layer
 * @param {boolean} [useMasterProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
 * instead of expressions to link the controllers. Ignored on previous versions of After Effects.
 * @return {int} Error code:<br >
-* -3: No controllers found in the precomp
-* -2: The layer is not a precomposition
-* -1: Some controllers are not parented to other controllers
-* 0: Unknown error
+* -3: No controllers found in the precomp<br >
+* -2: The layer is not a precomposition<br >
+* -1: Some controllers can not be extracted<br >
+* 0: Unknown error<br >
 * 1: OK
 */
 DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMasterProperties)
@@ -524,28 +527,29 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	var controllers = DuAEF.Duik.Controller.getControllers(preComp);
 	if (controllers.length == 0) return -3;
 
-	//check for parenting, return -1 if a controller is not parented to another controller or nothing.
-
-	app.beginUndoGroup('Duik | ' + "Extract controllers - Preparing controllers");
-
+	//check for parenting and list layers
+	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 1");
 	var itCtrls = new Iterator(controllers);
 	var controller;
 	var ctrlLayers = [];
-	while (controller = itCtrls.next())
+	itCtrls.do(function(controller)
 	{
-		var parent = controller.layer.parent;
-		ctrlLayers.push(controller.layer);
+		var layer = controller.layer;
+		//check if the layer has a parent which is not a controller or nothing
+		var ctrlParent = layer.parent;
+		layer.reparent = true;
+		if (!ctrlParent) layer.reparent = false;
+		if (DuAEF.Duik.isLayerType(ctrlParent, DuAEF.Duik.LayerTypes.CONTROLLER)) layer.reparent = false;
+		ctrlLayers.push(layer);
 		controller.bakeAppearance();
-		if (!parent) continue;
-		if (!DuAEF.Duik.isLayerType(parent,DuAEF.Duik.LayerTypes.CONTROLLER)) return -1;
-	}
+	});
 
 	app.endUndoGroup();
 
 	//copy controllers
 	var newCtrlLayers = DuAEF.DuAE.Layer.copyToComp(ctrlLayers, comp);
 
-	app.beginUndoGroup('Duik | ' + "Extract controllers");
+	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 2");
 
 	//Add null at position precomp.width/2 precomp.height/2
 	var nullLayer = comp.layers.addNull();
@@ -555,17 +559,22 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	DuAEF.DuAE.Layer.parent(newCtrlLayers, nullLayer);
 	//parent the null to the precomp using parentWithJump
 	nullLayer.setParentWithJump(preComposition);
-	//remove the null (check if controllers stay parented to precomp)
+	//remove the null
 	nullLayer.remove();
 	//create Master Props or Expressions
 	//sort by index to be sure to link layers correctly
 	ctrlLayers = DuAEF.DuAE.Layer.sortByIndex(ctrlLayers);
 	newCtrlLayers = DuAEF.DuAE.Layer.sortByIndex(newCtrlLayers);
+
 	//link transformations and effects (only)
 	for (var i = 0, num = ctrlLayers.length; i < num; i++)
 	{
 		var ctrlLayer = ctrlLayers[i];
 		var newCtrlLayer = newCtrlLayers[i];
+
+		//use locators for all controllers parented to something else than a controller or nothing
+		if (ctrlLayer.reparent) DuAEF.Duik.Rigging.parent(newCtrlLayer, ctrlLayer.parent);
+
 		if (useMasterProperties)
 		{
 			//transform
@@ -594,7 +603,6 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 			DuAEF.DuAE.Property.linkProperties(ctrlLayer('ADBE Effect Parade'),newCtrlLayer('ADBE Effect Parade'));
 		}
 	}
-
 
 	app.endUndoGroup();
 
