@@ -77,25 +77,21 @@
  */
 function DuFFMpeg(options)
 {
-	//detect os
-	var mac = $.os.toLowerCase().indexOf("mac") >= 0;
-	this.mac = mac;
-	this.win = !mac;
-
 	if (typeof options === 'undefined') options = '-stats';
 
 	this.ffmpegPath = '';
 
 	//try to detect the ffmpeg path
 	var ffmpegBinName = '';
-	if (this.win) ffmpegBinName = 'ffmpeg.exe';
+	if (DuAEF.win) ffmpegBinName = 'ffmpeg.exe';
 	else ffmpegBinName = 'ffmpeg';
 	//first, in the same dir
-	var ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/' + ffmpegBinName);
+	var thisScriptFile = new File($.fileName);
+	var ffmpegFile = new File(thisScriptFile.parent.absoluteURI + '/' + ffmpegBinName);
 	//in an (ffmpeg) subfolder
 	if (!ffmpegFile.exists)
 	{
-		ffmpegFile = new File($.fileName.substring(0,$.fileName.lastIndexOf('/')) + '/(ffmpeg)/' + ffmpegBinName);
+		ffmpegFile = new File(thisScriptFile.parent.absoluteURI + '/(ffmpeg)/' + ffmpegBinName);
 	}
 	//in AE Scripts folder
 	if (!ffmpegFile.exists)
@@ -117,6 +113,16 @@ function DuFFMpeg(options)
 	{
 		ffmpegFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/(ffmpeg)/' + ffmpegBinName);
 	}
+	//in the parent dir
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(thisScriptFile.parent.parent.absoluteURI + '/' + ffmpegBinName);
+	}
+	//in the parent dir (fmmpeg)
+	if (!ffmpegFile.exists)
+	{
+		ffmpegFile = new File(thisScriptFile.parent.parent.absoluteURI + '/(ffmpeg)' + ffmpegBinName);
+	}
 
 	if (ffmpegFile.exists) this.ffmpegPath = ffmpegFile.fsName;
 
@@ -127,22 +133,23 @@ function DuFFMpeg(options)
 /**
  * Launches encoding
  * @memberof DuFFMpeg
- * @return {string} The text returned by ffmpeg (currently works on win only, empty string on mac)
  */
 DuFFMpeg.prototype.launch = function ()
 {
+	if (!DuAEF.DuJS.Fs.fileExists(this.ffmpegPath) || this.ffmpegPath == '') return;
+
 	var cmd = '';
 
 	var ffmpegCmd = '';
 
-	if (this.win) ffmpegCmd += '"' + this.ffmpegPath + '"';
+	if (DuAEF.win) ffmpegCmd += '"' + this.ffmpegPath + '"';
 	else
 	{
 	  var ffmpegFile = new File(this.ffmpegPath);
 	  ffmpegCmd += '"' + ffmpegFile.parent.fsName + '"/./' + ffmpegFile.name;
 	}
 
-	if (this.win) cmd += 'cmd.exe /c "';
+	if (DuAEF.win) cmd += 'cmd.exe /c "';
 
 	//add RenderItems
 	for (var i = 0 ; i < this.queue.length ; i++)
@@ -162,19 +169,17 @@ DuFFMpeg.prototype.launch = function ()
 		}
 	}
 
-	if (this.win) cmd += '"';
+	if (DuAEF.win) cmd += '"';
 
 	//launch!
 
 	// mac hack, do not wait for ffmpeg as it freezes AE
-	if (this.mac) cmd = cmd + ' && ';
-
-	$.writeln(cmd);
+	if (DuAEF.mac) cmd = cmd + ' && ';
 
 	system.callSystem(cmd);
 
 	// mac hack, but let's wait anyway
-	if (this.mac)
+	if (DuAEF.mac)
 	{
 		//timeout
 		var currentDate = new Date();
