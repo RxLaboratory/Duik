@@ -19,41 +19,6 @@ function createUI()
 
 	#include Duik16_notes.jsxinc
 
-	//=========== FUNCTIONS ==========
-	function setCurrentPanel(panel)
-	{
-		if (panel == undefined)
-		{
-			//get setting
-			panel = settings.data.currentPanel;
-			if (panel == undefined) panel = 1;
-		}
-
-		//reinit panels
-		initRiggingUI();
-		initAnimationUI();
-		initIOUI();
-		initCameraUI();
-
-		ui_riggingGroup.visible = panel == 5;
-		ui_riggingButton.setChecked(ui_riggingGroup.visible);
-		ui_animationMainGroup.visible = panel == 4;
-		ui_animationButton.setChecked(ui_animationMainGroup.visible);
-		ui_cameraGroup.visible = panel == 3;
-		ui_cameraButton.setChecked(ui_cameraGroup.visible);
-		ui_ioGroup.visible = panel == 2;
-		ui_ioButton.setChecked(ui_ioGroup.visible);
-		ui_settingsGroup.visible = panel == 1;
-		ui_settingsButton.setChecked(ui_settingsGroup.visible);
-
-		//save settings
-		if (panel != 1 && panel != 0) settings.data.currentPanel = panel;
-		settings.save();
-	}
-
-	//=========== EVENTS =============
-
-	//TOOLS
 	function ui_notesButton_clicked()
 	{
 		if(!notes_ui_palette.visible) DuAEF.DuScriptUI.showUI(notes_ui_palette);
@@ -77,40 +42,41 @@ function createUI()
 	debugLog.checkTimer("Building UI");
 
 	var ui_palette = ui_mainPalette.contents.add('group');
+	ui_palette.alignment = ['fill','fill'];
 	ui_palette.orientation = 'column';
 	ui_palette.spacing = 2;
 	ui_palette.margins = 0;
 
-	//layout
-	var ui_topGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
-	DuAEF.DuScriptUI.setBackgroundColor(ui_topGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
-	ui_topGroup.alignment = ['fill','top'];
-	//DuAEF.DuScriptUI.addSeparator(ui_palette);
-	var ui_mainGroup = DuAEF.DuScriptUI.addGroup(ui_palette,'stack');
-	ui_mainGroup.alignment = ['fill','top'];
+	//the main TabPanel
+	var ui_mainTabPanel = DuAEF.DuScriptUI.addTabPanel(ui_palette, settings.data.uiMode != 2, 'right');
+	ui_mainTabPanel.alignment = ['fill', 'fill'];
+	ui_mainTabPanel.mainGroup.alignment = ['fill', 'fill'];
+	DuAEF.DuScriptUI.setBackgroundColor(ui_mainTabPanel.buttonsGroup, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	//the bottom line
 	var ui_bottomGroup = DuAEF.DuScriptUI.addGroup(ui_palette);
 	ui_bottomGroup.alignment = ['fill','bottom'];
 
 	//=== TOP LEFT TOOLS ===
 
-	var ui_notesButton = DuAEF.DuScriptUI.addButton(ui_topGroup,'',DuAEF.DuBinary.toFile(w18_notes_l),"Simple notepad, with auto-save.",DuAEF.DuBinary.toFile(w18_notes_r));
+	var ui_notesButton = DuAEF.DuScriptUI.addButton(ui_mainTabPanel.buttonsGroup,'',DuAEF.DuBinary.toFile(w18_notes_l),"Simple notepad, with auto-save.",DuAEF.DuBinary.toFile(w18_notes_r));
+	ui_notesButton.alignment = ['left','fill'];
 	ui_notesButton.setHelp("Notes Editor", noteseditorHelp, noteseditorLink);
 
-	//=== TOP RIGHT TOOLS ===
+	//=== MAIN TABS ===
+	var ui_riggingTab = ui_mainTabPanel.addTab('', DuAEF.DuBinary.toFile(w18_rig_l), "Rigging", DuAEF.DuBinary.toFile(w18_rig_r));
+	ui_mainTabPanel.buttons[ui_mainTabPanel.buttons.length-1].setHelp('Rigging', riggingHelp, riggingLink);
+	var ui_animationTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_kbez_l),"Animation",DuAEF.DuBinary.toFile(w18_kbez_r));
+	ui_mainTabPanel.buttons[ui_mainTabPanel.buttons.length-1].setHelp('Animation',animationHelp,animationLink);
+	var ui_cameraTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
+	ui_mainTabPanel.buttons[ui_mainTabPanel.buttons.length-1].setHelp('Camera',cameraHelp,cameraLink);
+	var ui_ioTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
+	ui_mainTabPanel.buttons[ui_mainTabPanel.buttons.length-1].setHelp('Import / Export',ioHelp,ioLink);
+	var ui_settingsTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
+	ui_mainTabPanel.buttons[ui_mainTabPanel.buttons.length-1].setHelp('Settings', settingsHelp, settingsLink);
 
-	var ui_tabsGroup = DuAEF.DuScriptUI.addGroup(ui_topGroup,'row');
-	ui_tabsGroup.alignment = ['right','center'];
-	var ui_riggingButton = DuAEF.DuScriptUI.addCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_rig_l),"Rigging",DuAEF.DuBinary.toFile(w18_rig_r));
-	ui_riggingButton.setHelp('Rigging', riggingHelp, riggingLink);
-	var ui_animationButton = DuAEF.DuScriptUI.addCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_kbez_l),"Animation",DuAEF.DuBinary.toFile(w18_kbez_r));
-	ui_animationButton.setHelp('Animation',animationHelp,animationLink);
-	var ui_cameraButton = DuAEF.DuScriptUI.addCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_camera_l),"Camera",DuAEF.DuBinary.toFile(w18_camera_r));
-	ui_cameraButton.setHelp('Camera',cameraHelp,cameraLink);
-	var ui_ioButton = DuAEF.DuScriptUI.addCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
-	ui_ioButton.setHelp('Import / Export',ioHelp,ioLink);
-	var ui_settingsButton = DuAEF.DuScriptUI.addCheckBox(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_settings_l),"Settings",DuAEF.DuBinary.toFile(w18_settings_r));
-	ui_settingsButton.setHelp('Settings', settingsHelp, settingsLink);
-	var ui_helpButton = DuAEF.DuScriptUI.addButton(ui_tabsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
+	//=== TOP RIGHT BUTTONS ===
+	var ui_helpButton = DuAEF.DuScriptUI.addButton(ui_mainTabPanel.buttonsGroup,'',DuAEF.DuBinary.toFile(w18_help_l),"Help | About",DuAEF.DuBinary.toFile(w18_help_r));
 	DuAEF.DuScriptUI.updateAboutPopup('Duik Bassel (v' + version + ')',helpHelp,'https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide');
 
 	//=== BOTTOM ===
@@ -133,6 +99,12 @@ function createUI()
 	#include Duik16_io.jsxinc
 	#include Duik16_settings.jsxinc
 
+	ui_riggingTab.build = function () { ui_buildRigging(ui_riggingTab); };
+	ui_animationTab.build = function () { ui_buildAnimation(ui_animationTab); };
+	ui_cameraTab.build = function () { ui_buildCamera(ui_cameraTab); };
+	ui_ioTab.build = function () { ui_buildIO(ui_ioTab); };
+	ui_settingsTab.build = function () { ui_buildSettings(ui_settingsTab); };
+
 	//=== HELP PANEL ===
 	DuAEF.DuScriptUI.helpPanel.text = 'Duik Bassel ' + "help";
 
@@ -141,20 +113,21 @@ function createUI()
 	//top left tools
 	ui_notesButton.onClick = ui_notesButton_clicked;
 	//tabs
-	ui_riggingButton.onClick = function(){setCurrentPanel(5)};
-	ui_animationButton.onClick = function(){setCurrentPanel(4)};
-	ui_cameraButton.onClick = function(){setCurrentPanel(3)};
-	ui_ioButton.onClick = function(){setCurrentPanel(2)};
-	ui_settingsButton.onClick = function(){setCurrentPanel(1)};
+	ui_mainTabPanel.onChange = function()
+	{
+		settings.data.currentPanel = ui_mainTabPanel.index;
+		settings.save();
+	}
 	ui_helpButton.onClick = function(){ DuAEF.DuScriptUI.showAbout(); };
 
 	//bottom
-	ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
+	//ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
 
 	//=== INIT ===
-	setCurrentPanel();
+
 	debugLog.checkTimer("Showing UI");
 	DuAEF.DuScriptUI.showUI(ui_mainPalette);
+	ui_mainTabPanel.setCurrentIndex(settings.data.currentPanel);
 
-	debugLog.checkTimer("Duik successfully loaded.");
+	debugLog.stopTimer("Duik successfully loaded.");
 }
