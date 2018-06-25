@@ -122,6 +122,17 @@ DuAEF.DuScriptUI.dimControls = function(e)
 }
 
 /**
+ * Resets the layout of the whole ui containing a scriptUI item.
+ * @memberof DuAEF.DuScriptUI
+ * @param {ScriptUI} item - The ScriptUI element which needs to be resized
+ */
+DuAEF.DuScriptUI.layout = function(item)
+{
+	item.layout.layout(true);
+	item.layout.resize();
+}
+
+/**
  * Adjust the color according to the brightness setting of After Effects
  * @memberof DuAEF.DuScriptUI
  * @param {float[]} color - The color [R,V,B,A] Array
@@ -171,6 +182,7 @@ DuAEF.DuScriptUI.setBackgroundColor = function (uiItem,color,adjusted)
 {
 	if (typeof adjusted === 'undefined') adjusted = true;
 	if (!uiItem) throw "You must provide a ScriptUI Control to change the color of the background";
+	var c = color;
 	if (adjusted) c = DuAEF.DuScriptUI.adjustColor(color);
 	var g = uiItem.graphics;
 	var brush = g.newBrush(g.BrushType.SOLID_COLOR,c);
@@ -309,7 +321,7 @@ DuAEF.DuScriptUI.showUI = function (ui)
 {
 	ui.layout.layout(true);
 	ui.layout.resize();
-	ui.onResizing = ui.onResize = function () {try {this.layout.resize();} catch (e) {}}
+	ui.onResizing = ui.onResize = function () {try {ui.layout.resize();} catch (e) {}}
 
 	// If it's a Window, it needs to be shown
 	if (ui instanceof Window) {
@@ -2516,7 +2528,6 @@ DuAEF.DuScriptUI.addLayerPicker = function(container)
  * @memberof LayerPickerDialog
  */
 
-
 /**
  * Creates a dialog with a LayerPicker<br />
  * Use {@link DuAEF.DuScriptUI.showUI} to show it after creation.
@@ -2560,4 +2571,166 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
 	validGroupCancelButton.onClick = function() {dialog.hide();};
 
 	return dialog;
+}
+
+/**
+ * @class
+ * @name TabPanel
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * A Panel with tabs.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.DuScriptUI.addTabPanel} to create a picker.<br />
+ * The TabPanel inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {DuButton[]} buttons - The buttons for the tabs. Not that an "index" property is added to the button, containing the Tab index.
+ * @property {Tab[]} tabs - The tabs.
+ * @property {int} index - The currently visible tab.
+ * @property {Group} buttonsGroup - The ScriptUI Group containing the buttons
+ * @property {Group} mainGroup - The ScriptUI Group containing the tabs
+ * @property {TabPanel~onChange} onChange - Called when the index changes.
+ */
+
+/**
+* Adds a new empty Tab in the TabPanel.
+* @method
+* @memberof TabPanel
+* @name addTab
+* @param {Tab~build} buildFunction - A callback which takes a ScriptUI Group as the only argument.<br />
+* This 'Group' argument is the UI of the tab where new UI items can be added.<br />
+* This method is called only once when the tab is shown for the first time.
+* @param {string} [tabTitle=''] - The title of the tab.
+* @param {string} [text=tabTitle] - The label of the button.
+* @param {string} [image=''] - The path to the icon.
+* @param {string} [helpTip=''] - The helptip.
+* @param {string} [imageOver=image] - The path to an icon displayed when the mouse is over the button.
+* @return {Tab} The new Tab.
+*/
+
+/**
+* Sets the current visible tab.
+* @method
+* @memberof TabPanel
+* @name setCurrentIndex
+* @param {int} [index=0] - The index of the tab to show.
+*/
+
+ /**
+ * Called when the index changes.
+ * @callback TabPanel~onChange
+ * @memberof TabPanel
+*/
+
+/**
+ * @class
+ * @name Tab
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * A Tab inside a {@link TabPanel}.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link TabPanel.add} to create a new Tab.
+ * @property {int} index - The index of this tab.
+ * @property {Tab~onActivate} onActivate - The function to execute when the tab is about to be displayed.
+ * @property {Tab~build} build - You can use this callbacl to add a function which builds the UI of the tab, it will be called on first display.
+ */
+
+ /**
+ * The function to execute when the tab is about to be displayed.
+ * @callback Tab~onActivate
+ * @memberof Tab
+*/
+
+ /**
+ * You can use this callbacl to add a function which builds the UI of the tab, it will be called on first display.<br />
+ * This allows a faster startup of your script by delaying the creation of the tabs which are hidden at startup.
+ * @callback Tab~build
+ * @memberof Tab
+*/
+
+/**
+ * Creates a panel with tabs<br />
+ * @memberof DuAEF.DuScriptUI
+ * @param {Window|Panel|Group} container - The ScriptUI Object which will contain and display the panel.
+ * @param {boolean} [showTitle=true] - Wether to show the titles of the tabs or not.
+ * @param {string} [buttonsAlignment='center'] - The alignment of the buttons, 'left', 'center' or 'right'
+ * @return {TabPanel} The panel.
+ */
+DuAEF.DuScriptUI.addTabPanel = function (container, buttonsAlignment)
+{
+	if (typeof buttonsAlignment === 'undefined') buttonsAlignment = 'center';
+
+	var panel = DuAEF.DuScriptUI.addGroup(container,'column');
+
+	panel.buttons = [];
+	panel.tabs = [];
+	panel.tabGroups = [];
+	panel.showTitle = true;
+	panel.onChange = function () {};
+
+	//adds a group for the buttons
+	panel.buttonsGroup = DuAEF.DuScriptUI.addGroup(panel,'row');
+	panel.buttonsGroup.alignChildren = [buttonsAlignment, 'fill'];
+	//adds a group for the tabs
+	panel.mainGroup = DuAEF.DuScriptUI.addGroup(panel,'stack');
+
+	panel.addTab = function(text, image, helpTip, imageOver)
+	{
+		//adds the new button
+		var button = DuAEF.DuScriptUI.addCheckBox(panel.buttonsGroup, text, image, helpTip, imageOver);
+		button.index = panel.tabs.length;
+		panel.buttons.push(button);
+
+		//adds the new tab
+		var tab = DuAEF.DuScriptUI.addGroup(panel.mainGroup,'column');
+		tab.visible = false;
+
+		//the onActivate callBack
+		tab.onActivate = function() {};
+		//the build callBack
+		tab.build = function () { };
+		tab.built = false;
+
+		//add to the list
+		tab.index = panel.tabs.length;
+		panel.tabs.push(tab);
+
+		button.onClick = function ()
+		{
+			panel.setCurrentIndex(button.index);
+		}
+
+		return tab;
+	}
+
+	panel.setCurrentIndex = function (index)
+	{
+		var numTabs = panel.tabs.length;
+
+		if (numTabs == 0) return;
+
+		//hide all tabs
+		for (var i = 0; i < numTabs; i++)
+		{
+			var visible = i == index;
+			var tab = panel.tabs[i];
+			if (visible)
+			{
+				if (!tab.built)
+				{
+					tab.build();
+					//resize everything
+					DuAEF.DuScriptUI.layout(tab);
+					tab.built = true;
+				}
+				tab.onActivate();
+			}
+
+			tab.visible = visible;
+			panel.buttons[i].setChecked(visible);
+		}
+
+		if (index >= 0 && index < numTabs) panel.index = index;
+		else panel.index = -1;
+
+		panel.onChange();
+	}
+
+	return panel;
 }

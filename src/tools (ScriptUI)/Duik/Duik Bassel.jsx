@@ -81,7 +81,7 @@
 
 	//UI
 	//main palette
-	var ui_mainPalette = DuAEF.DuScriptUI.createUI(obj,'Duik Bassel');
+	var ui_mainPalette = DuAEF.DuScriptUI.createUI(obj,'Duik Bassel', ['fill','fill']);
 	ui_mainPalette.contents.orientation = 'stack';
 
 	//this file
