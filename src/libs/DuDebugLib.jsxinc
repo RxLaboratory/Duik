@@ -56,6 +56,7 @@ DuAEF.Debug.LogLevel =
  * @param	{boolean}	[enabled=DuAEF.debug] -  true to enable the log and start recording
  * @property {DuAEF.Debug.LogLevel} level - The log level.
  * @property {File}	file - The log file.
+ * @property {boolean}	running - true if the timer is running, false if it is stopped.
  */
 function DebugLog(pathOrFile,clear,logLevel,enabled)
 {
@@ -63,7 +64,7 @@ function DebugLog(pathOrFile,clear,logLevel,enabled)
 	else this.file = pathOrFile;
 	this.file.encoding = 'UTF-8';
 
-	if (logLevel == undefined) logLevel = DuAEF.Debug.DEBUG;
+	if (logLevel == undefined) logLevel = DuAEF.Debug.LogLevel.DEBUG;
 	this.level = logLevel;
 
 	if (enabled == undefined) enabled = DuAEF.debug;
@@ -83,6 +84,7 @@ function DebugLog(pathOrFile,clear,logLevel,enabled)
 	}
 
 	this.elapsed = 0;
+	this.running = false;
 }
 
 /**
@@ -92,6 +94,8 @@ function DebugLog(pathOrFile,clear,logLevel,enabled)
 */
 DebugLog.prototype.log = function (message,level)
 {
+	if (typeof level === 'undefined') level = DuAEF.Debug.LogLevel.DEBUG;
+
 	if (!this.enabled) return;
 	if (level < this.level) return;
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return;
@@ -112,14 +116,17 @@ DebugLog.prototype.log = function (message,level)
 /**
 * Starts the debugger timer.
 * @param {string} [message] - A message to display in the log
+* @param {DuAEF.Debug.LogLevel} [level=DuAEF.Debug.LogLevel.VERBOSE] - The level of the message
 */
-DebugLog.prototype.startTimer = function(message)
+DebugLog.prototype.startTimer = function(message, level)
 {
+	if (typeof level === 'undefined') level = DuAEF.Debug.LogLevel.VERBOSE;
+
 	if (!this.enabled) return;
 
 	if (message == undefined) message = '';
 
-	if (this.level == DuAEF.Debug.LogLevel.VERBOSE && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+	if (level >= this.level && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 		if (this.file.open('a'))
 		{
@@ -129,22 +136,57 @@ DebugLog.prototype.startTimer = function(message)
 		}
 	}
 
-	this.elapsed = 0;
+	if (!this.running) this.elapsed = 0;
+	this.running = true;
 	$.hiresTimer;
 }
 
 /**
-* Checks the time elapsed since the timer has started
+* Stops the debugger timer.
+* @param {string} [message] - A message to display in the log
+* @param {DuAEF.Debug.LogLevel} [level=DuAEF.Debug.LogLevel.DEBUG] - The level of the message
+*/
+DebugLog.prototype.stopTimer = function(message, level)
+{
+	if (typeof level === 'undefined') level = DuAEF.Debug.LogLevel.DEBUG;
+	if (!this.enabled) return;
+	if (!this.running) return;
+
+	this.elapsed += Math.round($.hiresTimer/1000);
+
+	if (typeof message === 'undefined') message = '';
+
+	if (level >= this.level && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+	{
+		if (this.file.open('a'))
+		{
+			var currentDate = new Date();
+			this.file.writeln('[' + currentDate.toString() + '] == Timer stopped == Time elapsed | ' + this.elapsed + 'ms | == ' + message);
+			this.file.close();
+		}
+	}
+
+	this.elapsed = 0;
+	this.running = false;
+	$.hiresTimer;
+}
+
+/**
+* Checks the time elapsed since the timer has started<br />
+* If the timer is not running, it will be started.
 * @param {string} message - A message to display in the log
+* @param {DuAEF.Debug.LogLevel} [level=DuAEF.Debug.LogLevel.DEBUG] - The level of the message
 * @return {int} The time elapsed in milliseconds
 */
-DebugLog.prototype.checkTimer = function(message)
+DebugLog.prototype.checkTimer = function(message, level)
 {
+	if (typeof level === 'undefined') level = DuAEF.Debug.LogLevel.DEBUG;
+	if (!this.running) this.startTimer();
 	this.elapsed += Math.round($.hiresTimer/1000);
 
 	if (!this.enabled) return -1;
 
-	if (DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+	if (level >= this.level && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 		if (this.file.open('a'))
 		{
