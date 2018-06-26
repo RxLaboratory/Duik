@@ -352,12 +352,14 @@ DuAEF.Duik.Autorig.tagTail = function (tail,tip)
  * Rigs the layers according to the tags found
  * @memberof DuAEF.Duik.Autorig
  * @param {Layer[]} layers - The layers to rig
- * @param {boolean} [ikTail=false] - True to use an IK to rig tails, false will create FK Controls
+ * @param {DuAEF.Duik.Rigging.chainTypes} [longChainType=DuAEF.Duik.Rigging.chainTypes.FK] - True to use an IK to rig tails, false will create FK Controls
+ * @param {boolean} [threeAsOneAndTwo=true] - when rigging three layers, true to rig using a one-layer IK followed by a two-layer IK instead of a three-mayer IK
  * @return {Controller[]} The controllers created (empty if the layers can not be rigged)
  */
-DuAEF.Duik.Autorig.rig = function (layers,ikTail)
+DuAEF.Duik.Autorig.rig = function (layers, longChainType, threeAsOneAndTwo)
 {
-	if (typeof ikTail === 'undefined') ikTail = false;
+	if (typeof longChainType === 'undefined') longChainType = DuAEF.Duik.Rigging.chainTypes.FK;
+	if (typeof threeAsOneAndTwo === 'undefined') threeAsOneAndTwo = true;
 
 	if (layers.length == 0) return false;
 
@@ -784,6 +786,8 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 
 		//sort the tail
 		tail.tail.sort(sortElements);
+
+		var ikTail = longChainType != DuAEF.Duik.Rigging.chainTypes.FK;
 
 		//unparent
 		for (var i=0, num = tail.tail.length ; i < num ; i++ ) tail.tail[i].parent = null;
@@ -1487,9 +1491,20 @@ DuAEF.Duik.Autorig.rig = function (layers,ikTail)
 	//if nothing were rigged, try adding IKs...
 	if (allCtrls.length == 0)
 	{
-		if (!ikTail && layers.length >= 5)
+		if (layers.length >= 4)
 		{
-			allCtrls = [DuAEF.Duik.Rigging.fkOverlap(layers)];
+			if (longChainType == DuAEF.Duik.Rigging.chainTypes.FK)
+			{
+				allCtrls = [DuAEF.Duik.Rigging.fkOverlap(layers)];
+			}
+			else if (longChainType == DuAEF.Duik.Rigging.chainTypes.BEZIER)
+			{
+				allCtrls = DuAEF.Duik.Rigging.ik(layers, undefined, true);
+			}
+			else
+			{
+				allCtrls = DuAEF.Duik.Rigging.ik(layers, undefined, false, threeAsOneAndTwo);
+			}
 		}
 		else
 		{
