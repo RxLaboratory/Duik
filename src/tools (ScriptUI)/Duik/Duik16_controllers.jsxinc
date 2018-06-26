@@ -1,160 +1,184 @@
-function ui_controllersSelectButton_clicked()
+function ui_buildControllers(ui_controllersMainGroup)
 {
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return;
+	debugLog.startTimer("Loading controllers.");
 
-	var ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
-	if (ctrls.length == 0) return;
-
-	app.beginUndoGroup('Duik - ' + "Select controllers");
-	DuAEF.DuAE.Comp.unselectLayers(comp);
-	for (var i = 0 ; i < ctrls.length ; i++)
+	function setCurrentControllersPanel(panel)
 	{
-		ctrls[i].layer.selected = true;
+		if (typeof panel === 'undefined') panel = 0;
+
+		ui_controllersGroup.visible = panel == 0;
+		ui_extractControllersCtrlOptionsGroup.visible = panel == 1;
+		ui_controllersEditGroup.visible = panel == 2;
 	}
-	app.endUndoGroup();
-}
 
-function ui_controllersShowButton_clicked()
-{
-	var comp = DuAEF.DuAE.Project.getActiveComp();
-	if (!comp) return;
-
-	var ctrls = [];
-	if (comp.selectedLayers.length > 0) ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
-	else ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
-
-	if (ctrls.length == 0) return;
-
-	app.beginUndoGroup('Duik - ' + "Show/hide controllers");
-	var visible = !ctrls[0].layer.enabled;
-	for (var i = 0 ; i < ctrls.length ; i++)
+	function ui_controllersSelectButton_clicked()
 	{
-		ctrls[i].layer.enabled = visible;
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+
+		var ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
+		if (ctrls.length == 0) return;
+
+		app.beginUndoGroup('Duik - ' + "Select controllers");
+		DuAEF.DuAE.Comp.unselectLayers(comp);
+		for (var i = 0 ; i < ctrls.length ; i++)
+		{
+			ctrls[i].layer.selected = true;
+		}
+		app.endUndoGroup();
 	}
-	app.endUndoGroup();
+
+	function ui_controllersShowButton_clicked()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+
+		var ctrls = [];
+		if (comp.selectedLayers.length > 0) ctrls = DuAEF.Duik.Controller.getControllers(comp,true);
+		else ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
+
+		if (ctrls.length == 0) return;
+
+		app.beginUndoGroup('Duik - ' + "Show/hide controllers");
+		var visible = !ctrls[0].layer.enabled;
+		for (var i = 0 ; i < ctrls.length ; i++)
+		{
+			ctrls[i].layer.enabled = visible;
+		}
+		app.endUndoGroup();
+	}
+
+	function ui_extractControllersMPCtrlSelector_changed()
+	{
+		shared.extractUsingMP = ui_extractControllersMPCtrlSelector.index == 1;
+	}
+
+	function ui_extractControllersCtrlOptionsButton_clicked()
+	{
+		if (shared.extractUsingMP) ui_extractControllersMPCtrlSelector.setCurrentIndex(1);
+		else ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
+		setCurrentControllersPanel(1);
+	}
+
+	//================= UI ========================
+
+	ui_controllersMainGroup.orientation = 'stack';
+
+	var ui_controllersGroup = DuAEF.DuScriptUI.addGroup(ui_controllersMainGroup,'column');
+
+	DuAEF.DuScriptUI.addSeparator(ui_controllersGroup,settings.data.uiMode == 2 ? '' : "Controllers");
+	ui_controllersGroup.alignment = ['fill','top'];
+	ui_controllersGroup.alignChildren = ['center','top'];
+
+	var ui_ctrl1Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
+	var ui_ctrlRotButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_rotation_l),'',DuAEF.DuBinary.toFile(w25_rotation_r));
+	var ui_ctrlXposButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_xpos_l),'',DuAEF.DuBinary.toFile(w25_xpos_r));
+	var ui_ctrlYposButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_ypos_l),'',DuAEF.DuBinary.toFile(w25_ypos_r));
+	var ui_ctrlPosButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_pos_l),'',DuAEF.DuBinary.toFile(w25_pos_r));
+	var ui_ctrlTransformButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_transform_l),'',DuAEF.DuBinary.toFile(w25_transform_r));
+
+	var ui_ctrl2Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
+	var ui_ctrlEyeButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_eye_l),'',DuAEF.DuBinary.toFile(w25_eye_r));
+	var ui_ctrlCamButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_filmcam_l),'',DuAEF.DuBinary.toFile(w25_filmcam_r));
+	var ui_ctrlSliderButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_slider_l),'',DuAEF.DuBinary.toFile(w25_slider_r));
+	var ui_ctrlDoubleSliderButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_doubleslider_l),'',DuAEF.DuBinary.toFile(w25_doubleslider_r));
+	var ui_ctrlAngleButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_angle_l),'',DuAEF.DuBinary.toFile(w25_angle_r));
+
+	var ui_ctrl3Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
+	var ui_ctrlHeadButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_head_l),'',DuAEF.DuBinary.toFile(w25_head_r));
+	var ui_ctrlFootButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_plantigrade_l),'',DuAEF.DuBinary.toFile(w25_plantigrade_r));
+	var ui_ctrlClawsButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_digitigrade_l),'',DuAEF.DuBinary.toFile(w25_digitigrade_r));
+	var ui_ctrlHoofButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_ungulate_l),'',DuAEF.DuBinary.toFile(w25_ungulate_r));
+	var ui_ctrlHandButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_filledhand_l),'',DuAEF.DuBinary.toFile(w25_filledhand_r));
+
+	var ui_ctrl4Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
+	var ui_ctrlHipsButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_hips_l),'',DuAEF.DuBinary.toFile(w25_hips_r));
+	var ui_ctrlBodyButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_body_l),'',DuAEF.DuBinary.toFile(w25_body_r));
+	var ui_ctrlShouldersButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_shoulders_l),'',DuAEF.DuBinary.toFile(w25_shoulders_r));
+	var ui_ctrlTailButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_foxtail_l),'',DuAEF.DuBinary.toFile(w25_foxtail_r));
+	var ui_ctrlNullButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_nullobject_l),'',DuAEF.DuBinary.toFile(w25_nullobject_r));
+
+	if (settings.data.uiMode == 2) DuAEF.DuScriptUI.addSeparator(ui_controllersGroup);
+	var ui_ctrlTGroup = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,settings.data.uiMode == 2 ? 'row' : 'column');
+	ui_ctrlTGroup.alignment = ['fill','top'];
+	ui_ctrlTGroup.alignChildren = [settings.data.uiMode == 2 ? 'center' : 'fill','top'];
+	var ui_controllersSelectButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Select controllers",DuAEF.DuBinary.toFile(w25_selectcontroller_l),"Select all controllers",DuAEF.DuBinary.toFile(w25_selectcontroller_r));
+	var ui_controllersShowButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Show/hide",DuAEF.DuBinary.toFile(w25_showhand_l),"Show or hide controllers",DuAEF.DuBinary.toFile(w25_hidehand_r));
+	var ui_extractControllersCtrlGroup = DuAEF.DuScriptUI.addGroup(ui_ctrlTGroup,settings.data.uiMode == 2 ? 'column' : 'row');
+	var ui_extractControllersCtrlButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlGroup,settings.data.uiMode == 2 ? '' : "Extract controllers",DuAEF.DuBinary.toFile(w25_extractcontrollers_l),"Extract all the controllers from the precomposition",DuAEF.DuBinary.toFile(w25_extractcontrollers_r));
+	ui_extractControllersCtrlButton.setHelp("Extract Controllers", extractcontrollersHelp, extractcontrollersLink);
+	if (DuAEF.DuAE.App.version >= 15.1)
+	{
+		var ui_extractControllersCtrlOptionsButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Extract controllers options",DuAEF.DuBinary.toFile(w14_plus_r));
+		ui_extractControllersCtrlOptionsButton.group.alignment = [settings.data.uiMode == 2 ? 'center' : 'right','center'];
+	}
+
+	if (settings.data.uiMode != 0)
+	{
+		DuAEF.DuScriptUI.addSeparator(ui_controllersGroup);
+		var ui_editControllersButton = DuAEF.DuScriptUI.addButton(ui_controllersGroup,"Edit...",DuAEF.DuBinary.toFile(w18_settings_l),"Edit existing controllers",DuAEF.DuBinary.toFile(w18_settings_r));
+	}
+
+	// Extract Controllers
+	var ui_extractControllersCtrlOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_controllersMainGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_extractControllersCtrlOptionsGroup,"Extract Controllers");
+	var ui_extractControllersMPCtrlSelector = DuAEF.DuScriptUI.addSelector(ui_extractControllersCtrlOptionsGroup);
+	ui_extractControllersMPCtrlSelector.addButton("Use expressions",DuAEF.DuBinary.toFile(w25_js_l),"Use expressions to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_js_r));
+	ui_extractControllersMPCtrlSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
+	var ui_extractControllersCtrlValidGroup = DuAEF.DuScriptUI.addGroup(ui_extractControllersCtrlOptionsGroup);
+	ui_extractControllersCtrlValidGroup.alignment = ['fill','top'];
+	var ui_extractControllersCtrlCancelButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_extractControllersCtrlValidButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlValidGroup,"Extract!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
+
+	//Editor
+	#include Duik16_controllers_editor.jsxinc
+
+	// ============ INITIALIZE ==============
+
+	ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
+	setCurrentControllersPanel(0);
+
+	// ============ CONNECT EVENTS ==========
+
+	ui_ctrlRotButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.ROTATION);};
+	ui_ctrlXposButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.X_POSITION);};
+	ui_ctrlYposButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.Y_POSITION);};
+	ui_ctrlPosButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.POSITION);};
+	ui_ctrlTransformButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.TRANSFORM);};
+	ui_ctrlEyeButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.EYE);};
+	ui_ctrlCamButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.CAMERA);};
+	ui_ctrlSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.SLIDER);};
+	ui_ctrlDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.DOUBLE_SLIDER);};
+	ui_ctrlAngleButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.ANGLE);};
+	ui_ctrlHeadButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HEAD);};
+	ui_ctrlFootButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.FOOT);};
+	ui_ctrlClawsButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.CLAWS);};
+	ui_ctrlHoofButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HOOF);};
+	ui_ctrlHandButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HAND);};
+	//ui_ctrlHipsButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HIPS);setCurrentRiggingPanel(1);};
+	ui_ctrlHipsButton.addEventListener("click",function(e){
+			if (e.altKey) { shared.createController(DuAEF.Duik.Controller.Types.PENIS); }
+			else if (e.ctrlKey) { shared.createController(DuAEF.Duik.Controller.Types.VULVA); }
+			else { shared.createController(DuAEF.Duik.Controller.Types.HIPS); }
+		},true);
+	ui_ctrlBodyButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.BODY);};
+	ui_ctrlShouldersButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.SHOULDERS);};
+	ui_ctrlTailButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.TAIL);};
+	ui_ctrlNullButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.NULL);};
+
+	ui_controllersSelectButton.onClick = ui_controllersSelectButton_clicked;
+	ui_controllersShowButton.onClick = ui_controllersShowButton_clicked;
+
+	ui_extractControllersCtrlValidButton.onClick = function () { shared.extractControllers(); setCurrentRiggingPanel(1); };
+	ui_extractControllersCtrlButton.onClick = shared.extractControllers;
+	if (DuAEF.DuAE.App.version >= 15.1)
+	{
+		ui_extractControllersCtrlOptionsButton.onClick = ui_extractControllersCtrlOptionsButton_clicked;
+	}
+	ui_extractControllersCtrlCancelButton.onClick = function () {setCurrentControllersPanel(0);};
+	ui_extractControllersMPCtrlSelector.onChange = ui_extractControllersMPCtrlSelector_changed;
+
+	if (settings.data.uiMode != 0) ui_editControllersButton.onClick = function() { setCurrentControllersPanel(2);};
+
+	debugLog.stopTimer("Controllers ready.");
 }
-
-function ui_extractControllersMPCtrlSelector_changed()
-{
-	shared.extractUsingMP = ui_extractControllersMPCtrlSelector.index == 1;
-}
-
-function ui_extractControllersCtrlOptionsButton_clicked()
-{
-	if (shared.extractUsingMP) ui_extractControllersMPCtrlSelector.setCurrentIndex(1);
-	else ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
-	setCurrentRiggingPanel(7);
-}
-
-//================= UI ========================
-var ui_controllersGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
-DuAEF.DuScriptUI.addSeparator(ui_controllersGroup,settings.data.uiMode == 2 ? '' : "Controllers");
-ui_controllersGroup.alignment = ['fill','top'];
-ui_controllersGroup.alignChildren = ['center','top'];
-
-var ui_ctrl1Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
-var ui_ctrlRotButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_rotation_l),'',DuAEF.DuBinary.toFile(w25_rotation_r));
-var ui_ctrlXposButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_xpos_l),'',DuAEF.DuBinary.toFile(w25_xpos_r));
-var ui_ctrlYposButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_ypos_l),'',DuAEF.DuBinary.toFile(w25_ypos_r));
-var ui_ctrlPosButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_pos_l),'',DuAEF.DuBinary.toFile(w25_pos_r));
-var ui_ctrlTransformButton = DuAEF.DuScriptUI.addButton(ui_ctrl1Group,'',DuAEF.DuBinary.toFile(w25_transform_l),'',DuAEF.DuBinary.toFile(w25_transform_r));
-
-var ui_ctrl2Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
-var ui_ctrlEyeButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_eye_l),'',DuAEF.DuBinary.toFile(w25_eye_r));
-var ui_ctrlCamButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_filmcam_l),'',DuAEF.DuBinary.toFile(w25_filmcam_r));
-var ui_ctrlSliderButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_slider_l),'',DuAEF.DuBinary.toFile(w25_slider_r));
-var ui_ctrlDoubleSliderButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_doubleslider_l),'',DuAEF.DuBinary.toFile(w25_doubleslider_r));
-var ui_ctrlAngleButton = DuAEF.DuScriptUI.addButton(ui_ctrl2Group,'',DuAEF.DuBinary.toFile(w25_angle_l),'',DuAEF.DuBinary.toFile(w25_angle_r));
-
-var ui_ctrl3Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
-var ui_ctrlHeadButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_head_l),'',DuAEF.DuBinary.toFile(w25_head_r));
-var ui_ctrlFootButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_plantigrade_l),'',DuAEF.DuBinary.toFile(w25_plantigrade_r));
-var ui_ctrlClawsButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_digitigrade_l),'',DuAEF.DuBinary.toFile(w25_digitigrade_r));
-var ui_ctrlHoofButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_ungulate_l),'',DuAEF.DuBinary.toFile(w25_ungulate_r));
-var ui_ctrlHandButton = DuAEF.DuScriptUI.addButton(ui_ctrl3Group,'',DuAEF.DuBinary.toFile(w25_filledhand_l),'',DuAEF.DuBinary.toFile(w25_filledhand_r));
-
-var ui_ctrl4Group = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,'row');
-var ui_ctrlHipsButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_hips_l),'',DuAEF.DuBinary.toFile(w25_hips_r));
-var ui_ctrlBodyButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_body_l),'',DuAEF.DuBinary.toFile(w25_body_r));
-var ui_ctrlShouldersButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_shoulders_l),'',DuAEF.DuBinary.toFile(w25_shoulders_r));
-var ui_ctrlTailButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_foxtail_l),'',DuAEF.DuBinary.toFile(w25_foxtail_r));
-var ui_ctrlNullButton = DuAEF.DuScriptUI.addButton(ui_ctrl4Group,'',DuAEF.DuBinary.toFile(w25_nullobject_l),'',DuAEF.DuBinary.toFile(w25_nullobject_r));
-
-if (settings.data.uiMode == 2) DuAEF.DuScriptUI.addSeparator(ui_controllersGroup);
-var ui_ctrlTGroup = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,settings.data.uiMode == 2 ? 'row' : 'column');
-ui_ctrlTGroup.alignment = ['fill','top'];
-ui_ctrlTGroup.alignChildren = [settings.data.uiMode == 2 ? 'center' : 'fill','top'];
-var ui_controllersSelectButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Select controllers",DuAEF.DuBinary.toFile(w25_selectcontroller_l),"Select all controllers",DuAEF.DuBinary.toFile(w25_selectcontroller_r));
-var ui_controllersShowButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Show/hide",DuAEF.DuBinary.toFile(w25_showhand_l),"Show or hide controllers",DuAEF.DuBinary.toFile(w25_hidehand_r));
-var ui_extractControllersCtrlGroup = DuAEF.DuScriptUI.addGroup(ui_ctrlTGroup,settings.data.uiMode == 2 ? 'column' : 'row');
-var ui_extractControllersCtrlButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlGroup,settings.data.uiMode == 2 ? '' : "Extract controllers",DuAEF.DuBinary.toFile(w25_extractcontrollers_l),"Extract all the controllers from the precomposition",DuAEF.DuBinary.toFile(w25_extractcontrollers_r));
-ui_extractControllersCtrlButton.setHelp("Extract Controllers", extractcontrollersHelp, extractcontrollersLink);
-if (DuAEF.DuAE.App.version >= 15.1)
-{
-	var ui_extractControllersCtrlOptionsButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Extract controllers options",DuAEF.DuBinary.toFile(w14_plus_r));
-	ui_extractControllersCtrlOptionsButton.group.alignment = [settings.data.uiMode == 2 ? 'center' : 'right','center'];
-}
-
-if (settings.data.uiMode != 0)
-{
-	DuAEF.DuScriptUI.addSeparator(ui_controllersGroup);
-	var ui_editControllersButton = DuAEF.DuScriptUI.addButton(ui_controllersGroup,"Edit...",DuAEF.DuBinary.toFile(w18_settings_l),"Edit existing controllers",DuAEF.DuBinary.toFile(w18_settings_r));
-}
-
-// Extract Controllers
-var ui_extractControllersCtrlOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_riggingMainGroup,'column');
-if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_extractControllersCtrlOptionsGroup,"Extract Controllers");
-var ui_extractControllersMPCtrlSelector = DuAEF.DuScriptUI.addSelector(ui_extractControllersCtrlOptionsGroup);
-ui_extractControllersMPCtrlSelector.addButton("Use expressions",DuAEF.DuBinary.toFile(w25_js_l),"Use expressions to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_js_r));
-ui_extractControllersMPCtrlSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
-var ui_extractControllersCtrlValidGroup = DuAEF.DuScriptUI.addGroup(ui_extractControllersCtrlOptionsGroup);
-ui_extractControllersCtrlValidGroup.alignment = ['fill','top'];
-var ui_extractControllersCtrlCancelButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
-var ui_extractControllersCtrlValidButton = DuAEF.DuScriptUI.addButton(ui_extractControllersCtrlValidGroup,"Extract!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
-
-// ============ INITIALIZE ==============
-
-ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
-
-// ============ CONNECT EVENTS ==========
-
-ui_ctrlRotButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.ROTATION);};
-ui_ctrlXposButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.X_POSITION);};
-ui_ctrlYposButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.Y_POSITION);};
-ui_ctrlPosButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.POSITION);};
-ui_ctrlTransformButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.TRANSFORM);};
-ui_ctrlEyeButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.EYE);};
-ui_ctrlCamButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.CAMERA);};
-ui_ctrlSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.SLIDER);};
-ui_ctrlDoubleSliderButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.DOUBLE_SLIDER);};
-ui_ctrlAngleButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.ANGLE);};
-ui_ctrlHeadButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HEAD);};
-ui_ctrlFootButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.FOOT);};
-ui_ctrlClawsButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.CLAWS);};
-ui_ctrlHoofButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HOOF);};
-ui_ctrlHandButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HAND);};
-//ui_ctrlHipsButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.HIPS);setCurrentRiggingPanel(1);};
-ui_ctrlHipsButton.addEventListener("click",function(e){
-		if (e.altKey) { shared.createController(DuAEF.Duik.Controller.Types.PENIS); }
-		else if (e.ctrlKey) { shared.createController(DuAEF.Duik.Controller.Types.VULVA); }
-		else { shared.createController(DuAEF.Duik.Controller.Types.HIPS); }
-	},true);
-ui_ctrlBodyButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.BODY);};
-ui_ctrlShouldersButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.SHOULDERS);};
-ui_ctrlTailButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.TAIL);};
-ui_ctrlNullButton.onClick = function () {shared.createController(DuAEF.Duik.Controller.Types.NULL);};
-
-ui_controllersSelectButton.onClick = ui_controllersSelectButton_clicked;
-ui_controllersShowButton.onClick = ui_controllersShowButton_clicked;
-
-ui_extractControllersCtrlValidButton.onClick = function () { shared.extractControllers(); setCurrentRiggingPanel(1); };
-ui_extractControllersCtrlButton.onClick = shared.extractControllers;
-if (DuAEF.DuAE.App.version >= 15.1)
-{
-	ui_extractControllersCtrlOptionsButton.onClick = ui_extractControllersCtrlOptionsButton_clicked;
-}
-ui_extractControllersCtrlCancelButton.onClick = function () {setCurrentRiggingPanel(1);};
-ui_extractControllersMPCtrlSelector.onChange = ui_extractControllersMPCtrlSelector_changed;
-
-if (settings.data.uiMode != 0) ui_editControllersButton.onClick = function() { setCurrentRiggingPanel(5);};
