@@ -2594,9 +2594,6 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
 * @method
 * @memberof TabPanel
 * @name addTab
-* @param {Tab~build} buildFunction - A callback which takes a ScriptUI Group as the only argument.<br />
-* This 'Group' argument is the UI of the tab where new UI items can be added.<br />
-* This method is called only once when the tab is shown for the first time.
 * @param {string} [tabTitle=''] - The title of the tab.
 * @param {string} [text=tabTitle] - The label of the button.
 * @param {string} [image=''] - The path to the icon.
@@ -2627,6 +2624,7 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
  * This is not a real class, and cannot be instanciated.<br />
  * Use {@link TabPanel.add} to create a new Tab.
  * @property {int} index - The index of this tab.
+ * @property {DuButton} button - The button associated with this tab.
  * @property {Tab~onActivate} onActivate - The function to execute when the tab is about to be displayed.
  * @property {Tab~build} build - You can use this callbacl to add a function which builds the UI of the tab, it will be called on first display.
  */
@@ -2638,9 +2636,11 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
 */
 
  /**
- * You can use this callbacl to add a function which builds the UI of the tab, it will be called on first display.<br />
- * This allows a faster startup of your script by delaying the creation of the tabs which are hidden at startup.
+ * You can use this callback to add a function which builds the UI of the tab, it will be called on first display.<br />
+ * This allows a faster startup of your script by delaying the creation of the tabs which are hidden at startup.<br />
+ * The function must take one argument, a ScriptUI Group which is the tab iteself. You can add controls in this group.
  * @callback Tab~build
+ * @param {Group} tab - The tab where the ui has to be built
  * @memberof Tab
 */
 
@@ -2657,6 +2657,8 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 
 	var panel = DuAEF.DuScriptUI.addGroup(container,'column');
 
+	panel.alignment = ['fill','fill'];
+
 	panel.buttons = [];
 	panel.tabs = [];
 	panel.tabGroups = [];
@@ -2667,6 +2669,7 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 	panel.buttonsGroup = DuAEF.DuScriptUI.addGroup(panel,'row');
 	//adds a group for the tabs
 	panel.mainGroup = DuAEF.DuScriptUI.addGroup(panel,'stack');
+	panel.mainGroup.alignment = ['fill','fill'];
 
 	panel.addTab = function(text, image, helpTip, imageOver)
 	{
@@ -2677,13 +2680,16 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 
 		//adds the new tab
 		var tab = DuAEF.DuScriptUI.addGroup(panel.mainGroup,'column');
+		tab.alignment = ['fill','fill'];
 		tab.visible = false;
 
 		//the onActivate callBack
 		tab.onActivate = function() {};
 		//the build callBack
-		tab.build = function () { };
+		tab.build = function (theTab) { };
 		tab.built = false;
+
+		tab.button = button;
 
 		//add to the list
 		tab.index = panel.tabs.length;
@@ -2712,9 +2718,9 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 			{
 				if (!tab.built)
 				{
-					tab.build();
+					tab.build(tab);
 					//resize everything
-					DuAEF.DuScriptUI.layout(tab);
+					DuAEF.DuScriptUI.layout(panel);
 					tab.built = true;
 				}
 				tab.onActivate();
