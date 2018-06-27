@@ -617,7 +617,10 @@ DuAEF.Duik.Autorig.rig = function (layers, longChainType, threeAsOneAndTwo)
 			return;
 		}
 		//if it's a controller
-
+		else if (params.duik == DuAEF.Duik.LayerTypes.CONTROLLER)
+		{
+			customControllers.push(layer);
+		}
 	});
 
 	//use a null or shape controllers ?
@@ -1519,25 +1522,53 @@ DuAEF.Duik.Autorig.rig = function (layers, longChainType, threeAsOneAndTwo)
 	var itStructures = new Iterator(customStructures);
 	itStructures.do(function(structureLayers)
 	{
-		if (structureLayers.length >= 4)
+		var structure = new Structure(structureLayers);
+
+		var useIK = false;
+		var useFK = false;
+		var useBezier = false;
+
+		//try to find a corresponding controller
+		//do we prefer an FK controller?
+		var preferFK = longChainType == DuAEF.Duik.Rigging.chainTypes.FK;
+		var shortChain = structure.elements.length < 4;
+		if (shortChain) preferFK = false;
+		//get the controller
+		var ctrl = structure.getController(customControllers, preferFK, 10);
+		//if any controller
+		if (ctrl)
 		{
-			if (longChainType == DuAEF.Duik.Rigging.chainTypes.FK)
+			//if the controller is not at the end, remove the end
+			if (ctrl.structureIndex < structure.elements.length - 1 && ctrl.structureIndex != 0) structure.elements.pop();
+			//reset short chain
+			shortChain = structure.elements.length < 4;
+			//if it's a short chain, always IK, so do not use any FK controller
+			if (shortChain && ctrl.structureIndex == 0) ctrl = null;
+		}
+
+		//short chains are always IK
+		if (shortChain) useIK = true;
+		else
+		{
+			//if there's a controller, check its index
+			if (ctrl)
 			{
-				allCtrls.push(DuAEF.Duik.Rigging.fkOverlap(structureLayers));
-			}
-			else if (longChainType == DuAEF.Duik.Rigging.chainTypes.BEZIER)
-			{
-				allCtrls = allCtrls.concat(DuAEF.Duik.Rigging.ik(structureLayers, undefined, true));
+				if (ctrl.structureIndex == 0) useFK = true;
+				else if (longChainType == DuAEF.Duik.Rigging.chainTypes.BEZIER) useBezier = true;
+				else useIK = true;
 			}
 			else
 			{
-				allCtrls = allCtrls.concat(DuAEF.Duik.Rigging.ik(structureLayers, undefined, false, threeAsOneAndTwo));
+				if (longChainType == DuAEF.Duik.Rigging.chainTypes.FK) useFK = true;
+				if (longChainType == DuAEF.Duik.Rigging.chainTypes.BEZIER) useBezier = true;
+				else useIK = true;
 			}
 		}
-		else
-		{
-			allCtrls = allCtrls.concat(DuAEF.Duik.Rigging.ik(structureLayers));
-		}
+
+		//create
+		if (useFK) allCtrls.push(DuAEF.Duik.Rigging.fkOverlap(structure, ctrl));
+		else if (useBezier) allCtrls = allCtrls.concat(DuAEF.Duik.Rigging.ik(structure, ctrl, true));
+		else allCtrls = allCtrls.concat(DuAEF.Duik.Rigging.ik(structure, ctrl, false, threeAsOneAndTwo));
 	});
 
 	// =================== STANDARD LAYERS ========================
