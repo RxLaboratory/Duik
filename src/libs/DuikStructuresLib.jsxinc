@@ -2,7 +2,7 @@
 * Constructs a Structure
 * @class Structure
 * @classdesc A Structure.
-* @property {Layer[]} [elements] - The elements of the structure
+* @property {Layer[]} elements - The elements of the structure
 */
 function Structure(elements)
 {
@@ -220,6 +220,55 @@ Structure.prototype.duplicate = function()
 
 	//return
 	return new Structure(newLayers);
+}
+
+/**
+* Search for a controller which can be used with this Structure.
+* @memberof Structure
+* @param {Layer[]|LayerCollection} layers - The layers where to search for the controller
+* @param {boolean} [preferFK=false] - Set to true to search for the controller at the root of the chain first instead of the end
+* @param {int} [threshold=0] - The minimum distance in pixels between the controller and the structure to consider it valid.
+* @return {Layer|null} The controller found or null if there's nothing to find<br />
+* The Controller object has an attribute "structureIndex" corresponding to the index of the element of the structure where it was found.
+*/
+Structure.prototype.getController = function (layers, preferFK, threshold)
+{
+	if (this.elements.length == 0) return null;
+
+	if (typeof root === 'undefined') root = false;
+	if (typeof threshold === 'undefined') threshold = 0;
+
+	function getCtrl(index, struc)
+	{
+		for (var i = 0, num = layers.length; i < num; i++)
+		{
+			var ctrl = layers[i];
+			var dist = DuAEF.DuAE.Layer.getDistance(struc.elements[index], ctrl);
+			if (dist <= threshold)
+			{
+				ctrl.structureIndex = index;
+				return ctrl;
+			}
+			if (index > 0) dist = DuAEF.DuAE.Layer.getDistance(struc.elements[index-1], ctrl);
+			if (dist <= threshold)
+			{
+				ctrl.structureIndex = index-1;
+				return ctrl;
+			}
+		}
+		return null;
+	}
+
+	var elementIndex = 0;
+	if (!preferFK) elementIndex = this.elements.length - 1;
+
+	var ctrl =  getCtrl(elementIndex, this);
+	if (ctrl) return ctrl;
+
+	if (preferFK) elementIndex = this.elements.length -1;
+	else elementIndex = 0;
+
+	return getCtrl(elementIndex, this);
 }
 
 /**
