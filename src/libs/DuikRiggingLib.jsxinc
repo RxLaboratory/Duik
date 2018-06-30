@@ -2035,7 +2035,7 @@ DuAEF.Duik.Rigging.threeLayerIK = function (layer1,layer2,layer3,goal,controller
 * @param {Layer|null} [goal] - The goal layer, at the end of the IK
 * @param {Layer|Controller|null} [controllers] - The layer to use as controller, can be automatically created.<br />
 * Must be provided if goal is undefined.
-* @return {Controller[]} The controllers [curve,end]
+* @return {Controller[]} The controllers [curve,end,root]
 */
 DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 {
@@ -2065,12 +2065,18 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 
 	//create curve controller
 	var curveController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.POSITION,layers[0]);
+	curveController.layer.transform.scale.expression = '';
 	curveController.layer.name = curveController.layer.name + " | Curve";
-	if (controller.effect) curveController.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).setValue(controller.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).value*3/4);
+	if (controller.effect) curveController.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).setValue(controller.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).value*1/2);
+
+	//create root controller
+	var rootController = DuAEF.Duik.Controller.create(comp,DuAEF.Duik.Controller.Types.POSITION,layers[0]);
+	rootController.layer.name = rootController.layer.name + " | Root";
+	if (controller.effect) rootController.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).setValue(controller.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER)(4).value*1/2);
 
 	//add effect
 	var curveEffect = DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.apply(curveController.layer);
-	curveEffect(DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.rootLayer).setValue(layers[0].index);
+	curveEffect(DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.rootLayer).setValue(rootController.layer.index);
 	curveEffect(DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.curveLayer).setValue(curveController.layer.index);
 	curveEffect(DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.endLayer).setValue(controller.layer.index);
 
@@ -2091,6 +2097,7 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	var fill = handleInContent.addProperty("ADBE Vector Graphic - Fill");
 	fill("ADBE Vector Fill Color").expression = 'effect("Controller")(2)-[0.2,0.2,0.2,0]\n';
 	handleInGroup.transform.scale.expression = '[effect("Controller")(4),effect("Controller")(4)]';
+
 	handleInGroup.transform.position.expression = 'var fx = effect("' + curveEffect.name + '");\n' +
 		'var root = null;\n' +
 		'var curve = thisLayer;\n' +
@@ -2103,6 +2110,9 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 		'result += rootPos/2;\n' +
 		'}\n' +
 		'result;';
+	//Auto handle position disabled as it mess up the order of the evaluation of the expressions
+	//DuAEF.DuAE.Property.removeExpression(handleInGroup.transform.position);
+
 	handleInGroup.transform.opacity.expression = 'var fx = effect("' + curveEffect.name + '");\n' +
 		'fx(' + DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.showHandlesCheckbox + ').value*100';
 
@@ -2114,6 +2124,8 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	var fill = handleOutContent.addProperty("ADBE Vector Graphic - Fill");
 	fill("ADBE Vector Fill Color").expression = 'effect("Controller")(2)-[0.2,0.2,0.2,0]\n';
 	handleOutGroup.transform.scale.expression = '[effect("Controller")(4),effect("Controller")(4)]';
+
+	//Auto handle position disabled as it mess up the order of the evaluation of the expressions
 	handleOutGroup.transform.position.expression = 'var fx = effect("' + curveEffect.name + '");\n' +
 		'var end = null;\n' +
 		'var curve = thisLayer;\n' +
@@ -2126,6 +2138,9 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 		'result += endPos/2;\n' +
 		'}\n' +
 		'result;';
+	//Auto handle position disabled as it mess up the order of the evaluation of the expressions
+	//DuAEF.DuAE.Property.removeExpression(handleOutGroup.transform.position);
+
 	handleOutGroup.transform.opacity.expression = 'var fx = effect("' + curveEffect.name + '");\n' +
 		'fx(' + DuAEF.Duik.PseudoEffects.BEZIER_IK_CURVE.showHandlesCheckbox + ').value*100';
 
@@ -2165,7 +2180,7 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	}
 
 	//setup layers
-	var rootIndex = layers[0].index;
+	var rootIndex = rootController.layer.index;
 	var endIndex = controller.layer.index;
 	var curveIndex = curveController.layer.index;
 	var totalLength = DuAEF.DuJS.Math.getLength(rootPosition,cInPosition) + DuAEF.DuJS.Math.getLength(cOutPosition,cInPosition) + DuAEF.DuJS.Math.getLength(cOutPosition,endPosition);
@@ -2175,6 +2190,8 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	{
 		layers[i].parent = null;
 	}
+
+	layers[0].parent = rootController.layer;
 
 	for (var i = 0 ; i < layers.length ; i++)
 	{
@@ -2257,7 +2274,7 @@ DuAEF.Duik.Rigging.bezierIK = function (layers,goal,controller)
 	curveController.layer.selected = false;
 	controller.layer.moveBefore(curveController.layer);
 
-	return [curveController,controller];
+	return [curveController,controller,rootController];
 }
 
 DuAEF.Duik.Rigging.goal = function (layers, controller)
