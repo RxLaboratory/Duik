@@ -3,12 +3,20 @@
 * @class Structure
 * @classdesc A Structure.
 * @property {Layer[]} elements - The elements of the structure
+* @property {int} structureId - The unique Id set when this structure was created
 */
 function Structure(elements)
 {
 	if (typeof elements === 'undefined') elements = [];
 	this.elements = DuAEF.DuAE.Layer.sortByParent(elements);
 	this.editModeRegExp = / \|StructureElementChildren:([\d,]*)\|/;
+	this.structureId = -1;
+	if (this.elements.length > 0)
+	{
+		var element = this.elements[0];
+		var params = DuAEF.Duik.getDuikMarkerParameters(element);
+		if (params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID]) this.structureId = params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID];
+	}
 }
 
 /**
@@ -476,7 +484,7 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 			indexed.push(layer.index);
 
 			elementLayers.push(layer);
-		}
+		});
 
 		//TODO sort by id.
 		var structures = [];
@@ -486,8 +494,25 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 		var itElements = new Iterator(elementLayers);
 		itElements.do(function(element)
 		{
-			//TODO SORT
+			var elementId = -1;
+			var params = DuAEF.Duik.getDuikMarkerParameters(element);
+			if (params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID]) elementId = params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID];
+			//search in structures
+			for (var i = 0, num = structures.length; i < num; i++)
+			{
+				var structure = structures[i];
+				if (structure.structureId == elementId)
+				{
+					structure.elements.push(element);
+					return;
+				}
+			}
+			//create new structure
+			var structure = new Structure([element]);
+			structures.push(structure);
 		});
+
+		return structures;
 
 	}
 	else
