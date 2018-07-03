@@ -110,6 +110,9 @@ DuAEF.DuScriptUI.uiStrings = [];
 //low-level undocumented list: keeps the currently highlighted controls
 DuAEF.DuScriptUI.highlightedControls = [];
 
+//low-level undocumented list: keeps all the tabs, used in the buildAllTabs method
+DuAEF.DuScriptUI.allTabs = [];
+
 //low-level undocumented function: dims all currently highlighted controls
 DuAEF.DuScriptUI.dimControls = function(e)
 {
@@ -2710,6 +2713,8 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 		tab.index = panel.tabs.length;
 		panel.tabs.push(tab);
 
+		DuAEF.DuScriptUI.allTabs.push(tab);
+
 		button.onClick = function ()
 		{
 			panel.setCurrentIndex(button.index);
@@ -2757,4 +2762,35 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 	}
 
 	return panel;
+}
+
+/**
+ * Builds all the tabs from all the tab panels<br />
+ * @memberof DuAEF.DuScriptUI
+ */
+DuAEF.DuScriptUI.buildAllTabs = function()
+{
+	for (var i = 0, num = DuAEF.DuScriptUI.allTabs.length; i < num; i++)
+	{
+		var tab = DuAEF.DuScriptUI.allTabs[i];
+		if (!tab.built)
+		{
+			tab.build(tab);
+			//resize everything
+			DuAEF.DuScriptUI.layout(tab);
+			tab.built = true;
+		}
+	}
+	//check if there's still unbuilt tabs which may have been added
+	var redo = false;
+	for (var i = DuAEF.DuScriptUI.allTabs.length-1; i >=0; i--)
+	{
+		var tab = DuAEF.DuScriptUI.allTabs[i];
+		if (!tab.built)
+		{
+			redo = true;
+			break;
+		}
+	}
+	if (redo) DuAEF.DuScriptUI.buildAllTabs();
 }
