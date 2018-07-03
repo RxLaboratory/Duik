@@ -216,8 +216,6 @@ Structure.prototype.duplicate = function()
 		if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ID]) DuAEF.Duik.setDuikMarkerParameter(layer,DuAEF.Duik.MarkerParameters.AUTORIG_ID,autorigId);
 	});
 
-
-
 	//return
 	return new Structure(newLayers);
 }
@@ -464,100 +462,121 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 
 	if (layers.length == 0) return structures;
 
-	var structure = new Structure();
-
 	var it = new Iterator(layers);
 
-	it.do(function(layer)
+	if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ELEMENT)
 	{
-		if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
-		if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) return;
+		var elementLayers = [];
 
-		indexed.push(layer.index);
-
-		if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ELEMENT)
+		it.do(function(layer)
 		{
+			if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
+			if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) return;
+
+			indexed.push(layer.index);
+
+			elementLayers.push(layer);
+		}
+
+		//TODO sort by ID
+		var structures = [];
+
+		if (elementLayers.length == 0) return structures;
+
+		var itElements = new Iterator(elementLayers);
+		itElements.do(function(element)
+		{
+			//TODO SORT 
+		});
+
+	}
+	else
+	{
+		it.do(function(layer)
+		{
+			if (!DuAEF.Duik.isLayerType(layer,DuAEF.Duik.LayerTypes.STRUCTURE)) return;
+			if (DuAEF.DuJS.Array.indexOf(indexed,layer.index) >= 0) return;
+
+			indexed.push(layer.index);
+
+			structure = new Structure();
+
+			//TODO improve using ID
+
 			structure.elements.push(layer);
-			return;
-		}
-
-		structure = new Structure();
-		structure.elements.push(layer);
-		//get children
-		if (selectionMode == DuAEF.Duik.Structure.SelectionModes.CHILDREN || selectionMode == DuAEF.Duik.Structure.SelectionModes.STRUCTURE)
-		{
-			//for all layers in the comp, get child
-			var childLayer = layer;
-			while (childLayer != null)
+			//get children
+			if (selectionMode == DuAEF.Duik.Structure.SelectionModes.CHILDREN || selectionMode == DuAEF.Duik.Structure.SelectionModes.STRUCTURE)
 			{
-				var structureEffect = childLayer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
-				var childIndex = -1;
-				if (structureEffect) childIndex = structureEffect(3).value;
-				if (childIndex == childLayer.index) break;
-				var currentIndex = childLayer.index;
-				childLayer = null;
-				//get child
-				if (childIndex > 0)
+				//for all layers in the comp, get child
+				var childLayer = layer;
+				while (childLayer != null)
 				{
-					var child = comp.layer(childIndex);
-					//check if it's a structure element
-					if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE))
+					var structureEffect = childLayer.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
+					var childIndex = -1;
+					if (structureEffect) childIndex = structureEffect(3).value;
+					if (childIndex == childLayer.index) break;
+					var currentIndex = childLayer.index;
+					childLayer = null;
+					//get child
+					if (childIndex > 0)
 					{
-						structure.elements.push(child);
-						childLayer = child;
-						indexed.push(child.index);
-						continue;
+						var child = comp.layer(childIndex);
+						//check if it's a structure element
+						if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE))
+						{
+							structure.elements.push(child);
+							childLayer = child;
+							indexed.push(child.index);
+							continue;
+						}
 					}
-				}
-				//search child
-				for (var j = 1 ; j <= comp.layers.length ; j++)
-				{
-					var child = comp.layer(j);
-					if (child.parent == null) continue;
-					if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE) && child.parent.index == currentIndex)
+					//search child
+					for (var j = 1 ; j <= comp.layers.length ; j++)
 					{
-						structure.elements.push(child);
-						childLayer = child;
-						indexed.push(child.index);
-						break;
+						var child = comp.layer(j);
+						if (child.parent == null) continue;
+						if (DuAEF.Duik.isLayerType(child,DuAEF.Duik.LayerTypes.STRUCTURE) && child.parent.index == currentIndex)
+						{
+							structure.elements.push(child);
+							childLayer = child;
+							indexed.push(child.index);
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		//get parents
-		if (selectionMode == DuAEF.Duik.Structure.SelectionModes.STRUCTURE)
-		{
-			var parentLayer = layer;
-			while (parentLayer != null)
+			//get parents
+			if (selectionMode == DuAEF.Duik.Structure.SelectionModes.STRUCTURE)
 			{
-				var testParent = parentLayer.parent;
-				var childIndex = parentLayer.index;
-
-				if (testParent == null) break;
-				else if (!DuAEF.Duik.isLayerType(testParent,DuAEF.Duik.LayerTypes.STRUCTURE)) break;
-
-				var structureEffect = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
-				var testIndex = -1;
-				if (structureEffect) testIndex = structureEffect(3).value;
-
-				parentLayer = null;
-
-				if (testIndex == testParent.index) break;
-				else if (testIndex == 0 || testIndex == childIndex)
+				var parentLayer = layer;
+				while (parentLayer != null)
 				{
-					structure.elements.unshift(testParent);
-					parentLayer = testParent;
-					indexed.push(testParent.index);
+					var testParent = parentLayer.parent;
+					var childIndex = parentLayer.index;
+
+					if (testParent == null) break;
+					else if (!DuAEF.Duik.isLayerType(testParent,DuAEF.Duik.LayerTypes.STRUCTURE)) break;
+
+					var structureEffect = testParent.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE);
+					var testIndex = -1;
+					if (structureEffect) testIndex = structureEffect(3).value;
+
+					parentLayer = null;
+
+					if (testIndex == testParent.index) break;
+					else if (testIndex == 0 || testIndex == childIndex)
+					{
+						structure.elements.unshift(testParent);
+						parentLayer = testParent;
+						indexed.push(testParent.index);
+					}
 				}
 			}
-		}
 
-		structures.push(structure);
-
-	});
-
-	if (selectionMode == DuAEF.Duik.Structure.SelectionModes.ELEMENT) structures.push(structure);
+			structures.push(structure);
+		});
+	}
 
 	return structures;
 }
