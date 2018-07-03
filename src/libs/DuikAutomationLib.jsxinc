@@ -8,32 +8,29 @@ DuAEF.Duik.Automation = {};
 /**
 * Adds a list on a property
  * @memberof DuAEF.Duik.Automation
-* @param {PropertyInfo} prop - The Property
+* @param {PropertyInfo|Property} prop - The Property
 */
 DuAEF.Duik.Automation.list = function (prop)
 {
-	if (prop == undefined) throw "Missing Param 1: list needs a Property";
+	if (typeof prop === 'undefined') throw "Missing Param 1: list needs a Property";
+	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
 	if (!prop.riggable) return;
 
 	var dim = prop.dimensions;
 
-	var layer =prop.layer;
+	var layer = prop.layer;
 	var comp = layer.containingComp;
 
-	layer.selected = true;
-	if (dim == 1) layer.applyPreset(DuAEF.Duik.PseudoEffects.ONED_LIST);
-	else if (dim == 2)layer.applyPreset(DuAEF.Duik.PseudoEffects.TWOD_LIST);
-	else if (dim == 3) layer.applyPreset(DuAEF.Duik.PseudoEffects.THREED_LIST);
-	else { layer.selected = false; return;}
-	layer.selected = false;
-
-
-	var effect = layer.effect("List");
-	effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' List',layer);
+	var effect = null;
+	var name = prop.getProperty().name + ' List';
+	if (dim == 1) effect = DuAEF.Duik.PseudoEffects.ONED_LIST.apply(layer, name);
+	else if (dim == 2) effect = DuAEF.Duik.PseudoEffects.TWOD_LIST.apply(layer, name);
+	else if (dim == 3) effect = DuAEF.Duik.PseudoEffects.THREED_LIST.apply(layer, name);
+	else return;
 
 	//set animation with expression
 	var anim = DuAEF.DuAE.Property.getAnim(prop,false);
-	if (anim) DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,true);
+	if (anim) DuAEF.DuAE.Property.setAnim(effect(2),anim,0,true,true,false);
 	DuAEF.DuAE.Property.removeAnim(prop);
 
 	prop.getProperty().expression =  "//Duik.list\r\n" +
