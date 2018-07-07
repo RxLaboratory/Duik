@@ -204,9 +204,25 @@ DuAEF.Duik.Rigging.parent = function(children,parent)
 
 	var parentComp = parent.containingComp;
 
+	//create the parent locator
+	var locator = DuAEF.Duik.Rigging.addLocator(parent);
+	//the children locators
+	var childLocators = [];
+
 	new Iterator(children).do(function(child)
 	{
 		var childComp = child.containingComp;
+
+		//check if there already is a child locator
+		var childLocator = null;
+		for (var i = 0, num = childLocators.length; i < num; i++)
+		{
+			if (childLocators[i].containingComp.id == childComp.id)
+			{
+				childLocator = childLocators[i];
+				break;
+			}
+		}
 
 		//if precomp
 		var precomps = DuAEF.DuAE.Comp.getPrecomps(childComp);
@@ -227,23 +243,21 @@ DuAEF.Duik.Rigging.parent = function(children,parent)
 					}
 				}
 			}
-			//create a locator and extract it
-			var locator = DuAEF.Duik.Rigging.addLocator(parent);
-			var childLocator = DuAEF.Duik.Rigging.extractLocator(locator,precompLayer);
+
+			//create the child Locator
+			if (!childLocator)
+			{
+				//create a locator and extract it
+				var childLocator = DuAEF.Duik.Rigging.extractLocator(locator,precompLayer);
+				childLocator.selected = false;
+				childLocator.enabled = false;
+				childLocator.shy = true;
+				childLocator.locked = true;
+				childLocators.push(childLocator);
+			}
+
 			child.parent = childLocator;
-			//lock and hide
-			locator.selected = false;
-			childLocator.selected = false;
-			locator.enabled = false;
-			childLocator.enabled = false;
-			locator.locked = true;
-			childLocator.locked = true;
-			locator.shy = true;
-			childLocator.shy = true;
-
 			child.selected = true;
-			parent.selected = true;
-
 			return;
 		}
 
@@ -264,31 +278,39 @@ DuAEF.Duik.Rigging.parent = function(children,parent)
 			}
 
 			//create a locator and extract it
-			var locator = DuAEF.Duik.Rigging.addLocator(parent);
 			locator.parent = precompLayer;
-			//create a null in the comp
-			var childLocator = childComp.layers.addNull();
-			childLocator.name = DuAEF.DuAE.Comp.newUniqueLayerName(locator.name,childComp);
-			DuAEF.DuAE.Property.linkProperties(childLocator.transform,locator.transform);
+
+			//create the child Locator
+			if (!childLocator)
+			{
+				//create a null in the comp
+				var childLocator = childComp.layers.addNull();
+				childLocator.name = DuAEF.DuAE.Comp.newUniqueLayerName(locator.name,childComp);
+				DuAEF.Duik.setDuikMarker(childLocator,"Locator",DuAEF.Duik.LayerTypes.LOCATOR);
+				DuAEF.DuAE.Property.linkProperties(childLocator.transform,locator.transform);
+				//lock and hide
+				childLocator.selected = false;
+				childLocator.enabled = false;
+				childLocator.shy = true;
+				childLocator.locked = true;
+				childLocators.push(childLocator);
+			}
+
 			child.parent = childLocator;
-
-			//lock and hide
-			locator.selected = false;
-			childLocator.selected = false;
-			locator.enabled = false;
-			childLocator.enabled = false;
-			locator.locked = true;
-			childLocator.locked = true;
-			locator.shy = true;
-			childLocator.shy = true;
-
 			child.selected = true;
-			parent.selected = true;
 
 			return;
 		}
 
 	});
+
+	//lock and hide
+	locator.selected = false;
+	locator.enabled = false;
+	locator.locked = true;
+	locator.shy = true;
+	parent.selected = true;
+
 }
 
 /**
