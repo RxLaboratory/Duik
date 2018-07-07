@@ -1,8 +1,24 @@
-﻿/**
-* Rigging tools
-* @namespace
-* @memberof DuAEF.Duik
-*/
+/**
+ * Duik Rigging Tools
+ * @author Nicolas Dufresne, Kevin Masson and contributors
+ * @copyright 2017,2018 Nicolas Dufresne, Rainbox Productions<br />
+ * {@link https://rainboxprod.coop}
+ * @namespace
+ * @memberof DuAEF.Duik
+ * @license GPL-3.0 <br />
+ * DuAEF is free software: you can redistribute it and/or modify<br />
+ * it under the terms of the GNU General Public License as published by<br />
+ * the Free Software Foundation, either version 3 of the License, or<br />
+ * (at your option) any later version.<br />
+ *<br />
+ * DuAEF is distributed in the hope that it will be useful,<br />
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of<br />
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br />
+ * GNU General Public License for more details.<br />
+ *<br />
+ * You should have received a copy of the GNU General Public License<br />
+ * along with DuAEF. If not, see {@link http://www.gnu.org/licenses/}.
+ */
 DuAEF.Duik.Rigging = {};
 
 /**
@@ -488,8 +504,8 @@ DuAEF.Duik.Rigging.connectorCheckParent = function (prop)
 * @param {Property|PropertyInfo} childProp - The child property
 * @param {Property|PropertyInfo} parentProp - The parent property
 * @param {PropertyGroup|PropertyInfo|null} [parentEffect] - The effect of an already existing connector
-* @param {float} [minValue] - The minimum value
-* @param {float} [maxValue] - The maximum value
+* @param {float} [minValue=0] - The minimum value
+* @param {float} [maxValue=100] - The maximum value
 * @param {DuAEF.DuAE.Axis} [axis=DuAEF.DuAE.Axis.X] - The axis or channel to connect
 * @param {DuAEF.DuAE.Types} [axis=DuAEF.DuAE.Types.VALUE] - The type
 * @return {PropertyGroup} The controlling effect created
@@ -513,16 +529,7 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProperty, parentEffect
 
 	var parentLayer = DuAEF.DuAE.Property.getLayer(parentProp);
 
-	if (!parentEffect)
-	{
-		if (dim == 1) parentEffect = DuAEF.DuAE.Layer.addPseudoEffect(parentLayer,DuAEF.Duik.PseudoEffects.ONED_CONNECTOR,DuAEF.Duik.PseudoEffectsMatchNames.ONED_CONNECTOR,parentProp.getProperty().name + ' Connector');
-		else if (dim == 2) parentEffect = DuAEF.DuAE.Layer.addPseudoEffect(parentLayer,DuAEF.Duik.PseudoEffects.TWOD_CONNECTOR,DuAEF.Duik.PseudoEffectsMatchNames.TWOD_CONNECTOR,parentProp.getProperty().name + ' Connector');
-		else if (dim == 3) parentEffect = DuAEF.DuAE.Layer.addPseudoEffect(parentLayer,DuAEF.Duik.PseudoEffects.THREED_CONNECTOR,DuAEF.Duik.PseudoEffectsMatchNames.THREED_CONNECTOR,parentProp.getProperty().name + ' Connector');
-		else if (dim == 4) parentEffect = DuAEF.DuAE.Layer.addPseudoEffect(parentLayer,DuAEF.Duik.PseudoEffects.COLOR_CONNECTOR,DuAEF.Duik.PseudoEffectsMatchNames.COLOR_CONNECTOR,parentProp.getProperty().name + ' Connector');
-		if (dim != 4) parentEffect(3).setValue(100);
-		else parentEffect(3).setValue(1);
-	}
-
+	//Adjust minimum value
 	if (!isNaN(minValue))
 	{
 		if (dim == 4)
@@ -532,8 +539,10 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProperty, parentEffect
 			if (app.project.bitsPerChannel == 32 && minValue < 0) minValue = 0;
 			if (app.project.bitsPerChannel == 32 && minValue > 1) minValue = 1;
 		}
-		parentEffect(2).setValue(minValue);
 	}
+	else minValue = 0;
+
+	//adjust maximum value
 	if (!isNaN(maxValue))
 	{
 		if (dim == 4)
@@ -543,30 +552,66 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProperty, parentEffect
 			if (app.project.bitsPerChannel == 32 && maxValue < 0) maxValue = 0;
 			if (app.project.bitsPerChannel == 32 && maxValue > 1) maxValue = 1;
 		}
-		parentEffect(3).setValue(maxValue);
+	}
+	else maxValue = 100;
+
+	//adjust typê
+	if ( type == DuAEF.DuAE.Types.VELOCITY ) type = 2;
+	else type = 1;
+
+	//adjust axis
+	if (axis == DuAEF.DuAE.Axis.Y ) axis = 2;
+	else if (axis == DuAEF.DuAE.Axis.Z ) axis = 3;
+	else if (axis == DuAEF.DuAE.Axis.RED ) axis = 1;
+	else if (axis == DuAEF.DuAE.Axis.GREEN ) axis = 2;
+	else if (axis == DuAEF.DuAE.Axis.BLUE ) axis = 3;
+	else if (axis == DuAEF.DuAE.Axis.ALPHA ) axis = 4;
+	else if (axis == DuAEF.DuAE.Axis.HUE ) axis = 5;
+	else if (axis == DuAEF.DuAE.Axis.SATURATION ) axis = 6;
+	else if (axis == DuAEF.DuAE.Axis.VALUE ) axis = 7;
+
+	//try to find an existing effect
+	if (!parentEffect)
+	{
+		var parentEffects = parentLayer.property('ADBE Effect Parade');
+		var matchName = DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.matchName;
+		if (dim == 2) matchName = DuAEF.Duik.PseudoEffects.TWOD_CONNECTOR.matchName;
+		if (dim == 3) matchName = DuAEF.Duik.PseudoEffects.THREED_CONNECTOR.matchName;
+		if (dim == 4) matchName = DuAEF.Duik.PseudoEffects.COLOR_CONNECTOR.matchName;
+
+		var effects = DuAEF.DuAE.Property.getProps(parentEffects,matchName,true);
+
+		//check if there is one with the same params
+		for (var i = 0, num = effects.length; i < num; i++)
+		{
+			var effect = effects[i].getProperty();
+			if (effect.property(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.minimumSlider).value != minValue) continue;
+			if (effect.property(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.maximumSlider).value != maxValue) continue;
+			if (effect.property(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.connexionModePopup).value != type) continue;
+			if (dim > 1) if (effect.property(DuAEF.Duik.PseudoEffects.TWOD_CONNECTOR.axisPopup).value != axis) continue;
+
+			//if all tests passed, this is the one!
+			parentEffect = effect;
+			break;
+		}
 	}
 
-	if ( type == DuAEF.DuAE.Types.VELOCITY ) parentEffect(1).setValue(2);
+	//if not found, create
+	if (!parentEffect)
+	{
+		if (dim == 1) parentEffect = DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.apply(parentLayer, parentProp.getProperty().name + ' Connector');
+		else if (dim == 2) parentEffect = DuAEF.Duik.PseudoEffects.TWOD_CONNECTOR.apply(parentLayer, parentProp.getProperty().name + ' Connector');
+		else if (dim == 3) parentEffect = DuAEF.Duik.PseudoEffects.THREED_CONNECTOR.apply(parentLayer, parentProp.getProperty().name + ' Connector');
+		else if (dim == 4) parentEffect = DuAEF.Duik.PseudoEffects.COLOR_CONNECTOR.apply(parentLayer, parentProp.getProperty().name + ' Connector');
 
-	if (dim == 2)
-	{
-		if (axis == DuAEF.DuAE.Axis.Y ) parentEffect(4).setValue(2);
+		if (dim != 4) parentEffect(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.maximumSlider).setValue(100);
+		else parentEffect(DuAEF.Duik.PseudoEffects.COLOR_CONNECTOR.maximumSlider).setValue(1);
 	}
-	else if (dim == 3)
-	{
-		if (axis == DuAEF.DuAE.Axis.Y ) parentEffect(4).setValue(2);
-		else if (axis == DuAEF.DuAE.Axis.Z ) parentEffect(4).setValue(3);
-	}
-	else if (dim == 4)
-	{
-		if (axis == DuAEF.DuAE.Axis.RED ) parentEffect(4).setValue(2);
-		else if (axis == DuAEF.DuAE.Axis.GREEN ) parentEffect(4).setValue(3);
-		else if (axis == DuAEF.DuAE.Axis.BLUE ) parentEffect(4).setValue(4);
-		else if (axis == DuAEF.DuAE.Axis.ALPHA ) parentEffect(4).setValue(5);
-		else if (axis == DuAEF.DuAE.Axis.HUE ) parentEffect(4).setValue(6);
-		else if (axis == DuAEF.DuAE.Axis.SATURATION ) parentEffect(4).setValue(7);
-		else if (axis == DuAEF.DuAE.Axis.VALUE ) parentEffect(4).setValue(8);
-	}
+
+	parentEffect(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.minimumSlider).setValue(minValue);
+	parentEffect(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.maximumSlider).setValue(maxValue);
+	parentEffect(DuAEF.Duik.PseudoEffects.ONED_CONNECTOR.connexionModePopup).setValue(type);
+	parentEffect(DuAEF.Duik.PseudoEffects.TWOD_CONNECTOR.axisPopup).setValue(axis);
 
 	// the expression
 
