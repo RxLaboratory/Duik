@@ -23,14 +23,130 @@ DuAEF.Dugr = {};
 
 /**
  * Adds a layer to a group
- * @param {Layer} layer 	- The layer
- * @param {string} group	- The group name
+ * @param {Layer} layer - The layer
+ * @param {string} group - The group name
  */
-DuAEF.Dugr.addLayerToGroup = function (layer,group)
+DuAEF.Dugr.addLayerToGroup = function (layer, group)
 {
+	var locked = layer.locked;
+	layer.locked = false;
 	var groupComment = '|' + group + '| ';
 	if (layer.comment.indexOf(groupComment) < 0)
 	{
 		layer.comment = layer.comment + groupComment;
 	}
+	layer.locked = locked;
+}
+
+/**
+ * Adds the selected layers from the current comp in the group
+ * @param {string} group - The group name
+ */
+DuAEF.Dugr.addSelectedLayersToGroup = function (group)
+{
+	if (group == "All") return;
+	if (group == "Selected") return;
+	if (group == "Not selected") return;
+	if (group == "Not grouped") return;
+
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	for (var i=0, num = layers.length; i < num; i++)
+	{
+		addLayerToGroup(layers[i],group);
+	}
+}
+
+/**
+ * Removes a layer from a group
+ * @param {Layer} layer - The layer
+ * @param {string} group - The group name
+ */
+DuAEF.Dugr.removeLayerFromGroup = function (layer, group)
+{
+	var locked = layer.locked;
+	layer.locked = false;
+	layer.comment = layer.comment.replace('|' + group + '| ','');
+	layer.locked = locked;
+}
+
+/**
+ * Removes the selected layers in the current comp from the group
+ * @param {string} group - The group name
+ */
+DuAEF.Dugr.removeSelectedLayersFromGroup = function (group)
+{
+	var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+	for (var i=0, num = layers.length; i < num; i++)
+	{
+		removeLayerFromGroup(layers[i],group);
+	}
+}
+
+/**
+ * Empties the group (equivalent to removing it)
+ * @param {string} group - The group name
+ */
+DuAEF.Dugr.removeAllLayersFromGroup = function (group)
+{
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var layers = comp.layers;
+	for (var i=1, num = comp.numLayers; i <= num; i++)
+	{
+		removeLayerFromGroup(layers[i],group);
+	}
+}
+
+/**
+ * Adds a layer in the current comp to warn the user that something is isolated
+ * @param {DuAEF.DuAE.LayerPlacements} [placement=DuAEF.DuAE.LayerPlacements.BOTTOM] - Where the layer must be created, either TOP or BOTTOM
+ */
+function addDugrLayer(placement)
+{
+	DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	if (typeof placement === 'undefined') placement = DuAEF.DuAE.LayerPlacements.BOTTOM;
+
+	//add rect
+	sq = comp.layers.addShape();
+	sq.shy = true;
+	sq.guideLayer = true;
+	sq.name = 'Dugr Activated';
+	if (placement == DuAEF.DuAE.LayerPlacements.BOTTOM) sq.moveToEnd();
+
+	var gr = sq("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	var groupContent = gr.property("ADBE Vectors Group");
+	var shapeProp = groupContent.addProperty("ADBE Vector Shape - Rect");
+	shapeProp("ADBE Vector Rect Size").setValue([comp.width,comp.height]);
+	var stroke = groupContent.addProperty("ADBE Vector Graphic - Stroke");
+	stroke("ADBE Vector Stroke Color").setValue([0.8,0,0]);
+	stroke("ADBE Vector Stroke Opacity").setValue(50);
+	stroke("ADBE Vector Stroke Width").setValue(comp.width/100);
+
+	sq.locked = true;
+}
+
+/**
+ * Removes the layer used to warn the user that something is isolated
+ * @return {boolean} True if a layer was actually removed, false if it was not found
+ */
+function removeDugrLayer()
+{
+	var found = false;
+	var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return found;
+
+	for (var i = 1, num = comp.numLayers; i <= num; i++)
+	{
+		if (comp.layer(i).name == 'Dugr Activated')
+		{
+			found = true;
+			comp.layer(i).locked = false;
+			comp.layer(i).remove();
+			break;
+		}
+	}
+	return found;
 }
