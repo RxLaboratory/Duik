@@ -696,6 +696,74 @@ DuAEF.Duik.Rigging.connector = function (childProp, parentProperty, parentEffect
 }
 
 /**
+* Applies connector to the property, creating a controller layer (or using any existing one) with a slider in the effects
+* @param {Property[]|PropertyInfo[]} childProps - The child property
+*/
+DuAEF.Duik.Rigging.quickConnector = function (childProps)
+{
+	var childProp = childProps[childProps.length-1];
+	if (!(childProp instanceof PropertyInfo)) childProp = new PropertyInfo(childProp);
+	//look for the connector layer in this comp, or create one
+	var connectorLayer = null;
+	var comp = childProp.comp;
+	var ctrls = DuAEF.Duik.Controller.getControllers(comp);
+	for (var i = 0, num = ctrls.length; i < num; i++)
+	{
+		var ctrl = ctrls[i].layer;
+		if (ctrl.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.QUICK_CONNECTOR.matchName))
+		{
+			connectorLayer = ctrl;
+			break;
+		}
+	}
+	//create if needed
+	if(connectorLayer == null)
+	{
+		var connectorCtrl = DuAEF.Duik.Controller.create(comp, DuAEF.Duik.Controller.Types.CONNECTOR);
+		connectorLayer = connectorCtrl.layer;
+	}
+	//create effect
+	var prop = childProp.getProperty();
+	var childLayer = childProp.layer;
+	var connectorEffect = DuAEF.Duik.PseudoEffects.QUICK_CONNECTOR.apply(connectorLayer, childLayer.name + ' | ' + prop.parentProperty.name);
+
+	var expr = '//Duik.connector\n' +
+		'var ctrlLayer = thisComp.layer("' + connectorLayer.name + '");\n' +
+		'var ctrlEffect = ctrlLayer.effect("' + connectorEffect.name + '");\n' +
+		'var ctrlValue = ctrlEffect(' + DuAEF.Duik.PseudoEffects.QUICK_CONNECTOR.connectorSlider + ');\n' +
+		'var ctrlMin = 0;\n' +
+		'var ctrlMax = 100;\n' +
+		'var result = value;\n' +
+		'if (numKeys >= 2 && ctrlEffect.enabled)\n' +
+		'{\n' +
+		'ctrlValue = ctrlValue.value;\n' +
+		'var t = 0;\n' +
+		'var beginTime = key(1).time;\n' +
+		'var endTime = key(numKeys).time;\n' +
+		'if (ctrlMin > ctrlMax)\n' +
+		'{\n' +
+		't = linear(ctrlValue, ctrlMin, ctrlMax, endTime, beginTime);\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		't = linear(ctrlValue, ctrlMin, ctrlMax, beginTime, endTime);\n' +
+		'}\n' +
+		'result = valueAtTime(t);\n' +
+		'}\n' +
+		'result;';
+
+
+	var it = new Iterator(childProps);
+	it.do(function (childProp)
+	{
+		if (!(childProp instanceof PropertyInfo)) childProp = new PropertyInfo(childProp);
+		if (!childProp.riggable) return;
+
+		childProp.getProperty().expression = expr;
+	});
+}
+
+/**
 * Creates an IK and its controller on the layers/the structure.
 * @param {Layer[]|Structure} layers - The layers, already parented or ordered from goal (at index 0) to root (including the goal)
 * @param {Layer|Controller|null} [controller] - An already existing controller.
