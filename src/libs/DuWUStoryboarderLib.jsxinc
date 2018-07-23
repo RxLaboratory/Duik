@@ -69,14 +69,24 @@ along with DuAEF. If not, see <http://www.gnu.org/licenses/>.
 
 /**
 * @class
-* @name WULayer
-* @classdesc A layer in a {@link WUBoard}<br />
+* @name WULayers
+* @classdesc A set of layers in a {@link WUBoard}<br />
 * This is not a real class, and cannot be instanciated.
-* @property {Object} reference - An object with two attributes:<br />
-* url (string) is the file name of the layer,<br />
-* opacity (flaot) its opacity, in the range [0.0, 1.0].
-* @property {Object} notes - An object with one attribute:<br />
-* url (string) is the file name of the layer.
+* @property {WULayer} reference
+* @property {WULayer} fill
+* @property {WULayer} tone
+* @property {WULayer} pencil
+* @property {WULayer} ink
+* @property {WULayer} notes
+*/
+
+/**
+* @class
+* @name WULayer
+* @classdesc A layer in a {@link WULayers}<br />
+* This is not a real class, and cannot be instanciated.
+* @property {string} url - The file name
+* @property {float} [opacity] - The opacity
 */
 
 /**
@@ -136,6 +146,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 	var imagesPath = file.path + '/images/';
 	var imagesFolder = new Folder(imagesPath);
 	if (!imagesFolder.exists) return -1;
+
 	//first board
 	var firstImageFile = new File(imagesPath + boards[0].url);
 	firstImageFile.psd = false;
@@ -148,15 +159,20 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			firstImageFile.psd = true;
 			if (!firstImageFile.exists) return -1;
 		}
-		else return -1;
+		//try with a layer
+		firstImageFile = new File(imagesPath + boards[0].layers.reference.url);
+		if (!firstImageFile.exists) return -1;
 	}
+
+
 	//size
 	//import first image to check size
 	var importOptions = new ImportOptions(firstImageFile);
 	importOptions.importAs = ImportAsType.FOOTAGE;
 	var item = app.project.importFile(importOptions);
-	width = item.width;
-	height = overlayInfo ? item.height : item.height+200;
+	var width = item.width;
+	var height = overlayInfo ? item.height : item.height+200;
+	var itemHeight = item.height;
 	item.remove();
 
 	//storyboard name
@@ -230,8 +246,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		}
 
 		//import
-		var mainFile;
-		var mainItem;
+		var mainItem = null;
 		var psd = false;
 		//psd
 		if (board.link !== undefined)
@@ -239,7 +254,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			var mainFile = new File(imagesPath + board.link);
 			var importOptions = new ImportOptions(mainFile);
 			importOptions.importAs = ImportAsType.COMP;
-			var mainItem = app.project.importFile(importOptions);
+			mainItem = app.project.importFile(importOptions);
 			//move folder
 			for (var j = 1, num = app.project.numItems; j <= num; j++ )
 			{
@@ -256,17 +271,52 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 		else
 		{
 			var mainFile = new File(imagesPath + board.url);
-			var mainItem = app.project.importFile(new ImportOptions(mainFile));
-		}
-		mainItem.parentFolder = imageFolder;
+			if (mainFile.exists) mainItem = app.project.importFile(new ImportOptions(mainFile));
 
-		//add to comp
-		var shotLayer = shotComp.layers.add(mainItem,board.duration/1000);
-		shotLayer.label = 16;
-		shotLayer.name = board.shot;
-		shotLayer.startTime = boardTime;
-		if (!overlayInfo) shotLayer.transform.position.setValue([width/2,mainItem.height/2]);
-		if(shotLayer.index != shotComp.numLayers) shotLayer.moveBefore(shotComp.layer(shotComp.numLayers));
+		}
+
+		var shotLayer = null;
+
+		if (mainItem != null)
+		{
+			mainItem.parentFolder = imageFolder;
+			//add to comp
+			shotLayer = shotComp.layers.add(mainItem,board.duration/1000);
+			shotLayer.label = 16;
+			shotLayer.name = board.shot;
+			shotLayer.startTime = boardTime;
+			if (!overlayInfo) shotLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			if(shotLayer.index != shotComp.numLayers) shotLayer.moveBefore(shotComp.layer(shotComp.numLayers));
+		}
+
+		if (board.layers.reference !== undefined && !psd)
+		{
+			var referenceFile = new File(imagesPath + board.layers.reference.url);
+			var referenceItem = app.project.importFile(new ImportOptions(referenceFile));
+			referenceItem.parentFolder = imageFolder;
+			var referenceLayer = shotComp.layers.add(referenceItem,board.duration/1000);
+			referenceLayer.label = 12;
+			referenceLayer.name = board.shot + " | Reference";
+			referenceLayer.startTime = boardTime;
+			referenceLayer.transform.opacity.setValue(board.layers.reference.opacity*100);
+			if (!overlayInfo) referenceLayer.transform.position.setValue([width/2,itemHeight/2]);
+			if (shotLayer != null)
+			{
+				referenceLayer.moveAfter(shotLayer);
+				referenceLayer.parent = shotLayer;
+			}
+			else shotLayer = referenceLayer;
+		}
+
+		if (shotLayer == null)
+		{
+			shotLayer = shotComp.layers.addNull();
+			shotLayer.label = 16;
+			shotLayer.name = board.shot;
+			shotLayer.startTime = boardTime;
+			if (!overlayInfo) shotLayer.transform.position.setValue([width/2,itemHeight/2]);
+			if(shotLayer.index != shotComp.numLayers) shotLayer.moveBefore(shotComp.layer(shotComp.numLayers));
+		}
 
 		//add dialog
 		if (board.dialogue)
@@ -290,6 +340,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			dialogueLayer.outPoint = board.duration/1000 + boardTime;
 			dialogueLayer.moveBefore(shotLayer);
 			dialogueLayer.transform.position.setValue([width/2,height-150]);
+			dialogueLayer.parent = shotLayer;
 		}
 
 		//add action
@@ -314,6 +365,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			actionLayer.outPoint = board.duration/1000 + boardTime;
 			actionLayer.moveBefore(shotLayer);
 			actionLayer.transform.position.setValue([width/2,height-87]);
+			actionLayer.parent = shotLayer;
 		}
 
 		//add notes
@@ -338,6 +390,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			notesLayer.outPoint = board.duration/1000 + boardTime;
 			notesLayer.moveBefore(shotLayer);
 			notesLayer.transform.position.setValue([width/2,height-25]);
+			notesLayer.parent = shotLayer;
 		}
 
 		//add notes layer
@@ -350,23 +403,69 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			notesLayer.label = 14;
 			notesLayer.name = board.shot + " | Notes";
 			notesLayer.startTime = boardTime;
-			if (!overlayInfo) notesLayer.transform.position.setValue([width/2,mainItem.height/2]);
+			if (!overlayInfo) notesLayer.transform.position.setValue([width/2,itemHeight/2]);
 			notesLayer.moveBefore(shotLayer);
+			notesLayer.parent = shotLayer;
 		}
 
-		//add reference layer
-		if (board.layers.reference !== undefined && !psd)
+		//add ink layer
+		if (board.layers.ink !== undefined && !psd)
 		{
-			var referenceFile = new File(imagesPath + board.layers.reference.url);
-			var referenceItem = app.project.importFile(new ImportOptions(referenceFile));
-			referenceItem.parentFolder = imageFolder;
-			var referenceLayer = shotComp.layers.add(referenceItem,board.duration/1000);
-			referenceLayer.label = 12;
-			referenceLayer.name = board.shot + " | Reference";
-			referenceLayer.startTime = boardTime;
-			referenceLayer.transform.opacity.setValue(board.layers.reference.opacity*100);
-			if (!overlayInfo) referenceLayer.transform.position.setValue([width/2,mainItem.height/2]);
-			referenceLayer.moveAfter(shotLayer);
+			var file = new File(imagesPath + board.layers.ink.url);
+			var item = app.project.importFile(new ImportOptions(file));
+			item.parentFolder = imageFolder;
+			var layer = shotComp.layers.add(item,board.duration/1000);
+			layer.label = 14;
+			layer.name = board.shot + " | Ink";
+			layer.startTime = boardTime;
+			if (!overlayInfo) layer.transform.position.setValue([width/2,itemHeight/2]);
+			layer.moveBefore(shotLayer);
+			layer.parent = shotLayer;
+		}
+
+		//add pencil layer
+		if (board.layers.pencil !== undefined && !psd)
+		{
+			var file = new File(imagesPath + board.layers.pencil.url);
+			var item = app.project.importFile(new ImportOptions(file));
+			item.parentFolder = imageFolder;
+			var layer = shotComp.layers.add(item,board.duration/1000);
+			layer.label = 14;
+			layer.name = board.shot + " | Pencil";
+			layer.startTime = boardTime;
+			if (!overlayInfo) layer.transform.position.setValue([width/2,itemHeight/2]);
+			layer.moveBefore(shotLayer);
+			layer.parent = shotLayer;
+		}
+
+		//add tone layer
+		if (board.layers.tone !== undefined && !psd)
+		{
+			var file = new File(imagesPath + board.layers.tone.url);
+			var item = app.project.importFile(new ImportOptions(file));
+			item.parentFolder = imageFolder;
+			var layer = shotComp.layers.add(item,board.duration/1000);
+			layer.label = 14;
+			layer.name = board.shot + " | Tone";
+			layer.startTime = boardTime;
+			if (!overlayInfo) layer.transform.position.setValue([width/2,itemHeight/2]);
+			layer.moveBefore(shotLayer);
+			layer.parent = shotLayer;
+		}
+
+		//add fill layer
+		if (board.layers.fill !== undefined && !psd)
+		{
+			var file = new File(imagesPath + board.layers.fill.url);
+			var item = app.project.importFile(new ImportOptions(file));
+			item.parentFolder = imageFolder;
+			var layer = shotComp.layers.add(item,board.duration/1000);
+			layer.label = 14;
+			layer.name = board.shot + " | Fill";
+			layer.startTime = boardTime;
+			if (!overlayInfo) layer.transform.position.setValue([width/2,itemHeight/2]);
+			layer.moveBefore(shotLayer);
+			layer.parent = shotLayer;
 		}
 
 		//add audio layer
@@ -380,6 +479,7 @@ DuAEF.WUStoryboarder.import = function (file,overlayInfo,precompShots)
 			audioLayer.name = board.shot + " | Audio";
 			audioLayer.startTime = boardTime;
 			audioLayer.moveToEnd();
+			audioLayer.parent = shotLayer;
 			//add to main comp
 			if (precompShots)
 			{
