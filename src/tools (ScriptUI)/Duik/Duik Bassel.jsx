@@ -74,7 +74,7 @@
 	var version = '16.0.4';
 	//=========================
 
-	#include DuAEF.jsxinc
+	#include ../../DuAEF.jsxinc
 	#include Duik16_shared.jsxinc
 
 	//============= INIT ==============
