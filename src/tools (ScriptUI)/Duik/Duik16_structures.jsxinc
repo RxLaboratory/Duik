@@ -368,10 +368,52 @@ function ui_buildStructures(ui_structuresMainGroup)
 		if (structures.length == 0) return;
 
 		app.beginUndoGroup('Duik - ' + "Duplicate structures");
-		for (var i = 0 ; i < structures.length ; i++)
+		var autorigIds = [];
+		var newStructures = [];
+
+		var it = new Iterator(structures);
+		it.do(function(structure)
 		{
-			structures[i].duplicate();
-		}
+			var newStructure  = structure.duplicate();
+			newStructures.push(newStructure);
+
+			//adjust autorig id
+			if (newStructure.elements.length > 0)
+			{
+				var element = newStructure.elements[0];
+				var params = DuAEF.Duik.getDuikMarkerParameters(element);
+				var newAutorigId = -1;
+				var autorigId = -1;
+				if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ID]) autorigId = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
+				else return;
+
+				for (var i = 0, num = autorigIds.length; i < num; i++)
+				{
+					if (autorigIds[i][0] == autorigId) newAutorigId = autorigIds[i][1];
+				}
+
+				if (newAutorigId == -1)
+				{
+					newAutorigId = new Date().getTime();
+					autorigIds.push([autorigId,newAutorigId]);
+				}
+
+				var itElements = new Iterator(structure.elements);
+				itElements.do(function(elmt)
+				{
+					DuAEF.Duik.setDuikMarkerParameter(elmt,DuAEF.Duik.MarkerParameters.AUTORIG_ID,newAutorigId);
+				});
+			}
+
+		});
+
+		//select all structures
+		var itNew = new Iterator(newStructures);
+		itNew.do(function(structure)
+		{
+			structure.select();
+		});
+
 		app.endUndoGroup();
 	}
 
@@ -466,7 +508,7 @@ function ui_buildStructures(ui_structuresMainGroup)
 	var ui_armPlantiButton = DuAEF.DuScriptUI.addCheckBox(ui_sutrcturesArmTypeGroup,'',DuAEF.DuBinary.toFile(w25_filledhand_l),"Plantigrade (human and primates, bears, rabbits...)",DuAEF.DuBinary.toFile(w25_filledhand_r));
 	ui_armPlantiButton.setChecked(true);
 	var ui_armDigiButton = DuAEF.DuScriptUI.addCheckBox(ui_sutrcturesArmTypeGroup,'',DuAEF.DuBinary.toFile(w25_digitigrade_l),"Digitigrade (dogs, cats, dinosaurs, walking birds...)",DuAEF.DuBinary.toFile(w25_digitigrade_r));
-	var ui_armUnguButton = DuAEF.DuScriptUI.addCheckBox(ui_sutrcturesArmTypeGroup,'',DuAEF.DuBinary.toFile(w25_ungulate_l),"Ungulate (horses, cattle, girafes, pigs, deers, camels, hippopotamuses...)",DuAEF.DuBinary.toFile(w25_ungulate_r));
+	var ui_armUnguButton = DuAEF.DuScriptUI.addCheckBox(ui_sutrcturesArmTypeGroup,'',DuAEF.DuBinary.toFile(w25_ungulate_l),"Ungulate (horses, cattle, giraffes, pigs, deers, camels, hippopotamuses...)",DuAEF.DuBinary.toFile(w25_ungulate_r));
 	var ui_armDetailsGroup = DuAEF.DuScriptUI.addGroup(ui_armGroup,'column');
 	ui_armDetailsGroup.alignment = ['center','top'];
 	ui_armDetailsGroup.alignChildren = ['left','top'];
