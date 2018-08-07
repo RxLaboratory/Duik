@@ -7,7 +7,7 @@
 
 (function ()
 {
-	#include "../libs/DuBinaryLib.jsxinc"
+	#include "../DuAEF.jsxinc"
 
 	var file = File.openDialog("Open include file.","Javascript files: *.jsx;*.jsxinc");
 	if (!file) return;
@@ -16,6 +16,6 @@
 
 	var outputFileName = file.path + '/' + obj.category + '/' + obj.fileName;
 
-	DuBinary.toFile(obj,outputFileName);
+	DuAEF.DuBinary.toFile(obj,outputFileName);
 
 })();

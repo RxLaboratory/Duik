@@ -47,7 +47,15 @@ function loadSettings ()
 {
 	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
 	settings = new DuSettings("Duik",settingsFile);
-	//TODO get the version of Duik, update settings if changed
+
+	if (typeof settings.data.duikVersion === 'undefined') settings.data.duikVersion = version;
+	//if the version has changed, update some settings
+	if (version != settings.data.duikVersion)
+	{
+		settings.data.newsAtStartup = true;
+		settings.data.checkUpdatesAtStartup = true;
+		settings.save();
+	}
 	settings.data.duikVersion = version;
 
 	//load settings
@@ -58,7 +66,9 @@ function loadSettings ()
 	if (typeof settings.data.checkUpdatesAtStartup === 'undefined') settings.data.checkUpdatesAtStartup = true;
 	if (typeof settings.data.newsAtStartup === 'undefined') settings.data.newsAtStartup = true;
 	if (typeof settings.data.currentPanel === 'undefined') settings.data.currentPanel = 0;
+	if (typeof settings.data.updateCheckDate === 'undefined') settings.data.updateCheckDate = new Date(2018,6,9).getTime(); //this is the public release date of Duik Bassel July, 9th 2018
 	DuAEF.debug = settings.data.debug;
+	settings.save();
 
 	//rigging
 	if (typeof settings.data.currentRiggingPanel === 'undefined') settings.data.currentRiggingPanel = 0;
@@ -95,6 +105,14 @@ function loadSettings ()
 	if (typeof settings.data.boneSize === 'undefined') settings.data.boneSize = 100;
 	if (typeof settings.data.boneColor === 'undefined') settings.data.boneColor = "EC1818";
 
+	//news
+	if (typeof settings.data.news === 'undefined')
+	{
+		settings.data.news = {};
+		settings.data.news.items = [];
+		settings.data.news.lastCheck = new Date(2018,6,9).getTime();
+	}
+
 	//create Debug log
 	var settingsPath = settings.file.path;
 	debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
@@ -107,6 +125,10 @@ function loadSettings ()
 
 	#include "translation/Duik Bassel_fr.json.jsxinc"
 	DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
+	#include "translation/Duik Bassel_es.json.jsxinc"
+	DuAEF.DuBinary.toFile(Duik_Bassel_es,settingsPath + 'Duik Bassel_es.json');
+	#include "translation/Duik Bassel_zh.json.jsxinc"
+	DuAEF.DuBinary.toFile(Duik_Bassel_zh,settingsPath + 'Duik Bassel_zh.json');
 
 	DuAEF.Dutranslator.Settings.folder = settingsPath;
 	DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
@@ -156,6 +178,16 @@ function checkUpdates()
 		return;
 	}
 
+	//check only if it has not been checked today
+	var lastCheck = settings.data.updateCheckDate;
+	var now = new Date().getTime();
+	//if we've checked in the last 24 hours
+	if(now - lastCheck < 24*60*60*1000)
+	{
+		createUI();
+		return;
+	}
+
 	var channel = shared.checkForUpdate(false);
 	if (!channel)
 	{
@@ -168,6 +200,10 @@ function checkUpdates()
 		createUI();
 		return;
 	}
+
+	//set the checked date
+	settings.data.updateCheckDate = new Date().getTime();
+	settings.save();
 
 	var item = channel.items[0];
 	var newVersion = item.title;
