@@ -1,8 +1,0 @@
-[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide) > [Rigging](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Rigging) > [Controllers](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Controllers) > Extract Controllers
-
-In most cases, it is easier to have rigs (for characters or other items) in their own precompositions, but this is not the most handy way to animate, especially when you have several characters in the same shot or if you need to see the background.
-
-To avoid assembling all the rigs and the background in the same composition, you can keep the rigs in a precomposition and "*Extract*" the controllers.
-This way, all the controllers are available in the same main composition, with the background if you wish, but the rigs stay precomposed. This is especially useful when there are a lot of layers for the rigs, and if you want to render proxies for character animations in order to improve performance when compositing the shot.
-
-- Just select a precomposition layer containing a rig, and click the "***Extract Controllers***" button to copy the controllers to the current composition and be able to animate outside of the rigged precomposition.
