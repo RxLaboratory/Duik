@@ -1,0 +1,16 @@
+[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide) > [I/O](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/i-o) > Import Animation
+
+You can re-import After Effects animations previously [exported](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Export-Animation) with Duik.
+
+When importing animation, Duik will try to load the animations onto the layers with the same name and index which are selected in the active composition (or in all layers if none are selected).  
+If after this there are still some animations which were not imported (i.e. if Duik do not find any correspondance for their name & index in the composition), Duik will ask you on which layer you want to set them. Set to "None" to ignore some of them, or click the "Cancel" button to ignore them all.
+
+### Import animation options
+
+- All properties/Only keyframes: If "All properties" is selected, the value of properties without animation will be updated too, if the imported animation has a value for them. Setting this option to "Only keyframes" allows to ignore all imported properties without animation (i.e. simple values without keyframes).
+
+- You can filter the type of property you want to import: Position, Rotation, Scale, Opacity, Shapes/Masks paths, Effects properties, or all properties (no filter).
+
+- Offset/Absolute: you can choose to either load the values are they are in the imported animation ("Absolute" setting) or to offset the current values ("Offset").
+
+- Replace existing keyframes: check this box to remove all previous animations from the properties which are imported.
