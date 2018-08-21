@@ -1,5 +1,10 @@
 # Controller Tools
 
+## Select Controllers
+
+Click the *Select controllers* button to select all the Controllers in the composition.
+
+
 ## Show / Hide Controllers
 
 Shows or hides all (or selected) *Controllers* found in the composition.
