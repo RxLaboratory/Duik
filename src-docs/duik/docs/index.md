@@ -38,7 +38,7 @@ Duik is free and lives only thanks to the contributions. There is always some [d
 
 # License
 
-Duik is released under the GNU General Public License v3. Learn more about this license here.
+Duik is released under the GNU General Public License v3. [Learn more about this license here](../../License).
 
 ## Credits
 
