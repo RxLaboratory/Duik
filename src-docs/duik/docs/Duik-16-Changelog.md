@@ -1,58 +1,64 @@
-### This is the list of what has changed since the first Alpha version of Duik Bassel (16)
+# Changelog
 
-If you want to know what's new since Duik 15 and older versions, you can read the list of [new features here](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-16-New-features), and [improvements here](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-16-Improvements).
+This is the list of what has changed since the first Alpha version of Duik Bassel (16)
 
 ## 16.1.0 (in development)
 
-### New
+#### New
 
 - A tool to ***Align Layers*** in the rigging tools panel.
 
-### Improvements
+#### Improvements
 
 - The *Connector* can now be used in a single click (creates a controller layer automatically).
 
 ## 16.0.5 (in development)
 
-### New
+#### New
 
 - Chinese translation, thanks to eZioPan.
 
-### Improvements
+#### Improvements
 
 - The "Effector" layer is now created as a guide layer.
+
+#### Fixes
+
+- *2D Camera* no longer crashes if there's no active composition.
+- *Extract controllers* no longer fails when launched from the additionnal panel of the tool.
+
 ## 16.0.4
 
-### Bugfixes
+#### Fixes
 
 - Duik now really imports correctly Wonderunit Storyboarder files made with the latest version.
 
 ## 16.0.3
 
-### Bugfixes
+#### Fixes
 
 - Duik now imports correctly Wonderunit Storyboarder files made with the latest version.
 
 ## 16.0.2
 
-### Improvements
+#### Improvements
 
 - Duik now checks for updates and reads the news only once a day.
 
-### Bugfixes
+#### Fixes
 
 - The *Framing guides* are now created as guide layers.
 - There is no longer any error when the serveur for news and updates is unavailable.
 
 ## 16.0.1
 
-### Bugfixes
+#### Fixes
 
 - Fixed the *Connector* used with a master property which has one dimension only.
 
-## 16.0.0 (Bassel public release)
+## 16.0.0
 
-### Improvements
+#### Improvements
 
 - The *Select Keyframes* now works like the other tools, in a single click with an additionnal panel for the settings
 - *Parent Accross Comps* now locks and hides the locators
@@ -65,7 +71,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - Completed French translation
 - Completed Documentation (but without screenshots, and still needs more details)
 
-### Bugfixes
+#### Fixes
 
 - Fixed performance issue with the Copy/paste anim (when reversed keyframes is checked).
 - Fixed *Select Keyframes* tool with properties with separated dimensions.
@@ -83,20 +89,19 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-RC2
 
-### Improvements
+#### Improvements
 
 - Huge performance improvement at startup, with help from [Lars Jandel](http://www.larsjandel.de/) (again).
 - The *Auto-rig* is smarter: it can rig a mix between predefined limbs and custom structures
 - UI tweaks
 
-### Bugfixes
+#### Fixes
 
 - Fixed Bezier IK and Spine Auto-rig strange behavior
 
-## 16.0.0-RC1 (Bassel Release Candidate)
-**_June, 24th 2018_**
+## 16.0.0-RC1
 
-### Improvements
+#### Improvements
 
 - *Extract Controllers* now able to extract all controllers, including the ones which are parented to any other layer, thanks to the new *Parent Accross Comps* tool.
 - You now have the option to use null layers for controllers instead of shape layers (*Standard* and *Expert* modes only)
@@ -108,7 +113,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - The *Calculator* has been removed.
 - Lots of UI tweaks and improvements
 
-### Bugfixes
+#### Fixes
 
 - *Animation Panel*: the ease slider now automatically change linear keyframes to bezier with velocity set to 0.
 - Clicking the *Autorig & IK* button no longer crashes Duik when there are no active composition.
@@ -117,14 +122,14 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - Fixed file extensions with exports in Mac OS
 - Exporting to Audition with transcoding now works in Mac OS
 
-## 16.0.0-Beta-1 (Bassel Annecy PreRelease)
+## 16.0.0-Beta-1
 
-### New
+#### New
 
 - ***Duplicate Structures*** easily with a single button.
 - ***Export and Import Animations*** re-implemented from Duik 15.
 
-### Improvements
+#### Improvements
 
 - *Wonder Unit Storyboarder* now handles PSD boards.
 - *Looper* now has a parameter to set the number of keyframes to loop.
@@ -139,7 +144,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - *Copy/Paste Animation*: option to replace existing animation or just add the new keyframes
 - *Copy/Paste Animation*: option to reverse keyframes
 
-### Bugfixes
+#### Fixes
 
 - Fixed the keyboard shortcuts for the *Bones* button in the options panel.
 - *Bones*: tangents width for the bones created on shapes (CC2018) is now adjusted with the size parameter of the bone.
@@ -150,7 +155,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-10
 
-### New
+#### New
 
 - ***Contextual Help***: Shift+Click on any tool to get some help.
 - ***Animation blender*** is a new tool to animate using markers to trigger animations. Setup a composition with some animations and the *Animation Blender*, and then you just have to add some markers on the controller to trigger the animations, with an optionnal nice blending between each animation and the ability to loop them.
@@ -160,12 +165,12 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - Re-implemented the translation framework, and added French translation. It is now possible to add new translations to Duik. More details about this will be available on the [wiki](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik) soon.
 - Re-implemented ***Export to Audition*** from Duik 15. Export to Audition now transfers audio levels keyframes too!
 
-### Improvements
+#### Improvements
 
 - *Wiggle*: you can now control the complexity of the wiggle (octaves and mutliplier) and manually set a *Random Seed* to keep the same wiggle accross layers.
 - UX/UI tweaks and improvements, stability improved.
 
-### Bugfixes
+#### Fixes
 
 - *Effector* set to infinite line is no longer reversed.
 - Changing colors of controllers with Duik no longer freezes Duik.
@@ -174,7 +179,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-9
 
-### New
+#### New
 
 - ***Walk Cycle***: the first procedural animation is available.
 - The keyframe types button in the ***Animation*** panel can now be used to create keyframes on all animated properties.
@@ -184,7 +189,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - The ***Effector*** now has two modes: *Circle* or *Infinite line*.
 - You can now import your traditionnal animations from ***[Krita](http://krita.org)***, just export them as CSV!
 
-### Improvements
+#### Improvements
 
 - Huge performance improvement. A lot of work have been made to make Duik run faster (especially the Structure creation and Autorig).
 - *Structures*, *Bones*, and *Controllers* are now created with their quality set to "Draft" to improve performance in After Effects.
@@ -201,7 +206,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - The *Connector* now automatically populates the "min" and "max" values based on the actual animation of the master property.
 - A lot UI adjustments and improvements
 
-### Bugfixes
+#### Fixes
 
 - *FK Overlap* now working correctly with a parent.
 - *Bezier IK* curve controller now created at a correct size, depending on the settings of the controllers.
@@ -211,12 +216,12 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-8
 
-### New
+#### New
 
 - *Rookie Mode*: An easy-to-use interface for beginners. Note: Duik will automatically switch to this mode on first start, go to the settings to set it again to standard or expert mode.
 - Animation: *IK/FK* Snap and switch.
 
-### Improvements
+#### Improvements
 
 - *IK* (2 and 3 layers): rotation values are improved to prevent a "jump" in some cases. The rotation value on the upper part of the limb will now have a 360° jump in the opposite direction than its orientation when the IK is created.
 - *IK* (2 and 3 layers): the "reverse" option in the effec of the controller have been moved unearthed to be more accessible.
@@ -226,27 +231,27 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - UI Tweaks. Lots of invisible tweaks.
 - Some performance improvements (especially with some expressions in the Structures).
 
-### Bugfixes
+#### Fixes
 
 - *List*: no more error when applying on a spatial property (but spatial tangents will be lost)
 - *FK Overlap* now works better even when the root has a parent.
 
 ## 16.0.0-Alpha-7
 
-### New
+#### New
 
 - *FK Overlap* tool, very useful for tails and ropes (or even arms)!
 
-# 16.0.0-Alpha-6
+## 16.0.0-Alpha-6
 
-### New
+#### New
 
 - Re-implemented tools from Duik15: *Camera Rig*, *Scale Z-Link*, *Import TVPaint Camera*
 - The *Auto-rig* now rigs tails.
 - The *Auto-rig* now rigs digitigrades (cats and dogs...).
 - The *Auto-rig* now rigs ungulates (cattle, sheeps...).
 
-### Improvements
+#### Improvements
 
 - *Controllers* scale locked on creation
 - *Controllers* new shapes available
@@ -255,7 +260,7 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 - *Expert Mode* UI improvements
 - *Structures* rotation and scale are now reset to 0 and 100% before applying IK/autorig
 
-### Bugfixes
+#### Fixes
 
 - *Bezier IK* not selecting the controller at the end of the creation.
 - *Bezier IK* handles now working even when guides are hidden
@@ -263,20 +268,20 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-5
 
-### New
+#### New
 
 - [WonderUnit Storyboarder](https://wonderunit.com/storyboarder/) file import
 - Implemented 2D Camera (renamed the 2D Multiplane from Duik 15)
 - 2D Camera: Ability to add a layer (just duplicate any existing layer)
 - Implemented the Autorig (legs, arms, spine but not tails or custom structures/layers yet)
 
-### Improvements
+#### Improvements
 
 - User Interface has been polished | The *Expert mode* might still have some issues which will be fixed later
 - Layers created by Duik are now tagged with a marker. The marker can be renamed by the user, but cannot be removed: some data is stored internally to help Duik identify the layers and compute stuff.
 
 
-### Bugfixes
+#### Fixes
 
 - *Bezier IK* the "curve" controller is now a position controller.
 - Removed the *Attachment Constraint* which did not work as expected. Use the other constraints instead.
@@ -287,19 +292,19 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-3
 
-### New
+#### New
 
 - Animation *Kleaner* to clean the keyframes. Includes the *Smart interpolations* and *Spatial Interpolations* tools from previous Alpha versions.
 - *Connector* able to connect to "fake" layer sequences using layer opacities (very powerful tool)
 
-### Improvements
+#### Improvements
 
 - UX: (clicking on the tab buttons sets the default panel - closes the current tool - for the tab)
 - *Connector* UX/UI small improvements
 - UI: Improved animation panel (separated keyframe tools and animation tools)
 - Better naming conventions for controllers, bones, structures...
 
-### Bugfixes
+#### Fixes
 
 - *Effector* now works when re-using an existing controller layer.
 - *Randomize* for properties and keyframes
@@ -310,12 +315,12 @@ If you want to know what's new since Duik 15 and older versions, you can read th
 
 ## 16.0.0-Alpha-2
 
-### New
+#### New
 
 - *Keyframe selection* tool (in the animation tab) to easily batch select keyframes by type or by layers.
 - Re-implemented tools from Duik 15: *Rename*, *Search and replace*, *Measure*.
 
-### Improvements
+#### Improvements
 
 - Simplification of the usage of the *slider*, *2D slider* and *angle* controllers: the effect on the layer has been simplified and some explanations added; a keyframe is automatically added on the right property.
 - Several UI adjustments
