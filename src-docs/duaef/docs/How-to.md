@@ -22,4 +22,4 @@ In this case, using the simple way, you can include _DuAEF_no_bin.jsxinc_ instea
 
 ## Comprehensive reference
 
-The framework reference is available in the [docs](docs) folder, **[click here to view it](https://rainbox-dev.github.io/DuAEF_Duik/)**.
+The framework reference is available **[here](../Framework-Reference)**.
