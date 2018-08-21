@@ -9,7 +9,7 @@
 - ***Duben***<!--(https://rainbox-dev.github.io/DuAEF_Duik/Documentation/Duben)--> - A tool to benchmark the performance of an installation of After Effects against other versions and hardware.
 - ***Dugr***<!--(https://rainbox-dev.github.io/DuAEF_Duik/Documentation/Dugr)--> - A tool to manage and group layers in After Effects, which works hand in hand with Duik or as a stand-alone tool.
 - ***Duframe***<!--(https://rainbox-dev.github.io/DuAEF_Duik/Documentation/Duframe)--> - Framing guides to help your compositions.
-- ***[Duik](https://rainbox-dev.github.io/DuAEF_Duik/Framework-Reference/Documentation/Duik/index.html)*** - A comprehensive rigging and animation toolset.
+- [***Duik***](Guides/Duik/) - A comprehensive rigging and animation toolset.
 - ***Krita*** - A simple script to import [Krita](https://krita.org) animations into After Effects.
 - ***WUStoryboarder*** - A simple script to import [Storyboarder](https://wonderunit.com/storyboarder/) files into After Effects and create a composition.
 
