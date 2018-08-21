@@ -69,6 +69,6 @@ Then, you can [submit a pull request](https://github.com/Rainbox-dev/DuAEF_Duik/
 
 Here are some links that can help you:
 
-- Web documentation of DuAEF: [rainbox-dev.github.io/DuAEF_Duik/](https://rainbox-dev.github.io/DuAEF_Duik/)  
+- Web documentation of DuAEF: [rainbox-dev.github.io/DuAEF_Duik/](../Framework-Reference)  
 - JavaScript Tools Guide for Adobe CC: [estk.aenhancers.com](http://estk.aenhancers.com)  
 - After Effects Scripting Guide: [docs.aenhancers.com](http://docs.aenhancers.com/)
