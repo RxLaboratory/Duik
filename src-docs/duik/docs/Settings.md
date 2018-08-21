@@ -1,4 +1,4 @@
-[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide) > Settings
+# Settings
 
 There are a few settings you can change in Duik Bassel to better set it up for your taste.
 
@@ -9,9 +9,10 @@ There are a few settings you can change in Duik Bassel to better set it up for y
 - You can change the language of Duik to one of the available ones, or you can [contribute with your own translation](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Translation).
 
 - There are three different modes for the user interface, depending on your level:
-  - ***Rookie*** is the simplest one, recommended if this is the first time you use Duik Bassel. Only the most used and simplest tools are available, and the user interface is thought to be as easy to use as possible.
-  - ***Standard*** has all the tools available, in a nice and easy-to-use user interface.
-  - ***Expert*** is the smallest mode, and may be a bit more complex to use as there are less texts to explain what do the buttons do.
+
+    - ***Rookie*** is the simplest one, recommended if this is the first time you use Duik Bassel. Only the most used and simplest tools are available, and the user interface is thought to be as easy to use as possible.
+    - ***Standard*** has all the tools available, in a nice and easy-to-use user interface.
+    - ***Expert*** is the smallest mode, and may be a bit more complex to use as there are less texts to explain what do the buttons do.
 
 Rookie:  
 ![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/constraints_rookie.PNG)
