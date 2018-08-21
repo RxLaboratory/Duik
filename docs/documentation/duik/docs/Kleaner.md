@@ -1,0 +1,29 @@
+[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide) > [Animation](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Animation) > [Keyframe Tools](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Keyframe-Tools) > Kleaner
+
+The *Kleaner* is a tool to automatically clean the selected animations. It is able to remove unneeded keyframes, clean the interpolations, etc.
+
+## Description
+
+It works both on spatial interpolations and keyframe eases, in three default steps:
+
+1. Fix spatial interpolation: the *Kleaner* will detect spatial tangents which should not be there, for example when two successive keyframes are exactly at the same place but with tangents between them.
+2. Smooth temporal interpolations. The *Kleaner* will adjust the animation curves to make them as smooth as possible, automatically detecting the best velocities and eases. It works a bit like the *Auto-Bezier* feature in After Effects but... better.
+3. The *Kleaner* will remove all unnecessary keyframes, keeping the exact same animation but with less keys.
+
+## Use
+
+1. Select the keyframes of the animation you want to clean.
+2. Click on the *Kleaner* button.
+
+## Additionnal Panel
+
+The additionnal panel is divided in three sections corresponding to the three steps of the "Kleaner " process.
+
+- Spatial Interpolations:  
+The four leftmost buttons can be used to quickly change the tangents of several spatial keyframes at once.  
+Check or uncheck the checkbox to activate or deactivate this step when you run the *Kleaner*
+- Temporal interpolation smoothing:  
+Use the two leftmost buttons to tell the *Kleaner* if the first and last keyframes of the animation have to be linear or with ease.  
+Check or uncheck the checkbox to activate or deactivate this step when you run the *Kleaner*
+- Remove unnecessary keyframes:  
+Check or uncheck the checkbox to activate or deactivate this step when you run the *Kleaner*
