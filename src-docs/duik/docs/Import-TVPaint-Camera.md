@@ -1,4 +1,4 @@
-[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik-User-Guide) > [Camera](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Camera) > Import TVPaint Camera
+# Import TVPaint Camera
 
 Duik can re-create any TVPaint camera animation in After Effects.
 
@@ -12,13 +12,15 @@ Once the camera has been imported, you can copy/paste its animation on a camera 
 ## Additionnal panel
 
 - There are three ways to re-create the camera in After Effects:
-  - Using a Null object: creates a null object to get the animation of the camera.
-  - Precomposing the layers: will precompose all layers of the composition, and the camera movement will be applied to this precomposition.
-  - Use selected layer: applies the animation to the selected layer in the composition.
+
+    - Using a Null object: creates a null object to get the animation of the camera.
+    - Precomposing the layers: will precompose all layers of the composition, and the camera movement will be applied to this precomposition.
+    - Use selected layer: applies the animation to the selected layer in the composition.
 
 - Auto-parent layers will automatically link all the composition’s layers to the camera (keeping all existing links, parenting only layers which do not already have a parent layer).
 
 - You can animate either the position or the anchor point of the camera.  
 Using the anchor point, the movement will be closer to what it was in TVPaint, which moves the frame instead of moving the layers, as using the position will be far easier to adjust and tweak.
 
-> Interpolation methods from TVPaint to nd After Effects differs completely, so some minor differences in the interpolations between After Effects and TVPaint might appear.
+!!! note
+    Interpolation methods in TVPaint and After Effects differ completely. Some minor differences in the interpolations between After Effects and TVPaint might appear.
