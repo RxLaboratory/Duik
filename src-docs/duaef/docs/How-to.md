@@ -22,4 +22,4 @@ In this case, using the simple way, you can include _DuAEF_no_bin.jsxinc_ instea
 
 ## Comprehensive reference
 
-The framework reference is available **[here](framework-reference.md)**.
+The framework reference is available **[here](http://duaef-reference.rainboxprod.coop)**.

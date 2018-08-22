@@ -49,9 +49,9 @@ Any help is appreciated, even the smallest one.
 
 ## Code Documentation
 
-As the [coding guidelines](code-guidelines.md) state so, we try to document the code at the same time it is written. But there may be some older code which is not documented, or mistakes. If you find any piece of code which is not documented, or mistakes in [the framework reference](framework-reference.md), you can help us improve the documentation.
+As the [coding guidelines](code-guidelines.md) state so, we try to document the code at the same time it is written. But there may be some older code which is not documented, or mistakes. If you find any piece of code which is not documented, or mistakes in [the framework reference](http://duaef-reference.rainboxprod.coop), you can help us improve the documentation.
 
-We use [JSDoc](http://usejsdoc.org/) to write all the [code documentation](framework-reference.md). The html docs are generated from the JSDoc found in DuAEF source code and all its inclusions.
+We use [JSDoc](http://usejsdoc.org/) to write all the [code documentation](http://duaef-reference.rainboxprod.coop). The html docs are generated from the JSDoc found in DuAEF source code and all its inclusions.
 
 - All Namespaces, Classes, and Functions must be clearly documented as soon as they are added. We do not have a documentation writing step, and ask all contributors to document what they add to the framework.
 
