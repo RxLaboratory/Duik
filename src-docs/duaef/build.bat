@@ -1,2 +1,2 @@
-mkdocs build --dirty
+mkdocs build --dirty -d ../../docs/
 pause
