@@ -1,5 +1,17 @@
 # Documentation contribution
 
+## Editing this documentation and user guides
+
+It is very easy to edit this very documentation and all the user guides of the tools (Dugr, Duik, etc.).
+
+1- You're going to need a **(free) account on _GitHub_**. This is the platform which keeps our source code and documentation. [Sign up here](https://github.com/join)!
+
+2- **Sign in** to your (newly created) account on _GitHub_, then get back to this documentation to browse it as you wish.
+
+3- When you're on a page you want to modify, **click on the _Edit on GitHub_** link at the top of the page.
+
+4- If this is the first time you edit this documentation, **you will be asked to _Fork this repository_**. Do it! Click on the big green button!
+
 ## Writing the help for Duik
 
 **[Duik](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Duik) now includes a contextual help, which can be shown by *Shift+Clicking* on any tool** (if the tool has been documented).  
