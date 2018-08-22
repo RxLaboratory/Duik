@@ -6,7 +6,7 @@ The "Effector" is a way to control properties depending on a spatial effector.
 
 ## Setup
 
-Like the [Connector](../Connector), the effector needs keyframes on the controlled property to work.
+Like the [Connector](connector.md), the effector needs keyframes on the controlled property to work.
 
 1. Animate the slave property
 2. Select the property and click on the "Effector" button.

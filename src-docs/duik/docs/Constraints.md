@@ -12,14 +12,14 @@ The constraints panel.
 
 ## Tools
 
-- ***[Autorig & IK](../Autorig)*** are (automated) tools mostly used to rig humans and animals.
-- The ***[Connector](../Connector)*** is a way to control almost any property in After Effects with any other property, a bit like parenting between layers.
-- The ***[Animation Blender](../Animation-Blender-Setup)*** is a tool to animate using markers to trigger animations.
-- The [***Bones***](../Bones) are layers used to control spatial properties of effects (including the puppet tool pins, but not only them), or Bézier shapes since After Effects CC2018, allowing to use parenting, expressions and the other rigging tools with them, from Duik or any other script.
-- The [***Parent Link***](../Parent-Link) tool replaces the native parenting of After Effects and allows to animate those links.
-- ***[Parent Accross Comps](../Parent-Accross-Compositions)*** is a way to simulate parenting a layer to another one in a parent composition or in a precomposition.
-- The [***Path Constraint***](../Path-Constraint) constraints the position of a layer to any Bézier path (CC2018 and up only)
-- The [***Position Constraint***](../Position-Constraint) links the position of a layer to the positions of other layers.
-- The [***Orientation Constraint***](../Orientation-Constraint) links the rotation of a layer to the orientations of other layers.
-- The [***List***](../Duik-List) tool is a nice way to combine animations or expressions on the same property.
-- The [***Zero***](../Zero) is a layer used to zero out transformations of another layer.
+- ***[Autorig & IK](autorig.md)*** are (automated) tools mostly used to rig humans and animals.
+- The ***[Connector](connector.md)*** is a way to control almost any property in After Effects with any other property, a bit like parenting between layers.
+- The ***[Animation Blender](animation-blender-setup.md)*** is a tool to animate using markers to trigger animations.
+- The [***Bones***](bones.md) are layers used to control spatial properties of effects (including the puppet tool pins, but not only them), or Bézier shapes since After Effects CC2018, allowing to use parenting, expressions and the other rigging tools with them, from Duik or any other script.
+- The [***Parent Link***](parent-link.md) tool replaces the native parenting of After Effects and allows to animate those links.
+- ***[Parent Accross Comps](parent-accross-compositions.md)*** is a way to simulate parenting a layer to another one in a parent composition or in a precomposition.
+- The [***Path Constraint***](path-constraint.md) constraints the position of a layer to any Bézier path (CC2018 and up only)
+- The [***Position Constraint***](position-constraint.md) links the position of a layer to the positions of other layers.
+- The [***Orientation Constraint***](orientation-constraint.md) links the rotation of a layer to the orientations of other layers.
+- The [***List***](duik-list.md) tool is a nice way to combine animations or expressions on the same property.
+- The [***Zero***](zero.md) is a layer used to zero out transformations of another layer.

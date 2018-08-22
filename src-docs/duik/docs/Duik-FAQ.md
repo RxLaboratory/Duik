@@ -48,13 +48,13 @@ There are three workarounds:
 
 Duik Bassel has three user interface modes, and the default one, the _Rookie_ mode does not include the most advanced tools; it is designed to be easy-to-use but powerful enough to rig and animate any kind of characters. If you're a beginner with Duik, you should not need the most advanced tools.
 
-To change the mode of the user interface and switch to _Normal_ or _Expert_ mode, go to the [settings](../Settings) panel.
+To change the mode of the user interface and switch to _Normal_ or _Expert_ mode, go to the [settings](settings.md) panel.
 
 ## Changes between Duik Bassel, Duik 15 and older versions
 
 ### Duik 15 came with an installer, Duik Bassel is just a zip, why?
 
-Duik Bassel is so simple to install, it does not need an installer any more. Read the [installation instructions](../Install-Duik).
+Duik Bassel is so simple to install, it does not need an installer any more. Read the [installation instructions](install-duik.md).
 
 ### The Duik 15 installer included *Dugr* too, where can I find it now?
 
@@ -120,4 +120,4 @@ The procedural walk cycle animates the arms with Forward Kinematics (FK) and thu
 If you want to animate/adjust the arms, you can either adjust the values in the *Individual FK* controls in the effects of the controllers, or you can re-enable the IK, but this will deactivate the procedural animation on the arms.
 
 !!! note
-    You can animate the switch between IK and FK, and Duik provides a tool to ease this *[IK/FK switch](../IK-FK-Switch)* process.
+    You can animate the switch between IK and FK, and Duik provides a tool to ease this *[IK/FK switch](ik-fk-switch.md)* process.

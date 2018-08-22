@@ -29,10 +29,10 @@ All changes made in this panel will affect all selected Structures and the creat
 - You can change the color of the Structures: if you click on the colored label, a color picker will be shown, but you can also set your on hexadecimal color code in the text field. A random button will set a random color.  
 
 !!! hint
-    The color parameter is ignored when you create [predefined limbs](../Create-Structures) (arm, leg, etc.), but you can always change the color afterwards.
+    The color parameter is ignored when you create [predefined limbs](create-structures.md) (arm, leg, etc.), but you can always change the color afterwards.
 
 - You can pick the selected Structure appearance with the *Get* button, and set the parameters to the selection with the "Set" button.
 - The "Bake Appearance" button will remove all expressions used by the Structure to set its appearance. This will improve the performance of the rig, but you will not be able to change the appearance afterwards.  
 
 !!! note
-    By default, the [Auto-Rig](../Autorig) automatically bakes the appearance of the Structures.
+    By default, the [Auto-Rig](autorig.md) automatically bakes the appearance of the Structures.

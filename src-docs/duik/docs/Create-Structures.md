@@ -4,7 +4,7 @@
 
 ## ![Icon](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/docs/media/wiki/icons/w32_human_r.png) Hominoid
 
-This tool will create *[Structures](../Structures)* for a complete hominoid with a spine, two legs and two arms, using the settings of the individual limbs set in the *[Structures](../Structures)* panel.
+This tool will create *[Structures](structures.md)* for a complete hominoid with a spine, two legs and two arms, using the settings of the individual limbs set in the *[Structures](structures.md)* panel.
 
 !!! note
     [Hominoids](https://en.wikipedia.org/wiki/Ape) (Hominoidea) are a branch of tailless anthropoid primates native to Africa and Southeast Asia.

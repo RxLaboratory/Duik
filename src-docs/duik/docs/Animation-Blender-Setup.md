@@ -9,7 +9,7 @@ The animation blender is able to blend the animations together during transition
 ![Animation Blender GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/animation-blender-2.gif)
 
 !!! hint
-    Once the animation blender have been set up, [a simple tool](../Animation-Blender) in the Animation panel (Tools tab) of Duik can be used to easily set the markers to trigger animations.
+    Once the animation blender have been set up, [a simple tool](animation-blender.md) in the Animation panel (Tools tab) of Duik can be used to easily set the markers to trigger animations.
 
 There are two things which need to be set up: the animations (the animated properties), and the Blender controller itself.  
 The first part of the panel allows to quickly set the animations, while the second part is used to set the Blender up.
@@ -39,7 +39,7 @@ To use the blender, you just have to add markers with the name of the animation 
 !!! caution
     Their name have to be exactly the same, and it is case sensitive.
 
-[A simple tool](../Animation-Blender) in the Animation panel (Tools tab) of Duik can be used to easily set these markers, but you can also do it directly inside After Effects (see the shorcuts below).
+[A simple tool](animation-blender.md) in the Animation panel (Tools tab) of Duik can be used to easily set these markers, but you can also do it directly inside After Effects (see the shorcuts below).
 
 There are a few options in the effects of the controller, to loop the animation, and to control how they may blend during transitions. You can control if they have to blend, the duration of the transition (in seconds), and how it is interpolated. The blend happens *after* the marker triggering the animation, between the animation of the marker and the previous one.
 

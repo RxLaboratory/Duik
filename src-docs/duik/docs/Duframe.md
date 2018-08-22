@@ -5,7 +5,7 @@
 ![DuFrame GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/frame.gif)
 
 It is [available as a preset (_*.ffx_)](https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/Release/DuFrame) which you can apply to an empty Shape Layer via the menu "Animation/Apply Preset..." in After Effects.  
-It is also available in the camera panel of [Duik Bassel](../). ([Download here](https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/Release/DuFrame)).
+It is also available in the camera panel of [Duik Bassel](index.md). ([Download here](https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/Release/DuFrame)).
 
 ![Default Frame](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/duframe/example1.PNG)
 
