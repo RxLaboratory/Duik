@@ -26,6 +26,9 @@
 
 5. Github will show you what you have modified. If everything is ok, **validate the submission with the _Create pull request_ button**. You can leave another comment if you wish, then validate again with another _Create pull request_ button.
 
+!!! note
+    You won't see your changes on the original page, as the changes have to be reviewed first, which is typically done in a couple of days.
+
 ## Writing the contextual help for Duik
 
 **[Duik](Guides/Duik/) now includes a contextual help, which can be shown by _Shift+Clicking_ on any tool**.  
