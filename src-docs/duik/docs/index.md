@@ -12,9 +12,11 @@ If you run into a specific issue, read the [F.A.Q.](Duik-FAQ) to see if a soluti
 
 ## Tutorials
 
-As Duik Bassel has just been released, we did not have time to make official tutorials yet. But we will! Keep in touch.
+Grab the user guide, keep it at hand, and go watch tutorials to quickly learn Duik!  
+We're making official tutorials, and there are a lot of other tutorials on the internet in a lot of different languages, not only English.  
+We're collecting  the best of them [there](Tutorials).
 
-[In the meantime, just watch this jumpstart by Jake In Motion!](https://www.youtube.com/watch?v=i63vPXJ00r0)
+[Watch the tutorials](Tutorials)!
 
 ## What's new?
 
