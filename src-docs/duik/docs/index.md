@@ -28,17 +28,17 @@ If you're already testing/using Duik 16 and want to know what's been added and c
 
 Don't be afraid to contribute and to make mistakes, you won't break anything nor lead to the end of the world. Any help is appreciated, even the smallest one.
 
-Duik is free and lives only thanks to the contributions. There is always some [documentation](../../Documentation) to write, some stuff to [translate](../../Translation) in your own language, some [bugs](../../Bug-Report-&-Feature-Request) to report, some [code](../../Code-Guidelines) to write...
+Duik is free and lives only thanks to the contributions. There is always some [documentation](../../documentation) to write, some stuff to [translate](../../translation) in your own language, some [bugs](../../Bug-Report-&-Feature-Request) to report, some [code](../../code-guidelines) to write...
 
-- [Contributing Guide](../../Contributing-Guide)
-- [Bug report and feature request](../../Bug-Report-&-Feature-Request)
+- [Contributing Guide](../../contributing-guide)
+- [Bug report and feature request](../../bug-report-&-feature-request)
 
 # License
 
-Duik is released under the GNU General Public License v3. [Learn more about this license here](../../License).
+Duik is released under the GNU General Public License v3. [Learn more about this license here](../../license).
 
 ## Credits
 
-*Duik Bassel*, which is and stays free, could not exist without [your support](../../Donation) and [contributions](../../Contributing-Guide).
+*Duik Bassel*, which is and stays free, could not exist without [your support](../../donation) and [contributions](../../contributing-guide).
 
-[**Many thanks to all people who made this possible**](../../Credits).
+[**Many thanks to all people who made this possible**](../../credits).

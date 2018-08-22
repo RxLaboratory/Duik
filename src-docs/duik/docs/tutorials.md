@@ -44,4 +44,4 @@ We're collecting here the best tutorials we find on the internet about Duik.
 - Free: [**Duik Bassel Tutoriales, por Hero Studio (Rubén Giménez)**](https://www.youtube.com/playlist?list=PLqgjVVKs3VV6QJiwybvMZarWo1cUS-RiV): Presentación de todas las herramientas de Duik.
 
 !!! hint
-    If you want to add other tutorials to this list, [Contact us](../../Contact) or edit this page (see [How to contribute to the documentation](../../Contribute))
+    If you want to add other tutorials to this list, [Contact us](../../../contact) or edit this page (see [How to contribute to the documentation](../../../contribute))
