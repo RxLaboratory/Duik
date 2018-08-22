@@ -13,6 +13,16 @@
 
 Click the *Select structures* button to select all the Structures in the composition.
 
+## Duplicate Structures
+
+Click the *Duplicate structures* button to duplicate them. On the contrary of the *duplicate* function of After Effects, the resulting Structure will be correctly parented, and the layers will be grouped together in the stack.
+
+!!! note
+    When using this tool to duplicate Structures, Duik will adjust some internal stuff to make sure the Autorig can differentiate the duplicated one from the original one.
+
+!!! warning
+    You should always use this button to duplicate Structures, and **not** duplicate with After Effects ([Ctrl+D]), or else the Auto-rig will consider the duplicated structure to be the same as the original one and will do weird stuff with them...
+
 ## Show/Hide Structures
 
 Shows or hides all (or selected) *Structures* found in the composition.
