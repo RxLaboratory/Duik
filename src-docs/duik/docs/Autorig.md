@@ -15,7 +15,8 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 
 ![Rigging GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/smart-ux-2.gif)
 
-**To get started quickly with this process, [just watch this jumpstart by Jake In Motion](https://www.youtube.com/watch?v=i63vPXJ00r0)!**
+*To get started quickly with this process, just watch this [jumpstart](https://www.youtube.com/watch?v=i63vPXJ00r0) by [Jake In Motion](https://www.jakeinmotion.com/):*  
+![YOUTUBE](i63vPXJ00r0)
 
 ## Using the Auto-rig
 
