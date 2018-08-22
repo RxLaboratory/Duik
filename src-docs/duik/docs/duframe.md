@@ -40,7 +40,7 @@ You can temporarily hide a specific grid or guide by disabling the corresponding
 
 ![Grid Effect](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/duframe/gridFX.PNG)
 
-There are a lot of different grids, and if you need another type, just [ask for it](../../../Contributing-Guide) ;)
+There are a lot of different grids, and if you need another type, just [ask for it](../../../contributing-guide) ;)
 
 * **Safe Frames** displays standard "action" and "title" safe frames, which represents resepectively 80% and 90% of the surface of the entire frame.
 * **Digital Frames** shows the standard digital formats (*4/3*, *16/9*, *1.85*, *2.35*) contained in the current frame. This way you can make sure your composition works even if the image is later cropped to another format.
