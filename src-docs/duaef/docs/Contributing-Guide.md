@@ -4,14 +4,14 @@ Don't be afraid to contribute and to make mistakes, you won't break anything nor
 
 **You can help to improve *Duik* and the whole *Duduf After Effects Framework* by:**
 
-- **[documenting](../Documentation)** the code and/or the tools;
-- **[translating](../Translation)** the tools;
+- **[documenting](documentation.md)** the code and/or the tools;
+- **[translating](translation.md)** the tools;
 - **[reporting](../Bug-Report-&-Feature-Request)** issues;
 - **[proposing](../Bug-Report-&-Feature-Request)** new features;
-- **[fixing](../Coding)** issues;
-  - Read the [Code guidelines](../Code-Guidelines)
-- **[implementing](../Coding)** new features.
-  - Read the [Code guidelines](../Code-Guidelines)
+- **[fixing](coding.md)** issues;
+  - Read the [Code guidelines](code-guidelines.md)
+- **[implementing](coding.md)** new features.
+  - Read the [Code guidelines](code-guidelines.md)
 - **[making a donation](https://rainboxprod.coop/en/tools/#don)** to Rainbox, the cooperative which runs the development.
 - **[supporting Duduf](https://patreon.com/duduf)** for his continuous effort to develop, maintain and improve DuAEF and Duik.
 

@@ -48,7 +48,7 @@ The Walk Cycle can be adjusted in the effects of the walk cycle controller which
     If you want to animate or adjust the arms, you can either adjust the values in the Individual FK controls in the effects of the controllers, or you can re-enable the IK, but this will deactivate the procedural animation on the arms.
 
 !!! hint
-    You can animate the switch between IK and FK, and Duik provides a tool to ease this [IK/FK switch](../IK-FK-Switch) process.
+    You can animate the switch between IK and FK, and Duik provides a tool to ease this [IK/FK switch](ik-fk-switch.md) process.
 
 
 ## Effect

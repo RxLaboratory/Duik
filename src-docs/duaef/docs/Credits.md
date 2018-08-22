@@ -1,6 +1,6 @@
 # Credits
 
-The *Duduf After Effects Framework* - especially *Duik Bassel* - which is and stays free, could not exist without [your support](../Donation) and [contributions](../Contributing-Guide). **Many thanks to all people who made this possible**.
+The *Duduf After Effects Framework* - especially *Duik Bassel* - which is and stays free, could not exist without [your support](donation.md) and [contributions](contributing-guide.md). **Many thanks to all people who made this possible**.
 
 Copyright (c) 2008 - 2018 Nicolas Dufresne, Rainbox Productions. All Rights Reserved
 https://rainboxprod.coop

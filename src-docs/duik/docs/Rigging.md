@@ -19,22 +19,22 @@ The process can be summarized in just a few words:
 *To get started quickly with this process, just watch this [jumpstart](https://www.youtube.com/watch?v=i63vPXJ00r0) by [Jake In Motion](https://www.jakeinmotion.com/):*  
 ![YOUTUBE](i63vPXJ00r0)
 
-## [Structures](Structures.md)
+## [Structures](structures.md)
 
-[Structures](Structures.md) are layers you can add in your composition which will drive the animations, like the rig of a real puppet. The process is very simple: create or import your design in After Effects, add Structures and move them to the right spots (the pivots of each limb). Then you can rig those Structures, instead of the design itself like in previous versions of Duik, and finally link the design layers to the corresponding Structure layers.
+[Structures](structures.md) are layers you can add in your composition which will drive the animations, like the rig of a real puppet. The process is very simple: create or import your design in After Effects, add Structures and move them to the right spots (the pivots of each limb). Then you can rig those Structures, instead of the design itself like in previous versions of Duik, and finally link the design layers to the corresponding Structure layers.
 
 This way, the rig you create is independant from the design. This means it’s easier to adjust the design even after the rig has been made, or even to re-use the same rig with other designs. Also, this rigging process is easier to fix or change if ever you need to adjust it even when you’re already in the process of animation.
 
-## [Controllers](Controllers.md)
+## [Controllers](controllers.md)
 
-Using the autorig, and a set of constraints, what you end with are [controllers](../Controllers) to drive the animation. You animate the controllers, they drive the structures through the constraints, and voilà! Your character moves.
+Using the autorig, and a set of constraints, what you end with are [controllers](controllers.md) to drive the animation. You animate the controllers, they drive the structures through the constraints, and voilà! Your character moves.
 
-## [Constraints](Constraints.md)
+## [Constraints](constraints.md)
 
-The interaction between the controllers and the Structures, and between the Structures themselves, happens through some [constraints](Constraints.md). Some of them are the core tools of Duik since the first version, like IK which drive the bending of limbs, and the Bones which are used to control any spatial properties: puppet pins, the emitter of a particle effect, and, with CC2018 and newer versions of After Effects, any bezier value, like shapes or masks.
+The interaction between the controllers and the Structures, and between the Structures themselves, happens through some [constraints](constraints.md). Some of them are the core tools of Duik since the first version, like IK which drive the bending of limbs, and the Bones which are used to control any spatial properties: puppet pins, the emitter of a particle effect, and, with CC2018 and newer versions of After Effects, any bezier value, like shapes or masks.
 
 There is also a whole new set of constraints to automate even more movements and make the animator’s life very easier: it’s now possible to animate parenting with the new Parent Link constraint, or to constrain a layer to a bezier path, to attach a layer to other layers using weights, etc.
 
-## [Automations](Automations.md)
+## [Automations](automations.md)
 
-As soon as your character is rigged, you can begin the animation, being helped by a lot of *Automations*. **[*Automations*](../Automations) are procedural animations** and dynamics to quickly set the most common animations up and then focus on the characterization of your character. You can automate wiggles, springs, wheels, etc. with customizable and advanced controls for example to loop the effects, and access each and every detail quickly and easily.
+As soon as your character is rigged, you can begin the animation, being helped by a lot of *Automations*. **[*Automations*](automations.md) are procedural animations** and dynamics to quickly set the most common animations up and then focus on the characterization of your character. You can automate wiggles, springs, wheels, etc. with customizable and advanced controls for example to loop the effects, and access each and every detail quickly and easily.

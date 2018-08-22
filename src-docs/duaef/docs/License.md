@@ -13,7 +13,7 @@ The first freedom guarantees that **you can use the software as you wish**, for 
 
 You don’t need any authorization or contract. Download, install, have fun!
 
-Just know that **we’re very curious to see what you’ve made with our tools**, so [you can send us the result of your work](https://rainboxprod.coop/en/#contact)! You can help the developement of the free tools too, with a [donation](../Donation).
+Just know that **we’re very curious to see what you’ve made with our tools**, so [you can send us the result of your work](https://rainboxprod.coop/en/#contact)! You can help the developement of the free tools too, with a [donation](donation.md).
 
 ## What it means for developpers
 
@@ -27,4 +27,4 @@ If you include any part of the source code of our tools – even a short part �
 
 More info is available at the [Free Software Foundation](http://www.fsf.org).
 
-All the contributors of Duik, friends, and all the people who helped the creation of Duik are listed [here](../Credits). **You may thank all of them for their commitment to greatly improving animation for everyone and for free**.
+All the contributors of Duik, friends, and all the people who helped the creation of Duik are listed [here](credits.md). **You may thank all of them for their commitment to greatly improving animation for everyone and for free**.

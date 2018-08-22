@@ -23,7 +23,7 @@ The complete source code of DuAEF is freely available on [github](https://github
 
 *DuAEF* includes some [libraries for developpers](https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/src) with classes, methods and tools to ease the scripting process in After Effects, as long as adding features (like pngquant, ffmpeg, or json, and new ScriptUI Controls) not available in After Effects/ExtendScript.
 
-It is very easy to use and [documented](../How-to).
+It is very easy to use and [documented](how-to.md).
 
 ## Contributing to *DuAEF*
 
@@ -31,4 +31,4 @@ Any help to develop *DuAEF*, *Duik* and all the tools is very appreciated!
 
 We need **feedback**, **feature requests**, **bug reports**, **translations**, **code contribution**... Anything, really! Whether you're a developer or not, anyone can contribute!
 
-Read the [contributing guide](../Contributing-Guide) to get started.
+Read the [contributing guide](contributing-guide.md) to get started.

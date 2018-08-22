@@ -4,7 +4,7 @@ The Animation Blender is a tool to animate using markers to trigger animations.
 
 !!! note
     To use it, the animated properties or composition which have to be triggerd by markers have to be set up beforehand.
-    [The tools to prepare the Animation Blender](../Animation-Blender-Setup) are located in the Rigging panel, in the Constraints tab.
+    [The tools to prepare the Animation Blender](animation-blender-setup.md) are located in the Rigging panel, in the Constraints tab.
 
 Once it is set up, you just have to add markers named after the animation you want to trigger on the blender controller layer.  
 You can do it manually directly inside After Effects (see the shortcuts below), or with the Animation Blender tool which will list all available animations for you:  

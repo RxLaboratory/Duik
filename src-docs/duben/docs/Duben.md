@@ -12,11 +12,11 @@ Duben has been tested with all versions of After Effects since CS6. Under CS6, i
 
 It measures:
 
-- [x] The performance of the [expressions](../Duben-Expressions) evaluation
-- [x] The the performance when drawing [shapes](../Duben-Shapes)
-- [x] The performance when computing [effects](../Duben-Effects)
-- [x] The performance of the [script](../Duben-Script) evaluation and running  
-- [x] The performance of the [user interface](../Duben-ui) of After Effects
+- [x] The performance of the [expressions](duben-expressions.md) evaluation
+- [x] The the performance when drawing [shapes](duben-shapes.md)
+- [x] The performance when computing [effects](duben-effects.md)
+- [x] The performance of the [script](duben-script.md) evaluation and running  
+- [x] The performance of the [user interface](duben-ui.md) of After Effects
 
 Not implemented yet, but could be useful:
 
@@ -78,10 +78,10 @@ Best UI Score | CC | CC2014
 
 ## Documentation
 
-1. [How Duben works, how to use it](../Duben-How-to).
-2. [Expressions](../Duben-Expressions).
-3. [Shapes](../Duben-Shapes).
-4. [Effects](../Duben-Effects).
-5. [Script](../Duben-Script).
-6. [User Interface](../Duben-UI).
-7. [Total](../Duben-Total).
+1. [How Duben works, how to use it](duben-how-to.md).
+2. [Expressions](duben-expressions.md).
+3. [Shapes](duben-shapes.md).
+4. [Effects](duben-effects.md).
+5. [Script](duben-script.md).
+6. [User Interface](duben-ui.md).
+7. [Total](duben-total.md).

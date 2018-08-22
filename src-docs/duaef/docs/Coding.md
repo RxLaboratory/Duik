@@ -41,7 +41,7 @@ Generally, [all tickets labeled **Good First Issue**](https://github.com/Rainbox
 
 ## Coding
 
-Be sure to read the [Code guidelines](../Code-Guidelines).
+Be sure to read the [Code guidelines](code-guidelines.md).
 
 Once you have chosen what to do, you can start to work ! You should work on a **new branch** every-time you implement something else. Here is an example:
 
@@ -69,6 +69,6 @@ Then, you can [submit a pull request](https://github.com/Rainbox-dev/DuAEF_Duik/
 
 Here are some links that can help you:
 
-- Web documentation of DuAEF: [rainbox-dev.github.io/DuAEF_Duik/](../Framework-Reference)  
+- Web documentation of DuAEF: [rainbox-dev.github.io/DuAEF_Duik/](framework-reference.md)  
 - JavaScript Tools Guide for Adobe CC: [estk.aenhancers.com](http://estk.aenhancers.com)  
 - After Effects Scripting Guide: [docs.aenhancers.com](http://docs.aenhancers.com/)
