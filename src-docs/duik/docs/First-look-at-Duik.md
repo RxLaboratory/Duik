@@ -4,7 +4,7 @@
 
 ## Help
 
-If you need help, click on the top right button in Duik to open the [contextual help](duik-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](duik-help.md).
+If you need help, click on the top right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
 
 Take a look at the [frequently asked questions](duik-faq.md) if you don't find a solution to your issue in this user guide.
 
@@ -39,7 +39,7 @@ And this is done without any configuration step or other click in Duik.
 
 ### User Interface (UI)
 
-As any modern script in After Effects, Duik has the form of a panel which can be docked with other native After Effects panels and third party tools (provided it was [correctly installed](duik-installation.md) and launched from the "Window" menu of After Effects).
+As any modern script in After Effects, Duik has the form of a panel which can be docked with other native After Effects panels and third party tools (provided it was [correctly installed](install-duik.md) and launched from the "Window" menu of After Effects).
 
 The User Interface has been designed with these main ideas:
 
@@ -65,8 +65,8 @@ The other buttons display the available panels:
 - [***Animation***](animation.md)
 - [***Camera***](camera.md)
 - [***Import and Export tools***](i-o.md)
-- [***Settings***](duik-settings.md)
-- [***Help***](duik-help.md)
+- [***Settings***](settings.md)
+- [***Help***](contextual-help.md)
 
 ### User Experience (UX)
 
@@ -102,7 +102,7 @@ Although Duik uses existing layer types in After Effects (mostly shape layers an
 Layers created by Duik have a marker at their beginning, showing how Duik uses them (their "Duik Type"), and containing important data that Duik needs to work with them. **Do not remove these markers** (but you can move them away, even before the beginning of the comp to hide them, if you find them annoying).
 
 The types defined by Duik are:
-- [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](edit-controllers.md) panel). They are used to manipulate and animate compositions rigged by Duik.
+- [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](controller-tools.md) panel). They are used to manipulate and animate compositions rigged by Duik.
 - [Structures](structures.md) are shape layers used to actually rig characters and props. They should not be manipulated by the animator and can be hidden as soon as the riggoing process is finished.
 - [Bones](bones.md) are shape layers which control spatial properties of effects or bezier shapes and masks. They are usually parented to Structures to be rigged and animated, but sometimes can be animated themselves just to control the position of an effect, or parent it to anything else.
 - [Locators](parent-accross-compositions.md) are null objects used to expose the absolute transformations of another layer in a composition, and to create links between layers and compositions.
