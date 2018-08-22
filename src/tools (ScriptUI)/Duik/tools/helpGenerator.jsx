@@ -1,5 +1,5 @@
 /**
-This small script is used to generate the help strings used in the contextual help of Duik based on the files found in the 'help' folder.
+This small script is used to generate the help strings used in the contextual help of Duik based on the files found in the github wiki.
 It will overwrite the file Duik16_helpStrings.jsxinc.
 Each file will be converted to a string, stored in a variable named after the filename + "Help" which can then be used in the source of Duik.
 */
@@ -36,7 +36,8 @@ Each file will be converted to a string, stored in a variable named after the fi
 	}
 
 	var scriptFolder = new File($.fileName).parent.parent;
-	var helpFolder = new Folder(scriptFolder.absoluteURI + '/help');
+	var helpFolder = Folder.selectDialog("Please select the root folder of the help files (wiki/duik/contextual-help)");
+	if (!helpFolder) return;
 	var helpContent = helpFolder.getFiles(isFolder);
 
 	var data = '';
@@ -51,10 +52,12 @@ Each file will be converted to a string, stored in a variable named after the fi
 			var file = files[j];
 			var re = /-/g;
 			var varName = file.name.replace(re,'');
+			re = /.md$/g;
+			varName = varName.replace(re,'');
 			data += 'var ' + varName + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + varName + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name + '"\n\n';
+			data += 'var ' + varName + 'Link = "https://github.com/Rainbox-dev/DuAEF_Duik/wiki/' + file.name.replace(re,'') + '"\n\n';
 		}
 	}
 
