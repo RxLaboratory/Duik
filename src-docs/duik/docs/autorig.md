@@ -38,20 +38,42 @@ The most important constraints used by the Auto-rig to rig characters are IK and
 
 ### Inverse Kinematics (IK)
 
-IK is a way to animate limbs by translating a controller located at the tip of the limb (i.e. at the hand or at the foot).  
+IK is a way to animate limbs by moving a controller located at the tip of the limb (i.e. at the hand or at the foot).  
 This means that animating with IK uses positions, which are interpreted into the rotation of each part of the limb. This seems very natural when one manipulates it, but it is actually an advanced process. It is invaluable when the hand, or the foot, have interactions with anything else (like the foot interacting with the ground when the character walks).  
 IK are the only way to animate the position of the hips while keeping the feet stuck on the ground, or the hand against a wall.  
 But as animating with IK means animating positions, it is actually **not the easiest nor the smartest way to animate limbs**. It's needed when there are interactions, but in any other case (most of the cases for arms), you should prefer  animating with FK.
 
 ### Forward Kinematics (FK)
 
-FK is the most simple way to animate limbs: all parts are parented together, and you just have to animate the rotations of each parts. Rotation is way easier to animate than position: there's only one value, one axis, and you don't have to adjust trajectories, you can concentrate on the speed and eases only.
-Ususally, when animating with FK, the animator wants to add *follow-through* and *overlap*. As these are very common in animation, FK controls created with Duik include an automatic *follow-through* and *overlap* tool.
+FK is the most simple way to animate limbs: all parts are parented together, and you just have to animate the rotations of each parts. Rotation is way easier to animate than position: there's only one value, one axis, and you don't have to adjust trajectories, you can focus on speed and eases only.
+Ususally, when animating with FK, the animator wants to add [*follow-through* and *overlap*](https://en.wikipedia.org/wiki/12_basic_principles_of_animation#Follow_Through_and_Overlapping_Action). As these are very common in animation, FK controls created with Duik include an automatic [*follow-through* and *overlap*](https://en.wikipedia.org/wiki/12_basic_principles_of_animation#Follow_Through_and_Overlapping_Action) tool (read below).
 
 ### IK / FK
 
 As both IK and FK can be useful, all IK created with Duik also include FK controls, and the animator can switch between FK and IK whenever he wants. The FK controls included in the IK effects even include an automatic *follow-through* and *overlap*.  
 To make this process the easiest possible, an [IK/FK Switch](ik-fk-switch.md) tool is provided with the [animation tools](animation-tools.md).
+
+When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the corresponding controller. The type of the IK can vary depending on the type and number of layers which were rigged.
+
+#### One-Layer IK (shoulder rotation, single-layer spine...)
+
+!!! note
+    This section still has to be written
+
+#### Two-layer IK (arms and legs...)
+
+!!! note
+    This section still has to be written
+
+#### Bezier IK (multi-layer spine, tails...)
+
+!!! note
+    This section still has to be written
+
+#### FK with follow-through, overlap and drag (tails...)
+
+!!! note
+    This section still has to be written
 
 ## Controllers
 
@@ -76,6 +98,8 @@ The additionnal panel for the Auto-rig is divided in two parts: some options for
 !!! hint
     Available in _Standard_ and _Expert_ modes only.
 
+*Read above for a description of the effects added on the controllers.*
+
 - The ***IK*** button may be needed in very special occasions when the Auto-rig is not able to automatically create IK.
 There is an additionnal panel for the IK to let you choose how the IK for three layers have to be made:
 
@@ -84,4 +108,4 @@ There is an additionnal panel for the IK to let you choose how the IK for three 
 
 - ***Bezier IK*** creates a Bezier IK without using the Auto-rig. In normal situations, as soons as there are more than two layers, the Auto-Rig will create a Bezier IK, but in some cases you may need some Bezier IK for only one or two layers; in this case, you can use this tool instead.
 
-- ***FK Overlap*** rigs a chain of layers with a rotation controller (FK) with automatic follow-through and overlap. This is very useful for tails, hanging ropes, fabric...
+- ***FK Overlap*** rigs a chain of layers with a rotation controller (FK) with automatic [*follow-through* and *overlap*](https://en.wikipedia.org/wiki/12_basic_principles_of_animation#Follow_Through_and_Overlapping_Action). This is very useful for tails, hanging ropes, fabric...

@@ -1,3 +1,5 @@
+[TOC]
+
 # Controller Tools
 
 ## Select Controllers
@@ -18,6 +20,25 @@ To avoid assembling all the rigs and the background in the same composition, you
 This way, all the controllers are available in the same main composition, with the background if you wish, but the rigs stay precomposed. This is especially useful when there are a lot of layers for the rigs, and if you want to render proxies for character animations in order to improve performance when compositing the shot.
 
 - Just select a precomposition layer containing a rig, and click the "***Extract Controllers***" button to copy the controllers to the current composition and be able to animate outside of the rigged precomposition.
+
+### Extract controllers options
+
+You can choose to extract controllers using expressions or Master Properties.
+
+!!! note
+    Master Properties are available in After Effects CC2018 and above only.
+
+- When using expressions, the project can still be saved to a previous version of After Effects, and the rig will be more robust, more stable.
+
+- When using Master Properties, you will be able to have different instances of the rigged composition, in example to have different animations **of the same rig**. But Master Properties are not fully scriptable in current versions of After Effects, and the rig can break if the composition is not correctly duplicated.
+
+!!! hint
+    Master Properties can be very powerful. If you want to use them safely in this case, follow these steps:
+
+    1. Rig the character as you'd do in any case.
+    2. Put the rigged composition into another composition, let's call this one the "Animation Comp". The rigged composition is now a precomposition inside "Animation Comp".
+    3. Select this rigged precomposition, and extract controllers with Duik, using Master Properties.
+    4. "Animation Comp" can now be duplicated ; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
 
 ## Edit Controllers
 
