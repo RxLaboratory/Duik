@@ -38,6 +38,9 @@ If there is no layer selected, this will show of hide all Structures in the comp
 
 ## Edit Structures
 
+!!! hint
+    Available in _Standard_ and _Expert_ modes only.
+
 In the edition panel, you can adjust the appearance of the Structures (Normal and Expert mode).
 
 All changes made in this panel will affect all selected Structures and the creation of all other Structures.
