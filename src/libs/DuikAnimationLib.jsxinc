@@ -420,15 +420,55 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 	var active = ikEffect(pseudoEffect.ikCheckbox).value;
 	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
 
-	var layer1 = ikEffect(pseudoEffect.upperLayer).value;
-	var layer2 = ikEffect(pseudoEffect.lowerLayer).value;
-	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,comp.layer(layer1).transform.rotation.value);
-	if (ikType == 3)
+	//get layers if this is a linked controller
+	var layer1, layer2, layer3;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
 	{
-		var layer3 = ikEffect(pseudoEffect.middleLayer).value;
-		ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,comp.layer(layer3).transform.rotation.value);
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		layer1 = preIkEffect(preIKPseudo.upperLayer).value;
+		layer2 = preIkEffect(preIKPseudo.lowerLayer).value;
+		layer1 = preComp.layer(layer1);
+		layer2 = preComp.layer(layer2);
+		if (ikType == 3)
+		{
+			layer3 = preIkEffect(preIKPseudo.middleLayer).value;
+			layer3 = preComp.layer(layer3);
+		}
 	}
-	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,comp.layer(layer2).transform.rotation.value);
+	else
+	{
+		layer1 = ikEffect(pseudoEffect.upperLayer).value;
+		layer2 = ikEffect(pseudoEffect.lowerLayer).value;
+		layer1 = comp.layer(layer1);
+		layer2 = comp.layer(layer2);
+		if (ikType == 3)
+		{
+			layer3 = ikEffect(pseudoEffect.middleLayer).value;
+			layer3 = comp.layer(layer3);
+		}
+	}
+
+
+	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,layer1.transform.rotation.value);
+	if (ikType == 3) ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,layer3.transform.rotation.value);
+	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,layer2.transform.rotation.value);
 
 	//look for a goal and adjust
 	var goal = ikEffect(pseudoEffect.goalLayer).value;
@@ -603,8 +643,8 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 			DuAEF.DuAE.Property.linkProperties(ctrlLayer('ADBE Effect Parade'),newCtrlLayer('ADBE Effect Parade'));
 		}
 		//set params to keep the link
-		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, "linkedToComp", preComp.id);
-		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, "linkedToLayer", ctrlLayer.name);
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOCOMP, preComp.id);
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOLAYER, ctrlLayer.name);
 	}
 
 	app.endUndoGroup();
