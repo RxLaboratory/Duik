@@ -17,6 +17,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### New
 
 - Chinese translation, thanks to eZioPan.
+- Re-implemented the [_Lock Property_](lock-property.md) tool from Duik 15 (in the constraints panel, _Standard_ and _Expert_ mode only).
 
 #### Improvements
 
