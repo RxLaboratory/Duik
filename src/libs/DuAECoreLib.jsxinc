@@ -3328,16 +3328,19 @@ DuAEF.DuAE.Property.setExpression = function (prop,expr,keepValue)
 	if (typeof keepValue === 'undefined') keepValue = true;
 	var editable = false;
 	var riggable = false;
+	var dimensions = 0;
 	if (prop instanceof PropertyInfo)
 	{
 		editable = prop.editable;
 		riggable = prop.riggable;
+		dimensions = prop.dimensions;
 		prop = prop.getProperty();
 	}
 	else
 	{
 		editable = DuAEF.DuAE.Property.isEditable(prop);
 		riggable = DuAEF.DuAE.Property.isRiggable(prop);
+		dimensions = DuAEF.DuAE.Property.getDimensions(prop);
 	}
 
 	if (!riggable) return;
@@ -3349,7 +3352,7 @@ DuAEF.DuAE.Property.setExpression = function (prop,expr,keepValue)
 	//set new expression
 	try { prop.expression = expr; } catch (e) { if (DuAEF.debug) alert(e.description); }
 	//restore value
-	if (editable && keepValue) DuAEF.DuAE.Property.setValue(prop, 2*originalValue - prop.value);
+	if (editable && keepValue && dimensions > 0) DuAEF.DuAE.Property.setValue(prop, 2*originalValue - prop.value);
 }
 
 /**
@@ -3534,13 +3537,37 @@ DuAEF.DuAE.Property.addToEGP = function(prop)
 /**
  * Locks the property with an expression so its value cannot be changed
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase} prop - The property
+ * @param {PropertyBase|PropertyInfo|PropertyBase[]|PropertyInfo[]} properties - The property or properties
 */
-DuAEF.DuAE.Property.lock = function(prop)
+DuAEF.DuAE.Property.lock = function(properties)
 {
-	if (prop.propertyType != PropertyType.PROPERTY) return;
-	if (!prop.canSetExpression) return;
-	prop.expression = prop.value.toSource();
+	var it = new Iterator(properties);
+	it.do(function (property)
+	{
+		var p = property;
+		var riggable = false;
+		var dimensions = 0;
+		if (property instanceof PropertyInfo)
+		{
+			p = property.getProperty();
+			riggable = property.riggable;
+			dimensions = property.dimensions;
+		}
+		else
+		{
+			riggable = DuAEF.DuAE.Property.isRiggable(p);
+			dimensions = DuAEF.DuAE.Property.getDimensions(p);
+		}
+
+		if (riggable)
+		{
+			var exp = "";
+			if (dimensions == 0) exp = "value";
+			else if (dimensions == 1) exp = p.value.toString();
+			else exp = p.value.toSource();
+			DuAEF.DuAE.Property.setExpression(property,exp);
+		}
+	});
 }
 
 /**
