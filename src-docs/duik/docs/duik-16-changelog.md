@@ -29,6 +29,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - *Extract controllers* no longer fails when launched from the additionnal panel of the tool.
 - *Extract controllers* and other tools are more robust and should throw less errors in unusual cases.
 - Some labels could not be translated in the User Interface and stayed in English. This is now fixed and everything should be translated in upcoming versions.
+- Fixed some stability issues, and made some small performance improvements.
+- Fixed the tools not working if the composition is selected from the project panel and the composition in the viewer is not the same.
 
 ## 16.0.4
 
