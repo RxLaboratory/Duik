@@ -359,6 +359,40 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 
 	if (!ikEffect) return;
 
+	//if controller is linked, get data in the parent
+	var goalWorldPosition, goal;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
+	{
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		goal = preIkEffect(preIKPseudo.goalLayer).value;
+		if (goal > 0) goal = preComp.layer(goal);
+		goalWorldPosition = preIkEffect(preIKPseudo.goalWorldPositionPoint);
+	}
+	else
+	{
+		goal = ikEffect(preIKPseudo.goalLayer).value;
+		if (goal > 0) goal = comp.layer(goal);
+		goalWorldPosition = ikEffect(pseudoEffect.goalWorldPositionPoint);
+	}
+
+
 	//deactivate IK
 	var active = ikEffect(pseudoEffect.ikCheckbox).value;
 	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
@@ -366,20 +400,19 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 	var parent = controller.parent;
 	controller.parent = null;
 	//position
-	controller.transform.position.setValueAtTime(comp.time,ikEffect(pseudoEffect.goalWorldPositionPoint).value);
+	controller.transform.position.setValueAtTime(comp.time,goalWorldPosition.value);
 	controller.parent = parent;
 
 	//look for a goal and adjust
-	var goal = ikEffect(pseudoEffect.goalLayer).value;
-	if (goal > 0)
+	if (goal)
 	{
-		var prevRot = comp.layer(goal).transform.rotation.value;
+		var prevRot = goal.transform.rotation.value;
 		//Activate to adjust goal
 		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
 
 		controller.transform.rotation.setValueAtTime(comp.time,0);
 		//get difference
-		var newRot = prevRot - comp.layer(goal).transform.rotation.value;
+		var newRot = prevRot - goal.transform.rotation.value;
 		controller.transform.rotation.setValueAtTime(comp.time,newRot);
 	}
 
