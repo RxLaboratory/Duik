@@ -27,6 +27,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - *2D Camera* no longer crashes if there's no active composition.
 - *Extract controllers* no longer fails when launched from the additionnal panel of the tool.
 - *Extract controllers* and other tools are more robust and should throw less errors in unusual cases.
+- Some labels could not be translated in the User Interface and stayed in English. This is now fixed and everything should be translated in upcoming versions.
 
 ## 16.0.4
 
