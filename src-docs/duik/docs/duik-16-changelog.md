@@ -2,7 +2,7 @@
 
 This is the list of what has changed since the first Alpha version of Duik Bassel (16)
 
-## 16.1.0
+## 16.1.0 (in development)
 
 #### New
 
@@ -12,7 +12,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - The *Connector* can now be used in a single click (creates a controller layer automatically).
 
-## 16.0.5 (in development)
+## 16.0.5
 
 #### New
 
