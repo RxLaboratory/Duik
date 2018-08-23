@@ -2,7 +2,7 @@
 
 This is the list of what has changed since the first Alpha version of Duik Bassel (16)
 
-## 16.1.0 (in development)
+## 16.1.0
 
 #### New
 
