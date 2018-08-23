@@ -21,13 +21,15 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### Improvements
 
-- The "Effector" layer is now created as a guide layer.
+- The [*Effector*](effector.md) layer is now created as a guide layer.
 
 #### Fixes
 
-- *2D Camera* no longer crashes if there's no active composition.
-- *Extract controllers* no longer fails when launched from the additionnal panel of the tool.
-- *Extract controllers* and other tools are more robust and should throw less errors in unusual cases.
+- [*2D Camera*](camera-2d.md) no longer crashes if there's no active composition.
+- [*Extract controllers*](controller-tools.md#extract-controllers) no longer fails when launched from the additionnal panel of the tool.
+- [*Extract controllers*](controller-tools.md#extract-controllers) and other tools are more robust and should throw less errors in unusual cases.
+- [*IK/FK Switch*](ik-fk-switch.md) now works with controllers extracted from a precomposition.
+- [*Walk Cycle*](walk-cycle.md) now works with controllers extracted from a precomposition.
 - Some labels could not be translated in the User Interface and stayed in English. This is now fixed and everything should be translated in upcoming versions.
 - Fixed some stability issues, and made some small performance improvements.
 - Fixed the tools not working if the composition is selected from the project panel and the composition in the viewer is not the same.
