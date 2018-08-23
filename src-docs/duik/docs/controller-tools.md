@@ -4,7 +4,6 @@
 
 Click the *Select controllers* button to select all the Controllers in the composition.
 
-
 ## Show / Hide Controllers
 
 Shows or hides all (or selected) *Controllers* found in the composition.
@@ -22,6 +21,9 @@ This way, all the controllers are available in the same main composition, with t
 
 ## Edit Controllers
 
+!!! hint
+    Available in _Standard_ and _Expert_ modes only.
+
 In the edition panel, you can adjust the appearance of the Controllers (Normal and Expert mode).
 
 All changes made in this panel will affect all selected Controllers and the creation of all other Controllers.
@@ -35,3 +37,5 @@ All changes made in this panel will affect all selected Controllers and the crea
 - The "Bake Appearance" button will remove all expressions used by the Controllers to set its appearance. This will improve the performance of the rig, but you will not be able to change the appearance afterwards.
 
 - You can choose to use shape layers (with icons and visual feedback) or simpler null objects to create controllers by default when using the rigging tools.
+
+- You can choose to use _Draft mode_ or _Best quality_ to render the controller layers by default (this can be changed at any time in After Effects). Setting _Draft mode_ can greatly improve performance by disabling anti-aliasing on these layers.
