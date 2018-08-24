@@ -42,7 +42,7 @@ There are a few options to speed up the preview and your workflow in After Effec
 
     ![Preview Quality](img/after-effects-screenshots/preview-quality.png)
 
-    The default option, _Adaptive Resolution_, does not seem to be the best choice, as constantly changing the resolution of the preview when moving layers does not feel fuild at all. _Off (Final Quality)_ does feel way more fluid when working, as does _Fast Draft_. We don't actually see much difference between _Fast Draft_ and _Off (Final Quality)_...
+    The default option, _Adaptive Resolution_, does not seem to be the best choice, as constantly changing the resolution of the preview when moving layers does not feel fluid at all. _Off (Final Quality)_ does feel way more fluid when working, as does _Fast Draft_. We don't actually see much difference between _Fast Draft_ and _Off (Final Quality)_...
 
 - You can change the resolution of the preview.
 
@@ -63,7 +63,8 @@ There are a few options to speed up the preview and your workflow in After Effec
 Every time you use a bezier shape, After Effects has to rasterize it before it can display it and render the composition. This means the more shape layers you have, the lower the performance will be. Every time it is possible, you should precompose the shape layer, to the smallest composition you can: this way the precomposition is an image layer, with actual pixels, and faster to render. You can even render the precomposition to an [image sequence]() to replace it or use as a proxy. Proxies are great!
 
 !!! tip
-    A shape layer without animation nor expressions in its content should always be replaced by an image.
+    A shape layer without animation nor expressions in its content should always be replaced by an image.  
+    Even when using the puppet tool, as it works in _pixels_ and not with the vector data, you won't lose quality.
 
 **It is NOT a good idea to use shapes hoping to be able to scale them**.
 
