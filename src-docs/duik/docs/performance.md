@@ -64,7 +64,7 @@ Every time you use a bezier shape, After Effects has to rasterize it before it c
 
 !!! tip
     A shape layer without animation nor expressions in its content should always be replaced by an image.  
-    Even when using the puppet tool, as it works in _pixels_ and not with the vector data, you won't lose quality.
+    Especially when using the puppet tool! As it works in _pixels_ and not with the vector data, you won't lose quality, there's no need to keep the vectors. And precomposing the shape will fix a lot of issues...
 
 **It is NOT a good idea to use shapes hoping to be able to scale them**.
 
