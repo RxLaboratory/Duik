@@ -12,3 +12,6 @@ This is the Controllers panel in *Normal* mode.
 The controller panel consists of the list of controllers shapes you can use in your rigs (or which are created with the tools like the Auto-rig), and some useful tools related to controllers.
 
 There are 3 special shapes: the slider, the 2D slider and the angle controllers. They are not meant to be used like other controllers - with parenting or IKs, etc. - but with the "Connector" or expressions: it is easy to get and connect their value to any other property and control almost anything you want with them, in a very visual and easy way.
+
+!!! hint
+    Controllers are standard shape layers. You can draw anything you want in the content of a controller, therefore using custom shapes is possible.
