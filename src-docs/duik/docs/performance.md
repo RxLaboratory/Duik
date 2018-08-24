@@ -150,7 +150,7 @@ As for the controllers, the additionnal panel of the [_Structures_](structures.m
 ### Parent constraint
 
 !!! caution
-    The parent link can be very heavy.
+    The parent constraint can be very heavy.
 
 The [_Parent constraint_](parent-constraint.md) is a great tool but... It can be very computer-intensive. To be able to compute the location of a layer, it has to compute the previous movement of all it's parents on the previous frames of the composition. This means the longer the composition is, the slower it will be. Avoid using it in very long compositions, and try to use it only when necessary. Often, it is easier and quickier to just split the layer when its parent must change.
 
@@ -182,7 +182,7 @@ The default [_Wheel_](wheel.md) automation is very light won't be any problem. B
 
 #### Other automations
 
-The other automations are not particularly heavy. Just be careful with automations like the [_Effector_] which is often used to drive a lot of layers together, which means its a lot of expressions.
+The other automations are not particularly heavy. Just be careful with automations like the [_Effector_](effector.md) which is often used to drive a lot of layers together, which means its a lot of expressions.
 
 ## Choose the right version of After Effects
 
