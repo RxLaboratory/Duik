@@ -192,12 +192,8 @@ function PropertyInfo(property)
 		if (this.isEffect) break;
 	}
 
-	var riggable = true;
-	if (property.propertyType != PropertyType.PROPERTY) riggable = false;
-	if (!property.canVaryOverTime) riggable = false;
-	if (!property.canSetExpression) riggable = false;
-	if (property.elided) riggable = false;
-	this.riggable = riggable;
+	this.riggable = DuAEF.DuAE.Property.isRiggable(property);
+	this.editable = DuAEF.DuAE.Property.isEditable(property);
 	this.numerical = DuAEF.DuAE.Property.isNumerical(property);
 	this.layer = DuAEF.DuAE.Property.getLayer(property);
 	this.comp = this.layer.containingComp;
@@ -580,6 +576,41 @@ DuAEF.DuAE.LayerPlacements =
 }
 
 /**
+ * Types of layers used by Ae
+ * @enum {string}
+ * @readonly
+ */
+DuAEF.DuAE.LayerTypes =
+{
+	NULL: 'null',
+	SOLID: 'solid',
+	SHAPE: 'shape',
+	TEXT: 'text',
+	ADJUSTMENT: 'adjustment',
+	LIGHT: 'light',
+	CAMERA: 'camera'
+}
+
+/**
+ * Attributes of layers in Ae
+ * @enum {string}
+ * @readonly
+ */
+DuAEF.DuAE.LayerAttributes =
+{
+	SELECTED: 'selected',
+	VISIBLE: 'visible',
+	AUDIO: 'audio',
+	SOLO: 'solo',
+	LOCKED: 'locked',
+	SHY: 'shy',
+	EFFECTS_ENABLED: 'effects',
+	MOTION_BLUR: 'motionblur',
+	THREE_D: '3d',
+	GUIDE: 'guide'
+}
+
+/**
 * Checks if the param is an AE collection or an Array
 * @param {Array|Collection} collection - The list to check
 * @return {boolean} true if collection is a collection, false if it's an array
@@ -779,7 +810,8 @@ DuAEF.DuAE.Project.setProgressMode = function(inProgress)
 	{
 		//store the current comp
 		DuAEF.DuAE.Project.activeComp = DuAEF.DuAE.Project.getActiveComp();
-		DuAEF.DuAE.Project.viewerMaximized = app.activeViewer.maximized;
+
+		if (app.activeViewer != null) DuAEF.DuAE.Project.viewerMaximized = app.activeViewer.maximized;
 
 		//create a temp comp, open it
 		DuAEF.DuAE.Project.progressComp = app.project.items.addComp("MAGIC IS HAPPENING...", 500, 500, 1, 1, 1);
@@ -789,17 +821,17 @@ DuAEF.DuAE.Project.setProgressMode = function(inProgress)
 		tempL.selected = false;
 
 		DuAEF.DuAE.Project.progressComp.openInViewer();
-		app.activeViewer.maximized = true;
+		if (app.activeViewer != null) app.activeViewer.maximized = true;
 
 		DuAEF.DuAE.Project.progressMode = true;
 	}
 	else
 	{
 		//remove temp comp
-		DuAEF.DuAE.Project.progressComp.remove();
+		if (DuAEF.DuAE.Project.progressComp != null) DuAEF.DuAE.Project.progressComp.remove();
 		//re-activate previous comp
 		if (DuAEF.DuAE.Project.activeComp != null) DuAEF.DuAE.Project.activeComp.openInViewer();
-		app.activeViewer.maximized = DuAEF.DuAE.Project.viewerMaximized;
+		if (app.activeViewer != null) app.activeViewer.maximized = DuAEF.DuAE.Project.viewerMaximized;
 
 		DuAEF.DuAE.Project.progressMode = false;
 	}
@@ -2266,6 +2298,57 @@ DuAEF.DuAE.Property.getDimensions = function (prop)
 }
 
 /**
+* Checks if this property value can be edited
+* @param {Property|PropertyInfo} prop - The After Effects Property
+* @return {bool} true if the value of the property can be edited, false otherwise
+*/
+DuAEF.DuAE.Property.isEditable = function (prop)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+
+	if (prop.propertyType != PropertyType.PROPERTY) return false;
+	if (prop.elided) return false;
+	if (prop.dimensionsSeparated) return false;
+
+	//try to set a value if there's no keyframe
+	if (prop.numKeys !== 0)
+	{
+		try
+		{
+			prop.setValue(prop.value);
+			return true;
+		}
+		catch (e)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+* Checks if this property value can be rigged (with an expression)
+* @param {Property|PropertyInfo} prop - The After Effects Property
+* @return {bool} true if the value of the property can be rigged, false otherwise
+*/
+DuAEF.DuAE.Property.isRiggable = function (prop)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+
+	if (prop.propertyType != PropertyType.PROPERTY) return false;
+	if (!prop.canVaryOverTime) return false;
+	if (!prop.canSetExpression) return false;
+	if (prop.elided) return false;
+	if (prop.dimensionsSeparated) return false;
+
+	//try to set an expression
+	try { prop.expression = prop.expression; return true; } catch (e) { return false; }
+
+	return true;
+}
+
+/**
 * Gets the key at a given index on a property
 * @param {Property|PropertyInfo}	prop	- The property.
 * @param {int}	keyIndex	- The index of the key to retrieve. If the index is negative, it is counted from the end i.e. to retrieve the keyframe before the last one, use -2 (-1 is the last)
@@ -2652,7 +2735,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 			{
 				if (prop.numKeys == 0)
 				{
-					try { prop.setValue(anim.startValue); } catch (e) {};
+					DuAEF.DuAE.Property.setValue(anim.startValue);
 				}
 				else
 				{
@@ -2878,21 +2961,27 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 DuAEF.DuAE.Property.setValue = function(prop,value)
 {
 	var dimensions = 0;
+	var editable = false;
 	if (prop instanceof PropertyInfo)
 	{
 		dimensions = prop.dimensions;
+		editable = prop.editable;
 		prop = prop.getProperty();
 	}
 	else
 	{
+		editable = DuAEF.DuAE.Property.isEditable(prop);
 		dimensions = DuAEF.DuAE.Property.getDimensions(prop);
 	}
+
+	if (!editable) return;
+
+	//check dimensions of the property
 	if (dimensions == 0 || dimensions == 1)
 	{
 		if (value instanceof Array) value = value[0];
-		prop.setValue(value);
+		try { prop.setValue(value); } catch (e) { if (DuAEF.debug) alert(e.description); }
 	}
-
 	else
 	{
 		if (!(value instanceof Array)) value = [value];
@@ -2904,7 +2993,7 @@ DuAEF.DuAE.Property.setValue = function(prop,value)
 		{
 			value.pop();
 		}
-		prop.setValue(value);
+		try { prop.setValue(value); } catch (e) { if (DuAEF.debug) alert(e.description); }
 	}
 }
 
@@ -3368,20 +3457,41 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 
 /**
 * Sets an expression to a property.<br />
-* Tries to keep the original value of the property by resetting it after.
+* With the ability to keep the initial value.
 * @param {Property|PropertyInfo} prop - The property
 * @param {string} expr - The expression
+* @param {bool} [keepValue=true] - When true, the method will try to keep the same resulting value as before applying the expression.
 */
-DuAEF.DuAE.Property.setExpression = function (prop,expr)
+DuAEF.DuAE.Property.setExpression = function (prop,expr,keepValue)
 {
-	if (!prop.canSetExpression) return;
+	if (typeof keepValue === 'undefined') keepValue = true;
+	var editable = false;
+	var riggable = false;
+	var dimensions = 0;
+	if (prop instanceof PropertyInfo)
+	{
+		editable = prop.editable;
+		riggable = prop.riggable;
+		dimensions = prop.dimensions;
+		prop = prop.getProperty();
+	}
+	else
+	{
+		editable = DuAEF.DuAE.Property.isEditable(prop);
+		riggable = DuAEF.DuAE.Property.isRiggable(prop);
+		dimensions = DuAEF.DuAE.Property.getDimensions(prop);
+	}
+
+	if (!riggable) return;
+
 	var originalValue = prop.value;
 	//remove current expression
-	prop.expression = "";
-	prop.setValue(originalValue);
+	if (keepValue) DuAEF.DuAE.Property.removeExpression(prop);
+	else try { prop.expression = "" } catch (e) { if (DuAEF.debug) alert(e.description); return; }
 	//set new expression
-	prop.expression = expr;
-	prop.setValue( 2*originalValue - prop.value);
+	try { prop.expression = expr; } catch (e) { if (DuAEF.debug) alert(e.description); }
+	//restore value
+	if (editable && keepValue && dimensions > 0) DuAEF.DuAE.Property.setValue(prop, 2*originalValue - prop.value);
 }
 
 /**
@@ -3566,13 +3676,37 @@ DuAEF.DuAE.Property.addToEGP = function(prop)
 /**
  * Locks the property with an expression so its value cannot be changed
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase} prop - The property
+ * @param {PropertyBase|PropertyInfo|PropertyBase[]|PropertyInfo[]} properties - The property or properties
 */
-DuAEF.DuAE.Property.lock = function(prop)
+DuAEF.DuAE.Property.lock = function(properties)
 {
-	if (prop.propertyType != PropertyType.PROPERTY) return;
-	if (!prop.canSetExpression) return;
-	prop.expression = prop.value.toSource();
+	var it = new Iterator(properties);
+	it.do(function (property)
+	{
+		var p = property;
+		var riggable = false;
+		var dimensions = 0;
+		if (property instanceof PropertyInfo)
+		{
+			p = property.getProperty();
+			riggable = property.riggable;
+			dimensions = property.dimensions;
+		}
+		else
+		{
+			riggable = DuAEF.DuAE.Property.isRiggable(p);
+			dimensions = DuAEF.DuAE.Property.getDimensions(p);
+		}
+
+		if (riggable)
+		{
+			var exp = "";
+			if (dimensions == 0) exp = "value";
+			else if (dimensions == 1) exp = p.value.toString();
+			else exp = p.value.toSource();
+			DuAEF.DuAE.Property.setExpression(property,exp);
+		}
+	});
 }
 
 /**
@@ -3582,7 +3716,7 @@ DuAEF.DuAE.Property.lock = function(prop)
 */
 DuAEF.DuAE.Property.removeExpression = function(prop)
 {
-	prop.setValue(prop.value);
+	DuAEF.DuAE.Property.setValue(prop, prop.value);
 	prop.expression = '';
 }
 
