@@ -328,18 +328,141 @@ DuAEF.Duik.Structure.size = 100;
 DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
 
 /**
- * Creates a structure in a composition
+ * Creates structures in a composition.
+ * If path properties are selected, will create the structures on the vertices, if puppet pins, on the pins, else if layers, on the layers if they are not aligned.
  * @memberof DuAEF.Duik.Structure
- * @param {int}		num	- The number of elements of the structure
- * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {int}		[num=2]	- The number of elements of the structure.
+ * @param {CompItem}	[comp]	- The composition where to create the Structure. Default is the active item, if it's a comp.
+ * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
+ * @return {Structure[]}	The Structures
+ */
+DuAEF.Duik.Structure.addStructures = function (num,comp,name)
+{
+	if (typeof num === 'undefined') num = 2;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+	if (typeof name === 'undefined') name = "Name";
+
+	var structures = [];
+
+	//paths filter.
+	function pathsFilter(prop)
+	{
+		if (prop.matchName == "ADBE Vector Shape - Group") return true;
+		if (prop.matchName == "ADBE Mask Atom") return true;
+		return false;
+	}
+
+	var layers = comp.selectedLayers;
+
+	if (layers.length > 0)
+	{
+		var propsByLayer = [];
+		onLayers = true;
+		var layerPositions = [];
+
+		//get selected props
+		var it = new Iterator(layers);
+		it.do(function(layer)
+		{
+			//check if there are layers at the same location
+			if (onLayers)
+			{
+				layerPositions.push(layer.transform.position.value);
+				onLayers = !DuAEF.DuJS.Array.hasDuplicates(layerPositions);
+			}
+
+			//get paths
+			var props = DuAEF.DuAE.Layer.getSelectedProps(layer,pathsFilter);
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+
+			//puppet pins
+			props = DuAEF.DuAE.Layer.getSelectedProps(layer,"ADBE FreePin3 PosPin Atom");
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+
+			//puppet effect
+			props = DuAEF.DuAE.Layer.getSelectedProps(layer,"ADBE FreePin3");
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+		});
+
+		//create structures on selected props
+		it = new Iterator(propsByLayer);
+		it.do(function(propsLayer)
+		{
+			if (propsLayer.length == 0) return;
+
+			//get paths
+			if (propsLayer[0].matchName == "ADBE Vector Shape - Group" || propsLayer[0].matchName == "ADBE Mask Atom")
+			{
+				new Iterator(propsLayer).do( function (prop)
+				{
+					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop) );
+				});
+				return;
+			}
+
+			//puppet pins
+			if (propsLayer[0].matchName == "ADBE FreePin3 PosPin Atom")
+			{
+				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer) );
+				return;
+			}
+
+			//puppet effect
+			if (propsLayer[0].matchName == "ADBE FreePin3")
+			{
+				new Iterator(propsLayer).do( function (prop)
+				{
+					if (prop.matchName != "ADBE FreePin3") return;
+					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop) );
+				});
+				return;
+			}
+		});
+
+		if (structures.length == 0 && onLayers)
+		{
+			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers) );
+		}
+	}
+
+	if (structures.length == 0)
+	{
+		structures.push( DuAEF.Duik.Structure.addStructure(num,comp,name) );
+	}
+
+	return structures;
+}
+
+/**
+ * Creates a structure in a composition.
+ * If path properties are selected, will create the structures on the vertices, if puppet pins, on the pins, else if layers, on the layers if they are not aligned.
+ * @memberof DuAEF.Duik.Structure
+ * @param {int}		[num=2]	- The number of elements of the structure.
+ * @param {CompItem}	[comp]	- The composition where to create the Structure. Default is the active item, if it's a comp.
  * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
  * @param {int}	[id] - An identifier for this structure
- * @return {Structure|null}	The Structure or null if there is no active composition
+ * @return {Structure}	The Structure
  */
 DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 {
-	if (name === undefined) name = "Name";
-	if (id === undefined) id = new Date().getTime();
+	if (typeof num === 'undefined') num = 2;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return new Structure();
+	if (typeof name === 'undefined') name = "Name";
+	if (typeof id === 'undefined') id = new Date().getTime();
 
 	//end
 	num++;
@@ -398,6 +521,156 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 		}
 	}
 	structure.elements[0].selected = true;
+
+	return structure;
+}
+
+/**
+* Adds a Structure to the Bezier Path
+* @param {Property|PropertyInfo} pathProperty - The path
+* @param {int}	[id] - An identifier for this structure
+* @return {Structure} The new Structure
+*/
+DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, id)
+{
+	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
+	if (!propInfo) throw "Expected a shape property, got another type of value.";
+	var pathProperty = propInfo.getProperty();
+
+	if (typeof id === 'undefined') id = new Date().getTime();
+
+	var vertices = DuAEF.DuAE.Property.Bezier.verticesToComp(pathProperty);
+	var comp = propInfo.comp;
+	var name = pathProperty.parentProperty.name;
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var structure = DuAEF.Duik.Structure.addStructure(vertices.length - 1,comp,name,id);
+
+	//move to the vertices
+	for (var i = 0, num = structure.elements.length; i < num; i++)
+	{
+		var element = structure.elements[i];
+		element.parent = null;
+		element.transform.position.setValue(vertices[i]);
+		if (i > 0) element.parent = structure.elements[i-1];
+	}
+
+	return structure;
+}
+
+/**
+* Adds a Structure to the layers. Will return an empty structure if all the layers are at the same place.
+* @param {Layer[]} layers - The layers
+* @return {Structure} The new Structure
+*/
+DuAEF.Duik.Structure.addStructureToLayers = function (layers, id)
+{
+	if (typeof id === 'undefined') id = new Date().getTime();
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var structure = DuAEF.Duik.Structure.addStructure(layers.length - 1,comp,undefined,id);
+
+	//move to the layers
+	for (var i = 0, num = structure.elements.length; i < num; i++)
+	{
+		var element = structure.elements[i];
+		element.parent = null;
+		element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layers[i]));
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + layers[i].name, comp);
+		if (i > 0) element.parent = structure.elements[i-1];
+	}
+
+	return structure;
+}
+
+/**
+* Adds a Structure to the Puppet Effect. Elements will be parented in the order of the pins in the stack
+* @param {PropertyGroup|PropertyInfo} puppetEffect - The puppet effect
+* @return {Structure} The new Structure
+*/
+DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, id)
+{
+	var propInfo = new PropertyInfo(puppetEffect);
+	puppetEffect = propInfo.getProperty();
+
+	var pins = [];
+
+	var meshGroup = puppetEffect.property("ADBE FreePin3 ARAP Group").property("ADBE FreePin3 Mesh Group");
+	for (var i = 1, num = meshGroup.numProperties; i <= num; i++)
+	{
+		var mesh = meshGroup(i);
+		var pinsGroup = mesh.property("ADBE FreePin3 PosPins");
+		for (var j = 1, numPins = pinsGroup.numProperties; j <= numPins; j++)
+		{
+			var pin = pinsGroup.property(j);
+			var test = new PropertyInfo(pin.property("ADBE FreePin3 PosPin Position"));
+			if (test.riggable) pins.push(pin);
+		}
+	}
+
+	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, id);
+
+	return structure;
+}
+
+/**
+* Adds a Structure to the Puppet Pins. Elements will be parented in the order of the Array.
+* @param {Property[]|PropertyInfo[]} puppetPins - The pins
+* @return {Structure} The new Structure
+*/
+DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, id)
+{
+	if (typeof id === 'undefined') id = new Date().getTime();
+
+	var propInfo = new PropertyInfo(puppetPins[0]);
+	var comp = propInfo.comp;
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var structure = DuAEF.Duik.Structure.addStructure(puppetPins.length - 1, comp, undefined, id);
+
+	//move to the layers
+	for (var i = 0, num = puppetPins.length; i < num; i++)
+	{
+		var element = structure.elements[i];
+		element.parent = null;
+
+		//get pin position
+		var pin = puppetPins[i];
+
+		var propInfo = new PropertyInfo(pin);
+		pin = propInfo.getProperty();
+		var parentPin;
+
+		if (pin.matchName == "ADBE FreePin3 PosPin Atom")
+		{
+			parentPin = pin;
+			pin = pin.property("ADBE FreePin3 PosPin Position");
+		}
+		else
+		{
+			parentPin = pin.parentProperty;
+		}
+
+		element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(propInfo.layer,pin.value));
+
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + parentPin.name, comp);
+		if (i > 0) element.parent = structure.elements[i-1];
+	}
 
 	return structure;
 }
