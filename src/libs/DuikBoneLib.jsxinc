@@ -283,13 +283,8 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 
 	if (!Object.isValid(prop)) return bones;
 
-	var propInfo;
-	if (prop instanceof PropertyInfo)
-	{
-		propInfo = prop;
-		prop = propInfo.getProperty();
-	}
-	else propInfo = new PropertyInfo(prop);
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
 
 	try { prop.matchName; } catch (e) {return bones;}
 
@@ -362,6 +357,8 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 	var pathInTangents = prop.value.inTangents;
 	var pathOutTangents = prop.value.outTangents;
 
+	var verticesCoordinates = DuAEF.DuAE.Property.Bezier.verticesToComp(prop);
+
 	//For each path point
 	for (var i = 0; i < pathPoints.length; i++)
 	{
@@ -384,14 +381,8 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 		bones.push(newBone);
 
 		// Set position using layer space transforms, then remove expressions
-		newBone.layer.position.setValue(pathPoints[i]);
-		newBone.layer.position.expression = "var srcLayer = thisComp.layer(\"" + layer.name + "\"); \r" +
-									"var srcPath = " + pathPath + ".points()[" + i + "]; \r" +
-									"srcLayer.toComp(srcPath);";
-		var newPos = newBone.layer.position.value;
-		newBone.layer.position.setValue(newPos);
-		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).setValue([newPos[0],newPos[1]]);
-		newBone.layer.position.expression = '';
+		newBone.layer.position.setValue(verticesCoordinates[i]);
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).setValue([verticesCoordinates[i][0],verticesCoordinates[i][1]]);
 
 		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).setValue(pathOutTangents[i])
 		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).setValue(pathInTangents[i])
@@ -435,6 +426,7 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 		'var origOutTang = origPath.outTangents();\n' +
 		'var closed = origPath.isClosed();\n' +
 		'var fxName = "B | " + origPath.propertyGroup().name;\n' +
+
 		'for (var i = 1, num = thisLayer("Effects").numProperties ; i <= num; i++)\n' +
 		'{\n' +
 		'var fx = effect(i);\n' +
@@ -465,13 +457,8 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 
 	if (!Object.isValid(prop)) return bones;
 
-	var propInfo;
-	if (prop instanceof PropertyInfo)
-	{
-		propInfo = prop;
-		prop = propInfo.getProperty();
-	}
-	else propInfo = new PropertyInfo(prop);
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
 
 	try { prop.matchName; } catch (e) {return bones;}
 
@@ -488,7 +475,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 	}
 
 	if (prop.propertyValueType == PropertyValueType.SHAPE && DuAEF.DuAE.App.version < 15) return bones;
-
 
 	if (prop.propertyValueType == PropertyValueType.SHAPE) return DuAEF.Duik.Bone.rigShape(prop,size,tangents,true);
 
@@ -578,22 +564,12 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
 	}
 
-	//move the bone to the prop : use an expression to get its world position
-	try
-	{
-		prop.expression = "";
-		posLink = DuAEF.DuAE.Property.getExpressionLink(prop,true);
-	}
-	catch(e)
-	{
-		return bones;
-	}
-
+	//move the bone to the prop
 	if (!(layer instanceof ShapeLayer))
 	{
-		bone.layer.position.expression = "thisComp.layer(\"" + layer.name + "\").toWorld(" + posLink + ")";
-		bone.layer.position.setValue(bone.layer.position.value);
-		bone.layer.position.expression = "";
+		var matrix = DuAEF.DuAE.Layer.getTransformMatrix(layer);
+		var pos = matrix.applyToPoint(prop.value);
+		bone.layer.position.setValue(pos);
 	}
 	else
 	{
