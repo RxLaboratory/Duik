@@ -180,18 +180,26 @@ function PropertyInfo(property)
 {
 	if (property instanceof PropertyInfo) property = property.getProperty();
 	this.property = property;
+	this.name = property.name;
+	this.matchName = property.matchName;
 	this.index = property.propertyIndex;
 	this.parentIndices  = [this.index];
 	this.isEffect = property.isEffect;
-	var parentProp = property;
-	while (parentProp.parentProperty)
+	this.effect = null;
+	if (!this.isEffect)
 	{
-		// Traverse up the property tree
-		parentProp = parentProp.parentProperty;
-		this.isEffect = parentProp.isEffect;
-		this.parentIndices.unshift(parentProp.propertyIndex);
-		if (this.isEffect) break;
+		var parentProp = property;
+		while (parentProp.parentProperty)
+		{
+			// Traverse up the property tree
+			parentProp = parentProp.parentProperty;
+			this.isEffect = parentProp.isEffect;
+			this.parentIndices.unshift(parentProp.propertyIndex);
+			if (this.isEffect) this.effect = parentProp;
+			if (this.isEffect) break;
+		}
 	}
+	else this.effect = property;
 
 	this.riggable = DuAEF.DuAE.Property.isRiggable(property);
 	this.editable = DuAEF.DuAE.Property.isEditable(property);
@@ -1247,15 +1255,15 @@ DuAEF.DuAE.Layer.newUniqueMarkerName = function(newName, layer,increment)
 */
 DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 {
-	if (strict == undefined) strict = false;
-	if (caseSensitive == undefined) caseSensitive = true;
+	if (typeof strict === 'undefined') strict = false;
+	if (typeof caseSensitive === 'undefined') caseSensitive = true;
 
 	var props = [];
 
 	if (!caseSensitive && typeof filter === "string") filter = filter.toLowerCase();
 
 	var selectedProps = layer.selectedProperties;
-	if (filter == undefined)
+	if (typeof filter === 'undefined')
 	{
 		props = props.concat(selectedProps);
 	}
@@ -1273,19 +1281,33 @@ DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 				matchName = matchName.toLowerCase();
 			}
 
-			if (strict && name === filter) props.push(prop);
-			else if (strict && matchName === filter) props.push(prop);
+			if (strict && name === filter)
+			{
+				props.push(prop);
+			}
+			else if (strict && matchName === filter)
+			{
+				props.push(prop);
+			}
 			else if (typeof filter === "string")
 			{
 				if (name.indexOf(filter) >= 0) props.push(prop);
 				else if (matchName.indexOf(filter) >= 0) props.push(prop);
 			}
-			else if (prop.propertyType == PropertyType.PROPERTY) if (prop.propertyValueType == filter) props.push(prop);
-			else if (prop.propertyType == filter) props.push(prop);
-			else if (typeof filter === "function") if (filter(prop)) props.push(prop);
+			else if (prop.propertyType == PropertyType.PROPERTY)
+			{
+				if (prop.propertyValueType == filter) props.push(prop);
+			}
+			else if (prop.propertyType == filter)
+			{
+				props.push(prop);
+			}
+			else if (typeof filter === "function")
+			{
+				if (filter(prop)) props.push(prop);
+			};
 		}
 	}
-
 	return DuAEF.DuAE.getPropertyInfos(props);
 }
 
@@ -1588,19 +1610,16 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 }
 
 /**
-* Gets the world position of the layer
+* Gets the world coordinates of the point of a layer
 * @param {Layer} layer - The layer
+* @param {float[]} [point=layer.transform.anchorPoint.value] - the point
 * @return {float[]} The world coordinates of the layer
 */
-DuAEF.DuAE.Layer.getWorldPos = function (layer)
+DuAEF.DuAE.Layer.getWorldPos = function (layer, point)
 {
-	var comp = layer.containingComp;
-	//add a null
-	var n = comp.layers.addNull();
-	n.transform.position.expression = 'thisComp.layer(' + layer.index + ').toWorld(thisComp.layer(' + layer.index + ').anchorPoint);';
-	var pos = n.transform.position.value;
-	n.remove();
-	return pos;
+	var matrix = DuAEF.DuAE.Layer.getTransformMatrix(layer);
+	if (typeof point === 'undefined') point = layer.transform.anchorPoint.value;
+	return matrix.applyToPoint(point);
 }
 
 /**
@@ -2180,7 +2199,6 @@ DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
 	for (var i = layers.length - 1; i >= 0; i--)
 	{
 		var l = layers[i];
-		$.writeln(l.name);
 		matrix.translate(-l.transform.anchorPoint.value);
 		matrix.translate(l.transform.position.value);
 		matrix.rotate(l.transform.rotation.value);
@@ -4222,22 +4240,9 @@ DuAEF.DuAE.Property.Bezier.verticalSymetries = function(pathProperties)
 */
 DuAEF.DuAE.Property.Bezier.verticesToComp = function(pathProperty)
 {
-	var propInfo = new PropertyInfo(pathProperty);
+	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
+	if (!propInfo) throw "Expected a shape property, got another type of value.";
 	var pathProperty = propInfo.getProperty();
-
-	//get the path property in case it was a mask or a shape path selected
-	if (pathProperty.matchName == "ADBE Vector Shape - Group")
-	{
-		pathProperty = pathProperty.property("ADBE Vector Shape");
-		propInfo = new PropertyInfo(pathProperty);
-	}
-	else if (pathProperty.matchName == "ADBE Mask Atom")
-	{
-		pathProperty = pathProperty.property("ADBE Mask Shape");
-		propInfo = new PropertyInfo(pathProperty);
-	}
-	else if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
 
 	//get the layer matrix
 	var matrix = DuAEF.DuAE.Shape.getTransformMatrix(propInfo);
@@ -4251,6 +4256,33 @@ DuAEF.DuAE.Property.Bezier.verticesToComp = function(pathProperty)
 	}
 
 	return vertices;
+}
+
+/**
+* Checks if the property is a bezier property, or return the child bezier property if this is a shape or a mask
+* @param {Property|PropertyInfo} prop - The property
+* @return {PropertyInfo|null} the bezier property or null if it is not.
+*/
+DuAEF.DuAE.Property.Bezier.checkProperty = function(prop)
+{
+	propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	//get the path property in case it was a mask or a shape path selected
+	if (prop.matchName == "ADBE Vector Shape - Group")
+	{
+		prop = prop.property("ADBE Vector Shape");
+		return new PropertyInfo(prop);
+	}
+	else if (prop.matchName == "ADBE Mask Atom")
+	{
+		prop = prop.property("ADBE Mask Shape");
+		return new PropertyInfo(prop);
+	}
+	else if (prop.propertyType !== PropertyType.PROPERTY) return null;
+	if (prop.propertyValueType !== PropertyValueType.SHAPE) return null;
+
+	return propInfo;
 }
 
 /**
