@@ -5,9 +5,14 @@ Bones are a very simple yet extremely useful tool. They are layers used to contr
 ## Creation
 
 1. Select the properties
-2. - Click on the "Bones" button
+2. - Click on the _Bones_ button
     - Maintaining the [Alt] key will pick a random color for the new bones
     - Maintaining the [Ctrl] key will will ignore the tangents when creating bones on bezier paths
+
+!!! hint
+    You can remove bone layers and recreate them at any time.  
+    This is especially useful when rigging bezier paths where you do not need to rig all the tangents: you can either remove the ones you don't need, or create them later.  
+    To create missing tangents on a bezier path, select the corresponding tangent _in the effects_ of the layer containing the path, and then click the _Bones_ button.
 
 One bone will be created for each spatial property and for each vertex and tangent of Bezier paths.  
 Bones can be used to control puppet pins, but also for example the emitter of a particle system, the origin of a lens flare, and any Bezier paths (shapes or masks).
