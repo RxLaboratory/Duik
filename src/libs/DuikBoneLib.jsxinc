@@ -380,58 +380,61 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 	{
 		var nullName = 'B | ' + layer.name + " | " + prop.parentProperty.name + " - " + i;
 
-		var newBone = DuAEF.Duik.Bone.getBoneByName(comp,nullName);
-
-		// Get names of nulls that don't exist yet and create them
-		if(newBone === null)
-		{
-			//Create nulls
-			newBone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.VERTEX);
-			newBone.layer.name = nullName;
-		}
-
 		//add effect
 		var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
 		var effect = DuAEF.Duik.Bone.createShapeControl(layer,effectName);
-		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(newBone.layer.index);
-		bones.push(newBone);
-
-		// Set position using layer space transforms, then remove expressions
-		newBone.layer.position.setValue(verticesCoordinates[i]);
 		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).setValue([verticesCoordinates[i][0],verticesCoordinates[i][1]]);
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).setValue(pathOutTangents[i]);
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).setValue(pathInTangents[i]);
 
-		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).setValue(pathOutTangents[i])
-		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).setValue(pathInTangents[i])
-
-		if (tangents)
+		if (createBones)
 		{
-			var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
-			var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
 
-			var newBoneIn = DuAEF.Duik.Bone.getBoneByName(comp,nullNameIn);
-			var newBoneOut = DuAEF.Duik.Bone.getBoneByName(comp,nullNameOut);
+			var newBone = DuAEF.Duik.Bone.getBoneByName(comp,nullName);
 
-			if (newBoneOut === null)
+			// Get names of nulls that don't exist yet and create them
+			if(newBone === null)
 			{
-				var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
-				newBoneOut.layer.parent = newBone.layer;
-				newBoneOut.layer.name = nullNameOut;
-				newBoneOut.layer.position.setValue(pathOutTangents[i]);
+				//Create nulls
+				newBone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.VERTEX);
+				newBone.layer.name = nullName;
 			}
 
-			if (newBoneIn === null)
+			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(newBone.layer.index);
+			bones.push(newBone);
+			// Set position using layer space transforms, then remove expressions
+			newBone.layer.position.setValue(verticesCoordinates[i]);
+
+			if (tangents)
 			{
-				var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
-				newBoneIn.layer.parent = newBone.layer;
-				newBoneIn.layer.name = nullNameIn;
-				newBone.layer.moveBefore(newBoneIn.layer);
-				newBoneIn.layer.position.setValue(pathInTangents[i]);
+				var nullNameIn = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | In - " + i;
+				var nullNameOut = 'B | ' + layer.name + " | " + prop.parentProperty.name + " | Out - " + i;
+
+				var newBoneIn = DuAEF.Duik.Bone.getBoneByName(comp,nullNameIn);
+				var newBoneOut = DuAEF.Duik.Bone.getBoneByName(comp,nullNameOut);
+
+				if (newBoneOut === null)
+				{
+					var newBoneOut = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
+					newBoneOut.layer.parent = newBone.layer;
+					newBoneOut.layer.name = nullNameOut;
+					newBoneOut.layer.position.setValue(pathOutTangents[i]);
+				}
+
+				if (newBoneIn === null)
+				{
+					var newBoneIn = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.TANGENT);
+					newBoneIn.layer.parent = newBone.layer;
+					newBoneIn.layer.name = nullNameIn;
+					newBone.layer.moveBefore(newBoneIn.layer);
+					newBoneIn.layer.position.setValue(pathInTangents[i]);
+				}
+
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(newBoneIn.layer.index);
+				effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(newBoneOut.layer.index);
+
+				bones.push(newBoneOut);
 			}
-
-			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(newBoneIn.layer.index);
-			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(newBoneOut.layer.index);
-
-			bones.push(newBoneOut);
 		}
 	}
 
@@ -744,7 +747,7 @@ DuAEF.Duik.Bone.linkToBone = function (prop, boneLayer, keepOffset)
 * @param {Layer} [inTangentLayers] - The parent layer for inTangents. If not provided or empty array, will link tangents to the effect on vertexLayers
 * @param {Layer} [outTangentLayers] - The parent layer for outTangents
 */
-DuAEF.Duik.Bone.shapeToBone = function (prop, vertexLayers, inTangentLayers, outTangentLayers)
+DuAEF.Duik.Bone.shapeToBones = function (prop, vertexLayers, inTangentLayers, outTangentLayers)
 {
 
 }
