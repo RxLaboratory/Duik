@@ -7,6 +7,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### New
 
 - A tool to ***Align Layers*** in the rigging tools panel.
+- A tool to ***Separate Dimensions*** of any property, including colors which can be animated both as RGB or HSL.
 
 #### Improvements
 
