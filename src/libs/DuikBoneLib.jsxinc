@@ -140,6 +140,8 @@ DuAEF.Duik.Bone.BoneTypes =
 */
 DuAEF.Duik.Bone.createBone = function(comp,size,type)
 {
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
 	//create
 	var bone = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(bone,"Bone",DuAEF.Duik.LayerTypes.BONE);
@@ -263,6 +265,76 @@ DuAEF.Duik.Bone.getBoneByName = function (comp,name,selectedOnly)
 	return null;
 }
 
+//low-level undocumented function
+//creates an effect to control a shape vertex and tangents
+DuAEF.Duik.Bone.createShapeControl = function (l,name, fixVertex, fixIn, fixOut)
+{
+	if (typeof fixVertex === 'undefined') fixVertex = false;
+	if (typeof fixIn === 'undefined') fixIn = false;
+	if (typeof fixOut === 'undefined') fixOut = false;
+
+	var vertexExp = '//Duik.bone\n' +
+		'var l = null;\n' +
+		'try {l = thisProperty.propertyGroup()(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer + ')} catch (e) {};\n' +
+		'var result = value;\n' +
+		'if (l != null) {\n' +
+		'result = l.toWorld(l.anchorPoint);\n';
+	if (!(l instanceof ShapeLayer)) vertexExp += 'result = fromWorld(result);\n';
+	vertexExp +='}\n' +
+		'result;';
+
+	var inExp = '//Duik.bone\n' +
+		'var l = null;\n' +
+		'var fx = thisProperty.propertyGroup();\n' +
+		'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer + ')} catch (e) {};\n' +
+		'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
+		'if (l != null) {\n' +
+		'result = l.toWorld(l.anchorPoint);\n';
+	if (!(l instanceof ShapeLayer)) inExp += 'result = fromWorld(result);\n';
+	inExp +='}\n' +
+		'result;';
+
+	var outExp = '//Duik.bone\n' +
+		'var l = null;\n' +
+		'var fx = thisProperty.propertyGroup();\n' +
+		'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer + ')} catch (e) {};\n' +
+		'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
+		'if (l != null) {\n' +
+		'result = l.toWorld(l.anchorPoint);\n';
+	if (!(l instanceof ShapeLayer)) outExp += 'result = fromWorld(result);\n';
+	outExp +='}\n' +
+		'result;';
+
+	//check if an effect already exists
+	var effect = null;
+
+	for (var i = 1; i <= l('ADBE Effect Parade').numProperties ; i++)
+	{
+		var fx = l('ADBE Effect Parade').property(i);
+		if (fx.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName && fx.name == name)
+		{
+			effect = fx;
+			if (fixVertex) effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).expression = vertexExp;
+			if (fixIn) effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).expression = inExp;
+			if (fixOut) effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).expression = outExp;
+			break;
+		}
+	}
+	if (effect == null)
+	{
+		effect = DuAEF.Duik.PseudoEffects.SHAPE_LINKER.apply(l);
+		//expressions
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).expression = vertexExp;
+
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).expression = inExp;
+
+		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).expression = outExp;
+
+		effect.name = name;
+	}
+	return effect;
+}
+
 /**
 * Links the shape to bones<br />
 * Works with After Effects CC2018 (15.0) and newer only
@@ -296,62 +368,6 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 	var layer = propInfo.layer;
 	var comp = layer.containingComp;
 
-	//create effect function
-	function createControl(l,name)
-	{
-		//check if an effect already exists
-		var effect = null;
-
-		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
-		{
-			var fx = layer('ADBE Effect Parade').property(i);
-			if (fx.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName && fx.name == name)
-			{
-				effect = fx;
-				break;
-			}
-		}
-		if (effect == null)
-		{
-			effect = DuAEF.Duik.PseudoEffects.SHAPE_LINKER.apply(l);
-			//expressions
-			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint).expression = '//Duik.bone\n' +
-				'var l = null;\n' +
-				'try {l = thisProperty.propertyGroup()(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer + ')} catch (e) {};\n' +
-				'var result = value;\n' +
-				'if (l != null) {\n' +
-				'result = l.toWorld(l.anchorPoint);\n' +
-				'result = fromWorld(result);\n' +
-				'}\n' +
-				'result;';
-
-			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint).expression = '//Duik.bone\n' +
-				'var l = null;\n' +
-				'var fx = thisProperty.propertyGroup();\n' +
-				'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer + ')} catch (e) {};\n' +
-				'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
-				'if (l != null) {\n' +
-				'result = l.toWorld(l.anchorPoint);\n' +
-				'result = fromWorld(result);\n' +
-				'}\n' +
-				'result;';
-
-			effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint).expression = '//Duik.bone\n' +
-				'var l = null;\n' +
-				'var fx = thisProperty.propertyGroup();\n' +
-				'try {l = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer + ')} catch (e) {};\n' +
-				'var result = value + fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
-				'if (l != null) {\n' +
-				'result = l.toWorld(l.anchorPoint);\n' +
-				'result = fromWorld(result);\n' +
-				'}\n' +
-				'result;';
-
-			effect.name = name;
-		}
-		return effect;
-	}
-
 	var pathPath = DuAEF.DuAE.Property.getExpressionLink(prop,true);
 	var pathPoints = prop.value.vertices;
 	var pathInTangents = prop.value.inTangents;
@@ -376,7 +392,7 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 
 		//add effect
 		var effectName = 'B | ' + prop.parentProperty.name + " - " + i;
-		var effect = createControl(layer,effectName);
+		var effect = DuAEF.Duik.Bone.createShapeControl(layer,effectName);
 		effect(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(newBone.layer.index);
 		bones.push(newBone);
 
@@ -419,7 +435,9 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 		}
 	}
 
-	prop.expression = '//Duik.shapeLinker\n' +
+
+
+	var exp = '//Duik.shapeLinker\n' +
 		'var origPath = thisProperty;\n' +
 		'var origPoints = origPath.points();\n' +
 		'var origInTang = origPath.inTangents();\n' +
@@ -431,13 +449,16 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 		'{\n' +
 		'var fx = effect(i);\n' +
 		'if (fx.name.indexOf(fxName) == 0)\n' +
-		'{\n' +
-		'origPoints[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n' +
-		'origInTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint + ')-fx(1);\n' +
+		'{\n';
+	if (layer instanceof ShapeLayer) exp += 'origPoints[i-1] = fromWorld(fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + '));\n';
+	else exp += 'origPoints[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n';
+	exp += 'origInTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint + ')-fx(1);\n' +
 		'origOutTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint + ')-fx(1);\n' +
 		'}\n' +
 		'}\n' +
 		'createPath(origPoints,origInTang,origOutTang,closed);';
+
+	prop.expression = exp;
 
 	return bones;
 }
@@ -459,6 +480,9 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 
 	var propInfo = new PropertyInfo(prop);
 	prop = propInfo.getProperty();
+
+	var layer = propInfo.layer;
+	var comp = layer.containingComp;
 
 	if (prop.matchName == 'ADBE FreePin3 PosPin Atom')
 	{
@@ -492,32 +516,32 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		}
 
 		//position
-		bone.layer.transform.position.expression = 'thisComp.layer(' + layer.index + ').toWorld(thisComp.layer(' + layer.index + ').effect(' + parentProp.propertyIndex + ')(' + prop.propertyIndex + '));';
-		DuAEF.DuAE.Property.removeExpression(bone.layer.transform.position);
+		bone.layer.transform.position.setValue( DuAEF.DuAE.Layer.getWorldPos(layer,prop.value) );
 
 		var baseName = DuAEF.Duik.generateName('B',' | ' + layer.name + ' | ' + DuAEF.Duik.removeDuikPrefix(parentProp.name));
 
 		if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint)
 		{
 			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(bone.layer.index);
+			DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, true);
 			bone.layer.name = baseName;
 		}
 		else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint)
 		{
 			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(bone.layer.index);
+			DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, false, true);
 			bone.layer.name = baseName + " | In";
 		}
 		else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint)
 		{
 			parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(bone.layer.index);
+			DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, false, false, true);
 			bone.layer.name = baseName + " | Out";
 		}
 
 		return [bone];
 	}
 
-	var layer = propInfo.layer;
-	var comp = layer.containingComp;
 	//create bone
 	bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.PIN);
 	bone.layer.moveBefore(layer);
@@ -710,4 +734,16 @@ DuAEF.Duik.Bone.linkToBone = function (prop, boneLayer, keepOffset)
 			'result;';
 	}
 	prop.expression = exp;
+}
+
+/**
+* Links a bezier path to a set of layers
+* @param {Property|PropertyInfo} prop - The bezier path to link
+* @param {Layer} vertexLayers - The parent layer for vertices
+* @param {Layer} [inTangentLayers] - The parent layer for inTangents. If not provided or empty array, will link tangents to the effect on vertexLayers
+* @param {Layer} [outTangentLayers] - The parent layer for outTangents
+*/
+DuAEF.Duik.Bone.shapeToBone = function (prop, vertexLayers, inTangentLayers, outTangentLayers)
+{
+
 }
