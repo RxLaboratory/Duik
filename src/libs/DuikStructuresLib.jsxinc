@@ -326,6 +326,24 @@ DuAEF.Duik.Structure.size = 100;
 * @default DuAEF.DuJS.Color.Colors.RANDOM
 */
 DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
+/**
+* Whether to auto link bezier paths to structure elements on creation
+* @type {bool}
+* @default true
+*/
+DuAEF.Duik.Structure.linkPaths = true;
+/**
+* Whether to auto link puppet pins to structure elements on creation
+* @type {bool}
+* @default true
+*/
+DuAEF.Duik.Structure.linkPins = true;
+/**
+* Whether to auto link layers to structure elements on creation
+* @type {bool}
+* @default true
+*/
+DuAEF.Duik.Structure.linkLayers = true;
 
 /**
  * Creates structures in a composition.
@@ -335,9 +353,10 @@ DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
  * @param {CompItem} [comp] - The composition where to create the Structure. Default is the active item, if it's a comp.
  * @param {string} [name="Name"] - The name of the structure (used as layer names)
  * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+ * @param {bool} [forceLink=false] - When true, the selected items will be linked to the structure elements, no matter the value of {@link DuAEF.Duik.Structure.linkPaths}, {@link DuAEF.Duik.Structure.linkPins}, and {@link DuAEF.Duik.Structure.linkLayers}.
  * @return {Structure[]} The Structures
  */
-DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum)
+DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
 {
 	if (typeof num === 'undefined') num = 2;
 	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
@@ -402,7 +421,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum)
 			{
 				new Iterator(propsLayer).do( function (prop)
 				{
-					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop, num, forceNum) );
+					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop, num, forceNum, forceLink) );
 				});
 				return;
 			}
@@ -410,7 +429,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum)
 			//puppet pins
 			if (propsLayer[0].matchName == "ADBE FreePin3 PosPin Atom")
 			{
-				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer, num, forceNum) );
+				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer, num, forceNum, forceLink) );
 				return;
 			}
 
@@ -420,7 +439,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum)
 				new Iterator(propsLayer).do( function (prop)
 				{
 					if (prop.matchName != "ADBE FreePin3") return;
-					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop, num, forceNum) );
+					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop, num, forceNum, forceLink) );
 				});
 				return;
 			}
@@ -428,7 +447,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum)
 
 		if (structures.length == 0)
 		{
-			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers, num, forceNum) );
+			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers, num, forceNum, forceLink) );
 		}
 	}
 
@@ -527,7 +546,7 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 * @param {int}	[id] - An identifier for this structure
 * @return {Structure} The new Structure
 */
-DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum, id)
+DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum, forceLink, id)
 {
 	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
 	if (!propInfo) throw "Expected a shape property, got another type of value.";
@@ -576,7 +595,7 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
 * @return {Structure} The new Structure
 */
-DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, id)
+DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, forceLink, id)
 {
 	if (typeof id === 'undefined') id = new Date().getTime();
 	if (typeof forceNum === 'undefined') forceNum = false;
@@ -616,7 +635,7 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, id)
 		if (!moveLayers) break;
 	}
 
-	//move to the layers and rename
+	//move to the layers, rename and parent
 	var count = numElements;
 	if (layers.length <= numElements) count = layers.length-1;
 	for (var i = 0, num = count; i <= num; i++)
@@ -629,6 +648,11 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, id)
 			element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layers[i]));
 			structure.elements[i].moved = true;
 			if (i > 0) element.parent = structure.elements[i-1];
+		}
+
+		if (forceLink || DuAEF.Duik.Structure.linkLayers)
+		{
+			layers[i].parent = element;
 		}
 
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + layers[i].name, comp);
@@ -646,7 +670,7 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, id)
 * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
 * @return {Structure} The new Structure
 */
-DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, forceNum, id)
+DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, forceNum, forceLink, id)
 {
 	var propInfo = new PropertyInfo(puppetEffect);
 	puppetEffect = propInfo.getProperty();
@@ -666,7 +690,7 @@ DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, f
 		}
 	}
 
-	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, num, forceNum, id);
+	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, num, forceNum, forceLink, id);
 
 	return structure;
 }
@@ -678,7 +702,7 @@ DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, f
 * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
 * @return {Structure} The new Structure
 */
-DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, forceNum, id)
+DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, forceNum, forceLink, id)
 {
 	if (typeof id === 'undefined') id = new Date().getTime();
 	if (typeof forceNum === 'undefined') forceNum = false;
@@ -998,7 +1022,7 @@ DuAEF.Duik.Structure.selectStructures = function (comp, selectionMode)
  * @param {boolean} [symetry=false] - changes the coordinates of the humerus, applying a symetry on the shoulder (if any).
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,left,type,comp,originPosition,symetry)
+DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,left,type,comp,originPosition,symetry, forceLink)
 {
 	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return null;
@@ -1025,7 +1049,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 
 	if (numElements == 0) return null;
 
-	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp,undefined,true) );
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp,undefined,true, forceLink) );
 
 	structures.do(function (structure)
 	{
@@ -1160,7 +1184,7 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
  * @param {Number[]} [originPosition] - The coordinates in the comp of the first element of the structure.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,originPosition)
+DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,originPosition, forceLink)
 {
 	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return null;
@@ -1184,7 +1208,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 
 	if (numElements == 0) return null;
 
-	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true) );
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true, forceLink) );
 	structures.do(function (structure)
 	{
 		//name and move
@@ -1287,7 +1311,7 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
  * @param {Number[]} [originPosition] - The coordinates in the comp of the first element of the structure.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,originPosition)
+DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,originPosition, forceLink)
 {
 	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return null;
@@ -1306,7 +1330,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 
 	if (numElements == 0) return null;
 
-	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true) );
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true, forceLink) );
 	structures.do(function (structure)
 	{
 		//name and move
@@ -1383,7 +1407,7 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
  * @param {CompItem} [comp] - The composition where to create the structure. By default, will try with the active item, if any.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createTail = function(elementCount,comp)
+DuAEF.Duik.Structure.createTail = function(elementCount,comp, forceLink)
 {
 	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return null;
@@ -1392,7 +1416,7 @@ DuAEF.Duik.Structure.createTail = function(elementCount,comp)
 	if (elementCount === undefined) elementCount = 3;
 	if (elementCount == 0) return;
 
-	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(elementCount,comp, undefined, true) );
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(elementCount,comp, undefined, true, forceLink) );
 	structures.do(function (structure)
 	{
 		var tailLayer = [];
