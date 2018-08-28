@@ -2,6 +2,33 @@
 
 # Create structures
 
+There are several ways to create _Structures_ with Duik, depending on what you need.  
+As all the other tools in Duik Bassel, **the _Struture_ creation tools try to be smart, and change their behaviour depending on the context** (i.e. the current selection in the current composition).
+
+You can create either complete characters (e.g. Homonoïds...), single limbs (e.g. Arms, Legs...), or custom structures. **Except for complete characters**, the way the _Structures_ are created will change depending on the selection.
+
+Complete characters are always created in the center of the composition, and nothing is linked to the new _Structure_, you'll have to make the links between the artwork and the Structures by yourself later.
+
+Without any selection in the composition, predefined limbs and custom _Structures_ will also be created in the center of the composition, but with a selection, they will be moved to the selected properties or layers, which, by default, will be linked to the _Structure elements_.
+
+**If Bezier path properties (i.e. mask path or shape path) are selected, one _Structure_ will be created for each path**, with one _Structure element_ for each vertex of the path.  
+Vertex and tangents will both be linked to the corresponding _Structure elements_, but there is no individual control for tangents. You can create them later if you need with the [_Bones_](bones.md) tool.
+
+!!! note
+    As _Structures_ **can** be created on a bezier path with any version of After Effects, paths can be linked back to the _Structures_ only on After Effects CC2018 and newer.
+
+**If puppet pins are selected, one Structure will be created for each layer**, with one _Structure element_ for each puppet pin. The order of the elements of the _Structure_ depends on the order of the pins in the layer stack. You can re-order them before creating the _Structure_ to adjust how the _Structure_ is created and parented.  
+Puppet pins will be linked to the corresponding _Structure elements_.
+
+**If layers are selected, without any other property, one _Structure_ will be created**. Each _Structure element_ will be moved to a corresponding layer, and the layer will be parented to it.
+
+!!! note
+    If there are selected layers with their anchor points at the same location in the composition, the _Structure_ will not use the layers' position, and layers will not be parented, to avoid weird issues happening when layers share the same anchor point in the same _Structure_ chain.
+
+!!! hint
+    You can separately deactivate the automatic linking of layers, pins and paths to the _Structure elements_ in the [edition panel](structure-tools.md#edit-structures) of the _Structures_.  
+    In this case, holding the [Ctrl] key when creating Structures will enable you to temporarily force this automatic linking.
+
 !!! warning
     Never duplicate nor copy and paste _Structures_ in After Effects, always create new _Structures_ or use the [_Duplicate_](structure-tools.md#duplicate-structures) button in the _Structures_ panel of Duik.
 
