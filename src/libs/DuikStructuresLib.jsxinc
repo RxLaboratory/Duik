@@ -358,20 +358,12 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name)
 	if (layers.length > 0)
 	{
 		var propsByLayer = [];
-		onLayers = true;
 		var layerPositions = [];
 
 		//get selected props
 		var it = new Iterator(layers);
 		it.do(function(layer)
 		{
-			//check if there are layers at the same location
-			if (onLayers)
-			{
-				layerPositions.push(layer.transform.position.value);
-				onLayers = !DuAEF.DuJS.Array.hasDuplicates(layerPositions);
-			}
-
 			//get paths
 			var props = DuAEF.DuAE.Layer.getSelectedProps(layer,pathsFilter);
 			if (props.length > 0)
@@ -432,7 +424,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name)
 			}
 		});
 
-		if (structures.length == 0 && onLayers)
+		if (structures.length == 0)
 		{
 			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers) );
 		}
@@ -578,16 +570,44 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, id)
 		color = DuAEF.DuJS.Color.random();
 	}
 
+	var comp = layers[0].containingComp;
+
 	var structure = DuAEF.Duik.Structure.addStructure(layers.length - 1,comp,undefined,id);
 
-	//move to the layers
+	//check if there are layers at the same location
+	var moveLayers = true;
+
+	for (var l = 0, numLayers = layers.length; l < numLayers; l++)
+	{
+		var layer = layers[l];
+		var pos =  DuAEF.DuAE.Layer.getWorldPos(layer);
+		//check if there is another layer at this position
+		for (var i = l+1, num = layers.length; i < num; i++)
+		{
+			var layer2 = layers[i];
+			var pos2 = DuAEF.DuAE.Layer.getWorldPos(layer2);
+			if (DuAEF.DuJS.Array.compare(pos2, pos, 0))
+			{
+				moveLayers  = false;
+				break;
+			}
+		}
+		if (!moveLayers) break;
+	}
+
+	//move to the layers and rename
 	for (var i = 0, num = structure.elements.length; i < num; i++)
 	{
 		var element = structure.elements[i];
-		element.parent = null;
-		element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layers[i]));
+
+		if (moveLayers)
+		{
+			element.parent = null;
+			element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layers[i]));
+			if (i > 0) element.parent = structure.elements[i-1];
+		}
+
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + layers[i].name, comp);
-		if (i > 0) element.parent = structure.elements[i-1];
 	}
 
 	return structure;
