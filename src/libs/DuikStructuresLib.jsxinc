@@ -557,6 +557,7 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 
 	var vertices = DuAEF.DuAE.Property.Bezier.verticesToComp(pathProperty);
 	var comp = propInfo.comp;
+	var layer = propInfo.layer;
 	var name = pathProperty.parentProperty.name;
 
 	var color = DuAEF.Duik.Structure.color;
@@ -581,6 +582,24 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 		element.transform.position.setValue(vertices[i]);
 		structure.elements[i].moved = true;
 		if (i > 0) element.parent = structure.elements[i-1];
+	}
+
+	//add bones to the path
+	if (forceLink || DuAEF.Duik.Structure.linkPaths)
+	{
+		DuAEF.Duik.Bone.rigShape(pathProperty, undefined, true, false);
+		//set effects to use structure
+		var currentElement = 0;
+		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+		{
+			var fx = layer('ADBE Effect Parade').property(i);
+			if (fx.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName)
+			{
+				fx(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(structure.elements[currentElement].index);
+				currentElement++;
+				if (currentElement == structure.elements.length) break;
+			}
+		}
 	}
 
 	structure.moved = true;
