@@ -34,6 +34,95 @@ DuAEF.Duik.Rigging.chainTypes =
 }
 
 /**
+* Separates the dimensions of the properties into an effect.<br />
+* Works with 2D, 3D, and colors
+* @param {Property|PropertyInfo} prop - The property
+*/
+DuAEF.Duik.Rigging.separateDimensions = function (prop)
+{
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	var layer = propInfo.layer;
+	var dim = propInfo.dimensions;
+
+	if (dim < 2 || dim > 4) return;
+
+	if (dim == 2)
+	{
+		var pseudo;
+		if (propInfo.isScale) pseudo = DuAEF.Duik.PseudoEffects.TWO_DIMENSIONS_SCALE;
+		else if (propInfo.isAngle) effect; //TODO
+		else pseudo = DuAEF.Duik.PseudoEffects.TWO_DIMENSIONS;
+
+		var effect = pseudo.apply(layer,propInfo.name + " XY");
+
+		prop = propInfo.getProperty();
+
+		//copy values
+		if (prop.numKeys == 0)
+		{
+			effect(pseudo.xSlider).setValue(prop.value[0]);
+			effect(pseudo.ySlider).setValue(prop.value[1]);
+		}
+		else
+		{
+			for (var k = 1, num = prop.numKeys; k <= num; k++)
+			{
+				var time = prop.keyTime(k);
+				var value = prop.keyValue(k);
+				effect(pseudo.xSlider).setValueAtTime(time, value[0]);
+				effect(pseudo.ySlider).setValueAtTime(time, value[1]);
+			}
+		}
+
+		//add expression
+		prop.expression = '//Duik.separateDimensions\n' +
+			'var fx = thisLayer.effect("' + effect.name + '");\n' +
+			'[fx(' + pseudo.xSlider + ').value,fx(' + pseudo.ySlider + ').value];';
+	}
+	else if (dim == 3)
+	{
+		var pseudo;
+		if (propInfo.isScale) pseudo = DuAEF.Duik.PseudoEffects.THREE_DIMENSIONS_SCALE;
+		else if (propInfo.isAngle) effect; //TODO
+		else pseudo = DuAEF.Duik.PseudoEffects.THREE_DIMENSIONS;
+
+		var effect = pseudo.apply(layer,propInfo.name + " XYZ");
+
+		prop = propInfo.getProperty();
+
+		//copy values
+		if (prop.numKeys == 0)
+		{
+			effect(pseudo.xSlider).setValue(prop.value[0]);
+			effect(pseudo.ySlider).setValue(prop.value[1]);
+			effect(pseudo.zSlider).setValue(prop.value[2]);
+		}
+		else
+		{
+			for (var k = 1, num = prop.numKeys; k <= num; k++)
+			{
+				var time = prop.keyTime(k);
+				var value = prop.keyValue(k);
+				effect(pseudo.xSlider).setValueAtTime(time, value[0]);
+				effect(pseudo.ySlider).setValueAtTime(time, value[1]);
+				effect(pseudo.zSlider).setValueAtTime(time, value[2]);
+			}
+		}
+
+		//add expression
+		prop.expression = '//Duik.separateDimensions\n' +
+			'var fx = thisLayer.effect("' + effect.name + '");\n' +
+			'[fx(' + pseudo.xSlider + ').value,fx(' + pseudo.ySlider + ').value, fx(' +  pseudo.zSlider + ').value];';
+	}
+	else if (dim == 4)
+	{
+		//todo color
+	}
+}
+
+/**
 * Adds a zero to a layer
 * @param {Layer} layer - The layer
 * @return {AVLayer} The zero, a null
