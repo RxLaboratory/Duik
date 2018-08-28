@@ -52,7 +52,7 @@ DuAEF.Duik.Rigging.separateDimensions = function (prop)
 	{
 		var pseudo;
 		if (propInfo.isScale) pseudo = DuAEF.Duik.PseudoEffects.TWO_DIMENSIONS_SCALE;
-		else if (propInfo.isAngle) effect; //TODO
+		else if (propInfo.isAngle) pseudo = DuAEF.Duik.PseudoEffects.TWO_DIMENSIONS_ANGLE;
 		else pseudo = DuAEF.Duik.PseudoEffects.TWO_DIMENSIONS;
 
 		var effect = pseudo.apply(layer,propInfo.name + " XY");
@@ -85,7 +85,7 @@ DuAEF.Duik.Rigging.separateDimensions = function (prop)
 	{
 		var pseudo;
 		if (propInfo.isScale) pseudo = DuAEF.Duik.PseudoEffects.THREE_DIMENSIONS_SCALE;
-		else if (propInfo.isAngle) effect; //TODO
+		else if (propInfo.isAngle) pseudo = DuAEF.Duik.PseudoEffects.THREE_DIMENSIONS_ANGLE;
 		else pseudo = DuAEF.Duik.PseudoEffects.THREE_DIMENSIONS;
 
 		var effect = pseudo.apply(layer,propInfo.name + " XYZ");
@@ -118,7 +118,39 @@ DuAEF.Duik.Rigging.separateDimensions = function (prop)
 	}
 	else if (dim == 4)
 	{
-		//todo color
+		var pseudo = DuAEF.Duik.PseudoEffects.COLOR;
+		var effect = pseudo.apply(layer,propInfo.name + " RGB/HSL");
+		effect(pseudo.channelsPopup).setValue(2);
+		prop = propInfo.getProperty();
+
+		//copy values
+		if (prop.numKeys == 0)
+		{
+			var color = prop.value;
+			color = DuAEF.DuJS.Color.rgbToHsl(color);
+			effect(pseudo.xSlider).setValue(color[0]);
+			effect(pseudo.ySlider).setValue(color[1]);
+			effect(pseudo.zSlider).setValue(color[2]);
+		}
+		else
+		{
+			for (var k = 1, num = prop.numKeys; k <= num; k++)
+			{
+				var time = prop.keyTime(k);
+				var value = prop.keyValue(k);
+				value = DuAEF.DuJS.Color.rgbToHsl(value);
+				effect(pseudo.xSlider).setValueAtTime(time, value[0]);
+				effect(pseudo.ySlider).setValueAtTime(time, value[1]);
+				effect(pseudo.zSlider).setValueAtTime(time, value[2]);
+			}
+		}
+
+		//add expression
+		prop.expression = '//Duik.separateDimensions\n' +
+			'var fx = thisLayer.effect("' + effect.name + '");\n' +
+			'var color = [fx(' + pseudo.xSlider + ').value,fx(' + pseudo.ySlider + ').value, fx(' +  pseudo.zSlider + ').value, 1];\n' +
+			'if (fx(' + pseudo.channelsPopup + ').value == 2) hslToRgb(color);\n' +
+			'else color;\n';
 	}
 }
 
