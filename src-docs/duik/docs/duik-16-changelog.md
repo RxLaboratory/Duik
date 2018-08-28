@@ -10,7 +10,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### Improvements
 
-- The *Connector* can now be used in a single click (creates a controller layer automatically).
+- The _Connector_ can now be used in a single click (creates a controller layer automatically).
+- When _Structures_ are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
 
 ## 16.0.5
 
