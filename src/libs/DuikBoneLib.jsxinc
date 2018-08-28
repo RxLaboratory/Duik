@@ -460,8 +460,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 	var propInfo = new PropertyInfo(prop);
 	prop = propInfo.getProperty();
 
-	try { prop.matchName; } catch (e) {return bones;}
-
 	if (prop.matchName == 'ADBE FreePin3 PosPin Atom')
 	{
 		prop = prop.position;
@@ -477,32 +475,6 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 	if (prop.propertyValueType == PropertyValueType.SHAPE && DuAEF.DuAE.App.version < 15) return bones;
 
 	if (prop.propertyValueType == PropertyValueType.SHAPE) return DuAEF.Duik.Bone.rigShape(prop,size,tangents,true);
-
-	var layer = DuAEF.DuAE.Property.getLayer(prop);
-	var comp = layer.containingComp;
-
-	//create effect function
-	function createControl(l,name)
-	{
-		//check if an effect already exists
-		var effect = null;
-
-		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
-		{
-			var fx = layer('ADBE Effect Parade').property(i);
-			if (fx.matchName == DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER && fx.name == name)
-			{
-				effect = fx;
-				break;
-			}
-		}
-		if (effect == null)
-		{
-			effect = DuAEF.DuAE.Layer.addPseudoEffect(l,DuAEF.Duik.PseudoEffects.BONE_LINKER,DuAEF.Duik.PseudoEffectsMatchNames.BONE_LINKER);
-			effect.name = name;
-		}
-		return effect;
-	}
 
 	//if Shape controller Effect
 	var parentProp = prop.parentProperty;
@@ -544,63 +516,19 @@ DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
 		return [bone];
 	}
 
-	//add effect
-	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
-	var effect = createControl(layer,effectName);
-	var bone = null;
-
-	if (effect(1).value != 0 && effect(1).value != layer.index ) bone = new Bone(comp.layer(effect(1).value));
-	prop = propInfo.getProperty();
-
+	var layer = propInfo.layer;
+	var comp = layer.containingComp;
 	//create bone
-	if (bone == null)
-	{
-		bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.PIN);
-		bone.layer.moveBefore(layer);
-		//rename bone
-		var name = "B | " + layer.name;
-		if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
-		if (name.length > 80 && prop.parentProperty != undefined) name = "B | " + prop.parentProperty.name;
-		bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
-	}
+	bone = DuAEF.Duik.Bone.createBone(comp,size,DuAEF.Duik.Bone.BoneTypes.PIN);
+	bone.layer.moveBefore(layer);
+	//rename bone
+	var name = "B | " + layer.name;
+	if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
+	if (name.length > 80 && prop.parentProperty != undefined) name = "B | " + prop.parentProperty.name;
+	bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
 
-	//move the bone to the prop
-	if (!(layer instanceof ShapeLayer))
-	{
-		var matrix = DuAEF.DuAE.Layer.getTransformMatrix(layer);
-		var pos = matrix.applyToPoint(prop.value);
-		bone.layer.position.setValue(pos);
-	}
-	else
-	{
-		bone.layer.position.setValue(prop.value);
-	}
-
-	effect(1).setValue(bone.layer.index);
-	effect(2).expression = 'try { effect("' + effect.name + '")(1).effect("Bone")(1) } catch (e){}';
-
-	//add expression
-	if (layer instanceof ShapeLayer)
-	{
-		prop.expression = '//Duik.bone\n' +
-		 				'var l = null;\n' +
-						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-						'var result = value;\n' +
-						'if (l != null) { result = l.toWorld(l.anchorPoint); }\n' +
-						'result;';
-	}
-	else
-	{
-		prop.expression = '//Duik.bone\n' +
-		 				'var l = null;\n' +
-						'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-						'var result = value;\n' +
-						'if (l != null) {\n' +
-						'result = l.toWorld(l.anchorPoint);\n' +
-						'result = fromWorld(result);\n' +
-						'}\n' +
-						'result;';
-	}
+	//link bone
+	DuAEF.Duik.Bone.linkToBone(prop, bone.layer, false);
 
 	return [bone];
 }
@@ -665,4 +593,123 @@ DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
 		bones.push(new Bone(layer));
 	})
 	return bones;
+}
+
+/**
+* Links a spatial property to a layer
+* @param {Property|PropertyInfo} prop - The property to link
+* @param {Layer} boneLayer - The parent layer
+* @param {bool} [keepOffset=true] - True to not move the parent layer to the position of the property
+*/
+DuAEF.Duik.Bone.linkToBone = function (prop, boneLayer, keepOffset)
+{
+	if (typeof tangents === 'undefined') tangents = true;
+
+	if (!Object.isValid(prop)) return;
+
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	if (prop.matchName == 'ADBE FreePin3 PosPin Atom')
+	{
+		prop = prop.property("ADBE FreePin3 PosPin Position");
+		if (!prop.riggable) return;
+		propInfo = new PropertyInfo(prop);
+	}
+
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
+	{
+		return;
+	}
+
+	var layer = propInfo.layer;
+	var comp = layer.containingComp;
+
+	//create effect function
+	function createControl(l,name)
+	{
+		//check if an effect already exists
+		var effect = null;
+
+		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+		{
+			var fx = layer('ADBE Effect Parade').property(i);
+			if (fx.matchName == DuAEF.Duik.PseudoEffects.BONE_LINKER.matchName && fx.name == name)
+			{
+				effect = fx;
+				break;
+			}
+		}
+		if (effect == null)
+		{
+			effect = DuAEF.Duik.PseudoEffects.BONE_LINKER.apply(l);
+			effect.name = name;
+		}
+		return effect;
+	}
+
+	//add effect
+	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
+	var effect = createControl(layer,effectName);
+
+	var originalPos = DuAEF.DuAE.Layer.getWorldPos(boneLayer);
+
+	prop = propInfo.getProperty();
+
+	//move the layer to the prop
+	if (!keepOffset)
+	{
+		if (!(layer instanceof ShapeLayer))
+		{
+			var matrix = DuAEF.DuAE.Layer.getTransformMatrix(layer);
+			var pos = matrix.applyToPoint(prop.value);
+			var parent = boneLayer.parent;
+			boneLayer.parent = null;
+			boneLayer.position.setValue(pos);
+			boneLayer.parent = parent;
+		}
+		else
+		{
+			var parent = boneLayer.parent;
+			boneLayer.parent = null;
+			boneLayer.position.setValue(prop.value);
+			boneLayer.parent = parent;
+		}
+	}
+
+	effect(DuAEF.Duik.PseudoEffects.BONE_LINKER.boneLayer).setValue(boneLayer.index);
+
+	//add expression
+	var exp = '';
+	if (layer instanceof ShapeLayer)
+	{
+		exp = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = l.toWorld(l.anchorPoint);\n';
+
+		if (keepOffset) exp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		exp += '}\n' +
+			'result;';
+	}
+	else
+	{
+		exp = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = l.toWorld(l.anchorPoint);\n';
+
+		if (keepOffset) exp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		exp += 'result = fromWorld(result);\n' +
+			'}\n' +
+			'result;';
+	}
+
+	prop.expression = exp;
 }
