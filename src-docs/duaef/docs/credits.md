@@ -22,6 +22,7 @@ Adam Szczepański – Polish
 
 ### User Guide and Wiki
 
+[Claude Autret](http://jissse.com)
 [Pixelbakery](https://github.com/pixelbakery)  
 Assia Chioukh  
 Quentin Saint-Georges
@@ -37,10 +38,9 @@ Quentin Saint-Georges
 
 [Lars Jandel](http://www.larsjandel.de/) - ScriptUI & performance improvements  
 [Dan Ebberts](http://motionscript.com/) - Writing the first IK Expressions  
-Eric Epstein - making the IK's work with 3D Layers  
+Eric Epstein - making the IK work with 3D Layers  
 Kevin Schires – Including images in the script  
 Matias Poggini – Bezier IK feature  
-Eric Epstein - Making the IK work with 3D Layers
 
 ### Special Thanks
 

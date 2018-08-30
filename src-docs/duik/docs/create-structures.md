@@ -35,15 +35,18 @@ For each limb you can create with Duik, you have to choose the type of walking a
 
 Creates a *Structure* for the arm or the front leg of a quadruped.
 
-Click the '+' button to adjust the settings for the arm.
+Click the ○ button to adjust the settings for the arm.
 
 You can check which part of the limb is present on your character. The autorig will adapt to every configuration, but using all of them (except for claws when rigging humans) can ensure a nice rig and a more realistic animation.
+
+![Arm Animation](img/examples/parent-structure.gif)  
+_Animation by [Jissse](http://jissse.com)_  
 
 ## Leg
 
 Creates a *Structure* for the (rear) leg of a biped or a quadruped.
 
-Click the '+' button to adjust the settings for the leg.
+Click the ○ button to adjust the settings for the leg.
 
 The autorig will adapt to every configuration, but using all of them can ensure a nice rig and a more realistic animation (with a proper foot roll).
 
@@ -51,7 +54,7 @@ The autorig will adapt to every configuration, but using all of them can ensure 
 
 Creates a *Structure* for the spine of any vertebrate.
 
-Click the '+' button to adjust the settings for the spine.
+Click the ○ button to adjust the settings for the spine.
 
 You can check which part of the spine is present on your character.
 You can divide the spine and the neck in as many layers as you want (or none).
@@ -61,13 +64,17 @@ The autorig will adapt to every configuration.
 
 Create a *Structure* for the tail of any animal.
 
-Click the '+' button to adjust the settings for the tail.
+Click the ○ button to adjust the settings for the tail.
 
 You can divide the tail in as many layers as you want.
 The autorig will adapt to every configuration.
 
+![Fish illustration](img/examples/carpes-structures.jpg)  
+_Illustration by [Jissse](http://jissse.com)_  
+With tails, you can even rig fishes very easily.
+
 !!! tip
-    In the Autorig options, you can choose between rigging tails using Bezier IK controls or FK (with automatic follow through and overlap) controls. The latter achieves a natural motion more easily, but IK could be needed in some cases, like if the tail interacts with anything else.
+    In the Autorig options, you can choose between rigging tails using [Bezier IK](autorig.md#bezier-ik-multi-layer-spine-tails) controls or [FK (with automatic follow through and overlap)](autorig.md#fk-with-follow-through-overlap-and-drag-tails) controls. The latter achieves a natural motion more easily, but IK could be needed in some cases, like if the tail interacts with anything else.
 
 ## Custom Structure
 

@@ -1,10 +1,10 @@
-# Parent Link
+# Parent Constraint
 
-The Parent Link tool replaces the native parenting of After Effects and allows to animate those links.
+The Parent Constraint tool replaces the native parenting of After Effects and allows to animate those links.
 
 Its use is very simple: just select a layer and click on the "Parent Link" button.
 
-![Parent GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/Parent-link-ctrl-2.gif)
+![Parent Animation](img/examples/parent-2.gif)
 
 In the effects of the layer, you can set its parent, and animate a weight if needed. You can duplicate the effect to link the layer to other layers as well.
 

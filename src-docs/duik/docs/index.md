@@ -11,6 +11,11 @@ Duik also has some other useful tools, such as camera controls, that are not sol
 
 Duik’s comprehensiveness and ease of use have made it a script used in numerous movies across the world.
 
+_This is the 2017 showreel with extracts from films animated with Duik:_
+![VIMEO](209004708)
+
+[_You can also watch the 2015 showreel here_](https://vimeo.com/136667657)
+
 ## Why is it called Bassel?
 
 [Learn why this version of Duik is called Bassel](bassel.md).
