@@ -3,7 +3,7 @@
 The ***Constraints*** panel contains all necessary tools to rig characters, props, animations in After Effects.  
 These are the tools you can use after you have created some Structures, to make them move as you wish, and manipulate them with handy controllers.
 
-![Constraints GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/Parent-link-ctrl-2.gif)
+![Constraints GIF](img/examples/parent-2.gif)
 
 ## Panel
 
