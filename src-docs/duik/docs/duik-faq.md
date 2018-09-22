@@ -98,6 +98,10 @@ It is not possible to scale the rig itself yet without adjusting some expression
 You can then animate from outside of the precomp, with the extracted controllers, AND you can scale the precomposition layer to scale the rig (the controllers will follow).  
 We think this is a good workaround, you just have to take care of the resolution as it's a precompositon (and rasterization may not work properly with the rig), scaling up will damage it a bit, but scaling it down is ok.
 
+### How can I use the _connector_ to connect a single slave property to multiple master properties?
+
+As most of the tools in Duik, the [_connector_](connector.md) uses expressions to connect the properties, and multiple expressions can not be easily combined into a single property. But there are work arounds! Read [this section](connector.md#multiple-connections) of the [_connector_ documentation](connector.md) to learn how to achieve this.
+
 ### What can I do to make Duik work better with imported vector layers (illustrator, SVG, flash...) with continuous rasterization activated?
 
 After Effects’ puppet tool (and Duik bones) is a pixel tool, but using continuous rasterization is using vector layers, so this raises some issues which are difficult to work around.
