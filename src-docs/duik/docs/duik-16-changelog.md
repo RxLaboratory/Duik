@@ -17,6 +17,13 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - If there was a selection (path, pins or layers) in the composition when creating _Structures_, Duik will automatically link the selection to the _Structures_.
 - The head controller with the _Autorig_ now controls the head position too.
 
+## 16.0.6
+
+#### Fixes
+
+- [*Random*](random.md) tool now correctly sets values on animated properties.
+- Fixed a bunch of minor bugs, stability improved.
+
 ## 16.0.5
 
 #### New
