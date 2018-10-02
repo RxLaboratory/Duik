@@ -419,35 +419,46 @@ DuAEF.Duik.Rigging.parentConstraint = function (layer)
 {
 	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.PARENT,DuAEF.Duik.PseudoEffectsMatchNames.PARENT,'Parent link');
 
-	layer.position.expression = '//Duik.parent\n' +
-							'function getParentTransform(l,origin,sF,eF)\n' +
-							'{\n' +
-							'var sT = framesToTime(sF);\n' +
-							'var eT = framesToTime(eF);\n' +
-							'var pos = l.fromWorld( origin , sT ) ;\n' +
-							'var prevPos = l.toWorld( pos , sT );\n' +
-							'var newPos =  l.toWorld( pos , eT );\n' +
-							'return newPos - prevPos;\n' +
-							'}\n' +
-							'var result = valueAtTime(0);\n' +
-							'var cF = 1;\n' +
-							'while (cF <= timeToFrames())\n' +
-							'{\n' +
-							'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
-							'{\n' +
-							'var fx = effect(i);\n' +
-							'if (fx.name.indexOf("Parent link") != 0) continue;\n' +
-							'if (!fx(4).value) continue;\n' +
-							'try { var parentLayer = fx(1); } catch (e){ continue; }\n' +
-							'if (parentLayer.index == index) continue;\n' +
-							'var weight = fx(2).valueAtTime( framesToTime(cF) ) / 100;\n' +
-							'if (weight == 0) continue;\n' +
-							'result += getParentTransform( parentLayer , result , cF-1 , cF )*weight;\n' +
-							'}\n' +
-							'result += valueAtTime(framesToTime(cF)) - valueAtTime(framesToTime(cF-1));\n' +
-							'cF++;\n' +
-							'}\n' +
-							'result;'
+	var posExpr = '//Duik.parent\n' +
+		'function getParentTransform(l,origin,sF,eF)\n' +
+		'{\n' +
+		'var sT = framesToTime(sF);\n' +
+		'var eT = framesToTime(eF);\n' +
+		'var pos = l.fromWorld( origin , sT ) ;\n' +
+		'var prevPos = l.toWorld( pos , sT );\n' +
+		'var newPos =  l.toWorld( pos , eT );\n' +
+		'return newPos - prevPos;\n' +
+		'}\n' +
+		'var result = thisLayer.position.valueAtTime(0);\n' +
+		'var cF = 1;\n' +
+		'while (cF <= timeToFrames())\n' +
+		'{\n' +
+		'for (var i = 1 ; i <= thisLayer("Effects").numProperties ; i++)\n' +
+		'{\n' +
+		'var fx = effect(i);\n' +
+		'if (fx.name.indexOf("Parent link") != 0) continue;\n' +
+		'if (!fx(4).value) continue;\n' +
+		'try { var parentLayer = fx(1); } catch (e){ continue; }\n' +
+		'if (parentLayer.index == index) continue;\n' +
+		'var weight = fx(2).valueAtTime( framesToTime(cF) ) / 100;\n' +
+		'if (weight == 0) continue;\n' +
+		'result += getParentTransform( parentLayer , result , cF-1 , cF )*weight;\n' +
+		'}\n' +
+		'result += valueAtTime(framesToTime(cF)) - valueAtTime(framesToTime(cF-1));\n' +
+		'cF++;\n' +
+		'}\n' +
+		'result;';
+
+	if (layer.position.dimensionsSeparated)
+	{
+		layer.transform.xPosition.expression = posExpr + '\nresult[0];';
+
+		layer.transform.yPosition.expression = posExpr + '\nresult[1];';
+	}
+	else
+	{
+		layer.position.expression = posExpr;
+	}
 
 	layer.rotation.expression = '//Duik.parent\n' +
 						'function o(l,t)\n' +

@@ -22,6 +22,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### Fixes
 
 - [*Random*](random.md) tool now correctly sets values on animated properties.
+- [*Parent Constraint*](parent-constraint.md) now works when the dimensions of the position are separated.
 - Fixed a bunch of minor bugs, stability improved.
 
 ## 16.0.5
