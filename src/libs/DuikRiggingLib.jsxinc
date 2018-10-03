@@ -516,20 +516,38 @@ DuAEF.Duik.Rigging.pathConstraint = function (layer,path)
 {
 	if (path instanceof PropertyInfo) path = path.getProperty();
 
-	var effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.PATH,DuAEF.Duik.PseudoEffectsMatchNames.PATH,'Path constraint');
+	var effect = DuAEF.Duik.PseudoEffects.PATH.apply(layer);
 
 	var l = DuAEF.DuAE.Property.getLayer(path);
 	var pathExpr = DuAEF.DuAE.Property.getExpressionLink(path,true);
 
-	var previous = layer.position.value;
-	layer.position.expression = '//Duik.positionConstraint\n' +
-								'var fx = effect("' + effect.name + '");\n' +
-								'var l = thisComp.layer("' + l.name + '");\n' +
-								'var p = ' + pathExpr + ';\n' +
-								'var percent = fx(1)%100/100;\n' +
-								'p.pointOnPath(percent, time)+l.position+value;';
+	var expr = '//Duik.pathConstraint\n' +
+		'var fx = effect("' + effect.name + '");\n' +
+		'var l = thisComp.layer("' + l.name + '");\n' +
+		'var p = ' + pathExpr + ';\n' +
+		'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.percentSlider + ').value % 100 / 100;\n' +
+		'var result = value;\n' +
+		'result += p.pointOnPath(percent, time)+l.position;';
 
-	layer.position.setValue(previous - (layer.position.value-previous));
+	DuAEF.DuAE.Property.setExpression(layer.position, expr);
+
+	var expr = '//Duik.pathConstraint\n' +
+		'var fx = effect("' + effect.name + '");\n' +
+		'var autoOrient = fx(' + DuAEF.Duik.PseudoEffects.PATH.orientCheckbox + ').value;\n' +
+		'var result = value;\n' +
+		'if (autoOrient)\n' +
+		'{\n' +
+		'var p = ' + pathExpr + ';\n' +
+		'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.percentSlider + ').value % 100 / 100;\n' +
+		'var C = p.tangentOnPath(percent, time);\n' +
+		'var angle = Math.atan2(C[1], C[0]);\n' +
+		'angle = radiansToDegrees(angle);\n' +
+		'angle = angle;\n' +
+		'result += angle;\n' +
+		'}\n' +
+		'result;';
+
+	DuAEF.DuAE.Property.setExpression(layer.rotation, expr);
 }
 
 /**
