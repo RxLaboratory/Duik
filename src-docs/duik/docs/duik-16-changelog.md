@@ -6,16 +6,19 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New
 
-- A tool to ***Align Layers*** in the rigging tools panel.
-- A tool to ***Separate Dimensions*** of any property, including colors which can be animated both as RGB or HSL.
+- A tool to [***Align Layers***](rigging-tools.md) in the rigging tools panel.
+- A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
+- Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts:  
+    - You can get some [***Property Info***](rigging-tools.md) about the selected property, like its index, its matchName, the expression link to it, etc.
+    - A [***Scriptify expression***](rigging-tools.md) tool makes it quick to include an expression as a string in a .jsx script.
 
 #### Improvements
 
-- The _Connector_ can now be used in a single click (creates a controller layer automatically).
-- The _Connector_ User Interface for the additionnal panel has been improved a bit to be clearer.
-- When _Structures_ are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
-- If there was a selection (path, pins or layers) in the composition when creating _Structures_, Duik will automatically link the selection to the _Structures_.
-- The head controller with the _Autorig_ now controls the head position too.
+- The [_Connector_](connector.md) can now be used in a single click (creates a controller layer automatically).
+- The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer.
+- When [ _Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
+- If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
+- The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 
 ## 16.0.5
 
