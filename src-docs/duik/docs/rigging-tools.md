@@ -2,6 +2,8 @@
 
 A few tools which can be useful in the rigging process are available.
 
+[TOC]
+
 ## Rename
 
 With the "Rename" tool you can rename as many layers, puppet pins or project items at once as you wish.
@@ -28,3 +30,11 @@ In the additionnal panel you can choose to align the layers in *position*, *rota
 ## Remove expressions
 
 Select some properties with expressions to remove the expression, but keeping their current *post-expression value* instead of the *pre-expression value* like After Effects does.
+
+## Get property info
+
+Select one property and click on this button to get some useful information about the property, like its index, its match name, its path in expressions...
+
+## Scriptify expression
+
+Select a property with an expression to convert this expression to a string easy to include in a .jsx script. You can just copy and paste the generated script into your own script to quickly use the expression.
