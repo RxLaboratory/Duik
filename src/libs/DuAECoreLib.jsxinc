@@ -3496,7 +3496,7 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 		if (parentProp.isEffect)
 		{
 			var insideData = 0;
-			for (var p = 1, num =  childProp.numProperties; p <= num ; p++)
+			for (var p = 1, num = childProp.numProperties; p <= num ; p++)
 			{
 				var subProp = parentProp(p);
 				if (subProp.propertyValueType == PropertyValueType.NO_VALUE)
@@ -3509,7 +3509,7 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 
 					if (insideData > 0)
 					{
-						if (subProp.name == parentProp.name) insideData--;
+						if (subProp.name == parentProp.name || subProp.name == "") insideData--;
 						else insideData++;
 						continue;
 					}
@@ -3523,6 +3523,71 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 			{
 				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
 			}
+		}
+	}
+}
+
+/**
+ * Removes all expressions found in groups or sections named "Data" in the property.
+ * @memberof DuAEF.DuAE.Property
+ * @param {PropertyBase} prop - The property
+*/
+DuAEF.DuAE.Property.removeDataExpressions = function (prop)
+{
+	if (prop.propertyType == PropertyType.PROPERTY && prop.name.toLowerCase() == 'data')
+	{
+		DuAEF.DuAE.Property.removeExpression(prop);
+	}
+	else if (prop.isEffect)
+	{
+		var insideData  = 0;
+		for (var p = 1, num = prop.numProperties ; p <= num ; p++)
+		{
+			var subProp = prop(p);
+			if (subProp.propertyValueType == PropertyValueType.NO_VALUE)
+			{
+				if (subProp.name.toLowerCase() == 'data')
+				{
+					insideData++;
+					continue;
+				}
+
+				if (insideData > 0)
+				{
+					if (subProp.name == "" || subProp.name == prop.name) insideData--;
+					else insideData++;
+					continue;
+				}
+			}
+			if (insideData > 0) DuAEF.DuAE.Property.removeExpression(subProp);
+		}
+	}
+	else 
+	{
+		if (prop.name.toLowerCase() == 'data') DuAEF.DuAE.Property.removeExpressions(prop);
+		for (var p = 1, num = prop.numProperties ; p <= num ; p++)
+		{
+			DuAEF.DuAE.Property.removeDataExpressions(prop(p));
+		}
+	}
+}
+
+/**
+ * Removes all expressions found in the property.
+ * @memberof DuAEF.DuAE.Property
+ * @param {PropertyBase} prop - The property
+*/
+DuAEF.DuAE.Property.removeExpressions = function (prop)
+{
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		DuAEF.DuAE.Property.removeExpression(prop);
+	}
+	else 
+	{
+		for (var p = 1, num = prop.numProperties ; p <= num ; p++)
+		{
+			DuAEF.DuAE.Property.removeExpressions(prop(p));
 		}
 	}
 }
@@ -3646,6 +3711,7 @@ DuAEF.DuAE.Property.lock = function(properties)
 */
 DuAEF.DuAE.Property.removeExpression = function(prop)
 {
+	if (!prop.canSetExpression) return;
 	DuAEF.DuAE.Property.setValue(prop, prop.value);
 	prop.expression = '';
 }
