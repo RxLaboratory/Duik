@@ -28,6 +28,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - [*Extract Controllers*](controller-tools.md) now longer has an expression error on foot roll effects.
 - The anchor size of the [*Controllers*](controllers.md) can now be set to 0% without generating an expression error.
 - Fixed the [*Time remap*](animation-tools.md) tool.
+- The parent used in a [*Parent contraint*](parent-constraint.md) can now be scaled to 0% without generating an expression error.
 - Fixed a bunch of minor bugs, stability improved.
 - Overall stability improved (especially regarding composition names and links accross compositions).
 
