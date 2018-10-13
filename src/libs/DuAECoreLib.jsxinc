@@ -2226,12 +2226,15 @@ DuAEF.DuAE.Property.isEditable = function (prop)
 	if (prop.elided) return false;
 	if (prop.dimensionsSeparated) return false;
 
+	var comp = DuAEF.DuAE.Property.getComp(prop);
+	var time = comp.time;
+
 	//try to set a value if there's no keyframe
-	if (prop.numKeys === 0)
+	if (prop.numKeys == 0)
 	{
 		try
 		{
-			prop.setValue(prop.value);
+			prop.setValue(prop.valueAtTime(0,true));
 			return true;
 		}
 		catch (e)
@@ -2886,6 +2889,7 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 	* Sets a value on a property, adjusting the dimensions if needed
 	* @param {Property|PropertyInfo} prop - The property
 	* @param {any} value - The value to set
+	* @return {boolean} True if the value has correctly been set, false otherwise.
 */
 DuAEF.DuAE.Property.setValue = function(prop,value)
 {
@@ -2900,17 +2904,18 @@ DuAEF.DuAE.Property.setValue = function(prop,value)
 	{
 		propInfo = new PropertyInfo(prop);
 	}
-	dimensions = prop.dimensions;
-	editable = prop.editable;
+	dimensions = propInfo.dimensions;
+	editable = propInfo.editable;
 
-	if (prop.isSeparationLeader) if (prop.dimensionsSeparated) return;
-	if (!editable) return;
+	if (prop.isSeparationLeader) if (prop.dimensionsSeparated) return false;
+
+	if (!editable) return false;
 
 	//check dimensions of the property
 	if (dimensions == 0 || dimensions == 1)
 	{
 		if (value instanceof Array) value = value[0];
-		try { prop.setValue(value); } catch (e) { if (DuAEF.debug) alert(e.description); }
+		try { prop.setValue(value); return true; } catch (e) { if (DuAEF.debug) alert(e.description); return false; }
 	}
 	else
 	{
@@ -2923,7 +2928,7 @@ DuAEF.DuAE.Property.setValue = function(prop,value)
 		{
 			value.pop();
 		}
-		try { prop.setValue(value); } catch (e) { if (DuAEF.debug) alert(e.description); }
+		try { prop.setValue(value); return true; } catch (e) { if (DuAEF.debug) alert(e.description); return false; }
 	}
 }
 
@@ -3438,40 +3443,33 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 /**
 	* Sets an expression to a property.<br />
 	* With the ability to keep the initial value.
-	* @param {Property|PropertyInfo} prop - The property
+	* @param {Property|PropertyInfo} property - The property
 	* @param {string} expr - The expression
 	* @param {bool} [keepValue=true] - When true, the method will try to keep the same resulting value as before applying the expression.
 */
-DuAEF.DuAE.Property.setExpression = function (prop,expr,keepValue)
+DuAEF.DuAE.Property.setExpression = function (property, expr, keepValue)
 {
 	if (typeof keepValue === 'undefined') keepValue = true;
-	var editable = false;
-	var riggable = false;
-	var dimensions = 0;
-	if (prop instanceof PropertyInfo)
+
+	var propInfo = new PropertyInfo(property);
+
+	if (property instanceof PropertyInfo)
 	{
-		editable = prop.editable;
-		riggable = prop.riggable;
-		dimensions = prop.dimensions;
-		prop = prop.getProperty();
-	}
-	else
-	{
-		editable = DuAEF.DuAE.Property.isEditable(prop);
-		riggable = DuAEF.DuAE.Property.isRiggable(prop);
-		dimensions = DuAEF.DuAE.Property.getDimensions(prop);
+		property = property.getProperty();
 	}
 
-	if (!riggable) return;
+	if (!propInfo.riggable) return;
 
-	var originalValue = prop.value;
+	var originalValue = property.valueAtTime(propInfo.comp.time, false);
+
 	//remove current expression
-	if (keepValue) DuAEF.DuAE.Property.removeExpression(prop);
-	else try { prop.expression = "" } catch (e) { if (DuAEF.debug) alert(e.description); return; }
+	if (keepValue) DuAEF.DuAE.Property.removeExpression(property);
+	else try { property.expression = "" } catch (e) { if (DuAEF.debug) alert(e.description); return; }
 	//set new expression
-	try { prop.expression = expr; } catch (e) { if (DuAEF.debug) alert(e.description); }
+	try { property.expression = expr; } catch (e) { if (DuAEF.debug) alert(e.description); }
+
 	//restore value
-	if (editable && keepValue && dimensions > 0) DuAEF.DuAE.Property.setValue(prop, 2*originalValue - prop.value);
+	if (propInfo.editable && keepValue && propInfo.dimensions > 0) DuAEF.DuAE.Property.setValue(property, 2*originalValue - property.valueAtTime(propInfo.comp.time, false));
 }
 
 /**
@@ -3970,9 +3968,9 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 }
 
 /**
-* Bezier Paths methods
-* @namespace
-* @memberof DuAEF.DuAE.Property
+	* Bezier Paths methods
+	* @namespace
+	* @memberof DuAEF.DuAE.Property
 */
 DuAEF.DuAE.Property.Shape = {};
 
