@@ -27,6 +27,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Fixed a bunch of minor bugs, stability improved.
 - [*Extract Controllers*](controller-tools.md) now works correctly when dimensions are separated on the controllers.
 - [*Extract Controllers*](controller-tools.md) now longer has an expression error on foot roll effects.
+- Overall stability improved (especially regarding composition names and links accross compositions).
 
 ## 16.0.5
 
