@@ -881,11 +881,61 @@ DuAEF.DuAE.Project.getItemById = function (id)
 }
 
 /**
+	* Generates a new unique name for a composition
+	* @param {string} newName - The wanted new name
+	* @param {CompItem} comp  - The comp
+	* @param {boolean} [increment=true] - true to automatically increment the new name if it already ends with a digit
+	* @return {string}	The unique name, with a new number at the end if needed.
+*/
+DuAEF.DuAE.Project.newUniqueCompName = function(newName, increment)
+{
+	if (typeof increment == 'undefined') increment = true;
+	var compNames = [];
+	var it = new Iterator(app.project.items);
+	it.do(function(comp)
+	{
+		if (comp instanceof CompItem) compNames.push(comp.name);
+	});
+	return DuAEF.DuJS.String.generateUnique(newName,compNames,increment);
+}
+
+/**
+ * Makes sure all compositions in the project have unique names, renaming them if needed.
+*/
+DuAEF.DuAE.Project.setUniqueCompNames = function()
+{
+	var comps = DuAEF.DuAE.Project.getComps();
+	var it = new Iterator(app.project.items);
+	it.do(function(comp)
+	{
+		//temporarily set another name to correctly generate a new unique name 
+		var newName = comp.name;
+		comp.name = '***Duik-temp-name-xxx***';
+		comp.name = DuAEF.DuAE.Project.newUniqueCompName(newName);
+	});
+}
+
+/**
 	* After Effects composition methods
 	* @namespace
 	* @memberof DuAEF.DuAE
 */
 DuAEF.DuAE.Comp = {};
+
+/**
+ * Makes sure the composition has a unique name, renaming it if needed.
+ * @param {CompItem} comp - The composition
+ * @return {string} The new name.
+*/
+DuAEF.DuAE.Comp.setUniqueCompName = function (comp)
+{
+	if (!(comp instanceof CompItem)) throw "Cannot set a unique composition name, this is not a composition.";
+	//temporarily rename the comp to check for its name
+	var newName = comp.name;
+	comp.name = '***Duik-temp-name-xxx***';
+	comp.name = DuAEF.DuAE.Project.newUniqueCompName(newName);
+	return comp.name;
+}
 
 /**
 	* Gets the After Effects selected properties in the current comp
@@ -1032,7 +1082,7 @@ DuAEF.DuAE.Comp.selectLayers = function (layers)
 	* @param {boolean} [increment=true] - true to automatically increment the new name if it already ends with a digit
 	* @return {string}	The unique name, with a new number at the end if needed.
 */
-DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp,increment)
+DuAEF.DuAE.Comp.newUniqueLayerName = function(newName, comp, increment)
 {
 	if (increment == undefined) increment = true;
 	var layerNames = [];
