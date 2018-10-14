@@ -20,6 +20,29 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 
+## 16.0.6
+
+#### New
+
+- The [*Bones*](bones.md) can control the new puppet pins in After Effects 16.0: they handle the rotation and scale of the pins too.
+
+#### Improvements
+
+- Expressions used by Duik have been improved for the new expression engine in After Effects 16.0
+
+#### Fixes
+
+- [*Random*](random.md) tool now correctly sets values on animated properties.
+- [*Parent Constraint*](parent-constraint.md) now works when the dimensions of the position are separated.
+- [*Storyboarder*](import.md) import fixed (again).
+- [*Extract Controllers*](controller-tools.md) now works correctly when dimensions are separated on the controllers.
+- [*Extract Controllers*](controller-tools.md) now longer has an expression error on foot roll effects.
+- The anchor size of the [*Controllers*](controllers.md) can now be set to 0% without generating an expression error.
+- Fixed the [*Time remap*](animation-tools.md) tool.
+- The parent used in a [*Parent contraint*](parent-constraint.md) can now be scaled to 0% without generating an expression error.
+- Fixed a bunch of minor bugs, stability improved.
+- Overall stability improved (especially regarding composition names and links accross compositions).
+
 ## 16.0.5
 
 #### New

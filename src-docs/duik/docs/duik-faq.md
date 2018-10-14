@@ -50,6 +50,10 @@ Duik Bassel has three user interface modes, and the default one, the _Rookie_ mo
 
 To change the mode of the user interface and switch to _Normal_ or _Expert_ mode, go to the [settings](settings.md) panel.
 
+### When using some tools, this alert is shown: `Internal Verification Failure: Unexpected match name searched for in group" ( 29::0 )`, what can I do?
+
+This is a bug in After Effects CC2014 and CC2014.1, it is not an issue from Duik. Update After Effects to CC2014.2, or upgrade to a newer version.
+
 ## Changes between Duik Bassel, Duik 15 and older versions
 
 ### Duik 15 came with an installer, Duik Bassel is just a zip, why?
@@ -98,6 +102,10 @@ It is not possible to scale the rig itself yet without adjusting some expression
 You can then animate from outside of the precomp, with the extracted controllers, AND you can scale the precomposition layer to scale the rig (the controllers will follow).  
 We think this is a good workaround, you just have to take care of the resolution as it's a precompositon (and rasterization may not work properly with the rig), scaling up will damage it a bit, but scaling it down is ok.
 
+### How can I use the _connector_ to connect a single slave property to multiple master properties?
+
+As most of the tools in Duik, the [_connector_](connector.md) uses expressions to connect the properties, and multiple expressions can not be easily combined into a single property. But there are work arounds! Read [this section](connector.md#multiple-connections) of the [_connector_ documentation](connector.md) to learn how to achieve this.
+
 ### What can I do to make Duik work better with imported vector layers (illustrator, SVG, flash...) with continuous rasterization activated?
 
 After Effects’ puppet tool (and Duik bones) is a pixel tool, but using continuous rasterization is using vector layers, so this raises some issues which are difficult to work around.
@@ -107,9 +115,10 @@ IK have to work with coordinates of the layers, and continuous rasterization may
 However, the best you can do is converting those illustrator layers into shape layers (right click on the layer), which work better with the puppet tool and Duik.
 You can just precompose those layers too, while scaling them up in the precomposition to keep the quality of vectors.
 
-### When using some tools, this alert is shown: `Internal Verification Failure: Unexpected match name searched for in group" ( 29::0 )`, what can I do?
+### How can I create a "Look At" effect?
 
-This is a bug in After Effects CC2014 and CC2014.1, it is not an issue from Duik. Update After Effects to CC2014.2, or upgrade to a newer version.
+What is called _Look At_ in some 3D software and older versions of Duik is basically IK controlling an single element (Duik calls this a one-layer IK).  
+To add a _Look At_ on a layer with Duik, first select the target, then the layer, and click on the [Autorig & IK](autorig.md) button in the [Links & Constraints](constraints.md) panel. This will create IK on the layer, and a controller to use as a target. You can then adjust the parenting if you wish, especially parenting the target layer to the controller.
 
 ## Animation
 

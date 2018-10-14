@@ -72,9 +72,10 @@ The other buttons display the available panels:
 
 For every feature in Duik, the goal is to have a consistent workflow, the fastest possible, the easiest possible.
 
-Most of the tools work this way:  
-1. Select layers, properties or keyframes in the timeline of After Effects
-2. a. Click on the button of the tool you need
+Most of the tools work this way:
+
+1. Select layers, properties or keyframes in the timeline of After Effects  
+2. a. Click on the button of the tool you need  
     b. For some tools, a secondary panel is displayed to ask some other needed information
 3. Watch Duik work  
 (Actually, you won't, as for performance reasons most of the work remains hidden from the user, sorry ;) )
