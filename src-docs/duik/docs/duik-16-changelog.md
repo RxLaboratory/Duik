@@ -21,7 +21,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New
 
-- The [*Bones*](bones.md) can control the new puppet pins from After Effects 16.0: they handle the rotation and scale of the pins too.
+- The [*Bones*](bones.md) can control the new puppet pins in After Effects 16.0: they handle the rotation and scale of the pins too.
 
 #### Improvements
 
