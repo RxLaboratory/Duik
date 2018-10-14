@@ -19,6 +19,14 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 ## 16.0.6
 
+#### New
+
+- The [*Bones*](bones.md) can control the new puppet pins from After Effects 16.0: they handle the rotation and scale of the pins too.
+
+#### Improvements
+
+- Expressions used by Duik have been improved for the new expression engine in After Effects 16.0
+
 #### Fixes
 
 - [*Random*](random.md) tool now correctly sets values on animated properties.

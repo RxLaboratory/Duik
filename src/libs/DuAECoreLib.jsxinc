@@ -1637,19 +1637,16 @@ DuAEF.DuAE.Layer.getDistance = function (layer1,layer2)
 }
 
 /**
-	* Gets the world position of the layer
-	* @param {Layer} layer - The layer
-	* @return {float[]} The world coordinates of the layer
+* Gets the world coordinates of the point of a layer
+* @param {Layer} layer - The layer
+* @param {float[]} [point=layer.transform.anchorPoint.value] - the point
+* @return {float[]} The world coordinates of the layer
 */
-DuAEF.DuAE.Layer.getWorldPos = function (layer)
+DuAEF.DuAE.Layer.getWorldPos = function (layer, point)
 {
-	var comp = layer.containingComp;
-	//add a null
-	var n = comp.layers.addNull();
-	n.transform.position.expression = 'thisComp.layer(' + layer.index + ').toWorld(thisComp.layer(' + layer.index + ').anchorPoint);';
-	var pos = n.transform.position.value;
-	n.remove();
-	return pos;
+	var matrix = DuAEF.DuAE.Layer.getTransformMatrix(layer);
+	if (typeof point === 'undefined') point = layer.transform.anchorPoint.value;
+	return matrix.applyToPoint(point);
 }
 
 /**
@@ -2070,6 +2067,78 @@ DuAEF.DuAE.Layer.getPuppetPins = function (layer)
 
 
 	return pins;
+}
+
+/**
+	* Gets the transformation matrix of the layer from the compostion.<br />
+	* Use Matrix.applyToPoint(point) to transform any coordinate with the matrix returned by this method.
+	* @param {Layer[]} layer - the layer
+	* @return {Matrix} The coordinates.
+*/
+DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
+{
+	var matrix = new Matrix();
+
+	//get the ancestors
+	var layers = [layer];
+	var parent = layer.parent;
+	while (parent)
+	{
+		layers.push(parent);
+		parent = parent.parent;
+	}
+
+	//apply transforms from the ancestor
+	for (var i = layers.length - 1; i >= 0; i--)
+	{
+		var l = layers[i];
+		matrix.translate(-l.transform.anchorPoint.value);
+		matrix.translate(l.transform.position.value);
+		if (l.threeDLayer) matrix.rotate(l.transform.zRotation.value);
+		else matrix.rotate(l.transform.rotation.value);
+		matrix.scale(l.transform.scale.value/100);
+	}
+
+	return matrix;
+}
+
+/**
+ * Moves a layer to the coordinates of a spatial property
+ * @param {Layer} layer - The layer
+ * @param {Property|PropertyInfo} prop - The property
+*/
+DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
+{
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+
+	var propLayer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	if (!(propLayer instanceof ShapeLayer))
+	{
+		var matrix = DuAEF.DuAE.Layer.getTransformMatrix(propLayer);
+		var pos = matrix.applyToPoint(prop.value);
+		var parent = layer.parent;
+		layer.parent = null;
+		layer.position.setValue(pos);
+		layer.parent = parent;
+	}
+	else
+	{
+		var parent = layer.parent;
+		layer.parent = null;
+		layer.position.setValue(prop.value);
+		layer.parent = parent;
+	}
 }
 
 /**
@@ -3968,23 +4037,43 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 }
 
 /**
-	* Bezier Paths methods
+	* Puppet tool methods
+	* @namespace
+	* @memberof DuAEF.DuAE.Property
+*/
+DuAEF.DuAE.Property.PuppetTool = {};
+
+/**
+ * Checks if a pin can be rigged or not.\nFor now, the only pins which can not be rigged are starch pins.
+ * @param {PropertyGroup} pin - The pin to test
+ * @return {boolean} True if this pin has either a position, rotation or scale property
+*/
+DuAEF.DuAE.Property.PuppetTool.isRiggable = function (pin)
+{
+	if (pin.position.canSetExpression) return true;
+	if (pin.rotation.canSetExpression) return true;
+	if (pin.scale.canSetExpression) return true;
+	return false;
+}
+
+/**
+	* Shape Layers methods
 	* @namespace
 	* @memberof DuAEF.DuAE.Property
 */
 DuAEF.DuAE.Property.Shape = {};
 
 /**
-* Export the given shape property to the given file <br/>
-* The file name in the given path will be used to name the shape in the jsx code
-* @example
-* var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
-* var prop = props[0].getProperty();
-* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
-* @param {Property}	 [shapeProp]	- The path property to export
-* @param {String}	     [file]	- The path to where the jsxinc shape will be written
-* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
-* @return {int} A status code. [0: success, ...]
+	* Export the given shape property to the given file <br/>
+	* The file name in the given path will be used to name the shape in the jsx code
+	* @example
+	* var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
+	* var prop = props[0].getProperty();
+	* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
+	* @param {Property}	 [shapeProp]	- The path property to export
+	* @param {String}	     [file]	- The path to where the jsxinc shape will be written
+	* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
+	* @return {int} A status code. [0: success, ...]
 */
 DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCenter)
 {
@@ -4032,8 +4121,8 @@ DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCen
 }
 
 /**
-* Makes a horizontal symetry transformation on the path.
-* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
+	* Makes a horizontal symetry transformation on the path.
+	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
 */
 DuAEF.DuAE.Property.Shape.horizontalSymetry = function(pathProperty)
 {
@@ -4079,8 +4168,8 @@ DuAEF.DuAE.Property.Shape.horizontalSymetry = function(pathProperty)
 }
 
 /**
-* Makes a horizontal symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
-* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
+	* Makes a horizontal symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
+	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
 DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
 {
@@ -4129,8 +4218,8 @@ DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
 }
 
 /**
-* Makes a vertical symetry transformation on the path.
-* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
+	* Makes a vertical symetry transformation on the path.
+	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
 */
 DuAEF.DuAE.Property.Shape.verticalSymetry = function(pathProperty)
 {
@@ -4176,8 +4265,8 @@ DuAEF.DuAE.Property.Shape.verticalSymetry = function(pathProperty)
 }
 
 /**
-* Makes a vertical symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
-* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
+	* Makes a vertical symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
+	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
 DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
 {
@@ -4223,4 +4312,108 @@ DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
 			pathProperties[i].setValue(shape);
 		}
 	}
+}
+
+/**
+	* Bezier Paths methods
+	* @namespace
+	* @memberof DuAEF.DuAE.Property
+*/
+DuAEF.DuAE.Property.Bezier = {};
+
+/**
+	* Gets the vertices array in comp coordinates.
+	* @param {Property|PropertyInfo} prop - The property, a bezier path.
+	* @return {float[][]} The vertices in comp coordinates.
+*/
+DuAEF.DuAE.Property.Bezier.verticesToComp = function(pathProperty)
+{
+	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
+	if (!propInfo) throw "Expected a shape property, got another type of value.";
+	var pathProperty = propInfo.getProperty();
+
+	//get the layer matrix
+	var matrix = DuAEF.DuAE.Shape.getTransformMatrix(propInfo);
+
+	//apply transform
+	var vertices = [];
+	var origin  = pathProperty.value.vertices;
+	for (var i = 0, num = origin.length; i < num; i++)
+	{
+		vertices.push(matrix.applyToPoint(origin[i]));
+	}
+
+	return vertices;
+}
+
+/**
+	* Checks if the property is a bezier property, or return the child bezier property if this is a shape or a mask
+	* @param {Property|PropertyInfo} prop - The property
+	* @return {PropertyInfo|null} the bezier property or null if it is not.
+*/
+DuAEF.DuAE.Property.Bezier.checkProperty = function(prop)
+{
+	propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	//get the path property in case it was a mask or a shape path selected
+	if (prop.matchName == "ADBE Vector Shape - Group")
+	{
+		prop = prop.property("ADBE Vector Shape");
+		return new PropertyInfo(prop);
+	}
+	else if (prop.matchName == "ADBE Mask Atom")
+	{
+		prop = prop.property("ADBE Mask Shape");
+		return new PropertyInfo(prop);
+	}
+	else if (prop.propertyType !== PropertyType.PROPERTY) return null;
+	if (prop.propertyValueType !== PropertyValueType.SHAPE) return null;
+
+	return propInfo;
+}
+
+/**
+	* Shape Layers methods
+	* @namespace
+	* @memberof DuAEF.DuAE
+*/
+DuAEF.DuAE.Shape = {};
+
+/**
+	* Gets the transformation matrix for all the parent groups of a given property
+	* @param {Property|PropertyInfo} prop - The property
+	* @return {Matrix} The transformation matrix.
+*/
+DuAEF.DuAE.Shape.getTransformMatrix = function(prop)
+{
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	var matrix = DuAEF.DuAE.Layer.getTransformMatrix(propInfo.layer);
+
+	var props = [];
+
+	//get the groups
+	var parentProp = prop;
+	while (parentProp.parentProperty)
+	{
+		if (parentProp.matchName == "ADBE Vector Group")
+		{
+			props.push(parentProp);
+		}
+		// Traverse up the property tree
+		parentProp = parentProp.parentProperty;
+	}
+
+	//apply transforms from the ancestor
+	for (var i = props.length - 1; i >= 0; i--)
+	{
+		var p = props[i].property("ADBE Vector Transform Group");
+		matrix.translate(-p.property("ADBE Vector Anchor").value);
+		matrix.translate(p.property("ADBE Vector Position").value);
+		matrix.rotate(p.property("ADBE Vector Rotation").value);
+		matrix.scale(p.property("ADBE Vector Scale").value/100);
+	}
+
+	return matrix;
 }
