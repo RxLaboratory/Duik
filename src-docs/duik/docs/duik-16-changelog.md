@@ -20,6 +20,13 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 
+## 16.0.7
+
+#### Fixes
+
+- The rigging [*tools*](rigging-tools.md) panel is displaying again.
+- Adding [*Bones*](bones.md) on scaled layers no longer moves them to another location.
+
 ## 16.0.6
 
 #### New
