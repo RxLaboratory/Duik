@@ -20,6 +20,12 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 
+## 16.0.8
+
+#### Fixes
+
+- The [*Walk Cycle*](walk-cycle.md) now works with the new expression engine in After Effects 16.0
+
 ## 16.0.7
 
 #### Fixes
