@@ -2,6 +2,8 @@
 
 # Create structures
 
+![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures.PNG)
+
 There are several ways to create _Structures_ with Duik, depending on what you need.  
 As all the other tools in Duik Bassel, **the _Struture_ creation tools try to be smart, and change their behaviour depending on the context** (i.e. the current selection in the current composition).
 
@@ -34,7 +36,7 @@ Puppet pins will be linked to the corresponding _Structure elements_.
 
     Internal unique identifiers are associated with the _Structures_, which won't be updated when you copy or duplicate the _Structures_ in After Effects. The [_Auto-rig_](autorig.md) and other rigging tools in Duik need these identifiers to work correctly and may fail if they are not set properly. The [_Duplicate_](structure-tools.md#duplicate-structures) tool does this.
 
-## ![Icon](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/docs/media/wiki/icons/w32_human_r.png) Hominoid
+## ![Icon](img/duik-icons/w32_human_r.png) Hominoid
 
 This tool will create *[Structures](structures.md)* for a complete hominoid with a spine, two legs and two arms, using the settings of the individual limbs set in the *[Structures](structures.md)* panel.
 
@@ -58,11 +60,13 @@ Ungulate | Animals which walk on the tip of their fingers, who usually have hoof
 
 For each limb you can create with Duik, you have to choose the type of walking animal it is (for arms and legs), and which parts of the limbs must be created.
 
-## Arm
+## ![Icon](img/duik-icons/w32_arm_r.png) Arm
 
 Creates a *Structure* for the arm or the front leg of a quadruped.
 
 Click the ○ button to adjust the settings for the arm.
+
+![Arm options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Arm-ArmStructure.PNG)
 
 You can check which part of the limb is present on your character. The autorig will adapt to every configuration, but using all of them (except for claws when rigging humans) can ensure a nice rig and a more realistic animation.
 
@@ -74,6 +78,8 @@ _Animation by [Jissse](http://jissse.com)_
 Creates a *Structure* for the (rear) leg of a biped or a quadruped.
 
 Click the ○ button to adjust the settings for the leg.
+
+![Leg options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Leg-LegStructure.PNG)
 
 The autorig will adapt to every configuration, but using all of them can ensure a nice rig and a more realistic animation (with a proper foot roll).
 

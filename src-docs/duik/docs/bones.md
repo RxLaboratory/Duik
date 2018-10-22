@@ -1,4 +1,4 @@
-# Bones
+# ![bone icon](img/duik-icons/bone-icon-r.png) Bones
 
 Bones are a very simple yet extremely useful tool. They are layers used to control any spatial property or bezier shape.
 
@@ -8,6 +8,8 @@ Bones are a very simple yet extremely useful tool. They are layers used to contr
 2. - Click on the _Bones_ button
     - Maintaining the [Alt] key will pick a random color for the new bones
     - Maintaining the [Ctrl] key will will ignore the tangents when creating bones on bezier paths
+
+![create bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones.PNG)
 
 !!! hint
     You can remove bone layers and recreate them at any time.  
@@ -28,6 +30,9 @@ When the property is controlled by a bone, you can rig the bone itself, parent i
 
 In the additionnal panel of the Bones (Standard and Expert modes), you can adjust their appearance.
 All changes made in this panel will affect all selected Bones and the creation of all other Bones.
+
+![edit bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones-EditBones.PNG)
+![edit bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones-EditBones-options.png)
 
 - You can change the size of the Bones, either automatically, relatively to the size of the composition (small, medium and large options), or with an absolute value (custom option).
 

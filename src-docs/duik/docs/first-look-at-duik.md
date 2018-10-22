@@ -83,6 +83,8 @@ Most of the tools work this way:
 To be able to work in a single click, the tools need to be smart enough to take some decisions depending on what you're doing.  
 Of course, Duik does not want you to be or feel limited to what you can do. Although most of the tools work in a single click, some of them are accompanied with a little "circle" button. This means there are options you can change for the future use of the tool, which you can access by clicking on the circle.
 
+![selection circle](img/duik-screenshots/selection-circle/options-circle-selection2.png)
+
 Duik can also be personnalized through some [settings](settings.md) so you can adadpt it to your tastes, even if you have very bad tastes.
 
 ## What Duik does in After Effects
@@ -102,12 +104,12 @@ The After Effects features mainly used by Duik are:
 Although Duik uses existing layer types in After Effects (mostly shape layers and null objects), the layers it creates have a specific use and can be considered as new layer types.
 Layers created by Duik have a marker at their beginning, showing how Duik uses them (their "Duik Type"), and containing important data that Duik needs to work with them. **Do not remove these markers** (but you can move them away, even before the beginning of the comp to hide them, if you find them annoying).
 
-The types defined by Duik are:
-- [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](controller-tools.md) panel). They are used to manipulate and animate compositions rigged by Duik.
-- [Structures](structures.md) are shape layers used to actually rig characters and props. They should not be manipulated by the animator and can be hidden as soon as the riggoing process is finished.
-- [Bones](bones.md) are shape layers which control spatial properties of effects or bezier shapes and masks. They are usually parented to Structures to be rigged and animated, but sometimes can be animated themselves just to control the position of an effect, or parent it to anything else.
-- [Locators](parent-accross-compositions.md) are null objects used to expose the absolute transformations of another layer in a composition, and to create links between layers and compositions.
-- (Spatial) [Effectors](effector.md) are a special type of controllers used to drive properties and motion depending on spatial coordinates.
+The types defined by Duik are: <br>
+- [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](controller-tools.md) panel). They are used to manipulate and animate compositions rigged by Duik. <br>
+- [Structures](structures.md) are shape layers used to actually rig characters and props. They should not be manipulated by the animator and can be hidden as soon as the rigging process is finished. <br>
+- [Bones](bones.md) are shape layers which control spatial properties of effects or bezier shapes and masks. They are usually parented to Structures to be rigged and animated, but sometimes can be animated themselves just to control the position of an effect, or parent it to anything else. <br>
+- [Locators](parent-accross-compositions.md) are null objects used to expose the absolute transformations of another layer in a composition, and to create links between layers and compositions. <br>
+- (Spatial) [Effectors](effector.md) are a special type of controllers used to drive properties and motion depending on spatial coordinates. <br>
 
 There are other types of layers used by Duik, which are more specific to some tools.
 
