@@ -11,6 +11,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts:  
     - You can get some [***Property Info***](rigging-tools.md) about the selected property, like its index, its matchName, the expression link to it, etc.
     - A [***Scriptify expression***](rigging-tools.md) tool makes it quick to include an expression as a string in a .jsx script.
+- Reimplemented the [_TVPaint_] import tool from Duik 15.
 
 #### Improvements
 
