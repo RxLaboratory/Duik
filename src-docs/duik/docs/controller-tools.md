@@ -2,17 +2,26 @@
 
 # Controller Tools
 
-## Select Controllers
+## ![select controller icon](img/duik-icons/selectcontroller_r.png) Select Controllers
+
+![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/SelectController.PNG)
 
 Click the *Select controllers* button to select all the Controllers in the composition.
 
-## Show / Hide Controllers
+
+
+## ![show controller icon](img/duik-icons/showhand_r.png) Show / Hide Controllers
+
+![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ControllersShowHide.PNG)
 
 Shows or hides all (or selected) *Controllers* found in the composition.
 
+
 If there is no layer selected, this will show of hide all *Conbtrollers* in the composition, or else it will use the layer selection.
 
-## Extract Controllers
+## ![extract controller icon](img/duik-icons/extractcontrollers_r.png) Extract Controllers
+
+![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ExtractControllers.PNG)
 
 In most cases, it is easier to have rigs (for characters or other items) in their own precompositions, but this is not the most handy way to animate, especially when you have several characters in the same shot or if you need to see the background.
 
@@ -21,9 +30,11 @@ This way, all the controllers are available in the same main composition, with t
 
 - Just select a precomposition layer containing a rig, and click the "***Extract Controllers***" button to copy the controllers to the current composition and be able to animate outside of the rigged precomposition.
 
-### Extract controllers options
+### ![extract controller icon](img/duik-icons/circle-little_r.png) Extract controllers options
 
 You can choose to extract controllers using expressions or Master Properties.
+
+![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ExtractControllers-options2.png)
 
 !!! note
     Master Properties are available in After Effects CC2018 and above only.
@@ -40,7 +51,7 @@ You can choose to extract controllers using expressions or Master Properties.
     3. Select this rigged precomposition, and extract controllers with Duik, using Master Properties.
     4. "Animation Comp" can now be duplicated ; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
 
-## Edit Controllers
+## ![edit controller icon](img/duik-icons/edit-icon-r.png) Edit Controllers
 
 !!! hint
     Available in _Standard_ and _Expert_ modes only.
@@ -48,6 +59,8 @@ You can choose to extract controllers using expressions or Master Properties.
 In the edition panel, you can adjust the appearance of the Controllers (Normal and Expert mode).
 
 All changes made in this panel will affect all selected Controllers and the creation of all other Controllers.
+
+![edit controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/EditControllersPanels.png)
 
 - You can change the size of the Controllers, either automatically, relatively to the size of the composition (small, medium and large options), or with an absolute value (custom option).
 

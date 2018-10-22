@@ -1,4 +1,4 @@
-# Parent Accross Compositions
+## ![parent icon](img/duik-icons/parent_icon_r.png) Parent Accross Compositions
 
 # Parenting
 
@@ -7,7 +7,7 @@ Sometimes, you may need to parent a layer to another one which is inside a preco
 Duik Bassel makes this easy with the "Parent accross compositions" tool.
 
 This is the tool, in *Standard Mode*:  
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/duik-tools/parent_accross_comps.PNG)
+![Parent across comp panel ](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/ParentAcrossComps.PNG)
 
 1. Select the layers to parent (the children), as you would with standard parenting in After Effects.
 2. In the panel of Duik, select the composition containing the layer which you want to be the parent. In the list, only containing and precompositions of the current composition will be displayed. It is not possible to parent accross compositions which have no relationship.
