@@ -1,6 +1,6 @@
 [TOC]
 
-# Auto-rig
+# ![Constraints Icon](img/duik-icons/autorig-icon-r.png) Auto-rig
 
 The Auto-rig in Duik Bassel is a versatile and smart tool which adapts to a lot of different situations. This makes it the cornerstone of the [rigging process](rigging.md) in Duik, which can be summarized to:
 
@@ -32,7 +32,7 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 
 ![Autorig GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/autorig.gif)
 
-## IK and FK
+## ![Constraints Icon](img/duik-icons/ikfk-icon-r.png) IK and FK
 
 The most important constraints used by the Auto-rig to rig characters are IK and FK.
 
