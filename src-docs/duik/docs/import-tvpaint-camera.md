@@ -1,4 +1,6 @@
-# Import TVPaint Camera
+# ![import TVPaint Camera Icon](img\duik-icons\tvpcam-icon-r.png) Import TVPaint Camera
+
+![import tvpaint cam panel](img\duik-screenshots\S-Camera\ImportTVPaint-panel.PNG)
 
 Duik can re-create any TVPaint camera animation in After Effects.
 
@@ -14,6 +16,8 @@ Once the camera has been imported, you can copy/paste its animation on a camera 
 - Copy the rotation on the tilt effect.
 
 ## Additionnal panel
+
+![import tvpaint cam option](img\duik-screenshots\S-Camera\ImportTVPaint-optn.PNG)
 
 - There are three ways to re-create the camera in After Effects:
 
