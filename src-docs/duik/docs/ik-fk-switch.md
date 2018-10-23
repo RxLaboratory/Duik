@@ -14,4 +14,6 @@ The switch happens in to steps:
 
 ## Additionnal Panel
 
+![animation tool panel](img\duik-screenshots\S-Animation\S-Animation-Tools\Ikfk-additionnalpanel.PNG)
+
 In the additionnal panel, you can manually snap FK on the IK or the inverse, without actually switching between IK and FK, if ever you need it.
