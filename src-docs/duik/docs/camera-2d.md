@@ -1,4 +1,6 @@
-# 2D Camera
+# ![2d camera Icon](img\duik-icons\2dcamera-icon-r.png) 2D Camera
+
+![2d camera panel](img\duik-screenshots\S-Camera\2DCamera-panel.PNG)
 
 With 2D animation, it is usually easier to animate the positions of 2D layers than to set up a 3D space using cameras to create camera movements.
 
