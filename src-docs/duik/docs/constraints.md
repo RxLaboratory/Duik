@@ -7,7 +7,7 @@ These are the tools you can use after you have created some Structures, to make 
 
 ## Panel
 
-![Constraints panel](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/constraints_all.png)  
+![Constraints panel](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\Links&Constraints-panels.png)
 The constraints panel.
 
 ## Tools
@@ -23,3 +23,4 @@ The constraints panel.
 - ![Constraints Icon](img/duik-icons/links-tools/orient-constraint-icon-r.png) The [***Orientation Constraint***](orientation-constraint.md) links the rotation of a layer to the orientations of other layers.
 - ![Constraints Icon](img/duik-icons/links-tools/add-list-icon-r.png) The [***List***](duik-list.md) tool is a nice way to combine animations or expressions on the same property.
 - ![Constraints Icon](img/duik-icons/links-tools/add-zero-icon-r.png) The [***Zero***](zero.md) is a layer used to zero out transformations of another layer.
+- ![Constraints Icon](img/duik-icons/links-tools/separatedim-icon-r.png) [***Separate Dimensions***] allows you to separate X and Y positions.
