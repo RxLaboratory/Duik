@@ -95,6 +95,8 @@ This being said, if you need or want to add and use a specific controller, you j
 
 The additionnal panel for the Auto-rig is divided in two parts: some options for the Auto-rig process itself, and some complementary tools (*Standard* and *Expert* modes only).
 
+![Autorig additional panel](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/Autorig-additionalpanel2.png)  
+
 ### Options
 
 - By default, the Auto-rig will "bake" the appearance of any Structure after it has rigged it. This is a way to improve performance in After Effects by removing all unneeded expressions, but it will prevent you from changing the appearance of the Structures after having run the Auto-rig. You can disable this option if you wish; baking the appearance of the Structures will still be possible through the *[Edit Structures](structure-tools.md)* panel (in Standard and Expert mode only).
