@@ -1,4 +1,4 @@
-# X-Sheet
+# ![Xsheet Icon](img\duik-icons\xsheet-icon-r.png) X-Sheet
 
 *X-Sheet* is a simple way to adjust the animation exposure of the properties, the layers or the whole composition.
 
@@ -6,6 +6,8 @@ This is a very useful tool if you are compositing traditionnal animation or tryi
 It can change the framerate of the composition or of the properties at any time, mixing framerates (what's called the "exposure" in traditionnal animation) in the same composition, for different layers or at different times.
 
 ## Setup
+
+![xsheet panel](img\duik-screenshots\S-Animation\S-Animation-Tools\XSheet-panel.PNG)
 
 You can use the *X-Sheet* either as an adjustment layer for the whole comp, or on properties.
 
@@ -26,5 +28,7 @@ The three other methods do not use an exposure / framerate value, but keyframes 
 - The last two methods works the same way but using composition or layer markers instead of keyframes. The displayed frame will be changed at each marker time.
 
 ## Additionnal panel
+
+![xsheet option](img\duik-screenshots\S-Animation\S-Animation-Tools\XSheet-optn.PNG)
 
 - You can use the additionnal panel to set an option to try to auto-detect the best exposure for selected properties to achieve a nice traditionnal look. This feature is a bit experimental but may work well with the most simple animations.
