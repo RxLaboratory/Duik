@@ -1,7 +1,9 @@
-# Motion Trail
+# ![Motion Trail Icon](img\duik-icons\motiontrail-icon-r.png) Motion Trail
 
 !!! note
     Available in After Effects CC2018 and above only.
+
+![motion trail panel](img\duik-screenshots\S-Animation\S-Animation-Tools\MotionTrail-panel.PNG)  
 
 The *Motion Trail* tool draws the trajectory of any layer in a shape layer, and can make trails behind (or in front of) them.
 
@@ -27,6 +29,8 @@ Use the effects of the "Motion Trail" layer to adjust all the trails.
 - In the display section, you can change and animate basic appearance settings. Keep in mind that "Motion trails" are standard shape layers and you can do much more with them by modifying yourself the content.
 
 ## Additionnal panel
+
+![motion trail option](img\duik-screenshots\S-Animation\S-Animation-Tools\MotionTrail-optn.PNG)  
 
 In the additionnal panel, you can choose to create a new layer when you create new motion trails, or to add them all on the existing layer if any.
 You can also set the color of new motion trails.
