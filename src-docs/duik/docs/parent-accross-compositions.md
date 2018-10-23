@@ -1,4 +1,4 @@
-## ![parent icon](img/duik-icons/parent_icon_r.png) Parent Accross Compositions
+## ![parent icon](img/duik-icons/parentcomp-icon-r.png) Parent Accross Compositions
 
 # Parenting
 
