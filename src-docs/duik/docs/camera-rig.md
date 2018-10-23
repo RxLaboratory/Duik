@@ -1,4 +1,6 @@
-# Camera Rig
+# ![Camera Rig Icon](img\duik-icons\camerarig-icon-r.png) Camera Rig
+
+![camera rig panel](img\duik-screenshots\S-Camera\CameraRig-panel.PNG)
 
 If you need to use 3D cameras, you can rig them in a simple way using Duik's "Camera Rig".
 
