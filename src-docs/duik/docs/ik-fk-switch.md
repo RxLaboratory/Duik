@@ -1,4 +1,4 @@
-# IK/FK Switch
+# ![Constraints Icon](img/duik-icons/ik2fk-icon-r.png) IK/FK Switch
 
 *IK/FK Switch* is an easy way to switch between IK and FK during the animation, if the layers have been rigged by Duik Bassel.
 

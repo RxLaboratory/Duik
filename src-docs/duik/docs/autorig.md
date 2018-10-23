@@ -1,6 +1,6 @@
 [TOC]
 
-# ![Constraints Icon](img/duik-icons/autorig-icon-r.png) Auto-rig
+# ![Constraints Icon](img/duik-icons/autorig/autorig-icon-r.png) Auto-rig
 
 The Auto-rig in Duik Bassel is a versatile and smart tool which adapts to a lot of different situations. This makes it the cornerstone of the [rigging process](rigging.md) in Duik, which can be summarized to:
 
@@ -32,11 +32,11 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 
 ![Autorig GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/autorig.gif)
 
-## ![Constraints Icon](img/duik-icons/ikfk-icon-r.png) IK and FK
+## IK and FK
 
 The most important constraints used by the Auto-rig to rig characters are IK and FK.
 
-### Inverse Kinematics (IK)
+### ![Constraints Icon](img/duik-icons/autorig/ik-icon-r.png) Inverse Kinematics (IK)
 
 IK is a way to animate limbs by moving a controller located at the tip of the limb (i.e. at the hand or at the foot).  
 This means that animating with IK uses positions, which are interpreted into the rotation of each part of the limb. This seems very natural when one manipulates it, but it is actually an advanced process. It is invaluable when the hand, or the foot, have interactions with anything else (like the foot interacting with the ground when the character walks).  
@@ -47,7 +47,7 @@ But as animating with IK means animating positions, it is actually **not the eas
 _Animation by [Jissse](http://jissse.com)_  
 In this animation, you can see how the "hand" is animated independantly from the "shoulder", which both animated using positions, without any rotation keyframe. This means that, for example, the hand can be fixed while the shoulder moves.
 
-### Forward Kinematics (FK)
+### ![Constraints Icon](img/duik-icons/autorig/fk-icon-r.png) Forward Kinematics (FK)
 
 FK is the most simple way to animate limbs: all parts are parented together, and you just have to animate the rotations of each parts. Rotation is way easier to animate than position: there's only one value, one axis, and you don't have to adjust trajectories, you can focus on speed and eases only.
 Ususally, when animating with FK, the animator wants to add [*follow-through* and *overlap*](https://en.wikipedia.org/wiki/12_basic_principles_of_animation#Follow_Through_and_Overlapping_Action). As these are very common in animation, FK controls created with Duik include an automatic [*follow-through* and *overlap*](https://en.wikipedia.org/wiki/12_basic_principles_of_animation#Follow_Through_and_Overlapping_Action) tool (read below).
