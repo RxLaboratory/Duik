@@ -1,4 +1,4 @@
-## Animation
+## ![Animation Icon](img\duik-icons\animation-icon-r.png) Animation
 
 Duik Bassel provides a lot of tools very useful for character (and other) animation.
 
