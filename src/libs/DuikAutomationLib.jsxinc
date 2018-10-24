@@ -597,30 +597,26 @@ DuAEF.Duik.Automation.spring = function (prop)
 
 	if (bounce)
 	{
-		prop.getProperty().expression = "//Duik.Spring\n" +
-					'var fx = effect("' + effect.name + '")\n' +
-					"damping = fx(2).value;\n" +
-					"elasticity = fx(1).value;\n" +
-					"speedLimit = 0.1;\n" +
-					"bounce = fx(3).value;\n\n" +
-					"if (numKeys > 1 && elasticity != 0 ){\n" +
-					"if (nearestKey(time).index == 1) { value }\n" +
-					"else {\n\n" +
-					"if (length(velocity) <= speedLimit ) {\n\n" +
-					"tempsClefProx = nearestKey(time).time;\n\n" +
-					"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" +
-					"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" +
-					"temps = time - tempsDebut;\n\n" +
-					"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
-					"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" +
-					"if (!bounce) valueAtTime(tempsDebut) + spring;\n\n" +
-					"if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) + Math.abs(spring);\n\n" +
-					"if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) valueAtTime(tempsDebut) - Math.abs(spring);\n\n" +
-					"}\n" +
-					"else { value }\n" +
-					"}\n" +
-					"}\n" +
-					"else { value }";
+		prop.getProperty().expression = '//Duik.Spring\n' +
+			'var fx = effect("' + effect.name + '")\n' +
+			'damping = fx(2).value;\n' +
+			'elasticity = fx(1).value;\n' +
+			'speedLimit = 0.1;\n' +
+			'bounce = fx(3).value;\n' +
+			'var result = value;\n' +
+			'if (numKeys > 1 && elasticity != 0 && nearestKey(time).index != 1 && length(velocity) <= speedLimit)\n' +
+			'{\n' +
+			'    tempsClefProx = nearestKey(time).time;\n' +
+			'    if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n' +
+			'    else { tempsDebut = key(nearestKey(time).index-1).time }\n' +
+			'    temps = time - tempsDebut;\n' +
+			'    spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n' +
+			'    if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n' +
+			'    if (!bounce) result = valueAtTime(tempsDebut) + spring;\n' +
+			'    if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) >  valueAtTime(tempsDebut)) result = valueAtTime(tempsDebut) + Math.abs(spring);\n' +
+			'    if (bounce &&  valueAtTime(tempsDebut-thisComp.frameDuration) <  valueAtTime(tempsDebut)) result = valueAtTime(tempsDebut) - Math.abs(spring);\n' +
+			'}\n' +
+			'result;';
 	}
 	else if (spatial)
 	{
@@ -641,69 +637,59 @@ DuAEF.Duik.Automation.spring = function (prop)
 			"return [worldVelocityX,worldVelocityY];\n" +
 			"}\n";
 		}
-		prop.getProperty().expression = "//Duik.spring\n" +
-					'var fx = effect("' + effect.name + '")\n' +
-					"damping = fx(2).value;\n" +
-					"elasticity = fx(1).value;\n" +
-					'simulation = fx(3).value;\n' +
-					"speedLimit = 0.1;\n" +
-					"if (damping == 0) damping = 0.01;\n" +
-					"if (elasticity == 0) elasticity = 0.01;\n" +
-					"retard = elasticity/damping;\n" +
-					"poids = 1/damping/10;\n" +
-					"precision = thisComp.frameDuration;\n" +
-					toWorldFunc +
-					"function worldSpeed(temps) {\n" +
-					"return length(worldVelocity(temps));\n" +
-					"}\n" +
-					'if (simulation == 2)\n' +
-					'{\n' +
-						"tempsDebut = 0;\n" +
-						"tempsRedemarrage = 0;\n" +
-						"stop = false;\n" +
-						"arrete = false;\n" +
-						"for (i=timeToFrames(time);i>=0;i--) {\n" +
-						"var instant = framesToTime(i);\n" +
-						"var instantSuivant = instant-precision;\n" +
-						"if (worldSpeed(instant) == 0 ) {\n" +
-						"if (tempsRedemarrage == 0) tempsRedemarrage = instant;\n" +
-						"if (worldSpeed(instantSuivant) !=0 ) {\n" +
-						"tempsDebut = instantSuivant;\n" +
-						"break;\n" +
-						"}\n" +
-						"}\n" +
-						"}\n" +
-						"temps = time-tempsDebut;\n" +
-						"frameRedemarre = timeToFrames( time-tempsRedemarrage);\n" +
-						"valeur = value\n" +
-						"if ( frameRedemarre <= retard)\n" +
-						"valeur = value - worldVelocity(time)*poids*(frameRedemarre/retard);\n" +
-						"else\n" +
-						"valeur = value - worldVelocity(time)*poids;\n" +
-						"if (worldSpeed(time) == 0) {\n" +
-						"spring = worldVelocity(tempsDebut) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
-						"valeur + spring;\n" +
-						"}else{ valeur; }\n" +
-					'}\n' +
-					'else\n' +
-					'{\n' +
-						"if (numKeys > 1 && elasticity != 0 ){\n" +
-						"if (nearestKey(time).index == 1) { value }\n" +
-						"else {\n\n" +
-						"if (length(velocity) <= speedLimit ) {\n\n" +
-						"tempsClefProx = nearestKey(time).time;\n\n" +
-						"if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n" +
-						"else { tempsDebut = key(nearestKey(time).index-1).time }\n\n" +
-						"temps = time - tempsDebut;\n\n" +
-						"spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n" +
-						"if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n" +
-						"valueAtTime(tempsDebut) + spring;\n\n" +
-						"}\n" +
-						"else { value }\n" +
-						"}\n" +
-						"}\n" +
-						"else { value }\n" +
-					'}\n';
+		prop.getProperty().expression = '//Duik.spring\n' +
+			'var fx = effect("' + effect.name + '")\n' +
+			'damping = fx(2).value;\n' +
+			'elasticity = fx(1).value;\n' +
+			'simulation = fx(3).value;\n' +
+			'speedLimit = 0.1;\n' +
+			'if (damping == 0) damping = 0.01;\n' +
+			'if (elasticity == 0) elasticity = 0.01;\n' +
+			'retard = elasticity/damping;\n' +
+			'poids = 1/damping/10;\n' +
+			'precision = thisComp.frameDuration;\n' +
+			'var result = value;\n' +
+			toWorldFunc +
+			'function worldSpeed(temps) {\n' +
+			'    return length(worldVelocity(temps));\n' +
+			'}\n' +
+			'if (simulation == 2)\n' +
+			'{\n' +
+			'    tempsDebut = 0;\n' +
+			'    tempsRedemarrage = 0;\n' +
+			'    stop = false;\n' +
+			'    arrete = false;\n' +
+			'    for (i=timeToFrames(time);i>=0;i--) {\n' +
+			'        var instant = framesToTime(i);\n' +
+			'        var instantSuivant = instant-precision;\n' +
+			'        if (worldSpeed(instant) == 0 ) {\n' +
+			'        if (tempsRedemarrage == 0) tempsRedemarrage = instant;\n' +
+			'        if (worldSpeed(instantSuivant) !=0 ) {\n' +
+			'        tempsDebut = instantSuivant;\n' +
+			'        break;\n' +
+			'        }\n' +
+			'        }\n' +
+			'    }\n' +
+			'    temps = time-tempsDebut;\n' +
+			'    frameRedemarre = timeToFrames( time-tempsRedemarrage);\n' +
+			'    valeur = value\n' +
+			'    if ( frameRedemarre <= retard) result = value - worldVelocity(time)*poids*(frameRedemarre/retard);\n' +
+			'    else result = value - worldVelocity(time)*poids;\n' +
+			'    if (worldSpeed(time) == 0) {\n' +
+			'    result += worldVelocity(tempsDebut) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n' +
+			'    }\n' +
+			'}\n' +
+			'else if (numKeys > 1 && elasticity != 0 && nearestKey(time).index != 1 && length(velocity) <= speedLimit)\n' +
+			'{\n' +
+			'    tempsClefProx = nearestKey(time).time;\n' +
+			'    if ( tempsClefProx <= time ) { tempsDebut = tempsClefProx }\n' +
+			'    else { tempsDebut = key(nearestKey(time).index-1).time }\n' +
+			'    temps = time - tempsDebut;\n' +
+			'    spring = velocityAtTime(tempsDebut-thisComp.frameDuration) * ( .15/elasticity * Math.sin(elasticity * temps * 2 * Math.PI) / Math.exp( temps * damping ) );\n' +
+			'    if (speedLimit > 0) spring = spring * (1-length(velocity)/speedLimit);\n' +
+			'    result = valueAtTime(tempsDebut) + spring;\n' +
+			'}\n' +
+			'result;';
 
 	}
 	else
