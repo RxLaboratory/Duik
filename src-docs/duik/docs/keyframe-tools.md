@@ -1,14 +1,15 @@
 [TOC]
 
-# Keyframe Tools
+# ![Keyframe Icon](img\duik-icons\keyframe-icon-r.png) Keyframe Tools
 
 The "*Keys*" panel contains all tools you may need all the time when in the process of animation.
 
 This is the "*Keys*" panel shown in *Standard Mode*:  
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/animation_normal.PNG)
+![Keyframe panel](img\duik-screenshots\S-Animation\S-Animation-Keyframes\Keyframe-panel.PNG) 
 
-## Select Keyframes
+## ![SelectKeyframe Icon](img\duik-icons\keyframe-icon-r.png) Select Keyframes
 
+![SelectKeyframes panel](img\duik-screenshots\S-Animation\S-Animation-Keyframes\SelectKeyframes-panels.png) 
 *Select keyframes...* is a very useful tool to quickly select a lot of keyframes together in the timeline.
 
 ### Options
@@ -20,15 +21,21 @@ To set specific time and time range, you can click on the eyedropper to pick the
 
 - You can use the filters to select the keyframes of a specific type or on specific layers only.
 
-## Interpolations
+## ![Interpolation Icon](img\duik-icons\interpolation-icon-r.png) Interpolations
+
+![keyframes anim](img\duik-screenshots\S-Animation\S-Animation-Keyframes\keyframes-anim.gif)
 
 Just under the 'Select keyframes' button, there are several tools to quickly adjust the interpolations of the selected keyframes.
+
+![Interpolations panel](img\duik-screenshots\S-Animation\S-Animation-Keyframes\KeyframeInterpolation.PNG) 
 
 - The first line of buttons can be used to change the interpolation type of the keyframes, or add keyframes of the wanted type on the properties. With the first button on the left, you can switch between the 'Edit' mode and the 'Add key' mode.
 - In *Standard Mode* (only), you can manage some interpolation presets, which store and reset velocity and ease.
 - The two sliders and the percentage adjust the ease on the selected keyframes, while the value just below defines the velocity.
 
-## Kleaner
+## ![Kleaner Icon](img\duik-icons\kleaner-icon-r.png) Kleaner
+
+![Kleaner panel](img\duik-screenshots\S-Animation\S-Animation-Keyframes\Kleaner.PNG)
 
 The *Kleaner* is a tool to automatically clean the selected animations. It is able to remove unneeded keyframes, clean the interpolations, etc.
 
@@ -47,6 +54,8 @@ It works both on spatial interpolations and keyframe eases, in three default ste
 
 ### Additionnal Panel
 
+![Kleaner option](img\duik-screenshots\S-Animation\S-Animation-Keyframes\Kleaner-optn.PNG)
+
 The additionnal panel is divided in three sections corresponding to the three steps of the "Kleaner " process.
 
 - Spatial Interpolations:  
@@ -58,7 +67,9 @@ Check or uncheck the checkbox to activate or deactivate this step when you run t
 - Remove unnecessary keyframes:  
 Check or uncheck the checkbox to activate or deactivate this step when you run the *Kleaner*
 
-## Copy and Paste animation
+## ![Copy anim Icon](img\duik-icons\copyanim-icon-r.png) Copy and Paste animation
+
+![Copy Paste](img\duik-screenshots\S-Animation\S-Animation-Keyframes\copy-paste-buttons.PNG)
 
 You can copy and paste animations from several layers at once, and from one composition to another.
 
