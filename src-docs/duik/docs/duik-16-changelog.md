@@ -25,6 +25,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - [*Copy/Paste animation*](keyframe-tools.md), which was broken in 16.0.8, is fixed
 - The [*Extract controllers*](controller-tool.md#extract-controllers) can now extract the controllers from two rigs in the same composition.
 - [*Bones*](bones.md) on puppet pins are named after the correponding pin.
+- Fixed [*Bones*](bones.md) creation on pins with Ae CC2018 and older.
+- The [*Storyboarder*](import.md) importer now imports empty boards too.
 
 ## 16.0.8
 
