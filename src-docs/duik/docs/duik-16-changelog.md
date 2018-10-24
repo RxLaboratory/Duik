@@ -24,6 +24,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Spring*](spring.md) expressions have been fixed and improved for After Effects 16.0
 - [*Copy/Paste animation*](keyframe-tools.md), which was broken in 16.0.8, is fixed
 - The [*Extract controllers*](controller-tool.md#extract-controllers) can now extract the controllers from two rigs in the same composition.
+- [*Bones*](bones.md) on puppet pins are named after the correponding pin.
 
 ## 16.0.8
 
