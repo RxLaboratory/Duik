@@ -51,6 +51,13 @@ You can choose to extract controllers using expressions or Master Properties.
     3. Select this rigged precomposition, and extract controllers with Duik, using Master Properties.
     4. "Animation Comp" can now be duplicated ; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
 
+## Tag Controllers
+
+Sometimes, you may want to use custom layers as controllers (for example, if you designed it yourself in Photoshop, or want to use any existing layer as a controller).  
+In this case, you can use this _tag_ tool on these layers so Duik can recognise them as controllers when using other controller tools, like [*Extract controllers*](#extract-controllers).
+
+Duik will add a new layer marker on the first frame of the layer, named "Controller".
+
 ## ![edit controller icon](img/duik-icons/edit-icon-r.png) Edit Controllers
 
 !!! hint
