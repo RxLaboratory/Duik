@@ -12,6 +12,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
     - You can get some [***Property Info***](rigging-tools.md) about the selected property, like its index, its matchName, the expression link to it, etc.
     - A [***Scriptify expression***](rigging-tools.md) tool makes it quick to include an expression as a string in a .jsx script.
 - Reimplemented the [_TVPaint_] import tool from Duik 15.
+- A [*tag controller*](controller-tools.md) tool to set any layer so Duik can recognise it as a controller (very useful for the [*extract controllers*](controller-tools.md#extract-controllers) tool for example).
 
 #### Improvements
 
