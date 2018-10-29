@@ -4,15 +4,25 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 ## 16.1.0 (in development)
 
-#### New
+#### New (Links & Constraints)
+
+- A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
+- The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
+
+#### New (Controllers)
+
+- A [*tag controller*](controller-tools.md) tool to set any layer so Duik can recognise it as a controller (very useful for the [*extract controllers*](controller-tools.md#extract-controllers) tool for example).
+
+#### New (Other rigging tools)
 
 - A tool to [***Align Layers***](rigging-tools.md) in the rigging tools panel.
-- A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
 - Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts:  
     - You can get some [***Property Info***](rigging-tools.md) about the selected property, like its index, its matchName, the expression link to it, etc.
     - A [***Scriptify expression***](rigging-tools.md) tool makes it quick to include an expression as a string in a .jsx script.
+
+#### New (Other)
+
 - Reimplemented the [_TVPaint_] import tool from Duik 15.
-- A [*tag controller*](controller-tools.md) tool to set any layer so Duik can recognise it as a controller (very useful for the [*extract controllers*](controller-tools.md#extract-controllers) tool for example).
 
 #### Improvements
 
@@ -21,6 +31,11 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - When [ _Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
 - If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
+- The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
+
+#### Fixes
+
+- When picking properties with Duik tools, if there is a disabled expression, it stays disabled instead of being enabled by the tool.
 
 ## 16.0.9
 
@@ -28,7 +43,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - The [*Spring*](spring.md) expressions have been fixed and improved for After Effects 16.0
 - [*Copy/Paste animation*](keyframe-tools.md), which was broken in 16.0.8, is fixed
-- The [*Extract controllers*](controller-tool.md#extract-controllers) can now extract the controllers from two rigs in the same composition.
+- The [*Extract controllers*](controller-tools.md#extract-controllers) can now extract the controllers from two rigs in the same composition.
 
 ## 16.0.8
 

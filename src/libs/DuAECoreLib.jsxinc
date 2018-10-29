@@ -178,6 +178,7 @@ function LayerAnim()
 function PropertyInfo(property)
 {
 	if (property instanceof PropertyInfo) property = property.getProperty();
+	var expressionEnabled = property.expressionEnabled;
 	if (property.propertyType == PropertyType.PROPERTY)
 	{
 		this.numKeys = property.numKeys;
@@ -218,6 +219,7 @@ function PropertyInfo(property)
 	this.dimensions = DuAEF.DuAE.Property.getDimensions(property);
 	this.isPercent = property.unitsText == 'percent';
 	this.isAngle = property.unitsText == 'degrees';
+	property.expressionEnabled = expressionEnabled;
 }
 
 /**
@@ -2034,18 +2036,23 @@ DuAEF.DuAE.Layer.copyToComp = function (layers, destinationComp, withPropertyLin
 }
 
 /**
-	* Parents all unparented layers
+	* Parents all (unparented) layers
 	* @param {Layer[]} layers - The layers to parent
-	* @param {Layer} parent - The parent
+	* @param {Layer} [parent] - The parent. If not defined, will use the last layer of the list
+	* @param {boolean} [unparentedOnly=true] - True to parent only layers which do not have a parent yet 
 */
-DuAEF.DuAE.Layer.parent = function(layers, parent)
+DuAEF.DuAE.Layer.parent = function(layers, parent, unparentedOnly)
 {
+	if (layers.length < 2) return;
+	if (typeof unparentedOnly === 'undefined') unparentedOnly = true;
+	if (typeof parent === 'undefined') parent = layers[layers.length -1];
+
 	var it = new Iterator (layers);
 	it.do(function(layer)
 	{
 		var locked = layer.locked;
 		layer.locked = false;
-		if (layer.parent == null) layer.parent = parent;
+		if ((layer.parent == null && unparentedOnly) || !unparentedOnly) layer.parent = parent;
 		layer.locked = locked;
 	});
 }
@@ -4136,10 +4143,9 @@ DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
 		prop = prop.getProperty();
 	}
 
-
 	if (!propInfo.numerical) return [];
 
-	if (prop.expression == '') preExpression = true;
+	if (prop.expression == '' || !prop.expressionEnabled) preExpression = true;
 
 	var comp = propInfo.comp;
 	var frames = comp.duration/comp.frameDuration;
@@ -4169,6 +4175,8 @@ DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
 			maxTime = i;
 		}
 	}
+
+	if (preExpression) prop.expressionEnabled = false;
 
 	if (minTime < maxTime) return [min,max];
 	else return [max,min];
