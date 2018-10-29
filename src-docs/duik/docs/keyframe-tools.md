@@ -69,7 +69,7 @@ Check or uncheck the checkbox to activate or deactivate this step when you run t
 
 ## ![Copy anim Icon](img\duik-icons\copyanim-icon-r.png) Copy and Paste animation
 
-![Copy Paste](img\duik-screenshots\S-Animation\S-Animation-Keyframes\copy-paste-buttons.PNG)
+![Copy Paste](img\duik-screenshots\S-Animation\S-Animation-Keyframes\copy-paste-buttons.png)
 
 You can copy and paste animations from several layers at once, and from one composition to another.
 
