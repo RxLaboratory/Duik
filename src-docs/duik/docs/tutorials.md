@@ -1,3 +1,5 @@
+[TOC]
+
 # Tutorials
 
 Grab the user guide, keep it at hand, and go watch tutorials to quickly learn Duik!  
@@ -19,10 +21,7 @@ We're making official tutorials, and there are a lot of other tutorials on the i
 
 - English
 
-    **Comprehensive course about animation**: principles, objects, characters with After Effects (8h30mn).
-
-    !!! note
-        We're currently translating this course from French, it will be available soon!
+    [**Comprehensive course about animation**](https://en.tuto.com/after-effects/comprehensive-animation-course-principles-objects-characters-after-effects,112561.html?cc=vyKT3i): principles, objects, characters with After Effects (8h30mn).
 
 - Français
 
