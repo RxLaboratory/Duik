@@ -1,4 +1,4 @@
-# Frequently Asked Questions
+# ![faq Icon](img\duik-icons\help-icon-r.png) Frequently Asked Questions
 
 If you don't find the answer to your question here, come and ask for help on [the official forum](https://forum.rainboxprod.coop) or on [Discord](https://discord.gg/hNuKny8)!
 
