@@ -1922,6 +1922,60 @@ DuAEF.DuAE.Layer.unparent = function (layers)
 }
 
 /**
+	* (Un)parent the children of the layer.< br/>
+	* When children are unparented, an effect is added and the name of the layer is changed to show the "edit mode" is enabled.<br />
+	* When toggled again, the effect is removed, and the name is restored.
+	* @param {Layer} layer - The layer to toggle.
+*/
+DuAEF.DuAE.Layer.toggleEditMode = function(layer)
+{
+	//a reg exp to retrieve the list of children
+	var reChildren = / \|Duik::ChildrenLayers:([\d,]*)\|/;
+
+	var setEditMode = !reChildren.test(layer.comment);
+
+	//TODO else
+
+	var comp = layer.containingComp;
+
+	if (setEditMode)
+	{
+		var children = DuAEF.DuAE.Layer.getChildren(layer);
+		layer.comment = layer.comment + ' |Duik::ChildrenLayers:';
+		for (var j = 0, num = children.length ; j < num ; j++)
+		{
+			var child = children[j];
+			layer.comment = layer.comment + child.index;
+			if (j < children.length -1) layer.comment = layer.comment + ',';
+			child.parent = null;
+		}
+		layer.comment = layer.comment + "|";
+		layer.name = '=EDIT= ' + layer.name;
+	}
+	else
+	{
+		var match = reChildren.exec(layer.comment);
+		if (match.length == 2)
+		{
+			var indices = match[1].split(',');
+			//reparent
+			if (indices.length > 0)
+			{
+				for (var i = 0 ; i < indices.length ; i++)
+				{
+					var index = parseInt(indices[i]);
+					if (isNaN(index)) continue;
+					comp.layer(index).parent = layer;
+				}
+			}
+			//remove comment
+			layer.comment = layer.comment.replace(match[0],'');
+			layer.name = layer.name.replace('=EDIT= ','');
+		}
+	}
+}
+
+/**
 	* Creates a sequence with the layers, but using opacities.
 	* This enables more possibilities to rig them, like with the Connector
 	* @param {Layer[]|LayerCollection} layers - The layers

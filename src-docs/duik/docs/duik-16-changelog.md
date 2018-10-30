@@ -15,10 +15,12 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New (Other rigging tools)
 
-- A tool to [***Align Layers***](rigging-tools.md) in the rigging tools panel.
+- A tool to [***Align Layers***](rigging-tools.md#align-layers) in the rigging tools panel.
+- With the [***Edit mode***](rigging-tools.md#toggle-edit-mode), you can (un/re)parent all the children of a layer.
+- You can [***Remove expressions***](rigging-tools.md#remove-expressions) while keeping the post-expression value.
 - Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts:  
-    - You can get some [***Property Info***](rigging-tools.md) about the selected property, like its index, its matchName, the expression link to it, etc.
-    - A [***Scriptify expression***](rigging-tools.md) tool makes it quick to include an expression as a string in a .jsx script.
+    - You can get some [***Property Info***](rigging-tools.md#get-property-info) about the selected property, like its index, its matchName, the expression link to it, etc.
+    - A [***Scriptify expression***](rigging-tools.md#scriptify-expression) tool makes it quick to include an expression as a string in a .jsx script.
 
 #### New (Other)
 
@@ -28,6 +30,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - The [_Connector_](connector.md) can now be used in a single click (creates a controller layer automatically).
 - The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer.
+- When used on opacities, the [_Connector_](connector.md) automatically makes the layer visible.
 - When [ _Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
 - If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
