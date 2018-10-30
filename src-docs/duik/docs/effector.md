@@ -1,4 +1,4 @@
-# Effector
+# ![effector Icon](img\duik-icons\automation\effector-icon-r.png) Effector
 
 The "Effector" is a way to control properties depending on a spatial effector.
 
@@ -15,6 +15,8 @@ Like the [Connector](connector.md), the effector needs keyframes on the controll
 You can also connect a new property to an existing Effector: before clicking on the button, select the property AND the Effector you want to connect.
 
 ## Effect
+
+![Effector effects example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Effector-effects-example.png)
 
 In the effect of the Effector, you can change the limits, and choose between two modes: circle and inifinite line.
 Note that in the infinite line mode, the outter limit is ignored.
