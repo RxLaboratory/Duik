@@ -1,4 +1,4 @@
-# Automations
+# ![automation Icon](img\duik-icons\automation\automation-icon-r.png) Automations
 
 Automations, automatic animations, dynamics, physics, procedural animation.
 
@@ -10,7 +10,7 @@ As soon as your character is rigged, you can begin the animation, being helped b
 
 ## Panel
 
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/automations_normal.PNG)
+![automation panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Automation-panel.PNG)
 
 Duik includes a lot of tools to help animators deal with simple or common animations, to make them quicker and focus more on complex character animation.
 
