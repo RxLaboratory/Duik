@@ -1,6 +1,8 @@
 [TOC]
 
-# Walk Cycle
+# ![walk cycle Icon](img\duik-icons\automation\walkcycle-icon-r.png) Walk Cycle
+
+![Walk cycle panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\WalkCycle.PNG)
 
 The "Walk Cycle" is the first comprehensive procedural animation available in Duik Bassel.
 
@@ -53,6 +55,8 @@ The Walk Cycle can be adjusted in the effects of the walk cycle controller which
 
 ## Effect
 
+![Walk cycle effects main](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Walkcycle-effectsmain.PNG)
+
 - The "General motion" value can be used to start and stop the walk cycle. You can then animate the character as you would without the walk cycle tool to continue the animation before or after the walk.
 
 - The "Main parameters" set the general information needed by the walk cycle to animate it correctly
@@ -62,6 +66,8 @@ The Walk Cycle can be adjusted in the effects of the walk cycle controller which
 - The "Animation data" is where you can connect custom controllers to the walk cycle, get data to use in your own expressions and rigs, and adjust some parameters needed for the computation.
 
 ### Main Parameters
+
+![main parameters](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Walkcycle-effects-detail\mainparameters.png)
 
 All parameters use the metric system for now. Future versions of Duik will let you choose between the metric system and imperial units.
 
@@ -79,11 +85,15 @@ All parameters use the metric system for now. Future versions of Duik will let y
 
 ### Secondary controls
 
+![secondary controls](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Walkcycle-effects-detail\secondarycontrols.png)
+
 Here you can adjust how each individual limb moves. In this version of Duik, you can not control separately the left and the right, but if you need to differenciate each side, you can create two different versions of the walk cycle in the same composition, one for each side.
 
 You can adjust the swinging amplitude the limbs, their softness (how the muscles are contracted), etc. Do not hesitate to test each control individually to see how it affects the walk cycle.
 
 ### Animation data
+
+![animation data](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Walkcycle-effects-detail\animationdata.png)
 
 In this section you can adjust how the walk cycle is computed, connect your custom rig and controllers which Duik could not connect automatically, or get useful data for your own rigs and expressions.
 
@@ -104,6 +114,8 @@ Duik tries to set some important parameters automatically when you create the wa
 - Duik also needs the height of the whole characer, in pixels, from the heel to the top of the head.
 
 #### Computation
+
+![computation](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Walkcycle-effects-detail\computation.png)
 
 This section outputs some values used by Duik to compute the walk cycle. You can use them in your own expressions and rigs.
 
