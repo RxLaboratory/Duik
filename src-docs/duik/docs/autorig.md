@@ -64,20 +64,40 @@ When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the c
 !!! note
     This section still has to be written
 
+- The _Enable IK_ checkbox can be used to de-activate the IK and animate only using the FK control.
+    !!! tip
+        On this specific one-layer IK, you can animate in FK even without de-activating the IK. The layer controlled by the IK can even still be rotated manually too.
+
+- The _FK_ angle controls the rotation of the rigged layer.
+
+- In the _display_ section, you can customize the way the IK is shown by the controller, and how it displays some information. De-activating all these options will improve the performance.
+
 #### Two-layer IK (arms and legs...)
 
 !!! note
     This section still has to be written
+
+- The _Enable IK_ checkbox can be used to de-activate the IK and animate only using the FK control.
+
+- In the _display_ section, you can customize the way the IK is shown by the controller, and how it displays some information. De-activating all these options will improve the performance.
 
 #### Bezier IK (multi-layer spine, tails...)
 
 !!! note
     This section still has to be written
 
+Two controllers are needed to control Bezier IK. One at the end of the chain, like with other types of IK, and one in the middle which controls the curve. On both of these controllers there are some options in the effects.
+
+##### Main Controller (end)
+
+##### Middle Controller (curve)
+
 #### FK with follow-through, overlap and drag (tails...)
 
 !!! note
     This section still has to be written
+
+This constraint autommatically controls the rotation of all the parts of the chain, depending on both the animation of the rotation of the controller and the motion of the parent of the chain. It rotates the children of the chain according the _overlap_ and _follow through_ animation principles. This means it mimics ropes, tails, hairs, etc. with the ability to adjust their flexibility and the resistance of the air or water where they are.
 
 ![Fish animation](img/examples/carpes-structures.gif)  
 _Animation by [Jissse](http://jissse.com)_  
