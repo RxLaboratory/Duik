@@ -2538,10 +2538,8 @@ DuAEF.DuAE.Property.isEditable = function (prop)
 	if (prop.propertyType != PropertyType.PROPERTY) return false;
 	if (prop.elided) return false;
 	if (prop.dimensionsSeparated) return false;
-
-	var comp = DuAEF.DuAE.Property.getComp(prop);
-	var time = comp.time;
-
+	if (typeof prop.value === 'undefined') return false;
+	//TODO find a way to detect if prop is hidden without using a try/catch
 	//try to set a value if there's no keyframe
 	if (prop.numKeys == 0)
 	{
@@ -2560,6 +2558,7 @@ DuAEF.DuAE.Property.isEditable = function (prop)
 		try
 		{
 			prop.setValueAtKey(1, prop.keyValue(1));
+			return true;
 		}
 		catch (e)
 		{
@@ -2584,11 +2583,9 @@ DuAEF.DuAE.Property.isRiggable = function (prop)
 	if (!prop.canSetExpression) return false;
 	if (prop.elided) return false;
 	if (prop.dimensionsSeparated) return false;
-
-	//try to set an expression
-	try { prop.expression = prop.expression; return true; } catch (e) { return false; }
-
-	return true;
+	if (typeof prop.expression !== 'string') return false;
+//TODO find a way to detect if prop is hidden without using a try/catch
+	try { prop.expression = prop.expression; return true } catch(e) { return false; }
 }
 
 /**
@@ -4068,13 +4065,17 @@ DuAEF.DuAE.Property.lock = function(properties)
 /**
  * Removes the expression from the property, keeping the post-expression value.
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase} prop - The property
+ * @param {Property|PropertyInfo} prop - The property
 */
 DuAEF.DuAE.Property.removeExpression = function(prop)
 {
-	if (!prop.canSetExpression) return;
-	DuAEF.DuAE.Property.setValue(prop, prop.value);
-	prop.expression = '';
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (prop.expression == '') return;
+	if (DuAEF.DuAE.Property.isRiggable(prop))
+	{
+		DuAEF.DuAE.Property.setValue(prop, prop.value);
+		prop.expression = '';
+	}
 }
 
 /**
