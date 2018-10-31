@@ -1,10 +1,12 @@
-# ![random Icon](img\duik-icons\random-icon-r.png) Random
+# ![random Icon](img\duik-icons\automation\random-icon-r.png) Random
 
 ![Random panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Random.PNG)
 
 The "Random" tool is able to randomize all kind of things (property values, keyframe times, layer times...)
 
 First, open the "Random" panel by clicking on the "Random" button.
+
+![Random panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Random-optn.PNG)
 
 You can choose:
 
