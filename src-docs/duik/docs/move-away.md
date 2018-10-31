@@ -1,5 +1,7 @@
 # ![move away Icon](img\duik-icons\automation\moveaway-icon-r.png) Move Away
 
+![Move away panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\MoveAway.PNG)
+
 The "Move Away" tool will add a simple cursor which controls the position of the layer. This cursor will control the distance between the layer and its parent.
 
 1. Select the layer

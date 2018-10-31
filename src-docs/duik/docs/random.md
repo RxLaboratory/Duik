@@ -1,10 +1,13 @@
-# Random
+# ![random Icon](img\duik-icons\random-icon-r.png) Random
+
+![Random panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Random.PNG)
 
 The "Random" tool is able to randomize all kind of things (property values, keyframe times, layer times...)
 
 First, open the "Random" panel by clicking on the "Random" button.
 
 You can choose:
+
 - Current values: randomizes the selected properties, adding a keyframe at the current time if the property is animated.
 - Layers: randomizes the layers times, or position in the layer stack.
 - Keyframes: randomizes the selected keyframes values or times.
