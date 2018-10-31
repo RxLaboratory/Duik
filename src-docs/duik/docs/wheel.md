@@ -1,5 +1,7 @@
 # ![wheel Icon](img\duik-icons\automation\wheel-icon-r.png) Wheel
 
+![Wheel panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Wheel.PNG)
+
 The "Wheel" automates the rotation of the layer depending on its translations.
 
 ## Setup
