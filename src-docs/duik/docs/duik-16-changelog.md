@@ -17,6 +17,12 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - If there was a selection (path, pins or layers) in the composition when creating _Structures_, Duik will automatically link the selection to the _Structures_.
 - The head controller with the _Autorig_ now controls the head position too.
 
+## 16.0.10
+
+#### Fixes
+
+- UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
+
 ## 16.0.9
 
 #### Fixes
