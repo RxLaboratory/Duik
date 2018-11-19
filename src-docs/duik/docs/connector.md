@@ -1,6 +1,6 @@
 [TOC]
 
-# Connector
+# ![Connector Icon](img/duik-icons/constraint-icon-r.png) Connector
 
 The Connector is a way to control almost any property in After Effects with any other property, a bit like parenting between layers, but with properties.
 

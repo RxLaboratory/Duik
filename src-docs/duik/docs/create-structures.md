@@ -36,7 +36,7 @@ Puppet pins will be linked to the corresponding _Structure elements_.
 
     Internal unique identifiers are associated with the _Structures_, which won't be updated when you copy or duplicate the _Structures_ in After Effects. The [_Auto-rig_](autorig.md) and other rigging tools in Duik need these identifiers to work correctly and may fail if they are not set properly. The [_Duplicate_](structure-tools.md#duplicate-structures) tool does this.
 
-## ![Icon](img/duik-icons/w32_human_r.png) Hominoid
+## ![Hominoid Icon](img/duik-icons/humanoid-icon-r.png) Hominoid
 
 ![Hominoid](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Hominoid.PNG)
 
@@ -65,8 +65,8 @@ For each limb you can create with Duik, you have to choose the type of walking a
 ## ![Arm Icon](img/duik-icons/arm-icon-r.png) Arm
 
 ![arm structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure.PNG)
-![arm structure 2](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure2.PNG)
-![arm structure 3](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure3.PNG)
+
+![arm structure comp](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure-comp.png)
 
 Creates a *Structure* for the arm or the front leg of a quadruped.
 
@@ -82,8 +82,8 @@ _Animation by [Jissse](http://jissse.com)_
 ## ![Leg Icon](img/duik-icons/leg-icon-r.png) Leg
 
 ![leg structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure.PNG)
-![leg structure 2](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure2.PNG)
-![leg structure 3](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure3.PNG)
+
+![leg structure comp](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure-comp.png)
 
 Creates a *Structure* for the (rear) leg of a biped or a quadruped.
 
