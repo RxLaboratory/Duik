@@ -17,9 +17,10 @@ It can be adjusted in the effects of the corresponding layer.
 
 ## Effect
 
-![Spring effects example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Spring-effects-example.png)
+![Spring pannel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Spring-effects.PNG)
+![Spring example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\spring-example.png)
 
-![Spring effects example](img\examples\cart.gif)
+![Spring example gif](img\examples\cart.gif)
 
 - The elasticity controls both the amplitude and the frequency of the motion. A Higher elasticity will result in a higher frequency but lower amplitude.
 

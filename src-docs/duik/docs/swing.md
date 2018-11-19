@@ -13,7 +13,8 @@ The Swing can be adjusted in the effects of the corresponding layer.
 
 ## Effect
 
-![Swing effects example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Swing-effects-example.png)
+![Swing panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Swing-effects.PNG)
+![Swing example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\swing-example.png)
 
 By default, the swing uses an exact sinus and goes back and forth very smoothly. Using the "Ease" value, you can add some ease at the extremes and make it slow down and accelerate more.
 

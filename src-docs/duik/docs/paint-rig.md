@@ -13,7 +13,8 @@ You can adjust and animate the paint strokes in the effects of the layer.
 
 ## Effect
 
-![Paint rig effects example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Paintrig-effects-example.png)
+![Paint rig panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Paintrig-effects.PNG)
+![Paint rig example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\paintrig-example.png)
 
 The start, end, Color and Diameter paramaters work like the same parameters in the individual stroles, but as controlling all of them as if they were a single one.
 

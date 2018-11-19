@@ -16,7 +16,10 @@ You can also connect a new property to an existing Effector: before clicking on 
 
 ## Effect
 
-![Effector effects example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Effector-effects-example.png)
+![Effector pannel example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Effector-effects.PNG)
+![Effector example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\circle-example.png)
+![Effector example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\infiniteline-example.png)
+
 
 In the effect of the Effector, you can change the limits, and choose between two modes: circle and inifinite line.
 Note that in the infinite line mode, the outter limit is ignored.
