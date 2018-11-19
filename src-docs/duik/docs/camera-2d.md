@@ -32,6 +32,9 @@ Camera Influence can be found in the effects of the generated or duplicated null
 
 ## Effect
 
+![2d camera effects](img\duik-screenshots\S-Camera\2DCamera-effects.PNG)
+![2d camera effects advanced](img\duik-screenshots\S-Camera\2DCamera-effects-advanced.PNG)
+
 - **Horizontal or Vertical Pan**: simulates a rotation of the camera, animates the position of the layers without parallax.
 - **Zoom**: simulates zooming, animates the scale of the layers without parallax
 - **Truck In Out**: simulates truck in or out, animates the scale of the layers with parallax
