@@ -149,7 +149,7 @@ As for the controllers, the additionnal panel of the [_Structures_](structures.m
 
 ### Parent constraint
 
-!!! caution
+!!! warning
     The parent constraint can be very heavy.
 
 The [_Parent constraint_](parent-constraint.md) is a great tool but... It can be very computer-intensive. To be able to compute the location of a layer, it has to compute the previous movement of all it's parents on the previous frames of the composition. This means the longer the composition is, the slower it will be. Avoid using it in very long compositions, and try to use it only when necessary. Often, it is easier and quickier to just split the layer when its parent must change.
