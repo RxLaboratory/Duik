@@ -11,6 +11,7 @@ This part will be completed when 16.1.0 will be released... Be patient ;)
 #### Fixes
 
 - UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
+- Fixed the issue when sometimes two [*Bones*](bones.md) were created for the same puppet pin.
 
 ## 16.0.9
 
