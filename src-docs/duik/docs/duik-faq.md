@@ -6,18 +6,30 @@ If you don't find the answer to your question here, come and ask for help on [th
 
 ## General
 
-### Can I use Duik Bassel on After Effects XX? (replace XX by any version name)
+### Can I use Duik on After Effects XX? (replace XX by any version name)
+
+#### Duik Bassel
 
 Duik Bassel has been tested and works on all versions since CS6. That means CS6, CC, CC2014, CC2015, CC2017 and CC2018 support Duik.
 
 We do not test Duik on versions older than CS6, so it may or may not work properly, we don't know ;) But you can test it yourself, it won't break anything!
 
+!!! warning
+    Duik Bassel does work on CS6, but the UI has a lot of issues we can not fix (they are issues in After Effects itself).
+
 !!! note
     Although Duik works well on older versions of After effects, some features may be deactivated, like some tools working with Bézier paths only on CC2018 and newer.
 
+#### Previous versions of Duik and After Effects
+
 If you need older versions of Duik which work with earlier versions of After Effects, you can get them there: https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/Release/Duik
 
-The 10th version even works with After Effects 7.0!
+Duik 15.52 works with CS4 and all more recent versions.
+
+Duik 10 "oldafter" even works with After Effects 7.0!
+
+!!! note
+    Duik 15.52 can not be installed on the first After Effects v16.0 (CC2019) because of the missing `PresetEffects.xml` file. This is fixed in After Effects 16.1 and more recent versions.
 
 ### Can I keep (or safely remove) the older versions of Duik (15)?
 

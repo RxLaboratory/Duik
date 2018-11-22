@@ -36,9 +36,15 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 - The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
 
+## 16.0.10
+
 #### Fixes
 
 - When picking properties with Duik tools, if there is a disabled expression, it stays disabled instead of being enabled by the tool.
+- UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
+- Fixed the issue when sometimes two [*Bones*](bones.md) were created for the same puppet pin.
+- Fixed the expressions for the [*walk cycle*](walk-cycle.md) with the new expression engine. If errors are still generated, you can jut ignore them, they'll disappear as soon as you use the controller.
+- Slider, 2D-slider and angle [*controllers*](controllers.md) are no longer broken when there are layers selected in the composition before creating them.
 
 ## 16.0.9
 
@@ -47,6 +53,9 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Spring*](spring.md) expressions have been fixed and improved for After Effects 16.0
 - [*Copy/Paste animation*](keyframe-tools.md), which was broken in 16.0.8, is fixed
 - The [*Extract controllers*](controller-tools.md#extract-controllers) can now extract the controllers from two rigs in the same composition.
+- [*Bones*](bones.md) on puppet pins are named after the correponding pin.
+- Fixed [*Bones*](bones.md) creation on pins with Ae CC2018 and older.
+- The [*Storyboarder*](import.md) importer now imports empty boards too.
 
 ## 16.0.8
 
