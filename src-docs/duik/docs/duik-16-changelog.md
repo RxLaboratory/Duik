@@ -13,6 +13,7 @@ This part will be completed when 16.1.0 will be released... Be patient ;)
 - UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
 - Fixed the issue when sometimes two [*Bones*](bones.md) were created for the same puppet pin.
 - Fixed the expressions for the [*walk cycle*](walk-cycle.md) with the new expression engine. If errors are still generated, you can jut ignore them, they'll disappear as soon as you use the controller.
+- Slider, 2D-slider and angle [*controllers*](controllers.md) are no longer broken when there are layers selected in the composition before creating them.
 
 ## 16.0.9
 
