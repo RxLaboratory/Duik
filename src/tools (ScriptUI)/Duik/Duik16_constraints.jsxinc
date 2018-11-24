@@ -568,16 +568,12 @@ function ui_buildConstraints(ui_constraintsGroup)
 
 	function ui_zeroButton_clicked()
 	{
-		var layers = DuAEF.DuAE.Comp.unselectLayers();
-		if (layers.length == 0) return;
+		DuAEF.DuAE.Comp.doSelectedLayers(DuAEF.Duik.Rigging.addZero, "Duik | Add zero");
+	}
 
-		app.beginUndoGroup('Duik | ' + "Add zero");
-		for (var i = 0 ; i < layers.length ; i++)
-		{
-			DuAEF.Duik.Rigging.addZero(layers[i]);
-		}
-		DuAEF.DuAE.Comp.selectLayers(layers);
-		app.endUndoGroup();
+	function ui_zeroButton_altClicked()
+	{
+		DuAEF.DuAE.Comp.doSelectedLayers(DuAEF.Duik.Animation.resetPRS, "Duik | Reset PRS");
 	}
 
 	function ui_lockButton_clicked()
@@ -771,13 +767,13 @@ function ui_buildConstraints(ui_constraintsGroup)
 	//ui_bonesGroup.alignment = ['fill','top'];
 	var ui_bonesButton = DuAEF.DuScriptUI.addButton(ui_bonesGroup,"Add bones",DuAEF.DuBinary.toFile(w25_pin_l),"Connect any spatial property to a control layer",DuAEF.DuBinary.toFile(w25_pin_r));
 	ui_bonesButton.setHelp("Bones", bonesHelp, bonesLink);
-	if (settings.data.uiMode != 0)
+	if (settings.data.uiMode > 0)
 	{
 		var ui_bonesOptionsButton = DuAEF.DuScriptUI.addButton(ui_bonesGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Bones options",DuAEF.DuBinary.toFile(w14_plus_r));
 		ui_bonesOptionsButton.group.alignment = ['right','center'];
 	}
 
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_constraintsGeneralGroup);
 
 	var ui_constraintsMainGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGeneralGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 	if (settings.data.uiMode == 2) ui_constraintsMainGroup.alignment = ['center','top'];
@@ -786,7 +782,7 @@ function ui_buildConstraints(ui_constraintsGroup)
 	var ui_parentCompButton = DuAEF.DuScriptUI.addButton(ui_constraintsMainGroup,settings.data.uiMode == 2 ? '' : "Parent accross comps...",DuAEF.DuBinary.toFile(w25_parentcomp_l),"Parent layers between compositions",DuAEF.DuBinary.toFile(w25_parentcomp_r));
 	ui_parentCompButton.setHelp("Parent Accross Compositions", parentaccrosscompositionsHelp, parentaccrosscompositionsLink);
 
-	if (settings.data.uiMode != 0)
+	if (settings.data.uiMode > 0)
 	{
 		var ui_pathConstraintButton = DuAEF.DuScriptUI.addButton(ui_constraintsMainGroup,settings.data.uiMode == 2 ? '' : "Path constraint...",DuAEF.DuBinary.toFile(w25_pathconstraint_l),"Attach a layer to a bezier path",DuAEF.DuBinary.toFile(w25_pathconstraint_r));
 		ui_pathConstraintButton.setHelp("Path Constraint", pathconstraintHelp, pathconstraintLink);
@@ -808,7 +804,7 @@ function ui_buildConstraints(ui_constraintsGroup)
 		if (settings.data.uiMode == 2) ui_constraintsToolsGroup.alignment = ['center','top'];
 		var ui_listConstaintsButton = DuAEF.DuScriptUI.addButton(ui_constraintsToolsGroup,settings.data.uiMode == 2 ? '' : "Add list",DuAEF.DuBinary.toFile(w18_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w18_list_r));
 		ui_listConstaintsButton.setHelp("List", listHelp, listLink);
-		var ui_zeroButton = DuAEF.DuScriptUI.addButton(ui_constraintsToolsGroup,settings.data.uiMode == 2 ? '' : "Add zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer",DuAEF.DuBinary.toFile(w18_zero_r));
+		var ui_zeroButton = DuAEF.DuScriptUI.addButton(ui_constraintsToolsGroup,settings.data.uiMode == 2 ? '' : "Zero",DuAEF.DuBinary.toFile(w18_zero_l),"Add a \"zero\" to a layer.\nAlt + Click: Resets the PRS of the layer",DuAEF.DuBinary.toFile(w18_zero_r));
 		ui_zeroButton.setHelp("Zero", zeroHelp, zeroLink);
 		var ui_lockButton = DuAEF.DuScriptUI.addButton(ui_constraintsToolsGroup,settings.data.uiMode == 2 ? '' : "Lock property",DuAEF.DuBinary.toFile(w18_lock_l),"Locks the property so its value can not be changed nor keyframed",DuAEF.DuBinary.toFile(w18_lock_r));
 		ui_lockButton.setHelp("Lock property", lockpropertyHelp, lockpropertyLink);
@@ -1078,19 +1074,22 @@ function ui_buildConstraints(ui_constraintsGroup)
 	ui_parentCompLayerSelector.onChange = ui_parentCompLayerSelector_changed;
 	ui_parentCompValidButton.onClick = ui_parentCompValidButton_clicked;
 
-	if (settings.data.uiMode != 0) ui_pathConstraintButton.onClick = ui_pathConstraintButton_clicked;
-	ui_pathConstraintCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
-	ui_pathConstraintPickButton.onClick = ui_pathConstraintPickButton_clicked;
-	ui_pathConstraintValidButton.onClick = ui_pathConstraintValidButton_clicked;
+	if (settings.data.uiMode > 0)
+	{
+		ui_pathConstraintButton.onClick = ui_pathConstraintButton_clicked;
+		ui_pathConstraintCancelButton.onClick = function () {setCurrentConstraintsPanel(0);};
+		ui_pathConstraintPickButton.onClick = ui_pathConstraintPickButton_clicked;
+		ui_pathConstraintValidButton.onClick = ui_pathConstraintValidButton_clicked;
 
-	if (settings.data.uiMode != 0) ui_positionConstraintButton.onClick = ui_positionConstraintButton_clicked;
-	if (settings.data.uiMode != 0) ui_orientationConstraintButton.onClick = ui_orientationConstraintButton_clicked;
-
-	if (settings.data.uiMode != 0) ui_listConstaintsButton.onClick = ui_listConstaintsButton_clicked;
-	if (settings.data.uiMode != 0) ui_zeroButton.onClick = ui_zeroButton_clicked;
-	if (settings.data.uiMode != 0) ui_locatorButton.onClick = ui_locatorButton_clicked;
-	if (settings.data.uiMode != 0) ui_extractLocatorsButton.onClick = ui_extractLocatorsButton_clicked;
-	if (settings.data.uiMode != 0) ui_lockButton.onClick = ui_lockButton_clicked;
+		ui_positionConstraintButton.onClick = ui_positionConstraintButton_clicked;
+		ui_orientationConstraintButton.onClick = ui_orientationConstraintButton_clicked;
+		ui_listConstaintsButton.onClick = ui_listConstaintsButton_clicked;
+		ui_zeroButton.onClick = ui_zeroButton_clicked;
+		ui_zeroButton.onAltClick = ui_zeroButton_altClicked;
+		ui_locatorButton.onClick = ui_locatorButton_clicked;
+		ui_extractLocatorsButton.onClick = ui_extractLocatorsButton_clicked;
+		ui_lockButton.onClick = ui_lockButton_clicked;
+	}
 
 	debugLog.stopTimer("Constraints ready.");
 }
