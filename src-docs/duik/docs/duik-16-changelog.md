@@ -8,6 +8,10 @@ This part will be completed when 16.1.0 will be released... Be patient ;)
 
 ## 16.0.10
 
+#### Improvements
+
+- [Alt + Click] on the [*Zero*](zero.md) button resets the position, rotation and scale of the layer.
+
 #### Fixes
 
 - UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
