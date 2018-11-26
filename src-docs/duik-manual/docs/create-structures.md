@@ -68,7 +68,7 @@ For each limb you can create with Duik, you have to choose the type of walking a
 
 ![arm structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure.PNG)
 
-![arm structure comp](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure-comp.png)
+![arm structure comp](img\duik-screenshots\S-Rigging\S-Rigging-Structures\arm-structure-comp.png)
 
 !!! warning "À FAIRE - LEA"
     dans l'image ci dessus, digitigrade et ongulés sont inversés (l'image de squelette, pas celle des structures de duik)

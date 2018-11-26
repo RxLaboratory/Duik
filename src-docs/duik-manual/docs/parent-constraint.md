@@ -1,4 +1,6 @@
-# Parent Constraint
+# ![parent constraint icon](img/duik-icons/parent-icon-r.png) Parent Constraint
+
+![Parent Constraint](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\ParentConstraint.PNG)
 
 The Parent Constraint tool replaces the native parenting of After Effects and allows to animate those links.
 
@@ -7,6 +9,8 @@ Its use is very simple: just select a layer and click on the "Parent Link" butto
 ![Parent Animation](img/examples/parent-2.gif)
 
 In the effects of the layer, you can set its parent, and animate a weight if needed. You can duplicate the effect to link the layer to other layers as well.
+
+![Parent Constraint effect](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\ParentConstraint-effect.PNG)
 
 !!! note
     You won't see the effect of the parent link unless there already are some keyframes, the tool needs animation to compute the linking.
