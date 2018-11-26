@@ -12,3 +12,5 @@ With the Looper you can combine in and out loops, and activate and deactivate th
 
 1. Select the properties
 2. Click on the "Looper" button
+
+![Looper effect](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Looper-effect.PNG)

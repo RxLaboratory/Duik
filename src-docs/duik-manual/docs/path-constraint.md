@@ -1,4 +1,4 @@
-# ![path constraint icon](img/duik-icons/pathconstraint-icon-r.png) Path Constraint
+# ![path constraint icon](img/duik-icons/path-icon-r.png) Path Constraint
 
 ![Path Constraint](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\PathConstraint.PNG)
 
@@ -9,6 +9,8 @@
     Available in _Standard_ and _Expert_ modes only.  
 
 The Path Constraint constraints the position of a layer to any Bézier path.
+
+## Setup
 
 1. Select a Bezier path
 2. Click on the "Pick Path" button of the Path Constraint panel
