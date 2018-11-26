@@ -2,6 +2,8 @@
 
 # ![Connector Icon](img/duik-icons/constraint-icon-r.png) Connector
 
+![Connector](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\Connector.PNG)
+
 The Connector is a way to control almost any property in After Effects with any other property, a bit like parenting between layers, but with properties.
 
 With the connector, a "master property" will drive one or several "slave properties" and automate their animation depending on the master property value.
@@ -42,6 +44,8 @@ If you need to have the controller in another composition, you can either use th
 Read further to learn how to do more advanced stuff with the connector, in the additionnal panel.
 
 ### Standard setup
+
+![Connector options](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\Connector-optn.PNG)
 
 Using the standard setup, you can do more things than the quick setup, like connecting from a composition to another, and be able to choose almost _any property_ as a controller (see the section above, [Property types handled by the connector](#property-types-handled-by-the-connector)).
 

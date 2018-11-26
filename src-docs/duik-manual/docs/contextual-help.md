@@ -1,5 +1,7 @@
 ## ![Help icon](img/duik-icons/help-icon-red.png) Contextual help
 
+(img\duik-screenshots\accueil-help.png)
+
 If you need help, click on the top right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
 
 In this help panel, there are 3 tabs.

@@ -72,8 +72,6 @@ Creates a *Structure* for the arm or the front leg of a quadruped.
 
 Click the ○ button to adjust the settings for the arm.
 
-![Arm options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Arm-ArmStructure.PNG)
-
 You can check which part of the limb is present on your character. The autorig will adapt to every configuration, but using all of them (except for claws when rigging humans) can ensure a nice rig and a more realistic animation.
 
 ![Arm Animation](img/examples/parent-structure.gif)  
@@ -88,8 +86,6 @@ _Animation by [Jissse](http://jissse.com)_
 Creates a *Structure* for the (rear) leg of a biped or a quadruped.
 
 Click the ○ button to adjust the settings for the leg.
-
-![Leg options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Leg-LegStructure.PNG)
 
 The autorig will adapt to every configuration, but using all of them can ensure a nice rig and a more realistic animation (with a proper foot roll).
 
