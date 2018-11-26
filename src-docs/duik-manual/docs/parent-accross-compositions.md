@@ -27,6 +27,8 @@ This is the tool, in *Standard Mode*:
 
 ![Parent across comp locator ](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/ParentAcrossComp-locator.png)
 
+![Parent across comp locator effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/locator-effect.PNG)
+
 Locators, which are used by the "Parent accross compositions" tool, can be very useful in some cases. They are null layers which follow another layer no matter what and get all its transformations.
 
 You can add a locator in a composition at any time, and the "Extract locators" button will extract all locators from a selected precomposition layer to make them available directly inside the main (parent) composition. This is exactly the principle behind the "Parent accross compositions" tool.
