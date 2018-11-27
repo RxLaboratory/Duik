@@ -1,5 +1,7 @@
 # ![Animation blender Icon](img\duik-icons\animblender-icon-r.png) Animation Blender
 
+![Blender panel](img\duik-screenshots\S-Animation\S-Animation-Tools\AnimBlender.PNG)
+
 The Animation Blender is a tool to animate using markers to trigger animations.
 
 
@@ -17,12 +19,12 @@ There is a "Refresh" button in case the animation list is not up-to-date.
 !!! caution
     Some of these shortcuts were not available in all versions of After Effects, but were added in the latest versions.
 
-- ![star shortcut](img/duik-screenshots/shortcut/star.png) adds a new marker on the selected layer, or on the composition without any selected layer.
+-  **.*.**   adds a new marker on the selected layer, or on the composition without any selected layer.
 >
-- ![alt+star shortcut](img/duik-screenshots/shortcut/alt+star.png) opens the marker editor window before adding the marker, where you can set a comment.
+- **Alt + *.** (img/duik-screenshots/shortcut/alt+star.png) opens the marker editor window before adding the marker, where you can set a comment.
 >
-- ![alt+click shortcut](img/duik-screenshots/shortcut/alt+click.png) on a marker changes its duration.
+- **Alt + Click** on a marker changes its duration.
 >
-- ![ctrl+click shortcut](img/duik-screenshots/shortcut/ctrl+click.png) on a marker removes it.
+- **Ctrl + Click** on a marker removes it.
 >
-- ![shift+number shortcut](img/duik-screenshots/shortcut/shift+number.png) adds a marker with the corresponding number as its comment.
+- **Shift + 1 / 2 / 9...** adds a marker with the corresponding number as its comment.

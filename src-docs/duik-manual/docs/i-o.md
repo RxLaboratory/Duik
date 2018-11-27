@@ -7,9 +7,9 @@
 ## ![Import Icon](img\duik-icons\import-icon-r.png) Import
 
 This is the *Import* panel shown in *Standard* mode:  
-![io panel](img\duik-screenshots\S-IOTools\Import\Import-allpanels.png)
+![io panel](img\duik-screenshots\S-IOTools\Import\Import-panel.PNG)
 
 ## ![Export Icon](img\duik-icons\export-icon-r.png) Export
 
 This is the *Export* panel shown in *Standard* mode:  
-![io panel](img\duik-screenshots\S-IOTools\Export\Export-allpanels.png)
+![io panel](img\duik-screenshots\S-IOTools\Export\Export-panel.PNG)

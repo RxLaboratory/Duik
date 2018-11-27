@@ -16,6 +16,8 @@ A "Motion Trail" layer is added to the comp. It is a shape layer used to draw th
 
 ## Effect
 
+![motion trail effect](img\duik-screenshots\S-Animation\S-Animation-Tools\MotionTrail-effect.PNG)
+
 Use the effects of the "Motion Trail" layer to adjust all the trails.
 
 - The "Motion source" is the layer used to draw the trail.
