@@ -66,9 +66,7 @@ For each limb you can create with Duik, you have to choose the type of walking a
 
 ## ![Arm Icon](img/duik-icons/arm-icon-r.png) Arm
 
-![arm structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure.PNG)
-
-![arm structure comp](img\duik-screenshots\S-Rigging\S-Rigging-Structures\arm-structure-comp.png)
+![arm structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Arm.PNG)
 
 !!! warning "À FAIRE - LEA"
     dans l'image ci dessus, digitigrade et ongulés sont inversés (l'image de squelette, pas celle des structures de duik)
@@ -77,7 +75,9 @@ Creates a *Structure* for the arm or the front leg of a quadruped.
 
 Click the ○ button to adjust the settings for the arm.
 
-![Arm options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Arm-ArmStructure.PNG)
+![arm structure optn](img/duik-screenshots/S-Rigging/S-Rigging-Structures/arm-structure.PNG)
+
+![arm structure comp](img\duik-screenshots\S-Rigging\S-Rigging-Structures\arm-structure-comp.png)
 
 You can check which part of the limb is present on your character. The autorig will adapt to every configuration, but using all of them (except for claws when rigging humans) can ensure a nice rig and a more realistic animation.
 
@@ -86,25 +86,27 @@ _Animation by [Jissse](http://jissse.com)_
 
 ## ![Leg Icon](img/duik-icons/leg-icon-r.png) Leg
 
-![leg structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure.PNG)
-
-![leg structure comp](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure-comp.png)
+![Leg structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Leg.PNG)
 
 Creates a *Structure* for the (rear) leg of a biped or a quadruped.
 
 Click the ○ button to adjust the settings for the leg.
 
-![Leg options panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures-Leg-LegStructure.PNG)
+![leg structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure.PNG)
+
+![leg structure comp](img/duik-screenshots/S-Rigging/S-Rigging-Structures/leg-structure-comp.png)
 
 The autorig will adapt to every configuration, but using all of them can ensure a nice rig and a more realistic animation (with a proper foot roll).
 
 ## ![Spine Icon](img/duik-icons/spine-icon-r.png) Spine
 
-![spine structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/spine-structure.PNG)
+![spine structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Spine.PNG)
 
 Creates a *Structure* for the spine of any vertebrate.
 
 Click the ○ button to adjust the settings for the spine.
+
+![spine optn](img/duik-screenshots/S-Rigging/S-Rigging-Structures/spine-structure.PNG)
 
 You can check which part of the spine is present on your character.
 You can divide the spine and the neck in as many layers as you want (or none).
@@ -112,11 +114,13 @@ The autorig will adapt to every configuration.
 
 ## ![Tail Icon](img/duik-icons/tail-icon-r.png) Tail
 
-![tail structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/tail-structure.PNG)
+![tail structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Tail.PNG)
 
 Create a *Structure* for the tail of any animal.
 
 Click the ○ button to adjust the settings for the tail.
+
+![tail optn](img/duik-screenshots/S-Rigging/S-Rigging-Structures/tail-structure.PNG)
 
 You can divide the tail in as many layers as you want.
 The autorig will adapt to every configuration.
@@ -130,7 +134,8 @@ With tails, you can even rig fishes very easily.
 
 ## ![Bone Icon](img/duik-icons/bone-icon-r.png)  Custom Structure
 
-![custom structure](img/duik-screenshots/S-Rigging/S-Rigging-Structures/custom-structure.PNG)
+![custom panel](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Custom.PNG)
+![custom optn](img/duik-screenshots/S-Rigging/S-Rigging-Structures/custom-structure.PNG)
 
 Creates a standard, custom *Structure*.
 

@@ -68,6 +68,7 @@ When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the c
     This section still has to be written
 
 - The _Enable IK_ checkbox can be used to de-activate the IK and animate only using the FK control.
+
     !!! tip
         On this specific one-layer IK, you can animate in FK even without de-activating the IK. The layer controlled by the IK can even still be rotated manually too.
 
