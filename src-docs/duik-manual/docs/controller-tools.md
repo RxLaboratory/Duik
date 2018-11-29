@@ -19,7 +19,7 @@ Shows or hides all (or selected) *Controllers* found in the composition.
 
 If there is no layer selected, this will show of hide all *Conbtrollers* in the composition, or else it will use the layer selection.
 
-## ![extract controller icon](img/duik-icons/extractcontrollers_r.png) Extract Controllers
+## ![extract controller icon](img/duik-icons/extractcontrollers-icon-r.png) Extract Controllers
 
 ![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ExtractControllers.PNG)
 
