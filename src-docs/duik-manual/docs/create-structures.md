@@ -2,7 +2,7 @@
 
 # Create structures
 
-![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures.PNG)
+![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Structures.PNG)
 
 There are several ways to create _Structures_ with Duik, depending on what you need.  
 As all the other tools in Duik Bassel, **the _Struture_ creation tools try to be smart, and change their behaviour depending on the context** (i.e. the current selection in the current composition).

@@ -12,5 +12,5 @@ As Structures will become so much important in the rigging process, we’ve thou
 
 ## Panel
 
-![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures.PNG)  
+![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/Structures.PNG)  
 This is the *Structures* panel as shown in the *Normal* mode.
