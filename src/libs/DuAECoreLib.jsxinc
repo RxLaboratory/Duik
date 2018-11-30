@@ -1011,6 +1011,45 @@ DuAEF.DuAE.Comp.getSelectedLayers = function()
 }
 
 /**
+	* Runs a function on all the selected layers
+	* @param {function} method - The function to run on the layers, which takes a layer as its only argument.
+	* @param {string} [undoGroupName] - The name of the undoGroup created before the execution. If not provided, there will not be any undoGroup created.
+	*/
+DuAEF.DuAE.Comp.doSelectedLayers = function(method, undoGroupName)
+{
+	//get layers
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	
+	// run
+	DuAEF.DuAE.Layer.doLayers(layers, method, undoGroupName);
+
+	//reselect
+	DuAEF.DuAE.Comp.selectLayers(layers);
+}
+
+/**
+	* Runs a function on all the layers
+	* @param {function} method - The function to run on the layers, which takes a layer as its only argument.
+	* @param {string} [undoGroupName] - The name of the undoGroup created before the execution. If not provided, there will not be any undoGroup created.
+	* @param {CompItem} [comp] - The comp containing the layers. Will use the current comp if not provided.
+	*/
+DuAEF.DuAE.Comp.doLayers = function(method, undoGroupName, comp)
+{
+	if (typeof comp === 'undefined') 
+	{
+		comp = DuAEF.DuAE.Project.getActiveComp();
+	}
+	if (!(comp instanceof CompItem)) return;
+
+	//get layers
+	var layers = comp.layers;
+	if (layers.length == 0) return;
+	
+	// run
+	DuAEF.DuAE.Layer.doLayers(layers, method, undoGroupName);
+}
+
+/**
 	* Gets the After Effects animated (with keyframes) properties in the current comp
 	* @param {PropertyType|PropertyValueType|string|function}	 [filter]	- A filter to get only a certain type, or value type, or property name or matchName.<br />
 	* A function which take one PropertyBase as argument can be used to filter the properties: the Property will be returned if the function returns true.
@@ -1269,6 +1308,20 @@ DuAEF.DuAE.Comp.getAudioLayers = function (comp,audioActiveOnly)
 	* @memberof DuAEF.DuAE
 */
 DuAEF.DuAE.Layer = {};
+
+/**
+	* Runs a function on all the layers
+	* @param {function} method - The function to run on the layers, which takes a layer as its only argument.
+	* @param {string} [undoGroupName] - The name of the undoGroup created before the execution. If not provided, there will not be any undoGroup created.
+	*/
+DuAEF.DuAE.Layer.doLayers = function(layers, method, undoGroupName)
+{
+	if (typeof undoGroupName === 'undefined') undoGroupName = "";
+	// run
+	if (undoGroupName != "") app.beginUndoGroup(undoGroupName);
+	new Iterator(layers).do(method);
+	if (undoGroupName != "") app.endUndoGroup();
+}
 
 /**
 	* Generates a new unique name for an effect
