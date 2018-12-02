@@ -18,9 +18,6 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 
 ![Rigging GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/smart-ux-2.gif)
 
-*To get started quickly with this process, just watch this [jumpstart](https://www.youtube.com/watch?v=i63vPXJ00r0) by [Jake In Motion](https://www.jakeinmotion.com/):*  
-![YOUTUBE](i63vPXJ00r0)
-
 ## Using the Auto-rig
 
 1. Select some layers in the composition .
@@ -29,9 +26,9 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
     - **If there are Structures** in the selection:
 
         - If there are predefined limbs (arm, leg, spine or tail), the Auto-rig will rig everything for you, so you can start to animate right afterwards.
-        - If the Structures are custom Structures, the Auto-rig will add IKs to rig them, determining which type of IK would be the best according to the number and location of the layers.
+        - If the Structures are custom Structures, the Auto-rig will add IK to rig them, determining which type of IK would be the best according to the number and location of the layers.
 
-    - **If the selection is made of standard layers**, the Auto-rig will add IKs to rig them, trying to guess how they need to be rigged using their parenting and the location of their anchor points. If the layers are not parented yet, the Auto-rig is able to parent them automatically, but it's better in this case to select the layers in the right order: from the tip to the root of the limb (from hand to shoulder, or from foot to hip...).
+    - **If the selection is made of standard layers**, the Auto-rig will add IK to rig them, trying to guess how they need to be rigged using their parenting and the location of their anchor points. If the layers are not parented yet, the Auto-rig is able to parent them automatically, but it's better in this case to select the layers in the right order: from the tip to the root of the limb (from hand to shoulder, or from foot to hip...).
 
 ![Autorig GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/autorig.gif)
 
@@ -44,11 +41,11 @@ The most important constraints used by the Auto-rig to rig characters are IK and
 IK is a way to animate limbs by moving a controller located at the tip of the limb (i.e. at the hand or at the foot).  
 This means that animating with IK uses positions, which are interpreted into the rotation of each part of the limb. This seems very natural when one manipulates it, but it is actually an advanced process. It is invaluable when the hand, or the foot, have interactions with anything else (like the foot interacting with the ground when the character walks).  
 IK are the only way to animate the position of the hips while keeping the feet stuck on the ground, or the hand against a wall.  
-But as animating with IK means animating positions, it is actually **not the easiest nor the smartest way to animate limbs**. It's needed when there are interactions, but in any other case (most of the cases for arms), you should prefer  animating with FK.
+But as animating with IK means animating positions, it is actually **not the easiest nor the smartest way to animate limbs**. It's needed when there are interactions, but in any other case (most of the cases for the arms), you should prefer animating with FK.
 
 ![Arm Animation](img/examples/parent-structure.gif)  
 _Animation by [Jissse](http://jissse.com)_  
-In this animation, you can see how the "hand" is animated independantly from the "shoulder", which both animated using positions, without any rotation keyframe. This means that, for example, the hand can be fixed while the shoulder moves.
+In this animation, you can see how the "hand" is animated independantly from the "shoulder", which are both animated using positions, without any rotation keyframe. This means that, for example, the hand can be fixed while the shoulder moves.
 
 ### ![Constraints Icon](img/duik-icons/autorig/fk-icon-r.png) Forward Kinematics (FK)
 
@@ -64,6 +61,8 @@ When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the c
 
 #### One-Layer IK (shoulder rotation, single-layer spine...)
 
+![One-Layer IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/one-layerIK-effect.PNG)
+
 !!! note
     This section still has to be written
 
@@ -78,6 +77,8 @@ When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the c
 
 #### Two-layer IK (arms and legs...)
 
+![Two-Layer IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/two-layerIK-effect.PNG)
+
 !!! note
     This section still has to be written
 
@@ -90,13 +91,21 @@ When the Auto-rig creates an IK / FK, it can be adjusted in the effects of the c
 !!! note
     This section still has to be written
 
+![Bezier IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/bezier-IK-controllers.PNG)
+
 Two controllers are needed to control Bezier IK. One at the end of the chain, like with other types of IK, and one in the middle which controls the curve. On both of these controllers there are some options in the effects.
 
-##### Main Controller (end)
+**Main Controller (end)**
 
-##### Middle Controller (curve)
+![Bezier IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/bezier-IK-endEffect.PNG)
+
+**Middle Controller (curve)**
+
+![Bezier IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/bezier-IK-middleEffect.PNG)
 
 #### FK with follow-through, overlap and drag (tails...)
+
+![Bezier IK Effect](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/fk-effect.PNG)
 
 !!! note
     This section still has to be written
