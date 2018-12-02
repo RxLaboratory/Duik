@@ -477,6 +477,9 @@ DuAEF.DuScriptUI.addButton = function (container,text,image,helpTip,imageOver)
 	imageButton.standardImage = image;
 	imageButton.imageOver = imageOver;
 	imageButton.onClick = function(){};
+	imageButton.onAltClick = function(){};
+	imageButton.onCtrlAltClick = function(){};
+	imageButton.onCtrlClick = function(){};
 	imageButton.image = null;
 	imageButton.label = null;
 
@@ -514,21 +517,34 @@ DuAEF.DuScriptUI.addButton = function (container,text,image,helpTip,imageOver)
 	}
 
 	//events
-	imageButton.clicked = function (e)
+	imageButton.clicked = function ()
+	{
+		try { imageButton.onClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + e.description); }
+	}
+
+	imageButton.shiftClicked = function ()
 	{
 		DuAEF.DuScriptUI.updateHelpPopup(imageButton.help.title, imageButton.help.text, imageButton.help.link);
-		if (e.shiftKey)
+
+		if (imageButton.help.text != '')
 		{
-			if (imageButton.help.text != '')
-			{
-				DuAEF.DuScriptUI.showHelp();
-			}
-			return;
+			DuAEF.DuScriptUI.showHelp();
 		}
-		else
-		{
-			try { imageButton.onClick(); } catch (e) { if (DuAEF.debug) alert('An error has occured in file at line ' + e.line + '\n\n' + e.description); }
-		}
+	}
+
+	imageButton.altClicked = function ()
+	{
+		try { imageButton.onAltClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + e.description); }
+	}
+
+	imageButton.ctrlAltClicked = function ()
+	{
+		try { imageButton.onCtrlAltClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + e.description); }
+	}
+
+	imageButton.ctrlClicked = function ()
+	{
+		try { imageButton.onCtrlClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + e.description); }
 	}
 
 	imageButton.highlight = function (e)
@@ -555,7 +571,13 @@ DuAEF.DuScriptUI.addButton = function (container,text,image,helpTip,imageOver)
 	}
 
 	//add events
-	imageButton.addEventListener('click',imageButton.clicked,true);
+	imageButton.addEventListener('click',function(e) {
+			if (e.shiftKey) imageButton.shiftClicked();
+			else if (e.altKey && e.ctrlKey) imageButton.ctrlAltClicked();
+			else if (e.altKey) imageButton.altClicked();
+			else if (e.ctrltKey) imageButton.ctrlClicked();
+			else imageButton.clicked();
+		},true);
 	// Hack - CS6 Bug on mouseover with images
 	if (DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12)
 	{

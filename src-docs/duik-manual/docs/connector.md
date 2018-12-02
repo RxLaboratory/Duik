@@ -33,7 +33,7 @@ The master property must be of a type which is numerical (but can be multi-dimen
 
 To set the connector up ver quickly, you can do it the quick way:
 
-1. It is advised to first add the needed keyframes on the slave properties, though this can be done or modified afterwards. Just animate the slave property as you need it to change when the master (controller) property goes from its minimum to its maximum.
+1. It is advised to first add the needed keyframes on the slave properties, although this can be done or modified afterwards. Just animate the slave properties as you need them to change when the master (controller) property goes from its minimum to its maximum.
 2. Select the slave properties in the composition
 3. Click the "Connector" button
 
@@ -41,7 +41,7 @@ Duik will create or use any preexisting "Connector" controller, and add a slider
 This is the simplest and quickiest way to use the connector.  
 If you need to have the controller in another composition, you can either use the "Extract controllers" tool from the parent composition, or just copy and paste the controller to the new composition, and link the percent with an expression, simply using the pickwhip.
 
-Read further to learn how to do more advanced stuff with the connector, in the additionnal panel.
+Read further to learn how to do more advanced connections with the connector, in the additionnal panel.
 
 ### Standard setup
 
@@ -49,12 +49,12 @@ Read further to learn how to do more advanced stuff with the connector, in the a
 
 Using the standard setup, you can do more things than the quick setup, like connecting from a composition to another, and be able to choose almost _any property_ as a controller (see the section above, [Property types handled by the connector](#property-types-handled-by-the-connector)).
 
-1. It is advised to first add the needed keyframes on the slave property, though this can be done or modified afterwards. Just animate the slave property as you need it to change when the master property goes from its minimum to its maximum.
+1. Animate the slave properties as you need them to change when the master property goes from its minimum to its maximum.
 2. a. Select the master property in the timeline, and click on "Pick Master Property". The name of the master property will be shown on the button.  
-    b. You can also use one of the 4 controllers of Duik espacially made to be used by the connector (the slider, the 2D slider, the angle and the spatial effector)
+    b. You can also use one of the 4 controllers of Duik espacially made to be used by the connector (the slider, the 2D slider, the angle and the spatial effector. See the _Rigging - Controllers_ and _Rigging - Automations - Effector_ section of this guide for more information)
 3. Depending on the type of the master property, you can select the axis (or the channel if it's a color) to be used to control the slave properties.
 4. Choose between the value or the velocity of the master property to control the slave properties. Using the velocity can be very useful for example to control how the antenna of a car rotates depending on the speed of its X position.
-5. Set the minimum and maximum value of the master property.
+5. Set the minimum and maximum value you want to use with the master property.
 6. Click either on "Connect to selected properties" or "Connect to selected layers opacities". The latter can be used to control the display of a bunch of layers with a slider: it's a good way to switch predefined phonemes for a mouth with a controller for example. It is exactly like using time remapping on a composition containing a layer sequence, but without all the issues caused by using actual time remapping.
 
 After these few steps, everything is ready: as soon as the master property changes, the slave properties will be driven. You can change all the settings afterwards in the effects of the master layer.
@@ -63,9 +63,9 @@ If you need to adjust the keyframes on the slave properties, you can temporarily
 
 ## Multiple connections
 
-You often have to connect the same slave property to multiple master properties. For example, this happens when rigging a head turn to control the left-right turn with the X position of a controller and the up-down turn with its Y position. In this case, you have a different connection for each axis, on the same properties.
+You often have to connect the same slave property to multiple master properties. For example, this happens when rigging a head turn to control the left-right turn with the X position of a controller and the up-down turn with its Y position. In this case, you have a different connection for each axis, on the same slave properties.
 
-There are different ways of achieving this, depending on the type of the slave property.
+There are different ways for achieving this, depending on the type of the slave property.
 
 - For **transformation properties** (i.e. position, rotation and scale), the quickiest and easiest way is to **use parents**: for each new connection, add a null layer, and parent the already connected layer to this null. You can then connect the transformation of the null object, and you can repeat this process for each new connection you want to make.
 - For other **numerical properties** (including transformations too) you can use the [_list_](duik-list.md) tool of Duik, which is available in the [link & constraints](constraints.md) panel (in _standard_ and _expert mode_ only, it is hidden in _rookie mode_).

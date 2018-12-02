@@ -38,6 +38,10 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 ## 16.0.10
 
+#### Improvements
+
+- [Alt + Click] on the [*Zero*](zero.md) button resets the position, rotation and scale of the layer.
+
 #### Fixes
 
 - When picking properties with Duik tools, if there is a disabled expression, it stays disabled instead of being enabled by the tool.
