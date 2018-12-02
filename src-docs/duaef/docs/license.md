@@ -15,6 +15,9 @@ You don’t need any authorization or contract. Download, install, have fun!
 
 Just know that **we’re very curious to see what you’ve made with our tools**, so [you can send us the result of your work](https://rainboxprod.coop/en/#contact)! You can help the developement of the free tools too, with a [donation](donation.md).
 
+!!! note
+    It is not mandatory to add Duik in the credits of your films, but as it is free, it is greatly appreciated if you do it, it's a nice way to say "thanks", isn't it!
+
 ## What it means for developpers
 
 The second freedom **lets you change the software as you need**. You can get the source code on [Github](https://github.com/Rainbox-dev/DuAEF_Duik/).
