@@ -12,6 +12,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### New (Controllers)
 
 - A [*tag controller*](controller-tools.md) tool to set any layer so Duik can recognise it as a controller (very useful for the [*extract controllers*](controller-tools.md#extract-controllers) tool for example).
+- Hold the [Alt] button when creating controllers to create only one controller centered on the average positions of the selected layers.
+- Hold the [Ctrl] button to automatically parent the selected layers to the newly created controller(s).
 
 #### New (Other rigging tools)
 
