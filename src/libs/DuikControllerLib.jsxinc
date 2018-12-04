@@ -284,7 +284,8 @@ DuAEF.Duik.Controller.draft = false;
 	* Creates a new controller
 	* @param {CompItem} [comp] - The composition
 	* @param {DuAEF.Duik.Controller.Types} [type=DuAEF.Duik.Controller.defaultType] - The type of Controller.
-	* @param {Layer} [layer] - The layer where to create the controller.
+	* @param {Layerr|Layer[]|LayerCollection} [layer] - The layer(s) where to create the controller.<br />
+	* If several layers are provided, will create the controller at the average center of their world positions.
 	* @param {float}	[size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Controller.sizeHint
 	* @return {Controller} The controller
 */
@@ -305,6 +306,8 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 
 	if (typeof type === 'undefined') type = DuAEF.Duik.Controller.defaultType;
 
+	if (typeof layer === 'undefined') layer = null;
+
 	var ctrl;
 	if (type == DuAEF.Duik.Controller.Types.NULL)
 	{
@@ -314,11 +317,30 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	else ctrl = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
-	if (layer && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
+	if (layer != null && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
 	{
-		//center the controller and name it after the layer
-		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
-		var newName = DuAEF.Duik.generateName('C',layer.name);
+		//center the controller and name it after the layer(s)
+		var pos = [0,0];
+		var layerName = 'name';
+		if (layer.length)
+		{
+			new Iterator(layer).do(function (l)
+			{
+				pos = pos + DuAEF.DuAE.Layer.getWorldPos(l);
+			});
+			pos = pos / layer.length;
+		}
+		else
+		{
+			pos = DuAEF.DuAE.Layer.getWorldPos(layer);
+			layerName = layer.name;
+		}
+		
+		ctrl.transform.position.setValue(pos);
+
+		//name
+
+		var newName = DuAEF.Duik.generateName('C',layerName);
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
 	}
 
