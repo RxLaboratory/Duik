@@ -11,6 +11,7 @@ function ui_buildControllers(ui_controllersMainGroup)
 		ui_controllersGroup.visible = panel == 0;
 		ui_extractControllersCtrlOptionsGroup.visible = panel == 1;
 		ui_controllersEditGroup.visible = panel == 2;
+		ui_pseudoEffectsOptionsGroup.visible = panel == 3;
 	}
 
 	function createCtrlrButton(group,icon,iconOver,type)
@@ -77,11 +78,34 @@ function ui_buildControllers(ui_controllersMainGroup)
 	function ui_tagControllersButton_clicked()
 	{
 		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		app.beginUndoGroup('Duik | ' + "Tag controllers");
 		for (var i = 0, num = layers.length; i < num; i++)
 		{
 			DuAEF.Duik.setDuikMarker(layers[i], "Controller", DuAEF.Duik.LayerTypes.CONTROLLER);
 		}
+		app.endUndoGroup();
 	}
+
+	function ui_pseudoEffectsValidButton_clicked()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		var pseudoEffect;
+		if (ui_pseudoEffectsSelector.index == 0) pseudoEffect = DuAEF.Duik.PseudoEffects.EYES;
+		else if (ui_pseudoEffectsSelector.index == 1) pseudoEffect = DuAEF.Duik.PseudoEffects.FINGERS;
+		else if (ui_pseudoEffectsSelector.index == 2) pseudoEffect = DuAEF.Duik.PseudoEffects.HAND;
+		else if (ui_pseudoEffectsSelector.index == 3) pseudoEffect = DuAEF.Duik.PseudoEffects.HEAD;
+		else return;
+
+		app.beginUndoGroup('Duik - ' + "Add Pseudo-Effect");
+
+		for (var i = 0, num = layers.length; i < num; i++)
+		{
+			//add effect
+			DuAEF.DuAE.Layer.applyPreset(layers[i],pseudoEffect);
+		}
+		app.endUndoGroup();
+	}
+	
 
 	//================= UI ========================
 
@@ -125,6 +149,8 @@ function ui_buildControllers(ui_controllersMainGroup)
 	var ui_ctrlTGroup = DuAEF.DuScriptUI.addGroup(ui_controllersGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 	ui_ctrlTGroup.alignment = ['fill','top'];
 	ui_ctrlTGroup.alignChildren = [settings.data.uiMode == 2 ? 'center' : 'fill','top'];
+	var ui_controllersPseudoEffectsButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Pseudo-Effects...",DuAEF.DuBinary.toFile(w25_fx_l),"Creates useful pseudo-effects on controllers",DuAEF.DuBinary.toFile(w25_fx_r));
+	ui_controllersPseudoEffectsButton.setHelp("Pseudo-Effects", controllertoolsHelp, controllertoolsLink);
 	var ui_controllersSelectButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Select",DuAEF.DuBinary.toFile(w25_selectcontroller_l),"Select all controllers",DuAEF.DuBinary.toFile(w25_selectcontroller_r));
 	ui_controllersSelectButton.setHelp("Select Controllers", controllertoolsHelp, controllertoolsLink);
 	var ui_controllersShowButton = DuAEF.DuScriptUI.addButton(ui_ctrlTGroup,settings.data.uiMode == 2 ? '' : "Show/hide",DuAEF.DuBinary.toFile(w25_showhand_l),"Show or hide controllers",DuAEF.DuBinary.toFile(w25_hidehand_r));
@@ -148,6 +174,20 @@ function ui_buildControllers(ui_controllersMainGroup)
 		ui_editControllersButton.setHelp("Edit Controllers", controllertoolsHelp, controllertoolsLink);
 	}
 
+	// Pseudo Effects
+	var ui_pseudoEffectsOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_controllersMainGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_pseudoEffectsOptionsGroup,"Pseudo-Effects");
+	var ui_pseudoEffectsSelector = DuAEF.DuScriptUI.addSelector(ui_pseudoEffectsOptionsGroup);
+	ui_pseudoEffectsSelector.addButton("Eyes",'',"Eyes pseudo-effect",'');
+	ui_pseudoEffectsSelector.addButton("Fingers",'',"Fingers pseudo-effect",'');
+	ui_pseudoEffectsSelector.addButton("Hand",'',"Hand pseudo-effect",'');
+	ui_pseudoEffectsSelector.addButton("Head",'',"Hand pseudo-effect",'');
+	//ui_extractControllersMPCtrlSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
+	var ui_pseudoEffectsValidGroup = DuAEF.DuScriptUI.addGroup(ui_pseudoEffectsOptionsGroup);
+	ui_pseudoEffectsValidGroup.alignment = ['fill','top'];
+	var ui_pseudoEffectsCancelButton = DuAEF.DuScriptUI.addButton(ui_pseudoEffectsValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_pseudoEffectsValidButton = DuAEF.DuScriptUI.addButton(ui_pseudoEffectsValidGroup,"Add!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
+
 	// Extract Controllers
 	var ui_extractControllersCtrlOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_controllersMainGroup,'column');
 	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_extractControllersCtrlOptionsGroup,"Extract Controllers");
@@ -165,6 +205,7 @@ function ui_buildControllers(ui_controllersMainGroup)
 	// ============ INITIALIZE ==============
 
 	ui_extractControllersMPCtrlSelector.setCurrentIndex(0);
+	ui_pseudoEffectsSelector.setCurrentIndex(0);
 
 	ui_controllersMainGroup.tabActivated = setCurrentControllersPanel;
 
@@ -172,6 +213,10 @@ function ui_buildControllers(ui_controllersMainGroup)
 
 	ui_controllersSelectButton.onClick = ui_controllersSelectButton_clicked;
 	ui_controllersShowButton.onClick = ui_controllersShowButton_clicked;
+
+	ui_controllersPseudoEffectsButton.onClick = function () { setCurrentControllersPanel(3); };
+	ui_pseudoEffectsCancelButton.onClick = function () { setCurrentControllersPanel(0); };
+	ui_pseudoEffectsValidButton.onClick = function () { ui_pseudoEffectsValidButton_clicked(); setCurrentControllersPanel(0); };
 
 	ui_extractControllersCtrlValidButton.onClick = function () { shared.extractControllers(); setCurrentControllersPanel(0); };
 	ui_extractControllersCtrlButton.onClick = shared.extractControllers;
