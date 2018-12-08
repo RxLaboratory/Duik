@@ -34,7 +34,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer.
 - When used on opacities, the [_Connector_](connector.md) automatically makes the layer visible.
 - When [_Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
-- If there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link the selection to the _Structures_.
+- If you hold the [Ctrl] key and there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link (parent or expression) the selection to the _Structures_.
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 - The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
 - The [_Structures_](structures.md) colors for predefined limbs have been improved to better show the hierarchy.
