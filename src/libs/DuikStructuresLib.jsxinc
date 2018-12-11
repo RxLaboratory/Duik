@@ -294,19 +294,19 @@ DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
 	* @type {bool}
 	* @default true
 	*/
-DuAEF.Duik.Structure.linkPaths = true;
+DuAEF.Duik.Structure.linkPaths = false;
 /**
 	* Whether to auto link puppet pins to structure elements on creation
 	* @type {bool}
 	* @default true
 	*/
-DuAEF.Duik.Structure.linkPins = true;
+DuAEF.Duik.Structure.linkPins = false;
 /**
 	* Whether to auto link layers to structure elements on creation
 	* @type {bool}
 	* @default true
 	*/
-DuAEF.Duik.Structure.linkLayers = true;
+DuAEF.Duik.Structure.linkLayers = false;
 
 /**
  * Creates structures in a composition.
@@ -316,16 +316,16 @@ DuAEF.Duik.Structure.linkLayers = true;
  * @param {CompItem} [comp] - The composition where to create the Structure. Default is the active item, if it's a comp.
  * @param {string} [name="Name"] - The name of the structure (used as layer names)
  * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
- * @param {bool} [forceLink=false] - When true, the selected items will be linked to the structure elements, no matter the value of {@link DuAEF.Duik.Structure.linkPaths}, {@link DuAEF.Duik.Structure.linkPins}, and {@link DuAEF.Duik.Structure.linkLayers}.
+ * @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
  * @return {Structure[]} The Structures
  */
-DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
+DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,reverseAutoLink)
 {
 	if (typeof num === 'undefined') num = 2;
 	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
 	if (!comp) return [];
 	if (typeof name === 'undefined') name = "Name";
-	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
 
 	var structures = [];
 
@@ -384,7 +384,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
 			{
 				new Iterator(propsLayer).do( function (prop)
 				{
-					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop, num, forceNum, forceLink) );
+					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop, num, forceNum, reverseAutoLink) );
 				});
 				return;
 			}
@@ -392,7 +392,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
 			//puppet pins
 			if (propsLayer[0].matchName == "ADBE FreePin3 PosPin Atom")
 			{
-				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer, num, forceNum, forceLink) );
+				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer, num, forceNum, reverseAutoLink) );
 				return;
 			}
 
@@ -402,7 +402,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
 				new Iterator(propsLayer).do( function (prop)
 				{
 					if (prop.matchName != "ADBE FreePin3") return;
-					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop, num, forceNum, forceLink) );
+					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop, num, forceNum, reverseAutoLink) );
 				});
 				return;
 			}
@@ -410,7 +410,7 @@ DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,forceLink)
 
 		if (structures.length == 0)
 		{
-			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers, num, forceNum, forceLink) );
+			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers, num, forceNum, reverseAutoLink) );
 		}
 	}
 
@@ -506,10 +506,11 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 	* @param {Property|PropertyInfo} pathProperty - The path
 	* @param {int} [num] - The number of elements of the structure.
 	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
 	* @param {int}	[id] - An identifier for this structure
 	* @return {Structure} The new Structure
 	*/
-DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum, forceLink, id)
+DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum, reverseAutoLink, id)
 {
 	if (DuAEF.DuAE.App.version < 15) return null;
 
@@ -519,6 +520,10 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 
 	if (typeof id === 'undefined') id = new Date().getTime();
 	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkPaths;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkPaths;
 
 	var vertices = DuAEF.DuAE.Property.Bezier.verticesToComp(pathProperty);
 	var comp = propInfo.comp;
@@ -550,7 +555,7 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 	}
 
 	//add bones to the path
-	if (forceLink || DuAEF.Duik.Structure.linkPaths)
+	if (link)
 	{
 		DuAEF.Duik.Bone.rigShape(pathProperty, undefined, true, false);
 		//set effects to use structure
@@ -577,12 +582,17 @@ DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum,
 	* @param {Layer[]} layers - The layers
 	* @param {int} [num] - The number of elements of the structure.
 	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
 	* @return {Structure} The new Structure
 	*/
-DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, forceLink, id)
+DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, reverseAutoLink, id)
 {
 	if (typeof id === 'undefined') id = new Date().getTime();
 	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkLayers;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkLayers;
 
 	var color = DuAEF.Duik.Structure.color;
 	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
@@ -634,7 +644,7 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, for
 			if (i > 0) element.parent = structure.elements[i-1];
 		}
 
-		if (forceLink || DuAEF.Duik.Structure.linkLayers) layers[i].parent = element;
+		if (link) layers[i].parent = element;
 
 		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + layers[i].name, comp);
 	}
@@ -649,9 +659,10 @@ DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, for
 	* @param {PropertyGroup|PropertyInfo} puppetEffect - The puppet effect
 	* @param {int} [num] - The number of elements of the structure.
 	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
 	* @return {Structure} The new Structure
 	*/
-DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, forceNum, forceLink, id)
+DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, forceNum, reverseAutoLink, id)
 {
 	var propInfo = new PropertyInfo(puppetEffect);
 	puppetEffect = propInfo.getProperty();
@@ -671,7 +682,7 @@ DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, f
 		}
 	}
 
-	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, num, forceNum, forceLink, id);
+	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, num, forceNum, reverseAutoLink, id);
 
 	return structure;
 }
@@ -681,12 +692,17 @@ DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, f
 	* @param {Property[]|PropertyInfo[]} puppetPins - The pins
 	* @param {int} [num] - The number of elements of the structure.
 	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
 	* @return {Structure} The new Structure
 	*/
-DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, forceNum, forceLink, id)
+DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, forceNum, reverseAutoLink, id)
 {
 	if (typeof id === 'undefined') id = new Date().getTime();
 	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkPins;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkPins;
 
 	var propInfo = new PropertyInfo(puppetPins[0]);
 	var comp = propInfo.comp;
@@ -735,7 +751,7 @@ DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, force
 		if (i > 0) element.parent = structure.elements[i-1];
 
 		//link
-		if (forceLink || DuAEF.Duik.Structure.linkPins) DuAEF.Duik.Bone.linkToBone(pin, element, false);
+		if (link) DuAEF.Duik.Bone.linkPositionToBone(pin, element, false);
 	}
 
 	structure.moved = true;
