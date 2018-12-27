@@ -3270,7 +3270,7 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 		prop = prop.parentProperty;
 	}
 
-	if (exprCode.indexOf("(") != 0) exprCode = '.' + exprCode;
+	if (exprCode.indexOf("(") != 0 && exprCode != "") exprCode = '.' + exprCode;
 
 	if (fromLayer)
 	{
@@ -3911,34 +3911,62 @@ DuAEF.DuAE.Property.replaceInExpressions = function (prop,oldString,newString,ca
 DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
 {
 	if (!childProp.canSetExpression) return;
-	if (useThisComp == undefined)
+	if (typeof useThisComp === 'undefined')
 	{
 		var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
 		var childComp = DuAEF.DuAE.Property.getComp(childProp);
 		if (parentComp.id == childComp.id) useThisComp = true;
 		else useThisComp = false;
 	}
-	try { childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp); } catch (e) { if (DuAEF.debug) alert(e.description); };
+	var exp = DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp );
+	DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 }
 
 /**
  * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)<br />
  * Note: any Property or PropertyGroup (and its subproperties) named "Data" will be ignored.
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase}	childProp			- The child property
- * @param {PropertyBase}	parentProp			- The parent property
- * @param {bool}		[useThisComp]			- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
-*/
-DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
+ * @param {PropertyBase} childProp - The child property
+ * @param {PropertyBase} parentProp - The parent property
+ * @param {bool} [useThisComp] - Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ * @param {LayerItem} [timeLayer=null] - A layer used to offset the time (typically, in case of link between precompositions, the precomposition layer).<br />
+ * When not null, the start time of this layer will be taken into account to get the values and synchronize them.
+ */
+DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp,timeLayer)
 {
 	if (parentProp.name.toLowerCase() == 'data') return;
 	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
+		if (typeof timeLayer === 'undefined') timeLayer = null;
+		
+		if (typeof useThisComp === 'undefined')
+		{
+			var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
+			var childComp = DuAEF.DuAE.Property.getComp(childProp);
+
+			useThisComp = parentComp.id == childComp.id;
+		}
+
 		//copy paste the animation / value
 		var anim = DuAEF.DuAE.Property.getAnim(parentProp,false);
 		if (anim != null) DuAEF.DuAE.Property.setAnim(childProp,anim,0,true,true, false);
+
 		//set the link
-		DuAEF.DuAE.Property.pickWhip(childProp,parentProp,useThisComp);
+		var exp = DuAEF.Duik.expressionIds.LINK + '\n';
+		if (timeLayer != null)
+		{		
+			exp += 'var timeLayer = ' + DuAEF.DuAE.Property.getExpressionLink( timeLayer ) + ';\n' +
+				'var st = timeLayer.startTime;\n' +
+				'var t = time + st;\n' +
+				DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + '.valueAtTime(t);';
+
+		}
+		else
+		{
+			exp += DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + ';';
+		}
+
+		DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 	}
 	else
 	{
@@ -3963,14 +3991,14 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 						continue;
 					}
 				}
-				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp);
+				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp,timeLayer);
 			}
 		}
 		else
 		{
 			for (var p = 1, num = childProp.numProperties ; p <= num ; p++)
 			{
-				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
+				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp,timeLayer);
 			}
 		}
 	}
