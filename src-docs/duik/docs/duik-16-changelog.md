@@ -38,6 +38,11 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The head controller with the [_Autorig_](autorig.md) now controls the head position too.
 - The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
 - The [_Structures_](structures.md) colors for predefined limbs have been improved to better show the hierarchy.
+- The User Interface has been tweaked to fix some details and improve the overall User Experience.
+
+#### Fixes
+
+- The version of Duik is now checked correctly (even for alpha and beta tests), and there is no warning if the version installed is the same than the available one.
 
 ## 16.0.10
 
