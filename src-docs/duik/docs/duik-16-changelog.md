@@ -45,6 +45,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - The version of Duik is now checked correctly (even for alpha and beta tests), and there is no warning if the version installed is the same than the available one.
 - The [*extract controllers*](controller-tools.md#extract-controllers) tool now takes the precomposition start time into account in the links, thus you can safely move the precomposed character in time.
+- The [*Search and replace*](rigging-tools.md) now correctly ignores locked layers.
 
 ## 16.0.10
 
