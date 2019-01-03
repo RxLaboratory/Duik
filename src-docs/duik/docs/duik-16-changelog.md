@@ -52,6 +52,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### Improvements
 
 - [Alt + Click] on the [*Zero*](zero.md) button resets the position, rotation and scale of the layer.
+- The User Interface has been tweaked to make it always better.
 
 #### Fixes
 
