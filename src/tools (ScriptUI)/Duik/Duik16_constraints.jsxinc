@@ -57,6 +57,8 @@ function ui_buildConstraints(ui_constraintsGroup)
 			ui_connectorSeparator2.enabled = false;
 		}
 		ui_connectorChildrenGroup.enabled = false;
+		ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile(w25_allproperties_m);
+			ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile(w25_opacity_m);
 	}
 
 	//====== EVENTS ================
@@ -91,7 +93,7 @@ function ui_buildConstraints(ui_constraintsGroup)
 				connectorMasterProp = new PropertyInfo(effect(DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.index['ValueSlider']));
 				ui_connectorMinimumEdit.setText('-100');
 				ui_connectorMaximumEdit.setText('100');
-				connectorMasterLabel.text = "Slider";
+				connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Slider";
 			}
 			if (!effect)
 			{
@@ -101,7 +103,7 @@ function ui_buildConstraints(ui_constraintsGroup)
 					connectorMasterProp = new PropertyInfo(effect(DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.index['AngleAngle']));
 					ui_connectorMinimumEdit.setText('0');
 					ui_connectorMaximumEdit.setText('360');
-					connectorMasterLabel.text = "Angle";
+					connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Angle";
 				}
 			}
 			if  (!effect)
@@ -112,22 +114,26 @@ function ui_buildConstraints(ui_constraintsGroup)
 					connectorMasterProp = new PropertyInfo(effect(DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.index['2D ValuePoint']));
 					ui_connectorMinimumEdit.setText('-100');
 					ui_connectorMaximumEdit.setText('100');
-					connectorMasterLabel.text = "2D Slider";
+					connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "2D Slider";
 				}
 			}
 		}
 
-		var props = DuAEF.DuAE.Comp.getSelectedProps();
-		if (props.length > 0)
+		if (connectorMasterProp == null)
 		{
-			var prop = props[props.length-1].getProperty();
-			if (prop.propertyType == PropertyType.PROPERTY)
+			var props = DuAEF.DuAE.Comp.getSelectedProps();
+			if (props.length > 0)
 			{
-				connectorMasterProp = props[props.length-1];
-				connectorMasterLabel.text = prop.name;
+				var propInfo = props[props.length-1];
+				var prop = propInfo.getProperty();
+				if (prop.propertyType == PropertyType.PROPERTY)
+				{
+					connectorMasterProp = propInfo;
+					connectorMasterLabel.text = propInfo.layer.index + " - " + propInfo.layer.name + " # " + prop.name;
+				}
 			}
 		}
-
+		
 		if (connectorMasterProp != null)
 		{
 			var dim = DuAEF.Duik.Rigging.connectorCheckParent(connectorMasterProp);
@@ -180,10 +186,12 @@ function ui_buildConstraints(ui_constraintsGroup)
 			}
 		}
 
-		if (connectorMasterProp)
+		if (connectorMasterProp != null)
 		{
 			ui_connectorForm.enabled = true;
 			ui_connectorChildrenGroup.enabled = true;
+			ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile(w25_allproperties_l);
+			ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile(w25_opacity_l);
 			if (settings.data.uiMode != 2)
 			{
 				ui_connectorSeparator3.enabled = true;
@@ -196,6 +204,8 @@ function ui_buildConstraints(ui_constraintsGroup)
 			connectorMasterLabel.text = "Pick master property";
 			ui_connectorForm.enabled = false;
 			ui_connectorChildrenGroup.enabled = false;
+			ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile(w25_allproperties_m);
+			ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile(w25_opacity_m);
 			if (settings.data.uiMode != 2)
 			{
 				ui_connectorSeparator3.enabled = false;
@@ -524,18 +534,28 @@ function ui_buildConstraints(ui_constraintsGroup)
 	function ui_pathConstraintButton_clicked()
 	{
 		pathConstraintPathProp = null;
-		ui_pathConstraintLabel.text ="Pick a path\nthen select a layer\nto apply the constraint.";
-		ui_pathConstraintPickButton_clicked();
+		ui_pathConstraintLabel.text ="Select path...";
+		ui_pathConstraintValidButton.enabled = false;
+		ui_pathConstraintSeparator.enabled = false;
+		ui_pathConstraintValidButton.icon.image = ui_pathConstraintValidButton.standardImage = DuAEF.DuBinary.toFile(w25_pathconstraint_m);
+		pathConstraintPathProp = null;
 		setCurrentConstraintsPanel(1);
 	}
 
 	function ui_pathConstraintPickButton_clicked()
 	{
 		var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
-		if (props.length == 0) return;
+		if (props.length == 0)
+		{
+			return;
+		}
 
-		pathConstraintPathProp = props[props.length-1];
-		ui_pathConstraintLabel.text ="Now select a layer to appy the constraint.";
+		pathConstraintPathProp = props.pop();
+		var parentProp = pathConstraintPathProp.getProperty().parentProperty;
+		ui_pathConstraintLabel.text = pathConstraintPathProp.layer.index + " - " + pathConstraintPathProp.layer.name + " # " + parentProp.name;
+		ui_pathConstraintValidButton.enabled = true;
+		ui_pathConstraintSeparator.enabled = true;
+		ui_pathConstraintValidButton.icon.image = ui_pathConstraintValidButton.standardImage = DuAEF.DuBinary.toFile(w25_pathconstraint_l);
 	}
 
 	function ui_pathConstraintValidButton_clicked()
@@ -941,13 +961,20 @@ function ui_buildConstraints(ui_constraintsGroup)
 	var ui_pathConstraintGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
 	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_pathConstraintGroup,"Path constraint");
 	ui_pathConstraintGroup.alignChildren = ['center','top'];
-	var ui_pathConstraintPickButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintGroup,"Pick path",DuAEF.DuBinary.toFile(w32_pickpath_l),"Select the path for the constraint",DuAEF.DuBinary.toFile(w32_pickpath_r));
-	var ui_pathConstraintLabel = ui_pathConstraintGroup.add('statictext',undefined,"Pick a path\nthen select a layer\nto apply the constraint.",{multiline:true});
-	DuAEF.DuScriptUI.setTextColor(ui_pathConstraintLabel,DuAEF.DuJS.Color.Colors.DARK_GREY);
-	var ui_pathConstraintValidGroup = DuAEF.DuScriptUI.addGroup(ui_pathConstraintGroup);
-	ui_pathConstraintValidGroup.alignment = ['fill','top'];
-	var ui_pathConstraintCancelButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
-	var ui_pathConstraintValidButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintValidGroup,"Create",DuAEF.DuBinary.toFile(w25_check_g),"Path constraint",DuAEF.DuBinary.toFile(w25_check_r));
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_pathConstraintGroup,"1 - Select path");
+	var ui_pathConstraintPickButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintGroup,"Pick path",DuAEF.DuBinary.toFile(w25_pickpath_l),"Select the path for the constraint",DuAEF.DuBinary.toFile(w25_pickpath_r));
+	var ui_pathConstraintLabel = DuAEF.DuScriptUI.addStaticText(ui_pathConstraintGroup, "Select path", DuAEF.DuJS.Color.Colors.DARK_GREY);
+	ui_pathConstraintLabel.characters = 20;
+	ui_pathConstraintLabel.justify = 'center';
+	if (settings.data.uiMode != 2) var ui_pathConstraintSeparator = DuAEF.DuScriptUI.addSeparator(ui_pathConstraintGroup,"2 - Select layer");
+	var ui_pathConstraintValidButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintGroup,
+		"Constrain layer",
+		DuAEF.DuBinary.toFile(w25_pathconstraint_m),
+		"Path constraint",
+		DuAEF.DuBinary.toFile(w25_pathconstraint_r)
+		);
+	DuAEF.DuScriptUI.addSeparator(ui_pathConstraintGroup,"");
+	var ui_pathConstraintCancelButton = DuAEF.DuScriptUI.addButton(ui_pathConstraintGroup,"Cancel",DuAEF.DuBinary.toFile(w25_back_m),"Cancel",DuAEF.DuBinary.toFile(w25_back_r));
 
 	//bones options
 	var ui_bonesGroup = DuAEF.DuScriptUI.addGroup(ui_constraintsGroup,'column');
@@ -1010,7 +1037,9 @@ function ui_buildConstraints(ui_constraintsGroup)
 	if (settings.data.uiMode > 0)
 	{
 		ui_connectorPickButton = DuAEF.DuScriptUI.addButton(ui_connectorCtrlGroup,"",DuAEF.DuBinary.toFile(w32_pickproperty_l),"Select the master property",DuAEF.DuBinary.toFile(w32_pickproperty_r));
-		connectorMasterLabel = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,"Pick master property").label;
+		connectorMasterLabel = DuAEF.DuScriptUI.addStaticText(ui_connectorGroup,"Pick master property", DuAEF.DuJS.Color.Colors.DARK_GREY);
+		connectorMasterLabel.characters = 20;
+		connectorMasterLabel.justify = 'center';
 	}
 
 	else
@@ -1040,8 +1069,20 @@ function ui_buildConstraints(ui_constraintsGroup)
 	if (settings.data.uiMode != 2) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator(ui_connectorGroup,'3 - ' + "Select children");
 	var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup(ui_connectorGroup,settings.data.uiMode == 2 ? 'row' : 'column');
 	ui_connectorChildrenGroup.alignment = settings.data.uiMode == 2 ? ['center','top'] : ['fill','top'];
-	var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addButton(ui_connectorChildrenGroup,settings.data.uiMode == 2 ? '' : 'Connect to properties',DuAEF.DuBinary.toFile(w25_allproperties_l),"Connect selected properties",DuAEF.DuBinary.toFile(w25_allproperties_r))
-	var ui_connectorOpacitiesButton = DuAEF.DuScriptUI.addButton(ui_connectorChildrenGroup,settings.data.uiMode == 2 ? '' : 'Connect to opacities',DuAEF.DuBinary.toFile(w25_opacity_l),"Connect selected layers opacity",DuAEF.DuBinary.toFile(w25_opacity_r))
+	var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addButton(
+		ui_connectorChildrenGroup,
+		settings.data.uiMode == 2 ? '' : 'Connect to properties',
+		DuAEF.DuBinary.toFile(w25_allproperties_m),
+		"Connect selected properties",
+		DuAEF.DuBinary.toFile(w25_allproperties_r)
+		);
+	var ui_connectorOpacitiesButton = DuAEF.DuScriptUI.addButton(
+		ui_connectorChildrenGroup,
+		settings.data.uiMode == 2 ? '' : 'Connect to opacities',
+		DuAEF.DuBinary.toFile(w25_opacity_m),
+		"Connect selected layers opacity",
+		DuAEF.DuBinary.toFile(w25_opacity_r)
+		);
 	DuAEF.DuScriptUI.addSeparator(ui_connectorGroup);
 	var ui_connectorCancelButton = DuAEF.DuScriptUI.addButton(ui_connectorGroup,"Cancel",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 
