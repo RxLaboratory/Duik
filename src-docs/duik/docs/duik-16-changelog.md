@@ -47,6 +47,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*extract controllers*](controller-tools.md#extract-controllers) tool now takes the precomposition start time into account in the links, thus you can safely move the precomposed character in time.
 - The [*Search and replace*](rigging-tools.md) now correctly ignores locked layers.
 - Adding [*Bones*](bones.md) on shapes on a layer which already has some effects now works correctly.
+- The [*Parent Constraint*](parent-constraint.md) now works correctly when the composition start time is not 0.
 
 ## 16.0.10
 
