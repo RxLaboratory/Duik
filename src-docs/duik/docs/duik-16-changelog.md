@@ -49,6 +49,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Adding [*Bones*](bones.md) on shapes on a layer which already has some effects now works correctly.
 - The [*Parent Constraint*](parent-constraint.md) now works correctly when the composition start time is not 0.
 - [*Auto-rig*](autorig.md) freezing when there's only one layer selected.
+- Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
 
 ## 16.0.10
 
