@@ -1,6 +1,6 @@
 ## Controllers
 
-As the controllers are going to be the interface between the animator and the character, they have to be intuitive and easy to manipulate. That’s why Duik Bassel not only introduces new shapes to make them easier to recognize, but there is also visual feeadback on the controllers to see what the controllers are doing! And of course, they can be easily personnalized, you can change their colors and shapes as you wish.
+As the controllers are going to be the interface between the animator and the character, they have to be intuitive and easy to manipulate. That’s why Duik Bassel not only introduces new shapes to make them easier to recognize, but there is also visual feedback on the controllers to see what the controllers are doing! And of course, they can be easily personalized, you can change their colors and shapes as you wish.
 
 ![Controllers GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/controllers.gif)
 
