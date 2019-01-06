@@ -20,7 +20,7 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 
 ## Using the Auto-rig
 
-1. Select some layers in the composition .
+1. Select some layers in the composition.
 2. Click the "Auto-rig & IK" button.
 
     - **If there are Structures** in the selection:
@@ -41,11 +41,11 @@ The most important constraints used by the Auto-rig to rig characters are IK and
 IK is a way to animate limbs by moving a controller located at the tip of the limb (i.e. at the hand or at the foot).  
 This means that animating with IK uses positions, which are interpreted into the rotation of each part of the limb. This seems very natural when one manipulates it, but it is actually an advanced process. It is invaluable when the hand, or the foot, have interactions with anything else (like the foot interacting with the ground when the character walks).  
 IK are the only way to animate the position of the hips while keeping the feet stuck on the ground, or the hand against a wall.  
-But as animating with IK means animating positions, it is actually **not the easiest nor the smartest way to animate limbs**. It's needed when there are interactions, but in any other case (most of the cases for arms), you should prefer  animating with FK.
+But as animating with IK means animating positions, it is actually **not the easiest nor the smartest way to animate limbs**. It's needed when there are interactions, but in any other case (most of the cases for arms), you should prefer animating with FK.
 
 ![Arm Animation](img/examples/parent-structure.gif)  
 _Animation by [Jissse](http://jissse.com)_  
-In this animation, you can see how the "hand" is animated independantly from the "shoulder", which both animated using positions, without any rotation keyframe. This means that, for example, the hand can be fixed while the shoulder moves.
+In this animation, you can see how the "hand" is animated independently from the "shoulder", which both animated using positions, without any rotation keyframe. This means that, for example, the hand can be fixed while the shoulder moves.
 
 ### Forward Kinematics (FK)
 
