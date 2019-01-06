@@ -18,11 +18,11 @@ We use [JSDoc](http://usejsdoc.org/) to write all the code documentation. The ht
 
 - **Class names** and **Namespace names**:
     - Starting with an uppercase
-    - Seperate words with an uppercase
+    - Separate words with an uppercase
     - Example: `function PropertyInfo()`, `DuAEF.DuAE.App = {}`
 - **Function names**, **Variable names** and **Function argument names**:
     - Starting with a lowercase
-    - Sepreate words with an uppercase
+    - Separate words with an uppercase
     - Example: `var layerProperties;`, `function doSomething(fisrtArg, secondArg)`
     - This applies also for object members: `this.isReadOnly`
 
