@@ -7,7 +7,7 @@
 1. Select the controller of an IK made with Duik
 2. Duik will detect if it need to be switched to IK or FK and set needed keyframes at the current time to make the switch.
 
-The switch happens in to steps:
+The switch happens in two steps:
 
 1. Duik snaps the FK to the IK or the opposite, depending on the switch, and adds keyframes to keep the value at the current frame.
 2. Duik actually switches between the IK and the FK, adding keyframes at the current time.
