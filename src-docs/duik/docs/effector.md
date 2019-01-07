@@ -16,5 +16,5 @@ You can also connect a new property to an existing Effector: before clicking on 
 
 ## Effect
 
-In the effect of the Effector, you can change the limits, and choose between two modes: circle and inifinite line.
+In the effect of the Effector, you can change the limits, and choose between two modes: circle and infinite line.
 Note that in the infinite line mode, the outter limit is ignored.
