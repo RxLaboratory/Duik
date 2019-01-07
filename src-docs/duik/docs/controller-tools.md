@@ -10,7 +10,7 @@ Click the *Select controllers* button to select all the Controllers in the compo
 
 Shows or hides all (or selected) *Controllers* found in the composition.
 
-If there is no layer selected, this will show of hide all *Conbtrollers* in the composition, or else it will use the layer selection.
+If there is no layer selected, this will show of hide all *Controllers* in the composition, or else it will use the layer selection.
 
 ## Extract Controllers
 
@@ -38,7 +38,7 @@ You can choose to extract controllers using expressions or Master Properties.
     1. Rig the character as you'd do in any case.
     2. Put the rigged composition into another composition, let's call this one the "Animation Comp". The rigged composition is now a precomposition inside "Animation Comp".
     3. Select this rigged precomposition, and extract controllers with Duik, using Master Properties.
-    4. "Animation Comp" can now be duplicated ; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
+    4. "Animation Comp" can now be duplicated; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
 
 ## Edit Controllers
 
