@@ -19,7 +19,7 @@ When the master property value is at the predefined minimum, the child property 
 
 ## Property types handled by the connector
 
-As the connector uses the same principle as time remapping, it is able to connect almost any type of property to any other type of property, which makes it a very powerul tool, even on older versions of After Effects.
+As the connector uses the same principle as time remapping, it is able to connect almost any type of property to any other type of property, which makes it a very powerful tool, even on older versions of After Effects.
 
 The slave property can be of any type which can be animated with keyframes and have an expression (numerical and spatial values, shapes, texts...)
 
@@ -29,7 +29,7 @@ The master property must be of a type which is numerical (but can be multi-dimen
 
 1. It is advised to first add the needed keyframes on the slave property, though this can be done or modified afterwards. Just animate the slave property as you need it to change when the master property goes from its minimum to its maximum.
 2. a. Select the master property in the timeline, and click on "Pick Master Property". The name of the master property will be shown on the button.  
-    b. You can also use one of the 4 controllers of Duik espacially made to be used by the connector (the slider, the 2D slider, the angle and the spatial effector)
+    b. You can also use one of the 4 controllers of Duik especially made to be used by the connector (the slider, the 2D slider, the angle and the spatial effector)
 3. Depending on the type of the master property, you can select the axis (or the channel if it's a color) to be used to control the slave properties.
 4. Choose between the value or the velocity of the master property to control the slave properties. Using the velocity can be very useful for example to control how the antenna of a car rotates depending on the speed of its X position.
 5. Set the minimum and maximum value of the master property.
@@ -47,7 +47,7 @@ There are different ways of achieving this, depending on the type of the slave p
 
 - For **transformation properties** (i.e. position, rotation and scale), the quickiest and easiest way is to **use parents**: for each new connection, add a null layer, and parent the already connected layer to this null. You can then connect the transformation of the null object, and you can repeat this process for each new connection you want to make.
 - For other **numerical properties** (including transformations too) you can use the [_list_](duik-list.md) tool of Duik, which is available in the [link & constraints](constraints.md) panel (in _standard_ and _expert mode_ only, it is hidden in _rookie mode_).
-Just select the property, and click the _list_ button. Duik will add an effect with 5 new properties to control the original property, allowing up to five connections (or even more if you add a list to the list....). With the list, you won't connect the original property, but one of the new properties in the list effect.
+Just select the property, and click the _list_ button. Duik will add an effect with 5 new properties to control the original property, allowing up to five connections (or even more if you add a list to the list...). With the list, you won't connect the original property, but one of the new properties in the list effect.
 - And there are **non-numerical properties, like Bezier paths**...  
     - If you're using an version of **_After EFfects_ older than CC2018**, it can be a bit tricky: with older versions, there is no way to efficiently work with shapes in expressions, so you can not do more than one single connection to the shapes (to your X **or** Y slider, but not both). The only way to achieve this is by duplicating the bezier path and try to make it work, combining the two of them, but it can be very difficult. **Using masks can help**: instead of connecting the original shape itself, you can connect masks which "cut" it, or with shape layers try **using multiple shapes and the "merge path" option** (which works like the pathfinder of Adobe Illustrator).  
     - If your using **CC2018 or any more recent version**, you can **add [_bones_](bones.md) to the bezier path** (select the path property, or any vertex of the path, and click on the "add bones" button in the [links & constraints](constraints.md) panel of Duik). This way you'll have one layer for each vertex (and tangent) of the path, and you can then connect the position properties of these bones, and get back to the first and second method (connecting transformations or numerical properties).
@@ -62,7 +62,7 @@ With an arm already rigged, made of shapes (either shape layers or masks on soli
 2. Animate the shape(s) of the arm and forearm so the cloth looks nice during the whole animation. Feel free to add as many keyframes as needed and use eases!
 3. Select the rotation property of the structure of the forearm. This is the property which exposes how the arm is bent, no matter what, in FK as in IK.
 4. Click on the "Pick master property" button of the panel of the connector.
-5. a. Set the minimum to the rotation value of the structure of the forearm at the beginning of the composition, when the arm is straight.  
+5. a. Set the minimum to the rotation value of the structure of the forearm at the beginning of the composition, when the arm is straight.
     b. Set the maximum value to the rotation value of the structure of the forearm at the end of the animation, when the arm is completely bent.  
     c. Note that Duik will try to automatically set these values, reading the existing animation of the master property if any.
 6. Select the shape(s) used to draw the cloth (and now animated).
