@@ -25,7 +25,7 @@ Adam Szczepański – Polish
 [Claude Autret](http://jissse.com)
 [Pixelbakery](https://github.com/pixelbakery)  
 Assia Chioukh  
-Quentin Saint-Georges
+Quentin Saint-Georges  
 Proofreading: [Darío Hereñú](https://github.com/kant)
 
 ### Ideas and Feedback
