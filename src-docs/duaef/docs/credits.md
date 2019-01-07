@@ -26,6 +26,7 @@ Adam Szczepański – Polish
 [Pixelbakery](https://github.com/pixelbakery)  
 Assia Chioukh  
 Quentin Saint-Georges
+Proofreading: [Darío Hereñú](https://github.com/kant)
 
 ### Ideas and Feedback
 
