@@ -18,4 +18,4 @@ Another useful thing is that using zeros makes it easy to recover the original p
 To create a zero, select the layer(s) and click the "Zero" button.
 
 !!! warning
-    when a zero has been added, if you want to change the parent of the layer, be careful to change the parent of the zero and not the actual parent of the layer itself, to keep the zero in the hierarchy.
+    When a zero has been added, if you want to change the parent of the layer, be careful to change the parent of the zero and not the actual parent of the layer itself, to keep the zero in the hierarchy.
