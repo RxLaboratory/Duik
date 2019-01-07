@@ -28,7 +28,7 @@ This tool has not been re-implemented since Duik 15. TVpaint now offers its own 
 
 ## Krita Animation
 
-Duik can import traditionnal animations made with [Krita](http://krita.org), without needing to export frame sequences or video.
+Duik can import traditional animations made with [Krita](http://krita.org), without needing to export frame sequences or video.
 
 Duik will keep all layers and the animation exposure/timeline from Krita.
 
