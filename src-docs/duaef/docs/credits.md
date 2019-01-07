@@ -22,7 +22,7 @@ Adam Szczepański – Polish
 
 ### User Guide and Wiki
 
-[Claude Autret](http://jissse.com)
+[Claude Autret](http://jissse.com)  
 [Pixelbakery](https://github.com/pixelbakery)  
 Assia Chioukh  
 Quentin Saint-Georges  
