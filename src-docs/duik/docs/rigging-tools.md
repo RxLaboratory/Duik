@@ -18,9 +18,9 @@ When two layers are selected, click on the "Measure Distance" button to measure 
 
 # Align Layers
 
-Select some layers to align them togeter. Layers will be aligned on the latest selected one.
+Select some layers to align them together. Layers will be aligned on the latest selected one.
 
-In the additionnal panel you can choose to align the layers in *position*, *rotation*, *scale* or even *opacity*.
+In the additional panel you can choose to align the layers in *position*, *rotation*, *scale* or even *opacity*.
 
 # Remove expressions
 

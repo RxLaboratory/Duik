@@ -12,7 +12,7 @@ If you don't find the answer to your question here, come and ask for help on [th
 
 Duik Bassel has been tested and works on all versions since CS6. That means CS6, CC, CC2014, CC2015, CC2017 and CC2018 support Duik.
 
-We do not test Duik on versions older than CS6, so it may or may not work properly, we don't know ;) But you can test it yourself, it won't break anything!
+We do not test Duik on versions older than CS6, so it may or may not work properly, we don't know!) But you can test it yourself, it won't break anything!
 
 !!! warning
     Duik Bassel does work on CS6, but the UI has a lot of issues we can not fix (they are issues in After Effects itself).
@@ -43,7 +43,7 @@ However, if you don't need Duik 15 anymore, you can safely remove it: just delet
 
 ### After Effects shows an expression error saying `Unterminated string constant` when renaming layers or puppet pins.
 
-This is a known isse when using After Effects versions older than CC2017 on Mac OSX Sierra or more recent. If you rename elements using the [Rename](../Rigging-Tools/#rename) tool of Duik it should work correctly.
+This is a known issue when using After Effects versions older than CC2017 on Mac OSX Sierra or more recent. If you rename elements using the [Rename](../Rigging-Tools/#rename) tool of Duik it should work correctly.
 This has been fixed in After Effects CC2017.
 
 ### Duik's user interface does not display correctly (it's cropped), I can’t see all of it, what should I do?
@@ -112,13 +112,13 @@ It is not possible to scale the rig itself yet without adjusting some expression
     2. Select the precomposition layer and, in the controllers panel of Duik, click on "Extract controllers"  
 
 You can then animate from outside of the precomp, with the extracted controllers, AND you can scale the precomposition layer to scale the rig (the controllers will follow).  
-We think this is a good workaround, you just have to take care of the resolution as it's a precompositon (and rasterization may not work properly with the rig), scaling up will damage it a bit, but scaling it down is ok.
+We think this is a good workaround, you just have to take care of the resolution as it's a precomposition (and rasterization may not work properly with the rig), scaling up will damage it a bit, but scaling it down is ok.
 
 ### How can I use the _connector_ to connect a single slave property to multiple master properties?
 
 As most of the tools in Duik, the [_connector_](connector.md) uses expressions to connect the properties, and multiple expressions can not be easily combined into a single property. But there are work arounds! Read [this section](connector.md#multiple-connections) of the [_connector_ documentation](connector.md) to learn how to achieve this.
 
-### What can I do to make Duik work better with imported vector layers (illustrator, SVG, flash...) with continuous rasterization activated?
+### What can I do to make Duik work better with imported vector layers (Illustrator, SVG, Flash...) with continuous rasterization activated?
 
 After Effects’ puppet tool (and Duik bones) is a pixel tool, but using continuous rasterization is using vector layers, so this raises some issues which are difficult to work around.
 

@@ -11,7 +11,7 @@ You can adjust and animate the paint strokes in the effects of the layer.
 
 ## Effect
 
-The start, end, Color and Diameter paramaters work like the same parameters in the individual stroles, but as controlling all of them as if they were a single one.
+The start, end, Color and Diameter parameters work like the same parameters in the individual stroles, but as controlling all of them as if they were a single one.
 
 Diameter and Color are divided into two parameters to be able to interpolate from the first stroke to the last one, and act like a ramp through all the strokes.
 
