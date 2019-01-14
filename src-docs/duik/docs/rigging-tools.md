@@ -38,6 +38,13 @@ Un-parents and re-parents the children of a layer to be able to adjust its trans
 
 Select some properties with expressions to remove the expression, but keeping their current *post-expression value* instead of the *pre-expression value* like After Effects does.
 
+## Copy Paste expressions
+
+!!! hint
+    Available in _Standard_ and _Expert_ modes only. 
+
+This very simple tool will copy an expression from a selected property, and then allows you to paste it on several properties at once, without changing their pre-expression values or keyframes.
+
 ## Get property info
 
 !!! hint
