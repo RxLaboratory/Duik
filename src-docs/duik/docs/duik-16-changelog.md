@@ -20,6 +20,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - A tool to [***Align Layers***](rigging-tools.md#align-layers) in the rigging tools panel.
 - With the [***Edit mode***](rigging-tools.md#toggle-edit-mode), you can (un/re)parent all the children of a layer.
 - You can [***Remove expressions***](rigging-tools.md#remove-expressions) while keeping the post-expression value.
+- It is easy to [***Copy & Paste Expressions***](rigging-tools.md#copy-paste-expressions) without changing the current value o several properties at once with the copy and paste expressions buttons.
 - Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts (expert mode only):  
     - You can get some [***Property Info***](rigging-tools.md#get-property-info) about the selected property, like its index, its matchName, the expression link to it, etc.
     - A [***Scriptify expression***](rigging-tools.md#scriptify-expression) tool makes it quick to include an expression as a string in a .jsx script.
