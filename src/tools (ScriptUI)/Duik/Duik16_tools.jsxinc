@@ -2,6 +2,8 @@ function ui_buildTools(ui_toolsGroup)
 {
 	debugLog.startTimer("Loading misc. tools.");
 
+	var copiedExp = '';
+
 	// ====== FUNCTIONS ==============
 
 	function setCurrentToolsPanel(panel)
@@ -415,7 +417,7 @@ function ui_buildTools(ui_toolsGroup)
 	function ui_editModeButton_clicked()
 	{
 		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		app.beginUndoGroup('Duik - ' + "Edit mode");
+		app.beginUndoGroup('Duik | ' + "Edit mode");
 		for (var i = 0, num = layers.length ; i < num ; i++)
 		{
 			DuAEF.DuAE.Layer.toggleEditMode(layers[i]);
@@ -446,6 +448,39 @@ function ui_buildTools(ui_toolsGroup)
 		ui_stringifiedExpressionEdit.text = DuAEF.DuAE.Property.scriptifyExpression(prop);
 	}
 
+	function ui_copyExpButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+		prop = props.pop();
+
+		if (prop.riggable)
+		{
+			prop = prop.getProperty();
+			copiedExp = prop.expression;
+		}
+
+	}
+
+	function ui_pasteExpButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Paste expression");
+		
+		new Iterator(props).do(function(prop)
+		{
+			if (prop.riggable)
+			{
+				var p = prop.getProperty();
+				p.expression = copiedExp;
+			}
+		});
+
+		app.endUndoGroup();
+	}
+
 	// ========== UI ==================
 
 	ui_toolsGroup.orientation = 'stack';
@@ -468,6 +503,15 @@ function ui_buildTools(ui_toolsGroup)
 	ui_editModeButton.setHelp("Edit Mode", riggingtoolsHelp, riggingtoolsLink);
 	var ui_removeExpressionsButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Remove expressions",DuAEF.DuBinary.toFile(w25_removeexpression_l),"Removes the expressions of the selected properties/layers, keeping the post-expression value.",DuAEF.DuBinary.toFile(w25_removeexpression_r));
 	ui_removeExpressionsButton.setHelp("Remove Expressions", riggingtoolsHelp, riggingtoolsLink);
+	var ui_copyExpButton;
+	if (settings.data.uiMode != 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Copy Expression",DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
+	var ui_pasteExpGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+	if (settings.data.uiMode == 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,'',DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
+	if (settings.data.uiMode == 2) ui_copyExpButton.alignment = ['center','top'];
+	ui_copyExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
+	var ui_pasteExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,settings.data.uiMode == 2 ? '' : "Paste expression",DuAEF.DuBinary.toFile(w25_paste_l),"Paste expressions",DuAEF.DuBinary.toFile(w25_paste_r));
+	if (settings.data.uiMode == 2) ui_pasteExpButton.alignment = ['center','top'];
+	ui_pasteExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
 	if (settings.data.uiMode == 2)
 	{
 		var ui_propInfoButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup, "Get prop info...", DuAEF.DuBinary.toFile(w25_propinfo_l), "Gets some useful information about the selected property", DuAEF.DuBinary.toFile(w25_propinfo_r));
@@ -657,6 +701,9 @@ function ui_buildTools(ui_toolsGroup)
 	ui_alignCancelButton.onClick = function () { setCurrentToolsPanel(0); };
 
 	ui_removeExpressionsButton.onClick = ui_removeExpressionsButton_clicked;
+
+	ui_copyExpButton.onClick = ui_copyExpButton_clicked;
+	ui_pasteExpButton.onClick = ui_pasteExpButton_clicked;
 
 	ui_editModeButton.onClick = ui_editModeButton_clicked;
 
