@@ -3743,10 +3743,13 @@ DuAEF.DuAE.Property.cleanKeyframes = function(property)
 /**
 	* Gets the average speed of the animated propreties
 	* @param {Property[]|PropertyInfo[]} props - The Properties
-	* @return {float} The average speed
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+	* @return {float} The average speed in unit per second
 */
-DuAEF.DuAE.Property.getAverageSpeed = function(props)
+DuAEF.DuAE.Property.getAverageSpeed = function(props, preExpression)
 {
+	if (typeof preExpression === 'undefined') preExpression = true;
+
 	var averageSpeed = 0;
 	var count = 0;
 
@@ -3760,8 +3763,13 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 
 		var comp = DuAEF.DuAE.Property.getComp(prop);
 		var frames = comp.duration / comp.frameDuration ;
-		var lastTime = prop.keyTime(prop.numKeys);
-		var firstTime = prop.keyTime(1);
+		var lastTime = comp.duration;
+		var firstTime = 0;
+		if (preExpression)
+		{
+			lastTime = prop.keyTime(prop.numKeys);
+			firstTime = prop.keyTime(1);
+		}
 		var lastFrame = lastTime/comp.frameDuration ;
 		var firstFrame = firstTime/comp.frameDuration ;
 		if (lastFrame > frames) lastFrames = frames;
@@ -3770,7 +3778,7 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 		for (var frame = firstFrame ; frame < lastFrame ; frame++)
 		{
 			var time = frame*comp.frameDuration;
-			sum += DuAEF.DuAE.Property.getSpeed(prop,time);
+			sum += DuAEF.DuAE.Property.getSpeed(prop,time, preExpression);
 		}
 		var speed = sum/(lastFrame-firstFrame);
 
@@ -3788,6 +3796,7 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 /**
 	* Gets the maximum speed of the animated propreties
 	* @param {Property[]|PropertyInfo[]} props - The Properties
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
 	* @return {float} The average speed
 */
 DuAEF.DuAE.Property.getMaximumSpeed = function(props)
@@ -3809,7 +3818,7 @@ DuAEF.DuAE.Property.getMaximumSpeed = function(props)
 	* @param {float} [time=composition.time] - The time.
 	* @return {float} The speed
 */
-DuAEF.DuAE.Property.getSpeed = function (prop,time)
+DuAEF.DuAE.Property.getSpeed = function (prop,time, preExpression)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (prop.propertyType != PropertyType.PROPERTY) return 0;
@@ -3817,8 +3826,8 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 	var comp = DuAEF.DuAE.Property.getComp(prop);
 	if (time == undefined) time = comp.time;
 
-	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration,false),prop.valueAtTime(time-comp.frameDuration,false));
-	return speed;
+	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration/2,preExpression),prop.valueAtTime(time-comp.frameDuration/2,preExpression));
+	return speed/comp.frameDuration;
 }
 
 /**
@@ -4330,7 +4339,7 @@ DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
 		}
 	}
 
-	if (preExpression) prop.expressionEnabled = false;
+	//if (preExpression) prop.expressionEnabled = false;
 
 	if (minTime < maxTime) return [min,max];
 	else return [max,min];
@@ -4377,7 +4386,7 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 		prevVal = val;
 	}
 
-	return velocity;
+	return velocity/comp.frameDuration;
 
 }
 
