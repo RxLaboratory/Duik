@@ -646,8 +646,10 @@ DuAEF.DuScriptUI.addButton = function (container, text, image, helpTip, imageOve
  * @param {string}					[textChecked]			- The label of the button displayed when it is checked.
  * @return {DuCheckBox}					The image checkbox created.
  */
-DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,textChecked)
+DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageChecked,imageOver,textChecked,isTab)
 {
+	//isTab is an undocumented low-level param used to create buttons for tabs in tabpanel
+	if (typeof isTab === 'undefined') isTab = false;
 	if (!container) return null;
 	if (!text) text = '';
 	if (!image) image = '';
@@ -666,13 +668,26 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 	text = tr(text);
 	helpTip = tr(helpTip);
 
-	var group = container.add('group');
+	var mainGroup = container.add('group');
+	mainGroup.orientation = 'column';
+	mainGroup.margins = 2;
+	if (isTab) mainGroup.spacing = 3;
+	else mainGroup.spacing = 0;
+	//if (image == '') mainGroup.margins = 5;
+	var group = mainGroup.add('group');
 	group.orientation = 'row';
-	group.margins = 2;
-	if (image == '') group.margins = 5;
+	group.margins = 0;
 	group.spacing = 0;
-	var imageButton = group;
-	imageButton.group = group;
+	var outLine;
+	if (isTab && text != '')
+	{
+		outLine = mainGroup.add('group');
+		outLine.margins = 0;
+		outLine.minimumSize.height = 2;
+		outLine.alignment = ['fill','fill'];
+	}
+	var imageButton = mainGroup;
+	imageButton.group = mainGroup;
 
 	imageButton.standardImage = image;
 	imageButton.imageOver = imageOver;
@@ -690,17 +705,21 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 	//add checkbox
 	if (text != '' && DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
-		imageButton.checkbox = group.add('image',undefined,imageButton.iconUnchecked);
-		imageButton.checkbox.alignment = ['left','center'];
-		imageButton.checkbox.helpTip = helpTip;
-		DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		if (!isTab)
+		{
+			imageButton.checkbox = group.add('image',undefined,imageButton.iconUnchecked);
+			imageButton.checkbox.alignment = ['left','center'];
+			imageButton.checkbox.helpTip = helpTip;
+		}
+		DuAEF.DuScriptUI.setBackgroundColor(mainGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 		imageButton.alignment = ['fill','top'];
 	}
 
 	if (image != '')
 	{
 		var icon = group.add('image',undefined,image);
-		icon.alignment = ['left','center'];
+		if (isTab) icon.alignment = ['center','center'];
+		else icon.alignment = ['left','center'];
 		icon.helpTip = helpTip;
 		imageButton.image = icon;
 	}
@@ -709,7 +728,8 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 	{
 		var label = group.add('statictext',undefined,text);
 		label.helpTip = helpTip;
-		label.alignment = ['left','center'];
+		if (isTab) label.alignment = ['left','center'];
+		else label.alignment = ['left','center'];
 		imageButton.label = label;
 
 		if (text.length < textChecked.length) imageButton.label.minimumSize.width = textChecked.length*7;
@@ -737,12 +757,12 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 			if (imageButton.checked)
 			{
 				if (imageButton.textChecked != '') imageButton.label.text = imageButton.textChecked;
-				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconChecked;
+				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab) imageButton.checkbox.image = imageButton.iconChecked;
 			}
 			else
 			{
 				imageButton.label.text = imageButton.defaultText;
-				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconUnchecked;
+				if (DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab) imageButton.checkbox.image = imageButton.iconUnchecked;
 			}
 		}
 
@@ -757,6 +777,13 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 				if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
 			}
 		}
+
+		if (outLine)
+		{
+			if (imageButton.checked) DuAEF.DuScriptUI.setBackgroundColor(outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true);
+			else DuAEF.DuScriptUI.setBackgroundColor(outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true);
+		}
+
 	}
 
 	imageButton.clicked = function (e)
@@ -781,29 +808,38 @@ DuAEF.DuScriptUI.addCheckBox = function (container,text,image,helpTip,imageCheck
 		if (icon) if (imageButton.imageOver != '') icon.image = imageButton.imageOver;
 		if (label)
 		{
-			DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.DARK_GREY);
-			if (DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+			DuAEF.DuScriptUI.setBackgroundColor(mainGroup,DuAEF.DuJS.Color.Colors.DARK_GREY);
+			if (DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab)
 			{
 				if (imageButton.checked) imageButton.checkbox.image = imageButton.iconCheckedOver;
 				else imageButton.checkbox.image = imageButton.iconUncheckedOver;
 			}
 
 		}
+		if (outLine)
+		{
+			DuAEF.DuScriptUI.setBackgroundColor(outLine, DuAEF.DuJS.Color.Colors.LIGHT_GREY, true);
+		}
 		DuAEF.DuScriptUI.highlightedControls.push(imageButton);
 	}
 
 	imageButton.dim = function (e)
 	{
-		if (label) DuAEF.DuScriptUI.setBackgroundColor(group,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+		if (label) DuAEF.DuScriptUI.setBackgroundColor(mainGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 		if (imageButton.checked)
 		{
 			if (icon) if (imageButton.imageChecked != '') icon.image = imageButton.imageChecked;
-			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconChecked;
+			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab) imageButton.checkbox.image = imageButton.iconChecked;
 		}
 		else
 		{
 			if (icon) if (imageButton.standardImage != '') icon.image = imageButton.standardImage;
-			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess) imageButton.checkbox.image = imageButton.iconUnchecked;
+			if (label && DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab) imageButton.checkbox.image = imageButton.iconUnchecked;
+		}
+		if (outLine)
+		{
+			if (imageButton.checked) DuAEF.DuScriptUI.setBackgroundColor(outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true);
+			else DuAEF.DuScriptUI.setBackgroundColor(outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true);
 		}
 	}
 
@@ -2082,12 +2118,12 @@ DuAEF.DuScriptUI.helpPanel = new Window('palette',"Help panel",undefined,{resize
 })();
 
 /**
-* Updates the helpPopup with new information
-* @memberof DuAEF.DuScriptUI
-* @param {string} title - A title.
-* @param {string} text - The help text.
-* @param {string} link - The http link to a webpage
-*/
+	* Updates the helpPopup with new information
+	* @memberof DuAEF.DuScriptUI
+	* @param {string} title - A title.
+	* @param {string} text - The help text.
+	* @param {string} link - The http link to a webpage
+	*/
 DuAEF.DuScriptUI.updateHelpPopup = function (title, text, link)
 {
 	if (typeof link === 'undefined') link = '';
@@ -2108,12 +2144,12 @@ DuAEF.DuScriptUI.updateHelpPopup = function (title, text, link)
 }
 
 /**
-* Updates the About Popup with new information
-* @memberof DuAEF.DuScriptUI
-* @param {string} title - A title.
-* @param {string} text - The help text.
-* @param {string} link - The http link to a webpage
-*/
+	* Updates the About Popup with new information
+	* @memberof DuAEF.DuScriptUI
+	* @param {string} title - A title.
+	* @param {string} text - The help text.
+	* @param {string} link - The http link to a webpage
+	*/
 DuAEF.DuScriptUI.updateAboutPopup = function (title,text,link)
 {
 	if (typeof link === 'undefined') link = '';
@@ -2134,13 +2170,13 @@ DuAEF.DuScriptUI.updateAboutPopup = function (title,text,link)
 }
 
 /**
-* Gets the RSS content from a feed url, and set the news in the Help popup
-* @memberof DuAEF.DuRSS
-* @param {string} url - The url of the server.
-* @param {string} [subfolder='feed'] - The subdirectory of the feed (without a leading '/')
-* @param {int} [port=80] - The server port.
-* @return {RSSItem[]} The news items
-*/
+	* Gets the RSS content from a feed url, and set the news in the Help popup
+	* @memberof DuAEF.DuRSS
+	* @param {string} url - The url of the server.
+	* @param {string} [subfolder='feed'] - The subdirectory of the feed (without a leading '/')
+	* @param {int} [port=80] - The server port.
+	* @return {RSSItem[]} The news items
+	*/
 DuAEF.DuScriptUI.getNews = function (url, subfolder, port)
 {
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return;
@@ -2158,10 +2194,10 @@ DuAEF.DuScriptUI.getNews = function (url, subfolder, port)
 }
 
 /**
-* Sets the news in the help popup
-* @memberof DuAEF.DuRSS
-* @param {RSSItem[]} items - The items.
-*/
+	* Sets the news in the help popup
+	* @memberof DuAEF.DuRSS
+	* @param {RSSItem[]} items - The items.
+	*/
 DuAEF.DuScriptUI.setNews = function (items)
 {
 	DuAEF.DuScriptUI.helpPanel.newsItems = items;
@@ -2175,9 +2211,9 @@ DuAEF.DuScriptUI.setNews = function (items)
 }
 
 /**
-* Shows the help popup
-* @memberof DuAEF.DuScriptUI
-*/
+	* Shows the help popup
+	* @memberof DuAEF.DuScriptUI
+	*/
 DuAEF.DuScriptUI.showHelp = function ()
 {
 	DuAEF.DuScriptUI.helpPanel.setPanel(0);
@@ -2185,9 +2221,9 @@ DuAEF.DuScriptUI.showHelp = function ()
 }
 
 /**
-* Shows the news popup
-* @memberof DuAEF.DuScriptUI
-*/
+	* Shows the news popup
+	* @memberof DuAEF.DuScriptUI
+	*/
 DuAEF.DuScriptUI.showNews = function ()
 {
 	if (DuAEF.DuScriptUI.helpPanel.newsItems.length == 0) return;
@@ -2196,9 +2232,9 @@ DuAEF.DuScriptUI.showNews = function ()
 }
 
 /**
-* Shows the about popup
-* @memberof DuAEF.DuScriptUI
-*/
+	* Shows the about popup
+	* @memberof DuAEF.DuScriptUI
+	*/
 DuAEF.DuScriptUI.showAbout = function ()
 {
 	DuAEF.DuScriptUI.helpPanel.setPanel(2);
@@ -2251,20 +2287,20 @@ DuAEF.DuScriptUI.showAbout = function ()
  */
 
 /**
-* Sets the comp list
-* @method
-* @memberof CompSelector
-* @name setComps
-* @param {CompItem[]} [comps] - The list of compositions. By default, will use {@link CompSelector.filterComps()} to get the comps.
-*/
+	* Sets the comp list
+	* @method
+	* @memberof CompSelector
+	* @name setComps
+	* @param {CompItem[]} [comps] - The list of compositions. By default, will use {@link CompSelector.filterComps()} to get the comps.
+	*/
 
 /**
-* Gets the selected comp
-* @method
-* @memberof CompSelector
-* @name getComp
-* @return {CompItem|null} the selected comp
-*/
+	* Gets the selected comp
+	* @method
+	* @memberof CompSelector
+	* @name getComp
+	* @return {CompItem|null} the selected comp
+	*/
 
 /**
  * Creates a drop down selector for compositions
@@ -2529,12 +2565,12 @@ DuAEF.DuScriptUI.addCompSelector = function(container)
  */
 
 /**
-* Adds a new line on the LayerPicker
-* @method
-* @memberof LayerPicker
-* @name addSelector
-* @return {LayerSelector} The added LayerSelector
-*/
+	* Adds a new line on the LayerPicker
+	* @method
+	* @memberof LayerPicker
+	* @name addSelector
+	* @return {LayerSelector} The added LayerSelector
+	*/
 
 /**
  * Creates a two-columns group to allow the user to pick layers
@@ -2618,29 +2654,29 @@ DuAEF.DuScriptUI.addLayerPicker = function(container)
  */
 
 /**
-* Adds a new line on the LayerPicker
- * This is a convenience function equivalent to {@link LayerPickerDialog.layerPicker.addSelector}.
-* @method
-* @memberof LayerPickerDialog
-* @name addSelector
-* @return {LayerSelector} The added LayerSelector
-*/
+	* Adds a new line on the LayerPicker
+	* This is a convenience function equivalent to {@link LayerPickerDialog.layerPicker.addSelector}.
+	* @method
+	* @memberof LayerPickerDialog
+	* @name addSelector
+	* @return {LayerSelector} The added LayerSelector
+	*/
 
 /**
-* Gets the layers picked by the user.
-* @method
-* @memberof LayerPickerDialog
-* @name getLayers
-* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
-*/
+	* Gets the layers picked by the user.
+	* @method
+	* @memberof LayerPickerDialog
+	* @name getLayers
+	* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
+	*/
 
 /**
-* Gets the layers picked by the user.
-* @method
-* @memberof LayerPickerDialog
-* @name getLayers
-* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
-*/
+	* Gets the layers picked by the user.
+	* @method
+	* @memberof LayerPickerDialog
+	* @name getLayers
+	* @return {Layer[]} The layers picked (null if the user has set none in the selector), in the display order.
+	*/
 
 /**
  * The function called when the dialog is accepted.
@@ -2710,24 +2746,24 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function (title)
  */
 
 /**
-* Adds a new empty Tab in the TabPanel.
-* @method
-* @memberof TabPanel
-* @name addTab
-* @param {string} [tabTitle=''] - The title of the tab.
-* @param {string} [text=tabTitle] - The label of the button.
-* @param {string} [image=''] - The path to the icon.
-* @param {string} [helpTip=''] - The helptip.
-* @param {string} [imageOver=image] - The path to an icon displayed when the mouse is over the button.
-* @return {Tab} The new Tab.
-*/
+	* Adds a new empty Tab in the TabPanel.
+	* @method
+	* @memberof TabPanel
+	* @name addTab
+	* @param {string} [tabTitle=''] - The title of the tab.
+	* @param {string} [text=tabTitle] - The label of the button.
+	* @param {string} [image=''] - The path to the icon.
+	* @param {string} [helpTip=''] - The helptip.
+	* @param {string} [imageOver=image] - The path to an icon displayed when the mouse is over the button.
+	* @return {Tab} The new Tab.
+	*/
 
 /**
-* Sets the current visible tab.
-* @method
-* @memberof TabPanel
-* @name setCurrentIndex
-* @param {int} [index=0] - The index of the tab to show.
+	* Sets the current visible tab.
+	* @method
+	* @memberof TabPanel
+	* @name setCurrentIndex
+	* @param {int} [index=0] - The index of the tab to show.
 */
 
  /**
@@ -2801,7 +2837,7 @@ DuAEF.DuScriptUI.addTabPanel = function (container)
 	panel.addTab = function(text, image, helpTip, imageOver)
 	{
 		//adds the new button
-		var button = DuAEF.DuScriptUI.addCheckBox(panel.buttonsGroup, text, image, helpTip, imageOver);
+		var button = DuAEF.DuScriptUI.addCheckBox(panel.buttonsGroup, text, image, helpTip, imageOver, undefined, undefined, true);
 		button.index = panel.tabs.length;
 		panel.buttons.push(button);
 
