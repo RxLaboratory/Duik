@@ -5,7 +5,7 @@ There's always stuff to explain better, or tools which are not yet documented, [
 Duik is a comprehensive animation and rigging toolset for Adobe After Effects.
 
 **It provides the main rigging tools**, found in any 3D software, like IK, controllers, and bones, but adapts them to 2D animation in After Effects. With Duik you can rig complex characters and use advanced animation techniques usually used in 3D softwares.
-If you do not know what “rigging” means, it may be because it is a bit too soon for you to use those tools. Please refer to the section entitled “Should I use Duik?”.
+If you do not know what “rigging” means, it may be because it is a bit too soon for you to use those tools. Please refer to the section entitled _Should I use Duik?_.
 
 **Duik has plenty of animation tools too** - managing keyframes and interpolations, traditional animation, animation exposure… - and automations too, like wiggle, spring, swing, wheel, etc. which allow you to animate more quickly and easily.
 
