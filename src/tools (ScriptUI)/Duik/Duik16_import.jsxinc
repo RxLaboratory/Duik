@@ -1,0 +1,245 @@
+function ui_buildImport(ui_importTab)
+{
+
+    function setCurrentIOPanel(panel)
+	{
+		if (typeof panel === 'undefined') panel = 0;
+
+		ui_importGroup.visible = panel == 0;
+		ui_storyboarderGroup.visible = panel == 2;
+		ui_importAnimationGroup.visible = panel == 4;
+	}
+
+    //=== EVENTS ===
+
+    	function ui_importTVPClipButton_clicked()
+	{
+		var tvpFile = File.openDialog("Select clipinfo.txt",'txt files:*.txt',false);
+		if (!tvpFile) return;
+		DuAEF.TVPaint.importClip(tvpFile);
+	}
+
+	function ui_importAnimButton_clicked()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length == 0) layers = comp.layers;
+		if (layers.length == 0) return;
+
+		//Ask for the file
+		var openFile = File.openDialog("Please select the animation file.","JSON: *.duaef;*.json,All: *.*");
+		if (!openFile) return;
+
+		//white lists
+		var whiteList;
+		if (!ui_importAnimationKeysAllButton.checked)
+		{
+			whiteList = [];
+			if (ui_importAnimationKeysPosButton.checked)
+			{
+				whiteList.push('ADBE Position');
+				whiteList.push('ADBE Position_0');
+				whiteList.push('ADBE Position_1');
+				whiteList.push('ADBE Position_2');
+			}
+			if (ui_importAnimationKeysRotButton.checked)
+			{
+				whiteList.push('ADBE Orientation');
+				whiteList.push('ADBE Rotate X');
+				whiteList.push('ADBE Rotate Y');
+				whiteList.push('ADBE Rotate Z');
+			}
+			if (ui_importAnimationKeysScaleButton.checked)
+			{
+				whiteList.push('ADBE Scale');
+			}
+			if (ui_importAnimationKeysOpacityButton.checked)
+			{
+				whiteList.push('ADBE Opacity');
+			}
+			if (ui_importAnimationKeysMaskButton.checked)
+			{
+				whiteList.push('ADBE Mask Shape');
+				whiteList.push('ADBE Vector Shape');
+			}
+			if (ui_importAnimationKeysFXButton.checked)
+			{
+				whiteList.push('ADBE Effect Parade');
+			}
+		}
+
+		//options
+		var onlyKeyframes = ui_keyframesSelector.index == 0;
+		var replace = ui_importAnimationReplaceButton.checked;
+		var offset =  ui_importAnimationOffsetSelector.index == 0;
+
+		app.beginUndoGroup('Duik | ' + "Import Animation");
+
+		var data = DuAEF.Interchange.animation.loadAnimFromJson(openFile);
+		var remaining = DuAEF.DuAE.Layer.setAnims(layers, data, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset);
+
+		if (remaining.length > 0)
+		{
+			var ui_importLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
+			for (var i = 0, num = remaining.length; i < num; i++)
+			{
+				ui_importLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+				//try to preselect by name
+				var ok = false;
+				for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
+				{
+					var l = comp.layer(j);
+					if (l.name == remaining[i]._name)
+					{
+						ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
+						ok = true;
+						break;
+					}
+				}
+				if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
+			}
+
+			ui_importLayerPicker.onAccept = function () {app.beginUndoGroup('Duik | ' + "Import Animation"); DuAEF.DuAE.Layer.setAllAnims( ui_importLayerPicker.getLayers(), remaining, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset); app.endUndoGroup();};
+
+			DuAEF.DuScriptUI.showUI(ui_importLayerPicker);
+		}
+
+		app.endUndoGroup();
+	}
+
+	function ui_importAnimationKeysAllButton_clicked()
+	{
+		var checked = ui_importAnimationKeysAllButton.checked;
+		ui_importAnimationKeysPosButton.setChecked(checked);
+		ui_importAnimationKeysRotButton.setChecked(checked);
+		ui_importAnimationKeysScaleButton.setChecked(checked);
+		ui_importAnimationKeysOpacityButton.setChecked(checked);
+		ui_importAnimationKeysMaskButton.setChecked(checked);
+		ui_importAnimationKeysFXButton.setChecked(checked);
+	}
+
+	function ui_importKritaButton_clicked()
+	{
+		//select file
+		var file = File.openDialog("Select the .csv Krita file.",'Krita CSV:*.csv,All files:*.*',false);
+		if (!file) return;
+
+		app.beginUndoGroup("Duik | Import Krita animation");
+
+		DuAEF.Krita.importCSV(file);
+
+		app.endUndoGroup();
+	}
+
+	function ui_importStoryboardOptionsButton_clicked()
+	{
+		setCurrentIOPanel(2);
+	}
+
+	function ui_storyboarderValidButton_clicked()
+	{
+		//select file
+		var file = File.openDialog("Select the .storyboarder file.",'Storyboarder:*.storyboarder,JSON:*.json,All files:*.*',false);
+		if (!file) return;
+
+		app.beginUndoGroup("Duik | Import Storyboarder file");
+
+		DuAEF.WUStoryboarder.import(file,ui_storyboarderTextSelector.index == 0,ui_storyboarderPrecompSelector.index == 0);
+
+		app.endUndoGroup();
+	}
+
+
+    //============ UI ===============
+
+    ui_importTab.orientation = 'stack';
+    var ui_importGroup = DuAEF.DuScriptUI.addGroup(ui_importTab,'column');
+	var ui_importAnimButtonGroup = DuAEF.DuScriptUI.addGroup(ui_importGroup);
+	var ui_importAnimButton = DuAEF.DuScriptUI.addButton(ui_importAnimButtonGroup,"Animation",DuAEF.DuBinary.toFile(w25_importanim_l),"Import animation",DuAEF.DuBinary.toFile(w25_importanim_r));
+	var ui_importAnimOptionsButton = DuAEF.DuScriptUI.addButton(ui_importAnimButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Animation import options",DuAEF.DuBinary.toFile(w14_plus_r));
+	ui_importAnimOptionsButton.alignment = ['right','center'];
+	ui_importAnimButton.setHelp("Import Animation",importHelp,importLink);
+	ui_importAnimOptionsButton.setHelp("Import Animation",importHelp,importLink);
+	var ui_importRigButton = DuAEF.DuScriptUI.addButton(ui_importGroup,"Rig",DuAEF.DuBinary.toFile(w25_importrig_l),"Import rig",DuAEF.DuBinary.toFile(w25_importrig_r));
+	var ui_importTVPClipButton = DuAEF.DuScriptUI.addButton(ui_importGroup,"TVP Clip",DuAEF.DuBinary.toFile(w25_tvpclip_l),"Import TVPaint clip",DuAEF.DuBinary.toFile(w25_tvpclip_r));
+	var ui_importKritaButton = DuAEF.DuScriptUI.addButton(ui_importGroup,"Krita Animation",DuAEF.DuBinary.toFile(w25_krita_l),"Import an animation previously exported as a CSV file from Krita.",DuAEF.DuBinary.toFile(w25_krita_r));
+	ui_importKritaButton.setHelp("Krita", importHelp, importLink);
+	var ui_importStoryboardButtonGroup = DuAEF.DuScriptUI.addGroup(ui_importGroup);
+	var ui_importStoryboardButton = DuAEF.DuScriptUI.addButton(ui_importStoryboardButtonGroup,"Storyboarder",DuAEF.DuBinary.toFile(w25_storyboard_l),"Import Storyboarder",DuAEF.DuBinary.toFile(w25_storyboard_r));
+	ui_importStoryboardButton.setHelp("Storyboarder", importHelp, importLink);
+	var ui_importStoryboardOptionsButton = DuAEF.DuScriptUI.addButton(ui_importStoryboardButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Storyboarder import options",DuAEF.DuBinary.toFile(w14_plus_r));
+	ui_importStoryboardOptionsButton.setHelp("Storyboarder", importHelp, importLink);
+	ui_importStoryboardOptionsButton.alignment = ['right','center'];
+
+	ui_importRigButton.enabled = false;
+
+    //Import Animation
+	var ui_importAnimationGroup = DuAEF.DuScriptUI.addGroup(ui_importTab,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_importAnimationGroup,"Import animation");
+	var ui_keyframesSelector = DuAEF.DuScriptUI.addSelector(ui_importAnimationGroup);
+	ui_keyframesSelector.addButton("Only keyframes",DuAEF.DuBinary.toFile(w14_keyframesonly_l),"Imports only the keyframes.",DuAEF.DuBinary.toFile(w14_keyframesonly_r));
+	ui_keyframesSelector.addButton("All properties",DuAEF.DuBinary.toFile(w14_allproperties_l),"Sets values on all properties.",DuAEF.DuBinary.toFile(w14_allproperties_r));
+	ui_keyframesSelector.setCurrentIndex(0);
+	var ui_importAnimationKeysTypeGroup = DuAEF.DuScriptUI.addGroup(ui_importAnimationGroup,'row');
+	ui_importAnimationKeysTypeGroup.alignment = ['center','top'];
+	var ui_importAnimationKeysPosButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_pos_l),"Position",DuAEF.DuBinary.toFile(w18_pos_r));
+	var ui_importAnimationKeysRotButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_rotation_l),"Rotation",DuAEF.DuBinary.toFile(w18_rotation_r));
+	var ui_importAnimationKeysScaleButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_scale_l),"Scale",DuAEF.DuBinary.toFile(w18_scale_r));
+	var ui_importAnimationKeysOpacityButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_opacity_l),"Opacity",DuAEF.DuBinary.toFile(w18_opacity_r));
+	var ui_importAnimationKeysMaskButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_mask_l),"Masks",DuAEF.DuBinary.toFile(w18_mask_r));
+	var ui_importAnimationKeysFXButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_fx_l),"FX",DuAEF.DuBinary.toFile(w18_fx_r));
+	var ui_importAnimationKeysAllButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_allproperties_l),"All",DuAEF.DuBinary.toFile(w18_allproperties_r));
+	var ui_importAnimationOffsetSelector = DuAEF.DuScriptUI.addSelector(ui_importAnimationGroup);
+	ui_importAnimationOffsetSelector.addButton("Offset",DuAEF.DuBinary.toFile(w14_moveaway_l),"Offset current values",DuAEF.DuBinary.toFile(w14_moveaway_r));
+	ui_importAnimationOffsetSelector.addButton("Absolute",DuAEF.DuBinary.toFile(w14_absolute_l),"Replaces current values",DuAEF.DuBinary.toFile(w14_absolute_r));
+	var ui_importAnimationReplaceButton = DuAEF.DuScriptUI.addCheckBox(ui_importAnimationGroup,'Replace existing keyframes',undefined,"Replaces any existing keyframe on the properties before loading the new animation",undefined);
+	var ui_importAnimationValidGroup = DuAEF.DuScriptUI.addGroup(ui_importAnimationGroup);
+	ui_importAnimationValidGroup.alignment = ['fill','top'];
+	var ui_importAnimationCancelButton = DuAEF.DuScriptUI.addButton(ui_importAnimationValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_importAnimationValidButton = DuAEF.DuScriptUI.addButton(ui_importAnimationValidGroup,"Import",DuAEF.DuBinary.toFile(w25_check_g),"Imports an animation",DuAEF.DuBinary.toFile(w25_check_r));
+	ui_importAnimationValidButton.setHelp("Import Animation",importHelp,importLink);
+
+	//Storyboarder
+	var ui_storyboarderGroup = DuAEF.DuScriptUI.addGroup(ui_importTab,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_storyboarderGroup,'Storyboarder');
+	var ui_storyboarderTextSelector = DuAEF.DuScriptUI.addSelector(ui_storyboarderGroup);
+	ui_storyboarderTextSelector.addButton("Overlay text",DuAEF.DuBinary.toFile(w32_overlaytext_l),"Overlays the text information.",DuAEF.DuBinary.toFile(w32_overlaytext_r));
+	ui_storyboarderTextSelector.addButton("Text below",DuAEF.DuBinary.toFile(w32_textbelow_l),"Displays the text below the image.",DuAEF.DuBinary.toFile(w32_textbelow_r));
+	ui_storyboarderTextSelector.setCurrentIndex(1);
+	var ui_storyboarderPrecompSelector = DuAEF.DuScriptUI.addSelector(ui_storyboarderGroup);
+	ui_storyboarderPrecompSelector.addButton("Precompose shots",DuAEF.DuBinary.toFile(w32_precompshots_l),"Precomposes the shots.",DuAEF.DuBinary.toFile(w32_precompshots_r));
+	ui_storyboarderPrecompSelector.addButton("No precomp.",DuAEF.DuBinary.toFile(w32_noprecomp_l),"Does not precompose the shots.",DuAEF.DuBinary.toFile(w32_noprecomp_r));
+	ui_storyboarderPrecompSelector.setCurrentIndex(0);
+	var ui_storyboarderValidGroup = DuAEF.DuScriptUI.addGroup(ui_storyboarderGroup);
+	ui_storyboarderValidGroup.alignment = ['fill','top'];
+	var ui_storyboarderCancelButton = DuAEF.DuScriptUI.addButton(ui_storyboarderValidGroup,"Back",DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_storyboarderValidButton = DuAEF.DuScriptUI.addButton(ui_storyboarderValidGroup,"Import",DuAEF.DuBinary.toFile(w25_check_g),"Imports a storyboarder project",DuAEF.DuBinary.toFile(w25_check_r));
+
+    //========== INIT =================
+
+    ui_keyframesSelector.setCurrentIndex(0);
+	ui_importAnimationOffsetSelector.setCurrentIndex(1);
+	ui_importAnimationKeysAllButton.setChecked(true);
+	ui_importAnimationKeysAllButton_clicked();
+    setCurrentIOPanel();
+
+    
+    
+    // ======= CONNECT EVENTS ======
+
+    ui_importTVPClipButton.onClick = ui_importTVPClipButton_clicked;
+
+	ui_importAnimButton.onClick = ui_importAnimationValidButton.onClick = ui_importAnimButton_clicked;
+	ui_importAnimOptionsButton.onClick = function(){setCurrentIOPanel(4);};
+	ui_importAnimationCancelButton.onClick = function(){setCurrentIOPanel(0);};
+	ui_importAnimationKeysAllButton.onClick = ui_importAnimationKeysAllButton_clicked;
+
+	ui_importKritaButton.onClick = ui_importKritaButton_clicked;
+
+	ui_importStoryboardOptionsButton.onClick = ui_importStoryboardOptionsButton_clicked;
+	ui_storyboarderCancelButton.onClick = function(){setCurrentIOPanel(0);};
+	ui_storyboarderValidButton.onClick = ui_importStoryboardButton.onClick = ui_storyboarderValidButton_clicked;
+
+
+}
