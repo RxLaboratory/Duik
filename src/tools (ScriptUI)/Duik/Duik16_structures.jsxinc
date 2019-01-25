@@ -386,21 +386,19 @@ function ui_buildStructures(ui_structuresMainGroup)
 		setCurrentStructuresPanel(0);
 	}
 
-	function ui_structuresShowButton_clicked()
+	function ui_structuresShowButton_clicked(invert)
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
-		var structures;
-		if (comp.selectedLayers.length == 0) structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ALL);
-		else structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+		if (typeof invert === 'undefined') invert = false;
+		var structures = DuAEF.Duik.Structure.getStructureLayers();
 
 		if (structures.length == 0) return;
 
 		app.beginUndoGroup('Duik - ' + "Show/hide structures");
+		var visible = !structures[0].enabled;
 		for (var i = 0 ; i < structures.length ; i++)
 		{
-			structures[i].showHide();
+			if (invert) structures[i].enabled = !structures[i].enabled;
+			else structures[i].enabled = visible;
 		}
 		app.endUndoGroup();
 	}
@@ -750,7 +748,8 @@ function ui_buildStructures(ui_structuresMainGroup)
 	}
 
 	ui_structuresDuplicateButton.onClick = ui_structuresDuplicateButton_clicked;
-	ui_structuresShowButton.onClick = ui_structuresShowButton_clicked;
+	ui_structuresShowButton.onClick = function () { ui_structuresShowButton_clicked(false); };
+	ui_structuresShowButton.onAltClick = function () { ui_structuresShowButton_clicked(true); };
 	ui_structuresSelectButton.onClick = ui_structuresSelectButton_clicked;
 
 	debugLog.stopTimer("Structures ready.");
