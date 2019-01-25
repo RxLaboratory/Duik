@@ -8,6 +8,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
 - The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
+- The additional panel for the [***Bone***](bones.md) now includes a button to select and show or hide all the bones in the composition.
 
 #### New (Controllers)
 
@@ -33,7 +34,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 #### Improvements
 
 - The [_Connector_](connector.md) can now be used in a single click (creates a controller layer automatically).
-- The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer.
+- The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer and easier to use.
 - When used on opacities, the [_Connector_](connector.md) automatically makes the layer visible.
 - When [_Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
 - If you hold the [Ctrl] key and there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link (parent or expression) the selection to the _Structures_.
@@ -41,6 +42,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
 - The [_Structures_](structures.md) colors for predefined limbs have been improved to better show the hierarchy.
 - The User Interface has been tweaked to fix some details and improve the overall User Experience.
+- All buttons for showing or hiding stuff (Structures, bones, controllers...) can now invert the visibility with holding the [Alt] button, instead of showing or hiding them all.
 
 #### Fixes
 
@@ -51,6 +53,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Parent Constraint*](parent-constraint.md) now works correctly when the composition start time is not 0.
 - [*Auto-rig*](autorig.md) freezing when there's only one layer selected.
 - Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
+- The show/hide button for [*Structures*](structures.md) now works correctly.
 
 ## 16.0.10
 
