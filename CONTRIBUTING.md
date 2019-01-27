@@ -30,8 +30,8 @@ This part is dedicated to help anyone who wants to contribute on the code of the
 
 ### Setup
 
-You can skip this part if you are familiar with *git* and developing adobe scripts.
-First of all, be sure to **fork** this repository. Then, clone it somewhere else than in the Adoble application folder. It will be easier because of the rights required to work in those folders.
+You can skip this part if you are familiar with *git* and developing Adobe scripts.
+First of all, be sure to **fork** this repository. Then, clone it somewhere else than in the Adobe application folder. It will be easier because of the rights required to work in those folders.
 
 ```
 # In C:/Users/.../Code for example
@@ -56,7 +56,7 @@ mklink /J "C:\Program Files\Adobe\Adobe After Effects CC\Support Files\Scripts\S
 mklink /J "C:\Program Files\Adobe\Adobe After Effects CC\Support Files\Scripts\ScriptUI Panels\bin" "devFolder\DuAEF\src\bin"
 ```
 If you want to link Duik, you need to link every file of Duik.
-You will now be able to run your developement version inside After Effects.
+You will now be able to run your development version inside After Effects.
 **Alternatively**, you could use [linkshellextension](http://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html) on Windows if you are not familiar with the command line.
 
 ### Pick a ticket

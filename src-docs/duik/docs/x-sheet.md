@@ -2,8 +2,8 @@
 
 *X-Sheet* is a simple way to adjust the animation exposure of the properties, the layers or the whole composition.
 
-This is a very useful tool if you are compositing traditionnal animation or trying to achieve a traditionnal look on CG animations.
-It can change the framerate of the composition or of the properties at any time, mixing framerates (what's called the "exposure" in traditionnal animation) in the same composition, for different layers or at different times.
+This is a very useful tool if you are compositing traditional animation or trying to achieve a traditional look on CG animations.
+It can change the framerate of the composition or of the properties at any time, mixing framerates (what's called the "exposure" in traditional animation) in the same composition, for different layers or at different times.
 
 ## Setup
 
@@ -31,4 +31,5 @@ The three other methods do not use an exposure / framerate value, but keyframes 
 
 ![xsheet option](img\duik-screenshots\S-Animation\S-Animation-Tools\XSheet-optn.PNG)
 
-- You can use the additionnal panel to set an option to try to auto-detect the best exposure for selected properties to achieve a nice traditionnal look. This feature is a bit experimental but may work well with the most simple animations.
+- You can use the additional panel to set an option to try to auto-detect the best exposure for selected properties to achieve a nice traditional look. This feature is a bit experimental but may work well with the most simple animations.
+

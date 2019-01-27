@@ -10,26 +10,22 @@ There are a lot of ways to get help with Duik!
 
 - Read the official comprehensive user guide: http://duik-docs.rainboxprod.coop where you will find documentation for all the tools, an FAQ, and a lot of other information.
 
+- Watch some tutorials! http://duik-tutorials.rainboxprod.coop
+
 - Search on the forum: https://forum.rainboxprod.coop, and ask your question there if you don't find what you need.
 
-- Come and have a chat on the dedicated Discord server! https://discord.gg/tX5zPt7
+- Come and have a chat on the dedicated Discord server! http://chat.rainboxprod.coop
 
 ## Supported versions of After Effects 
-
-### Tested
 
 Duik has been tested and is working with all versions of After Effects since CS6. That means it works correctly on:
 CS6 (11), CC (12), CC2014 (13), CC2015 (13.5), CC2017 (14), CC2018 (15), CC2019 (16).
 
 Note: CS6 has a lot of issues with Script Panels like the one used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the UI issues you may have... You also have to know that the performance is pretty poor with CS6.
 
-### Untested
-
-Note that it may also work on CS4, CS5, and CS5.5 but we do not test it on these versions. Just try if you still use one of those.
-
 ### Not supported
 
-All versions before CS4 won't be able to correctly run Duik, sorry! Time to update...
+All versions before CS6 won't be able to correctly run Duik, sorry! Time to update...
 
 ## Installation
 

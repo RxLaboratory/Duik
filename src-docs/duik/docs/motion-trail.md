@@ -28,9 +28,7 @@ Use the effects of the "Motion Trail" layer to adjust all the trails.
 
 - In the display section, you can change and animate basic appearance settings. Keep in mind that "Motion trails" are standard shape layers and you can do much more with them by modifying yourself the content.
 
-## Additionnal panel
+## Additional panel
 
-![motion trail option](img\duik-screenshots\S-Animation\S-Animation-Tools\MotionTrail-optn.PNG)  
-
-In the additionnal panel, you can choose to create a new layer when you create new motion trails, or to add them all on the existing layer if any.
+In the additional panel, you can choose to create a new layer when you create new motion trails, or to add them all on the existing layer if any.
 You can also set the color of new motion trails.

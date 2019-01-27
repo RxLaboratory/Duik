@@ -26,7 +26,7 @@ Just include the framework in your script with this simple code:
     
 After one of these two lines, all objects and methods from DuAEF will be available.
 
-As you can see, you can either use only the "DuAEF_full.jsxinc" file which contains the whole framework, or "DuAEF.jsxinc" file to keep every library in separated files. In most cases, you should use the "full" file. The second one might be easier to use if you plan to modify or personnalize the framework.
+As you can see, you can either use only the "DuAEF_full.jsxinc" file which contains the whole framework, or "DuAEF.jsxinc" file to keep every library in separated files. In most cases, you should use the "full" file. The second one might be easier to use if you plan to modify or personalize the framework.
 
 ## Comprehensive reference
 

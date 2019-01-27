@@ -10,9 +10,9 @@ It is very easy to contribute to the translations of Duik.
 
 ## Existing translations
 
-The default language of Duik is English. [Available translations](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation) are:  **Chinese** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_xh.json)),**Español** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_es.json)), **Français** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_fr.json)).
+The default language of Duik is English. [Available translations](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation) are:  **Chinese** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_xh.json)),**Español** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_es.json)), **Français** ([file](https://github.com/Rainbox-dev/DuAEF_Duik/raw/master/src/tools%20(ScriptUI)/Duik/translation/Duik%20Bassel_fr.json)). **German** has been made and will be available soon.
 
-The translation which would be great to do in priority are (Brazilian) **Portuguese**, **German**, **Japanese**. This list is based on the use of Duik in the world, but if you'd like Duik in any other language, you're free to translate it to whatever you want. Esparanto would be great too!
+The translation which would be great to do in priority are (Brazilian) **Portuguese** and **Japanese**. This list is based on the use of Duik in the world, but if you'd like Duik in any other language, you're free to translate it to whatever you want. Esperanto would be great too!
 
 ## Translating
 
