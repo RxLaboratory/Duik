@@ -47,7 +47,7 @@ To use the blender, you just have to add markers with the name of the animation 
 
 There are a few options in the effects of the controller, to loop the animation, and to control how they may blend during transitions. You can control if they have to blend, the duration of the transition (in seconds), and how it is interpolated. The blend happens *after* the marker triggering the animation, between the animation of the marker and the previous one.
 
-To temporarily disable the Blender, you can disable the effect on the controller. This makes it easy to add new animations or modifiy the existing ones.
+To temporarily disable the Blender, you can disable the effect on the controller. This makes it easy to add new animations or modify the existing ones.
 
 # Shortcuts for markers in After Effects
 

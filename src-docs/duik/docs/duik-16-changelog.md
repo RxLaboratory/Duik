@@ -55,6 +55,16 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
 - The show/hide button for [*Structures*](structures.md) now works correctly.
 
+## 16.0.11
+
+#### Fixes
+
+- Fixed the [Connector](connector.md) when an angle is used as a controller property and in some cases there is a jump of 360 degrees, and *IK* rotation values.
+- Fixed some [Structures](structures.md) bugs with the new JavaScript expression engine.
+- Fixed [Scale Z-Link](scale-z-link.md).
+- Fixed the [Randomize](random.md) tool when used on keyframe times in absolute mode.
+- Fixed the [*walk cycle*](walk-cycle.md) with the new JavaScript expression engine.
+
 ## 16.0.10
 
 #### Improvements

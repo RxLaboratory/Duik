@@ -83,9 +83,7 @@ Most of the tools work this way:
 To be able to work in a single click, the tools need to be smart enough to take some decisions depending on what you're doing.  
 Of course, Duik does not want you to be or feel limited to what you can do. Although most of the tools work in a single click, some of them are accompanied with a little "circle" button. This means there are options you can change for the future use of the tool, which you can access by clicking on the circle.
 
-![selection circle](img/duik-screenshots/selection-circle/options-circle-selection2.png)
-
-Duik can also be personnalized through some [settings](settings.md) so you can adadpt it to your tastes, even if you have very bad tastes.
+Duik can also be personalized through some [settings](settings.md) so you can adapt it to your tastes, even if you have very bad tastes.
 
 ### Rookie, standard or expert mode
 
@@ -119,13 +117,9 @@ Layers created by Duik have a marker at their beginning, showing how Duik uses t
 The types defined by Duik are: 
 
 - [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](controller-tools.md) panel). They are used to manipulate and animate compositions rigged by Duik.
-
 - [Structures](structures.md) are shape layers used to actually rig characters and props. They should not be manipulated by the animator and can be hidden as soon as the rigging process is finished.
-
 - [Bones](bones.md) are shape layers which control spatial properties of effects or bezier shapes and masks. They are usually parented to Structures to be rigged and animated, but sometimes can be animated themselves just to control the position of an effect, or parent it to anything else.
-
 - [Locators](parent-accross-compositions.md) are null objects used to expose the absolute transformations of another layer in a composition, and to create links between layers and compositions.
-
 - (Spatial) [Effectors](effector.md) are a special type of controllers used to drive properties and motion depending on spatial coordinates.
 
 

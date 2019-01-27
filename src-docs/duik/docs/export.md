@@ -33,7 +33,7 @@ Exports rig descriptions to a JSON file, which is an open format very easy to wo
 If you have some layers with audio in After Effects, you can export the audio to Audition using this tool.
 
 Duik will build a multi-track session in Audition, creating one clip for each layer with audio in the composition. Audio in precomposition is not supported (yet).  
-Audio levels and their keyframes will be transfered to audition too, but if the channels (left and right) do not have the same levels, only the average level will be set in Audition.
+Audio levels and their keyframes will be transfered to Audition too, but if the channels (left and right) do not have the same levels, only the average level will be set in Audition.
 
 ### ![export audition optn](img\duik-icons\circle-little_r.png) Audition options
 
