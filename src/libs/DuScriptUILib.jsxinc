@@ -463,10 +463,16 @@ DuAEF.DuScriptUI.addButton = function (container, text, image, helpTip, imageOve
 	if (image != '' && !DuAEF.DuJS.Fs.fileExists(image)) image = '';
 	if (imageDisabled != '' && !DuAEF.DuJS.Fs.fileExists(imageDisabled)) imageDisabled = '';
 
-	if (text != '') DuAEF.DuScriptUI.uiStrings.push(text);
-	if (helpTip != '') DuAEF.DuScriptUI.uiStrings.push(helpTip);
-	text = tr(text);
-	helpTip = tr(helpTip);
+	if (text != '')
+	{
+		DuAEF.DuScriptUI.uiStrings.push(text);
+		text = tr(text);
+	}
+	if (helpTip != '')
+	{
+		DuAEF.DuScriptUI.uiStrings.push(helpTip);	
+		helpTip = tr(helpTip);
+	}
 
 	if (image == '' && text == '') text = 'o';
 
@@ -609,6 +615,139 @@ DuAEF.DuScriptUI.addButton = function (container, text, image, helpTip, imageOve
 	}
 
 	return imageButton;
+}
+
+/**
+ * @class
+ * @name DuSmallButton
+ * @classdesc For use with {@link DuAEF.DuScriptUI}.<br />
+ * An Small Button.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.DuScriptUI.addSmallButton} to create a Small Button.<br />
+ * The Small Button inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {StaticText} label - The label
+ * @property {DuSmallButton~onClick} onClick - The function to execute when the button is clicked
+ */
+
+/**
+ * The function to execute when the button is clicked.
+ * @callback DuSmallButton~onClick
+ * @memberof DuSmallButton
+ */
+
+/**
+ * Creates a small button.
+ * @memberof DuAEF.DuScriptUI
+ * @param {Panel|Window|Group}			container	- The ScriptUI Object which will contain and display the button.
+ * @param {string}					text		- The label of the button. Default: empty string
+ * @param {string}					[helpTip]		- The helptip. Default: empty string
+ * @return {DuButton}			The image button created.
+ */
+DuAEF.DuScriptUI.addSmallButton = function (container, text, helpTip)
+{
+	if (typeof helpTip === 'undefined') helpTip = '';
+
+	DuAEF.DuScriptUI.uiStrings.push(text);
+	text = tr(text);
+	if (helpTip != '')
+	{
+		DuAEF.DuScriptUI.uiStrings.push(helpTip);
+		helpTip = tr(helpTip);
+	}
+
+	var smallButton = container.add('group');
+	smallButton.orientation = 'row';
+	smallButton.margins = 0;
+	smallButton.alignment = ['fill','top'];
+	smallButton.alignChildren = ['fill','fill'];
+	smallButton.spacing = 0;
+
+	smallButton.onClick = function(){};
+	smallButton.onAltClick = function(){};
+	smallButton.onCtrlAltClick = function(){};
+	smallButton.onCtrlClick = function(){};
+	smallButton.label = smallButton.add('statictext',undefined,text);
+	smallButton.label.helpTip = helpTip;
+	smallButton.label.justify = 'center';
+	DuAEF.DuScriptUI.setBackgroundColor(smallButton,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	//events
+	smallButton.clicked = function ()
+	{
+		try { smallButton.onClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file\n' + error.fileName + '\nat line ' + error.line + '\n\n' + error.description); }
+	}
+
+	smallButton.shiftClicked = function ()
+	{
+		DuAEF.DuScriptUI.updateHelpPopup(smallButton.help.title, smallButton.help.text, smallButton.help.link);
+
+		if (smallButton.help.text != '')
+		{
+			DuAEF.DuScriptUI.showHelp();
+		}
+	}
+
+	smallButton.altClicked = function ()
+	{
+		try { smallButton.onAltClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + error.description); }
+	}
+
+	smallButton.ctrlAltClicked = function ()
+	{
+		try { smallButton.onCtrlAltClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + error.description); }
+	}
+
+	smallButton.ctrlClicked = function ()
+	{
+		try { smallButton.onCtrlClick(); } catch (error) { if (DuAEF.debug) alert('An error has occured in file at line ' + error.line + '\n\n' + error.description); }
+	}
+
+	smallButton.highlight = function (e)
+	{
+		e.stopPropagation();
+		DuAEF.DuScriptUI.dimControls();
+
+		DuAEF.DuScriptUI.setTextColor(smallButton.label,DuAEF.DuJS.Color.Colors.VERY_LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(smallButton,DuAEF.DuJS.Color.Colors.DARK_GREY);
+
+		DuAEF.DuScriptUI.highlightedControls.push(smallButton);
+	}
+
+	smallButton.dim = function ()
+	{
+		DuAEF.DuScriptUI.setTextColor(smallButton.label,DuAEF.DuJS.Color.Colors.LIGHT_GREY);
+		DuAEF.DuScriptUI.setBackgroundColor(smallButton,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	}
+
+	//add events
+	smallButton.addEventListener('click',function(e) {
+			if (e.shiftKey) smallButton.shiftClicked();
+			else if (e.altKey && e.ctrlKey) smallButton.ctrlAltClicked();
+			else if (e.altKey) smallButton.altClicked();
+			else if (e.ctrlKey) smallButton.ctrlClicked();
+			else smallButton.clicked();
+		},true);
+
+
+	smallButton.addEventListener("mouseover",smallButton.highlight);
+
+
+	smallButton.help = {};
+	smallButton.help.title = '';
+	smallButton.help.text = '';
+	smallButton.help.link = '';
+
+	//help popup
+	smallButton.setHelp = function(title,text,link)
+	{
+		if (text != '') DuAEF.DuScriptUI.uiStrings.push(title);
+		title = tr(title);
+		smallButton.help.title = title;
+		smallButton.help.text = text;
+		smallButton.help.link = link;
+	}
+
+	return smallButton;
 }
 
 /**
@@ -1296,28 +1435,46 @@ DuAEF.DuScriptUI.addStaticText = function(container,text,color,helpTip,translata
  * @param {boolean}	[invertedAppearance]		- Revert the slider with max value on the left
  * @param {string}	[prefix]		- A text prefix to display.
  * @param {string}	[suffix]		- A text suffix to display.
+ * @param {string}	[textAlignment='center'] - The alignment of the text.<br />
+ * One of 'left', 'center', 'right' for column orientation,<br />
+ * And 'top', 'center', 'bottom' for row orientation.
+ * @param {int[]}	[valueButtons=[]] - A list of predefined values to add as buttons.
  * @return {DuSlider}	The custom Group containing the slider.
  * @todo implement helpTip
  */
-DuAEF.DuScriptUI.addSlider = function(container,defaultValue,min,max,orientation,invertedAppearance,prefix,suffix)
+DuAEF.DuScriptUI.addSlider = function(container,defaultValue,min,max,orientation,invertedAppearance,prefix,suffix,textAlignment,valueButtons)
 {
-	if (prefix == undefined) prefix = '';
-	if (suffix == undefined) suffix = '';
-	if (min == undefined) min = 0;
-	if (max == undefined) max = 100;
-	if (defaultValue == undefined) defaultValue = 0;
+	if (typeof prefix === 'undefined') prefix = '';
+	if (typeof suffix === 'undefined') suffix = '';
+	if (typeof min === 'undefined') min = 0;
+	if (typeof max === 'undefined') max = 100;
+	if (typeof defaultValue === 'undefined') defaultValue = 0;
+	if (typeof textAlignment === 'undefined') textAlignment = 'center';
+	if (typeof valueButtons === 'undefined') valueButtons = [];
 	if (orientation != 'row') orientation = 'column';
 
-	if (prefix != '') DuAEF.DuScriptUI.uiStrings.push(prefix);
-	if (suffix != '') DuAEF.DuScriptUI.uiStrings.push(suffix);
-	prefix = tr(prefix);
-	suffix = tr(suffix);
+	if (valueButtons.length > 0 && textAlignment == 'center')
+	{
+		if (orientation == 'column') textAlignment = 'right';
+		else textAlignment = 'bottom';
+	}
+
+	if (prefix != '')
+	{
+		DuAEF.DuScriptUI.uiStrings.push(prefix);
+		prefix = tr(prefix);
+	}
+	if (suffix != '')
+	{
+		DuAEF.DuScriptUI.uiStrings.push(suffix);
+		suffix = tr(suffix);
+	}
 
 	var niceSlider = container.add('group');
 	niceSlider.orientation = orientation;
 	niceSlider.spacing = DuAEF.DuScriptUI.defaultSpacing;
 	niceSlider.alignment = ['fill','top'];
-	niceSlider.alignChildren = ['fill','center'];
+	niceSlider.alignChildren = ['fill','fill'];
 
 	niceSlider.value = defaultValue;
 	niceSlider.invertedAppearance = invertedAppearance;
@@ -1326,18 +1483,48 @@ DuAEF.DuScriptUI.addSlider = function(container,defaultValue,min,max,orientation
 	if (niceSlider.invertedAppearance) sliderValue = max-defaultValue+min;
 
 	niceSlider.slider = niceSlider.add('slider',undefined,sliderValue,min,max);
-	niceSlider.edit = DuAEF.DuScriptUI.addEditText(niceSlider,defaultValue.toString(),prefix,suffix);
+
+	niceSlider.editGroup = DuAEF.DuScriptUI.addGroup(niceSlider);
+	niceSlider.editGroup.spacing = 0;
+
+	//a function to add buttons before or after the edittext, depending on the textAlignment
+	niceSlider.buttons = [];
+	function addButtons()
+	{
+		//add
+		for (var i = 0, num = valueButtons.length; i < num; i++)
+		{
+			var b = DuAEF.DuScriptUI.addSmallButton(niceSlider.editGroup, valueButtons[i].toString());
+			b.alignment = ['fill','fill'];
+			b.value = valueButtons[i];
+			b.onClick = function ()
+			{
+				niceSlider.setValue(this.value);
+				niceSlider.onChange();
+			}
+			niceSlider.buttons.push(b);
+		}
+	}
+
+	if (textAlignment == 'right' || textAlignment == 'bottom') addButtons();
+
+	niceSlider.edit = DuAEF.DuScriptUI.addEditText(niceSlider.editGroup,defaultValue.toString(),prefix,suffix);
 	var numChars = max.toString().length;
 	if (min.toString().length > max.toString().length) numChars = min.toString().length;
-	niceSlider.edit.edit.characters = numChars + prefix.length + suffix.length;
+	niceSlider.edit.edit.characters = numChars + prefix.length + suffix.length-1;
 	if (orientation == 'row')
 	{
-		niceSlider.edit.alignment = ['right','center'];
+		niceSlider.edit.alignment = ['center',textAlignment];
+		niceSlider.edit.static.justify = 'center';
 	}
 	else
 	{
-		niceSlider.edit.alignment = ['center','center'];
+		niceSlider.edit.alignment = [textAlignment,'center'];
+		niceSlider.edit.static.justify = textAlignment;
 	}
+
+	if (textAlignment == 'left' || textAlignment == 'top') addButtons();
+
 	niceSlider.onChanging = function () {};
 	niceSlider.onChange = function () {};
 
@@ -1357,6 +1544,7 @@ DuAEF.DuScriptUI.addSlider = function(container,defaultValue,min,max,orientation
 		niceSlider.edit.setText(niceSlider.value);
 		niceSlider.onChanging();
 	}
+
 	niceSlider.slider.onChange = function ()
 	{
 		niceSlider.onChange();

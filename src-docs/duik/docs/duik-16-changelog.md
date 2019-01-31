@@ -30,6 +30,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 - Reimplemented the [_TVPaint_] import tool from Duik 15.
 - Added **German translation**.
+- The interpolation adjustment tools in the [***Keyframes***](keyframe-tools.md) has been greatly improved, with sliders for velocity and buttons with useful predefined values.
 
 #### Improvements
 
