@@ -594,6 +594,45 @@ DuAEF.DuAE.LayerAttributes =
 }
 
 /**
+ * Loop types
+ * @enum {string}
+ * @readonly
+*/
+DuAEF.DuAE.LoopTypes = 
+{
+	HOLD: 'hold',
+	NONE: 'none',
+	CYCLE: 'cycle',
+	PINGPONG: 'pingpong',
+	OFFSET: 'offset',
+	CONTINUE: 'continue'
+}
+
+/**
+ * Default color labels
+ * @readonly
+ * @todo get real labels (from pref file?)
+ */
+DuAEF.DuAE.ColorLabels = [];
+DuAEF.DuAE.ColorLabels[0]  = [0, 0, 0 ];	// 0. None
+DuAEF.DuAE.ColorLabels[1]  = [121/255, 058/255, 058/255 ];	// 1. Red
+DuAEF.DuAE.ColorLabels[2]  = [144/255, 138/255, 068/255 ];	// 2. Yellow
+DuAEF.DuAE.ColorLabels[3]  = [115/255, 132/255, 130/255 ];	// 3. Aqua
+DuAEF.DuAE.ColorLabels[4]  = [145/255, 124/255, 131/255 ];	// 4. Pink
+DuAEF.DuAE.ColorLabels[5]  = [115/255, 115/255, 131/255 ];	// 5. Lavender
+DuAEF.DuAE.ColorLabels[6]  = [146/255, 127/255, 109/255 ];	// 6. Peach
+DuAEF.DuAE.ColorLabels[7]  = [120/255, 130/255, 120/255 ];	// 7. Sea Foam
+DuAEF.DuAE.ColorLabels[8]  = [082/255, 093/255, 142/255 ];	// 8. Blue
+DuAEF.DuAE.ColorLabels[9]  = [067/255, 112/255, 068/255 ];	// 9. Green
+DuAEF.DuAE.ColorLabels[10] = [101/255, 052/255, 107/255 ];	// 10. Purple
+DuAEF.DuAE.ColorLabels[11] = [146/255, 103/255, 037/255 ];	// 11. Orange
+DuAEF.DuAE.ColorLabels[12] = [094/255, 065/255, 051/255 ];	// 12. Brown
+DuAEF.DuAE.ColorLabels[13] = [152/255, 085/255, 137/255 ];	// 13. Fuchsia
+DuAEF.DuAE.ColorLabels[14] = [061/255, 111/255, 113/255 ];	// 14. Cyan
+DuAEF.DuAE.ColorLabels[15] = [114/255, 105/255, 090/255 ];	// 15. Sandstone
+DuAEF.DuAE.ColorLabels[16] = [045/255, 062/255, 045/255 ];	// 16. DarkGreen
+
+/**
 	* Checks if the param is an AE collection or an Array
 	* @param {Array|Collection} collection - The list to check
 	* @return {boolean} true if collection is a collection, false if it's an array
@@ -2407,7 +2446,7 @@ DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
  * Moves a layer to the coordinates of a spatial property
  * @param {Layer} layer - The layer
  * @param {Property|PropertyInfo} prop - The property
-*/
+ */
 DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 {
 	var propInfo;
@@ -2440,6 +2479,49 @@ DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 		layer.position.setValue(prop.value);
 		layer.parent = parent;
 	}
+}
+
+/**
+ * Sets the In and Out points of a layer according to its opacity (cuts at 0%)
+ * @param {Layer} layer - The layer
+ * @param {boolean} [preExpression=false] - Whether to check for the opacity post or pre-expression value
+ */
+DuAEF.DuAE.Layer.autoDuration = function( layer, preExpression )
+{
+	if (typeof preExpression === 'undefined') preExpression = false;
+
+	var comp = layer.containingComp;
+
+	var inPoint = layer.inPoint;
+	var outPoint = layer.outPoint;
+	var inFrame = inPoint / comp.frameDuration;
+	var outFrame = outPoint / comp.frameDuration;
+
+	//search in
+	if (layer.transform.opacity.valueAtTime(inPoint, preExpression) == 0)
+	{
+		for (var i = inFrame; i < outFrame; i++)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) inPoint = time + comp.frameDuration;
+			else break;
+		}
+	}
+
+	//search out 
+	if (layer.transform.opacity.valueAtTime(outPoint, preExpression) == 0)
+	{
+		for (var i = outFrame; i > inFrame; i--)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) outPoint = time;
+			else break;
+		}
+	}
+
+	//set new in and out points
+	if (inPoint != layer.inPoint) layer.inPoint = inPoint;
+	if (outPoint != layer.outPoint) layer.outPoint = outPoint;
 }
 
 /**

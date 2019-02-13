@@ -40,24 +40,24 @@
 
 
 /**
-	* @class
-	* @name TVPCamera
-	* @classdesc For use with {@link DuAEF.TVPaint}.<br />
-	* A TVPaint camera.<br />
-	* Do not instanciate this class,<br />
-	* Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
-	* @property {TVPCameraPoint[]} points - the points of the animation (keyframe values)
-	* @property {int} pointCout - the number of points
-	* @property {TVPProfileprof} profileprof - the profileprof (animation interpolations)
-*/
+ * @class
+ * @name TVPCamera
+ * @classdesc For use with {@link DuAEF.TVPaint}.<br />
+ * A TVPaint camera.<br />
+ * Do not instanciate this class,<br />
+ * Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
+ * @property {TVPCameraPoint[]} points - the points of the animation (keyframe values)
+ * @property {int} pointCout - the number of points
+ * @property {TVPProfileprof} profileprof - the profileprof (animation interpolations)
+ */
 function TVPCamera ()
 {
-	this.points = [];
-	this.pointCount = 0;
-	this.profileprof = {};
-	this.profileprof.points = [];
-	this.profileprof.linear = false;
-	this.profileprof.pointCount = 0;
+    this.points = [];
+    this.pointCount = 0;
+    this.profileprof = {};
+    this.profileprof.points = [];
+    this.profileprof.linear = false;
+    this.profileprof.pointCount = 0;
 }
 
 /**
@@ -66,144 +66,762 @@ function TVPCamera ()
  * @param {Layer} layer - The layer to animate
  * @param {bool} link - true to automatically all un-parented layers in the composition to the camera.
  * @param {bool} useAnchorPoint - true to animate the anchor point instead of the position.
-*/
-TVPCamera.prototype.applyToLayer = function(layer,link,useAnchorPoint)
+ */
+TVPCamera.prototype.applyToLayer = function( layer, link, useAnchorPoint )
 {
-	var comp = layer.containingComp;
-	var numPoints = this.pointCount;
+    var comp = layer.containingComp;
+    var numPoints = this.pointCount;
 
-	if (typeof link === "undefined") link = false;
-	if (typeof useAnchorPoint === "undefined") useAnchorPoint = false;
+    if ( typeof link === "undefined" ) link = false;
+    if ( typeof useAnchorPoint === "undefined" ) useAnchorPoint = false;
 
-	var moveProp = layer.transform.anchorPoint;
-	var rotationLayer = layer;
+    var moveProp = layer.transform.anchorPoint;
+    var rotationLayer = layer;
 
-	// Move
-	if (!useAnchorPoint)
-	{
-		moveProp = layer.transform.position;
-		rotationLayer = layer.containingComp.layers.addNull();
-		rotationLayer.name = "TVPaint Rotation & Scale";
-	}
-	var startPos = layer.transform.position.value;
-	var intialDif = [0,0];
-	for (var i = 0;i< numPoints;i++)
-	{
-		var point = this.points[i];
-		var time = (comp.duration-comp.frameDuration)/(numPoints-1)*i;
+    // Move
+    if ( !useAnchorPoint )
+    {
+        moveProp = layer.transform.position;
+        rotationLayer = layer.containingComp.layers.addNull();
+        rotationLayer.name = "TVPaint Rotation & Scale";
+    }
+    var startPos = layer.transform.position.value;
+    var intialDif = [ 0, 0 ];
+    for ( var i = 0; i < numPoints; i++ )
+    {
+        var point = this.points[ i ];
+        var time = ( comp.duration - comp.frameDuration ) / ( numPoints - 1 ) * i;
 
-		if (i == 0) initialDif = startPos - [point.x,point.y];
-		var val;
-		useAnchorPoint ? val = [point.x,point.y] : val = 2*startPos-[point.x,point.y]-initialDif;
+        if ( i == 0 ) initialDif = startPos - [ point.x, point.y ];
+        var val;
+        useAnchorPoint ? val = [ point.x, point.y ] : val = 2 * startPos - [ point.x, point.y ] - initialDif;
 
-		moveProp.setValueAtTime(time,val);
+        moveProp.setValueAtTime( time, val );
 
-		if (i == 0 || i == numPoints-1)
-		{
-			moveProp.setSpatialTangentsAtKey(i+1,[0,0,0],[0,0,0]);
-		}
-		else
-		{
-			moveProp.setSpatialAutoBezierAtKey(i+1,true);
-			var inTangent = moveProp.keyInSpatialTangent(i+1);
-			var outTangent = moveProp.keyOutSpatialTangent(i+1);
-		}
-	}
+        if ( i == 0 || i == numPoints - 1 )
+        {
+            moveProp.setSpatialTangentsAtKey( i + 1, [ 0, 0, 0 ], [ 0, 0, 0 ] );
+        }
+        else
+        {
+            moveProp.setSpatialAutoBezierAtKey( i + 1, true );
+            var inTangent = moveProp.keyInSpatialTangent( i + 1 );
+            var outTangent = moveProp.keyOutSpatialTangent( i + 1 );
+        }
+    }
 
-	//rotation & scale
-	for (var i =0; i < numPoints;i++)
-	{
-		var point = this.points[i];
-		moveProp.setRovingAtKey(i+1,true);
-		time = moveProp.keyTime(i+1);
-		rotationLayer.transform.rotation.setValueAtTime(time,point.rotation);
-		var zoom = (1+(1-point.zoom))*100;
-		rotationLayer.transform.scale.setValueAtTime(time,[zoom,zoom,zoom]);
-	}
+    //rotation & scale
+    for ( var i = 0; i < numPoints; i++ )
+    {
+        var point = this.points[ i ];
+        moveProp.setRovingAtKey( i + 1, true );
+        time = moveProp.keyTime( i + 1 );
+        rotationLayer.transform.rotation.setValueAtTime( time, point.rotation );
+        var zoom = ( 1 + ( 1 - point.zoom ) ) * 100;
+        rotationLayer.transform.scale.setValueAtTime( time, [ zoom, zoom, zoom ] );
+    }
 
-	//Morpher
-	var morpher = layer.Effects.addProperty("ADBE Slider Control");
-	morpher.name = "Camera Interpolation";
+    //Morpher
+    var morpher = layer.Effects.addProperty( "ADBE Slider Control" );
+    morpher.name = "Camera Interpolation";
 
-	var exp = "//Duik.TVPCamera\nvalueAtTime((thisComp.layer(\"" + layer.name +"\").effect(\"Camera Interpolation\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
-	moveProp.expression = exp;
-	rotationLayer.transform.rotation.expression = exp;
-	rotationLayer.transform.scale.expression = exp;
+    var exp = "//Duik.TVPCamera\nvalueAtTime((thisComp.layer(\"" + layer.name + "\").effect(\"Camera Interpolation\")(1)-thisComp.displayStartTime/thisComp.frameDuration)*thisComp.frameDuration)";
+    moveProp.expression = exp;
+    rotationLayer.transform.rotation.expression = exp;
+    rotationLayer.transform.scale.expression = exp;
 
-	//add morpher keys
-	var numProfPoints = this.profileprof.pointCount;
-	for (var i = 0;i<numProfPoints;i++)
-	{
-		var point = this.profileprof.points[i];
-		morpher(1).setValueAtTime((comp.duration-comp.frameDuration)*point.u,(comp.duration-comp.frameDuration)/comp.frameDuration*point.v);
-	}
-	//bezier
-	if (!this.profileprof.linear)
-	{
-		for (var i = 1;i<= morpher(1).numKeys;i++)
-		{
-			morpher(1).setInterpolationTypeAtKey(i,KeyframeInterpolationType.BEZIER);
-			if (i != 1 && i != morpher(1).numKeys)
-			{
-				morpher(1).setTemporalContinuousAtKey(i, true);
-				morpher(1).setTemporalAutoBezierAtKey(i, true);
-			}
-			else
-			{
-				var easeIn = new KeyframeEase(0,100/3);
-				morpher(1).setTemporalEaseAtKey(i,[easeIn]);
-			}
-		}
-	}
+    //add morpher keys
+    var numProfPoints = this.profileprof.pointCount;
+    for ( var i = 0; i < numProfPoints; i++ )
+    {
+        var point = this.profileprof.points[ i ];
+        morpher( 1 ).setValueAtTime( ( comp.duration - comp.frameDuration ) * point.u, ( comp.duration - comp.frameDuration ) / comp.frameDuration * point.v );
+    }
+    //bezier
+    if ( !this.profileprof.linear )
+    {
+        for ( var i = 1; i <= morpher( 1 ).numKeys; i++ )
+        {
+            morpher( 1 ).setInterpolationTypeAtKey( i, KeyframeInterpolationType.BEZIER );
+            if ( i != 1 && i != morpher( 1 ).numKeys )
+            {
+                morpher( 1 ).setTemporalContinuousAtKey( i, true );
+                morpher( 1 ).setTemporalAutoBezierAtKey( i, true );
+            }
+            else
+            {
+                var easeIn = new KeyframeEase( 0, 100 / 3 );
+                morpher( 1 ).setTemporalEaseAtKey( i, [ easeIn ] );
+            }
+        }
+    }
 
-	if (!useAnchorPoint) layer.parent = rotationLayer;
+    if ( !useAnchorPoint ) layer.parent = rotationLayer;
 
-	if (link) DuAEF.DuAE.Comp.parentAllOrphans(layer);
+    if ( link ) DuAEF.DuAE.Comp.parentAllOrphans( layer );
 }
 
 /**
-	* @class
-	* @name TVPCameraPoint
-	* @classdesc For use with {@link DuAEF.TVPaint}.<br />
-	* A TVPaint camera point (keyframe value).<br />
-	* This is not a real class, and cannot be instanciated.<br />
-	* Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
-	* @property {float} x - the X coordinate
-	* @property {float} y - the y coordinate
-	* @property {float} zoom - the zoom value
-	* @property {float} rotation - the rotation angle
-*/
+ * @class
+ * @name DuTVPaintCameraPoint
+ * @classdesc For use with {@link DuAEF.TVPaint}.<br />
+ * A TVPaint camera point (keyframe value).<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
+ * @property {float} x - the X coordinate
+ * @property {float} y - the y coordinate
+ * @property {float} zoom - the zoom value
+ * @property {float} rotation - the rotation angle
+ */
+/**
+ * @class
+ * @name DuTVPaintProfileprof
+ * @classdesc For use with {@link DuAEF.TVPaint}.<br />
+ * A TVPaint camera profileprof (animation interpolation).<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
+ * @property {TVPProfileprofPoint[]} points - the interpolation tangents for each TVPCameraPoint (keyframe)
+ * @property {bool} linear - the interpolation (bezier when false)
+ * @property {int} pointCount - the number of points
+ */
 
 /**
-	* @class
-	* @name TVPProfileprof
-	* @classdesc For use with {@link DuAEF.TVPaint}.<br />
-	* A TVPaint camera profileprof (animation interpolation).<br />
-	* This is not a real class, and cannot be instanciated.<br />
-	* Use {@link DuAEF.TVPaint.importCamera} to create a TVPaint Camera from a .cpt file.
-	* @property {TVPProfileprofPoint[]} points - the interpolation tangents for each TVPCameraPoint (keyframe)
-	* @property {bool} linear - the interpolation (bezier when false)
-	* @property {int} pointCount - the number of points
-*/
+ * @class
+ * @name DuTVPaintProfileprofPoint
+ * @classdesc For use with {@link DuAEF.TVPaint}.<br />
+ * A TVPaint camera profileprof point (keyframe tangents).<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
+ * @property {float} u - the first coordinate
+ * @property {float} v - the second coordinate
+ */
 
 /**
-	* @class
-	* @name TVPProfileprofPoint
-	* @classdesc For use with {@link DuAEF.TVPaint}.<br />
-	* A TVPaint camera profileprof point (keyframe tangents).<br />
-	* This is not a real class, and cannot be instanciated.<br />
-	* Use {@link DuAEF.TVPaint.parseCam} to create a TVPaint Camera from a .cpt file.
-	* @property {float} u - the first coordinate
-	* @property {float} v - the second coordinate
-*/
-
-/**
-	* TVPaint interchange tools<br />
-	* Dependencies: JSON.jsxinc; DuAEFLib.jsxinc; DuJSLib.jsxinc
-	* @namespace
-	* @memberof DuAEF
-*/
+ * TVPaint interchange tools
+ * @namespace
+ * @memberof DuAEF
+ */
 DuAEF.TVPaint = {};
+
+/**
+ * Associative array to convert blending modes from TVPaint to After Effects
+ */
+DuAEF.TVPaint.BlendingModes = {
+    'Color': BlendingMode.NORMAL,
+    'Add': BlendingMode.ADD,
+    'Shade2': BlendingMode.COLOR_BURN,
+    'Screen': BlendingMode.SCREEN,
+    'Difference': BlendingMode.DIFFERENCE,
+    'Multiply': BlendingMode.MULTIPLY,
+    'Overlay': BlendingMode.OVERLAY,
+	'Sub': BlendingMode.SUBTRACT
+};
+
+/**
+ * Associative array to convert TVPaint pre and post behaviours indices to After Effects loops
+ */
+DuAEF.TVPaint.PrePostBehaviours = [DuAEF.DuAE.LoopTypes.NONE, DuAEF.DuAE.LoopTypes.CYCLE, DuAEF.DuAE.LoopTypes.PINPONG, DuAEF.DuAE.LoopTypes.HOLD];
+
+/**
+ * Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool (TVPaint version < 11) or as JSON (TVPaint version >= 11)
+ * @memberof DuAEF.TVPaint
+ * @param {File} clipFile - The clipinfo.txt or json file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+ * @param {boolean} [askLayers=false] - True to display a dialog to select the layers to import.
+ */
+DuAEF.TVPaint.importClip = function( clipFile, askLayers )
+{
+	if (typeof askLayers === 'undefined') askLayers = false;
+
+	var ext = DuAEF.DuJS.Fs.getExtension( clipFile );
+	var data = null;
+	if (ext == 'txt') data = DuAEF.TVPaint.ClipInfo.parseFile( clipFile );
+	else data = DuAEF.TVPaint.Json.parseFile( clipFile );
+
+	var go = true;
+
+	if (askLayers)
+	{
+		//build dialog
+		var title = "Select the layers to import";
+		DuAEF.DuScriptUI.uiStrings.push(title);
+		var layerWindow = new Window('dialog', tr(title), undefined, {"resizeable":true});
+		layerWindow.margins = DuAEF.DuScriptUI.defaultMargins;
+		layerWindow.spacing = DuAEF.DuScriptUI.defaultSpacing;
+		layerWindow.alignChildren = ['fill','fill'];
+
+		var selectGroup = DuAEF.DuScriptUI.addGroup(layerWindow);
+		selectGroup.alignment = ['fill','top'];
+		var selectAllButton = DuAEF.DuScriptUI.addButton(selectGroup, "Select all");
+		var selectNoneButton = DuAEF.DuScriptUI.addButton(selectGroup, "Select none");
+
+		DuAEF.DuScriptUI.addStaticText(layerWindow, "Double click a layer to (de)select it.");
+
+		var layerList = layerWindow.add('listbox');
+
+		var validGroup = DuAEF.DuScriptUI.addGroup(layerWindow);
+		validGroup.alignment = ['fill','bottom'];
+		var cancelButton = DuAEF.DuScriptUI.addButton(validGroup, "Cancel");
+		var validButton = DuAEF.DuScriptUI.addButton(validGroup, "Import");
+
+		//events
+		layerList.onDoubleClick = function(){
+			var item = layerList.selection;
+			item.selected = false;
+			if (typeof item.checked !== 'undefined') item.checked = !item.checked;
+		}
+
+		selectAllButton.onClick = function()
+		{
+			for (var i = 0, num = layerList.items.length; i<num; i++)
+			{
+				var item = layerList.items[i];
+				item.selected = false;
+				if (typeof item.checked !== 'undefined') item.checked = true;
+			}
+		}
+
+		selectNoneButton.onClick = function()
+		{
+			for (var i = 0, num = layerList.items.length; i<num; i++)
+			{
+				var item = layerList.items[i];
+				item.selected = false;
+				if (typeof item.checked !== 'undefined') item.checked = false;
+			}
+		}
+
+		cancelButton.onClick = function () { layerWindow.hide(); go = false; };
+
+		validButton.onClick = function() {
+			for (var i = layerList.items.length-1 ; i>=0; i--)
+			{
+				var item = layerList.items[i];
+				if (!item.checked)
+				{
+					data.project.clip.layers.splice(i,1);
+				}
+			}
+			layerWindow.hide();
+			go = true;
+		};
+
+		//add layers
+		//sort
+		data.project.clip.layers.sort( function (layerA, layerB)
+		{
+			return layerA.position - layerB.position;
+		});
+
+		var itLayers = new Iterator(data.project.clip.layers);
+		itLayers.do(function (layer)
+		{
+			var name = '';
+			//check for missing frames
+			var frames = layer.link;
+			var allMissing = true;
+			var someMissing = false;
+			for (var f = 0, numFrames = frames.length; f < numFrames; f++)
+			{
+				var frame = frames[ f ];
+				var frameFile = new File( data.path + "/" + frame.file );
+				if (!frameFile.exists) someMissing = true;
+				else allMissing = false;
+				if (!allMissing && someMissing) break;
+			}
+			//display in the list
+			if (allMissing) name += 'MISSING Layer! | ';
+			else if (someMissing) name += 'Some frames missing! | ';
+			name += layer.name;
+			var layerItem = layerList.add('item', name);
+			if (!allMissing && !someMissing) layerItem.checked = true;
+			else if (!allMissing) layerItem.checked = false;
+		});
+
+		layerWindow.layout.layout(true);
+		layerWindow.layout.resize();
+		layerWindow.onResizing = layerWindow.onResize = function () {try {layerWindow.layout.resize();} catch (e) {}}
+		layerWindow.show();
+	}
+
+	if (go) DuAEF.TVPaint.importData( data );
+}
+
+/**
+ * Imports a clip
+ * @memberof DuAEF.TVPaint
+ * @param {Object} data - The clip data returned by either {@link DuAEF.TVPaint.ClipInfo.parseFile()} or {@link DuAEF.TVPaint.Json.parseFile()}.
+ */
+DuAEF.TVPaint.importData = function( data )
+{
+	//useful data
+	var clip = data.project.clip;
+	var layers = clip.layers;
+	var bgColor = DuAEF.DuJS.Color.eightBpcToFloat( [ clip.bg.red, clip.bg.green, clip.bg.blue ]);
+
+	//sort layers
+	layers.sort( function (layerA, layerB)
+	{
+		return layerB.position - layerA.position;
+	});
+
+	//create folder for the project
+	var projectFolderItem = app.project.items.addFolder( clip.name );
+
+	//create folder for layers
+	var layersFolderItem = app.project.items.addFolder( "Layers" );
+	layersFolderItem.parentFolder = projectFolderItem;
+
+	//create composition
+	var clipComp = app.project.items.addComp( clip.name, clip.width, clip.height, clip.pixelaspectratio, clip["image-count"] / clip.framerate, clip.framerate );
+	clipComp.parentFolder = projectFolderItem;
+	clipComp.bgColor = bgColor;
+
+	//create layers 
+	var itLayers = new Iterator(layers);
+	itLayers.do(function (layer)
+	{
+		//create layer composition
+		//sometimes, the layer ends at 0...
+		var duration = layer.end + 1 - layer.start;
+		//create comp for the layer
+		var layerComp = app.project.items.addComp( layer.name, clip.width, clip.height, clip.pixelaspectratio, duration / clip.framerate, clip.framerate );
+		layerComp.parentFolder = layersFolderItem;
+		layerComp.bgColor = bgColor;
+
+		//import frames
+		var layerFolder = app.project.items.addFolder( layer.name );
+		layerFolder.parentFolder = layersFolderItem;
+		var itFrames = new Iterator(layer.link);
+		//add frames to comp
+		itFrames.do(function (frame)
+		{
+			//import 
+			var frameFile = new File( data.path + "/" + frame.file );
+			if (!frameFile.exists) return;
+			var io = new ImportOptions( frameFile );
+			io.importAs = ImportAsType.FOOTAGE;
+			var frameFootage = app.project.importFile( io );
+			frameFootage.parentFolder = layerFolder;
+			//add to comp
+			var frameLayer = layerComp.layers.add(frameFootage);
+			frameLayer.moveToEnd();
+			//opacity
+			//we first get values to set them later to improve performance
+			var times = [];
+			var values = [];
+			for (var f = 0, numFrames = layer.link.length; f < numFrames; f++)
+			{
+				var otherFrame = layer.link[f];
+				var opacity = 0;
+				//if self, set to 100%
+				if (otherFrame.file == frame.file) opacity = 100;
+				for (var i = 0, numOpacities = otherFrame.images.length; i < numOpacities; i++)
+				{
+					var time = otherFrame.images[ i ] / clip.framerate;
+					times.push( time );
+					values.push( opacity );
+					//out of range
+					if (opacity == 100)
+					{
+						if (time < frameLayer.inPoint) frameLayer.inPoint = time;
+						if (time > frameLayer.outPoint) frameLayer.outPoint = time;
+					}
+				}
+			}
+			//set opacity values
+			if (times.length > 1)
+			{
+				frameLayer.transform.opacity.setValuesAtTimes(times, values);
+				for (var k = 1; k <= frameLayer.transform.opacity.numKeys; k++)
+				{
+					frameLayer.transform.opacity.setInterpolationTypeAtKey(k, KeyframeInterpolationType.HOLD, KeyframeInterpolationType.HOLD);
+				}
+			}
+
+			//clean
+			DuAEF.DuAE.Property.cleanKeyframes(frameLayer.transform.opacity);
+
+			//adjust duration
+			DuAEF.DuAE.Layer.autoDuration(frameLayer);
+
+			//clean keyframes
+			var numKeys = frameLayer.transform.opacity.numKeys;
+			if (numKeys < 3 || (numKeys == 3 && frameLayer.transform.opacity.keyValue(1) == 0))
+			{
+				DuAEF.DuAE.Property.removeAnim(frameLayer.transform.opacity);
+				frameLayer.transform.opacity.setValue(100);
+			}
+
+			//time offset
+			frameLayer.startTime = - layer.start / clip.framerate;
+		});
+
+		//add to comp 
+		var layerLayer = clipComp.layers.add(layerComp);
+		//label
+		var labelColor = [layer.group.red/255, layer.group.green/255, layer.group.blue/255];
+		//search for the closest one
+		var smallestDistance = 1000;
+		var aeLabel = 0;
+		for (var l = 0, numLabels = DuAEF.DuAE.ColorLabels.length; l < numLabels; l++)
+		{
+			var distance = DuAEF.DuJS.Math.getLength( labelColor, DuAEF.DuAE.ColorLabels[l] );
+			if (distance < smallestDistance)
+			{
+				smallestDistance = distance;
+				aeLabel = l;
+			}
+		}
+		layerLayer.label = aeLabel;
+		//blending mode
+		DuAEF.TVPaint.setBlendingMode(layerLayer, layer["blending-mode"] );
+		//opacity
+		layerLayer.transform.opacity.setValue(layer.opacity / 2.55 );
+		//exposure
+		DuAEF.Duik.Animation.getPrecompExposure( layerLayer );
+		//loops
+		var preLoop = DuAEF.TVPaint.PrePostBehaviours[ layer["pre-behavior"] ];
+		var postLoop = DuAEF.TVPaint.PrePostBehaviours[ layer["post-behavior"] ];
+		if ( preLoop != DuAEF.DuAE.LoopTypes.NONE || postLoop != DuAEF.DuAE.LoopTypes.NONE )
+		{
+			DuAEF.Duik.Animation.timeRemap( [layerLayer], preLoop, postLoop )
+		}
+		//time offset
+		layerLayer.startTime = layer.start / clip.framerate;
+	});
+}
+
+/**
+ * TVPaint tools for importing clips exported as JSON from TVPaint 11 and newer
+ * @namespace
+ * @memberof DuAEF.TVPaint
+ */
+DuAEF.TVPaint.Json  = {};
+
+/**
+ * Parses a clip exported as JSON from TVPaint 11 and newer
+ * @memberof DuAEF.TVPaint
+ * @param {File} jsonFile - The jsonFile.json file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+ * @return {Object} The project, as an object corresponding to a JSON file exported with the JSON exporter in TVpaint 11+.
+ */
+DuAEF.TVPaint.Json.parseFile = function ( jsonFile )
+{
+	if ( typeof jsonFile === 'undefined' ) throw "You must provide the json file.";
+    if ( typeof jsonFile === 'string' ) jsonFile = File( jsonFile );
+    if ( !( jsonFile instanceof File ) ) throw "jsonFile must be a File or a string path.";
+    if ( !jsonFile.exists ) throw "jsonFile file does not exist.";
+
+	var data = DuAEF.DuJS.Fs.parseJSON( jsonFile );
+	
+	//adjust clip name 
+	if (data.project.clip.name == "Untitled") data.project.clip.name = DuAEF.DuJS.Fs.getBasename(jsonFile);
+	//add containing folder
+	data.folder = jsonFile.parent;
+	data.path = data.folder.absoluteURI;
+
+	return data;
+}
+
+/**
+ * TVPaint tools for importing and converting clips exported with the MJ_AFX_Export_1.0 tool<br />
+ * This is the tool used to export clips from TVPaint in versions older than 11.
+ * @namespace
+ * @memberof DuAEF.TVPaint
+ */
+DuAEF.TVPaint.ClipInfo = {};
+
+/**
+ * Parses the general information from a clipinfo.txt file generated by the MJ_AFX_Export_1.0 tool
+ * @memberof DuAEF.TVPaint
+ * @param {File} clipInfo - The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+ * @return {Object} An object containing the framerate, duration, bgColor, clipName, projectName and folder.
+ */
+DuAEF.TVPaint.ClipInfo.parseTxt = function( clipInfoFile )
+{
+    if ( typeof clipInfoFile === 'undefined' ) throw "You must provide the clipInfo file.";
+    if ( typeof clipInfoFile === 'string' ) clipInfoFile = File( clipInfoFile );
+    if ( !( clipInfoFile instanceof File ) ) throw "clipInfo must be a File or a string path.";
+    if ( !clipInfoFile.exists ) throw "clipInfo file does not exist.";
+
+    var clipInfo = {};
+
+    //get path
+    clipInfo.folder = clipInfoFile.parent;
+
+    //parse clipInfo file
+
+    //read file
+    clipInfoData = [];
+    clipInfoFile.open( 'r' );
+    while ( !clipInfoFile.eof )
+    {
+        clipInfoData.push( clipInfoFile.readln() );
+    }
+    clipInfoFile.close();
+
+    //parse data
+    clipInfo.framerate = 25;
+    clipInfo.duration = 100;
+    clipInfo.bgColor = [ 0, 0, 0 ];
+    clipInfo.projectName = clipInfo.folder.parent.displayName;
+    clipInfo.clipName = clipInfo.folder.displayName == 'Untitled' ? clipInfo.projectName : clipInfo.folder.displayName;
+
+    for ( var i = 0; i < clipInfoData.length; i++ )
+    {
+        var data = clipInfoData[ i ].split( ';' );
+        if ( data[ 0 ].toLowerCase() == 'framerate' )
+        {
+            clipInfo.framerate = data[ 1 ];
+        }
+        else if ( data[ 0 ].toLowerCase() == 'duration' )
+        {
+            clipInfo.duration = data[ 1 ];
+        }
+        else if ( data[ 0 ].toLowerCase() == 'bgcolor' )
+        {
+            clipInfo.bgColor = data[ 1 ].split( ',' );
+        }
+    }
+
+    return clipInfo;
+}
+
+/**
+ * Gets the resolution (width & height) of a clip exported by the MJ_AFX_Export_1.0 tool
+ * @memberof DuAEF.TVPaint
+ * @param {Folder} clipInfoFolder - The folder containing the clip.
+ * @return {int[]} [width, height]
+ */
+DuAEF.TVPaint.ClipInfo.getResolution = function( clipInfoFolder )
+{
+    //Get a PNG to know the resolution
+    var folders = clipInfoFolder.getFiles( DuAEF.DuJS.Fs.isFolder );
+
+	var resolution = [ 1920, 1080 ]
+
+    for ( var i = 0, numFolders = folders.length; i < numFolders; i++ )
+    {
+        var folder = folders[ i ];
+        var pngs = folder.getFiles( "*.png" );
+        if ( pngs.length == 0 ) continue;
+
+        var png = new File( pngs[ 0 ] );
+
+        //import
+        var io = new ImportOptions( png );
+        io.importAs = ImportAsType.FOOTAGE;
+        var footage = app.project.importFile( io );
+        resolution = [ footage.width, footage.height ];
+		footage.remove();
+		break;
+    }
+
+    return resolution;
+}
+
+/**
+ * Gets the layers of a clip exported by the MJ_AFX_Export_1.0 tool
+ * @memberof DuAEF.TVPaint
+ * @param {Folder} clipInfoFolder - The folder containing the clip.
+ * @return {Object[]} An object corresponding to the layers object in the JSON file exported with the JSON exporter in TVpaint 11+.
+ */
+DuAEF.TVPaint.ClipInfo.getLayers = function( clipInfoFolder, duration )
+{
+	var layers = [];
+
+    //The subfolders
+    var folders = clipInfoFolder.getFiles( DuAEF.DuJS.Fs.isFolder );
+
+    for ( var i = 0, numFolders = folders.length; i < numFolders; i++ )
+    {
+        var folder = folders[ i ];
+
+		//get layerinfo
+		var start = 0;
+		var end = duration - 1;
+		var blendingMode = "Color";
+		var opacity = 255;
+		var label = 0;
+
+		layerInfopath = folder.absoluteURI + "/layerinfo.txt";
+        layerInfo = new File( layerInfopath );
+        if ( layerInfo.exists )
+        {
+            layerInfo.open();
+
+            var layerIN = layerInfo.readln();
+            layerIN = layerIN.split( ";" );
+            start = layerIN[ 1 ] - 1;
+
+            var layerOUT = layerInfo.readln();
+            layerOUT = layerOUT.split( ";" );
+            end = layerOUT[ 1 ] - 1;
+
+            var layerBlendmode = layerInfo.readln();
+            layerBlendmode = layerBlendmode.split( ";" );
+            blendingMode = layerBlendmode[ 1 ];
+
+            var layerOpacity = layerInfo.readln();
+            layerOpacity = layerOpacity.split( ";" );
+            opacity = parseFloat( layerOpacity[ 1 ] ) / 100 * 255;
+            try
+            {
+                var layerLabel = layerInfo.readln();
+                layerLabel = layerLabel.split( ";" );
+                label = parseInt( layerLabel[ 1 ] );
+            }
+            catch ( e )
+            {
+
+            }
+            layerInfo.close();
+		}
+
+		//get frames (called links in TVPaint JSON)
+        var pngs = folder.getFiles( "*.png" );
+		var link = [];
+		for (var j = 0, numPngs = pngs.length; j < numPngs; j++)
+		{
+			var png = pngs[ j ];
+
+			var imageNumber = parseInt( DuAEF.DuJS.Fs.ImageSequence.getNumber( png.absoluteURI ) );
+
+			link.push( {
+				"instance-index": imageNumber,
+				"instance-name": "1",
+				"file": png.parent.name + "/" + png.name,
+				"images": [ imageNumber ]
+			} );
+		}
+
+		//build layer object
+		layers.push( {
+			"name": folder.displayName,
+			"visible": true,
+			"position": i,
+			"opacity": opacity,
+			"start": start,
+			"end": end,
+			"pre-behavior": 0,
+			"post-behavior": 0,
+			"blending-mode": blendingMode,
+			"group": {
+				"red": DuAEF.DuAE.ColorLabels[label][0] * 255,
+				"green": DuAEF.DuAE.ColorLabels[label][1] * 255,
+				"blue": DuAEF.DuAE.ColorLabels[label][2] * 255
+			},
+			"link": link
+		});
+    }
+
+    return layers;
+}
+
+/**
+ * Parses a clip exported by the MJ_AFX_Export_1.0 tool
+ * @memberof DuAEF.TVPaint
+ * @param {File} clipInfo - The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
+ * @return {Object} The project, as an object corresponding to a JSON file exported with the JSON exporter in TVpaint 11+.
+ */
+DuAEF.TVPaint.ClipInfo.parseFile = function( clipInfoFile )
+{
+    //parse file
+    var clipInfo = DuAEF.TVPaint.ClipInfo.parseTxt( clipInfoFile );
+    //get resolution
+    var resolution = DuAEF.TVPaint.ClipInfo.getResolution( clipInfo.folder );
+	var layers = DuAEF.TVPaint.ClipInfo.getLayers( clipInfo.folder, clipInfo.duration )
+
+    //======== The data object
+    var data = {};
+    data.version = {
+        "major": 5,
+        "minor": 0
+    };
+
+    //======== The project
+    data.project = {};
+    data.project.format = {
+        "extension": "png"
+    };
+
+    //======== The camera
+    data.project.camera = {
+        "width": resolution[ 0 ],
+        "height": resolution[ 1 ],
+        "field": 0,
+        "framerate": clipInfo.framerate,
+        "pixelaspectratio": 1.0,
+        "antialiasing": 1
+    };
+
+    //======== The clip
+    data.project.clip = {
+        "name": clipInfo.clipName,
+        "width": resolution[ 0 ],
+        "height": resolution[ 1 ],
+        "framerate": clipInfo.framerate,
+        "pixelaspectratio": 1.0,
+        "image-count": clipInfo.duration,
+        "bg":
+        {
+            "red": clipInfo.bgColor[ 0 ] * 255,
+            "green": clipInfo.bgColor[ 1 ] * 255,
+            "blue": clipInfo.bgColor[ 2 ] * 255,
+        },
+        "camera":
+        {
+            "mode": 1,
+            "profile": "2 0 1 0 0 1 1 ",
+            "motion-blur": 0.0,
+            "lock-all": false,
+            "lock-x": false,
+            "lock-y": false,
+            "lock-angle": false,
+            "lock-scale": false,
+            "points": [
+				{
+					"x": resolution[ 0 ] / 2,
+					"y": resolution[ 1 ] / 2,
+					"angle": 0.0,
+					"scale": 1.0
+				}
+			],
+            "positions": [
+				{
+					"x": resolution[ 0 ] / 2,
+					"y": resolution[ 1 ] / 2,
+					"angle": 0.0,
+					"scale": 1.0
+				}
+			]
+        },
+		"layers": layers
+    };
+
+	//add containing folder
+	data.folder = clipInfo.folder;
+	data.path = data.folder.absoluteURI;
+
+	return data;
+}
+
+/**
+ * Sets the blending mode of an AE Layer based on the TVPaint blend mode name
+ * @memberof DuAEF.TVPaint
+ * @param {AVLayer}		layer		The layer
+ * @param {string}		blendName	The TVPaint blending mode name
+ */
+DuAEF.TVPaint.setBlendingMode = function( layer, blendName )
+{
+    if ( typeof DuAEF.TVPaint.BlendingModes[ blendName ] !== 'undefined' ) layer.blendingMode = DuAEF.TVPaint.BlendingModes[ blendName ];
+}
+
+/**
+ * TVPaint tools for importing Cameras exported as .cpt files from TVPaint
+ * @namespace
+ * @memberof DuAEF.TVPaint
+ */
+DuAEF.TVPaint.camera = {};
 
 /**
  * Loads a TVPaint Camera
@@ -211,17 +829,17 @@ DuAEF.TVPaint = {};
  * @param {File} camFile - The .cpt TVPaint camera file
  * @return {TVPCamera} The TVPaint camera
  */
-DuAEF.TVPaint.loadCamera = function(camFile)
+DuAEF.TVPaint.camera.load = function( camFile )
 {
-	var camString = "";
-	if (camFile.open("r"))
-	{
-		camString = camFile.read();
-		camFile.close();
-	}
-	if (camString == "") return;
+    var camString = "";
+    if ( camFile.open( "r" ) )
+    {
+        camString = camFile.read();
+        camFile.close();
+    }
+    if ( camString == "" ) return;
 
-	return DuAEF.TVPaint.parseCam(camString);
+    return DuAEF.TVPaint.camera.parse( camString );
 }
 
 /**
@@ -229,335 +847,102 @@ DuAEF.TVPaint.loadCamera = function(camFile)
  * @memberof DuAEF.TVPaint
  * @param {String} camString - The camera as a .cpt string
  * @return {TVPCamera} The TVPaint camera
-*/
-DuAEF.TVPaint.parseCam = function(camString)
+ */
+DuAEF.TVPaint.camera.parse = function( camString )
 {
-	var camera = new TVPCamera();
+    var camera = new TVPCamera();
 
-	function createTVPaintCameraPoint()
-	{
-		var point = {};
-		point.x = 0.0;
-		point.y = 0.0;
-		point.zoom = 1.0;
-		point.rotation = 0.0;
-		return point;
-	}
+    function createTVPaintCameraPoint ()
+    {
+        var point = {};
+        point.x = 0.0;
+        point.y = 0.0;
+        point.zoom = 1.0;
+        point.rotation = 0.0;
+        return point;
+    }
 
-	var lines = camString.split("\n");
+    var lines = camString.split( "\n" );
 
-	var reXPoint = /point\.(\d+)\.x=(-?\d+\.?\d*)/i;
-	var reYPoint = /point\.(\d+)\.y=(-?\d+\.?\d*)/i;
-	var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
-	var reRPoint = /point\.(\d+)\.rotation=(-?\d+\.?\d*)/i;
-	var reLinear = /profileprof_linear=([01])/i;
-	var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
-	var rePointCout = /pointcount=(\d+)/i;
-	var reProfPointCount = /profileprof_numpoint=(\d+)/i;
-	for (var i=0;i<lines.length;i++ )
-	{
-		var line = lines[i];
-		var count = line.match(rePointCout);
-		if (count != null)
-		{
-			camera.pointCount = parseInt(count[1]);
-		}
-		var xPoint = line.match(reXPoint);
-		if (xPoint != null)
-		{
-			var index = parseInt(xPoint[1]);
-			var value = parseFloat(xPoint[2]);
-			var point = camera.points[index];
-			if (point === undefined) point = createTVPaintCameraPoint();
-			point.x = value ;
-			camera.points[index] = point;
-		}
-		var yPoint = line.match(reYPoint);
-		if (yPoint != null)
-		{
-			var index = parseInt(yPoint[1]);
-			var value = parseFloat(yPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = createTVPaintCameraPoint();
-			point.y = value ;
-			camera.points[index] = point;
-		}
-		var zPoint = line.match(reZPoint);
-		if (zPoint != null)
-		{
-			var index = parseInt(zPoint[1]);
-			var value = parseFloat(zPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = createTVPaintCameraPoint();
-			point.zoom = value ;
-			camera.points[index] = point;
-		}
-		var rPoint = line.match(reRPoint);
-		if (rPoint != null)
-		{
-			var index = parseInt(rPoint[1]);
-			var value = parseFloat(rPoint[2]);
-			var point = camera.points[index];
-			if (point == undefined) point = createTVPaintCameraPoint();
-			point.rotation = value ;
-			camera.points[index] = point;
-		}
-		var linear = line.match(reLinear);
-		if (linear != null)
-		{
-			var lin = parseInt(linear[1]);
-			camera.profileprof.linear = (lin == 1);
-		}
-		var profPoint = line.match(reProfPoint);
-		if (profPoint != null)
-		{
-			var index = parseInt(profPoint[1]);
-			var u = parseFloat(profPoint[2]);
-			var v = parseFloat(profPoint[3]);
-			var point = {};
-			point.u = u;
-			point.v = v;
-			camera.profileprof.points[index] = point;
-		}
-		var profCount = line.match(reProfPointCount);
-		if (profCount != null)
-		{
-			camera.profileprof.pointCount = parseInt(profCount[1]);
-		}
-	}
+    var reXPoint = /point\.(\d+)\.x=(-?\d+\.?\d*)/i;
+    var reYPoint = /point\.(\d+)\.y=(-?\d+\.?\d*)/i;
+    var reZPoint = /point\.(\d+)\.zoom=(\d+\.?\d*)/i;
+    var reRPoint = /point\.(\d+)\.rotation=(-?\d+\.?\d*)/i;
+    var reLinear = /profileprof_linear=([01])/i;
+    var reProfPoint = /profileprof\_point(\d+)=(\d+.?\d*) (\d+.?\d*)/i;
+    var rePointCout = /pointcount=(\d+)/i;
+    var reProfPointCount = /profileprof_numpoint=(\d+)/i;
+    for ( var i = 0; i < lines.length; i++ )
+    {
+        var line = lines[ i ];
+        var count = line.match( rePointCout );
+        if ( count != null )
+        {
+            camera.pointCount = parseInt( count[ 1 ] );
+        }
+        var xPoint = line.match( reXPoint );
+        if ( xPoint != null )
+        {
+            var index = parseInt( xPoint[ 1 ] );
+            var value = parseFloat( xPoint[ 2 ] );
+            var point = camera.points[ index ];
+            if ( point === undefined ) point = createTVPaintCameraPoint();
+            point.x = value;
+            camera.points[ index ] = point;
+        }
+        var yPoint = line.match( reYPoint );
+        if ( yPoint != null )
+        {
+            var index = parseInt( yPoint[ 1 ] );
+            var value = parseFloat( yPoint[ 2 ] );
+            var point = camera.points[ index ];
+            if ( point == undefined ) point = createTVPaintCameraPoint();
+            point.y = value;
+            camera.points[ index ] = point;
+        }
+        var zPoint = line.match( reZPoint );
+        if ( zPoint != null )
+        {
+            var index = parseInt( zPoint[ 1 ] );
+            var value = parseFloat( zPoint[ 2 ] );
+            var point = camera.points[ index ];
+            if ( point == undefined ) point = createTVPaintCameraPoint();
+            point.zoom = value;
+            camera.points[ index ] = point;
+        }
+        var rPoint = line.match( reRPoint );
+        if ( rPoint != null )
+        {
+            var index = parseInt( rPoint[ 1 ] );
+            var value = parseFloat( rPoint[ 2 ] );
+            var point = camera.points[ index ];
+            if ( point == undefined ) point = createTVPaintCameraPoint();
+            point.rotation = value;
+            camera.points[ index ] = point;
+        }
+        var linear = line.match( reLinear );
+        if ( linear != null )
+        {
+            var lin = parseInt( linear[ 1 ] );
+            camera.profileprof.linear = ( lin == 1 );
+        }
+        var profPoint = line.match( reProfPoint );
+        if ( profPoint != null )
+        {
+            var index = parseInt( profPoint[ 1 ] );
+            var u = parseFloat( profPoint[ 2 ] );
+            var v = parseFloat( profPoint[ 3 ] );
+            var point = {};
+            point.u = u;
+            point.v = v;
+            camera.profileprof.points[ index ] = point;
+        }
+        var profCount = line.match( reProfPointCount );
+        if ( profCount != null )
+        {
+            camera.profileprof.pointCount = parseInt( profCount[ 1 ] );
+        }
+    }
 
-	return camera;
-}
-
-/**
-	* Imports a clip exported from TVPaint with the MJ_AFX_Export_1.0 tool
-	* @memberof DuAEF.TVPaint
-	* @param {File} clipInfo - The clipinfo.txt file to import. If a string is provided instead of a File object, it will be used as a path for the file.
-*/
-DuAEF.TVPaint.importClip = function (clipInfo)
-{
-	if (typeof clipInfo === 'undefined') throw "You must provide the clipInfo file.";
-	if (typeof clipInfo === 'string') clipInfo = File(clipInfo);
-	if (!(clipInfo instanceof File)) throw "clipInfo must be a File or a string path.";
-	if (!clipInfo.exists) throw "clipInfo file does not exist."
-
-	//get path
-	clipFolder = clipInfo.parent;
-
-	//get infos
-	clipInfoData = [];
-	clipInfo.open('r');
-	while(!clipInfo.eof)
-	{
-		clipInfoData.push(clipInfo.readln());
-	}
-	clipInfo.close();
-	var framerate,clipDuration,bgColor;
-	for (var i = 0 ; i < clipInfoData.length ; i++)
-	{
-		var data = clipInfoData[i].split(';');
-		if (data[0].toLowerCase() == 'framerate')
-		{
-			framerate = data[1];
-		}
-		else if (data[0].toLowerCase() == 'duration')
-		{
-			clipDuration = data[1];
-		}
-		else if (data[0].toLowerCase() == 'bgcolor')
-		{
-			bgColor = data[1].split(',');
-		}
-	}
-
-	if (!framerate || !clipDuration || !bgColor) throw "Invalid clipInfo file. Please re-export from TVPaint."
-
-	//get layers
-	projClipFolder = app.project.items.addFolder(clipFolder.displayName);
-	myNewCompositions = new Array();
-	var folders = clipFolder.getFiles(DuAEF.DuJS.Fs.isFolder);
-	for(var i = 0; i < folders.length; i++)
-	{
-		var curLayerFolder = folders[i];
-		var folderName = curLayerFolder.displayName;
-		var itemArray = curLayerFolder.getFiles("*.png");
-		if(itemArray.length > 0)
-		{
-			itemArray.sort();
-		}
-
-		projLayerFolder = app.project.items.addFolder(folderName);
-		projLayerFolder.parentFolder = projClipFolder;
-		projFramesFolder = app.project.items.addFolder(folderName + "_frames");
-		projFramesFolder.parentFolder = projLayerFolder;
-
-		//Importing
-		var footage = new Array();
-		var files = new Array();
-		for(var j = 0; j < itemArray.length;j++)
-		{
-			var curFile = new File(itemArray[j]);
-			var ioRef = new ImportOptions(curFile);
-			ioRef.importAs = ImportAsType.FOOTAGE;
-			var footageRef = app.project.importFile(ioRef);
-			footageRef.parentFolder = projFramesFolder;
-
-			footage[j] = footageRef;
-		}
-
-		// read layerinfo
-		layerInfopath= curLayerFolder.absoluteURI+"/layerinfo.txt";
-		layerInfo = new File(layerInfopath);
-
-		if (layerInfo.exists)
-		{
-			layerInfo.open();
-
-			var layerIN = layerInfo.readln();
-			layerIN = layerIN.split(";");
-			layerIN = layerIN[1];
-
-				var layerOUT = layerInfo.readln();
-			layerOUT = layerOUT.split(";");
-			layerOUT = layerOUT[1];
-
-			var layerBlendmode = layerInfo.readln();
-			layerBlendmode = layerBlendmode.split(";");
-			layerBlendmode = layerBlendmode[1];
-
-			var layerOpacity = layerInfo.readln();
-				layerOpacity = layerOpacity.split(";");
-				layerOpacity = layerOpacity[1];
-			try
-			{
-				var layerLabel = layerInfo.readln();
-				layerLabel = layerLabel.split(";");
-				layerLabel = layerLabel[1]*1;
-			}
-			catch(e)
-			{
-				layerLabel = 0;
-			}
-
-
-			layerInfo.close();
-		}
-		else
-		{
-			layerIN = 1
-			layerOUT = layerIN+clipDuration
-			layerBlendmode ="COLOR";
-		}
-
-		layerDuration = layerOUT-layerIN+1
-		layerDuration=layerDuration*(1/framerate)
-
-		//Creating Composition
-		curComp = app.project.items.addComp(folderName,footageRef.width,footageRef.height,1,layerDuration,framerate);
-		curComp.parentFolder = projLayerFolder;
-		var compStats=new Array(curComp,layerIN,layerOUT,layerBlendmode,layerOpacity,layerLabel);
-		myNewCompositions.push(compStats);
-
-		//Timing layers
-		for(k=0;k<footage.length;k++)
-		{
-			curImage = footage[k];
-			path = curImage.file.absoluteURI;
-			imageNUM =  DuAEF.DuJS.Fs.ImageSequence.getNumber(path)*1;
-
-			//frame duration
-			var imageIN = imageNUM/framerate-layerIN/framerate;
-
-			if(k==footage.length-1)
-			{
-				var imageDuration =  curComp.duration-imageIN;
-			}
-			else
-			{
-				nextImage = footage[k+1];
-				path = nextImage.file.absoluteURI;
-				nextNUM =  DuAEF.DuJS.Fs.ImageSequence.getNumber(path)*1;
-				var deltaFrame = nextNUM-imageNUM;
-				var imageDuration = deltaFrame/framerate;
-			}
-
-			//finding file
-			try
-			{
-				mylayers = curComp.layers.add(curImage);
-				mylayers.inPoint = imageIN;
-				mylayers.outPoint = imageIN+imageDuration;
-			}
-			catch(e)
-			{
-				alert("Cant Add Frame "+xsht_file+"\nof "+nameMain+"\n Probably because the footage wasnt imported because there is a write failue in the File");
-			}
-		}
-	}
-
-	//collect Layers In animation Comp
-	var collectComp = app.project.items.addComp(clipFolder.displayName,myNewCompositions[0][0].width,myNewCompositions[0][0].height,1,clipDuration/framerate,framerate);
-	collectComp.parentFolder = projClipFolder;
-
-	collectComp.bgColor =bgColor;
-	for(var p = myNewCompositions.length;p>0 ;p--)
-	{
-		var curCompStats = myNewCompositions[p-1];
-		var curComp=curCompStats[0];
-		var curIN=curCompStats[1];
-		var curOUT=curCompStats[2];
-		var curBLEND=curCompStats[3];
-		var curOPACITY=curCompStats[4];
-		var curLABEL=curCompStats[5];
-		var curLayer = collectComp.layers.add(curComp);
-		DuAEF.TVPaint.setBlendingMode(curLayer,curBLEND);
-		curLayer.startTime =(curIN-1)/framerate;
-		curLayer.opacity.setValue(curOPACITY);
-
-		try
-		{
-			curLayer.label=curLABEL*1;
-		}
-		catch(e)
-		{
-			curLayer.label=15;
-		}
-	}
-
-	//detect exposure in precomps
-	for (var j = 1;j<= collectComp.numLayers;j++)
-	{
-		//get layer
-		precompLayer = collectComp.layer(j);
-		DuAEF.Duik.Animation.getPrecompExposure(precompLayer);
-	}
-}
-
-/**
-	* Sets the blending mode of an AE Layer based on the TVPaint blend mode name
-	* @memberof DuAEF.TVPaint
-	* @param {AVLayer}		layer		The layer
-	* @param {string}		blendName	The TVPaint blending mode name
-*/
-DuAEF.TVPaint.setBlendingMode = function (layer,blendName)
-{
-	switch (blendName)
-	{
-		case "Color":
-			layer.blendingMode = BlendingMode.NORMAL;
-			break;
-		case "Add":
-			layer.blendingMode =  BlendingMode.ADD;
-		case "Screen":
-			layer.blendingMode =  BlendingMode.SCREEN;
-			break;
-		case "Multiply":
-			layer.blendingMode =  BlendingMode.MULTIPLY;
-			break;
-		case "Overlay":
-			layer.blendingMode =  BlendingMode.OVERLAY;
-			break;
-		default:
-			layer.blendingMode = BlendingMode.NORMAL;
-	}
+    return camera;
 }
