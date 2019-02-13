@@ -354,10 +354,15 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 /**
 	* Activate the time remapping on the layers, adding some useful controls or expressions
 	* @param {Layer[]|LayerCollection} layers - The layers
+	* @param {DuAEF.DuAE.LoopTypes} [loopInType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopIn
+	* @param {DuAEF.DuAE.LoopTypes} [loopOutType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopOut
 */
-DuAEF.Duik.Animation.timeRemap = function (layers)
+DuAEF.Duik.Animation.timeRemap = function (layers, loopInType, loopOutType)
 {
-	if (layers == undefined) return;
+	if (typeof layers === 'undefined') return;
+	if (typeof loopInType === 'undefined') loopInType = DuAEF.DuAE.LoopTypes.HOLD;
+	if (typeof loopInType === 'undefined') loopOutType = DuAEF.DuAE.LoopTypes.HOLD;
+
 	if (layers.length == 0 ) return;
 	var it = new Iterator(layers);
 	while (!it.atEnd)
@@ -371,11 +376,22 @@ DuAEF.Duik.Animation.timeRemap = function (layers)
 
 		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
 
-		layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
-		layer.timeRemap.removeKey(3);
-		layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+		if (layer.inPoint < lastValueTime)
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
+			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
+		}
+		else
+		{
+			layer.timeRemap.removeKey(2);
+		}
+		
 
-		DuAEF.Duik.Automation.loop(layer.timeRemap);
+		if (loopInType != DuAEF.DuAE.LoopTypes.NONE) layer.inPoint = 0;
+		if (loopOutType != DuAEF.DuAE.LoopTypes.NONE) layer.outPoint = comp.duration;
+
+		DuAEF.Duik.Automation.loop(layer.timeRemap, undefined, loopInType, loopOutType);
 	}
 }
 
@@ -751,16 +767,16 @@ DuAEF.Duik.Animation.getPrecompExposure = function (precomp)
 	if (!(comp instanceof CompItem)) throw "The layer must be a precomposition.";
 
 	//add slider
-	var slider = precompLayer.Effects.addProperty("ADBE Slider Control");
+	var slider = precomp.Effects.addProperty("ADBE Slider Control");
 	slider.name = "Detected Exposure";
 
 	//detect exposure
 	for (var i = 1 ; i <= comp.numLayers ; i++)
 	{
 		var layer = comp.layer(i);
-		slider(1).setValueAtTime(precompLayer.startTime + layer.inPoint,layer.inPoint);
+		slider(1).setValueAtTime(precomp.startTime + layer.inPoint,layer.inPoint);
 		slider(1).setInterpolationTypeAtKey(slider(1).numKeys,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
-		precompLayer.marker.setValueAtTime(precompLayer.startTime + layer.inPoint,new MarkerValue(''));
+		precomp.marker.setValueAtTime(precomp.startTime + layer.inPoint,new MarkerValue(''));
 	}
 }
 

@@ -28,7 +28,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New (Other)
 
-- Reimplemented the [_TVPaint_] import tool from Duik 15.
+- Reimplemented and improved the [_TVPaint_] import tool from Duik 15. Duik now also imports JSON exported from TVPaint 11+, in a simpler and stabler way than the script provided by TVPaint (and with the ability to choose which layers to import).
 - Added **German translation**.
 - The interpolation adjustment tools in the [***Keyframes***](keyframe-tools.md) has been greatly improved, with sliders for velocity and buttons with useful predefined values.
 
