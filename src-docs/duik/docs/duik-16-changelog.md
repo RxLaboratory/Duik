@@ -55,6 +55,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - [*Auto-rig*](autorig.md) freezing when there's only one layer selected.
 - Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
 - The show/hide button for [*Structures*](structures.md) now works correctly.
+- Fixed the scale expression for the [*2D Camera*](camera-2d.md).
 
 ## 16.0.11
 
