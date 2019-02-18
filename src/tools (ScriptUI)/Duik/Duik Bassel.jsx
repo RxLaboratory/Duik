@@ -75,7 +75,7 @@
 	//===========================
 
 	#include DuAEF.jsxinc
-	#include Duik16_shared.jsxinc
+	#include "duik_required/Duik16_shared.jsxinc"
 
 	//============= INIT ==============
 
@@ -88,9 +88,9 @@
 	var thisScriptFile = new File($.fileName);
 
 	//INIT
-	#include Duik16_init.jsxinc
+	#include "duik_required/Duik16_init.jsxinc"
 
 	//CREATE UI
-	#include Duik16_mainUI.jsxinc
+	#include "duik_required/Duik16_mainUI.jsxinc"
 
 })(this);
