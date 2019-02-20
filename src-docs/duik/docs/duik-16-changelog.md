@@ -44,6 +44,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [_Structures_](structures.md) colors for predefined limbs have been improved to better show the hierarchy.
 - The User Interface has been tweaked to fix some details and improve the overall User Experience.
 - All buttons for showing or hiding stuff (Structures, bones, controllers...) can now invert the visibility with holding the [Alt] button, instead of showing or hiding them all.
+- The [_Structures_](structures.md) layer names are now translated to the language set in the settings (if the translation file is up-to-date).
 
 #### Fixes
 
