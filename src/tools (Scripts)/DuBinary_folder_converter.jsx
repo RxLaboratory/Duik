@@ -1,7 +1,7 @@
 ﻿/*
 	DuBinary Converter
   Small tool to convert binary files in a folder (and subfolders) to include files .jsxinc
-	Copyright (c) 2017 Nicolas Dufresne, Rainbox Productions
+	Copyright (c) 2017-2018 Nicolas Dufresne, Rainbox Productions
 	https://rainboxprod.coop
 */
 
@@ -36,6 +36,4 @@
   }
 
   convertFolder(folder);
-
-
 })();

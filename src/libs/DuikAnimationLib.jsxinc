@@ -1,17 +1,67 @@
 ﻿/**
-* Animation tools
-* @namespace
-* @memberof DuAEF.Duik
+	* Animation tools
+	* @namespace
+	* @memberof DuAEF.Duik
 */
 DuAEF.Duik.Animation = {};
 
 /**
-* Automatically adjust the best bezier interpolations on the keyframes
-* @param {Property|PropertyInfo} prop - The property containing the keyframes
-* @param {boolean} [easeStart=true] - true to ease the first keyframe, false to set it to linear
-* @param {boolean} [easeEnd=true] - true to ease the last keyframe, false to set it to linear
-* @todo ability to change ease influence (only when velocity is 0?)
-* @todo implement a better multidimensionnal algo
+	* Resets the position, rotation, and scale of the layer.\n
+	* If the layer has a parent, the position will be set to [0,0,0],
+	* Else it will be set to the composition center.
+	* @param {Layer} layer - The layer
+	* @return {AVLayer} The zero, a null
+	*/
+DuAEF.Duik.Animation.resetPRS = function (layer)
+{
+	var comp = layer.containingComp;
+	//is it 3D?
+	var threeD = layer.threeDLayer;
+	//has parent ?
+	var parent = layer.parent !== null;
+	if (threeD)
+	{
+		var positionValue = parent ? [0,0,0] : [comp.width / 2, comp.height / 2, 0];
+		if (layer.transform.position.dimensionsSeparated)
+		{
+			layer.transform.xPosition.setValue(positionValue[0]);
+			layer.transform.yPosition.setValue(positionValue[1]);
+			layer.transform.zPosition.setValue(positionValue[2]);
+		}
+		else 
+		{
+			layer.transform.position.setValue(positionValue);
+		}
+		layer.transform.scale.setValue([100,100,100]);
+		layer.transform.zRotation.setValue(0);
+		layer.transform.xRotation.setValue(0);
+		layer.transform.yRotation.setValue(0);
+		layer.transform.orientation.setValue([0,0,0]);
+	}
+	else
+	{
+		var positionValue = parent ? [0,0] : [comp.width / 2, comp.height / 2];
+		if (layer.transform.position.dimensionsSeparated)
+		{
+			layer.transform.xPosition.setValue(positionValue[0]);
+			layer.transform.yPosition.setValue(positionValue[1]);
+		}
+		else 
+		{
+			layer.transform.position.setValue(positionValue);
+		}
+		layer.transform.scale.setValue([100,100]);
+		layer.transform.rotation.setValue(0);
+	}
+}
+
+/**
+	* Automatically adjust the best bezier interpolations on the keyframes
+	* @param {Property|PropertyInfo} prop - The property containing the keyframes
+	* @param {boolean} [easeStart=true] - true to ease the first keyframe, false to set it to linear
+	* @param {boolean} [easeEnd=true] - true to ease the last keyframe, false to set it to linear
+	* @todo ability to change ease influence (only when velocity is 0?)
+	* @todo implement a better multidimensionnal algo
 */
 DuAEF.Duik.Animation.smartInterpolation = function (prop,easeStart,easeEnd)
 {
@@ -107,12 +157,12 @@ DuAEF.Duik.Animation.smartInterpolation = function (prop,easeStart,easeEnd)
 }
 
 /**
-* Creates a motion trail for the layer
-* @param {CompItem} [comp] - The comp where to create the trails, can be omitted if you provide a layer
-* @param {Layer} [layer] - The layer source of the motion. If not provided, will just create an empty motion trail control
-* @param {ShapeLayer|null} [trailLayer] - An existing shape layer containing the trails
-* @param {float[]|null} [color] - A color for the motion trail. If not provided, random
-* @return {ShapeLayer} The layer containing the motion trail created
+	* Creates a motion trail for the layer
+	* @param {CompItem} [comp] - The comp where to create the trails, can be omitted if you provide a layer
+	* @param {Layer} [layer] - The layer source of the motion. If not provided, will just create an empty motion trail control
+	* @param {ShapeLayer|null} [trailLayer] - An existing shape layer containing the trails
+	* @param {float[]|null} [color] - A color for the motion trail. If not provided, random
+	* @return {ShapeLayer} The layer containing the motion trail created
 */
 DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 {
@@ -208,11 +258,11 @@ DuAEF.Duik.Animation.motionTrail = function (comp,layer,trailLayer,color)
 }
 
 /**
-* Adds animation exposure controls
-* @param {CompItem} comp - The comp where to create the X-Sheet
-* @param {Property|PropertyInfo} [prop] - The property controlled. If not provided, will add an X-Sheet adjustment layer in the comp.
-* @param {PropertyGroup|null} [effect] - an X-Sheet effect already created to use as a control for the prop
-* @return {PropertyGroup} The effect used to control
+	* Adds animation exposure controls
+	* @param {CompItem} comp - The comp where to create the X-Sheet
+	* @param {Property|PropertyInfo} [prop] - The property controlled. If not provided, will add an X-Sheet adjustment layer in the comp.
+	* @param {PropertyGroup|null} [effect] - an X-Sheet effect already created to use as a control for the prop
+	* @return {PropertyGroup} The effect used to control
 */
 DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 {
@@ -302,13 +352,17 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 }
 
 /**
-* Activate the time remapping on the layers, adding some useful controls or expressions
-* @param {Layer[]|LayerCollection} layers - The layers
-* @param {string} [loopType] - Looping time, 'in' or 'out'
+	* Activate the time remapping on the layers, adding some useful controls or expressions
+	* @param {Layer[]|LayerCollection} layers - The layers
+	* @param {DuAEF.DuAE.LoopTypes} [loopInType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopIn
+	* @param {DuAEF.DuAE.LoopTypes} [loopOutType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopOut
 */
-DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
+DuAEF.Duik.Animation.timeRemap = function (layers, loopInType, loopOutType)
 {
-	if (layers == undefined) return;
+	if (typeof layers === 'undefined') return;
+	if (typeof loopInType === 'undefined') loopInType = DuAEF.DuAE.LoopTypes.HOLD;
+	if (typeof loopInType === 'undefined') loopOutType = DuAEF.DuAE.LoopTypes.HOLD;
+
 	if (layers.length == 0 ) return;
 	var it = new Iterator(layers);
 	while (!it.atEnd)
@@ -322,25 +376,28 @@ DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
 
 		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
 
-		layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
-		layer.timeRemap.removeKey(3);
-		if (loopType == "out")
+		if (layer.inPoint < lastValueTime)
 		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
 			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
-			layer.timeRemap.expression = "loopOut();";
 		}
-		if (loopType == "in")
+		else
 		{
-			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
-			layer.timeRemap.expression = "loopIn();";
-			layer.inPoint = 0;
+			layer.timeRemap.removeKey(2);
 		}
+		
+
+		if (loopInType != DuAEF.DuAE.LoopTypes.NONE) layer.inPoint = 0;
+		if (loopOutType != DuAEF.DuAE.LoopTypes.NONE) layer.outPoint = comp.duration;
+
+		DuAEF.Duik.Automation.loop(layer.timeRemap, undefined, loopInType, loopOutType);
 	}
 }
 
 /**
-* Snaps the IK position to the FK rotation values
-* @param {Controller|Layer} controller - The IK Controller
+	* Snaps the IK position to the FK rotation values
+	* @param {Controller|Layer} controller - The IK Controller
 */
 DuAEF.Duik.Animation.ik2fk = function (controller)
 {
@@ -359,6 +416,40 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 
 	if (!ikEffect) return;
 
+	//if controller is linked, get data in the parent
+	var goalWorldPosition, goal;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
+	{
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		goal = preIkEffect(preIKPseudo.goalLayer).value;
+		if (goal > 0) goal = preComp.layer(goal);
+		goalWorldPosition = preIkEffect(preIKPseudo.goalWorldPositionPoint);
+	}
+	else
+	{
+		goal = ikEffect(preIKPseudo.goalLayer).value;
+		if (goal > 0) goal = comp.layer(goal);
+		goalWorldPosition = ikEffect(pseudoEffect.goalWorldPositionPoint);
+	}
+
+
 	//deactivate IK
 	var active = ikEffect(pseudoEffect.ikCheckbox).value;
 	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
@@ -366,20 +457,19 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 	var parent = controller.parent;
 	controller.parent = null;
 	//position
-	controller.transform.position.setValueAtTime(comp.time,ikEffect(pseudoEffect.goalWorldPositionPoint).value);
+	controller.transform.position.setValueAtTime(comp.time,goalWorldPosition.value);
 	controller.parent = parent;
 
 	//look for a goal and adjust
-	var goal = ikEffect(pseudoEffect.goalLayer).value;
-	if (goal > 0)
+	if (goal)
 	{
-		var prevRot = comp.layer(goal).transform.rotation.value;
+		var prevRot = goal.transform.rotation.value;
 		//Activate to adjust goal
 		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
 
 		controller.transform.rotation.setValueAtTime(comp.time,0);
 		//get difference
-		var newRot = prevRot - comp.layer(goal).transform.rotation.value;
+		var newRot = prevRot - goal.transform.rotation.value;
 		controller.transform.rotation.setValueAtTime(comp.time,newRot);
 	}
 
@@ -396,8 +486,8 @@ DuAEF.Duik.Animation.ik2fk = function (controller)
 }
 
 /**
-* Snaps the FK rotation values to the IK position
-* @param {Controller|Layer} controller - The IK Controller
+	* Snaps the FK rotation values to the IK position
+	* @param {Controller|Layer} controller - The IK Controller
 */
 DuAEF.Duik.Animation.fk2ik = function (controller)
 {
@@ -420,27 +510,70 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 	var active = ikEffect(pseudoEffect.ikCheckbox).value;
 	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
 
-	var layer1 = ikEffect(pseudoEffect.upperLayer).value;
-	var layer2 = ikEffect(pseudoEffect.lowerLayer).value;
-	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,comp.layer(layer1).transform.rotation.value);
-	if (ikType == 3)
+	//get layers if this is a linked controller
+	var layer1, layer2, layer3, goal;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
 	{
-		var layer3 = ikEffect(pseudoEffect.middleLayer).value;
-		ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,comp.layer(layer3).transform.rotation.value);
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		layer1 = preIkEffect(preIKPseudo.upperLayer).value;
+		layer2 = preIkEffect(preIKPseudo.lowerLayer).value;
+		goal = preIkEffect(preIKPseudo.goalLayer).value;
+		layer1 = preComp.layer(layer1);
+		layer2 = preComp.layer(layer2);
+		if (goal > 0) goal = preComp.layer(goal);
+		if (ikType == 3)
+		{
+			layer3 = preIkEffect(preIKPseudo.middleLayer).value;
+			layer3 = preComp.layer(layer3);
+		}
 	}
-	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,comp.layer(layer2).transform.rotation.value);
+	else
+	{
+		layer1 = ikEffect(pseudoEffect.upperLayer).value;
+		layer2 = ikEffect(pseudoEffect.lowerLayer).value;
+		goal = ikEffect(pseudoEffect.goalLayer).value;
+		layer1 = comp.layer(layer1);
+		layer2 = comp.layer(layer2);
+		if (goal > 0) goal = comp.layer(goal);
+		if (ikType == 3)
+		{
+			layer3 = ikEffect(pseudoEffect.middleLayer).value;
+			layer3 = comp.layer(layer3);
+		}
+	}
+
+
+	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,layer1.transform.rotation.value);
+	if (ikType == 3) ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,layer3.transform.rotation.value);
+	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,layer2.transform.rotation.value);
 
 	//look for a goal and adjust
-	var goal = ikEffect(pseudoEffect.goalLayer).value;
-	if (goal > 0)
+	if (goal)
 	{
-		var prevRot = comp.layer(goal).transform.rotation.value;
+		var prevRot = goal.transform.rotation.value;
 		//Deactivate to adjust goal
 		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
 
 		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,0);
 		//get difference
-		var newRot = prevRot - comp.layer(goal).transform.rotation.value;
+		var newRot = prevRot - goal.transform.rotation.value;
 		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,newRot);
 	}
 
@@ -456,8 +589,8 @@ DuAEF.Duik.Animation.fk2ik = function (controller)
 }
 
 /**
-* Automatically witches between IK and FK
-* @param {Controller|Layer} controller - The IK Controller
+	* Automatically witches between IK and FK
+	* @param {Controller|Layer} controller - The IK Controller
 */
 DuAEF.Duik.Animation.switchIkFk = function (controller)
 {
@@ -495,21 +628,21 @@ DuAEF.Duik.Animation.switchIkFk = function (controller)
 }
 
 /**
-* Extracts the controllers from the precomposition,< br/>
-* and copies them to the composition, linking all precomposed controllers<br />
-* to the new ones.<br />
-* WARNING This method uses the native copy and paste commands of After Effects,<br />
-* DO NOT enclose it in an undoGroup.<br />
-* Undo groups will be handled by this method itself.
-* @param {AVLayer} preComposition - The precomposition layer
-* @param {boolean} [useMasterProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
-* instead of expressions to link the controllers. Ignored on previous versions of After Effects.
-* @return {int} Error code:<br >
-* -3: No controllers found in the precomp<br >
-* -2: The layer is not a precomposition<br >
-* -1: Some controllers can not be extracted<br >
-* 0: Unknown error<br >
-* 1: OK
+	* Extracts the controllers from the precomposition,< br/>
+	* and copies them to the composition, linking all precomposed controllers<br />
+	* to the new ones.<br />
+	* WARNING This method uses the native copy and paste commands of After Effects,<br />
+	* DO NOT enclose it in an undoGroup.<br />
+	* Undo groups will be handled by this method itself.
+	* @param {AVLayer} preComposition - The precomposition layer
+	* @param {boolean} [useMasterProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
+	* instead of expressions to link the controllers. Ignored on previous versions of After Effects.
+	* @return {int} Error code:<br >
+	* -3: No controllers found in the precomp<br >
+	* -2: The layer is not a precomposition<br >
+	* -1: Some controllers can not be extracted<br >
+	* 0: Unknown error<br >
+	* 1: OK
 */
 DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMasterProperties)
 {
@@ -529,6 +662,11 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 
 	//check for parenting and list layers
 	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 1");
+	app.beginSuppressDialogs();
+
+	DuAEF.DuAE.Comp.setUniqueCompName(comp);
+	DuAEF.DuAE.Comp.setUniqueCompName(preComp);
+
 	var itCtrls = new Iterator(controllers);
 	var controller;
 	var ctrlLayers = [];
@@ -598,30 +736,64 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		else
 		{
 			//transform
-			DuAEF.DuAE.Property.linkProperties(ctrlLayer.transform,newCtrlLayer.transform);
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer.transform, newCtrlLayer.transform, undefined, preComposition );
+			//remove expressions in the data of the child effect 
+			DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
 			//effects
-			DuAEF.DuAE.Property.linkProperties(ctrlLayer('ADBE Effect Parade'),newCtrlLayer('ADBE Effect Parade'));
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer('ADBE Effect Parade'), newCtrlLayer('ADBE Effect Parade'), undefined, preComposition );
 		}
+		//set params to keep the link
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOCOMP, preComp.id);
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOLAYER, ctrlLayer.name);
 	}
 
 	app.endUndoGroup();
+	app.endSuppressDialogs(false);
 
 	return 1;
 }
 
 /**
-* Animation Blender
-* @namespace
-* @memberof DuAEF.Duik
+	* Adds a slider on a precomposition layer, and markers on the layer, with keyframes representing the animation exposure of the layers inside the precomposition
+	* @memberof Duik
+	* @param {LayerItem} precomp - The layer of the precomposition
 */
+DuAEF.Duik.Animation.getPrecompExposure = function (precomp)
+{
+	//get source comp
+	var comp = precomp.source;
+
+	//if not a precomp, skip
+	if (!(comp instanceof CompItem)) throw "The layer must be a precomposition.";
+
+	//add slider
+	var slider = precomp.Effects.addProperty("ADBE Slider Control");
+	slider.name = "Detected Exposure";
+
+	//detect exposure
+	for (var i = 1 ; i <= comp.numLayers ; i++)
+	{
+		var layer = comp.layer(i);
+		slider(1).setValueAtTime(precomp.startTime + layer.inPoint,layer.inPoint);
+		slider(1).setInterpolationTypeAtKey(slider(1).numKeys,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+		precomp.marker.setValueAtTime(precomp.startTime + layer.inPoint,new MarkerValue(''));
+	}
+}
+
+
+/**
+	* Animation Blender
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
 DuAEF.Duik.AnimationBlender = {};
 
 /**
-* Creates a blender controller in the control composition, and sets all the properties of the setup comp up.
-* @param {CompItem} setupComp - The comp
-* @param {CompItem} controlComp - The comp where to create the blender controller
-* @param {boolean} [selectedProperties=false] - true to set only the selected properties up. When false, sets all animated (without expression) properties up.
-*/
+	* Creates a blender controller in the control composition, and sets all the properties of the setup comp up.
+	* @param {CompItem} setupComp - The comp
+	* @param {CompItem} controlComp - The comp where to create the blender controller
+	* @param {boolean} [selectedProperties=false] - true to set only the selected properties up. When false, sets all animated (without expression) properties up.
+	*/
 DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedProperties)
 {
 	if (typeof selectedProperties === 'undefined') selectedProperties = false;
@@ -756,11 +928,11 @@ DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedPrope
 }
 
 /**
-* Gets the marker property used to define animations.<br />
-* This method will create a layer to receive markers on AE < 14.0 <br />
-* Because there were no scripting method to manage comp markers back then.
-* @param {CompItem} [comp] - The comp
-*/
+	* Gets the marker property used to define animations.<br />
+	* This method will create a layer to receive markers on AE < 14.0 <br />
+	* Because there were no scripting method to manage comp markers back then.
+	* @param {CompItem} [comp] - The comp
+	*/
 DuAEF.Duik.AnimationBlender.getAnimMarkers = function (comp)
 {
 	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
@@ -781,27 +953,27 @@ DuAEF.Duik.AnimationBlender.getAnimMarkers = function (comp)
 }
 
 /**
-* An onion skin
-* @typedef {Object} OnionSkin
-* @property {boolean} activated - Is it activated
-* @property {int} duration - Duration in frames
-* @property {int} exposure - Animation exposure
-* @property {int} outOpacity - out opacity
-* @property {int} inOpacity - in opacity
-*/
+	* An onion skin
+	* @typedef {Object} OnionSkin
+	* @property {boolean} activated - Is it activated
+	* @property {int} duration - Duration in frames
+	* @property {int} exposure - Animation exposure
+	* @property {int} outOpacity - out opacity
+	* @property {int} inOpacity - in opacity
+	*/
 
 /**
-* Cel animation tools
-* @namespace
-* @memberof DuAEF.Duik
-*/
+	* Cel animation tools
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
 DuAEF.Duik.CelAnimation = {};
 
 /**
-* Creates a new animation cel on the layer
-* @param {CompItem} comp - The composition
-* @param {AVLayer|null} [layer] - The layer where to create the cel
-*/
+	* Creates a new animation cel on the layer
+	* @param {CompItem} comp - The composition
+	* @param {AVLayer|null} [layer] - The layer where to create the cel
+	*/
 DuAEF.Duik.CelAnimation.createCel = function (comp,layer)
 {
 	if (comp == undefined) return;
@@ -832,10 +1004,10 @@ DuAEF.Duik.CelAnimation.createCel = function (comp,layer)
 }
 
 /**
-* Activates or deactivates the onion skin on a cel
-* @param {AVLayer} layer - The layer with the cel
-* @param {OnionSkin} onionSkin - Onion skin parameters
-*/
+	* Activates or deactivates the onion skin on a cel
+	* @param {AVLayer} layer - The layer with the cel
+	* @param {OnionSkin} onionSkin - Onion skin parameters
+	*/
 DuAEF.Duik.CelAnimation.onionSkin = function (layer,onionSkin)
 {
 	if (layer == undefined) return;

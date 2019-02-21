@@ -1,0 +1,268 @@
+//=========== GLOBAL VARIABLES =============
+var settingsFile, settings, settingsPath, debugLog;
+
+//=========== FILE AND NETWORK ACCESS ===========
+
+if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
+{
+	var ui_accessFileAndNetworkGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+
+	var accessExplanation = "Duik needs to be allowed to write files in order to:\n\n" +
+		"- Display icons\n" +
+		"- Run ffmpeg to transcode medias\n" +
+		"- Export animations and other formats\n" +
+		"- Save your settings.\n\n" +
+		"It also needs network access to check for updates.\n\n" +
+		"Please, check the box called 'Allow Scripts to write files...' in the preferences of After Effects.";
+
+	ui_accessFileAndNetworkGroup.add('statictext',undefined,accessExplanation,{multiline:true});
+	var ui_fileAndNetworkPrefButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Open preferences');
+	var ui_fileAndNetworkIgnoreButton = ui_accessFileAndNetworkGroup.add('button',undefined,'Ignore');
+
+	ui_fileAndNetworkPrefButton.onClick = function ()
+	{
+		var ok = DuAEF.DuAE.App.askFilesAndNetworkAccess(false);
+		if (ok)
+		{
+			ui_accessFileAndNetworkGroup.visible = false;
+			loadSettings();
+		}
+	}
+
+	ui_fileAndNetworkIgnoreButton.onClick = function ()
+	{
+		ui_accessFileAndNetworkGroup.visible = false;
+		loadSettings();
+	}
+
+	DuAEF.DuScriptUI.showUI(ui_mainPalette);
+}
+else
+{
+	loadSettings();
+}
+
+//=========== SETTINGS ===========
+function loadSettings ()
+{
+	if (app.settings.haveSetting("Duik","settingsFile")) settingsFile = new File(app.settings.getSetting("Duik","settingsFile"));
+	settings = new DuSettings("Duik",settingsFile);
+
+	if (typeof settings.data.duikVersion === 'undefined') settings.data.duikVersion = version;
+	//if the version has changed, update some settings
+	if (version != settings.data.duikVersion)
+	{
+		settings.data.newsAtStartup = true;
+		settings.data.checkUpdatesAtStartup = true;
+		settings.save();
+	}
+	settings.data.duikVersion = version;
+
+	//load settings
+
+	//general
+	if (typeof settings.data.scriptFile === 'undefined') settings.data.scriptFile = thisScriptFile.absoluteURI;
+	if (typeof settings.data.uiMode === 'undefined') settings.data.uiMode = 0;
+	if (typeof settings.data.debug === 'undefined') settings.data.debug = false;
+	if (typeof settings.data.checkUpdatesAtStartup === 'undefined') settings.data.checkUpdatesAtStartup = true;
+	if (typeof settings.data.newsAtStartup === 'undefined') settings.data.newsAtStartup = true;
+	if (typeof settings.data.currentPanel === 'undefined') settings.data.currentPanel = 0;
+	if (typeof settings.data.updateCheckDate === 'undefined') settings.data.updateCheckDate = new Date(2018,6,9).getTime(); //this is the public release date of Duik Bassel July, 9th 2018
+	DuAEF.debug = settings.data.debug;
+	settings.save();
+
+	//rigging
+	if (typeof settings.data.currentRiggingPanel === 'undefined') settings.data.currentRiggingPanel = 0;
+
+	//controllers
+	if (typeof settings.data.controllerSizeHint === 'undefined') settings.data.controllerSizeHint = 0;
+	if (typeof settings.data.controllerSize === 'undefined') settings.data.controllerSize = 100;
+	if (typeof settings.data.controllerNull === 'undefined') settings.data.controllerNull = false;
+	if (typeof settings.data.controllerColor === 'undefined') settings.data.controllerColor = "EC1818";
+	if (typeof settings.data.controllerDraft === 'undefined') settings.data.controllerDraft = false;
+	if (settings.data.controllerNull) DuAEF.Duik.Controller.defaultType = DuAEF.Duik.Controller.Types.NULL;
+	DuAEF.Duik.Controller.size = settings.data.controllerSize;
+	DuAEF.Duik.Controller.sizeHint = settings.data.controllerSizeHint;
+	var color = DuAEF.DuJS.Color.hexToRGB(settings.data.controllerColor);
+	DuAEF.Duik.Controller.color = color;
+
+	//autorig
+	if (typeof settings.data.autorigBakeStructures === 'undefined') settings.data.autorigBakeStructures = true;
+	if (typeof settings.data.autorigTailIK === 'undefined') settings.data.autorigTailIK = 1;
+	if (typeof settings.data.ik3Layer === 'undefined') settings.data.ik3Layer = false;
+
+	//animation
+	if (typeof settings.data.motionTrailColorMode === 'undefined') settings.data.motionTrailColorMode = 0;
+	if (typeof settings.data.motionTrailColor === 'undefined') settings.data.motionTrailColor = "EC1818";
+	if (typeof settings.data.easePresets === 'undefined') settings.data.easePresets = ['Presets','25/75 | 0/0','75/25 | 0/0','33/33 | 0/0','33/66 | 0/0','66/33 | 0/0','50/50 | 0/0','80/80 | 0/0'];
+
+	//structures
+	if (typeof settings.data.structureSizeHint === 'undefined') settings.data.structureSizeHint = 0;
+	if (typeof settings.data.structureSize === 'undefined') settings.data.structureSize = 100;
+	if (typeof settings.data.structureColor === 'undefined') settings.data.structureColor = "EC1818";
+	if (typeof settings.data.structureLinkPaths === 'undefined') settings.data.structureLinkPaths = false;
+	if (typeof settings.data.structureLinkPins === 'undefined') settings.data.structureLinkPins = false;
+	if (typeof settings.data.structureLinkLayers === 'undefined') settings.data.structureLinkLayers =false;
+
+	//constraints
+	if (typeof settings.data.boneSizeHint === 'undefined') settings.data.boneSizeHint = 0;
+	if (typeof settings.data.boneSize === 'undefined') settings.data.boneSize = 100;
+	if (typeof settings.data.boneColor === 'undefined') settings.data.boneColor = "EC1818";
+
+	//news
+	if (typeof settings.data.news === 'undefined')
+	{
+		settings.data.news = {};
+		settings.data.news.items = [];
+		settings.data.news.lastCheck = new Date(2018,6,9).getTime();
+	}
+
+	//create Debug log
+	var settingsPath = settings.file.path;
+	debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
+	debugLog.startTimer("Loading Duik");
+
+	//settings folder
+	var settingsPath = settings.file.parent.absoluteURI + '/';
+
+	//============= Translations ==============
+
+	#include 'translation/Duik Bassel_fr.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
+	#include 'translation/Duik Bassel_es.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_es,settingsPath + 'Duik Bassel_es.json');
+	#include 'translation/Duik Bassel_zh.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_zh,settingsPath + 'Duik Bassel_zh.json');
+	#include 'translation/Duik Bassel_de.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_de,settingsPath + 'Duik Bassel_de.json');
+
+	DuAEF.Dutranslator.Settings.folder = settingsPath;
+	DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
+	DuAEF.Dutranslator.Settings.name = "duik";
+	DuAEF.Dutranslator.getAvailable();
+
+	//if language has never been set
+	if (typeof settings.data.language === 'undefined')
+	{
+		var ui_languageSetGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+
+		ui_languageSetGroup.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.",{multiline:true});
+		ui_languageSetGroup.add('statictext', undefined, "You can also change the language at any time in the settings tab of Duik",{multiline:true});
+		var lDdd = ui_languageSetGroup.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+		lDdd.selection = 0;
+		var lDok = ui_languageSetGroup.add('button', undefined, "Ok");
+		lDok.onClick = function ()
+		{
+			if (lDdd.selection != null)
+			{
+				var languageChoosed = lDdd.selection.text;
+				DuAEF.Dutranslator.setPrettyLanguage(languageChoosed);
+				settings.data.language = DuAEF.Dutranslator.current;
+				settings.save();
+			}
+			ui_languageSetGroup.visible = false;
+			checkUpdates();
+		}
+
+		DuAEF.DuScriptUI.showUI(ui_mainPalette);
+
+	}
+	else
+	{
+		DuAEF.Dutranslator.setLanguage(settings.data.language);
+		checkUpdates();
+	}
+}
+
+//================== UPDATES ===================
+
+function checkUpdates()
+{
+	if (DuAEF.debug || !settings.data.checkUpdatesAtStartup)
+	{
+		createUI();
+		return;
+	}
+
+	//check only if it has not been checked today
+	var lastCheck = settings.data.updateCheckDate;
+	var now = new Date().getTime();
+	//if we've checked in the last 24 hours
+	if(now - lastCheck < 24*60*60*1000)
+	{
+		createUI();
+		return;
+	}
+
+	var channel = shared.checkForUpdate(false);
+	if (!channel)
+	{
+		createUI();
+		return;
+	}
+
+	if (channel.items.length == 0)
+	{
+		createUI();
+		return;
+	}
+
+	//set the checked date
+	settings.data.updateCheckDate = new Date().getTime();
+	settings.save();
+
+	var item = channel.items[0];
+	var newVersion = item.title;
+
+	//if current version is higher than the new version on the server
+	if (DuAEF.DuJS.Version.compare(version, newVersion))
+	{
+		createUI();
+		return;
+	}
+
+	var ui_newVersionGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+	ui_newVersionGroup.alignment = ['fill','fill'];
+	ui_newVersionGroup.alignChildren = ['fill','top'];
+	DuAEF.DuScriptUI.addSeparator(ui_newVersionGroup, "A new version of Duik is available!");
+
+	//TODO use duscriptui controls
+	ui_newVersionGroup.add('statictext',undefined,"Current version: " + version + "\nNew version: " + newVersion, {multiline:true});
+	ui_newVersionGroup.add('statictext',undefined,item.pubDate.toString());
+	var ui_newVersionDescription = ui_newVersionGroup.add('edittext',undefined,item.description, {multiline:true});
+	ui_newVersionDescription.alignment = ['fill','fill'];
+
+	var ui_newVersionOpenButton = ui_newVersionGroup.add('button',undefined,'More info');
+	ui_newVersionOpenButton.alignment = ['fill','bottom'];
+	var ui_newVersionUpdateButton = ui_newVersionGroup.add('button',undefined,'Update now!');
+	ui_newVersionUpdateButton.alignment = ['fill','bottom'];
+	var ui_newVersionIgnoreButton = ui_newVersionGroup.add('button',undefined,'Ignore');
+	ui_newVersionOpenButton.alignment = ['fill','bottom'];
+
+	ui_newVersionOpenButton.onClick = function ()
+	{
+		DuAEF.DuSystem.openURL(item.link);
+		ui_newVersionGroup.visible = false;
+		createUI();
+	}
+
+	ui_newVersionUpdateButton.onClick = function ()
+	{
+		//get version on server
+
+		//create file
+
+		//set settings.data.scriptFile
+
+		//reload
+	}
+
+	ui_newVersionIgnoreButton.onClick = function ()
+	{
+		ui_newVersionGroup.visible = false;
+		createUI();
+	}
+
+	DuAEF.DuScriptUI.showUI(ui_mainPalette);
+
+}

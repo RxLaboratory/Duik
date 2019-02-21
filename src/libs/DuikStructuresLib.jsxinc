@@ -1,9 +1,9 @@
 ﻿/**
-* Constructs a Structure
-* @class Structure
-* @classdesc A Structure.
-* @property {Layer[]} elements - The elements of the structure
-* @property {int} structureId - The unique Id set when this structure was created
+	* Constructs a Structure
+	* @class Structure
+	* @classdesc A Structure.
+	* @property {Layer[]} elements - The elements of the structure
+	* @property {int} structureId - The unique Id set when this structure was created
 */
 function Structure(elements)
 {
@@ -15,14 +15,15 @@ function Structure(elements)
 	{
 		var element = this.elements[0];
 		var params = DuAEF.Duik.getDuikMarkerParameters(element);
+		if (!params) return;
 		if (params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID]) this.structureId = params[DuAEF.Duik.MarkerParameters.STRUCTURE_ID];
 	}
 }
 
 /**
-* Sets a new display size for the structure
-* @memberof Structure
-* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Structure.sizeHint
+	* Sets a new display size for the structure
+	* @memberof Structure
+	* @param {int} [size] - The element size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Structure.sizeHint
 */
 Structure.prototype.setSize = function (size)
 {
@@ -44,9 +45,9 @@ Structure.prototype.setSize = function (size)
 }
 
 /**
-* Sets a new display color for the structure
-* @memberof Structure
-* @param {float[]} [color=DuAEF.Duik.Structure.color] - The color
+	* Sets a new display color for the structure
+	* @memberof Structure
+	* @param {float[]} [color=DuAEF.Duik.Structure.color] - The color
 */
 Structure.prototype.setColor = function (color)
 {
@@ -64,8 +65,8 @@ Structure.prototype.setColor = function (color)
 }
 
 /**
-* Toggles the edit mode
-* @memberof Structure
+	* Toggles the edit mode
+	* @memberof Structure
 */
 Structure.prototype.toggleEditMode = function (color)
 {
@@ -88,44 +89,7 @@ Structure.prototype.toggleEditMode = function (color)
 Structure.prototype.toggleElementEditMode = function (elementIndex,setEditMode)
 {
 	var element = this.elements[elementIndex];
-	var comp = element.containingComp;
-	var already = this.editModeRegExp.test(element.comment);
-
-	if (setEditMode && !already)
-	{
-		var children = DuAEF.DuAE.Layer.getChildren(element);
-		element.comment = element.comment + ' |StructureElementChildren:';
-		for (var j = 0 ; j < children.length ; j++)
-		{
-			var child = children[j];
-			element.comment = element.comment + child.index;
-			if (j < children.length -1) element.comment = element.comment + ',';
-			child.parent = null;
-		}
-		element.comment = element.comment + "|";
-		element.name = '=EDIT= ' + element.name;
-	}
-	else if (already)
-	{
-		var match = this.editModeRegExp.exec(element.comment);
-		if (match.length == 2)
-		{
-			var indices = match[1].split(',');
-			//reparent
-			if (indices.length > 0)
-			{
-				for (var i = 0 ; i < indices.length ; i++)
-				{
-					var index = parseInt(indices[i]);
-					if (isNaN(index)) continue;
-					comp.layer(index).parent = element;
-				}
-			}
-			//remove comment
-			element.comment = element.comment.replace(match[0],'');
-			element.name = element.name.replace('=EDIT= ','');
-		}
-	}
+	DuAEF.DuAE.Layer.toggleEditMode(element);
 }
 
 /**
@@ -227,14 +191,14 @@ Structure.prototype.duplicate = function()
 }
 
 /**
-* Search for a controller which can be used with this Structure.
-* @memberof Structure
-* @param {Layer[]|LayerCollection} layers - The layers where to search for the controller
-* @param {boolean} [preferFK=false] - Set to true to search for the controller at the root of the chain first instead of the end
-* @param {int} [threshold=0] - The minimum distance in pixels between the controller and the structure to consider it valid.
-* @return {Layer|null} The controller found or null if there's nothing to find<br />
-* The Controller object has an attribute "structureIndex" corresponding to the index of the element of the structure where it was found.
-*/
+	* Search for a controller which can be used with this Structure.
+	* @memberof Structure
+	* @param {Layer[]|LayerCollection} layers - The layers where to search for the controller
+	* @param {boolean} [preferFK=false] - Set to true to search for the controller at the root of the chain first instead of the end
+	* @param {int} [threshold=0] - The minimum distance in pixels between the controller and the structure to consider it valid.
+	* @return {Layer|null} The controller found or null if there's nothing to find<br />
+	* The Controller object has an attribute "structureIndex" corresponding to the index of the element of the structure where it was found.
+	*/
 Structure.prototype.getController = function (layers, preferFK, threshold)
 {
 	if (this.elements.length == 0) return null;
@@ -276,9 +240,9 @@ Structure.prototype.getController = function (layers, preferFK, threshold)
 }
 
 /**
-* Selects all the elements of the structure
-* @memberof Structure
-*/
+	* Selects all the elements of the structure
+	* @memberof Structure
+	*/
 Structure.prototype.select = function ()
 {
 	for (var i = 0, num = this.elements.length; i < num; i++)
@@ -288,11 +252,55 @@ Structure.prototype.select = function ()
 }
 
 /**
-* Structures
-* @namespace
-* @memberof DuAEF.Duik
-*/
+	* Structures
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
 DuAEF.Duik.Structure = {};
+
+/**
+ * Translatable strings used to name layers and effects<br />
+ * These strings are translated at init time using the {@link tr} function from {@link DuAEF.Dutranslator}.
+ * @enum {string}
+ * @readonly
+ */
+DuAEF.Duik.Structure.Strings =
+{
+	STRUCTURE: "Structure",
+	SHOULDER: "Shoulder",
+	ARM: "Arm",
+	FOREARM: "Forearm",
+	HAND: "Hand",
+	CLAWS: "Claws",
+	HOOF: "Hoof",
+	HEEL: "Heel",
+	ARM_TIP: "Arm tip",
+	THIGH: "Thigh",
+	CALF: "Calf",
+	FOOT: "Foot",
+	TOES: "Toes",
+	TIPTOE: "Tiptoe",
+	HIPS: "Hips",
+	SPINE: "Spine",
+	NECK: "Neck",
+	HEAD: "Head",
+	SPINE_TIP: "Spine tip",
+	TAIL: "Tail",
+	TAIL_TIP: "Tail tip"
+};
+
+//loz-level undocumented function
+//this function has to be called once at runtime.
+DuAEF.Duik.Structure.postInit = function()
+{
+	//translate strings
+	DuAEF.DuScriptUI.uiStrings = DuAEF.DuScriptUI.uiStrings.concat(DuAEF.Duik.Structure.Strings);
+	for (i in DuAEF.Duik.Structure.Strings)
+	{
+		var str = DuAEF.Duik.Structure.Strings[i];
+		DuAEF.Duik.Structure.Strings[i] = tr(str);
+	}
+}
 
 /**
  * How to get structures depending on selection<br />
@@ -306,40 +314,176 @@ DuAEF.Duik.Structure.SelectionModes =
 	CHILDREN: 1,
 	ELEMENT: 2,
 	ALL: 3
+};
+
+/**
+	* Size hint of structure elements
+	* @type {int}
+	* @default DuAEF.Duik.Sizes.SMALL
+	*/
+DuAEF.Duik.Structure.sizeHint = DuAEF.Duik.Sizes.SMALL;
+/**
+	* The default size for new structures if structureSizeHint is DuAEF.Duik.Sizes.CUSTOM
+	* @type {int}
+	* @default 100
+	*/
+DuAEF.Duik.Structure.size = 100;
+/**
+	* The default color for new structures
+	* @type {float[]}
+	* @default DuAEF.DuJS.Color.Colors.RANDOM
+	*/
+DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
+/**
+	* Whether to auto link bezier paths to structure elements on creation
+	* @type {bool}
+	* @default true
+	*/
+DuAEF.Duik.Structure.linkPaths = false;
+/**
+	* Whether to auto link puppet pins to structure elements on creation
+	* @type {bool}
+	* @default true
+	*/
+DuAEF.Duik.Structure.linkPins = false;
+/**
+	* Whether to auto link layers to structure elements on creation
+	* @type {bool}
+	* @default true
+	*/
+DuAEF.Duik.Structure.linkLayers = false;
+
+/**
+ * Creates structures in a composition.
+ * If path properties are selected, will create the structures on the vertices, if puppet pins, on the pins, else if layers, on the layers if they are not aligned.
+ * @memberof DuAEF.Duik.Structure
+ * @param {int} [num=2] - The number of elements of the structure.
+ * @param {CompItem} [comp] - The composition where to create the Structure. Default is the active item, if it's a comp.
+ * @param {string} [name="Name"] - The name of the structure (used as layer names)
+ * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+ * @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+ * @return {Structure[]} The Structures
+ */
+DuAEF.Duik.Structure.addStructures = function (num,comp,name,forceNum,reverseAutoLink)
+{
+	num = def(num, 2);
+	comp = def(comp, DuAEF.DuAE.Project.getActiveComp());
+	if (!comp) return [];
+	name = def(name,"Structure");
+	reverseAutoLink = def(reverseAutoLink,false);
+
+	var structures = [];
+
+	//paths filter.
+	function pathsFilter(prop)
+	{
+		if (prop.matchName == "ADBE Vector Shape - Group") return true;
+		if (prop.matchName == "ADBE Mask Atom") return true;
+		return false;
+	}
+
+	var layers = comp.selectedLayers;
+
+	if (layers.length > 0)
+	{
+		var propsByLayer = [];
+		var layerPositions = [];
+
+		//get selected props
+		var it = new Iterator(layers);
+		it.do(function(layer)
+		{
+			//get paths
+			var props = DuAEF.DuAE.Layer.getSelectedProps(layer,pathsFilter);
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+
+			//puppet pins
+			props = DuAEF.DuAE.Layer.getSelectedProps(layer,"ADBE FreePin3 PosPin Atom");
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+
+			//puppet effect
+			props = DuAEF.DuAE.Layer.getSelectedProps(layer,"ADBE FreePin3");
+			if (props.length > 0)
+			{
+				propsByLayer.push(props);
+				return;
+			}
+		});
+
+		//create structures on selected props
+		it = new Iterator(propsByLayer);
+		it.do(function(propsLayer)
+		{
+			if (propsLayer.length == 0) return;
+
+			//get paths
+			if (propsLayer[0].matchName == "ADBE Vector Shape - Group" || propsLayer[0].matchName == "ADBE Mask Atom")
+			{
+				new Iterator(propsLayer).do( function (prop)
+				{
+					structures.push( DuAEF.Duik.Structure.addStructureToPath(prop, num, forceNum, reverseAutoLink) );
+				});
+				return;
+			}
+
+			//puppet pins
+			if (propsLayer[0].matchName == "ADBE FreePin3 PosPin Atom")
+			{
+				structures.push( DuAEF.Duik.Structure.addStructureToPuppetPins(propsLayer, num, forceNum, reverseAutoLink) );
+				return;
+			}
+
+			//puppet effect
+			if (propsLayer[0].matchName == "ADBE FreePin3")
+			{
+				new Iterator(propsLayer).do( function (prop)
+				{
+					if (prop.matchName != "ADBE FreePin3") return;
+					structures.push( DuAEF.Duik.Structure.addStructureToPuppetEffect(prop, num, forceNum, reverseAutoLink) );
+				});
+				return;
+			}
+		});
+
+		if (structures.length == 0)
+		{
+			structures.push( DuAEF.Duik.Structure.addStructureToLayers(layers, num, forceNum, reverseAutoLink) );
+		}
+	}
+
+	if (structures.length == 0)
+	{
+		structures.push( DuAEF.Duik.Structure.addStructure(num,comp,name) );
+	}
+
+	return structures;
 }
 
 /**
-* Size hint of structure elements
-* @type {int}
-* @default DuAEF.Duik.Sizes.SMALL
-*/
-DuAEF.Duik.Structure.sizeHint = DuAEF.Duik.Sizes.SMALL;
-/**
-* The default size for new structures if structureSizeHint is DuAEF.Duik.Sizes.CUSTOM
-* @type {int}
-* @default 100
-*/
-DuAEF.Duik.Structure.size = 100;
-/**
-* The default color for new structures
-* @type {float[]}
-* @default DuAEF.DuJS.Color.Colors.RANDOM
-*/
-DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM
-
-/**
- * Creates a structure in a composition
+ * Creates a structure in a composition.
+ * If path properties are selected, will create the structures on the vertices, if puppet pins, on the pins, else if layers, on the layers if they are not aligned.
  * @memberof DuAEF.Duik.Structure
- * @param {int}		num	- The number of elements of the structure
- * @param {CompItem}	comp	- The composition where to create the Structure
+ * @param {int}		[num=2]	- The number of elements of the structure.
+ * @param {CompItem}	[comp]	- The composition where to create the Structure. Default is the active item, if it's a comp.
  * @param {string}	[name="Name"]	- The name of the structure (used as layer names)
  * @param {int}	[id] - An identifier for this structure
- * @return {Structure|null}	The Structure or null if there is no active composition
+ * @return {Structure}	The Structure
  */
 DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 {
-	if (name === undefined) name = "Name";
-	if (id === undefined) id = new Date().getTime();
+	if (typeof num === 'undefined') num = 2;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return new Structure();
+	if (typeof name === 'undefined') name = "Name";
+	if (typeof id === 'undefined') id = new Date().getTime();
 
 	//end
 	num++;
@@ -403,6 +547,264 @@ DuAEF.Duik.Structure.addStructure = function (num,comp,name,id)
 }
 
 /**
+	* Adds a Structure to the Bezier Path
+	* @param {Property|PropertyInfo} pathProperty - The path
+	* @param {int} [num] - The number of elements of the structure.
+	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+	* @param {int}	[id] - An identifier for this structure
+	* @return {Structure} The new Structure
+	*/
+DuAEF.Duik.Structure.addStructureToPath = function (pathProperty, num, forceNum, reverseAutoLink, id)
+{
+	if (DuAEF.DuAE.App.version < 15) return null;
+
+	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
+	if (!propInfo) throw "Expected a shape property, got another type of value.";
+	var pathProperty = propInfo.getProperty();
+
+	if (typeof id === 'undefined') id = new Date().getTime();
+	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkPaths;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkPaths;
+
+	var vertices = DuAEF.DuAE.Property.Bezier.verticesToComp(pathProperty);
+	var comp = propInfo.comp;
+	var layer = propInfo.layer;
+	var name = pathProperty.parentProperty.name;
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var numElements = vertices.length - 1;
+	if (typeof num === 'undefined') num = vertices.length - 1;
+	if (forceNum && num > numElements) numElements = num;
+
+	var structure = DuAEF.Duik.Structure.addStructure(numElements,comp,name,id);
+
+	//move to the vertices
+	var count = numElements;
+	if (vertices.length <= numElements) count = vertices.length-1;
+	for (var i = 0; i <= count; i++)
+	{
+		var element = structure.elements[i];
+		element.parent = null;
+		element.transform.position.setValue(vertices[i]);
+		structure.elements[i].moved = true;
+		if (i > 0) element.parent = structure.elements[i-1];
+	}
+
+	//add bones to the path
+	if (link)
+	{
+		DuAEF.Duik.Bone.rigShape(pathProperty, undefined, true, false);
+		//set effects to use structure
+		var currentElement = 0;
+		for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+		{
+			var fx = layer('ADBE Effect Parade').property(i);
+			if (fx.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName)
+			{
+				fx(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(structure.elements[currentElement].index);
+				currentElement++;
+				if (currentElement == structure.elements.length) break;
+			}
+		}
+	}
+
+	structure.moved = true;
+
+	return structure;
+}
+
+/**
+	* Adds a Structure to the layers. Will return an empty structure if all the layers are at the same place.
+	* @param {Layer[]} layers - The layers
+	* @param {int} [num] - The number of elements of the structure.
+	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+	* @return {Structure} The new Structure
+	*/
+DuAEF.Duik.Structure.addStructureToLayers = function (layers, num, forceNum, reverseAutoLink, id)
+{
+	if (typeof id === 'undefined') id = new Date().getTime();
+	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkLayers;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkLayers;
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var comp = layers[0].containingComp;
+
+	var numElements = layers.length - 1;
+	if (typeof num === 'undefined') num = layers.length - 1;
+	if (forceNum && num > numElements) numElements = num;
+
+	var structure = DuAEF.Duik.Structure.addStructure(numElements,comp,undefined,id);
+
+	//check if there are layers at the same location
+	var moveLayers = true;
+
+	for (var l = 0, numLayers = layers.length; l < numLayers; l++)
+	{
+		var layer = layers[l];
+		var pos =  DuAEF.DuAE.Layer.getWorldPos(layer);
+		//check if there is another layer at this position
+		for (var i = l+1, num = layers.length; i < num; i++)
+		{
+			var layer2 = layers[i];
+			var pos2 = DuAEF.DuAE.Layer.getWorldPos(layer2);
+			if (DuAEF.DuJS.Array.compare(pos2, pos, 0))
+			{
+				moveLayers  = false;
+				break;
+			}
+		}
+		if (!moveLayers) break;
+	}
+
+	//move to the layers, rename and parent
+	var count = numElements;
+	if (layers.length <= numElements) count = layers.length-1;
+	for (var i = 0, num = count; i <= num; i++)
+	{
+		var element = structure.elements[i];
+
+		if (moveLayers)
+		{
+			element.parent = null;
+			element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layers[i]));
+			structure.elements[i].moved = true;
+			if (i > 0) element.parent = structure.elements[i-1];
+		}
+
+		if (link) layers[i].parent = element;
+
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + layers[i].name, comp);
+	}
+
+	structure.moved = true;
+
+	return structure;
+}
+
+/**
+	* Adds a Structure to the Puppet Effect. Elements will be parented in the order of the pins in the stack
+	* @param {PropertyGroup|PropertyInfo} puppetEffect - The puppet effect
+	* @param {int} [num] - The number of elements of the structure.
+	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+	* @return {Structure} The new Structure
+	*/
+DuAEF.Duik.Structure.addStructureToPuppetEffect = function (puppetEffect, num, forceNum, reverseAutoLink, id)
+{
+	var propInfo = new PropertyInfo(puppetEffect);
+	puppetEffect = propInfo.getProperty();
+
+	var pins = [];
+
+	var meshGroup = puppetEffect.property("ADBE FreePin3 ARAP Group").property("ADBE FreePin3 Mesh Group");
+	for (var i = 1, numProps = meshGroup.numProperties; i <= numProps; i++)
+	{
+		var mesh = meshGroup(i);
+		var pinsGroup = mesh.property("ADBE FreePin3 PosPins");
+		for (var j = 1, numPins = pinsGroup.numProperties; j <= numPins; j++)
+		{
+			var pin = pinsGroup.property(j);
+			var test = new PropertyInfo(pin.property("ADBE FreePin3 PosPin Position"));
+			if (test.riggable) pins.push(new PropertyInfo(pin));
+		}
+	}
+
+	var structure = DuAEF.Duik.Structure.addStructureToPuppetPins(pins, num, forceNum, reverseAutoLink, id);
+
+	return structure;
+}
+
+/**
+	* Adds a Structure to the Puppet Pins. Elements will be parented in the order of the Array.
+	* @param {Property[]|PropertyInfo[]} puppetPins - The pins
+	* @param {int} [num] - The number of elements of the structure.
+	* @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+	* @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+	* @return {Structure} The new Structure
+	*/
+DuAEF.Duik.Structure.addStructureToPuppetPins = function (puppetPins, num, forceNum, reverseAutoLink, id)
+{
+	if (typeof id === 'undefined') id = new Date().getTime();
+	if (typeof forceNum === 'undefined') forceNum = false;
+	if (typeof reverseAutoLink === 'undefined') reverseAutoLink = false;
+
+	var link = DuAEF.Duik.Structure.linkPins;
+	if (reverseAutoLink) link = !DuAEF.Duik.Structure.linkPins;
+
+	var propInfo = new PropertyInfo(puppetPins[0]);
+	var comp = propInfo.comp;
+
+	var color = DuAEF.Duik.Structure.color;
+	if (color == DuAEF.DuJS.Color.Colors.RANDOM)
+	{
+		color = DuAEF.DuJS.Color.random();
+	}
+
+	var numElements = puppetPins.length - 1;
+	if (typeof num === 'undefined') num = puppetPins.length - 1;
+	if (forceNum && num > numElements) numElements = num;
+
+	var structure = DuAEF.Duik.Structure.addStructure(numElements, comp, undefined, id);
+
+	//move and link to the pins
+	var count = numElements;
+	if (puppetPins.length <= numElements) count = puppetPins.length-1;
+	for (var i = 0, num = count; i <= num; i++)
+	{
+		var element = structure.elements[i];
+		element.parent = null;
+
+		//get pin position
+		var pin = puppetPins[i];
+
+		var propInfo = new PropertyInfo(pin);
+		pin = propInfo.getProperty();
+		var parentPin;
+
+		if (pin.matchName == "ADBE FreePin3 PosPin Atom")
+		{
+			parentPin = pin;
+			pin = pin.property("ADBE FreePin3 PosPin Position");
+		}
+		else
+		{
+			parentPin = pin.parentProperty;
+		}
+
+		element.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(propInfo.layer,pin.value));
+		structure.elements[i].moved = true;
+
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | " + parentPin.name, comp);
+		if (i > 0) element.parent = structure.elements[i-1];
+
+		//link
+		if (link) DuAEF.Duik.Bone.linkPositionToBone(pin, element, false);
+	}
+
+	structure.moved = true;
+
+	return structure;
+}
+
+/**
  * Creates an element for a structure in a composition
  * @memberof DuAEF.Duik.Structure
  * @param {CompItem}	comp	- The composition where to create the Structure
@@ -454,6 +856,8 @@ DuAEF.Duik.Structure.addStructureElement = function (comp,color,size,id)
 
 	//lock scale
 	element.transform.scale.expression = '[100,100];';
+
+	element.moved = false;
 
 	return element;
 }
@@ -621,6 +1025,23 @@ DuAEF.Duik.Structure.getStructures = function (comp,selectionMode)
 }
 
 /**
+ * Gets structures in the comp or the selection.
+ * @param {CompItem}	[comp]	- The composition where to get the structure layers
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {ShapeLayer[]}	The structure layers.
+ */
+DuAEF.Duik.Structure.getStructureLayers = function (comp,selectedOnly)
+{
+	if (typeof selectedOnly === 'undefined') selectedOnly = false;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+
+	var structures = DuAEF.Duik.getLayers(DuAEF.Duik.LayerTypes.STRUCTURE,selectedOnly,comp);
+	
+	return structures;
+}
+
+/**
  * Selects structures in the comp. If some layers are selected, uses selectionMode, else returns selects all structure elements found.
  * @memberof DuAEF.Duik.Structure
  * @param {CompItem}	[comp=app.project.activeItem]	- The composition where to select the structures
@@ -663,19 +1084,20 @@ DuAEF.Duik.Structure.selectStructures = function (comp, selectionMode)
  * @param {boolean} [symetry=false] - changes the coordinates of the humerus, applying a symetry on the shoulder (if any).
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,left,type,comp,originPosition,symetry)
+DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,left,type,comp,originPosition,symetry, forceLink)
 {
-	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	comp = def(comp, DuAEF.DuAE.Project.getActiveComp());
 	if (!comp) return null;
-	if (typeof shoulder == 'undefined') shoulder = false;
-	if (typeof humerus == 'undefined') humerus = true;
-	if (typeof radius == 'undefined') radius = true;
-	if (typeof hand == 'undefined') hand = true;
-	if (typeof claws == 'undefined') claws = false;
-	if (typeof left == 'undefined') left = false;
-	if (typeof type == 'undefined') type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
-	if (typeof originPosition == 'undefined') originPosition = [comp.width/2,comp.height/4];
-	if (typeof symetry == 'undefined') symetry = false;
+	shoulder = def(shoulder, false);
+	humerus = def(humerus, true);
+	radius = def(radius, true);
+	hand = def(hand, true);
+	claws = def(claws, false);
+	left = def(left, false);
+	type = def(type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE);
+	originPosition = def(originPosition, [comp.width/2,comp.height/4]);
+	symetry = def(symetry, false);
+
 	var plantigrade = type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
 	var digitigrade = type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE;
 	var ungulate = type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE;
@@ -690,124 +1112,131 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
 
 	if (numElements == 0) return null;
 
-	var structure = DuAEF.Duik.Structure.addStructure(numElements,comp);
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp,undefined,true, forceLink) );
 
-	//name and move
-
-	//element index we're working on
-	var currentElement = 0;
-
-	//size of the humerus
-	var size = comp.height/7;
-	if (digitigrade) size = comp.height/9;
-	else if (ungulate) size = comp.height/11;
-
-	//position of the next limb
-	var nextPosition = originPosition;
-
-	var shoulderLayer,humerusLayer,radiusLayer,handLayer,clawsLayer,palmLayer,tipLayer;
-
-	if (shoulder)
+	structures.do(function (structure)
 	{
-		//set limb position and name
-		var element = structure.elements[currentElement];
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Shoulder",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+		//element index we're working on
+		var currentElement = 0;
+
+		//size of the humerus
+		var size = comp.height/7;
+		if (digitigrade) size = comp.height/9;
+		else if (ungulate) size = comp.height/11;
+
 		//position of the next limb
-		element.transform.position.setValue(nextPosition);
-		shoulderLayer = element;
-		if (!symetry)
+		var nextPosition = originPosition;
+
+		var shoulderLayer,humerusLayer,radiusLayer,handLayer,clawsLayer,palmLayer,tipLayer;
+
+		if (shoulder)
 		{
-			if (plantigrade) nextPosition = [-size/2,size/6];
-			else if (digitigrade) nextPosition = [-size*3/4,size*3/4];
-			else if (ungulate) nextPosition = [-size,size];
+			//set limb position and name
+			var element = structure.elements[currentElement];
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.SHOULDER);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+			//position of the next limb
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			shoulderLayer = element;
+			if (!symetry)
+			{
+				if (plantigrade) nextPosition = [-size/2,size/6];
+				else if (digitigrade) nextPosition = [-size*3/4,size*3/4];
+				else if (ungulate) nextPosition = [-size,size];
+			}
+			else
+			{
+				if (plantigrade) nextPosition = [size/2,size/6];
+				else if (digitigrade) nextPosition = [size*3/4,size*3/4];
+				else if (ungulate) nextPosition = [size,size];
+			}
+
+			//next
+			currentElement++;
 		}
-		else
+		if (humerus)
 		{
-			if (plantigrade) nextPosition = [size/2,size/6];
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.ARM);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+			humerusLayer = element;
+			if (plantigrade) nextPosition = [size/6,size];
 			else if (digitigrade) nextPosition = [size*3/4,size*3/4];
-			else if (ungulate) nextPosition = [size,size];
+			else if (ungulate) nextPosition = [size*3/4,size*3/4];
+			currentElement++;
 		}
-
-
-		//next
-		currentElement++;
-	}
-	if (humerus)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Arm",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
-		humerusLayer = element;
-		if (plantigrade) nextPosition = [size/6,size];
-		else if (digitigrade) nextPosition = [size*3/4,size*3/4];
-		else if (ungulate) nextPosition = [size*3/4,size*3/4];
-		currentElement++;
-	}
-	if (radius)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Forearm",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
-		radiusLayer = element;
-		if (plantigrade) nextPosition = [-size/6,size];
-		else if (digitigrade) nextPosition = [-size/3,size*4/3];
-		else if (ungulate) nextPosition = [-size/2,size*3/2];
-		currentElement++;
-	}
-	if (hand)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hand",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
-		handLayer = element;
-		if (plantigrade)
+		if (radius)
 		{
-			if (claws) nextPosition = [-size/3,size/8];
-			else nextPosition = [size/3,size/3];
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			else size = DuAEF.DuJS.Math.getLength([0,0], element.transform.position.value);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.FOREARM);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+			radiusLayer = element;
+			if (plantigrade) nextPosition = [-size/6,size];
+			else if (digitigrade) nextPosition = [-size/3,size*4/3];
+			else if (ungulate) nextPosition = [-size/2,size*3/2];
+			currentElement++;
 		}
-		else if (digitigrade) nextPosition = [0,size*3/8];
-		else if (ungulate) nextPosition = [size/5,size];
-		currentElement++;
-	}
-	if (claws)
-	{
+		if (hand)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.HAND);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.GREEN);
+			handLayer = element;
+			if (plantigrade)
+			{
+				if (claws) nextPosition = [-size/3,size/8];
+				else nextPosition = [size/3,size/3];
+			}
+			else if (digitigrade) nextPosition = [0,size*3/8];
+			else if (ungulate) nextPosition = [size/5,size];
+			currentElement++;
+		}
+		if (claws)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = ungulate ? DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.HOOF) :  DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.CLAWS);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+			clawsLayer = element;
+			if (plantigrade) nextPosition = [-size/4,0];
+			else if (digitigrade) nextPosition = [-size/4,0];
+			else if (ungulate) nextPosition = [0,size/2];
+			currentElement++;
+		}
 		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		if (ungulate) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hoof",comp);
-		else element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Claws",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
-		clawsLayer = element;
-		if (plantigrade) nextPosition = [-size/4,0];
-		else if (digitigrade) nextPosition = [-size/4,0];
-		else if (ungulate) nextPosition = [0,size/2];
-		currentElement++;
-	}
-	var element = structure.elements[currentElement];
-	element.transform.position.setValue(nextPosition);
-	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Arm Tip",comp);
-	tipLayer = element;
+		if (!element.moved) element.transform.position.setValue(nextPosition);
+		var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.ARM_TIP);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+		tipLayer = element;
 
-	//heel
-	if (plantigrade && claws)
-	{
-		var heelStructure = DuAEF.Duik.Structure.addStructure(0,comp);
-		var element = heelStructure.elements[0];
-		element.parent = structure.elements[structure.elements.length-1];
-		element.transform.position.setValue([size/4+size/3,0]);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Heel",comp);
-		element.selected = false;
-		structure.elements[0].selected = true;
-		structure.elements.push(element);
-		palmLayer = element;
-	}
+		//heel
+		if (plantigrade && claws)
+		{
+			var heelStructure = DuAEF.Duik.Structure.addStructure(0,comp);
+			var element = heelStructure.elements[0];
+			element.parent = structure.elements[structure.elements.length-1];
+			if (!element.moved) element.transform.position.setValue([size/4+size/3,0]);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Heel",comp);
+			element.selected = false;
+			structure.elements[0].selected = true;
+			structure.elements.push(element);
+			palmLayer = element;
+		}
 
-	DuAEF.Duik.Autorig.tagArm(shoulderLayer,humerusLayer,radiusLayer,handLayer,clawsLayer,palmLayer,tipLayer,type)
+		DuAEF.Duik.Autorig.tagArm(shoulderLayer,humerusLayer,radiusLayer,handLayer,clawsLayer,palmLayer,tipLayer,type)
+	});
 
-	return structure;
+	return structures;
+
 }
 
 /**
@@ -823,17 +1252,19 @@ DuAEF.Duik.Structure.createArm = function(shoulder,humerus,radius,hand,claws,lef
  * @param {Number[]} [originPosition] - The coordinates in the comp of the first element of the structure.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,originPosition)
+DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,originPosition, forceLink)
 {
-	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	comp = def( comp, DuAEF.DuAE.Project.getActiveComp());
 	if (!comp) return null;
-	if (typeof femur == 'undefined') femur = true;
-	if (typeof tibia == 'undefined') tibia = true;
-	if (typeof foot == 'undefined') foot = true;
-	if (typeof toes == 'undefined') toes = true;
-	if (typeof left == 'undefined') left = false;
-	if (typeof type == 'undefined') type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
-	if (typeof originPosition == 'undefined') originPosition = [comp.width/2,comp.height/2];
+	femur = def( femur, true );
+	tibia = def( tibia, true );
+	foot = def( foot, true );
+	toes = def( toes, true );
+	left = def( left, false );
+	type = def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE );
+	originPosition = def( originPosition, [comp.width/2,comp.height/2] );
+
+
 	var plantigrade = type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
 	var digitigrade = type == DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE;
 	var ungulate = type == DuAEF.Duik.Autorig.AnimalTypes.UNGULATE;
@@ -847,93 +1278,105 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
 
 	if (numElements == 0) return null;
 
-	var structure = DuAEF.Duik.Structure.addStructure(numElements,comp);
-
-	//name and move
-
-	//element index we're working on
-	var currentElement = 0;
-
-	//size of the femur
-	var size = comp.height/6;
-	if (digitigrade) size = comp.height/8;
-	else if (ungulate) size = comp.height/9;
-
-	//position of the next limb
-	var nextPosition = originPosition;
-
-	var femurLayer,tibiaLayer,footLayer,toesLayer,heelLayer,tipLayer,type;
-
-	if (femur)
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true, forceLink) );
+	//need copy the type locally to make it available for the function in the iterator
+	var legType = type;
+	structures.do(function (structure)
 	{
+		//name and move
+
+		//element index we're working on
+		var currentElement = 0;
+
+		//size of the femur
+		var size = comp.height/6;
+		if (digitigrade) size = comp.height/8;
+		else if (ungulate) size = comp.height/9;
+
+		//position of the next limb
+		var nextPosition = originPosition;
+
+		var femurLayer,tibiaLayer,footLayer,toesLayer,heelLayer,tipLayer,type;
+
+		if (femur)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.THIGH);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+			femurLayer = element;
+			if (plantigrade) nextPosition = [-size/6,size];
+			else if (digitigrade) nextPosition = [-size*3/4,size*3/4];
+			else if (ungulate) nextPosition = [-size/2,size*3/4];
+			currentElement++;
+		}
+		if (tibia)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			else size = DuAEF.DuJS.Math.getLength([0,0], element.transform.position.value);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.CALF);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+			tibiaLayer = element;
+			if (plantigrade) nextPosition = [size/6,size];
+			else if (digitigrade) nextPosition = [size*3/4,size*3/4];
+			else if (ungulate) nextPosition = [size*2/3,size*3/4];
+			currentElement++;
+		}
+		if (foot)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.FOOT);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.GREEN);
+			footLayer = element;
+			if (plantigrade)nextPosition = [-size*3/8,size/6];
+			else if (digitigrade) nextPosition = [0,size/2];
+			else if (ungulate) nextPosition = [-size/4,size];
+			currentElement++;
+		}
+		if (toes)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = "";
+			if (plantigrade) name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.TOES);
+			else if (digitigrade) name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.CLAWS);
+			else name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.HOOF);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+			toesLayer = element;
+			if (plantigrade) nextPosition = [-size/8,0];
+			else if (digitigrade) nextPosition = [-size/4,0];
+			else if (ungulate) nextPosition = [0,size/4];
+			currentElement++;
+		}
+
 		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Thigh",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
-		femurLayer = element;
-		if (plantigrade) nextPosition = [-size/6,size];
-		else if (digitigrade) nextPosition = [-size*3/4,size*3/4];
-		else if (ungulate) nextPosition = [-size/2,size*3/4];
-		currentElement++;
-	}
-	if (tibia)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Calf",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
-		tibiaLayer = element;
-		if (plantigrade) nextPosition = [size/6,size];
-		else if (digitigrade) nextPosition = [size*3/4,size*3/4];
-		else if (ungulate) nextPosition = [size*2/3,size*3/4];
-		currentElement++;
-	}
-	if (foot)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Foot",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
-		footLayer = element;
-		if (plantigrade)nextPosition = [-size*3/8,size/6];
-		else if (digitigrade) nextPosition = [0,size/2];
-		else if (ungulate) nextPosition = [-size/4,size];
-		currentElement++;
-	}
-	if (toes)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		if (plantigrade) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Toes",comp);
-		else if (digitigrade) element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Claws",comp);
-		else element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hoof",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_PURPLE);
-		toesLayer = element;
-		if (plantigrade) nextPosition = [-size/8,0];
-		else if (digitigrade) nextPosition = [-size/4,0];
-		else if (ungulate) nextPosition = [0,size/4];
-		currentElement++;
-	}
-	var element = structure.elements[currentElement];
-	element.transform.position.setValue(nextPosition);
-	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Tiptoe",comp);
-	tipLayer = element;
-	//heel
-	if (plantigrade && toes)
-	{
-		var heelStructure = DuAEF.Duik.Structure.addStructure(0,comp);
-		var element = heelStructure.elements[0];
-		element.parent = structure.elements[structure.elements.length-1];
-		element.transform.position.setValue([size/8+size*3/8,0]);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Heel",comp);
-		element.selected = false;
-		structure.elements[0].selected = true;
-		heelLayer = element;
-	}
+		if (!element.moved) element.transform.position.setValue(nextPosition);
+		var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.TIPTOE);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+		tipLayer = element;
+		//heel
+		if (plantigrade && toes)
+		{
+			var heelStructure = DuAEF.Duik.Structure.addStructure(0,comp);
+			var element = heelStructure.elements[0];
+			element.parent = structure.elements[structure.elements.length-1];
+			if (!element.moved) element.transform.position.setValue([size/8+size*3/8,0]);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Heel",comp);
+			element.selected = false;
+			structure.elements[0].selected = true;
+			heelLayer = element;
+		}
 
-	DuAEF.Duik.Autorig.tagLeg(femurLayer,tibiaLayer,footLayer,toesLayer,heelLayer,tipLayer,type)
+		DuAEF.Duik.Autorig.tagLeg(femurLayer,tibiaLayer,footLayer,toesLayer,heelLayer,tipLayer,legType);
+	});
 
-	return structure;
+	return structures;
 }
 
 /**
@@ -947,15 +1390,15 @@ DuAEF.Duik.Structure.createLeg = function(femur,tibia,foot,toes,left,type,comp,o
  * @param {Number[]} [originPosition] - The coordinates in the comp of the first element of the structure.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,originPosition)
+DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,originPosition, forceLink)
 {
-	if (typeof comp == 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	comp = def( comp, DuAEF.DuAE.Project.getActiveComp());
 	if (!comp) return null;
-	if (typeof hips == 'undefined') hips = true;
-	if (typeof spineCount == 'undefined') spineCount = 2;
-	if (typeof neckCount == 'undefined') neckCount = 1;
-	if (typeof head == 'undefined') head = true;
-	if (typeof originPosition == 'undefined') originPosition = [comp.width/2,comp.height*3/4];
+	hips = def( hips, true);
+	spineCount = def(spineCount, 2);
+	neckCount = def(neckCount, 1);
+	head = def(head, true);
+	originPosition = def(originPosition, [comp.width/2,comp.height*3/4]);
 
 	//create structure
 	var numElements = 0;
@@ -966,71 +1409,79 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
 
 	if (numElements == 0) return null;
 
-	var structure = DuAEF.Duik.Structure.addStructure(numElements,comp);
-
-	//name and move
-
-	//element index we're working on
-	var currentElement = 0;
-
-	//size of the spine
-	var size = comp.height/4;
-
-	//position of the next limb
-	var nextPosition = originPosition;
-
-	var hipsLayer,headLayer,tipLayer;
-	var spineLayer = [];
-	var neckLayer = [];
-
-	if (hips)
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(numElements,comp, undefined, true, forceLink) );
+	structures.do(function (structure)
 	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Hips",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
-		hipsLayer = element;
-		nextPosition = [0,-size/6];
-		currentElement++;
-	}
-	for (var i = 0 ; i < spineCount ; i++)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Spine",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
-		spineLayer.push(element);
-		nextPosition = [0,-size/spineCount];
-		currentElement++;
-	}
-	for (var i = 0 ; i < neckCount ; i++)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Neck",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
-		neckLayer.push(element);
-		nextPosition = [0,-size/6/neckCount];
-		currentElement++;
-	}
-	if (head)
-	{
-		var element = structure.elements[currentElement];
-		element.transform.position.setValue(nextPosition);
-		element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Head",comp);
-		element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
-		headLayer = element;
-		nextPosition = [0,-size/3];
-		currentElement++;
-	}
-	var element = structure.elements[currentElement];
-	element.transform.position.setValue(nextPosition);
-	element.name = DuAEF.DuAE.Comp.newUniqueLayerName("S | Spine Tip",comp);
-	tipLayer = element;
+		//name and move
 
-	DuAEF.Duik.Autorig.tagSpine(hipsLayer,spineLayer,neckLayer,headLayer,tipLayer)
+		//element index we're working on
+		var currentElement = 0;
 
-	return structure;
+		//size of the spine
+		var size = comp.height/4;
+
+		//position of the next limb
+		var nextPosition = originPosition;
+
+		var hipsLayer,headLayer,tipLayer;
+		var spineLayer = [];
+		var neckLayer = [];
+
+		if (hips)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.HIPS);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.RAINBOX_RED);
+			hipsLayer = element;
+			nextPosition = [0,-size/6];
+			currentElement++;
+		}
+		for (var i = 0 ; i < spineCount ; i++)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			else if (i > 0) size = DuAEF.DuJS.Math.getLength([0,0], element.transform.position.value);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.SPINE);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+			spineLayer.push(element);
+			nextPosition = [0,-size/spineCount];
+			currentElement++;
+		}
+		for (var i = 0 ; i < neckCount ; i++)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.NECK);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+			neckLayer.push(element);
+			nextPosition = [0,-size/6/neckCount];
+			currentElement++;
+		}
+		if (head)
+		{
+			var element = structure.elements[currentElement];
+			if (!element.moved) element.transform.position.setValue(nextPosition);
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.HEAD);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.GREEN);
+			headLayer = element;
+			nextPosition = [0,-size/3];
+			currentElement++;
+		}
+		var element = structure.elements[currentElement];
+		if (!element.moved) element.transform.position.setValue(nextPosition);
+		var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.SPINE_TIP);
+		element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+		tipLayer = element;
+
+		DuAEF.Duik.Autorig.tagSpine(hipsLayer,spineLayer,neckLayer,headLayer,tipLayer);
+	});
+
+	return structures;
 }
 
 /**
@@ -1040,34 +1491,40 @@ DuAEF.Duik.Structure.createSpine = function(hips,spineCount,neckCount,head,comp,
  * @param {CompItem} [comp] - The composition where to create the structure. By default, will try with the active item, if any.
  * @return {Structure|null} The structure.
  */
-DuAEF.Duik.Structure.createTail = function(elementCount,comp)
+DuAEF.Duik.Structure.createTail = function(elementCount,comp, forceLink)
 {
-	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
+	comp = def( comp, DuAEF.DuAE.Project.getActiveComp());
 	if (!comp) return null;
 
 	//create structure
-	if (elementCount === undefined) elementCount = 3;
+	elementCount = def( elementCount, 3 );
 	if (elementCount == 0) return;
 
-	var structure = DuAEF.Duik.Structure.addStructure(elementCount,comp, "Tail");
-
-	var tailLayer = [];
-	var tipLayer;
-
-	for (var i = 0 ; i < elementCount ; i++)
+	var structures = new Iterator( DuAEF.Duik.Structure.addStructures(elementCount,comp, undefined, true, forceLink) );
+	structures.do(function (structure)
 	{
-		var element = structure.elements[i];
-		if (i < elementCount/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
-		else if (i < elementCount*2/3) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
-		else element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
-		tailLayer.push(element);
-	}
+		var tailLayer = [];
+		var tipLayer;
 
-	tipLayer = structure.elements[elementCount];
+		for (var i = 0, num = structure.elements.length; i < num ; i++)
+		{
+			var element = structure.elements[i];
+			var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.TAIL);
+			element.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
+			if (i < num/3-1) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.ORANGE);
+			else if (i < num*2/3-1) element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.YELLOW);
+			else element.effect(DuAEF.Duik.PseudoEffectsMatchNames.STRUCTURE)(4).setValue(DuAEF.DuJS.Color.Colors.LIGHT_BLUE);
+			tailLayer.push(element);
+		}
 
-	DuAEF.Duik.Autorig.tagTail(tailLayer,tipLayer);
+		tipLayer = structure.elements[elementCount];
+		var name = DuAEF.Duik.generateName("S", DuAEF.Duik.Structure.Strings.TAIL_TIP);
+		tipLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp);
 
-	return structure;
+		DuAEF.Duik.Autorig.tagTail(tailLayer,tipLayer);
+	});
+
+	return structures;
 }
 
 /**
