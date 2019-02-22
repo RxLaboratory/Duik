@@ -71,7 +71,7 @@
 (function(obj)
 {
 	//===========================
-	var version = '16.1.0-RC3';
+	var version = '16.1.0-RC4';
 	//===========================
 
 	#include DuAEF.jsxinc
