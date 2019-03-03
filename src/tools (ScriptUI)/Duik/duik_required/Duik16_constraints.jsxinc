@@ -42,105 +42,92 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function connectorInit ()
     {
-        connectorMasterProp = null;
+        connector.masterProp = null;
+        connector.masterLayer = null;
+        connector.type = 1;
         connectorMasterLabel.text = "Pick master property";
+        ui_connectorMaximumEdit.suffix = '';
+        ui_connectorMinimumEdit.suffix = '';
         ui_connectorMinimumEdit.setText( "0" );
         ui_connectorMaximumEdit.setText( "100" );
         ui_connectorAxisList.removeAll();
         ui_connectorAxisList.enabled = false;
         ui_connectorAxisLabel.text = "Axis: ";
         ui_connectorTypeList.selection = 0;
-        ui_connectorForm.enabled = false;
-        if ( settings.data.uiMode != 2 )
-        {
-            ui_connectorSeparator3.enabled = false;
-            ui_connectorSeparator2.enabled = false;
-        }
-        ui_connectorChildrenGroup.enabled = false;
-        ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile( w25_allproperties_m );
-        ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_m );
+        ui_connectorTypeLabel.enabled = true;
+        ui_connectorTypeList.enabled = true;
+        connectorFormReady(false);
+        connectorReady(false);
     }
 
-    //====== EVENTS ================
-
-    function ui_connectorButton_clicked ()
+    function connectorPick()
     {
+        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        if (layers.length == 0) return;
+
+        connectorInit();
+
+        var layer = layers[layers.length - 1];
+
+        //get the selected property
         var props = DuAEF.DuAE.Comp.getSelectedProps();
-        if ( props.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Connector" );
-        DuAEF.Duik.Rigging.quickConnector( props );
-        app.endUndoGroup();
-    }
-
-    function ui_connectorPickButton_clicked ()
-    {
-        var comp = DuAEF.DuAE.Project.getActiveComp();
-        if ( !comp ) return;
-
-        connectorMasterProp = null;
-        ui_connectorMinimumEdit.setText( '0' );
-        ui_connectorMaximumEdit.setText( '100' );
-
-        //if there's a selected layer which is a Duik controller (slider, 2d slider, angle)
-        var layers = comp.selectedLayers;
-        if ( layers.length > 0 )
+        if ( props.length > 0 )
         {
-            var layer = layers[ layers.length - 1 ];
-            var effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.matchName );
-            if ( effect )
+            var propInfo = props[ props.length - 1 ];
+            var prop = propInfo.getProperty();
+            if ( prop.propertyType == PropertyType.PROPERTY )
             {
-                connectorMasterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.index[ 'ValueSlider' ] ) );
-                ui_connectorMinimumEdit.setText( '-100' );
-                ui_connectorMaximumEdit.setText( '100' );
-                connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Slider";
-            }
-            if ( !effect )
-            {
-                var effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.matchName );
-                if ( effect )
-                {
-                    connectorMasterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.index[ 'AngleAngle' ] ) );
-                    ui_connectorMinimumEdit.setText( '0' );
-                    ui_connectorMaximumEdit.setText( '360' );
-                    connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Angle";
-                }
-            }
-            if ( !effect )
-            {
-                effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.matchName );
-                if ( effect )
-                {
-                    connectorMasterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.index[ '2D ValuePoint' ] ) );
-                    ui_connectorMinimumEdit.setText( '-100' );
-                    ui_connectorMaximumEdit.setText( '100' );
-                    connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "2D Slider";
-                }
+                connector.masterProp = propInfo;
+                connector.layer = propInfo.layer;
+                connectorMasterLabel.text = propInfo.layer.index + " - " + propInfo.layer.name + " # " + prop.name;
             }
         }
 
-        if ( connectorMasterProp == null )
+        //look for a Duik controller 
+        var effect = layer.effect ( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.matchName );
+
+        //slider
+        if ( effect )
         {
-            var props = DuAEF.DuAE.Comp.getSelectedProps();
-            if ( props.length > 0 )
-            {
-                var propInfo = props[ props.length - 1 ];
-                var prop = propInfo.getProperty();
-                if ( prop.propertyType == PropertyType.PROPERTY )
-                {
-                    connectorMasterProp = propInfo;
-                    connectorMasterLabel.text = propInfo.layer.index + " - " + propInfo.layer.name + " # " + prop.name;
-                }
-            }
+            connector.masterLayer = layer;
+            connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.index[ 'ValueSlider' ] ) );
+            ui_connectorMinimumEdit.setText( '-100' );
+            ui_connectorMaximumEdit.setText( '100' );
+            connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Slider";
+        }
+        //2d slider
+        effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.matchName );
+        if ( effect )
+        {
+            connector.masterLayer = layer;
+            connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.index[ '2D ValuePoint' ] ) );
+            connector.masterLayer = layer;
+            ui_connectorMinimumEdit.setText( '-100' );
+            ui_connectorMaximumEdit.setText( '100' );
+            connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "2D Slider";
         }
 
-        if ( connectorMasterProp != null )
+        //angle
+        effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.matchName );
+        if ( effect )
         {
-            var dim = DuAEF.Duik.Rigging.connectorCheckParent( connectorMasterProp );
+            connector.masterLayer = layer;
+            connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.index[ 'AngleAngle' ] ) );
+            connector.masterLayer = layer;
+            ui_connectorMinimumEdit.setText( '0' );
+            ui_connectorMaximumEdit.setText( '360' );
+            connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Angle";
+        }
+
+        //init prop
+        if ( connector.masterProp != null )
+        {
+            var dim = DuAEF.Duik.Rigging.connectorCheckParent( connector.masterProp );
             if ( dim == 0 )
             {
-                connectorMasterProp = null;
                 alert( "This property cannot be used as a master property with the connector." );
+                connectorInit();
+                return;
             }
             else if ( dim == 1 )
             {
@@ -181,45 +168,102 @@ function ui_buildConstraints ( ui_constraintsGroup )
                 ui_connectorAxisList.selection = 4;
                 ui_connectorAxisLabel.text = "Channel: ";
                 if ( app.project.bitsPerChannel == 8 ) ui_connectorMaximumEdit.setText( '255' );
-                else if ( app.project.bitsPerChannel == 16 ) ui_connectorMaximumEdit.setText( '32768' );
+                else if ( app.project.bitsPerChannel == 16 ) ui_connectorMaximumEdit.setText( '65536' );
                 else if ( app.project.bitsPerChannel == 32 ) ui_connectorMaximumEdit.setText( '1.0' );
             }
+
+            connectorReady();
+            return;
         }
 
-        if ( connectorMasterProp != null )
+        //effector
+        effect = layer.effect( DuAEF.Duik.PseudoEffects.EFFECTOR.matchName );
+        if ( effect )
         {
-            ui_connectorForm.enabled = true;
+            connector.masterProp = null;
+            connector.masterLayer = layer;
+            connector.type = 2;
+            connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Spatial Effector";
+            connectorReady();
+            return;
+        }
+
+    }
+
+    function connectorFormReady(isReady)
+    {
+        isReady = def(isReady, true, false);
+        if (connector.type == 2) isReady = false;
+        
+        ui_connectorForm.enabled = isReady;
+        if ( settings.data.uiMode != 2 )
+        {
+            ui_connectorSeparator2.enabled = isReady;
+        }
+
+        if (connector.type == 3)
+        {
+            ui_connectorTypeLabel.enabled = false;
+            ui_connectorTypeList.enabled = false;
+        }
+    }
+
+    function connectorReady(isReady)
+    {
+        isReady = def(isReady, true, false);
+
+        connectorFormReady(isReady);
+        
+        if (isReady)
+        {
             ui_connectorChildrenGroup.enabled = true;
+
             ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile( w25_allproperties_l );
-            ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_l );
+
+            if (connector.type == 1) ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_l );
+            else ui_connectorOpacitiesButton.enabled = false;
+
             if ( settings.data.uiMode != 2 )
             {
                 ui_connectorSeparator3.enabled = true;
-                ui_connectorSeparator2.enabled = true;
             }
-            ui_connectorAxisList_changed();
+
+
         }
-        else
+        else 
         {
-            connectorMasterLabel.text = "Pick master property";
-            ui_connectorForm.enabled = false;
             ui_connectorChildrenGroup.enabled = false;
             ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile( w25_allproperties_m );
+            ui_connectorPropertiesButton.enabled = true;
             ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_m );
+            ui_connectorOpacitiesButton.enabled = true;
+
             if ( settings.data.uiMode != 2 )
             {
                 ui_connectorSeparator3.enabled = false;
-                ui_connectorSeparator2.enabled = false;
             }
         }
+
+    }
+
+    //====== EVENTS ================
+
+    function ui_connectorButton_clicked ()
+    {
+        var props = DuAEF.DuAE.Comp.getSelectedProps();
+        if ( props.length == 0 ) return;
+
+        app.beginUndoGroup( 'Duik | ' + "Connector" );
+        DuAEF.Duik.Rigging.quickConnector( props );
+        app.endUndoGroup();
     }
 
     function ui_connectorAxisList_changed ()
     {
-        if ( !connectorMasterProp ) return;
+        if ( !connector.masterProp ) return;
         var axis = 0;
         if ( ui_connectorAxisList.selection ) axis = ui_connectorAxisList.selection.index;
-        var range = DuAEF.DuAE.Property.getRange( connectorMasterProp, axis, false );
+        var range = DuAEF.DuAE.Property.getRange( connector.masterProp, axis, false );
         if ( range.length != 2 ) return;
         if ( range[ 0 ] == range[ 1 ] ) return;
         ui_connectorMinimumEdit.setText( Math.floor( range[ 0 ] ) );
@@ -236,8 +280,8 @@ function ui_buildConstraints ( ui_constraintsGroup )
         else if ( ui_connectorTypeList.selection.index == 1 )
         {
             ui_connectorAxisList.enabled = false;
-            if ( !connectorMasterProp ) return;
-            var vel = DuAEF.DuAE.Property.getMaxVelocity( connectorMasterProp );
+            if ( !connector.masterProp ) return;
+            var vel = DuAEF.DuAE.Property.getMaxVelocity( connector.masterProp );
             ui_connectorMinimumEdit.setText( '0' );
             ui_connectorMaximumEdit.setText( Math.floor( vel * 100 ) / 100 );
         }
@@ -245,42 +289,79 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_connectorPropertiesButton_clicked ()
     {
-        var effect = null;
-        var min = parseFloat( ui_connectorMinimumEdit.text );
-        var max = parseFloat( ui_connectorMaximumEdit.text );
-        var type = DuAEF.DuAE.Types.VALUE;
-        if ( ui_connectorTypeList.selection.index == 1 ) type = DuAEF.DuAE.Types.VELOCITY;
-        var axis = DuAEF.DuAE.Axis.X;
-        if ( connectorMasterProp.dimensions == 2 || connectorMasterProp.dimensions == 3 )
-        {
-            if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.Y;
-            else if ( ui_connectorAxisList.selection.index == 2 ) axis = DuAEF.DuAE.Axis.Z;
-        }
-        else if ( connectorMasterProp.dimensions == 4 )
-        {
-            if ( ui_connectorAxisList.selection.index == 0 ) axis = DuAEF.DuAE.Axis.RED;
-            else if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.GREEN;
-            else if ( ui_connectorAxisList.selection.index == 2 ) axis = DuAEF.DuAE.Axis.BLUE;
-            else if ( ui_connectorAxisList.selection.index == 3 ) axis = DuAEF.DuAE.Axis.ALPHA;
-            else if ( ui_connectorAxisList.selection.index == 4 ) axis = DuAEF.DuAE.Axis.HUE;
-            else if ( ui_connectorAxisList.selection.index == 5 ) axis = DuAEF.DuAE.Axis.SATURATION;
-            else if ( ui_connectorAxisList.selection.index == 6 ) axis = DuAEF.DuAE.Axis.VALUE;
-        }
+        //TODO effector a travers comp
+        //TODO texture a travers comp
+
 
         var props = DuAEF.DuAE.Comp.getSelectedProps();
         if ( props.length == 0 ) return;
 
-        app.beginUndoGroup( 'Duik | ' + "Connector" );
 
-        var effect = null;
-        var it = new Iterator( props );
-        it.do( function( p )
+        if (connector.type == 1)
         {
-            effect = DuAEF.Duik.Rigging.connector( p, connectorMasterProp, effect, min, max, axis, type );
-        } );
+            var effect = null;
+            var min = parseFloat( ui_connectorMinimumEdit.text );
+            var max = parseFloat( ui_connectorMaximumEdit.text );
+            var type = DuAEF.DuAE.Types.VALUE;
+            if ( ui_connectorTypeList.selection.index == 1 ) type = DuAEF.DuAE.Types.VELOCITY;
+            var axis = DuAEF.DuAE.Axis.X;
+            if ( connector.masterProp.dimensions == 2 || connector.masterProp.dimensions == 3 )
+            {
+                if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.Y;
+                else if ( ui_connectorAxisList.selection.index == 2 ) axis = DuAEF.DuAE.Axis.Z;
+            }
+            else if ( connector.masterProp.dimensions == 4 )
+            {
+                if ( ui_connectorAxisList.selection.index == 0 ) axis = DuAEF.DuAE.Axis.RED;
+                else if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.GREEN;
+                else if ( ui_connectorAxisList.selection.index == 2 ) axis = DuAEF.DuAE.Axis.BLUE;
+                else if ( ui_connectorAxisList.selection.index == 3 ) axis = DuAEF.DuAE.Axis.ALPHA;
+                else if ( ui_connectorAxisList.selection.index == 4 ) axis = DuAEF.DuAE.Axis.HUE;
+                else if ( ui_connectorAxisList.selection.index == 5 ) axis = DuAEF.DuAE.Axis.SATURATION;
+                else if ( ui_connectorAxisList.selection.index == 6 ) axis = DuAEF.DuAE.Axis.VALUE;
+            }
 
-        app.endUndoGroup();
+            app.beginUndoGroup( 'Duik | ' + "Connector" );
 
+            var effect = null;
+            var it = new Iterator( props );
+            it.do( function( p )
+            {
+                effect = DuAEF.Duik.Rigging.connector( p, connector.masterProp, effect, min, max, axis, type );
+            } );
+
+            app.endUndoGroup();
+        }
+
+        else if (connector.type == 2)
+        {
+            shared.effector(connector.masterLayer);
+        }
+
+        else if (connector.type == 3)
+        {
+            app.beginUndoGroup( 'Duik | ' + "Connector" );
+
+            var effect = null;
+            var it = new Iterator( props );
+            it.do( function( p )
+            {
+                effect = DuAEF.Duik.Automation.mapEffector( p, connector.masterLayer, effect );
+            } );
+
+            //set values 
+            var textureEffect = connector.masterLayer.effect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.matchName);
+            if (textureEffect)
+            {
+                textureEffect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['MinimumSlider']).setValue(parseFloat( ui_connectorMinimumEdit.text ));
+                textureEffect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['MaximumSlider']).setValue(parseFloat( ui_connectorMaximumEdit.text ));
+                textureEffect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['ChannelPopup']).setValue(ui_connectorAxisList.selection.index+1);
+            }
+
+            app.endUndoGroup();
+            DuAEF.Duik.Automation.mapEffector(connector.masterLayer);
+        }
+        
     }
 
     function ui_connectorOpacitiesButton_clicked ()
@@ -291,12 +372,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
         var type = DuAEF.DuAE.Types.VALUE;
         if ( ui_connectorTypeList.selection.index == 1 ) type = DuAEF.DuAE.Types.VELOCITY;
         var axis = DuAEF.DuAE.Axis.X;
-        if ( connectorMasterProp.dimensions == 2 || connectorMasterProp.dimensions == 3 )
+        if ( connector.masterProp.dimensions == 2 || connector.masterProp.dimensions == 3 )
         {
             if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.Y;
             else if ( ui_connectorAxisList.selection.index == 2 ) axis = DuAEF.DuAE.Axis.Z;
         }
-        else if ( connectorMasterProp.dimensions == 4 )
+        else if ( connector.masterProp.dimensions == 4 )
         {
             if ( ui_connectorAxisList.selection.index == 0 ) axis = DuAEF.DuAE.Axis.RED;
             else if ( ui_connectorAxisList.selection.index == 1 ) axis = DuAEF.DuAE.Axis.GREEN;
@@ -319,10 +400,94 @@ function ui_buildConstraints ( ui_constraintsGroup )
         var it = new Iterator( layers );
         it.do( function( layer )
         {
-            effect = DuAEF.Duik.Rigging.connector( layer.transform.opacity, connectorMasterProp, effect, min, max, axis, type );
+            effect = DuAEF.Duik.Rigging.connector( layer.transform.opacity, connector.masterProp, effect, min, max, axis, type );
         } );
 
         app.endUndoGroup();
+    }
+
+    function ui_connectorSliderButton_clicked()
+    {
+        var comp = DuAEF.DuAE.Project.getActiveComp();
+        if (!comp) return;
+
+        //create controller
+        var layer = shared.createController( DuAEF.Duik.Controller.Types.SLIDER )[0];
+
+        //ready
+        connectorPick();
+    }
+
+    function ui_connectorDoubleSliderButton_clicked()
+    {
+        var comp = DuAEF.DuAE.Project.getActiveComp();
+        if (!comp) return;
+
+        //create controller
+        var layer = shared.createController( DuAEF.Duik.Controller.Types.DOUBLE_SLIDER )[0];
+
+        //ready
+        connectorPick();
+    }
+
+    function ui_connectorAngleButton_clicked()
+    {
+
+        var comp = DuAEF.DuAE.Project.getActiveComp();
+        if (!comp) return;
+
+        //create controller
+        var layer = shared.createController( DuAEF.Duik.Controller.Types.ANGLE )[0];
+
+        //ready
+        connectorPick();
+    }
+
+    function ui_connectorEffectorButton_clicked ()
+    {
+        var comp = DuAEF.DuAE.Project.getActiveComp();
+        if (!comp) return;
+
+        app.beginUndoGroup('Duik | ' + "Create Effector");
+        //create the controller 
+        var layer = DuAEF.Duik.Automation.createEffectorController();
+        app.endUndoGroup();
+
+        //ready
+        connectorPick();
+    }
+
+    function ui_connectorMapEffectorButton_clicked ()
+    {
+        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        if (layers.length == 0) return;
+
+        connectorInit();
+
+        var layer = layers[layers.length - 1];
+
+        connector.masterProp = null;
+        connector.masterLayer = layer;
+        connector.type = 3;
+        connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Texture";
+
+        ui_connectorAxisList.removeAll();
+        ui_connectorAxisList.enabled = true;
+        ui_connectorAxisList.add( 'item', "Red" );
+        ui_connectorAxisList.add( 'item', "Green" );
+        ui_connectorAxisList.add( 'item', "Blue" );
+        ui_connectorAxisList.add( 'item', "Hue" );
+        ui_connectorAxisList.add( 'item', "Saturation" );
+        ui_connectorAxisList.add( 'item', "Luminosity" );
+        ui_connectorAxisList.add( 'item', "Alpha" );
+        ui_connectorAxisList.selection = 5;
+        ui_connectorAxisLabel.text = "Channel: ";
+        ui_connectorMaximumEdit.suffix = '%';
+        ui_connectorMaximumEdit.setText( '100' );
+        ui_connectorMinimumEdit.suffix = '%';
+        ui_connectorMinimumEdit.setText('0');
+        
+        connectorReady();
     }
 
     function ui_bonesEditSizeList_changed ()
@@ -1061,20 +1226,18 @@ function ui_buildConstraints ( ui_constraintsGroup )
     var ui_connectorGroup = DuAEF.DuScriptUI.addGroup( ui_constraintsGroup, 'column' );
     DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, settings.data.uiMode != 2 ? "Connector" : '' );
     ui_connectorGroup.alignChildren = [ 'center', 'top' ];
-
-    if ( settings.data.uiMode != 2 ) DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Controller" );
+    var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Pick master property", DuAEF.DuJS.Color.Colors.DARK_GREY );
+	connectorMasterLabel.characters = 20;
+	connectorMasterLabel.justify = 'center';
+    
     var ui_connectorCtrlGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, 'row' );
     var ui_connectorSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_slider_l ), 'Create a slider controller', DuAEF.DuBinary.toFile( w25_slider_r ) );
     var ui_connectorDoubleSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_doubleslider_l ), 'Create a 2D slider controller', DuAEF.DuBinary.toFile( w25_doubleslider_r ) );
     var ui_connectorAngleButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_angle_l ), 'Create an angle controller', DuAEF.DuBinary.toFile( w25_angle_r ) );
     var ui_connectorEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_effector_l ), 'Create a spatial effector', DuAEF.DuBinary.toFile( w25_effector_r ) );
-    var ui_connectorMapEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_texture_l ), 'Select a texture layer (map)', DuAEF.DuBinary.toFile( w25_texture_r ) );
+    var ui_connectorMapEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_picktexture_l ), 'Select a texture layer (map)', DuAEF.DuBinary.toFile( w25_picktexture_r ) );
 	var ui_connectorPickButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, "", DuAEF.DuBinary.toFile( w25_pickproperty_l ), "Select a master property", DuAEF.DuBinary.toFile( w25_pickproperty_r ) );
-	var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Pick master property", DuAEF.DuJS.Color.Colors.DARK_GREY );
-	connectorMasterLabel.characters = 20;
-	connectorMasterLabel.justify = 'center';
-
-
+	
     if ( settings.data.uiMode != 2 ) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Controller values" );
     var ui_connectorForm = DuAEF.DuScriptUI.addForm( ui_connectorGroup );
     DuAEF.DuScriptUI.setBackgroundColor( ui_connectorForm, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
@@ -1091,6 +1254,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_connectorMaxLabel.minimumSize.height = ui_connectorMaxLabel.maximumSize.height = ui_connectorMaximumEdit.edit.preferredSize[ 1 ];
     ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.height = ui_connectorAxisList.preferredSize[ 1 ];
     ui_connectorTypeLabel.minimumSize.height = ui_connectorTypeLabel.maximumSize.height = ui_connectorTypeList.preferredSize[ 1 ];
+
     if ( settings.data.uiMode != 2 ) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Children" );
     var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, settings.data.uiMode == 2 ? 'row' : 'column' );
     ui_connectorChildrenGroup.alignment = settings.data.uiMode == 2 ? [ 'center', 'top' ] : [ 'fill', 'top' ];
@@ -1108,6 +1272,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
         "Connect selected layers opacity",
         DuAEF.DuBinary.toFile( w25_opacity_r )
     );
+
     DuAEF.DuScriptUI.addSeparator( ui_connectorGroup );
     var ui_connectorCancelButton = DuAEF.DuScriptUI.addButton( ui_connectorGroup, "Cancel", DuAEF.DuBinary.toFile( w25_back_m ), "Back", DuAEF.DuBinary.toFile( w25_back_r ) );
 
@@ -1115,7 +1280,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     bonesEditInit();
     var pathConstraintPathProp = null;
-    var connectorMasterProp = null;
+    var connector = {};
+    connector.masterProp = null;
+    connector.masterLayer = null;
+    connector.type = 1; // 1: standard, 2: effector, 3: texture
+
     ui_autorigBakeStructuresButton.setChecked( settings.data.autorigBakeStructures );
     ui_autorigTailSelector.setCurrentIndex( settings.data.autorigTailIK );
     if ( settings.data.ik3Layer ) ui_ikOptionsSelector.setCurrentIndex( 1 );
@@ -1169,21 +1338,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_blenderSetupValidButton.onClick = ui_blenderSetupValidButton_clicked;
 
     ui_connectorButton.onClick = ui_connectorButton_clicked;
-    ui_connectorSliderButton.onClick = function()
-    {
-        shared.createController( DuAEF.Duik.Controller.Types.SLIDER );
-        ui_connectorPickButton_clicked();
-    }
-    ui_connectorDoubleSliderButton.onClick = function()
-    {
-        shared.createController( DuAEF.Duik.Controller.Types.DOUBLE_SLIDER );
-        ui_connectorPickButton_clicked();
-    }
-    ui_connectorAngleButton.onClick = function()
-    {
-        shared.createController( DuAEF.Duik.Controller.Types.ANGLE );
-        ui_connectorPickButton_clicked();
-    }
+    ui_connectorSliderButton.onClick = ui_connectorSliderButton_clicked;
+    ui_connectorDoubleSliderButton.onClick = ui_connectorDoubleSliderButton_clicked;
+    ui_connectorAngleButton.onClick = ui_connectorAngleButton_clicked;
+    ui_connectorEffectorButton.onClick = ui_connectorEffectorButton_clicked;
+    ui_connectorMapEffectorButton.onClick = ui_connectorMapEffectorButton_clicked;
     ui_connectorTypeList.onChange = ui_connectorTypeList_changed;
     ui_connectorAxisList.onChange = ui_connectorAxisList_changed;
     ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
@@ -1198,7 +1357,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
     {
         setCurrentConstraintsPanel( 0 );
     };
-    ui_connectorPickButton.onClick = ui_connectorPickButton_clicked;
+    ui_connectorPickButton.onClick = connectorPick;
     ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
     ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
 
