@@ -63,7 +63,7 @@ Each file will be converted to a string, stored in a variable named after the fi
 
 	//write data
 
-	var helpFile = new File(scriptFolder.absoluteURI + 'duik_required/Duik16_helpStrings.jsxinc');
+	var helpFile = new File(scriptFolder.absoluteURI + '/duik_required/Duik16_helpStrings.jsxinc');
 	helpFile.encoding = 'UTF-8';
 	if (!helpFile.open('w'))
 	{
