@@ -516,24 +516,29 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 		ctrlLayer.effect("Effector")(DuAEF.Duik.PseudoEffects.EFFECTOR.outerLimitSlider).setValue(distance*3/4);
 	}
 
+	var ctrlComp = ctrlLayer.containingComp;
+
 	//create effect
-	if (effect == null)
+	if (effect == null && comp.id == ctrlComp.id)
 	{
 		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
 		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
 	}
 
 	//Set effect
-	effect(1).setValue(ctrlLayer.index);
+	if (effect) effect(1).setValue(ctrlLayer.index);
 
 	//set expression
+	var ctrlLink = '';
+	if ( comp.id != ctrlComp.id ) ctrlLink = DuAEF.DuAE.Property.getExpressionLink(ctrlLayer);
+	else ctrlLink = 'effect( "' + effect.name + '" )( 1 )';
 	var expression = ['//Duik.effector',
 		'var fx = null;',
 		'var result = value;',
 		'',
 		'try',
 		'{',
-		'    var ctrl = effect( "' + effect.name + '" )( 1 );',
+		'    var ctrl = ' + ctrlLink  + ';',
 		'    fx = ctrl.effect( "Effector" );',
 		'}',
 		'catch ( e )',
@@ -643,14 +648,14 @@ DuAEF.Duik.Automation.mapEffector = function (prop,texture,effect)
 	var textureComp = texture.containingComp;
 
 	//create effect
-	if (effect == null)
+	if (effect == null && comp.id == textureComp.id)
 	{
 		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
 		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
 	}
 
 	//Set effect
-	effect(1).setValue(texture.index);
+	if (effect) effect(1).setValue(texture.index);
 
 	//Add texture effect 
 	var textureEffect = texture.effect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.matchName);
@@ -660,6 +665,9 @@ DuAEF.Duik.Automation.mapEffector = function (prop,texture,effect)
 	}
 
 	//set expression
+	var textureLink = '';
+	if ( comp.id != textureComp.id ) textureLink = DuAEF.DuAE.Property.getExpressionLink(texture);
+	else textureLink = 'effect( "' + effect.name + '" )( 1 )';
 	var expression = ['//Duik.mapEffector',
 		'var fx = null;',
 		'var ctrl = null;',
@@ -667,7 +675,7 @@ DuAEF.Duik.Automation.mapEffector = function (prop,texture,effect)
 		'',
 		'try',
 		'{',
-		'    ctrl = effect( "' + effect.name + '" )( 1 );',
+		'    ctrl = ' + textureLink + ';',
 		'    fx = ctrl.effect( "' + textureEffect.name + '" );',
 		'}',
 		'catch ( e )',
