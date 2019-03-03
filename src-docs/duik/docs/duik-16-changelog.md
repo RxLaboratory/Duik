@@ -9,6 +9,11 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
 - The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
 - The additional panel for the [***Bone***](bones.md) now includes a button to select and show or hide all the bones in the composition.
+- The [***Connector***](connector.md) now works with a spatial effector or a texture effector too.
+
+#### New (Automations)
+
+- The new [***Effector Map***](effector-map.md) tool is able to connect any property to a texture effector.
 
 #### New (Controllers)
 
