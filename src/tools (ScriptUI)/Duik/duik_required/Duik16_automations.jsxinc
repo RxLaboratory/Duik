@@ -10,6 +10,7 @@ function ui_buildAutomations(ui_automationsMainGroup)
 		ui_wiggleOptionsGroup.visible = panel == 1;
 		ui_randomOptionsGroup.visible = panel == 2;
 		ui_walkCycleOptionsGroup.visible = panel == 3;
+		ui_mapEffectorOptionsGroup.visible = panel == 4;
 	}
 
 	function initAutomationsUI()
@@ -431,20 +432,64 @@ function ui_buildAutomations(ui_automationsMainGroup)
 		app.endUndoGroup;
 	}
 
+	function ui_mapEffectorButton_clicked()
+	{
+		mapEffectorTexture = null;
+        ui_mapEffectorLabel.text = "Select path...";
+        ui_mapEffectorValidButton.enabled = false;
+        if (settings.data.uiMode < 2) ui_mapEffectorSeparator.enabled = false;
+        ui_mapEffectorValidButton.icon.image = ui_mapEffectorValidButton.standardImage = DuAEF.DuBinary.toFile( w25_mapeffector_m );
+        setCurrentAutomationPanel( 4 );
+	}
+
+	function ui_mapEffectorPickButton_clicked()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        if ( layers.length == 0 ) return;
+
+        mapEffectorTexture = layers.pop();
+        ui_mapEffectorLabel.text = mapEffectorTexture.index + " - " + mapEffectorTexture.name;
+        ui_mapEffectorValidButton.enabled = true;
+        if (settings.data.uiMode < 2) ui_mapEffectorSeparator.enabled = true;
+        ui_mapEffectorValidButton.icon.image = ui_mapEffectorValidButton.standardImage = DuAEF.DuBinary.toFile( w25_mapeffector_l );
+	}
+
+	function ui_mapEffectorValidButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+        if ( props.length == 0 ) return;
+
+		app.beginUndoGroup( 'Duik | ' + "Effector Map" );
+
+		var effect = null;
+		var it = new Iterator( props );
+		it.do( function( p )
+		{
+			effect = DuAEF.Duik.Automation.mapEffector( p, mapEffectorTexture, effect );
+		} );
+
+		app.endUndoGroup();
+	}
+
 	//========== UI =============
 
 	ui_automationsMainGroup.orientation = 'stack';
 
 	var ui_automationsBaseGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'column');
 	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_automationsBaseGroup,'Automations');
+
+	var ui_listButton = DuAEF.DuScriptUI.addButton(ui_automationsBaseGroup,"List",DuAEF.DuBinary.toFile(w25_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w25_list_r));
+	ui_listButton.setHelp("List", listHelp, listLink);
+
 	var ui_automationsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsBaseGroup,'row');
 	ui_automationsGroup.alignment = ['fill','top'];
 	ui_automationsGroup.alignChildren = ['fill','top'];
 
+
 	var ui_automationsLeftGroup = DuAEF.DuScriptUI.addGroup(ui_automationsGroup,'column');
 	ui_automationsLeftGroup.alignChildren = ['fill','top'];
-	var ui_listButton = DuAEF.DuScriptUI.addButton(ui_automationsLeftGroup,"List",DuAEF.DuBinary.toFile(w25_list_l),"Add a list to the property",DuAEF.DuBinary.toFile(w25_list_r));
-	ui_listButton.setHelp("List", listHelp, listLink);
+	var ui_mapEffectorButton = DuAEF.DuScriptUI.addButton(ui_automationsLeftGroup,"Effector Map",DuAEF.DuBinary.toFile(w25_mapeffector_l),"Use a texture effector to drive properties",DuAEF.DuBinary.toFile(w25_mapeffector_r));
+	ui_mapEffectorButton.setHelp("Effector Map", mapeffectorHelp, mapeffectorLink);
 	var ui_wiggleGroup = DuAEF.DuScriptUI.addGroup(ui_automationsLeftGroup);
 	var ui_wiggleButton = DuAEF.DuScriptUI.addButton(ui_wiggleGroup,"Wiggle",DuAEF.DuBinary.toFile(w25_wiggle_l),"Make the property wiggle",DuAEF.DuBinary.toFile(w25_wiggle_r));
 	ui_wiggleButton.setHelp("Wiggle", wiggleHelp, wiggleLink);
@@ -569,11 +614,30 @@ function ui_buildAutomations(ui_automationsMainGroup)
 	var ui_randomCancelButton = DuAEF.DuScriptUI.addButton(ui_randomValidGroup,'Cancel',DuAEF.DuBinary.toFile(w25_cancel_m),"Back to automations",DuAEF.DuBinary.toFile(w25_cancel_r));
 	var ui_randomValidButton = DuAEF.DuScriptUI.addButton(ui_randomValidGroup,'Randomize',DuAEF.DuBinary.toFile(w25_check_g),"Randomize!",DuAEF.DuBinary.toFile(w25_check_r));
 
+	//MAP EFFECTOR
+
+	var ui_mapEffectorOptionsGroup = DuAEF.DuScriptUI.addGroup(ui_automationsMainGroup,'column');
+	ui_mapEffectorOptionsGroup.alignChildren = [ 'center', 'top' ];
+    if ( settings.data.uiMode != 2 ) DuAEF.DuScriptUI.addSeparator( ui_mapEffectorOptionsGroup, "1 - Select texture layer" );
+	var ui_mapEffectorPickButton = DuAEF.DuScriptUI.addButton(ui_mapEffectorOptionsGroup,'Pick texture layer',DuAEF.DuBinary.toFile(w25_picktexture_l),"Pick texture layer",DuAEF.DuBinary.toFile(w25_picktexture_r));
+	var ui_mapEffectorLabel = DuAEF.DuScriptUI.addStaticText(ui_mapEffectorOptionsGroup, 'Select layer...', DuAEF.DuJS.Color.Colors.DARK_GREY );
+	ui_mapEffectorLabel.characters = 20;
+    ui_mapEffectorLabel.justify = 'center';
+	var ui_mapEffectorValidButton = DuAEF.DuScriptUI.addButton( ui_mapEffectorOptionsGroup,
+		"Connect properties",
+		DuAEF.DuBinary.toFile(w25_mapeffector_l),
+		"Use a texture effector to drive properties",
+		DuAEF.DuBinary.toFile(w25_mapeffector_r));
+	if ( settings.data.uiMode != 2 ) var ui_mapEffectorSeparator = DuAEF.DuScriptUI.addSeparator( ui_mapEffectorOptionsGroup, "2 - Select properties" );
+    DuAEF.DuScriptUI.addSeparator( ui_mapEffectorOptionsGroup, "" );
+    var ui_mapEffectorCancelButton = DuAEF.DuScriptUI.addButton( ui_mapEffectorOptionsGroup, "Cancel", DuAEF.DuBinary.toFile( w25_back_m ), "Cancel", DuAEF.DuBinary.toFile( w25_back_r ) );
+
 	//=========== INIT ==============
 	ui_randomOffsetSelector.setCurrentIndex(0);
 	ui_randomSelector.setCurrentIndex(0);
 	ui_randomSeparateSelector.setCurrentIndex(1);
 	ui_randomSelector_changed();
+	var mapEffectorTexture = null;
 
 	ui_automationsMainGroup.tabActivated = setCurrentAutomationPanel;
 
@@ -597,6 +661,11 @@ function ui_buildAutomations(ui_automationsMainGroup)
 	ui_randomValidButton.onClick = ui_randomValidButton_clicked;
 
 	ui_effectorButton.onClick = ui_effectorButton_clicked;
+
+	ui_mapEffectorButton.onClick = ui_mapEffectorButton_clicked;
+	ui_mapEffectorCancelButton.onClick = function(){setCurrentAutomationPanel(0);};
+	ui_mapEffectorPickButton.onClick = ui_mapEffectorPickButton_clicked;
+	ui_mapEffectorValidButton.onClick = ui_mapEffectorValidButton_clicked;
 
 	ui_springButton.onClick = ui_springButton_clicked;
 
