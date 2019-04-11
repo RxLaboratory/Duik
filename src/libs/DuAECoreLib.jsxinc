@@ -1,46 +1,6 @@
 ﻿#include "pseudoEffects/duaef_magic.ffx.jsxinc"
 
 /**
-	* Constructs a Pseudo Effect
-	* @class Structure
-	* @classdesc Describes a pseudo effect
-	* @param  {File} file - The ffx file
-	* @param  {string} [matchName=""] - The matchName
-	* @param  {string} [name=""] - The default name
-	* @property  {File} file - The ffx file
-	* @property  {string} matchName - The matchName
-	* @property  {string} name - The default name
-*/
-function PseudoEffect(file,matchName,name)
-{
-	if(typeof name == 'undefined') name = '';
-	if(typeof matchName == 'undefined') matchName = '';
-	this.file = file;
-	this.matchName = matchName;
-	if (name != '') DuAEF.DuScriptUI.uiStrings.push(name);
-	this.name = tr(name);
-}
-
-/**
-	* This method adds the pseudo effect to a layer
-	* @param {Layer} layer - The layer
-	* @param {string} [name=this.name] - A name for the effect
-	* @return {PropertyGroup|null} The effect or null if there's no matchName
-*/
-PseudoEffect.prototype.apply = function(layer,name)
-{
-	if (this.matchName == '')
-	{
-		DuAEF.DuAE.Layer.applyPreset(layer,this.file);
-		return null;
-	}
-
-	if (typeof name === 'undefined') name = this.name;
-
-	return DuAEF.DuAE.Layer.addPseudoEffect(layer,this.file,this.matchName,name);
-}
-
-/**
 	* Constructs a new KeySpatialProperty
 	* @class KeySpatialProperties
 	* @classdesc Spatial properties of a {@linkcode KeyFrame}.
@@ -634,6 +594,45 @@ DuAEF.DuAE.LayerAttributes =
 }
 
 /**
+ * Loop types
+ * @enum {string}
+ * @readonly
+*/
+DuAEF.DuAE.LoopTypes = 
+{
+	HOLD: 'hold',
+	NONE: 'none',
+	CYCLE: 'cycle',
+	PINGPONG: 'pingpong',
+	OFFSET: 'offset',
+	CONTINUE: 'continue'
+}
+
+/**
+ * Default color labels
+ * @readonly
+ * @todo get real labels (from pref file?)
+ */
+DuAEF.DuAE.ColorLabels = [];
+DuAEF.DuAE.ColorLabels[0]  = [0, 0, 0 ];	// 0. None
+DuAEF.DuAE.ColorLabels[1]  = [121/255, 058/255, 058/255 ];	// 1. Red
+DuAEF.DuAE.ColorLabels[2]  = [144/255, 138/255, 068/255 ];	// 2. Yellow
+DuAEF.DuAE.ColorLabels[3]  = [115/255, 132/255, 130/255 ];	// 3. Aqua
+DuAEF.DuAE.ColorLabels[4]  = [145/255, 124/255, 131/255 ];	// 4. Pink
+DuAEF.DuAE.ColorLabels[5]  = [115/255, 115/255, 131/255 ];	// 5. Lavender
+DuAEF.DuAE.ColorLabels[6]  = [146/255, 127/255, 109/255 ];	// 6. Peach
+DuAEF.DuAE.ColorLabels[7]  = [120/255, 130/255, 120/255 ];	// 7. Sea Foam
+DuAEF.DuAE.ColorLabels[8]  = [082/255, 093/255, 142/255 ];	// 8. Blue
+DuAEF.DuAE.ColorLabels[9]  = [067/255, 112/255, 068/255 ];	// 9. Green
+DuAEF.DuAE.ColorLabels[10] = [101/255, 052/255, 107/255 ];	// 10. Purple
+DuAEF.DuAE.ColorLabels[11] = [146/255, 103/255, 037/255 ];	// 11. Orange
+DuAEF.DuAE.ColorLabels[12] = [094/255, 065/255, 051/255 ];	// 12. Brown
+DuAEF.DuAE.ColorLabels[13] = [152/255, 085/255, 137/255 ];	// 13. Fuchsia
+DuAEF.DuAE.ColorLabels[14] = [061/255, 111/255, 113/255 ];	// 14. Cyan
+DuAEF.DuAE.ColorLabels[15] = [114/255, 105/255, 090/255 ];	// 15. Sandstone
+DuAEF.DuAE.ColorLabels[16] = [045/255, 062/255, 045/255 ];	// 16. DarkGreen
+
+/**
 	* Checks if the param is an AE collection or an Array
 	* @param {Array|Collection} collection - The list to check
 	* @return {boolean} true if collection is a collection, false if it's an array
@@ -731,7 +730,8 @@ DuAEF.DuAE.App.askFilesAndNetworkAccess = function(showAlert,message)
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 		if (showAlert) alert(message);
-		app.executeCommand(2359);
+		if (DuAEF.DuAE.App.version < 16.1) app.executeCommand(2359);
+		else app.executeCommand(3131);
 		DuAEF.DuAE.App.hasFilesAndNetworkAccess = app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1;
 	}
 	return DuAEF.DuAE.App.hasFilesAndNetworkAccess;
@@ -1886,23 +1886,13 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 	var sortedLayers = [];
 	var layersToSort = DuAEF.DuAE.convertCollectionToArray(layers);
 
-	//add layers with no parents
-	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
-	{
-		var l = layersToSort[i];
-		if (l.parent == null)
-		{
-			sortedLayers.push(l);
-			layersToSort.splice(i,1);
-		}
-	}
-
 	//add layers with a parent outside
 	//those with a parent outside of the selection
 	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
 	{
 		var l = layersToSort[i];
 		var parent = l.parent;
+		if (parent == null) continue;
 		var isParentOutside = true;
 		for (var j = 0 ; j < layersToSort.length ; j++ )
 		{
@@ -1913,6 +1903,17 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 			}
 		}
 		if (isParentOutside)
+		{
+			sortedLayers.push(l);
+			layersToSort.splice(i,1);
+		}
+	}
+
+	//add layers with no parents
+	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
+	{
+		var l = layersToSort[i];
+		if (l.parent == null)
 		{
 			sortedLayers.push(l);
 			layersToSort.splice(i,1);
@@ -2001,8 +2002,6 @@ DuAEF.DuAE.Layer.toggleEditMode = function(layer)
 
 	var setEditMode = !reChildren.test(layer.comment);
 
-	//TODO else
-
 	var comp = layer.containingComp;
 
 	if (setEditMode)
@@ -2018,6 +2017,10 @@ DuAEF.DuAE.Layer.toggleEditMode = function(layer)
 		}
 		layer.comment = layer.comment + "|";
 		layer.name = '=EDIT= ' + layer.name;
+         var tint = layer.property('ADBE Effect Parade').addProperty('ADBE Tint');
+         tint.name = 'DUIK EDIT MODE';
+         tint(1).setValue([0.5,0,0,1]);
+         tint(2).setValue([1,0,0,1]);
 	}
 	else
 	{
@@ -2038,6 +2041,8 @@ DuAEF.DuAE.Layer.toggleEditMode = function(layer)
 			//remove comment
 			layer.comment = layer.comment.replace(match[0],'');
 			layer.name = layer.name.replace('=EDIT= ','');
+             var tint = layer.property('ADBE Effect Parade').property('ADBE Tint');
+             if (tint) if (tint.name == 'DUIK EDIT MODE') tint.remove();
 		}
 	}
 }
@@ -2441,7 +2446,7 @@ DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
  * Moves a layer to the coordinates of a spatial property
  * @param {Layer} layer - The layer
  * @param {Property|PropertyInfo} prop - The property
-*/
+ */
 DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 {
 	var propInfo;
@@ -2474,6 +2479,49 @@ DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 		layer.position.setValue(prop.value);
 		layer.parent = parent;
 	}
+}
+
+/**
+ * Sets the In and Out points of a layer according to its opacity (cuts at 0%)
+ * @param {Layer} layer - The layer
+ * @param {boolean} [preExpression=false] - Whether to check for the opacity post or pre-expression value
+ */
+DuAEF.DuAE.Layer.autoDuration = function( layer, preExpression )
+{
+	if (typeof preExpression === 'undefined') preExpression = false;
+
+	var comp = layer.containingComp;
+
+	var inPoint = layer.inPoint;
+	var outPoint = layer.outPoint;
+	var inFrame = inPoint / comp.frameDuration;
+	var outFrame = outPoint / comp.frameDuration;
+
+	//search in
+	if (layer.transform.opacity.valueAtTime(inPoint, preExpression) == 0)
+	{
+		for (var i = inFrame; i < outFrame; i++)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) inPoint = time + comp.frameDuration;
+			else break;
+		}
+	}
+
+	//search out 
+	if (layer.transform.opacity.valueAtTime(outPoint, preExpression) == 0)
+	{
+		for (var i = outFrame; i > inFrame; i--)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) outPoint = time;
+			else break;
+		}
+	}
+
+	//set new in and out points
+	if (inPoint != layer.inPoint) layer.inPoint = inPoint;
+	if (outPoint != layer.outPoint) layer.outPoint = outPoint;
 }
 
 /**
@@ -3232,7 +3280,7 @@ DuAEF.DuAE.Property.selectKeyFrames = function(property,inTime,outTime)
  * Gets an expression link to the property
  * @memberof DuAEF.DuAE.Property
  * @param {Property|PropertyInfo}	prop			- The property
- * @param {bool}		[useThisComp]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
+ * @param {bool}		[useThisComp=false]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
  * @param {bool}		[fromLayer=true]		- Wether to begin the expression by comp.layer or directly from the first prop of the layer
  * @return {str}		The expression link to the property
 */
@@ -3270,7 +3318,7 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 		prop = prop.parentProperty;
 	}
 
-	if (exprCode.indexOf("(") != 0) exprCode = '.' + exprCode;
+	if (exprCode.indexOf("(") != 0 && exprCode != "") exprCode = '.' + exprCode;
 
 	if (fromLayer)
 	{
@@ -3515,13 +3563,15 @@ DuAEF.DuAE.Property.addKey = function(props, typeIn, typeOut, easeInValue, easeO
 	* @param {int[]|int} [easeOutValue] - The out interpolation ease value. Will be ignored if undefined.
 	* @param {int[]|int} [velocityInValue] - The out interpolation ease value. Will be ignored if undefined.
 	* @param {int[]|int} [velocityOutValue] - The out interpolation ease value. Will be ignored if undefined.
+	* @param {boolean} [velocityAsPercent=false] - Use a percent instead of a value to set velocities.<br />
+	* In this case, the proper velocity value will be deduced by multiplying the max speed of the property by the percent.
 */
-DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityInValue,velocityOutValue)
+DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityInValue,velocityOutValue,velocityAsPercent)
 {
-	if (isNaN(easeInValue) && easeInValue != undefined) easeInValue = 33;
-	if (isNaN(easeOutValue) && easeOutValue != undefined) easeOutValue = 33;
-	if (isNaN(velocityInValue) && velocityInValue != undefined) velocityInValue = 0;
-	if (isNaN(velocityOutValue) && velocityOutValue != undefined) velocityOutValue = 0;
+	if (isNaN(easeInValue) && typeof easeInValue !== 'undefined') easeInValue = 33;
+	if (isNaN(easeOutValue) && typeof easeOutValue !== 'undefined') easeOutValue = 33;
+	if (isNaN(velocityInValue) && typeof velocityInValue !== 'undefined') velocityInValue = 0;
+	if (isNaN(velocityOutValue) && typeof velocityOutValue !== 'undefined') velocityOutValue = 0;
 
 	for (var i = 0; i < props.length ; i++)
 	{
@@ -3529,6 +3579,7 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 		var prop = props[i];
 		if (!(propInfo instanceof PropertyInfo)) propInfo = new PropertyInfo(prop);
 		prop = propInfo.getProperty();
+		var comp = propInfo.comp;
 
 		if (prop.canVaryOverTime)
 		{
@@ -3552,14 +3603,68 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 					}
 				}
 
-				var easeIn =  [ new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[0].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[0].influence) ];
-				var easeOut = [ new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[0].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[0].influence) ];
+				//keep the ease values as the velocity computation loses them
+				var easeInValues = [];
+				var easeOutValues = [];
+				easeInValues[0] = typeof easeInValue === 'undefined' ? prop.keyInTemporalEase(key)[0].influence : easeInValue;
+				easeOutValues[0] = typeof easeOutValue === 'undefined' ? prop.keyOutTemporalEase(key)[0].influence : easeOutValue;
 				if (!prop.isSpatial)
 				{
 					for (var j = 1;j < prop.keyInTemporalEase(prop.selectedKeys[k]).length ; j++)
 					{
-						easeIn.push( new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[j].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[j].influence) );
-						easeOut.push( new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[j].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[j].influence) );
+						easeInValues.push( typeof easeInValue === 'undefined' ? prop.keyInTemporalEase(key)[j].influence : easeInValue );
+						easeOutValues.push( typeof easeOutValue === 'undefined' ? prop.keyOutTemporalEase(key)[j].influence : easeOutValue );
+					}
+				}
+
+
+				//compute the velocity
+				if (velocityAsPercent)
+				{
+					//set keyframe to linear
+					prop.setInterpolationTypeAtKey(key, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR);
+					//get speed just before and after
+					var valBefore = prop.valueAtTime( prop.keyTime(key) - comp.frameDuration, true );
+					var val = prop.keyValue(key);
+					var valAfter = prop.valueAtTime( prop.keyTime(key) + comp.frameDuration, true );
+					var prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / comp.frameDuration;
+					var nextSpeed = DuAEF.DuJS.Math.getLength(valAfter, val) / comp.frameDuration;
+
+					//detect sign
+					var signBefore = 1;
+					var signAfter = 1;
+					if (propInfo.dimensions == 1)
+					{
+						if (val - valBefore < 1) signBefore = -1;
+						if (valAfter - val < 1) signAfter = -1;
+					}
+
+					if (velocityInValue == velocityOutValue)
+					{
+						//select max speed
+						var speed = (prevSpeed + nextSpeed) / 2;
+
+						velocityInValue = velocityInValue * speed / 100 * signBefore;
+						velocityOutValue = velocityOutValue * speed / 100 * signBefore;
+					}
+					else 
+					{
+
+						velocityInValue = velocityInValue * prevSpeed / 100 * signBefore;
+						velocityOutValue = velocityOutValue * nextSpeed / 100 * signAfter;
+					}
+
+				}
+
+				var easeIn =  [ new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[0].speed, easeInValues[0]) ];
+				var easeOut = [ new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[0].speed, easeOutValues[0]) ];
+				
+				if (!prop.isSpatial)
+				{
+					for (var j = 1;j < prop.keyInTemporalEase(prop.selectedKeys[k]).length ; j++)
+					{
+						easeIn.push( new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[j].speed, easeInValues[j] ) );
+						easeOut.push( new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[j].speed, easeOutValues[j] ) );
 					}
 				}
 
@@ -3567,11 +3672,11 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 				var inType = KeyframeInterpolationType.BEZIER;
 				var outType = KeyframeInterpolationType.BEZIER;
 
-				if (easeInValue == undefined && velocityInValue == undefined)
+				if (typeof easeInValue === 'undefined' && typeof velocityInValue === 'undefined')
 				{
 					inType = prop.keyInInterpolationType(key);
 				}
-				if (easeOutValue == undefined && velocityOutValue == undefined)
+				if (typeof easeOutValue === 'undefined' && typeof velocityOutValue === 'undefined')
 				{
 					outType = prop.keyOutInterpolationType(key);
 				}
@@ -3781,10 +3886,13 @@ DuAEF.DuAE.Property.cleanKeyframes = function(property)
 /**
 	* Gets the average speed of the animated propreties
 	* @param {Property[]|PropertyInfo[]} props - The Properties
-	* @return {float} The average speed
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+	* @return {float} The average speed in unit per second
 */
-DuAEF.DuAE.Property.getAverageSpeed = function(props)
+DuAEF.DuAE.Property.getAverageSpeed = function(props, preExpression)
 {
+	if (typeof preExpression === 'undefined') preExpression = true;
+
 	var averageSpeed = 0;
 	var count = 0;
 
@@ -3798,8 +3906,13 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 
 		var comp = DuAEF.DuAE.Property.getComp(prop);
 		var frames = comp.duration / comp.frameDuration ;
-		var lastTime = prop.keyTime(prop.numKeys);
-		var firstTime = prop.keyTime(1);
+		var lastTime = comp.duration;
+		var firstTime = 0;
+		if (preExpression)
+		{
+			lastTime = prop.keyTime(prop.numKeys);
+			firstTime = prop.keyTime(1);
+		}
 		var lastFrame = lastTime/comp.frameDuration ;
 		var firstFrame = firstTime/comp.frameDuration ;
 		if (lastFrame > frames) lastFrames = frames;
@@ -3808,7 +3921,7 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 		for (var frame = firstFrame ; frame < lastFrame ; frame++)
 		{
 			var time = frame*comp.frameDuration;
-			sum += DuAEF.DuAE.Property.getSpeed(prop,time);
+			sum += DuAEF.DuAE.Property.getSpeed(prop,time, preExpression);
 		}
 		var speed = sum/(lastFrame-firstFrame);
 
@@ -3824,12 +3937,31 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 }
 
 /**
+	* Gets the maximum speed of the animated propreties
+	* @param {Property[]|PropertyInfo[]} props - The Properties
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+	* @return {float} The average speed
+*/
+DuAEF.DuAE.Property.getMaximumSpeed = function(props)
+{
+	var maxSpeed = 0;
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		var speed = DuAEF.DuAE.Property.getMaxVelocity(props[i],false);
+		if (speed > maxSpeed) maxSpeed = speed;
+	}
+
+	return maxSpeed;
+}
+
+/**
 	* Gets the speed of a property at a given time
 	* @param {Property|PropertyInfo} prop - The property
 	* @param {float} [time=composition.time] - The time.
 	* @return {float} The speed
 */
-DuAEF.DuAE.Property.getSpeed = function (prop,time)
+DuAEF.DuAE.Property.getSpeed = function (prop,time, preExpression)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (prop.propertyType != PropertyType.PROPERTY) return 0;
@@ -3837,8 +3969,8 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 	var comp = DuAEF.DuAE.Property.getComp(prop);
 	if (time == undefined) time = comp.time;
 
-	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration,false),prop.valueAtTime(time-comp.frameDuration,false));
-	return speed;
+	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration/2,preExpression),prop.valueAtTime(time-comp.frameDuration/2,preExpression));
+	return speed/comp.frameDuration;
 }
 
 /**
@@ -3911,34 +4043,62 @@ DuAEF.DuAE.Property.replaceInExpressions = function (prop,oldString,newString,ca
 DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
 {
 	if (!childProp.canSetExpression) return;
-	if (useThisComp == undefined)
+	if (typeof useThisComp === 'undefined')
 	{
 		var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
 		var childComp = DuAEF.DuAE.Property.getComp(childProp);
 		if (parentComp.id == childComp.id) useThisComp = true;
 		else useThisComp = false;
 	}
-	try { childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp); } catch (e) { if (DuAEF.debug) alert(e.description); };
+	var exp = DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp );
+	DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 }
 
 /**
  * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)<br />
  * Note: any Property or PropertyGroup (and its subproperties) named "Data" will be ignored.
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase}	childProp			- The child property
- * @param {PropertyBase}	parentProp			- The parent property
- * @param {bool}		[useThisComp]			- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
-*/
-DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
+ * @param {PropertyBase} childProp - The child property
+ * @param {PropertyBase} parentProp - The parent property
+ * @param {bool} [useThisComp] - Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ * @param {LayerItem} [timeLayer=null] - A layer used to offset the time (typically, in case of link between precompositions, the precomposition layer).<br />
+ * When not null, the start time of this layer will be taken into account to get the values and synchronize them.
+ */
+DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp,timeLayer)
 {
 	if (parentProp.name.toLowerCase() == 'data') return;
 	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
+		if (typeof timeLayer === 'undefined') timeLayer = null;
+		
+		if (typeof useThisComp === 'undefined')
+		{
+			var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
+			var childComp = DuAEF.DuAE.Property.getComp(childProp);
+
+			useThisComp = parentComp.id == childComp.id;
+		}
+
 		//copy paste the animation / value
 		var anim = DuAEF.DuAE.Property.getAnim(parentProp,false);
 		if (anim != null) DuAEF.DuAE.Property.setAnim(childProp,anim,0,true,true, false);
+
 		//set the link
-		DuAEF.DuAE.Property.pickWhip(childProp,parentProp,useThisComp);
+		var exp = DuAEF.Duik.expressionIds.LINK + '\n';
+		if (timeLayer != null)
+		{		
+			exp += 'var timeLayer = ' + DuAEF.DuAE.Property.getExpressionLink( timeLayer ) + ';\n' +
+				'var st = timeLayer.startTime;\n' +
+				'var t = time + st;\n' +
+				DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + '.valueAtTime(t);';
+
+		}
+		else
+		{
+			exp += DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + ';';
+		}
+
+		DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 	}
 	else
 	{
@@ -3963,14 +4123,14 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 						continue;
 					}
 				}
-				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp);
+				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp,timeLayer);
 			}
 		}
 		else
 		{
 			for (var p = 1, num = childProp.numProperties ; p <= num ; p++)
 			{
-				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
+				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp,timeLayer);
 			}
 		}
 	}
@@ -4322,7 +4482,7 @@ DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
 		}
 	}
 
-	if (preExpression) prop.expressionEnabled = false;
+	//if (preExpression) prop.expressionEnabled = false;
 
 	if (minTime < maxTime) return [min,max];
 	else return [max,min];
@@ -4341,14 +4501,13 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 	if (typeof preExpression === 'undefined') preExpression = true;
 
 	var propInfo = prop;
-	if (!prop instanceof PropertyInfo)
+	if (!(prop instanceof PropertyInfo))
 	{
 		propInfo = new PropertyInfo(prop);
 	}
 	else
 	{
-		propInfo = prop;
-		prop = prop.getProperty();
+		prop = propInfo.getProperty();
 	}
 
 	var velocity = 0;
@@ -4369,7 +4528,7 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 		prevVal = val;
 	}
 
-	return velocity;
+	return velocity/comp.frameDuration;
 
 }
 
@@ -4383,12 +4542,12 @@ DuAEF.DuAE.Property.scriptifyExpression = function(prop)
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	var exp = prop.expression;
 	var expArray = exp.split('\n');
-	var expString = 'var expression = \'' + expArray[0].replace('\r','') + '\\n\' +\n';
-	for (var i = 1 ; i < expArray.length-1 ; i++)
+	var expString = "var expression = ['" + expArray[0].replace("\r","") + "'";
+	for (var i = 1 ; i < expArray.length ; i++)
 	{
-		expString += '\t\'' + expArray[i].replace('\r','') + '\\n\' +\n';
+		expString += ",\n\t'" + expArray[i].replace('\r','') + "'";
 	}
-	expString += '\t\'' + expArray[expArray.length-1] + '\';';
+	expString += "\n\t].join('\\n');";
 
 	return expString;
 }

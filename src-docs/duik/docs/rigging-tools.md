@@ -20,9 +20,9 @@ When two layers are selected, click on the "Measure Distance" button to measure 
 
 ## Align Layers
 
-Select some layers to align them togeter. Layers will be aligned on the latest selected one.
+Select some layers to align them together. Layers will be aligned on the latest selected one.
 
-In the additionnal panel you can choose to align the layers in *position*, *rotation*, *scale* or even *opacity*.
+In the additional panel you can choose to align the layers in *position*, *rotation*, *scale* or even *opacity*.
 
 !!! caution
     This tool works well even if layers are parented to other layers, but if there is non-homothetic scale on the parents, they can not be properly aligned in scale, as the induced deformation can not be reproduced using only transformations.
@@ -37,6 +37,13 @@ Un-parents and re-parents the children of a layer to be able to adjust its trans
     Available in _Standard_ and _Expert_ modes only. 
 
 Select some properties with expressions to remove the expression, but keeping their current *post-expression value* instead of the *pre-expression value* like After Effects does.
+
+## Copy Paste expressions
+
+!!! hint
+    Available in _Standard_ and _Expert_ modes only. 
+
+This very simple tool will copy an expression from a selected property, and then allows you to paste it on several properties at once, without changing their pre-expression values or keyframes.
 
 ## Get property info
 

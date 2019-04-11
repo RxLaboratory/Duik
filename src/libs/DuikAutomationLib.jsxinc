@@ -384,32 +384,16 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 }
 
 /**
-	* Links a property to an effector controller
-	* @param {PropertyInfo} prop - The property to rig
-	* @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
-	* @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
-	* @return {object} A custom object with two attributes:<br />
-	* - effectorLayer: the effector layer
-	* - effect: the layer expression control on the rigged layer used to link to the effector
-*/
-DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
+	* Creates the effector controller layer
+	* @param {CompItem} [comp=DuAEF.DuAE.Project.getActiveComp] - The composition where to create the controller
+	* @return {ShapeLayer} The controller
+	*/
+DuAEF.Duik.Automation.createEffectorController = function (comp)
 {
-	if (effect == undefined) effect = null;
-	if (ctrlLayer == undefined) ctrlLayer = null;
-	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
-	var effector = {};
-	effector.effectorLayer = ctrlLayer;
-	effector.effect = effect;
-	if (!prop) return effector;
-	if (!prop.riggable) return effector;
+		comp = def(comp, DuAEF.DuAE.Project.getActiveComp());
+		if(!comp) throw "Bad Argument: DuAEF.Duik.Automation.createEffectorController needs a composition";
 
-	var layer = prop.layer;
-	var comp = layer.containingComp;
-
-	//create effector
-	if (ctrlLayer == null)
-	{
-		ctrlLayer = comp.layers.addShape();
+		var ctrlLayer = comp.layers.addShape();
 		DuAEF.Duik.setDuikMarker(ctrlLayer,"Effector",DuAEF.Duik.LayerTypes.EFFECTOR);
 		ctrlLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName("Effector",comp);
 		//effect
@@ -492,80 +476,271 @@ DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
 		outerGroupLinear.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = 'if (effect("Effector")(' + DuAEF.Duik.PseudoEffects.EFFECTOR.modePopup + ').value == 2) 100; else 0;';
 
 		//unselect
-		ctrlLayer.selected = false;
 		ctrlLayer.guideLayer = true;
+
+		return ctrlLayer;
+}
+
+/**
+	* Links a property to an effector controller
+	* @param {PropertyInfo} prop - The property to rig
+	* @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
+	* @param {ShapeLayer|null} [ctrlLayer] - The effector layer. will be created if not provided
+	* @return {object} A custom object with two attributes:<br />
+	* - effectorLayer: the effector layer
+	* - effect: the layer expression control on the rigged layer used to link to the effector
+	*/
+DuAEF.Duik.Automation.effector = function (prop,effect,ctrlLayer)
+{
+	if (effect == undefined) effect = null;
+	if (ctrlLayer == undefined) ctrlLayer = null;
+	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+	var effector = {};
+	effector.effectorLayer = ctrlLayer;
+	effector.effect = effect;
+	if (!prop) return effector;
+	if (!prop.riggable) return effector;
+
+	var layer = prop.layer;
+	var comp = layer.containingComp;
+
+	//create effector
+	if (ctrlLayer == null)
+	{
+		ctrlLayer = DuAEF.Duik.Automation.createEffectorController(comp);
+		//unselect
+		ctrlLayer.selected = false;
 		//set Defaults
 		var distance = DuAEF.DuAE.Layer.getDistance(layer,ctrlLayer);
 		ctrlLayer.effect("Effector")(DuAEF.Duik.PseudoEffects.EFFECTOR.innerLimitSlider).setValue(distance/4);
 		ctrlLayer.effect("Effector")(DuAEF.Duik.PseudoEffects.EFFECTOR.outerLimitSlider).setValue(distance*3/4);
 	}
 
+	var ctrlComp = ctrlLayer.containingComp;
+
 	//create effect
-	if (effect == null)
+	if (effect == null && comp.id == ctrlComp.id)
 	{
 		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
 		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
 	}
 
 	//Set effect
-	effect(1).setValue(ctrlLayer.index);
+	if (effect) effect(1).setValue(ctrlLayer.index);
 
 	//set expression
-	prop.getProperty().expression = '//Duik.effector\n' +
-				'var ctrl = null;\n' +
-				'var result = value;\n' +
-				'try { ctrl = effect("' + effect.name + '")(1) } catch (e) {}\n' +
-				'if (ctrl && numKeys >= 2)\n' +
-				'{\n' +
-				'function p(l){ return l.toWorld(l.anchorPoint) };\n' +
-				'try { var fx = ctrl.effect("Effector"); } catch (e) {}\n' +
-				'if (fx)\n' +
-				'{\n' +
-				'var min = fx(' + DuAEF.Duik.PseudoEffects.EFFECTOR.innerLimitSlider + ');\n' +
-				'var max = fx(' + DuAEF.Duik.PseudoEffects.EFFECTOR.outerLimitSlider + ');\n' +
-				'var type = fx(' + DuAEF.Duik.PseudoEffects.EFFECTOR.typePopup + ');\n' +
-				'var reverse = fx(' + DuAEF.Duik.PseudoEffects.EFFECTOR.reverseCheckbox + ').value;\n' +
-				'var mode = fx(' + DuAEF.Duik.PseudoEffects.EFFECTOR.modePopup + ').value;\n' +
-				'if (mode == 2)\n' +
-				'{\n' +
-				'max = min;\n' +
-				'min = 0;\n' +
-				'reverse = !reverse;\n' +
-				'}\n' +
-				'var t = 0;\n' +
-				'var beginTime = key(1).time;\n' +
-				'var endTime = key(numKeys).time;\n' +
-				'var distance = 0;\n' +
-				'if (mode == 1) { distance = length ( p(thisLayer), p(ctrl) ); }\n' +
-				'else { var coords = ctrl.fromWorld(p(thisLayer)); distance = -coords[0]+max/2; }\n' +
-				'if (type == 1)\n' +
-				'{\n' +
-				'if (!reverse) t = linear(distance, min, max, endTime, beginTime);\n' +
-				'else t = linear(distance, min, max, beginTime, endTime);\n' +
-				'}\n' +
-				'else\n' +
-				'{\n' +
-				'var mid = (min + max)/2;\n' +
-				'if (!reverse)\n' +
-				'{\n' +
-				'if (distance > mid) t = linear(distance, mid, max, endTime, beginTime);\n' +
-				'else t = linear(distance, min, mid, beginTime, endTime);\n' +
-				'}\n' +
-				'else\n' +
-				'{\n' +
-				'if (distance > mid) t = linear(distance, mid, max, beginTime, endTime);\n' +
-				'else t = linear(distance, min, mid, endTime, beginTime);\n' +
-				'}\n' +
-				'}\n' +
-				'result = valueAtTime(t);\n' +
-				'}\n' +
-				'}\n' +
-				'result;\n';
+	var ctrlLink = '';
+	if ( comp.id != ctrlComp.id ) ctrlLink = DuAEF.DuAE.Property.getExpressionLink(ctrlLayer);
+	else ctrlLink = 'effect( "' + effect.name + '" )( 1 )';
+	var expression = ['//Duik.effector',
+		'var fx = null;',
+		'var result = value;',
+		'',
+		'try',
+		'{',
+		'    var ctrl = ' + ctrlLink  + ';',
+		'    fx = ctrl.effect( "Effector" );',
+		'}',
+		'catch ( e )',
+		'{}',
+		'',
+		'// Get layer world position',
+		'function p ( l )',
+		'{',
+		'    return l.toWorld( l.anchorPoint )',
+		'}',
+		'',
+		'function effector ()',
+		'{',
+		'    var min = fx( ' + DuAEF.Duik.PseudoEffects.EFFECTOR.innerLimitSlider + ' ).value;',
+		'    var max = fx( ' + DuAEF.Duik.PseudoEffects.EFFECTOR.outerLimitSlider + ' ).value;',
+		'    var mode = fx( ' + DuAEF.Duik.PseudoEffects.EFFECTOR.modePopup + ' ).value;',
+		'    var type = fx( ' + DuAEF.Duik.PseudoEffects.EFFECTOR.typePopup + ' ).value;',
+		'    var reverse = fx( ' + DuAEF.Duik.PseudoEffects.EFFECTOR.reverseCheckbox + ' ).value;',
+		'',
+		'    if ( mode == 2 ) //line',
+		'    {',
+		'        max = min;',
+		'        min = 0;',
+		'        reverse = !reverse;',
+		'    }',
+		'',
+		'    var distance = effectorDistance( max, mode );',
+		'    return effectorValue( distance, min, max, type, reverse );',
+		'}',
+		'',
+		'function effectorDistance ( max, mode )',
+		'{',
+		'    var distance = 0;',
+		'',
+		'    var worldPos = p( thisLayer );',
+		'',
+		'    if ( mode == 1 ) //circle',
+		'    {',
+		'        distance = length( worldPos, p( ctrl ) );',
+		'    }',
+		'    else if ( mode == 2 ) //line',
+		'    {',
+		'        var coords = ctrl.fromWorld( worldPos );',
+		'        distance = -coords[ 0 ] + max / 2;',
+		'    }',
+		'',
+		'    return distance;',
+		'}',
+		'',
+		'function effectorValue ( distance, min, max, type, reverse )',
+		'{',
+		'    var t = 0;',
+		'    var beginTime = key( 1 ).time;',
+		'    var endTime = key( numKeys ).time;',
+		'',
+		'    if ( type == 1 )',
+		'    {',
+		'        if ( !reverse ) t = linear( distance, min, max, endTime, beginTime );',
+		'        else t = linear( distance, min, max, beginTime, endTime );',
+		'    }',
+		'    else',
+		'    {',
+		'        var mid = ( min + max ) / 2;',
+		'        if ( !reverse )',
+		'        {',
+		'            if ( distance > mid ) t = linear( distance, mid, max, endTime, beginTime );',
+		'            else t = linear( distance, min, mid, beginTime, endTime );',
+		'        }',
+		'        else',
+		'        {',
+		'            if ( distance > mid ) t = linear( distance, mid, max, beginTime, endTime );',
+		'            else t = linear( distance, min, mid, endTime, beginTime );',
+		'        }',
+		'    }',
+		'    return valueAtTime( t );',
+		'}',
+		'',
+		'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+		''
+		].join('\n');
+
+	prop.getProperty().expression = expression;
 
 	effector.effectorLayer = ctrlLayer;
 	effector.effect = effect;
 
 	return effector;
+}
+
+/**
+	* Links a property to a texture layer
+	* @param {PropertyInfo} prop - The property to rig
+	* @param {AVLayer} texture - The texture layer.
+	* @param {PropertyGroup|null} [effect] - A Layer expression control used to link to the effector. Will be created on the layer if not provided
+	* @return {PropertyGroup} The layer expression control added on the layer.
+	*/
+DuAEF.Duik.Automation.mapEffector = function (prop,texture,effect)
+{
+	effect = def(effect, null);
+
+	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+	if (!prop) return effect;
+	if (!prop.riggable) return effect;
+
+	var layer = prop.layer;
+	var comp = layer.containingComp;
+	var textureComp = texture.containingComp;
+
+	//create effect
+	if (effect == null && comp.id == textureComp.id)
+	{
+		effect = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+		effect.name = DuAEF.DuAE.Layer.newUniqueEffectName(prop.getProperty().name + ' Effector',layer);
+	}
+
+	//Set effect
+	if (effect) effect(1).setValue(texture.index);
+
+	//Add texture effect 
+	var textureEffect = texture.effect(DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.matchName);
+	if (!textureEffect)
+	{
+		textureEffect = DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.apply(texture);
+	}
+
+	//set expression
+	var textureLink = '';
+	if ( comp.id != textureComp.id ) textureLink = DuAEF.DuAE.Property.getExpressionLink(texture);
+	else textureLink = 'effect( "' + effect.name + '" )( 1 )';
+	var expression = ['//Duik.mapEffector',
+		'var fx = null;',
+		'var ctrl = null;',
+		'var result = value;',
+		'',
+		'try',
+		'{',
+		'    ctrl = ' + textureLink + ';',
+		'    fx = ctrl.effect( "' + textureEffect.name + '" );',
+		'}',
+		'catch ( e )',
+		'{}',
+		'',
+		'// Get layer world position',
+		'function p ( l )',
+		'{',
+		'    return l.toWorld( l.anchorPoint )',
+		'}',
+		'',
+		'function effector ()',
+		'{',
+		'    var min = fx( ' + DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['MinimumSlider'] + ' ).value;',
+		'    var max = fx( ' + DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['MaximumSlider'] + ' ).value;',
+		'    var reverse = fx( ' + DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['ReverseCheckbox'] + ' ).value;',
+		'    var channel = fx( ' + DuAEF.Duik.PseudoEffects.MAP_EFFECTOR.index['ChannelPopup'] + ' ).value;',
+		'',
+		'    min = min / 100;',
+		'    max = max / 100;',
+		'',
+		'    var distance = effectorDistance( channel );',
+		'    return effectorValue( distance, min, max, reverse );',
+		'',
+		'}',
+		'',
+		'function effectorDistance ( channel )',
+		'{',
+		'    var distance = 0;',
+		'',
+		'    var worldPos = p( thisLayer );',
+		'',
+		'    if ( typeof channel === "undefined" ) channel = 5;',
+		'    var colorPoint = ctrl.fromWorld( worldPos );',
+		'    var color = ctrl.sampleImage( colorPoint );',
+		'    if ( channel <= 3 ) distance = color[ channel-1 ];',
+		'	else if (channel <= 6)',
+		'	{',
+		'		color = rgbToHsl(color);',
+		'		distance = color[ channel - 4 ];',
+		'	}',
+		'    else distance = color[ 3 ];',
+		'',
+		'    return distance;',
+		'}',
+		'',
+		'function effectorValue ( distance, min, max, reverse )',
+		'{',
+		'    var t = 0;',
+		'    var beginTime = key( 1 ).time;',
+		'    var endTime = key( numKeys ).time;',
+		'',
+		'    if ( !reverse ) t = linear( distance, min, max, beginTime, endTime );',
+		'    else t = linear( distance, min, max, endTime, beginTime );',
+		'',
+		'    return valueAtTime( t );',
+		'}',
+		'',
+		'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+		''
+		].join('\n');
+
+	prop.getProperty().expression = expression;
+
+	return effect;
 }
 
 /**
@@ -984,10 +1159,14 @@ DuAEF.Duik.Automation.autoWalk = function(controllers,comp)
 	* Loops the property
 	* @param {Property|PropertyInfo}	prop - The property.
 	* @param {PropertyGroup|null}	[effect]	- A looper effect already created by Duik to use as a controller for this looper
+	* @param {DuAEF.DuAE.LoopTypes} [loopInType=DuAEF.DuAE.LoopTypes.CYCLE] - The type of loopIn
+	* @param {DuAEF.DuAE.LoopTypes} [loopOutType=DuAEF.DuAE.LoopTypes.CYCLE] - The type of loopOut
 */
-DuAEF.Duik.Automation.loop = function(prop,ctrlEffect)
+DuAEF.Duik.Automation.loop = function(prop,ctrlEffect, loopInType, loopOutType)
 {
 	if (typeof ctrlEffect === 'undefined') ctrlEffect = null;
+	if (typeof loopInType === 'undefined') loopInType = DuAEF.DuAE.LoopTypes.CYCLE;
+	if (typeof loopInType === 'undefined') loopOutType = DuAEF.DuAE.LoopTypes.CYCLE;
 	if (!prop) return ctrlEffect;
 	if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
 	if (!prop.riggable) return ctrlEffect;
@@ -1000,6 +1179,18 @@ DuAEF.Duik.Automation.loop = function(prop,ctrlEffect)
 		ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inCheckbox).setValue(1);
 		ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outCheckbox).setValue(1);
 	}
+
+	if (loopInType == DuAEF.DuAE.LoopTypes.NONE || loopInType == DuAEF.DuAE.LoopTypes.HOLD) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inCheckbox).setValue( 0 );
+	if (loopInType == DuAEF.DuAE.LoopTypes.CYCLE) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inTypePopup).setValue( 1 );
+	if (loopInType == DuAEF.DuAE.LoopTypes.OFFSET) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inTypePopup).setValue( 2 );
+	if (loopInType == DuAEF.DuAE.LoopTypes.PINPONG) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inTypePopup).setValue( 3 );
+	if (loopInType == DuAEF.DuAE.LoopTypes.CONTINUE) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.inTypePopup).setValue( 4 );
+
+	if (loopOutType == DuAEF.DuAE.LoopTypes.NONE || loopInType == DuAEF.DuAE.LoopTypes.HOLD) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outCheckbox).setValue( 0 );
+	if (loopOutType == DuAEF.DuAE.LoopTypes.CYCLE) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outTypePopup).setValue( 1 );
+	if (loopOutType == DuAEF.DuAE.LoopTypes.OFFSET) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outTypePopup).setValue( 2 );
+	if (loopOutType == DuAEF.DuAE.LoopTypes.PINPONG) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outTypePopup).setValue( 3 );
+	if (loopOutType == DuAEF.DuAE.LoopTypes.CONTINUE) ctrlEffect(DuAEF.Duik.PseudoEffects.LOOPER.outTypePopup).setValue( 4 );
 
 	prop.getProperty().expression = '//Duik.looper\n' +
 		'var fx = ' + DuAEF.DuAE.Property.getExpressionLink(ctrlEffect,true) + '\n' +
@@ -1305,17 +1496,17 @@ DuAEF.Duik.Automation.Randomize.properties = function (props,fromCurrentVal,xMin
 }
 
 /**
-* Randomizes the values of the selected keys of the Properties
-* @param {PropertyBase[]} props - The Properties
-* @param {boolean} [fromCurrentVal] - true to offset the current value
-* @param {float} xMin - X minimum value
-* @param {float} xMax - X maximum value
-* @param {float} [yMin] - Y minimum value
-* @param {float} [yMax] - Y maximum value
-* @param {float} [zMin] - Z minimum value
-* @param {float} [zMax] - Z maximum value
-* @param {boolean} [collapseDimensions=false] - True to use the same random value (x) on all axis
-*/
+	* Randomizes the values of the selected keys of the Properties
+	* @param {PropertyBase[]} props - The Properties
+	* @param {boolean} [fromCurrentVal] - true to offset the current value
+	* @param {float} xMin - X minimum value
+	* @param {float} xMax - X maximum value
+	* @param {float} [yMin] - Y minimum value
+	* @param {float} [yMax] - Y maximum value
+	* @param {float} [zMin] - Z minimum value
+	* @param {float} [zMax] - Z maximum value
+	* @param {boolean} [collapseDimensions=false] - True to use the same random value (x) on all axis
+	*/
 DuAEF.Duik.Automation.Randomize.selectedKeys = function (props,fromCurrentVal,xMin,xMax,yMin,yMax,zMin,zMax,collapseDimensions)
 {
 	if (props == undefined) throw "You must select the keyframes you want to randomize";

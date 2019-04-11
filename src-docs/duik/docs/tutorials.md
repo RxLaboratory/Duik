@@ -2,20 +2,20 @@
 
 # Tutorials
 
-Grab the user guide, keep it at hand, and go watch tutorials to quickly learn Duik!  
+Grab the user guide - which you can [get here](lien achat) - keep it at hand, and go watch tutorials to quickly learn Duik!  
 We're making official tutorials, and there are a lot of other tutorials on the internet in a lot of different languages, not only English. See below.  
 
 ## Official Tutorials
 
 ### Using Duik and Character rigging
 
-!!! note
-    We're currently in the making of the Official Duik Bassel video course, a very complete course with a lot of tutorials like [the one we made for the previous version](https://en.tuto.com/after-effects/after-effects-and-duik-setup-your-first-characters-after-effects,73651.html?cc=vyKT3i), Duik 15.
+- English
 
-    All tutorials about how the tools of Duik work will be free, and the complete course with exercises and practical examples will be available at a low and fair price.
+    [**The official character rigging course with Duik Bassel**](https://en.tuto.com/after-effects/the-official-character-rigging-course-with-duik-bassel-after-effects,115371.html?cc=vyKT3i) (9h).
 
-!!! hint
-    If you already paid for the Duik 15 video course, don't worry, we'll be offering nice discount for the new Duik Bassel course as soon as it's available. This coupon will be sent in an e-mail from [tuto.com](https://en.tuto.com?cc=vyKT3i), just make sure those are not in your spam folder ;)
+- Français
+
+    [**Introduction au rigging**](https://en.tuto.com/after-effects/the-official-character-rigging-course-with-duik-bassel-after-effects,115371.html?cc=vyKT3i), la conférence de Duduf en 2015 (1h).
 
 ### Animation Course
 

@@ -60,7 +60,7 @@ The script creates a folder containing all needed frames in the clip, and a "cli
 
 ![Import krita ](img\duik-screenshots\S-IOTools\Import\ImportKritaAnim-panel.PNG)
 
-Duik can import traditionnal animations made with [Krita](http://krita.org), without needing to export frame sequences or video.
+Duik can import traditional animations made with [Krita](http://krita.org), without needing to export frame sequences or video.
 
 Duik will keep all layers and the animation exposure/timeline from Krita.
 
