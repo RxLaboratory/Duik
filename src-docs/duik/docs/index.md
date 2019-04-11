@@ -26,6 +26,11 @@ The [comprehensite user guide](duik-user-guide.md) of Duik is constantly evolvin
 
 If you run into a specific issue, read the [F.A.Q.](duik-faq.md) to see if a solution already exists.
 
+__[The Duik User Guide is also available as a book!](printed-user-guide.md)__
+ Duik Bassel won't have any secrets for you anymore, and buying it __would be a great support to the future development of Duik__!  
+This guide is available in English, and you can buy it in black and white or in colors depending on your budget. Enjoy! 
+
+
 ## Tutorials
 
 Grab the user guide, keep it at hand, and go watch tutorials to quickly learn Duik!  
