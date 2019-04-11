@@ -102,7 +102,7 @@ In this section you can adjust how the walk cycle is computed, connect your cust
 This is where you can connect the properties of custom rigs and controllers.
 Each value in this section outputs the animation of the corresponding property on each limb.
 To connect the properties of your controllers, use the expression pickwhip to pick the corresponding animation property, and add '+ value;' at the end of the resulting expression.
-The arms animmation uses FK, you need to connect them to angle properties.
+The arms animation uses FK, you need to connect them to angle properties.
 The feet animation uses IK, connect them to position properties.
 
 #### Parameters
