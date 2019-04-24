@@ -2,7 +2,7 @@
 
 # Tutorials
 
-Grab the user guide - which you can [get here](lien achat) - keep it at hand, and go watch tutorials to quickly learn Duik!  
+__[Grab the user guide](printed-user-guide.md)__, keep it at hand, and go watch tutorials to quickly learn Duik!  
 We're making official tutorials, and there are a lot of other tutorials on the internet in a lot of different languages, not only English. See below.  
 
 ## Official Tutorials
