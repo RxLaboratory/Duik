@@ -19,7 +19,7 @@
 */
 
 //encapsulate the script in a function to avoid global variables
-( function( thisObj ) {
+( function ( thisObj ) {
 
     //================
     var version = '0.0.0-a';
@@ -62,23 +62,24 @@
         if ( typeof publish === 'undefined' ) publish = false;
 
         var projectFile = app.project.file;
+        var projectName = '';
+        var projectPath = '';
 
         // == save WIP project ==
 
         if ( projectFile ) {
             //Adds WIP in the name if not already there
-            var projectName = DuAEF.DuJS.Fs.getBasename( projectFile );
+            projectName = DuAEF.DuJS.Fs.getBasename( projectFile );
             if ( DuAEF.DuJS.String.endsWith( projectName, settings.data.wipName ) ) {
                 projectName = projectName.substring( 0, projectName.length - settings.data.wipName.length - 1 );
             }
         } else {
             //todo demander destination et save
-            alert('Please save this project with After Effects once before using Ramses.')
+            alert( 'Please save this project with After Effects once before using Ramses.' );
             return;
         }
 
-        var projectPath = projectFile.path;
-        var projectName = '';
+        projectPath = projectFile.path;
 
         var saveName = projectPath + '/' + projectName;
         if ( !publish ) saveName += '_' + settings.data.wipName;
@@ -95,12 +96,14 @@
 
         if ( versionFolder.exists ) {
             // gets all exsting versions
-            var projectVersionFiles = versionFolder.getFiles( projectName + "_v*" + ".aep" );
+            var projectVersionFiles = versionFolder.getFiles( projectName + "_wip*.aep" );
+            projectVersionFiles = projectVersionFiles.concat( versionFolder.getFiles( projectName + "_pub*.aep" ) );
             for ( var i = 0, num = projectVersionFiles.length; i < num; i++ ) {
                 var f = projectVersionFiles[ i ];
                 if ( DuAEF.DuJS.Fs.isFile( f ) ) {
                     var fName = DuAEF.DuJS.Fs.getBasename( f );
-                    var v = fName.replace( projectName + "_v", '' );
+                    var v = fName.replace( projectName + "_wip", '' );
+                    v = v.replace( projectName + "_pub", '' );
                     v = v.replace( ".aepx", '' );
                     v = v.replace( ".aep", '' );
                     v = parseInt( v, 10 );
@@ -118,7 +121,11 @@
 
         // copy version
         var currentVersionString = DuAEF.DuJS.Number.convertToString( currentVersion, 3 );
-        var successful = projectFile.copy( versionFolder.absoluteURI + "/" + projectName + "_v" + currentVersionString + ".aep" );
+        var versionPath = versionFolder.absoluteURI + "/" + projectName;
+        if ( publish ) versionPath += "_pub";
+        else versionPath += "_wip";
+        versionPath += currentVersionString + ".aep";
+        var successful = projectFile.copy( versionPath );
         if ( !successful ) alert( "Warning - Error writing file\nThe version could not be backed up properly." );
         return successful;
     }
