@@ -342,44 +342,41 @@ DuAEF.Duik.Automation.wheel = function (layer,radius)
 	var rotation = layer.transform.rotation;
 	if (layer.threeDLayer) rotation = layer.transform.zRotation;
 
-	var effectName = DuAEF.DuAE.Layer.newUniqueEffectName('Wheel',layer);
-	layer.selected = true;
-	layer.applyPreset(DuAEF.Duik.PseudoEffects.WHEEL);
-	layer.selected = false;
-	var effect = layer.effect("Wheel");
-	effect.name = effectName;
-	effect(1).setValue(radius);
+	var effect = DuAEF.Duik.PseudoEffects.WHEEL.apply(layer);
 
-	rotation.expression = '//Duik.Wheel\n' +
-						'var fx = thisLayer.effect("' + effect.name + '");\n' +
-						'var R = fx(1);\n' +
-						'var Rev = fx(2);\n' +
-						'var curved = fx(3) == 2;\n' +
-						'function pos(frame)\n' +
-						'{\n' +
-						'return thisLayer.toWorld(thisLayer.anchorPoint,framesToTime(frame));\n' +
-						'}\n' +
-						'var result = 0;\n' +
-						'if (R>0)\n' +
-						'{\n' +
-						'var distance = 0;\n' +
-						'if (curved)\n' +
-						'{\n' +
-						'var start = thisLayer.inPoint > thisComp.displayStartTime ? timeToFrames(thisLayer.inPoint) : timeToFrames(thisComp.displayStartTime) ;\n' +
-						'var end = time < thisLayer.outPoint ? timeToFrames(time) : timeToFrames(thisLayer.outPoint);\n' +
-						'for(i=start;i<end;i++)\n' +
-						'{\n' +
-						'if (pos(i+1)[0] - pos(i)[0] > 0) distance += length(pos(i+1),pos(i));\n' +
-						'else distance -= length(pos(i+1),pos(i));\n' +
-						'}\n' +
-						'}\n' +
-						'else\n' +
-						'{\n' +
-						'distance = pos(timeToFrames(time))[0];\n' +
-						'}\n' +
-						'result = radiansToDegrees(distance/R);\n' +
-						'}\n' +
-						'Rev == 1 ? value - result : value + result;';
+	effect(DuAEF.Duik.PseudoEffects.WHEEL.index['RadiusSlider']).setValue(radius);
+
+	rotation.expression = ['//Duik.Wheel',
+		'var fx = thisLayer.effect("' + effect.name + '");',
+		'var R = fx(' + DuAEF.Duik.PseudoEffects.WHEEL.index['RadiusSlider'] + ').value;',
+		'var Rev = fx(' + DuAEF.Duik.PseudoEffects.WHEEL.index['ReverseCheckbox'] + ');',
+		'var curved = fx(' + DuAEF.Duik.PseudoEffects.WHEEL.index['TrajectoryPopup'] + ') == 2;',
+		'var moBlurPrecision = fx(' + DuAEF.Duik.PseudoEffects.WHEEL.index['Motion Blur PrecisionSlider'] + ');',
+		'',
+		'function pos(t) {',
+		'    return thisLayer.toWorld(thisLayer.anchorPoint, t);',
+		'}',
+		'var result = 0;',
+		'if (R > 0) {',
+		'    var distance = 0;',
+		'    if (curved) {',
+		'        var start = thisLayer.inPoint > thisComp.displayStartTime ? thisLayer.inPoint : thisComp.displayStartTime;',
+		'        var end = time < thisLayer.outPoint ? time : thisLayer.outPoint;',
+		'        var step = framesToTime(1)/moBlurPrecision;',
+		'        var cT = start;',
+		'        while (cT <= end)',
+		'        {',
+		'            if (pos(cT+step)[0] - pos(step)[0] > 0) distance += length(pos(cT+step), pos(cT));',
+		'            else distance -= length(pos(cT+step), pos(cT));',
+		'            cT += step;',
+		'        }',
+		'    } else {',
+		'        distance = pos(time)[0];',
+		'    }',
+		'    result = radiansToDegrees(distance / R);',
+		'}',
+		'Rev == 1 ? value - result : value + result;'
+		].join('\n');
 
 }
 
