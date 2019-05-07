@@ -62,6 +62,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
 - The show/hide button for [*Structures*](structures.md) now works correctly.
 - Fixed the scale expression for the [*2D Camera*](camera-2d.md).
+- The [*Wheel*](wheel.md) and [*Parent Constraint*](parent-constraint.md) now correctly generate motion blur (which can be adjusted to fix performance issues).
 
 ## 16.0.11
 
