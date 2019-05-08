@@ -63,6 +63,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The show/hide button for [*Structures*](structures.md) now works correctly.
 - Fixed the scale expression for the [*2D Camera*](camera-2d.md).
 - The [*Wheel*](wheel.md) and [*Parent Constraint*](parent-constraint.md) now correctly generate motion blur (which can be adjusted to fix performance issues).
+- Fixed animations not [importing](import.md)  when interpolation values are invalid.
 
 ## 16.0.11
 
