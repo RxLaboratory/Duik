@@ -6,14 +6,24 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 This part will be completed when 16.1.0 will be released... Be patient ;)
 
+## 16.0.12
+
+#### Fixes
+
+- Fixed the [*Parent constraint*](parent-constraint.md) expressions not working with the new Javascript enginge.
+- Fixed the *Check for updates* failing at first start, always stating that a new version is available when it's not.
+- Fixed the [*Structures*](structures.md) creation failing in huge comps.
+- Fixed the expression errors using the new JavaScript engine with the [*Framing guides*](duframe.md).
+- Fixed the rotation in the [*Camera Rig*](camera-rig.md).
+
 ## 16.0.11
 
 #### Fixes
 
-- Fixed the [Connector](connector.md) when an angle is used as a controller property and in some cases there is a jump of 360 degrees, and *IK* rotation values.
-- Fixed some [Structures](structures.md) bugs with the new JavaScript expression engine.
-- Fixed [Scale Z-Link](scale-z-link.md).
-- Fixed the [Randomize](random.md) tool when used on keyframe times in absolute mode.
+- Fixed the [*Connector*](connector.md) when an angle is used as a controller property and in some cases there is a jump of 360 degrees, and *IK* rotation values.
+- Fixed some [*Structures*](structures.md) bugs with the new JavaScript expression engine.
+- Fixed [*Scale Z-Link*](scale-z-link.md).
+- Fixed the [*Randomize*](random.md) tool when used on keyframe times in absolute mode.
 - Fixed the [*walk cycle*](walk-cycle.md) with the new JavaScript expression engine.
 
 ## 16.0.10
