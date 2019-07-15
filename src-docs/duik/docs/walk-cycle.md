@@ -48,6 +48,10 @@ The Walk Cycle can be adjusted in the effects of the walk cycle controller which
     The procedural walk cycle animates the arms with Forward Kinematics (FK) and thus deactivates the Inverse Kinematics (IK). The position of the controllers of the armes do not influence the rig anymore, as the animation is made on the angles of the individual FK controls.
 
     If you want to animate or adjust the arms, you can either adjust the values in the Individual FK controls in the effects of the controllers, or you can re-enable the IK, but this will deactivate the procedural animation on the arms.
+    
+!!! tip
+    Duik tries to auto-detect which arm is the left arm and which is the right arm, but depending on the design, this detection may fail. In this case, both arms will swing synchroneously.
+    You can fix this in the effects of the controllers for the arms, where you will find a "side" property to change the side of the arm.
 
 !!! hint
     You can animate the switch between IK and FK, and Duik provides a tool to ease this [IK/FK switch](ik-fk-switch.md) process.

@@ -34,6 +34,7 @@ We're collecting here the best tutorials we find on the internet about Duik.
 ### English
 
 - Free: [**Jumpstart by Jake In Motion**](https://www.youtube.com/watch?v=i63vPXJ00r0): Structures, Auto-rig, Walk Cycle.
+- Free: [**Rubberhose and Duik Comparison and tips**](https://www.youtube.com/watch?v=B-v8A9ZdqL4): Very nice tips and tricks to use both Rubberhose and Duik, by Morgan Williams for School of Motion.
 - $297: [**School of Motion's Rigging Academy**](https://www.schoolofmotion.com/rigging-academy?ref_id=duduf): Learn to Create Professional Character Rigs with Morgan Williams.
 - $897: [**School of Motion's Character Animation Bootcamp**](https://www.schoolofmotion.com/character-animation-bootcamp?ref_id=duduf): A Character Animation crash course for Motion Designers by Morgan Williams.
 - $897: [**School of Motion's Animation Bootcamp**](https://www.schoolofmotion.com/animation-bootcamp?ref_id=duduf): Hardcore Animation Training for Motion Designers, by Joey Korenman.
