@@ -2888,3 +2888,433 @@ DuAEF.Duik.Rigging.fkOverlap = function( layers, controller )
 
     return controller;
 }
+
+DuAEF.Duik.Rigging.exposeTransform = function( comp, layer )
+{
+    if (typeof comp === 'undefined')
+	{
+		if (typeof layer !== 'undefined')
+		{
+			comp = layer.containingComp;
+		}
+		else
+		{
+			comp = DuAEF.DuAE.Project.getActiveComp();
+		}
+	}
+	if (!comp) return;
+
+    var ctrl = DuAEF.Duik.Controller.create( comp, DuAEF.Duik.Controller.Types.EXPOSE_TRANSFORM, layer);
+    ctrl = ctrl.layer;
+
+    //add pseudo effect
+    var pE = DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM;
+    var index = pE.index;
+    var effect = pE.apply(ctrl);
+
+    //add guides
+    var guidesGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	guidesGroup.name = 'Guides';
+
+    var refGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    refGroup.name = 'Reference';
+
+    var refOrientationGroup = refGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    refOrientationGroup.name = 'Orientation';
+    refOrientation = refOrientationGroup("ADBE Vectors Group");
+
+    var path = refOrientation.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = [0,0];',
+        '	var B = [ 0 , -thisComp.height/20 ];',
+        '	createPath([A,B],[],[],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+        ].join('\n');
+
+    path = refOrientation.addProperty("ADBE Vector Shape - Ellipse");
+    path("ADBE Vector Ellipse Size").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+	    'var s = thisComp.height/40;',
+	    'if (fx(' + index['DisplayGuidesCheckbox'] + ').value) [s,s];',
+	    'else [0,0];'
+	    ].join('\n');
+
+    var stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayReferenceColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+
+    refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
+    refOrientationTransform('ADBE Vector Position').expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'var P = fx(' + index['2D Position (Comp projection)Absolute Point'] + ');',
+        'var R = fx(' + index['2D Position (Comp projection)Absolute Point'] + ') - fx(' + index['2D Position (Comp projection)Relative to referencePoint'] + ');',
+        'fromComp(R);'
+    ].join('\n');
+    refOrientationTransform('ADBE Vector Rotation').expression = 'content("Guides").content("Target").transform.rotation + content("Guides").content("Target").content("Reference Orientation").transform.rotation;'
+
+    var targetGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    targetGroup.name = 'Target';
+
+    var targetOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    targetOrientationGroup.name = 'Orientation';
+    targetOrientation = targetOrientationGroup("ADBE Vectors Group");
+
+    path = targetOrientation.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = [0,0];',
+        '	var B = [ 0 , -thisComp.height/10 ];',
+        '	createPath([A,B],[],[],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+    ].join('\n');
+
+    path = targetOrientation.addProperty("ADBE Vector Shape - Ellipse");
+    path("ADBE Vector Ellipse Size").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+	    'var s = thisComp.height/20;',
+	    'if (fx(' + index['DisplayGuidesCheckbox'] + ').value) [s,s];',
+	    'else [0,0];'
+	].join('\n');
+
+    stroke = targetOrientation.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayTargetColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+
+    var refOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    refOrientationGroup.name = 'Reference Orientation';
+    refOrientation = refOrientationGroup("ADBE Vectors Group");
+
+    path = refOrientation.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = [0,0];',
+        '	var B = [ 0 , -thisComp.height/20 ];',
+        '	createPath([A,B],[],[],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+    ].join('\n');
+
+    stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayReferenceColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+    
+    refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
+
+    refOrientationTransform('ADBE Vector Rotation').expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        '-fx(' + index['2D OrientationRelative to referenceAngle'] + ');'
+	].join('\n');
+
+    targetTransform = targetGroup('ADBE Vector Transform Group');
+    targetTransform('ADBE Vector Position').expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	fromComp(fx(' + index['2D Position (Comp projection)Absolute Point'] + '));',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+    ].join('\n');
+    targetTransform('ADBE Vector Rotation').expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'var result = fx(' + index['2D OrientationAbsoluteAngle'] + ');',
+        'var l = thisLayer;',
+        'result -= l.rotation.value;',
+        'while(l.hasParent)',
+        '{',
+        '	l = l.parent;',
+        '	result -= l.rotation.value;',
+        '}',
+        'result;'
+	].join('\n');
+
+    var angleGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    angleGroup.name = 'Angle';
+
+    var angleGroup1 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    angle1 = angleGroup1("ADBE Vectors Group");
+
+    path = angle1.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("Expose Transform");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = fromComp(fx(' + index['2D Position (Comp projection)Absolute Point'] + '));',
+        '	var B = fromComp( fx(' + index['2D Position (Comp projection)Absolute Point'] + ') - fx(' + index['2D Position (Comp projection)Relative to referencePoint'] + ') );',
+        '	createPath([A,[0,0],B],[],[],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+	].join('\n');
+
+    stroke = angle1.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayAngleColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+
+    var angleGroup2 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    angle2 = angleGroup2("ADBE Vectors Group");
+
+    path = angle2.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = fromComp(fx(' + index['2D Position (Comp projection)Absolute Point'] + '));',
+        '	var B = fromComp( fx(' + index['2D Position (Comp projection)Absolute Point'] + ') - fx(' + index['2D Position (Comp projection)Relative to referencePoint'] + ') );',
+        '	var M = (A+B)/2;',
+        '	var tA = [0,0];',
+        '	var tB = [0,0];',
+        '	var lB = length(B);',
+        '	var lA = length(A);',
+        '	if (lA > lB)',
+        '	{',
+        '		var q = 1;',
+        '		if (lA != 0) q = lB/lA;',
+        '		A = A/3*q;',
+        '		B = B/3;',
+        '		tA = M/6*q;',
+        '		tB = M/6;',
+        '	}',
+        '	else',
+        '	{',
+        '		var q = 1;',
+        '		if (lB != 0) q = lA/lB;',
+        '		A = A/3;',
+        '		B = B/3*q;',
+        '		tA = M/6;',
+        '		tB = M/6*q;',
+        '	}',
+        '	createPath([A,B],[ [0,0], tB ],[ tA, [0,0] ],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+	].join('\n');
+
+    stroke = angle2.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayAngleColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+    
+    var distanceGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+    distanceGroup.name = 'Distance';
+    distance = distanceGroup("ADBE Vectors Group");
+
+    path = distance.addProperty("ADBE Vector Shape - Group");
+    path("ADBE Vector Shape").expression = ['//Duik.exposeTransform',
+        'var fx = effect("' + effect.name + '");',
+        'if (fx(' + index['DisplayGuidesCheckbox'] + ').value)',
+        '{',
+        '	var A = fromComp(fx(' + index['2D Position (Comp projection)Absolute Point'] + '));',
+        '	var B = fromComp( fx(' + index['2D Position (Comp projection)Absolute Point'] + ') - fx(' + index['2D Position (Comp projection)Relative to referencePoint'] + ') );',
+        '	createPath([A,B],[],[],false);',
+        '}',
+        'else',
+        '{',
+        '	value;',
+        '}'
+	].join('\n');
+
+    stroke = distance.addProperty("ADBE Vector Graphic - Stroke");
+    stroke("ADBE Vector Stroke Color").expression = 'effect("Expose Transform")(' + index['DisplayDistanceColor'] + ');';
+    stroke("ADBE Vector Stroke Width").expression = 'thisComp.height/500;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = 'thisComp.height/100;';
+    stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+    stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = 'thisComp.height/500;';
+
+    //Effect expressions
+
+    effect(index['2D Position (Comp projection)Absolute Point']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var l = null;',
+        'try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        'var result = l.toComp(l.anchorPoint);',
+        'result;'
+	].join('\n');
+
+    effect(index['2D Position (Comp projection)Relative to referencePoint']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var useParent = fx(' + index['ReferenceCheckbox'] + ').value;',
+        'var layerPosition = fx(' + index['2D Position (Comp projection)Absolute Point'] + ');',
+        'var referencePosition = [0,0];',
+        'var rL = null;',
+        'if (useParent)',
+        '{',
+        '	try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        '	if (l.hasParent) rL = l.parent;',
+        '	else rL = l;',
+        '}',
+        'else',
+        '{',
+        '	try { rL = fx(' + index['Reference LayerLayer'] + '); } catch (e){ rL = thisLayer; }',
+        '}',
+        'referencePosition = rL.toComp(rL.anchorPoint);',
+        'var result = layerPosition - referencePosition;',
+        'result;'
+	].join('\n');
+
+    effect(index['2D Position (Comp projection)2D DistanceSlider']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var relativePosition = fx(' + index['2D Position (Comp projection)Relative to referencePoint'] + ');',
+        'var result = length( relativePosition );',
+        'result;'
+	].join('\n');
+
+    effect(index['3D Position (World)AbsolutePoint3D']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var l = null;',
+        'try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        'var result = l.toWorld(l.anchorPoint);',
+        'result;'
+	].join('\n');
+
+    effect(index['3D Position (World)Relative to referencePoint3D']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var layerPosition = fx(' + index['3D Position (World)AbsolutePoint3D'] + ');',
+        'var useParent = fx(' + index['ReferenceCheckbox'] + ').value;',
+        'var rL = null;',
+        'if (useParent)',
+        '{',
+        '	try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        '	if (l.hasParent) rL = l.parent;',
+        '	else rL = l;',
+        '}',
+        'else',
+        '{',
+        '	try { rL = fx(' + index['Reference LayerLayer'] + '); } catch (e){ rL = thisLayer; }',
+        '}',
+        'var referencePosition = rL.toWorld(rL.anchorPoint);',
+        'var result = layerPosition - referencePosition;',
+        'result;'
+	].join('\n');
+
+    effect(index['3D Position (World)3D DistanceSlider']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var relativePosition = fx(' + index['3D Position (World)Relative to referencePoint3D'] + ');',
+        'var result = length( relativePosition );',
+        'result;'
+	].join('\n');
+
+    effect(index['2D OrientationAbsoluteAngle']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var l = null;',
+        'try { l = fx(' + index['Target LayerLayer'] + ') } catch (e){ l = thisLayer; }',
+        'var result = l.rotation;',
+        'if (l.position.value.length == 3) result += l.orientation[2];',
+        'while(l.hasParent)',
+        '{',
+        '	l = l.parent;',
+        '	result += l.rotation;',
+        '	if (l.position.value.length == 3) result += l.orientation[2];',
+        '}',
+        'result;'
+	].join('\n');
+
+    effect(index['2D OrientationRelative to referenceAngle']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var useParent = fx(' + index['ReferenceCheckbox'] + ').value;',
+        'var rot = fx(' + index['2D OrientationAbsoluteAngle'] + ');',
+        'var result = value;',
+        'var rL = null;',
+        'if (useParent)',
+        '{',
+        '	try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        '	if (l.hasParent) rL = l.parent;',
+        '	else rL = l;',
+        '}',
+        'else',
+        '{',
+        '	try { rL = fx(' + index['Reference LayerLayer'] + '); } catch (e){ rL = thisLayer; }',
+        '}',
+        'var refRot = rL.rotation.value;',
+        'if (rL.position.value.length == 3) refRot += rL.orientation.value[2];',
+        'while(rL.hasParent)',
+        '{',
+        '	rL = rL.parent;',
+        '	refRot += rL.rotation.value;',
+        '	if (rL.position.value.length == 3) refRot += rL.orientation.value[2];',
+        '}',
+        'result = rot - refRot;',
+        'result;'
+	].join('\n');
+
+    effect(index['Angle (Layer-This-Reference)Angle']).expression = ['//Duik.exposeTransform',
+        'var fx = thisProperty.propertyGroup();',
+        'var useParent = fx(' + index['ReferenceCheckbox'] + ').value;',
+        'var O = thisLayer.toComp(thisLayer.anchorPoint);',
+        'var l = null;',
+        'var rL = null;',
+        'if (useParent)',
+        '{',
+        '	try { l = fx(' + index['Target LayerLayer'] + '); } catch (e){ l = thisLayer; }',
+        '	if (l.hasParent) rL = l.parent;',
+        '	else rL = l;',
+        '}',
+        'else',
+        '{',
+        '	try { rL = fx(' + index['Reference LayerLayer'] + '); } catch (e){ rL = thisLayer; }',
+        '}',
+        'try { l = fx(' + index['Target LayerLayer'] + '); } catch (e) { l = thisLayer; }',
+        'var A = l.toComp(l.anchorPoint);',
+        'var B = rL.toComp(rL.anchorPoint);',
+        'var OA = O-A;',
+        'var OB = O-B;',
+        'var angleA = Math.atan2(OA[1], OA[0]);',
+        'var angleB = Math.atan2(OB[1], OB[0]);',
+        'var result = angleA + angleB;',
+        'result = radiansToDegrees(angleB-angleA);',
+        'if (result < -180) result += 360;',
+        'result;'
+	].join('\n');
+
+    //set the layer as target
+    if (typeof layer !== 'undefined')
+    {
+        effect(index['Target LayerLayer'] ).setValue(layer.index);
+    }
+
+    return ctrl;
+}
