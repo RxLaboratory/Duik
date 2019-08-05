@@ -70,12 +70,13 @@
 
 (function(obj)
 {
+	#include DuAEF.jsxinc
+	
 	//===========================
-	var version = '16.1.0-RC5';
-	var scriptName = 'Duik Bassel';
+	var version = DuAEF.scriptVersion = '16.1.0-RC5';
+	var scriptName = DuAEF.scriptName = 'Duik Bassel';
 	//===========================
 
-	#include DuAEF.jsxinc
 	#include "duik_required/Duik16_shared.jsxinc"
 
 	//============= INIT ==============
