@@ -765,6 +765,41 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 	else return "Unknown";
 }
 
+//low-leve undocumented flag.
+//true if an undo group has been opened and has not been closed yet.
+DuAEF.DuAE.App.openedUndoGroup = false;
+
+/**
+ * Begins an undoGroup.<br />
+ * Automatically prepend the group name with the script name.<br />
+ * Using this method is safer than the native one, as DuAEF will try to avoid opening several undo groups at once.<br />
+ * The group name is translatable.
+ * @param {string} groupName - The name of the Undo Group.
+*/
+DuAEF.DuAE.App.beginUndoGroup = function (groupName)
+{
+	groupName = def(groupName, "");
+	if (groupName != "")
+	{
+		DuAEF.DuScriptUI.uiStrings.push( groupName );
+		groupName = tr( groupName );
+	}
+	
+	if (DuAEF.DuAE.App.openedUndoGroup) DuAEF.DuAE.App.endUndoGroup();
+	app.beginUndoGroup(DuAEF.scriptName + ' | ' + groupName);
+	DuAEF.DuAE.App.openedUndoGroup = true;
+}
+
+/**
+ * Ends an undoGroup.<br />
+ * Using this method is safer than the native one, as DuAEF will try to avoid opening several undo groups at once.
+*/
+DuAEF.DuAE.App.endUndoGroup = function ()
+{
+	app.endUndoGroup();
+	DuAEF.DuAE.App.openedUndoGroup = false;
+} 
+
 /**
 	* Cuts the selection (runs the cut menu command)
 */
@@ -4637,65 +4672,22 @@ DuAEF.DuAE.Property.Bezier.exportToJsxinc = function(pathProperty, file, offsetT
 }
 
 /**
-	* Makes a horizontal symetry transformation on the path.
-	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
-*/
-DuAEF.DuAE.Property.Bezier.horizontalSymetry = function(pathProperty)
-{
-	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-
-	var shape = pathProperty.value;
-	var vertices = shape.vertices;
-	var inTangents = shape.inTangents;
-	var outTangents = shape.outTangents;
-
-	//get the horizontal center.
-	var center = 0;
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		center += vertices[i][0];
-	}
-	center = center / vertices.length;
-
-	//twice the value for computing symetry
-	center = center*2;
-
-	//compute
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		vertices[i][0] = center - vertices[i][0];
-		inTangents[i][0] = -inTangents[i][0];
-		outTangents[i][0] = -outTangents[i][0];
-	}
-
-	//set
-	shape.vertices = vertices;
-	shape.inTangents = inTangents;
-	shape.outTangents = outTangents;
-	if (pathProperty.numKeys > 0)
-	{
-		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
-	}
-	else
-	{
-		pathProperty.setValue(shape);
-	}
-}
-
-/**
 	* Makes a horizontal symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
 	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
-DuAEF.DuAE.Property.Bezier.horizontalSymetries = function(pathProperties)
+DuAEF.DuAE.Property.Bezier.horizontalSymetry = function(pathProperties)
 {
+	if (!(pathProperties instanceof Array)) pathProperties = [pathProperties];
+
 	var shapes = [];
 	//get shapes and center
 	var center = 0;
 	var verticesCount = 0;
 	for (var i = 0 ; i < pathProperties.length ; i++)
 	{
-		var shape = pathProperties[i].value;
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		var shape = prop.value;
 		shapes.push(shape);
 		for (var j = 0 ; j < shape.vertices.length; j++)
 		{
@@ -4709,6 +4701,8 @@ DuAEF.DuAE.Property.Bezier.horizontalSymetries = function(pathProperties)
 	//compute
 	for (var i = 0 ; i < shapes.length; i++)
 	{
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		var shape = shapes[i];
 		var vertices = shape.vertices;
 		var inTangents = shape.inTangents;
@@ -4722,61 +4716,14 @@ DuAEF.DuAE.Property.Bezier.horizontalSymetries = function(pathProperties)
 		shape.vertices = vertices;
 		shape.inTangents = inTangents;
 		shape.outTangents = outTangents;
-		if (pathProperties[i].numKeys > 0)
+		if (prop.numKeys > 0)
 		{
-			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+			prop.setValueAtTime(DuAEF.DuAE.Property.getComp(prop).time,shape);
 		}
 		else
 		{
-			pathProperties[i].setValue(shape);
+			prop.setValue(shape);
 		}
-	}
-}
-
-/**
-	* Makes a vertical symetry transformation on the path.
-	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
-*/
-DuAEF.DuAE.Property.Bezier.verticalSymetry = function(pathProperty)
-{
-	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-
-	var shape = pathProperty.value;
-	var vertices = shape.vertices;
-	var inTangents = shape.inTangents;
-	var outTangents = shape.outTangents;
-
-	//get the horizontal center.
-	var center = 0;
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		center += vertices[i][1];
-	}
-	center = center / vertices.length;
-
-	//twice the value for computing symetry
-	center = center*2;
-
-	//compute
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		vertices[i][1] = center - vertices[i][1];
-		inTangents[i][1] = -inTangents[i][1];
-		outTangents[i][1] = -outTangents[i][1];
-	}
-
-	//set
-	shape.vertices = vertices;
-	shape.inTangents = inTangents;
-	shape.outTangents = outTangents;
-	if (pathProperty.numKeys > 0)
-	{
-		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
-	}
-	else
-	{
-		pathProperty.setValue(shape);
 	}
 }
 
@@ -4784,15 +4731,19 @@ DuAEF.DuAE.Property.Bezier.verticalSymetry = function(pathProperty)
 	* Makes a vertical symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
 	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
-DuAEF.DuAE.Property.Bezier.verticalSymetries = function(pathProperties)
+DuAEF.DuAE.Property.Bezier.verticalSymetry = function(pathProperties)
 {
+	if (!(pathProperties instanceof Array)) pathProperties = [pathProperties];
+
 	var shapes = [];
 	//get shapes and center
 	var center = 0;
 	var verticesCount = 0;
 	for (var i = 0 ; i < pathProperties.length ; i++)
 	{
-		var shape = pathProperties[i].value;
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		var shape = prop.value;
 		shapes.push(shape);
 		for (var j = 0 ; j < shape.vertices.length; j++)
 		{
@@ -4806,6 +4757,8 @@ DuAEF.DuAE.Property.Bezier.verticalSymetries = function(pathProperties)
 	//compute
 	for (var i = 0 ; i < shapes.length; i++)
 	{
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		var shape = shapes[i];
 		var vertices = shape.vertices;
 		var inTangents = shape.inTangents;
@@ -4819,13 +4772,13 @@ DuAEF.DuAE.Property.Bezier.verticalSymetries = function(pathProperties)
 		shape.vertices = vertices;
 		shape.inTangents = inTangents;
 		shape.outTangents = outTangents;
-		if (pathProperties[i].numKeys > 0)
+		if (prop.numKeys > 0)
 		{
-			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+			prop.setValueAtTime(DuAEF.DuAE.Property.getComp(prop).time,shape);
 		}
 		else
 		{
-			pathProperties[i].setValue(shape);
+			prop.setValue(shape);
 		}
 	}
 }
