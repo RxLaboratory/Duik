@@ -137,12 +137,15 @@ DuAEF.DuPseudoEffect = {};
  * @param {string} [category] - A Category for the file, will be used as a subfolder to extract files. Can have subcategories like "category/subcategory". Default: ""
  * @param {string} [outputFileName]  - The file name for the output. By default, same folder, same name with .jsxinc extension
  * @param {string} [varName] - The name of the variable used to store the javascript object. By default, the file name without extension.
+ * @param {boolean} [generateHelpFile=true] - Generates a text file with the list of controls and their indices, useful to use the pseudo effect in a script.
  * @return {File} The jsxinc file created
  */
-DuAEF.DuPseudoEffect.convertToIncludeFile = function(ffxFile,xmlFile,category,outputFileName,varName)
+DuAEF.DuPseudoEffect.convertToIncludeFile = function(ffxFile,xmlFile,category,outputFileName,varName, generateHelpFile)
 {
-    if (typeof  outputFileName === 'undefined') outputFileName = ffxFile.absoluteURI + '.jsxinc';
-	if (typeof varName === 'undefined') varName = ffxFile.name.replace(/\..+/,'');
+	outputFileName = def(outputFileName, ffxFile.absoluteURI + '.jsxinc');
+	varName = def(varName, ffxFile.name.replace(/\..+/,''));
+	generateHelpFile = def(generateHelpFile, true);
+
     varName = DuAEF.DuJS.String.replace(varName,'%20','_');
 
     var xmlString = "";
@@ -173,6 +176,29 @@ DuAEF.DuPseudoEffect.convertToIncludeFile = function(ffxFile,xmlFile,category,ou
 	{
 		outputFile.write(jsString);
 		outputFile.close();
+	}
+
+	if (generateHelpFile)
+	{
+		//load the pseudo effect
+		pE = new PseudoEffect(eval(jsString));
+		var helpString = "Pseudo Effect: " + pE.name + " | matchName: " + pE.matchName + "\n";
+		for (key in pE.index)
+		{
+			if (pE.index.hasOwnProperty(key))
+			{
+				helpString += "index['" + key + "'] = " + pE.index[key] + "\n";
+			}
+		}
+		
+		var helpFile = new File( DuAEF.DuJS.Fs.switchExtension( ffxFile, 'txt' ) );
+		helpFile.encoding = 'UTF8';
+		if (helpFile.open("w", "TEXT", "????"))
+		{
+			helpFile.write(helpString);
+			helpFile.close();
+		}
+
 	}
 
     return outputFile;
