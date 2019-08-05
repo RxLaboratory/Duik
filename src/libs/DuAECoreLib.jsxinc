@@ -4615,22 +4615,21 @@ DuAEF.DuAE.Property.PuppetTool.isRiggable = function (pin)
 DuAEF.DuAE.Property.Bezier = {};
 
 /**
-	* Export the given shape property to the given file <br/>
-	* The file name in the given path will be used to name the shape in the jsx code
-	* @example
-	* var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
-	* var prop = props[0].getProperty();
-	* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
+	* Scriptifies the given shape property.<br/>
 	* @param {Property}	 [shapeProp]	- The path property to export
-	* @param {String}	     [file]	- The path to where the jsxinc shape will be written
 	* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
-	* @return {int} A status code. [0: success, ...]
+	* @param {string}	[varName=shape]	- A name for the variable storing the shape
+	* @return {string} The scriptified shape
 */
-DuAEF.DuAE.Property.Bezier.exportToJsxinc = function(pathProperty, file, offsetToCenter)
+DuAEF.DuAE.Property.Bezier.scriptify = function(pathProperty, offsetToCenter, varName)
 {
+	if (pathProperty instanceof PropertyInfo) pathProperty = pathProperty.getProperty();
+	offsetToCenter = def(offsetToCenter, false);
+	varName = def(varName, 'shape');
+
 	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
 	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-	if(typeof(offsetToCenter) === 'undefined') offsetToCenter = false;
+	offsetToCenter = def(offsetToCenter, false);
 
 	var shape = pathProperty.value;
 	var vertices = shape.vertices;
@@ -4658,15 +4657,45 @@ DuAEF.DuAE.Property.Bezier.exportToJsxinc = function(pathProperty, file, offsetT
 	var outTangentsStr = shape.outTangents.toSource();
 	var closedStr = shape.closed ? 'true' : 'false';
 
-	var file = new File(file);
-	if(!file.open("w")) return 3
-	var name = DuAEF.DuJS.Fs.getBasename(file);
+	var scriptified = [
+		'var ' + varName + ' = new Shape();',
+		varName + '.vertices = ' + verticesStr + ';',
+		varName + '.inTangents = ' + inTangentsStr + ';',
+		varName + '.outTangents = ' + outTangentsStr + ';',
+		varName + '.closed = ' + closedStr + ';'
+		].join('\n');
 
-	file.writeln('var ' + name + ' = new Shape();');
-	file.writeln(name + '.vertices = ' + verticesStr + ';');
-	file.writeln(name + '.inTangents = ' + inTangentsStr + ';');
-	file.writeln(name + '.outTangents = ' + outTangentsStr + ';');
-	file.writeln(name + '.closed = ' + closedStr + ';');
+	return scriptified;
+}
+
+/**
+	* Export the given shape property to the given file <br/>
+	* The file name in the given path will be used to name the shape in the jsx code
+	* @example
+	* var props = DuAEF.DuAE.Comp.getSelectedProps(PropertyValueType.SHAPE);
+	* var prop = props[0].getProperty();
+	* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
+	* @param {Property}	 [shapeProp]	- The path property to export
+	* @param {String}	[file]	- The path or File where the jsxinc shape will be written
+	* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
+	* @param {boolean}	[append=false]	- If true, appends the shape at the end of the file instead of overwriting it.
+	* @param {string}	[varName=shape]	- A name for the variable storing the shape
+	* @return {int} A status code. [0: success, ...]
+*/
+DuAEF.DuAE.Property.Bezier.exportToJsxinc = function(pathProperty, file, offsetToCenter, append, varName)
+{
+	append = def(append, false);
+
+	if (!(file instanceof File)) file = new File(file);
+
+	var mode = 'w';
+	if (append) mode = 'a';
+
+	if(!file.open(mode)) return 3;
+
+	if (append) file.write('\n');
+	file.write( DuAEF.DuAE.Property.Bezier.scriptify( pathProperty, offsetToCenter, varName) );
+
 	file.close();
 	return 0;
 }
@@ -4784,10 +4813,10 @@ DuAEF.DuAE.Property.Bezier.verticalSymetry = function(pathProperties)
 }
 
 /**
-* Gets the vertices array in comp coordinates.
-* @param {Property|PropertyInfo} prop - The property, a bezier path.
-* @return {float[][]} The vertices in comp coordinates.
-*/
+ * Gets the vertices array in comp coordinates.
+ * @param {Property|PropertyInfo} prop - The property, a bezier path.
+ * @return {float[][]} The vertices in comp coordinates.
+ */
 DuAEF.DuAE.Property.Bezier.verticesToComp = function(pathProperty)
 {
 	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
