@@ -72,6 +72,7 @@
 {
 	//===========================
 	var version = '16.1.0-RC5';
+	var scriptName = 'Duik Bassel';
 	//===========================
 
 	#include DuAEF.jsxinc
@@ -81,7 +82,7 @@
 
 	//UI
 	//main palette
-	var ui_mainPalette = DuAEF.DuScriptUI.createUI(obj,'Duik Bassel', ['fill','fill']);
+	var ui_mainPalette = DuAEF.DuScriptUI.createUI(obj, scriptName, ['fill','fill']);
 	ui_mainPalette.contents.orientation = 'stack';
 
 	//this file
