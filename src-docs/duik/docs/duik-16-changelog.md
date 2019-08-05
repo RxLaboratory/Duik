@@ -10,6 +10,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
 - The additional panel for the [***Bone***](bones.md) now includes a button to select and show or hide all the bones in the composition.
 - The [***Connector***](connector.md) now works with a spatial effector or a texture effector too.
+- The [***Expose Transform***](expose-transform.md) tool is very useful with the [*Connector*](connector.md) or to build your own expressions and automate a lot of stuff.
+- The [IK effect](autorig.md#ik-fk) on controllers now exposes the distance between the end and the root of the limb, which may be very useful with the connector or in your own expressions.
 
 #### New (Automations)
 
