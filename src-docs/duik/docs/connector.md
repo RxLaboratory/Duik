@@ -21,9 +21,40 @@ When the master property value is at the predefined minimum, the child property 
 
 As the connector uses the same principle as time remapping, it is able to connect almost any type of property to any other type of property, which makes it a very powerful tool, even on older versions of After Effects.
 
+### Slave (controlled) property
+
 The slave property can be of any type which can be animated with keyframes and have an expression (numerical and spatial values, shapes, texts...)
 
-The master property must be of a type which is numerical (but can be multi-dimentionnal), like sliders, angles, position, scale, colors...
+### Master (controller) property
+
+The master property can be of any numerical type (but can be multi-dimentionnal):
+
+- Slider
+- Angle
+- Position
+- Scale
+- Opacity
+- Color
+- etc.
+
+That said, Duik provides several pre-rigged and very useful controllers which are meant to be used with the connector.
+
+#### Slider, 2D Slider, Angle
+
+These are layers which provide a nice UI in the composition panel to control your animation. They're especially used for facial rigging, but can be nice for a lot of different things.
+
+#### Spatial Effector and Effector Map
+
+The [*Effector*](effector.md) is a intuitive way to spatially control the slave properties, as the [*Effector Map*](effector-map.md) does the same but using the color or alpha channel from a texture layer.
+
+#### Expose Transform
+
+The [*Expose Transform*](expose-transform.md) tool is an object (a controller) which will measure and **expose angles, orientations, coordinates and distances between two layers**.
+
+!!! hint
+    The [IK effect](autorig.md#ik-fk) on controllers exposes the distance between the end and the root of the limb, which may be very useful with the connector, to connect anything to the bending of the limb.
+
+###
 
 ## How to set the connector up
 
