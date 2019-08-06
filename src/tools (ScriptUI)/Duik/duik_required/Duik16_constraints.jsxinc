@@ -55,10 +55,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
         ui_connectorPropLabel.enabled = false;
         ui_connectorAxisList.removeAll();
         ui_connectorAxisList.enabled = false;
+        ui_connectorAxisLabel.enabled = false;
         ui_connectorAxisLabel.text = "Axis: ";
         ui_connectorTypeList.selection = 0;
-        ui_connectorTypeLabel.enabled = true;
-        ui_connectorTypeList.enabled = true;
+        ui_connectorTypeLabel.enabled = false;
+        ui_connectorTypeList.enabled = false;
         connectorFormReady(false);
         connectorReady(false);
     }
@@ -202,6 +203,15 @@ function ui_buildConstraints ( ui_constraintsGroup )
             connector.masterLayer = layer;
             connector.type = 2;
             connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Spatial Effector";
+            ui_connectorPropList.removeAll();
+            ui_connectorPropList.enabled = true;
+            ui_connectorPropList.add( 'item', "Circle (transition)" );
+            ui_connectorPropList.add( 'item', "Circle (ping pong)" );
+            ui_connectorPropList.add( 'item', "Line (transition)" );
+            ui_connectorPropList.add( 'item', "Line (ping pong)" );
+            ui_connectorPropList.selection = 0;
+            ui_connectorMinimumEdit.setText( '100' );
+            ui_connectorMaximumEdit.setText( '200' );
             connectorReady();
             return;
         }
@@ -235,25 +245,37 @@ function ui_buildConstraints ( ui_constraintsGroup )
     function connectorFormReady(isReady)
     {
         isReady = def(isReady, true, false);
-        if (connector.type == 2) isReady = false;
         
         ui_connectorForm.enabled = isReady;
+
         if ( settings.data.uiMode != 2 )
         {
             ui_connectorSeparator2.enabled = isReady;
         }
 
-        if (connector.type == 3)
+        if (isReady)
         {
+            ui_connectorAxisLabel.enabled = connector.type == 1 || connector.type == 3 || connector.type == 4;
+            ui_connectorAxisList.enabled = connector.type == 1 || connector.type == 3 || connector.type == 4;
+
+            ui_connectorTypeLabel.enabled = connector.type == 1 || connector.type == 4;
+            ui_connectorTypeList.enabled = connector.type == 1 || connector.type == 4;
+
+            ui_connectorPropLabel.enabled = connector.type == 2 || connector.type == 4;
+            ui_connectorPropList.enabled = connector.type == 2 || connector.type == 4;
+        }
+        else
+        {
+            ui_connectorAxisLabel.enabled = false;
+            ui_connectorAxisList.enabled = false;
+
             ui_connectorTypeLabel.enabled = false;
             ui_connectorTypeList.enabled = false;
-        }
 
-        if (connector.type == 4)
-        {
-            ui_connectorPropLabel.enabled = true;
-            ui_connectorPropList.enabled = true;
+            ui_connectorPropLabel.enabled = false;
+            ui_connectorPropList.enabled = false;
         }
+        
     }
 
     function connectorReady(isReady)
@@ -308,20 +330,35 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_connectorPropList_changed ()
     {
-        var propid = 0;
-        if ( ui_connectorPropList.selection ) propid = ui_connectorPropList.selection.index;
-        var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.matchName );
-        var index = DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.index;
-        if (propid == 0) connector.masterProp = effect( index['2D Position (Comp projection)Absolute Point'] );
-        if (propid == 1) connector.masterProp = effect( index['2D Position (Comp projection)Relative to referencePoint'] );
-        if (propid == 2) connector.masterProp = effect( index['2D Position (Comp projection)2D DistanceSlider'] );
-        if (propid == 3) connector.masterProp = effect( index['3D Position (World)AbsolutePoint3D'] );
-        if (propid == 4) connector.masterProp = effect( index['3D Position (World)Relative to referencePoint3D'] );
-        if (propid == 5) connector.masterProp = effect( index['3D Position (World)3D DistanceSlider'] );
-        if (propid == 6) connector.masterProp = effect( index['2D OrientationAbsoluteAngle'] );
-        if (propid == 7) connector.masterProp = effect( index['2D OrientationRelative to referenceAngle'] );
-        if (propid == 8) connector.masterProp = effect( index['Angle (Layer-This-Reference)Angle'] );
-        connectorLoadMasterProperty();
+        if (connector.type == 4)
+        {
+            var propid = 0;
+            if ( ui_connectorPropList.selection ) propid = ui_connectorPropList.selection.index;
+            var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.matchName );
+            var index = DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.index;
+            if (propid == 0) connector.masterProp = effect( index['2D Position (Comp projection)Absolute Point'] );
+            if (propid == 1) connector.masterProp = effect( index['2D Position (Comp projection)Relative to referencePoint'] );
+            if (propid == 2) connector.masterProp = effect( index['2D Position (Comp projection)2D DistanceSlider'] );
+            if (propid == 3) connector.masterProp = effect( index['3D Position (World)AbsolutePoint3D'] );
+            if (propid == 4) connector.masterProp = effect( index['3D Position (World)Relative to referencePoint3D'] );
+            if (propid == 5) connector.masterProp = effect( index['3D Position (World)3D DistanceSlider'] );
+            if (propid == 6) connector.masterProp = effect( index['2D OrientationAbsoluteAngle'] );
+            if (propid == 7) connector.masterProp = effect( index['2D OrientationRelative to referenceAngle'] );
+            if (propid == 8) connector.masterProp = effect( index['Angle (Layer-This-Reference)Angle'] );
+            connectorLoadMasterProperty();
+        }
+        else if (connector.type == 2)
+        {
+            var propid = 0;
+            if ( ui_connectorPropList.selection ) propid = ui_connectorPropList.selection.index;
+            var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EFFECTOR.matchName );
+            var index = DuAEF.Duik.PseudoEffects.EFFECTOR.index;
+            if (propid == 0 || propid == 1) effect( index['ModePopup'] ).setValue(1);
+            if (propid == 2 || propid == 3) effect( index['ModePopup'] ).setValue(2);
+            if (propid == 0 || propid == 2) effect( index['InterpolationTypePopup'] ).setValue(1);
+            if (propid == 1 || propid == 3) effect( index['InterpolationTypePopup'] ).setValue(2);
+        }
+        
     }
 
     function ui_connectorAxisList_changed ()
@@ -357,6 +394,20 @@ function ui_buildConstraints ( ui_constraintsGroup )
             ui_connectorMinimumEdit.setText( '0' );
             ui_connectorMaximumEdit.setText( Math.floor( vel * 100 ) / 100 );
         }
+    }
+
+    function ui_connectorMinimumEdit_changed ()
+    {
+        var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EFFECTOR.matchName );
+        var index = DuAEF.Duik.PseudoEffects.EFFECTOR.index;
+        effect( index['Inner limitSlider'] ).setValue( parseFloat(ui_connectorMinimumEdit.text) );
+    }
+
+    function ui_connectorMaximumEdit_changed ()
+    {
+        var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EFFECTOR.matchName );
+        var index = DuAEF.Duik.PseudoEffects.EFFECTOR.index;
+        effect( index['Outter limitSlider'] ).setValue( parseFloat(ui_connectorMaximumEdit.text) );
     }
 
     function ui_connectorPropertiesButton_clicked ()
@@ -1465,6 +1516,8 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_connectorAxisList.onChange = ui_connectorAxisList_changed;
     ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
     ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
+    ui_connectorMinimumEdit.onChange = ui_connectorMinimumEdit_changed;
+    ui_connectorMaximumEdit.onChange = ui_connectorMaximumEdit_changed;
 
     ui_connectorOptionsButton.onClick = function()
     {
