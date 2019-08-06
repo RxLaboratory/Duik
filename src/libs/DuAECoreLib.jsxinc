@@ -3653,6 +3653,49 @@ DuAEF.DuAE.Property.addKey = function(props, typeIn, typeOut, easeInValue, easeO
 }
 
 /**
+ * Computes a percentage from a velocity on a given keyframe. 
+ * @param {Property|PropertyInfo} prop - The property
+ * @param {int} key - The index of the keyframe where to compute the velocity
+ * @return {float[]} The velocities [in, out] as a percentage.
+*/
+DuAEF.DuAE.Property.velocityToPercent = function(prop, key)
+{
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	var speedIn = prop.keyInTemporalEase(key)[0].speed;
+	var speedOut = prop.keyOutTemporalEase(key)[0].speed;
+
+	//get speed just before and after as if it was linear
+	var prevSpeed = 0;
+	var nextSpeed = 0;
+	var val = prop.keyValue(key);
+	var currentTime = prop.keyTime(key);
+	if (key > 1)
+	{
+		var valBefore = prop.keyValue(key-1);
+		var timeBefore = prop.keyTime(key-1);
+		prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (currentTime-timeBefore);
+	}
+
+	if (key < prop.numKeys)
+	{
+		var valAfter = prop.keyValue(key+1);
+		var timeAfter = prop.keyTime(key+1);
+		nextSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (timeAfter-currentTime);
+	}
+
+	//get average speed
+	var speed = (prevSpeed + nextSpeed) / 2;
+
+	//compare to the original speeds 
+	var speedInAsPercent = speedIn / speed * 100;
+	var speedOutAsPercent = speedOut / speed * 100;
+
+	return [speedInAsPercent, speedOutAsPercent];
+}
+
+/**
 	* Changes the ease influences of the selected keys
 	* @param {PropertyBase[]|PropertyInfo[]} props - The properties
 	* @param {int[]|int} [easeInValue] - The in interpolation ease value. Will be ignored if undefined.
@@ -3699,7 +3742,7 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 					}
 				}
 
-				//keep the ease values as the velocity computation loses them
+				//keep the ease values
 				var easeInValues = [];
 				var easeOutValues = [];
 				easeInValues[0] = typeof easeInValue === 'undefined' ? prop.keyInTemporalEase(key)[0].influence : easeInValue;
@@ -3717,14 +3760,24 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 				//compute the velocity
 				if (velocityAsPercent)
 				{
-					//set keyframe to linear
-					prop.setInterpolationTypeAtKey(key, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.LINEAR);
-					//get speed just before and after
-					var valBefore = prop.valueAtTime( prop.keyTime(key) - comp.frameDuration, true );
+					//get speed just before and after as if it was linear
+					var prevSpeed = 0;
+					var nextSpeed = 0;
 					var val = prop.keyValue(key);
-					var valAfter = prop.valueAtTime( prop.keyTime(key) + comp.frameDuration, true );
-					var prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / comp.frameDuration;
-					var nextSpeed = DuAEF.DuJS.Math.getLength(valAfter, val) / comp.frameDuration;
+					var currentTime = prop.keyTime(key);
+					if (key > 1)
+					{
+						var valBefore = prop.keyValue(key-1);
+						var timeBefore = prop.keyTime(key-1);
+						prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (currentTime-timeBefore);
+					}
+
+					if (key < prop.numKeys)
+					{
+						var valAfter = prop.keyValue(key+1);
+						var timeAfter = prop.keyTime(key+1);
+						nextSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (timeAfter-currentTime);
+					}
 
 					//detect sign
 					var signBefore = 1;
