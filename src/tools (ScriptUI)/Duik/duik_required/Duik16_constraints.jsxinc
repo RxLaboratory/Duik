@@ -45,11 +45,14 @@ function ui_buildConstraints ( ui_constraintsGroup )
         connector.masterProp = null;
         connector.masterLayer = null;
         connector.type = 1;
-        connectorMasterLabel.text = "Pick master property";
+        connectorMasterLabel.text = "Choose master property";
         ui_connectorMaximumEdit.suffix = '';
         ui_connectorMinimumEdit.suffix = '';
         ui_connectorMinimumEdit.setText( "0" );
         ui_connectorMaximumEdit.setText( "100" );
+        ui_connectorPropList.removeAll();
+        ui_connectorPropList.enabled = false;
+        ui_connectorPropLabel.enabled = false;
         ui_connectorAxisList.removeAll();
         ui_connectorAxisList.enabled = false;
         ui_connectorAxisLabel.text = "Axis: ";
@@ -58,6 +61,70 @@ function ui_buildConstraints ( ui_constraintsGroup )
         ui_connectorTypeList.enabled = true;
         connectorFormReady(false);
         connectorReady(false);
+    }
+
+    function connectorLoadMasterProperty()
+    {
+        //if no property, back to init
+        if ( !connector.masterProp )
+        {
+            connectorInit();
+            return;
+        }
+
+        //check dimensions and init
+        var dim = DuAEF.Duik.Rigging.connectorCheckParent( connector.masterProp );
+        if ( dim == 0 )
+        {
+            alert( "This property cannot be used as a master property with the connector." );
+            connectorInit();
+            return;
+        }
+        else if ( dim == 1 )
+        {
+            ui_connectorAxisList.removeAll();
+            ui_connectorAxisList.enabled = false;
+            ui_connectorAxisLabel.text = "Axis: ";
+        }
+        else if ( dim == 2 )
+        {
+            ui_connectorAxisList.removeAll();
+            ui_connectorAxisList.enabled = true;
+            ui_connectorAxisList.add( 'item', 'X' );
+            ui_connectorAxisList.add( 'item', 'Y' );
+            ui_connectorAxisList.selection = 0;
+            ui_connectorAxisLabel.text = "Axis: ";
+        }
+        else if ( dim == 3 )
+        {
+            ui_connectorAxisList.removeAll();
+            ui_connectorAxisList.enabled = true;
+            ui_connectorAxisList.add( 'item', 'X' );
+            ui_connectorAxisList.add( 'item', 'Y' );
+            ui_connectorAxisList.add( 'item', 'Z' );
+            ui_connectorAxisList.selection = 0;
+            ui_connectorAxisLabel.text = "Axis: ";
+        }
+        else if ( dim == 4 )
+        {
+            ui_connectorAxisList.removeAll();
+            ui_connectorAxisList.enabled = true;
+            ui_connectorAxisList.add( 'item', "Red" );
+            ui_connectorAxisList.add( 'item', "Green" );
+            ui_connectorAxisList.add( 'item', "Blue" );
+            ui_connectorAxisList.add( 'item', "Alpha" );
+            ui_connectorAxisList.add( 'item', "Hue" );
+            ui_connectorAxisList.add( 'item', "Saturation" );
+            ui_connectorAxisList.add( 'item', "Value" );
+            ui_connectorAxisList.selection = 4;
+            ui_connectorAxisLabel.text = "Channel: ";
+            if ( app.project.bitsPerChannel == 8 ) ui_connectorMaximumEdit.setText( '255' );
+            else if ( app.project.bitsPerChannel == 16 ) ui_connectorMaximumEdit.setText( '65536' );
+            else if ( app.project.bitsPerChannel == 32 ) ui_connectorMaximumEdit.setText( '1.0' );
+        }
+
+        ui_connectorAxisList_changed ();
+        connectorReady();
     }
 
     function connectorPick()
@@ -69,7 +136,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
         var layer = layers[layers.length - 1];
 
-        //get the selected property
+        //get the selected property if any and use it
         var props = DuAEF.DuAE.Comp.getSelectedProps();
         if ( props.length > 0 )
         {
@@ -80,35 +147,42 @@ function ui_buildConstraints ( ui_constraintsGroup )
                 connector.masterProp = propInfo;
                 connector.layer = propInfo.layer;
                 connectorMasterLabel.text = propInfo.layer.index + " - " + propInfo.layer.name + " # " + prop.name;
+                connectorLoadMasterProperty();
+                return;
             }
         }
 
         //look for a Duik controller 
-        var effect = layer.effect ( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.matchName );
 
         //slider
-        if ( !connector.masterProp )
+        var effect = layer.effect ( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.matchName );
+        if ( effect )
         {
             connector.masterLayer = layer;
             connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER.index[ 'ValueSlider' ] ) );
             ui_connectorMinimumEdit.setText( '-100' );
             ui_connectorMaximumEdit.setText( '100' );
             connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Slider";
+            connectorLoadMasterProperty();
+            return;
         }
+        
         //2d slider
         effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.matchName );
-        if ( !connector.masterProp )
+        if ( effect )
         {
             connector.masterLayer = layer;
             connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.index[ '2D ValuePoint' ] ) );
-            connector.masterLayer = layer;
             ui_connectorMinimumEdit.setText( '-100' );
             ui_connectorMaximumEdit.setText( '100' );
             connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "2D Slider";
+            connectorLoadMasterProperty();
+            return;
         }
+
         //angle
         effect = layer.effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.matchName );
-        if ( !connector.masterProp )
+        if ( effect )
         {
             connector.masterLayer = layer;
             connector.masterProp = new PropertyInfo( effect( DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE.index[ 'AngleAngle' ] ) );
@@ -116,62 +190,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
             ui_connectorMinimumEdit.setText( '0' );
             ui_connectorMaximumEdit.setText( '360' );
             connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Angle";
-        }
-
-        //init prop
-        if ( connector.masterProp != null )
-        {
-            var dim = DuAEF.Duik.Rigging.connectorCheckParent( connector.masterProp );
-            if ( dim == 0 )
-            {
-                alert( "This property cannot be used as a master property with the connector." );
-                connectorInit();
-                return;
-            }
-            else if ( dim == 1 )
-            {
-                ui_connectorAxisList.removeAll();
-                ui_connectorAxisList.enabled = false;
-                ui_connectorAxisLabel.text = "Axis: ";
-            }
-            else if ( dim == 2 )
-            {
-                ui_connectorAxisList.removeAll();
-                ui_connectorAxisList.enabled = true;
-                ui_connectorAxisList.add( 'item', 'X' );
-                ui_connectorAxisList.add( 'item', 'Y' );
-                ui_connectorAxisList.selection = 0;
-                ui_connectorAxisLabel.text = "Axis: ";
-            }
-            else if ( dim == 3 )
-            {
-                ui_connectorAxisList.removeAll();
-                ui_connectorAxisList.enabled = true;
-                ui_connectorAxisList.add( 'item', 'X' );
-                ui_connectorAxisList.add( 'item', 'Y' );
-                ui_connectorAxisList.add( 'item', 'Z' );
-                ui_connectorAxisList.selection = 0;
-                ui_connectorAxisLabel.text = "Axis: ";
-            }
-            else if ( dim == 4 )
-            {
-                ui_connectorAxisList.removeAll();
-                ui_connectorAxisList.enabled = true;
-                ui_connectorAxisList.add( 'item', "Red" );
-                ui_connectorAxisList.add( 'item', "Green" );
-                ui_connectorAxisList.add( 'item', "Blue" );
-                ui_connectorAxisList.add( 'item', "Alpha" );
-                ui_connectorAxisList.add( 'item', "Hue" );
-                ui_connectorAxisList.add( 'item', "Saturation" );
-                ui_connectorAxisList.add( 'item', "Value" );
-                ui_connectorAxisList.selection = 4;
-                ui_connectorAxisLabel.text = "Channel: ";
-                if ( app.project.bitsPerChannel == 8 ) ui_connectorMaximumEdit.setText( '255' );
-                else if ( app.project.bitsPerChannel == 16 ) ui_connectorMaximumEdit.setText( '65536' );
-                else if ( app.project.bitsPerChannel == 32 ) ui_connectorMaximumEdit.setText( '1.0' );
-            }
-
-            connectorReady();
+            connectorLoadMasterProperty();
             return;
         }
 
@@ -187,6 +206,30 @@ function ui_buildConstraints ( ui_constraintsGroup )
             return;
         }
 
+        //expose transform
+        effect = layer.effect( DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.matchName );
+        if ( effect )
+        {
+            connector.masterLayer = layer;
+            connector.masterProp = null;
+            connector.type = 4;
+            connectorMasterLabel.text = layer.index + " - " + layer.name + " # " + "Expose Transform";
+            ui_connectorPropList.removeAll();
+            ui_connectorPropList.enabled = true;
+            ui_connectorPropList.add( 'item', "Absolute position (2D)" );
+            ui_connectorPropList.add( 'item', "Relative position (2D)" );
+            ui_connectorPropList.add( 'item', "Distance (2D)" );
+            ui_connectorPropList.add( 'item', "Absolute position (3D)" );
+            ui_connectorPropList.add( 'item', "Relative position (3D)" );
+            ui_connectorPropList.add( 'item', "Distance (3D)" );
+            ui_connectorPropList.add( 'item', "Absolute orientation" );
+            ui_connectorPropList.add( 'item', "Relative orientation" );
+            ui_connectorPropList.add( 'item', "Angle" );
+            ui_connectorPropList.selection = 2;
+            connector.masterProp = effect( DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.index['2D Position (Comp projection)2D DistanceSlider'] );
+            connectorLoadMasterProperty();
+            return;
+        }
     }
 
     function connectorFormReady(isReady)
@@ -205,6 +248,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
             ui_connectorTypeLabel.enabled = false;
             ui_connectorTypeList.enabled = false;
         }
+
+        if (connector.type == 4)
+        {
+            ui_connectorPropLabel.enabled = true;
+            ui_connectorPropList.enabled = true;
+        }
     }
 
     function connectorReady(isReady)
@@ -219,7 +268,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
             ui_connectorPropertiesButton.icon.image = ui_connectorPropertiesButton.standardImage = DuAEF.DuBinary.toFile( w25_allproperties_l );
 
-            if (connector.type == 1) ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_l );
+            if (connector.type == 1 || connector.type == 4) ui_connectorOpacitiesButton.icon.image = ui_connectorOpacitiesButton.standardImage = DuAEF.DuBinary.toFile( w25_opacity_l );
             else ui_connectorOpacitiesButton.enabled = false;
 
             if ( settings.data.uiMode != 2 )
@@ -257,13 +306,40 @@ function ui_buildConstraints ( ui_constraintsGroup )
         app.endUndoGroup();
     }
 
+    function ui_connectorPropList_changed ()
+    {
+        var propid = 0;
+        if ( ui_connectorPropList.selection ) propid = ui_connectorPropList.selection.index;
+        var effect = connector.masterLayer.effect( DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.matchName );
+        var index = DuAEF.Duik.PseudoEffects.EXPOSE_TRANSFORM.index;
+        if (propid == 0) connector.masterProp = effect( index['2D Position (Comp projection)Absolute Point'] );
+        if (propid == 1) connector.masterProp = effect( index['2D Position (Comp projection)Relative to referencePoint'] );
+        if (propid == 2) connector.masterProp = effect( index['2D Position (Comp projection)2D DistanceSlider'] );
+        if (propid == 3) connector.masterProp = effect( index['3D Position (World)AbsolutePoint3D'] );
+        if (propid == 4) connector.masterProp = effect( index['3D Position (World)Relative to referencePoint3D'] );
+        if (propid == 5) connector.masterProp = effect( index['3D Position (World)3D DistanceSlider'] );
+        if (propid == 6) connector.masterProp = effect( index['2D OrientationAbsoluteAngle'] );
+        if (propid == 7) connector.masterProp = effect( index['2D OrientationRelative to referenceAngle'] );
+        if (propid == 8) connector.masterProp = effect( index['Angle (Layer-This-Reference)Angle'] );
+        connectorLoadMasterProperty();
+    }
+
     function ui_connectorAxisList_changed ()
     {
-        if ( !connector.masterProp ) return;
+        if (!connector.masterProp) return;
+
+        ui_connectorMinimumEdit.setText( 0 );
+        ui_connectorMaximumEdit.setText( 100 );
+
         var axis = 0;
         if ( ui_connectorAxisList.selection ) axis = ui_connectorAxisList.selection.index;
         var range = DuAEF.DuAE.Property.getRange( connector.masterProp, axis, false );
+
         if ( range.length != 2 ) return;
+
+        if (range[ 0 ] < parseFloat(ui_connectorMinimumEdit.text) ) ui_connectorMinimumEdit.setText( Math.floor( range[ 0 ] ) );
+        if (range[ 1 ] > parseFloat(ui_connectorMaximumEdit.text) ) ui_connectorMaximumEdit.setText( Math.floor( range[ 1 ] ) );
+        
         if ( range[ 0 ] == range[ 1 ] ) return;
         ui_connectorMinimumEdit.setText( Math.floor( range[ 0 ] ) );
         ui_connectorMaximumEdit.setText( Math.floor( range[ 1 ] ) );
@@ -292,9 +368,8 @@ function ui_buildConstraints ( ui_constraintsGroup )
         if ( props.length == 0 ) return;
 
 
-        if (connector.type == 1)
+        if (connector.type == 1 || connector.type == 4) //Property or expose transform 
         {
-            var effect = null;
             var min = parseFloat( ui_connectorMinimumEdit.text );
             var max = parseFloat( ui_connectorMaximumEdit.text );
             var type = DuAEF.DuAE.Types.VALUE;
@@ -328,12 +403,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
             app.endUndoGroup();
         }
 
-        else if (connector.type == 2)
+        else if (connector.type == 2) //Effector
         {
             shared.effector(connector.masterLayer);
         }
 
-        else if (connector.type == 3)
+        else if (connector.type == 3) //Effector Map
         {
             app.beginUndoGroup( 'Duik | ' + "Connector" );
 
@@ -482,6 +557,26 @@ function ui_buildConstraints ( ui_constraintsGroup )
         ui_connectorMinimumEdit.setText('0');
         
         connectorReady();
+    }
+
+    function ui_connectorEtmButton_clicked ()
+    {
+        var comp = DuAEF.DuAE.Project.getActiveComp();
+	    if (!comp) return;
+
+        DuAEF.DuAE.App.beginUndoGroup("Expose Transform");
+
+        var layers = DuAEF.DuAE.Comp.unselectLayers();
+        var ctrl;
+        if (layers.length == 0) ctrl = DuAEF.Duik.Rigging.exposeTransform(comp);
+        else ctrl = DuAEF.Duik.Rigging.exposeTransform(comp,layers[0]);
+
+        ctrl.selected = true;
+
+        DuAEF.DuAE.App.endUndoGroup();
+
+        //ready
+        connectorPick();
     }
 
     function ui_bonesEditSizeList_changed ()
@@ -1246,7 +1341,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
     var ui_connectorGroup = DuAEF.DuScriptUI.addGroup( ui_constraintsGroup, 'column' );
     DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, settings.data.uiMode != 2 ? "Connector" : '' );
     ui_connectorGroup.alignChildren = [ 'center', 'top' ];
-    var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Choose a master property", DuAEF.DuJS.Color.Colors.DARK_GREY );
+    var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Master selection/creation", DuAEF.DuJS.Color.Colors.DARK_GREY );
 	connectorMasterLabel.characters = 20;
 	connectorMasterLabel.justify = 'center';
     
@@ -1259,24 +1354,27 @@ function ui_buildConstraints ( ui_constraintsGroup )
 	var ui_connectorPickButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, "", DuAEF.DuBinary.toFile( w25_pickproperty_l ), "Select a master property", DuAEF.DuBinary.toFile( w25_pickproperty_r ) );
 	var ui_connectorEtmButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, "", DuAEF.DuBinary.toFile( w25_ruler_l ), "Create an 'Expose Transform' controller", DuAEF.DuBinary.toFile( w25_ruler_r ) );
 
-    if ( settings.data.uiMode != 2 ) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Controller values" );
+    if ( settings.data.uiMode != 2 ) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Master setup" );
     var ui_connectorForm = DuAEF.DuScriptUI.addForm( ui_connectorGroup );
     DuAEF.DuScriptUI.setBackgroundColor( ui_connectorForm, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
     ui_connectorForm.alignment = [ 'fill', 'top' ];
+    var ui_connectorPropLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Property: " );
     var ui_connectorAxisLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Placeholder: " );
     var ui_connectorTypeLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Type: " );
     var ui_connectorMinLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Minimum: " );
     var ui_connectorMaxLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Maximum: " );
+    var ui_connectorPropList = ui_connectorForm.buttons.add( 'dropdownlist', undefined, [ '                      ' ] );
     var ui_connectorAxisList = ui_connectorForm.buttons.add( 'dropdownlist', undefined, [ '            ' ] );
     var ui_connectorTypeList = ui_connectorForm.buttons.add( 'dropdownlist', undefined, [ "Value", "Velocity" ] );
     var ui_connectorMinimumEdit = DuAEF.DuScriptUI.addEditText( ui_connectorForm.buttons, '0' );
     var ui_connectorMaximumEdit = DuAEF.DuScriptUI.addEditText( ui_connectorForm.buttons, '10000' );
     ui_connectorMinLabel.minimumSize.height = ui_connectorMinLabel.maximumSize.height = ui_connectorMinimumEdit.edit.preferredSize[ 1 ];
     ui_connectorMaxLabel.minimumSize.height = ui_connectorMaxLabel.maximumSize.height = ui_connectorMaximumEdit.edit.preferredSize[ 1 ];
+    ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.height = ui_connectorPropList.preferredSize[ 1 ];
     ui_connectorAxisLabel.minimumSize.height = ui_connectorAxisLabel.maximumSize.height = ui_connectorAxisList.preferredSize[ 1 ];
     ui_connectorTypeLabel.minimumSize.height = ui_connectorTypeLabel.maximumSize.height = ui_connectorTypeList.preferredSize[ 1 ];
 
-    if ( settings.data.uiMode != 2 ) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Children" );
+    if ( settings.data.uiMode != 2 ) var ui_connectorSeparator3 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Children connection" );
     var ui_connectorChildrenGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, settings.data.uiMode == 2 ? 'row' : 'column' );
     ui_connectorChildrenGroup.alignment = settings.data.uiMode == 2 ? [ 'center', 'top' ] : [ 'fill', 'top' ];
     var ui_connectorPropertiesButton = DuAEF.DuScriptUI.addButton(
@@ -1364,6 +1462,8 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_connectorAngleButton.onClick = ui_connectorAngleButton_clicked;
     ui_connectorEffectorButton.onClick = ui_connectorEffectorButton_clicked;
     ui_connectorMapEffectorButton.onClick = ui_connectorMapEffectorButton_clicked;
+    ui_connectorEtmButton.onClick = ui_connectorEtmButton_clicked;
+    ui_connectorPropList.onChange = ui_connectorPropList_changed;
     ui_connectorTypeList.onChange = ui_connectorTypeList_changed;
     ui_connectorAxisList.onChange = ui_connectorAxisList_changed;
     ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
