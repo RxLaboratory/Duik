@@ -157,7 +157,7 @@ function LayerAnim()
 function PropertyInfo(property)
 {
 	if (property instanceof PropertyInfo) return property;
-
+	
 	var expressionEnabled = property.expressionEnabled;
 	if (property.propertyType == PropertyType.PROPERTY)
 	{
@@ -4131,16 +4131,12 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time, preExpression)
 */
 DuAEF.DuAE.Property.setExpression = function (property, expr, keepValue)
 {
-	if (typeof keepValue === 'undefined') keepValue = true;
+	keepValue = def(keepValue, true);
 
 	var propInfo = new PropertyInfo(property);
-
-	if (property instanceof PropertyInfo)
-	{
-		property = property.getProperty();
-	}
-
 	if (!propInfo.riggable) return;
+
+	property = propInfo.getProperty();
 
 	var originalValue = property.valueAtTime(propInfo.comp.time, false);
 
@@ -4214,7 +4210,7 @@ DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
  * When not null, the start time of this layer will be taken into account to get the values and synchronize them.
  */
 DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp,timeLayer)
-{
+{	
 	if (parentProp.name.toLowerCase() == 'data') return;
 	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
@@ -4235,7 +4231,7 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp,
 		//set the link
 		var exp = DuAEF.Duik.expressionIds.LINK + '\n';
 		if (timeLayer != null)
-		{		
+		{
 			exp += 'var timeLayer = ' + DuAEF.DuAE.Property.getExpressionLink( timeLayer ) + ';\n' +
 				'var st = timeLayer.startTime;\n' +
 				'var t = time + st;\n' +
@@ -4469,9 +4465,13 @@ DuAEF.DuAE.Property.lock = function(properties)
 */
 DuAEF.DuAE.Property.removeExpression = function(prop)
 {
-	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	if (typeof(prop) === 'undefined') return;
+
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	
 	if (prop.expression == '') return;
-	if (DuAEF.DuAE.Property.isRiggable(prop))
+	if (propInfo.riggable)
 	{
 		DuAEF.DuAE.Property.setValue(prop, prop.value);
 		prop.expression = '';
