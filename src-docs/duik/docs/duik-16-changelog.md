@@ -9,7 +9,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
 - The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
 - The additional panel for the [***Bone***](bones.md) now includes a button to select and show or hide all the bones in the composition.
-- The [***Connector***](connector.md) now works with a spatial effector or a texture effector too.
+- The [***Connector***](connector.md) now works with a spatial effector, a texture effector or the new [***Expose Transform***](expose-transform.md) tool too.
 - The [***Expose Transform***](expose-transform.md) tool is very useful with the [*Connector*](connector.md) or to build your own expressions and automate a lot of stuff.
 - The [IK effect](autorig.md#ik-fk) on controllers now exposes the distance between the end and the root of the limb, which may be very useful with the connector or in your own expressions.
 
@@ -28,7 +28,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - A tool to [***Align Layers***](rigging-tools.md#align-layers) in the rigging tools panel.
 - With the [***Edit mode***](rigging-tools.md#toggle-edit-mode), you can (un/re)parent all the children of a layer.
 - You can [***Remove expressions***](rigging-tools.md#remove-expressions) while keeping the post-expression value.
-- It is easy to [***Copy & Paste Expressions***](rigging-tools.md#copy-paste-expressions) without changing the current value o several properties at once with the copy and paste expressions buttons.
+- It is easy to [***Copy & Paste Expressions***](rigging-tools.md#copy-paste-expressions) without changing the current value of several properties at once with the copy and paste expressions buttons.
 - Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts (expert mode only):  
     - You can get some [***Property Info***](rigging-tools.md#get-property-info) about the selected property, like its index, its matchName, the expression link to it, etc.
     - A [***Scriptify expression***](rigging-tools.md#scriptify-expression) tool makes it quick to include an expression as a string in a .jsx script.
