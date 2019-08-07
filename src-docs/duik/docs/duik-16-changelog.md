@@ -70,6 +70,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Fixed animations not [importing](import.md)  when interpolation values are invalid.
 - Fixed 3D [Controllers extraction](controller-tools.md).
 - The [*List*](duik-list.md) does not anymore add an offset on the value when added on a property without keyframes.
+- The [*Move Away*](move-away.md) does not generate an expression error anymore when the layer is at the same location as its parent.
 
 ## 16.0.12
 

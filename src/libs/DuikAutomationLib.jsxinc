@@ -939,25 +939,24 @@ DuAEF.Duik.Automation.blink = function (prop)
 */
 DuAEF.Duik.Automation.moveAway = function (layer)
 {
-	if (layer == undefined) return;
+	if (typeof layer === 'undefined') return;
 	var effect = layer.Effects.addProperty("ADBE Slider Control");
 	effect.name =  DuAEF.DuAE.Layer.newUniqueEffectName('Move away from parent',layer);
 
-	layer.transform.position.expression = "//Duik.moveAway\n" +
-						"if (thisLayer.hasParent)\n" +
-						"{\n" +
-						"thisWorldPos = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
-						"parentWorldPos = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);\n" +
-						"depl = effect(\"" + effect.name  + "\")(1)\n" +
-						"dist = length(parentWorldPos ,thisWorldPos )\n" +
-						"coef = (dist+depl)/dist\n" +
-						"newWorldPos = (thisWorldPos-parentWorldPos)*coef+parentWorldPos\n" +
-						"thisLayer.parent.fromWorld(newWorldPos)\n" +
-						"}\n" +
-						"else\n" +
-						"{\n" +
-						"value\n" +
-						"}\n";
+	layer.transform.position.expression = ['//Duik.moveAway',
+		'var result = value;',
+		'if (thisLayer.hasParent && value[0] != 0 && value[1] != 0)',
+		'{',
+		'	thisWorldPos = thisLayer.toWorld(thisLayer.anchorPoint);',
+		'	parentWorldPos = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);',
+		'	depl = effect("' + effect.name + '")(1)',
+		'	dist = length(parentWorldPos ,thisWorldPos )',
+		'	coef = (dist+depl)/dist',
+		'	newWorldPos = (thisWorldPos-parentWorldPos)*coef+parentWorldPos',
+		'	result = thisLayer.parent.fromWorld(newWorldPos)',
+		'}',
+		'result;'
+	].join('\n');
 }
 
 /**
