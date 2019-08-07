@@ -523,24 +523,32 @@ DuAEF.Duik.Rigging.pathConstraint = function( layer, path )
     var l = DuAEF.DuAE.Property.getLayer( path );
     var pathExpr = DuAEF.DuAE.Property.getExpressionLink( path, true );
 
-    var expr = '//Duik.pathConstraint\n' +
-        'var fx = effect("' + effect.name + '");\n' +
-        'var l = thisComp.layer("' + l.name + '");\n' +
-        'var p = ' + pathExpr + ';\n' +
-        'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.percentSlider + ').value % 100 / 100;\n' +
-        'var result = value;\n' +
-        'result += p.pointOnPath(percent, time)+l.position;';
+    var expr = ['//Duik.pathConstraint',
+        'var fx = effect("' + effect.name + '");',
+        'var l = thisComp.layer("' + l.name + '");',
+        'var p = ' + pathExpr + ';',
+        'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.index['Percent along pathSlider'] + ').value % 100 / 100;',
+        'if (percent == 0) percent = 0.0001;',
+        'var pathOffset = fx(' + DuAEF.Duik.PseudoEffects.PATH.index['Path OffsetSlider']  + ');',
+        'var result = value;',
+        '//path value',
+        'result += p.pointOnPath(percent, time);',
+        '//offset',
+        'result += p.normalOnPath(percent, time)*pathOffset;',
+        '//layer position',
+        'result += l.position;'
+	].join('\n');
 
     DuAEF.DuAE.Property.setExpression( layer.position, expr );
 
     var expr = '//Duik.pathConstraint\n' +
         'var fx = effect("' + effect.name + '");\n' +
-        'var autoOrient = fx(' + DuAEF.Duik.PseudoEffects.PATH.orientCheckbox + ').value;\n' +
+        'var autoOrient = fx(' + DuAEF.Duik.PseudoEffects.PATH.index['OrientationCheckbox'] + ').value;\n' +
         'var result = value;\n' +
         'if (autoOrient)\n' +
         '{\n' +
         'var p = ' + pathExpr + ';\n' +
-        'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.percentSlider + ').value % 100 / 100;\n' +
+        'var percent = fx(' + DuAEF.Duik.PseudoEffects.PATH.index['Percent along pathSlider'] + ').value % 100 / 100;\n' +
         'var C = p.tangentOnPath(percent, time);\n' +
         'var angle = Math.atan2(C[1], C[0]);\n' +
         'angle = radiansToDegrees(angle);\n' +
