@@ -3147,13 +3147,15 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 */
 DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, offset)
 {
-	if (prop instanceof PropertyInfo) prop = prop.getProperty();
-	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
-	if (typeof setExpression === 'undefined') setExpression = false;
-	if (typeof replace === 'undefined') replace = false;
-	if (typeof offset === 'undefined') offset = false;
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	var comp = propInfo.comp;
+	time = def(time, comp.time );
+	setExpression = def(setExpression, false);
+	replace = def(replace, false);
+	offset = def(offset, false);
 
-	if (!DuAEF.DuAE.Property.isNumerical(prop)) offset = false;
+	if (!propInfo.numerical) offset = false;
 
 	var dimensions = anim.dimensions;
 
@@ -3162,9 +3164,8 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 	if (anim == null) return true;
 	if (anim.type == 'group') return false;
 
-	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
+	if (propInfo.editable)
 	{
-		var comp = DuAEF.DuAE.Property.getComp(prop);
 		//keep current value
 		var val = prop.valueAtTime(comp.time, true);
 
@@ -3175,7 +3176,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 			{
 				prop.removeKey(i);
 			}
-			DuAEF.DuAE.Property.setValue(val);
+			DuAEF.DuAE.Property.setValue(prop, val);
 		}
 
 		//if there are keys, set them
@@ -3212,7 +3213,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 			{
 				if (prop.numKeys == 0)
 				{
-					DuAEF.DuAE.Property.setValue(anim.startValue);
+					DuAEF.DuAE.Property.setValue(prop,anim.startValue);
 				}
 				else
 				{
@@ -3223,7 +3224,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 		}
 
 		//set the expression
-		if (prop.canSetExpression && setExpression)
+		if (propInfo.riggable && setExpression)
 		{
 			try { prop.expression = anim.expression; } catch(e) { if (DuAEF.debug) alert(e.description); };
 		}
