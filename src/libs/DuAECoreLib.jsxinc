@@ -821,13 +821,17 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 //true if an undo group has been opened and has not been closed yet.
 DuAEF.DuAE.App.openedUndoGroup = false;
 
+//low-level undocumented flag.
+//the name of the currently opened undo group
+DuAEF.DuAE.App.undoGroupName = '';
+
 /**
  * Begins an undoGroup.<br />
  * Automatically prepend the group name with the script name.<br />
  * Using this method is safer than the native one, as DuAEF will try to avoid opening several undo groups at once.<br />
  * The group name is translatable.
  * @param {string} groupName - The name of the Undo Group.
- * @param {boolean} [autoClose=true] - By default, DuAEF will close any previously opened undogroup to prevent any error.<br />
+ * @param {boolean} [autoClose=true] - By default, DuAEF will close any previously opened undogroup (which has a different name) to prevent any error.<br />
  * Set this to <code>false</code> in order to ignore this new group beginning and keep the previously opened one.
 */
 DuAEF.DuAE.App.beginUndoGroup = function (groupName, autoClose)
@@ -843,10 +847,12 @@ DuAEF.DuAE.App.beginUndoGroup = function (groupName, autoClose)
 
 	if (DuAEF.DuAE.App.openedUndoGroup)
 	{
-		if (autoClose) DuAEF.DuAE.App.endUndoGroup();
+		if ( autoClose && DuAEF.DuAE.App.undoGroupName != groupName ) DuAEF.DuAE.App.endUndoGroup();
 		else return;
 	}
 	app.beginUndoGroup(DuAEF.scriptName + ' | ' + groupName);
+
+	DuAEF.DuAE.App.undoGroupName = groupName;
 
 	DuAEF.DuAE.App.openedUndoGroup = true;
 }
@@ -862,11 +868,24 @@ DuAEF.DuAE.App.endUndoGroup = function ()
 } 
 
 /**
+ * Runs app.executeCommand in a safer way, taking care of undogroups.
+ * @param {int} commandID - The ID of the command as given by app.findMenuCommandID()
+ */
+DuAEF.DuAE.App.executeCommand = function(commandID)
+{
+	//the command will mess undo groups up if there already is one opened.
+	openedUndoGroup = DuAEF.DuAE.App.openedUndoGroup;
+	DuAEF.DuAE.App.endUndoGroup();
+	app.executeCommand(commandID);
+	if (openedUndoGroup) DuAEF.DuAE.App.beginUndoGroup(DuAEF.DuAE.App.undoGroupName);
+}
+
+/**
 	* Cuts the selection (runs the cut menu command)
 */
 DuAEF.DuAE.App.cut = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.CUT);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.CUT);
 }
 
 /**
@@ -874,7 +893,7 @@ DuAEF.DuAE.App.cut = function()
 */
 DuAEF.DuAE.App.copy = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.COPY);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.COPY);
 }
 
 /**
@@ -882,7 +901,7 @@ DuAEF.DuAE.App.copy = function()
 */
 DuAEF.DuAE.App.duplicate = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.DUPLICATE);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.DUPLICATE);
 }
 
 /**
@@ -892,7 +911,7 @@ DuAEF.DuAE.App.duplicate = function()
 */
 DuAEF.DuAE.App.copyWithPropertyLinks = function()
 {
-	if (DuAEF.DuAE.App.version >= 12.0) app.executeCommand(DuAEF.DuAE.menuCommandID.COPY_WITH_PROPERTY_LINKS);
+	if (DuAEF.DuAE.App.version >= 12.0) DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.COPY_WITH_PROPERTY_LINKS);
 	else DuAEF.DuAE.App.copy();
 }
 
@@ -901,7 +920,7 @@ DuAEF.DuAE.App.copyWithPropertyLinks = function()
 */
 DuAEF.DuAE.App.paste = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.PASTE);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.PASTE);
 }
 
 /**
