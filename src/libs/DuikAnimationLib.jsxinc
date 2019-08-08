@@ -661,7 +661,7 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	if (controllers.length == 0) return -3;
 
 	//check for parenting and list layers
-	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 1");
+
 	app.beginSuppressDialogs();
 
 	DuAEF.DuAE.Comp.setUniqueCompName(comp);
@@ -682,12 +682,8 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		controller.bakeAppearance();
 	});
 
-	app.endUndoGroup();
-
 	//copy controllers
 	var newCtrlLayers = DuAEF.DuAE.Layer.copyToComp(ctrlLayers, comp);
-
-	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 2");
 
 	//Add null at position precomp.width/2 precomp.height/2
 	var nullLayer = comp.layers.addNull();
@@ -713,6 +709,9 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		//use locators for all controllers parented to something else than a controller or nothing
 		if (ctrlLayer.reparent) DuAEF.Duik.Rigging.parent(newCtrlLayer, ctrlLayer.parent);
 
+		//remove expressions in the data of the child effect 
+		DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
+
 		if (useMasterProperties)
 		{
 			//transform
@@ -737,8 +736,6 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		{
 			//transform
 			DuAEF.DuAE.Property.linkProperties( ctrlLayer.transform, newCtrlLayer.transform, undefined, preComposition );
-			//remove expressions in the data of the child effect 
-			DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
 			//effects
 			DuAEF.DuAE.Property.linkProperties( ctrlLayer('ADBE Effect Parade'), newCtrlLayer('ADBE Effect Parade'), undefined, preComposition );
 		}
@@ -747,7 +744,6 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOLAYER, ctrlLayer.name);
 	}
 
-	app.endUndoGroup();
 	app.endSuppressDialogs(false);
 
 	return 1;
