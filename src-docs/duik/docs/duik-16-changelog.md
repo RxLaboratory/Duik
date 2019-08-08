@@ -52,7 +52,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The User Interface has been tweaked to fix some details and improve the overall User Experience.
 - All buttons for showing or hiding stuff (Structures, bones, controllers...) can now invert the visibility with holding the [Alt] button, instead of showing or hiding them all.
 - The [_Structures_](structures.md) layer names are now translated to the language set in the settings (if the translation file is up-to-date).
-- The [_Path Constraint](path-constraint.md) effect now has a "*Path Offset*" option.
+- The [_Path Constraint_](path-constraint.md) effect now has a "*Path Offset*" option.
 - The [*Add Bones*](bones.md) button now creates a single bone if nothing is selected, which you can then use any way you want.
 
 #### Fixes
@@ -73,6 +73,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Move Away*](move-away.md) does not generate an expression error anymore when the layer is at the same location as its parent.
 - Some checkboxes not working in the UI are fixed.
 - Duik is now launched correctly on first launch if the *File and Network Preference* of After Effects was unchecked.
+- The [*Walk Cycle*](alk-cycle.md) is now applied correctly when controllers are null layers.
 
 ## 16.0.12
 
