@@ -71,6 +71,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Fixed 3D [Controllers extraction](controller-tools.md).
 - The [*List*](duik-list.md) does not anymore add an offset on the value when added on a property without keyframes.
 - The [*Move Away*](move-away.md) does not generate an expression error anymore when the layer is at the same location as its parent.
+- Some checkboxes not working in the UI are fixed.
+- Duik is now launched correctly on first launch if the *File and Network Preference* of After Effects was unchecked.
 
 ## 16.0.12
 
