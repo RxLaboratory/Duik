@@ -257,8 +257,8 @@ DuAEF.DuScriptUI.setTextColor = function( text, color, adjusted )
  */
 DuAEF.DuScriptUI.setBackgroundColor = function( uiItem, color, adjusted )
 {
-    if ( typeof adjusted === 'undefined' ) adjusted = true;
-    if ( !uiItem ) throw "You must provide a ScriptUI Control to change the color of the background";
+    adjusted = def( adjusted, true );
+    if ( typeof uiItem === 'undefined' ) throw "You must provide a ScriptUI Control to change the color of the background";
     var c = color;
     if ( adjusted ) c = DuAEF.DuScriptUI.adjustColor( color );
     var g = uiItem.graphics;
@@ -931,11 +931,15 @@ DuAEF.DuScriptUI.addSmallButton = function( container, text, helpTip )
  * This is not a real class, and cannot be instanciated.<br />
  * Use {@link DuAEF.DuScriptUI.addCheckBox} to create an Image Checkbox.<br />
  * The Image Checkbox inherits the Group object from ScriptUI and has all of its properties and methods.
+ * @property {Group} group - The scriptUI Group containing the label and the image.
  * @property {string} standardImage - The path to the image (or a PNG as a string representation)
  * @property {string} imageOver - The path to the image (or a PNG as a string representation) to display when mouseover
  * @property {string} imageChecked - The path to the image (or a PNG as a string representation) to display when the button is checked
- * @property {Image}	image	- The scriptui object representing the image
- * @property {StaticText}	label	- The label
+ * @property {Image}	image	- The scriptui object representing the image, if any
+ * @property {StaticText}	label	- The label, if any
+ * @property {string} text - The current text
+ * @property {string} textChecked - The text to display when the checkbox is checked
+ * @property {string} defaultText - The text to display when the checkbox is unchecked
  * @property {boolean}	checked 	- The checked state of the button
  * @property {DuCheckBox~onClick} onClick - The function to execute when the button is clicked
  */
@@ -944,6 +948,24 @@ DuAEF.DuScriptUI.addSmallButton = function( container, text, helpTip )
  * The function to execute when the button is clicked.
  * @callback DuCheckBox~onClick
  * @memberof DuCheckBox
+ */
+
+/**
+ * Sets the checked state of the button
+ * @method
+ * @memberof DuCheckBox
+ * @name setChecked
+ * @param {boolean} [checked=true] - The state
+ */
+
+/**
+ * Sets the help information for this button
+ * @method
+ * @memberof DuCheckBox
+ * @name setHelp
+ * @param {string} title - The title
+ * @param {string} text - The content
+ * @param {string} link - A URL to an online help
  */
 
 /**
@@ -961,94 +983,101 @@ DuAEF.DuScriptUI.addSmallButton = function( container, text, helpTip )
 DuAEF.DuScriptUI.addCheckBox = function( container, text, image, helpTip, imageChecked, imageOver, textChecked, isTab )
 {
     //isTab is an undocumented low-level param used to create buttons for tabs in tabpanel
-    if ( typeof isTab === 'undefined' ) isTab = false;
+    isTab = def(isTab, false);
     if ( !container ) return null;
-    if ( !text ) text = '';
-    if ( !image ) image = '';
-    if ( !helpTip ) helpTip = '';
-    if ( !imageChecked ) imageChecked = '';
-    if ( !imageOver ) imageOver = imageChecked;
-    if ( textChecked == undefined ) textChecked = '';
+    text = def(text, '');
+    image = def(image, '');
+    helpTip = def(helpTip, '');
+    imageChecked = def(imageChecked, '');
+    imageOver = def(imageOver, imageChecked);
+    textChecked = def(textChecked, '');
+
+    //check if images exist
     if ( imageOver != '' && !DuAEF.DuJS.Fs.fileExists( imageOver ) ) imageOver = '';
     if ( image != '' && !DuAEF.DuJS.Fs.fileExists( image ) ) image = '';
     if ( imageChecked != '' && !DuAEF.DuJS.Fs.fileExists( imageChecked ) ) imageChecked = '';
 
+    //if no image and no text, a placeholder character
     if ( image == '' && text == '' ) text = '#';
 
+    //translate text and helptip
     if ( text != '' ) DuAEF.DuScriptUI.uiStrings.push( text );
     if ( helpTip != '' ) DuAEF.DuScriptUI.uiStrings.push( helpTip );
     text = tr( text );
     helpTip = tr( helpTip );
 
-    var mainGroup = container.add( 'group' );
-    mainGroup.orientation = 'column';
-    mainGroup.margins = 2;
-    if ( isTab ) mainGroup.spacing = 3;
-    else mainGroup.spacing = 0;
+    //create ui
+    var duCheckBox = container.add( 'group' );
+    duCheckBox.orientation = 'column';
+    duCheckBox.margins = 2;
+    if ( isTab ) duCheckBox.spacing = 3;
+    else duCheckBox.spacing = 0;
 
-    var group = mainGroup.add( 'group' );
-    group.orientation = 'row';
-    group.margins = 0;
-    group.spacing = 0;
+    duCheckBox.group = duCheckBox.add( 'group' );
+    duCheckBox.group.orientation = 'row';
+    duCheckBox.group.margins = 0;
+    duCheckBox.group.spacing = 0;
 
     var outLine;
     if ( isTab && text != '' )
     {
-        outLine = mainGroup.add( 'group' );
+        outLine = duCheckBox.add( 'group' );
         outLine.margins = 0;
         outLine.minimumSize.height = 2;
         outLine.alignment = [ 'fill', 'top' ];
     }
 
-    var imageButton = mainGroup;
-    imageButton.group = mainGroup;
+    duCheckBox.standardImage = image;
+    duCheckBox.imageOver = imageOver;
+    duCheckBox.imageChecked = imageChecked;
+    duCheckBox.onClick = function() {};
+    duCheckBox.checked = duCheckBox.value = false;
+    duCheckBox.textChecked = textChecked;
+    duCheckBox.defaultText = text;
+    duCheckBox.text = text;
 
-    imageButton.standardImage = image;
-    imageButton.imageOver = imageOver;
-    imageButton.imageChecked = imageChecked;
-    imageButton.onClick = function() {};
-    imageButton.checked = imageButton.value = false;
-    imageButton.textChecked = textChecked;
-    imageButton.defaultText = text;
+    iconChecked = DuAEF.DuBinary.toFile( w14_checked_m );
+    iconCheckedOver = DuAEF.DuBinary.toFile( w14_checked_l );
+    iconUnchecked = DuAEF.DuBinary.toFile( w14_emptysquare_m );
+    iconUncheckedOver = DuAEF.DuBinary.toFile( w14_unchecked_l );
+    var checkbox; //the icon checkbox
 
-    imageButton.iconChecked = DuAEF.DuBinary.toFile( w14_checked_m );
-    imageButton.iconCheckedOver = DuAEF.DuBinary.toFile( w14_checked_l );
-    imageButton.iconUnchecked = DuAEF.DuBinary.toFile( w14_emptysquare_m );
-    imageButton.iconUncheckedOver = DuAEF.DuBinary.toFile( w14_unchecked_l );
-
-    //add checkbox
-    if ( text != '' && DuAEF.DuAE.App.hasFilesAndNetworkAccess )
+    //adjust appearance if there's some text
+    if ( text != '')
     {
-        if ( !isTab )
+        //checkbox icon
+        if ( !isTab && DuAEF.DuAE.App.hasFilesAndNetworkAccess )
         {
-            imageButton.checkbox = group.add( 'image', undefined, imageButton.iconUnchecked );
-            imageButton.checkbox.alignment = [ 'left', 'center' ];
-            imageButton.checkbox.helpTip = helpTip;
+            checkbox = duCheckBox.group.add( 'image', undefined, duCheckBox.iconUnchecked );
+            checkbox.alignment = [ 'left', 'center' ];
+            checkbox.helpTip = helpTip;
         }
-        DuAEF.DuScriptUI.setBackgroundColor( mainGroup, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
-        imageButton.alignment = [ 'fill', 'top' ];
-        imageButton.alignChildren = [ 'fill', 'center' ];
+        //general appearance
+        DuAEF.DuScriptUI.setBackgroundColor( duCheckBox, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
+        duCheckBox.alignment = [ 'fill', 'top' ];
+        duCheckBox.alignChildren = [ 'fill', 'center' ];
     }
 
-    if ( image != '' )
+    //adjust appearance if there's an image
+    if ( image != '' && DuAEF.DuAE.App.hasFilesAndNetworkAccess )
     {
-        var icon = group.add( 'image', undefined, image );
-        if ( isTab ) icon.alignment = [ 'center', 'center' ];
-        else icon.alignment = [ 'left', 'center' ];
-        icon.helpTip = helpTip;
-        imageButton.image = icon;
+        duCheckBox.image = duCheckBox.group.add( 'image', undefined, image );
+        if ( isTab ) duCheckBox.image.alignment = [ 'center', 'center' ];
+        else duCheckBox.image.alignment = [ 'left', 'center' ];
+        duCheckBox.image.helpTip = helpTip;
     }
 
-    if ( text != '' )
+    //add the label 
+    //label
+    if ( text != '')
     {
-        var label = group.add( 'statictext', undefined, text );
-        label.helpTip = helpTip;
-        if ( isTab ) label.alignment = [ 'center', 'center' ];
-        else label.alignment = [ 'left', 'center' ];
-        imageButton.label = label;
-
-        if ( text.length < textChecked.length ) imageButton.label.characters = textChecked.length;
-        else imageButton.label.characters = text.length;
+        duCheckBox.label = duCheckBox.group.add( 'statictext', undefined, text );
+        duCheckBox.label.helpTip = helpTip;
+        if ( isTab ) duCheckBox.label.alignment = [ 'center', 'center' ];
+        else duCheckBox.label.alignment = [ 'left', 'center' ];
+        //label size
+        if ( text.length < textChecked.length ) duCheckBox.label.characters = textChecked.length;
+        else duCheckBox.label.characters = text.length;
     }
 
     /**
@@ -1056,137 +1085,124 @@ DuAEF.DuScriptUI.addCheckBox = function( container, text, image, helpTip, imageC
      * @memberof DuCheckBox
      * @param {boolean} c - The checked state
      */
-    imageButton.setChecked = function( c )
+    duCheckBox.setChecked = function( c )
     {
-        imageButton.checked = imageButton.value = c;
+        c = def(c, true);
+        duCheckBox.checked = duCheckBox.value = c;
 
-        if ( imageButton.label )
+        if ( c )
         {
-            if ( imageButton.checked )
+            //label
+            if ( duCheckBox.label && duCheckBox.textChecked != '' )
             {
-                if ( imageButton.textChecked != '' ) imageButton.label.text = imageButton.textChecked;
-                if ( imageButton.checkbox ) imageButton.checkbox.image = imageButton.iconChecked;
+                duCheckBox.label.text = duCheckBox.textChecked;
+                duCheckBox.text = duCheckBox.textChecked;
             }
-            else
-            {
-                imageButton.label.text = imageButton.defaultText;
-                if ( imageButton.checkbox ) imageButton.checkbox.image = imageButton.iconUnchecked;
-            }
+            //checkbox
+            if ( checkbox ) checkbox.image = iconChecked;
+            //image 
+            if ( duCheckBox.image && duCheckBox.imageChecked != '' ) duCheckBox.image.image = duCheckBox.imageChecked;
+            //outline
+            if (outLine) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true );
         }
-
-        if ( imageButton.image )
+        else 
         {
-            if ( imageButton.checked )
+            //label
+            if ( duCheckBox.label)
             {
-                if ( imageButton.imageChecked != '' ) icon.image = imageButton.imageChecked;
+                duCheckBox.label.text = duCheckBox.defaultText;
+                duCheckBox.text = duCheckBox.defaultText;
             }
-            else
-            {
-                if ( imageButton.standardImage != '' ) icon.image = imageButton.standardImage;
-            }
+            //checkbox
+            if ( checkbox ) checkbox.image = iconUnchecked;
+            //image 
+            if ( duCheckBox.image && duCheckBox.standardImage != '' ) duCheckBox.image.image = duCheckBox.standardImage;
+            //outline 
+            if (outLine) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true );
         }
-
-        if ( outLine )
-        {
-            if ( imageButton.checked ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true );
-            else DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true );
-        }
-
     }
 
-    imageButton.clicked = function( e )
+    duCheckBox.clicked = function( e )
     {
         e.stopPropagation();
-        DuAEF.DuScriptUI.updateHelpPopup( imageButton.help.title, imageButton.help.text, imageButton.help.link );
+        DuAEF.DuScriptUI.updateHelpPopup( duCheckBox.help.title, duCheckBox.help.text, duCheckBox.help.link );
         if ( e.shiftKey )
         {
-            if ( imageButton.help.text != '' )
+            if ( duCheckBox.help.text != '' )
             {
                 DuAEF.DuScriptUI.showHelp();
             }
             return;
         }
-        imageButton.setChecked( !imageButton.checked );
+
+        duCheckBox.setChecked( !duCheckBox.checked );
         try
         {
-            imageButton.onClick();
+            duCheckBox.onClick();
         }
         catch ( e )
         {
-            if ( DuAEF.debug ) alert( 'An error has occured at line ' + e.line + '\n\n' + e.description );
+            if ( DuAEF.debug ) alert( '::: DuCheckBox onClick error :::\n\nAn error has occured at line ' + e.line + '\n\n' + e.description );
         }
     }
 
-    imageButton.highlight = function( e )
+    duCheckBox.highlight = function( e )
     {
         e.stopPropagation();
         DuAEF.DuScriptUI.dimControls();
-        if ( icon )
-            if ( imageButton.imageOver != '' ) icon.image = imageButton.imageOver;
-        if ( label )
-        {
-            DuAEF.DuScriptUI.setBackgroundColor( mainGroup, DuAEF.DuJS.Color.Colors.DARK_GREY );
-            if ( DuAEF.DuAE.App.hasFilesAndNetworkAccess && !isTab )
-            {
-                if ( imageButton.checkbox && imageButton.checked ) imageButton.checkbox.image = imageButton.iconCheckedOver;
-                else if ( imageButton.checkbox ) imageButton.checkbox.image = imageButton.iconUncheckedOver;
-            }
+        //image
+        if ( duCheckBox.image && duCheckBox.imageOver != '' ) duCheckBox.image.image = duCheckBox.imageOver;
+        //label
+        if ( duCheckBox.label ) DuAEF.DuScriptUI.setBackgroundColor( duCheckBox, DuAEF.DuJS.Color.Colors.DARK_GREY );
+        //checkbox 
+        if ( checkbox && duCheckBox.checked ) checkbox.image = iconCheckedOver;
+        else if ( checkbox ) checkbox.image = iconUncheckedOver;
+        //outline
+        if ( outLine ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.LIGHT_GREY, true );
 
-        }
-        if ( outLine )
-        {
-            DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.LIGHT_GREY, true );
-        }
-        DuAEF.DuScriptUI.highlightedControls.push( imageButton );
+        DuAEF.DuScriptUI.highlightedControls.push( duCheckBox );
     }
 
-    imageButton.dim = function( e )
+    duCheckBox.dim = function( e )
     {
-        if ( label ) DuAEF.DuScriptUI.setBackgroundColor( mainGroup, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
-        if ( imageButton.checked )
-        {
-            if ( icon )
-                if ( imageButton.imageChecked != '' ) icon.image = imageButton.imageChecked;
-            if ( imageButton.checkbox ) imageButton.checkbox.image = imageButton.iconChecked;
-        }
-        else
-        {
-            if ( icon )
-                if ( imageButton.standardImage != '' ) icon.image = imageButton.standardImage;
-            if ( imageButton.checkbox ) imageButton.checkbox.image = imageButton.iconUnchecked;
-        }
-        if ( outLine )
-        {
-            if ( imageButton.checked ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true );
-            else DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true );
-        }
+        //image
+        if ( duCheckBox.image && duCheckBox.imageChecked != '' && duCheckBox.checked ) duCheckBox.image.image = duCheckBox.imageChecked;
+        else if ( duCheckBox.image && duCheckBox.imageChecked != '' ) duCheckBox.image.image = duCheckBox.standardImage;
+        //label
+        if ( duCheckBox.label ) DuAEF.DuScriptUI.setBackgroundColor( duCheckBox, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
+        //checkbox 
+        if ( checkbox && duCheckBox.checked ) checkbox.image = iconChecked;
+        else if ( checkbox ) checkbox.image = iconUnchecked;
+        //outline
+        if ( outLine && duCheckBox.checked ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.RAINBOX_RED, true );
+        else if ( outLine ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true );
     }
 
-    group.addEventListener( "mousedown", imageButton.clicked, true );
+    duCheckBox.group.addEventListener( "mousedown", duCheckBox.clicked, true );
     // Hack - CS6 Bug on mouseover with images
     if ( DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12 )
     {
-        if ( label ) imageButton.label.addEventListener( "mouseover", imageButton.highlight );
+        if ( duCheckBox.label ) duCheckBox.label.addEventListener( "mouseover", duCheckBox.highlight );
     }
     else
     {
-        mainGroup.addEventListener( "mouseover", imageButton.highlight );
+        duCheckBox.addEventListener( "mouseover", duCheckBox.highlight );
     }
 
-    imageButton.help = {};
-    imageButton.help.title = '';
-    imageButton.help.text = '';
-    imageButton.help.link = '';
+    duCheckBox.help = {};
+    duCheckBox.help.title = '';
+    duCheckBox.help.text = '';
+    duCheckBox.help.link = '';
 
     //help popup
-    imageButton.setHelp = function( title, text, link )
+    duCheckBox.setHelp = function( title, text, link )
     {
-        imageButton.help.title = title;
-        imageButton.help.text = text;
-        imageButton.help.link = link;
+        duCheckBox.help.title = title;
+        duCheckBox.help.text = text;
+        duCheckBox.help.link = link;
     }
 
-    return imageButton;
+    return duCheckBox;
 }
 
 /**
@@ -2394,21 +2410,30 @@ DuAEF.DuScriptUI.initHelpPanel = function()
         tr( "Help" ),
         DuAEF.DuBinary.toFile( w14_help_m ),
         '',
-        DuAEF.DuBinary.toFile( w14_help_l )
+        DuAEF.DuBinary.toFile( w14_help_l ),
+        undefined,
+        undefined,
+        true
     );
     DuAEF.DuScriptUI.helpPanel.newsButton = DuAEF.DuScriptUI.addCheckBox(
         tabsGroup,
         tr( "News" ),
         DuAEF.DuBinary.toFile( w14_news_m ),
         '',
-        DuAEF.DuBinary.toFile( w14_news_l )
+        DuAEF.DuBinary.toFile( w14_news_l ),
+        undefined,
+        undefined,
+        true
     );
     DuAEF.DuScriptUI.helpPanel.aboutButton = DuAEF.DuScriptUI.addCheckBox(
         tabsGroup,
         tr( "About" ),
         DuAEF.DuBinary.toFile( w14_help_m ),
         '',
-        DuAEF.DuBinary.toFile( w14_help_l )
+        DuAEF.DuBinary.toFile( w14_help_l ),
+        undefined,
+        undefined,
+        true
     );
 
     //add main panel
@@ -3365,6 +3390,7 @@ DuAEF.DuScriptUI.addTabPanel = function( container )
     {
         //adds the new button
         var button = DuAEF.DuScriptUI.addCheckBox( panel.buttonsGroup, text, image, helpTip, imageOver, undefined, undefined, true );
+
         button.index = panel.tabs.length;
         panel.buttons.push( button );
 
