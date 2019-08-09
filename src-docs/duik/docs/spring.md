@@ -1,4 +1,6 @@
-# Spring
+# ![spring Icon](img\duik-icons\automation\spring-icon-r.png) Spring
+
+![Spring panel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Spring.PNG)
 
 The Spring will add "follow through"/"overlap"/"overshot" to your animations and it is able to animate automatic bounces.
 
@@ -14,6 +16,11 @@ The spring is computed depending on the velocity of the layer, whenever it stops
 It can be adjusted in the effects of the corresponding layer.
 
 ## Effect
+
+![Spring pannel](img\duik-screenshots\S-Rigging\S-Rigging-Automations\Spring-effects.PNG)
+![Spring example](img\duik-screenshots\S-Rigging\S-Rigging-Automations\automation-illustration\spring-example.png)
+
+![Spring example gif](img\examples\cart.gif)
 
 - The elasticity controls both the amplitude and the frequency of the motion. A Higher elasticity will result in a higher frequency but lower amplitude.
 

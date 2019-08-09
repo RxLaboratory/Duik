@@ -1,0 +1,777 @@
+﻿function ui_buildTools(ui_toolsGroup)
+{
+	debugLog.startTimer("Loading misc. tools.");
+
+	var copiedExp = '';
+
+	// ====== FUNCTIONS ==============
+
+	function setCurrentToolsPanel(panel)
+	{
+		if (panel == undefined) panel = 0;
+
+		ui_toolsMainGroup.visible = panel == 0;
+		ui_renameGroup.visible = panel == 1;
+		uiSRGroup.visible = panel == 2;
+		ui_measureGroup.visible = panel == 3;
+		ui_alignGroup.visible = panel == 4;
+		ui_propInfoGroup.visible = panel == 5;
+		ui_scriptifyExpressionGroup.visible = panel == 6;
+	}
+
+	function initToolsUI()
+	{
+		setCurrentToolsPanel(0);
+	}
+
+	function setCurrentSRPanel(panel)
+	{
+		if (panel == undefined) panel = 0;
+
+		ui_SRSelectGroup2.visible = panel == 0;
+		ui_SRSelectGroup3.visible = panel == 1;
+	}
+
+	function generateNewName(oldName,i)
+	{
+		var prefix = ui_renamePrefixEdit.text;
+		var suffix = ui_renameSuffixEdit.text;
+
+		var newName = ui_renameNameEdit.text;
+		if (newName == '')
+		{
+			newName = oldName;
+			var removeFirst = parseInt(ui_renameRemoveFirstEdit.text);
+			var removeLast = parseInt(ui_renameRemoveLastEdit.text);
+			if (removeFirst > 0)
+			{
+				newName = newName.substr(removeFirst);
+			}
+			if (removeLast > 0)
+			{
+				newName = newName.substring(0,newName.length-removeLast);
+			}
+		}
+		var newName = prefix + newName + suffix;
+
+		var num = parseInt(ui_renameNumberEdit.text);
+		if (! isNaN(num) && ui_renameNumberButton.value)
+		{
+			newName += (num + i);
+		}
+
+		return newName;
+	}
+
+	// ========= EVENTS ===========
+
+	function ui_renameValidButton_clicked()
+	{
+		if (ui_renameTypeSelector.index == 0)
+		{
+			var comp = DuAEF.DuAE.Project.getActiveComp();
+			if (!comp) return;
+			var layers = comp.selectedLayers;
+			if (layers.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Rename");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(layers);
+			it.do(function (layer)
+			{
+				var oldName = layer.name;
+				var newName = generateNewName(oldName,it.current);
+				
+				layer.name = newName;
+				if (ui_renameExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,newName);
+			});
+		}
+		else if (ui_renameTypeSelector.index == 1)
+		{
+			var props = DuAEF.DuAE.Comp.getSelectedProps('ADBE FreePin3 PosPin Atom');
+			if (props.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Rename");
+			app.beginSuppressDialogs();
+
+			var num = parseInt(ui_renameNumberEdit.text);
+
+			var it = new Iterator(props);
+			it.do(function (prop)
+			{
+				var oldName = prop.getProperty().name;
+				var newName = generateNewName(oldName,it.current);
+				prop.getProperty().name = newName;
+				if (ui_renameExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,newName);
+			});
+		}
+		else
+		{
+			var items = app.project.selection;
+			if (items.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Rename");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(items);
+			it.do(function (item)
+			{
+				var oldName = item.name;
+				var newName = generateNewName(oldName,it.current);
+				item.name = newName;
+				if (ui_renameExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,newName);
+			});
+		}
+
+
+		ui_renameRemoveFirstEdit.setText('0');
+		ui_renameRemoveLastEdit.setText('0');
+
+		app.endSuppressDialogs(false);
+		app.endUndoGroup();
+	}
+
+	function ui_SRTypeSelector_changed()
+	{
+		if (ui_SRTypeSelector.index == 0)
+		{
+			ui_SRExpressionsSelector.visible = false;
+			setCurrentSRPanel(0);
+		}
+		else if (ui_SRTypeSelector.index == 1)
+		{
+			ui_SRExpressionsSelector.visible = false;
+			setCurrentSRPanel(0);
+		}
+		else if (ui_SRTypeSelector.index == 2)
+		{
+			ui_SRExpressionsSelector.visible = true;
+			setCurrentSRPanel(0);
+		}
+		else if (ui_SRTypeSelector.index == 3)
+		{
+			ui_SRExpressionsSelector.visible = true;
+			setCurrentSRPanel(1);
+		}
+	}
+
+	function ui_SRCompSelector_changed()
+	{
+		if (ui_SRCompSelector.index == 1) ui_SRLayersSelector.visible = false;
+		else ui_SRLayersSelector.visible = true;
+	}
+
+	function ui_SRValidButton_clicked()
+	{
+		if (ui_SRSearchEdit.text == ui_SRReplaceEdit.text) return;
+
+		//expressions
+		if (ui_SRTypeSelector.index == 0)
+		{
+			//all comps
+			if (ui_SRCompSelector.index == 1)
+			{
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+				var itItems = new Iterator(app.project.items);
+				itItems.do(function (item)
+				{
+					if (item instanceof CompItem)
+					{
+						var itLayers = new Iterator(item.layers);
+						itLayers.do(function (layer)
+						{
+							if (layer.locked) return;
+
+							DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+						});
+					}
+				});
+			}
+			//active comp
+			else
+			{
+				var comp = DuAEF.DuAE.Project.getActiveComp();
+				if (!comp) return;
+
+				var layers = [];
+				if (ui_SRLayersSelector.index == 1) layers = comp.selectedLayers;
+				else layers = comp.layers;
+				if (layers.length == 0) return;
+
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+
+				var it = new Iterator(layers);
+				it.do(function (layer)
+				{
+					if (layer.locked) return;
+					
+					DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+				});
+			}
+		}
+		//texts
+		else if (ui_SRTypeSelector.index == 1)
+		{
+			if (ui_SRCompSelector.index == 1)
+			{
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+				var itItems = new Iterator(app.project.items);
+				itItems.do(function (item)
+				{
+					if (item instanceof CompItem)
+					{
+						if (layer.locked) return;
+						
+						var itLayers = new Iterator(item.layers);
+						itLayers.do(function (layer)
+						{
+							if(layer instanceof TextLayer)
+							{
+								var source = layer.sourceText.value;
+								source.text = DuAEF.DuJS.String.replace(source.text,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+								layer.sourceText.setValue(source);
+							}
+						});
+					}
+				});
+			}
+			else
+			{
+				var comp = DuAEF.DuAE.Project.getActiveComp();
+				if (!comp) return;
+
+				var layers = [];
+				if (ui_SRLayersSelector.index == 1) layers = comp.selectedLayers;
+				else layers = comp.layers;
+				if (layers.length == 0) return;
+
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+
+				var it = new Iterator(layers);
+				it.do(function (layer)
+				{
+					if(layer instanceof TextLayer)
+					{
+						if (layer.locked) return;
+
+						var source = layer.sourceText.value;
+						source.text = DuAEF.DuJS.String.replace(source.text,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+						layer.sourceText.setValue(source);
+					}
+				});
+			}
+		}
+		//layers
+		else if (ui_SRTypeSelector.index == 2)
+		{
+			if (ui_SRCompSelector.index == 1)
+			{
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+				var itItems = new Iterator(app.project.items);
+				itItems.do(function (item)
+				{
+					if (item instanceof CompItem)
+					{
+						var itLayers = new Iterator(item.layers);
+						itLayers.do(function (layer)
+						{
+							if (layer.locked) return;
+
+							var oldName = layer.name;
+							layer.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+							if (ui_SRExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,layer.name);
+						});
+					}
+				});
+			}
+			else
+			{
+				var comp = DuAEF.DuAE.Project.getActiveComp();
+				if (!comp) return;
+
+				var layers = [];
+				if (ui_SRLayersSelector.index == 1) layers = comp.selectedLayers;
+				else layers = comp.layers;
+				if (layers.length == 0) return;
+
+				app.beginUndoGroup('Duik | ' + "Search and replace");
+				app.beginSuppressDialogs();
+
+				var it = new Iterator(layers);
+				it.do(function (layer)
+				{
+					if (layer.locked) return;
+
+					var oldName = layer.name;
+					layer.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+					if (ui_SRExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,layer.name);
+				});
+			}
+		}
+		//items
+		else if (ui_SRTypeSelector.index == 3)
+		{
+			if (ui_SRItemsSelector.index == 1) items = app.project.selection;
+			else items = DuAEF.DuAE.convertCollectionToArray(app.project.items);
+
+			if (items.length == 0) return;
+
+			app.beginUndoGroup('Duik | ' + "Search and replace");
+			app.beginSuppressDialogs();
+
+			var it = new Iterator(items);
+			it.do(function (item)
+			{
+				if ((ui_SRCompItemSelectButton.checked && item instanceof CompItem) || (ui_SRFootageItemSelectButton.checked && item instanceof FootageItem) || (ui_SRFolderItemSelectButton.checked && item instanceof FolderItem))
+				{
+					var oldName = item.name;
+					item.name = DuAEF.DuJS.String.replace(oldName,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
+					if (ui_SRExpressionsSelector.index == 1) app.project.autoFixExpressions(oldName,item.name);
+				}
+			});
+
+		}
+
+		app.endSuppressDialogs(false);
+		app.endUndoGroup();
+	}
+
+	function ui_measureButton_clicked()
+	{
+		ui_measureValidButton_clicked();
+		setCurrentToolsPanel(3);
+	}
+
+	function ui_measureValidButton_clicked()
+	{
+		var defaultStr = "Select two layers to measure the distance between them.";
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp)
+		{
+			ui_measureLabel.text = defaultStr;
+			DuAEF.DuScriptUI.setTextColor(ui_measureLabel, DuAEF.DuJS.Color.Colors.DARK_GREY );
+			return;
+		}
+		var layers = comp.selectedLayers;
+		if (layers.length < 2)
+		{
+			ui_measureLabel.text = defaultStr;
+			DuAEF.DuScriptUI.setTextColor(ui_measureLabel, DuAEF.DuJS.Color.Colors.DARK_GREY );
+			return;
+		}
+
+		var distance = DuAEF.DuAE.Layer.getDistance(layers[0], layers[1]);
+		distance = Math.round(distance);
+		ui_measureLabel.text = "The distance is " + distance + "px";
+		DuAEF.DuScriptUI.setTextColor(ui_measureLabel, DuAEF.DuJS.Color.Colors.LIGHT_GREY );
+	}
+
+	function ui_alignButton_clicked()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length == 0) return;
+
+		var target = layers.pop();
+
+		app.beginUndoGroup('Duik | ' + "Align layers");
+		DuAEF.DuAE.Layer.align(
+			layers,
+			target,
+			ui_alignPositionButton.checked,
+			ui_alignRotationButton.checked,
+			ui_alignScaleButton.checked,
+			ui_alignOpacityButton.checked
+		);
+		app.endUndoGroup();
+	}
+
+	function ui_removeExpressionsButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+
+		app.beginUndoGroup('Duik | ' + "Remove expressions");
+		if (props.length > 0)
+		{
+			for (var i = 0, num = props.length; i < num; i++)
+			{
+				DuAEF.DuAE.Property.removeExpression(props[i]);
+			}
+		}
+		else
+		{
+			var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+			for (var i = 0, num = layers.length; i < num; i++)
+			{
+				DuAEF.DuAE.Property.removeExpressions(layers[i]);
+			}
+		}
+		app.endUndoGroup();
+	}
+
+	function ui_editModeButton_clicked()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		app.beginUndoGroup('Duik | ' + "Edit mode");
+		for (var i = 0, num = layers.length ; i < num ; i++)
+		{
+			DuAEF.DuAE.Layer.toggleEditMode(layers[i]);
+		}
+		app.endUndoGroup();
+	}
+
+	function ui_propInfoButton_clicked()
+	{
+		//get property
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+		var prop = props[props.length-1];
+		ui_propInfoIndex.text = prop.index;
+		ui_propInfoName.text = prop.name;
+		ui_propInfoMatchName.text = prop.matchName;
+		ui_propInfoDimensions.text = prop.dimensions;
+		ui_propInfoLink.text = DuAEF.DuAE.Property.getExpressionLink(prop, true, true);
+		//values
+		var preExpression = ui_propPreExp.value;
+		//Min and max val per axis
+		var minVal = "";
+		var maxVal = "";
+		if (prop.dimensions == 1)
+		{
+			var range = DuAEF.DuAE.Property.getRange(prop, 0, preExpression);
+			minVal = Math.round(range[0]*100)/100;
+			maxVal = Math.round(range[1]*100)/100;
+		}
+		else
+		{
+			for (var i = 0; i < prop.dimensions ; i++)
+			{
+				var range = DuAEF.DuAE.Property.getRange(prop, i, preExpression);
+				if (i == 0)
+				{
+					minVal += "[ ";
+					maxVal += "[ ";
+				}
+
+				minVal += Math.round(range[0]*100)/100;
+				maxVal += Math.round(range[1]*100)/100;
+
+				if (i == prop.dimensions - 1)
+				{
+					minVal += " ]";
+					maxVal += " ]";
+				}
+				else
+				{
+					minVal += " , ";
+					maxVal += " , ";
+				}
+			}
+		}
+		
+		ui_propMinVal.text = minVal;
+		ui_propMaxVal.text = maxVal;
+		var maxSpeed = Math.round(DuAEF.DuAE.Property.getMaxVelocity(prop, preExpression)*100)/100;
+		ui_propVelocity.text = maxSpeed;
+		if (maxSpeed == 0) ui_propAverageVelocity.text = 0;
+		else ui_propAverageVelocity.text = Math.round(DuAEF.DuAE.Property.getAverageSpeed([prop], preExpression)*100)/100;
+
+		setCurrentToolsPanel(5);
+	}
+
+	function ui_scriptifyExpressionButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+		prop = props.pop();
+		setCurrentToolsPanel(6);
+		ui_stringifiedExpressionEdit.text = DuAEF.DuAE.Property.scriptifyExpression(prop);
+	}
+
+	function ui_copyExpButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+		prop = props.pop();
+
+		if (prop.riggable)
+		{
+			prop = prop.getProperty();
+			copiedExp = prop.expression;
+		}
+
+	}
+
+	function ui_pasteExpButton_clicked()
+	{
+		var props = DuAEF.DuAE.Comp.getSelectedProps();
+		if (props.length == 0) return;
+
+		app.beginUndoGroup('Duik | ' + "Paste expression");
+		
+		new Iterator(props).do(function(prop)
+		{
+			if (prop.riggable)
+			{
+				var p = prop.getProperty();
+				p.expression = copiedExp;
+			}
+		});
+
+		app.endUndoGroup();
+	}
+
+	// ========== UI ==================
+
+	ui_toolsGroup.orientation = 'stack';
+
+	//tools
+	var ui_toolsMainGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2 && !standAlone) DuAEF.DuScriptUI.addSeparator(ui_toolsMainGroup,"Tools");
+	var ui_renameButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Rename...",DuAEF.DuBinary.toFile(w25_rename_l),"Rename stuff",DuAEF.DuBinary.toFile(w25_rename_r));
+	ui_renameButton.setHelp("Rename", riggingtoolsHelp, riggingtoolsLink);
+	var ui_searchReplaceButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Search and replace...",DuAEF.DuBinary.toFile(w25_searchreplace_l),"Search and replace text",DuAEF.DuBinary.toFile(w25_searchreplace_r));
+	ui_searchReplaceButton.setHelp("Search and Replace", riggingtoolsHelp, riggingtoolsLink);
+	var ui_measureButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Measure distance...",DuAEF.DuBinary.toFile(w25_measure_l),"Measure the distance between two layers",DuAEF.DuBinary.toFile(w25_measure_r));
+	ui_measureButton.setHelp("Measure Distance", riggingtoolsHelp, riggingtoolsLink);
+	var ui_alignButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+	var ui_alignButton = DuAEF.DuScriptUI.addButton(ui_alignButtonsGroup,"Align layers",DuAEF.DuBinary.toFile(w25_align_l),"Align two (or more) layers together.\nAll selected layers will be aligned to the last selected one.",DuAEF.DuBinary.toFile(w25_align_r));
+	ui_alignButton.setHelp("Align Layers", riggingtoolsHelp, riggingtoolsLink);
+	var ui_alignOptionsButton = DuAEF.DuScriptUI.addButton(ui_alignButtonsGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Alignment options",DuAEF.DuBinary.toFile(w14_plus_r));
+	ui_alignOptionsButton.alignment = ['right','center'];
+	var ui_editModeButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Toggle edit mode",DuAEF.DuBinary.toFile(w25_unparent_l),"(Un)parent the children of the layer(s) to be able to adjust the transformation of the layer(s) without affecting the children.",DuAEF.DuBinary.toFile(w25_unparent_r));
+	ui_editModeButton.setHelp("Edit Mode", riggingtoolsHelp, riggingtoolsLink);
+	if (settings.data.uiMode > 0)
+	{
+		var ui_removeExpressionsButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Remove expressions",DuAEF.DuBinary.toFile(w25_removeexpression_l),"Removes the expressions of the selected properties/layers, keeping the post-expression value.",DuAEF.DuBinary.toFile(w25_removeexpression_r));
+		ui_removeExpressionsButton.setHelp("Remove Expressions", riggingtoolsHelp, riggingtoolsLink);
+		var ui_copyExpButton;
+		if (settings.data.uiMode != 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Copy Expression",DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
+		var ui_pasteExpGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+		if (settings.data.uiMode == 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,'',DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
+		if (settings.data.uiMode == 2) ui_copyExpButton.alignment = ['center','top'];
+		ui_copyExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
+		var ui_pasteExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,settings.data.uiMode == 2 ? '' : "Paste expression",DuAEF.DuBinary.toFile(w25_paste_l),"Paste expressions",DuAEF.DuBinary.toFile(w25_paste_r));
+		if (settings.data.uiMode == 2) ui_pasteExpButton.alignment = ['center','top'];
+		ui_pasteExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
+
+	
+		if (settings.data.uiMode == 2)
+		{
+			var ui_propInfoButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup, "Get prop info...", DuAEF.DuBinary.toFile(w25_propinfo_l), "Gets some useful information about the selected property", DuAEF.DuBinary.toFile(w25_propinfo_r));
+			ui_propInfoButton.setHelp("Get property info", riggingtoolsHelp, riggingtoolsLink);
+			var ui_scriptifyExpressionButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup, "Scriptify expression...", DuAEF.DuBinary.toFile(w25_jsstr_l), "Converts the expression as a string which can be used in a script.", DuAEF.DuBinary.toFile(w25_jsstr_r));
+			ui_scriptifyExpressionButton.setHelp("Scriptify expression", riggingtoolsHelp, riggingtoolsLink);
+		}
+	}
+
+	//Align
+	var ui_alignGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_alignGroup,"Align");
+	var ui_alignPositionButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Position",DuAEF.DuBinary.toFile(w14_pos_l),"Align the positions of the layers",DuAEF.DuBinary.toFile(w14_pos_r));
+	var ui_alignRotationButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Rotation",DuAEF.DuBinary.toFile(w14_rotation_l),"Align the orientations of the layers",DuAEF.DuBinary.toFile(w14_rotation_r));
+	var ui_alignScaleButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Scale",DuAEF.DuBinary.toFile(w14_scale_l),"Align the scales of the layers",DuAEF.DuBinary.toFile(w14_scale_r));
+	var ui_alignOpacityButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Opacity",DuAEF.DuBinary.toFile(w14_opacity_l),"Align the opacities of the layers",DuAEF.DuBinary.toFile(w14_opacity_r));
+	DuAEF.DuScriptUI.addStaticText(ui_alignGroup,"All selected layers will be aligned\nto the last selected one.")
+	var ui_alignValidGroup = DuAEF.DuScriptUI.addGroup(ui_alignGroup);
+	ui_alignValidGroup.alignment = ['fill','top'];
+	var ui_alignCancelButton = DuAEF.DuScriptUI.addButton(ui_alignValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_alignValidButton = DuAEF.DuScriptUI.addButton(ui_alignValidGroup,'Align',DuAEF.DuBinary.toFile(w25_check_g),"Align the layers",DuAEF.DuBinary.toFile(w25_check_r));
+
+	//Rename
+	var ui_renameGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_renameGroup,"Rename");
+
+	var ui_renameTypeSelector = DuAEF.DuScriptUI.addSelector(ui_renameGroup);
+	ui_renameTypeSelector.addButton("Layers",DuAEF.DuBinary.toFile(w14_aelayers_l),"Rename layers",DuAEF.DuBinary.toFile(w14_aelayers_r));
+	ui_renameTypeSelector.addButton("Pins",DuAEF.DuBinary.toFile(w14_pin_l),"Rename puppet pins",DuAEF.DuBinary.toFile(w14_pin_r));
+	ui_renameTypeSelector.addButton("Project items",DuAEF.DuBinary.toFile(w14_items_l),"Rename items in the project panel",DuAEF.DuBinary.toFile(w14_items_r));
+	ui_renameTypeSelector.setCurrentIndex(0);
+
+	var ui_renameExpressionsSelector = DuAEF.DuScriptUI.addSelector(ui_renameGroup);
+	ui_renameExpressionsSelector.addButton("Don't update Expressions",DuAEF.DuBinary.toFile(w14_code_l),"Do not update expressions after renaming",DuAEF.DuBinary.toFile(w14_code_r));
+	ui_renameExpressionsSelector.addButton("Update Expressions",DuAEF.DuBinary.toFile(w14_updatecode_l),"Update expressions after renaming",DuAEF.DuBinary.toFile(w14_updatecode_r));
+	ui_renameExpressionsSelector.setCurrentIndex(1);
+
+	var ui_renameForm =  DuAEF.DuScriptUI.addGroup(ui_renameGroup,'column');
+	DuAEF.DuScriptUI.setBackgroundColor(ui_renameForm,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	ui_renameForm.alignment = ['fill','top'];
+	ui_renameForm.alignChildren = ['center','top'];
+	var ui_renameRemoveFirstEdit = DuAEF.DuScriptUI.addEditText(ui_renameForm,'',"Remove the first "," digits.",'0');
+	var ui_renameRemoveLastEdit = DuAEF.DuScriptUI.addEditText(ui_renameForm,'',"Remove the last "," digits.",'0');
+	var ui_renamNumberGroup = DuAEF.DuScriptUI.addGroup(ui_renameForm,'row');
+	var ui_renameNumberButton = ui_renamNumberGroup.add('checkbox',undefined,'');
+	var ui_renameNumberEdit = DuAEF.DuScriptUI.addEditText(ui_renamNumberGroup,'1',"Number from ");
+
+	var ui_renamNameGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup,'row');
+	DuAEF.DuScriptUI.setBackgroundColor(ui_renamNameGroup,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+	ui_renamNameGroup.alignment = ['fill','top'];
+	ui_renamNameGroup.alignChildren = ['fill','top'];
+	var ui_renamePrefixEdit = DuAEF.DuScriptUI.addEditText(ui_renamNameGroup,'','','',"Prefix" + '_');
+	var ui_renameNameEdit = DuAEF.DuScriptUI.addEditText(ui_renamNameGroup,'','','',"Name");
+	var ui_renameSuffixEdit = DuAEF.DuScriptUI.addEditText(ui_renamNameGroup,'','','','_' + "Suffix");
+
+	var ui_renameValidGroup = DuAEF.DuScriptUI.addGroup(ui_renameGroup);
+	ui_renameValidGroup.alignment = ['fill','top'];
+	var ui_renameCancelButton = DuAEF.DuScriptUI.addButton(ui_renameValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_renameValidButton = DuAEF.DuScriptUI.addButton(ui_renameValidGroup,'Rename',DuAEF.DuBinary.toFile(w25_check_g),"Rename selection",DuAEF.DuBinary.toFile(w25_check_r));
+
+	//Search and replace
+
+	var uiSRGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(uiSRGroup,"Search and replace");
+
+	var ui_SRTypeSelector = DuAEF.DuScriptUI.addSelector(uiSRGroup);
+	ui_SRTypeSelector.addButton("Expressions",DuAEF.DuBinary.toFile(w14_code_l),"Search and replace text in expressions",DuAEF.DuBinary.toFile(w14_code_r));
+	ui_SRTypeSelector.addButton("Texts",DuAEF.DuBinary.toFile(w14_text_l),"Search and replace text in sources of text layers",DuAEF.DuBinary.toFile(w14_text_r));
+	ui_SRTypeSelector.addButton("Layers",DuAEF.DuBinary.toFile(w14_aelayers_l),"Search and replace text in layer names",DuAEF.DuBinary.toFile(w14_aelayers_r));
+	ui_SRTypeSelector.addButton("Project items",DuAEF.DuBinary.toFile(w14_items_l),"Search and replace text in project item names",DuAEF.DuBinary.toFile(w14_items_r));
+	ui_SRTypeSelector.setCurrentIndex(0);
+
+	var ui_SRSubSelectGroup = DuAEF.DuScriptUI.addGroup(uiSRGroup,'stack');
+	var ui_SRSelectGroup2 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,'column');
+	var ui_SRCompSelector = DuAEF.DuScriptUI.addSelector(ui_SRSelectGroup2);
+	ui_SRCompSelector.addButton("Active comp.",DuAEF.DuBinary.toFile(w14_comp_l),"Search and replace text in the active composition",DuAEF.DuBinary.toFile(w14_comp_r));
+	ui_SRCompSelector.addButton("All comps.",DuAEF.DuBinary.toFile(w14_project_l),"Search and replace text in the whole project",DuAEF.DuBinary.toFile(w14_project_r));
+	ui_SRCompSelector.setCurrentIndex(0);
+
+	var ui_SRLayersSelector = DuAEF.DuScriptUI.addSelector(ui_SRSelectGroup2);
+	ui_SRLayersSelector.addButton("All layers",DuAEF.DuBinary.toFile(w14_alllayers_l),"Search and replace text in the selected layers only",DuAEF.DuBinary.toFile(w14_alllayers_r));
+	ui_SRLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w14_selectedlayers_l),"Search and replace text in all layers",DuAEF.DuBinary.toFile(w14_selectedlayers_r));
+	ui_SRLayersSelector.setCurrentIndex(0);
+
+	var ui_SRSelectGroup3 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,settings.data.uiMode == 2 ? 'row' : 'column');
+	ui_SRSelectGroup3.alignment = ['fill','top'];
+	ui_SRSelectGroup3.alignChildren = ['left','top'];
+	var ui_SRItemsTypeGroup = DuAEF.DuScriptUI.addGroup(ui_SRSelectGroup3,'row');
+	var ui_SRCompItemSelectButton = DuAEF.DuScriptUI.addCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_comp_l),"Search and replace text in compositions",DuAEF.DuBinary.toFile(w25_comp_r));
+	var ui_SRFootageItemSelectButton = DuAEF.DuScriptUI.addCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_footage_l),"Search and replace text in footages",DuAEF.DuBinary.toFile(w25_footage_r));
+	var ui_SRFolderItemSelectButton = DuAEF.DuScriptUI.addCheckBox(ui_SRItemsTypeGroup,'',DuAEF.DuBinary.toFile(w25_folder_l),"Search and replace text in folders",DuAEF.DuBinary.toFile(w25_folder_r));
+	var ui_SRItemsSelector = DuAEF.DuScriptUI.addSelector(ui_SRSelectGroup3);
+	ui_SRItemsSelector.addButton("All items",DuAEF.DuBinary.toFile(w14_allitems_l),"Search and replace text in all items",DuAEF.DuBinary.toFile(w14_allitems_r));
+	ui_SRItemsSelector.addButton("Selected items",DuAEF.DuBinary.toFile(w14_selecteditems_l),"Search and replace text in the selected items only",DuAEF.DuBinary.toFile(w14_selecteditems_r));
+	ui_SRItemsSelector.setCurrentIndex(0);
+
+	var ui_SRCaseSelector = DuAEF.DuScriptUI.addSelector(uiSRGroup);
+	ui_SRCaseSelector.addButton("Case sensitive",DuAEF.DuBinary.toFile(w14_casesensitive_l),"Case sensitive search",DuAEF.DuBinary.toFile(w14_casesensitive_r));
+	ui_SRCaseSelector.addButton("Case insensitive",DuAEF.DuBinary.toFile(w14_caseinsensitive_l),"Case insensitive search",DuAEF.DuBinary.toFile(w14_caseinsensitive_r));
+	ui_SRCaseSelector.setCurrentIndex(0);
+
+	var ui_SRExpressionsSelector = DuAEF.DuScriptUI.addSelector(uiSRGroup);
+	ui_SRExpressionsSelector.addButton("Don't update Expressions",DuAEF.DuBinary.toFile(w14_code_l),"Do not update expressions after renaming",DuAEF.DuBinary.toFile(w14_code_r));
+	ui_SRExpressionsSelector.addButton("Update Expressions",DuAEF.DuBinary.toFile(w14_updatecode_l),"Update expressions after renaming",DuAEF.DuBinary.toFile(w14_updatecode_r));
+	ui_SRExpressionsSelector.setCurrentIndex(1);
+
+	var ui_SRSearchEdit = DuAEF.DuScriptUI.addEditText(uiSRGroup,'','','',"Search");
+	DuAEF.DuScriptUI.setBackgroundColor(ui_SRSearchEdit,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	var ui_SRReplaceEdit = DuAEF.DuScriptUI.addEditText(uiSRGroup,'','','',"Replace");
+	DuAEF.DuScriptUI.setBackgroundColor(ui_SRReplaceEdit,DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
+
+	var ui_SRValidGroup = DuAEF.DuScriptUI.addGroup(uiSRGroup);
+	ui_SRValidGroup.alignment = ['fill','top'];
+	var ui_SRCancelButton = DuAEF.DuScriptUI.addButton(ui_SRValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_SRValidButton = DuAEF.DuScriptUI.addButton(ui_SRValidGroup,'Replace',DuAEF.DuBinary.toFile(w25_check_g),"Search and replace text",DuAEF.DuBinary.toFile(w25_check_r));
+
+	// Measure
+
+	var ui_measureGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_measureGroup,"Measure");
+	var ui_measureLabel = DuAEF.DuScriptUI.addStaticText(ui_measureGroup,"Select two layers to measure the distance between them.",undefined,undefined,true,true);
+	ui_measureLabel.maximumSize.width = 150;
+	DuAEF.DuScriptUI.setTextColor(ui_measureLabel, DuAEF.DuJS.Color.Colors.DARK_GREY );
+	var ui_measureValidGroup = DuAEF.DuScriptUI.addGroup(ui_measureGroup);
+	ui_measureValidGroup.alignment = ['fill','top'];
+	var ui_measureCancelButton = DuAEF.DuScriptUI.addButton(ui_measureValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_measureValidButton = DuAEF.DuScriptUI.addButton(ui_measureValidGroup,'Measure',DuAEF.DuBinary.toFile(w25_check_g),"Measure distance",DuAEF.DuBinary.toFile(w25_check_r));
+
+	// Prop Info
+
+	var ui_propInfoGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_propInfoGroup,"Property Info");
+	var ui_propInfoForm = DuAEF.DuScriptUI.addForm(ui_propInfoGroup);
+	var ui_propInfoIndex = ui_propInfoForm.addField("Index","statictext","0","The index of the property")[1];
+	var ui_propInfoName = ui_propInfoForm.addField("Name","edittext","","The name of the property")[1];
+	var ui_propInfoMatchName = ui_propInfoForm.addField("Match Name","edittext","","The matchName of the property")[1];
+	var ui_propInfoDimensions = ui_propInfoForm.addField("Num Dimensions","statictext","0","The number of dimensions of the property")[1];
+	var ui_propInfoLink = ui_propInfoForm.addField("Expression link","edittext","","The expression link to the property (from the layer)")[1];
+	var ui_propMinVal = ui_propInfoForm.addField("Minimum value","edittext","","The minimum value during the animation.")[1];
+	var ui_propMaxVal = ui_propInfoForm.addField("Maximum value","edittext","","The maximum value during the animation.")[1];
+	var ui_propVelocity = ui_propInfoForm.addField("Maximum velocity","edittext","","The maximum velocity during the animation.")[1];
+	var ui_propAverageVelocity = ui_propInfoForm.addField("Average velocity","edittext","","The average velocity during the animation.")[1];
+	var ui_propPreExp = ui_propInfoForm.addField("Pre-expression val.","checkbox","","Display pre-expression values.")[1];
+	var ui_propInfoValidGroup = DuAEF.DuScriptUI.addGroup(ui_propInfoGroup);
+	ui_propInfoValidGroup.alignment = ['fill','top'];
+	var ui_propInfoCancelButton = DuAEF.DuScriptUI.addButton(ui_propInfoValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_propInfoValidButton = DuAEF.DuScriptUI.addButton(ui_propInfoValidGroup,'Get prop info',DuAEF.DuBinary.toFile(w25_check_g),"Get property info",DuAEF.DuBinary.toFile(w25_check_r));
+
+	// Scriptify expression
+
+	var ui_scriptifyExpressionGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_scriptifyExpressionGroup,"Scriptify expression");
+	var ui_stringifiedExpressionEdit = ui_scriptifyExpressionGroup.add('edittext', undefined, "", {multiline:true});
+	ui_stringifiedExpressionEdit.alignment = ['fill', 'fill'];
+	var ui_scriptifyExpressionValidGroup = DuAEF.DuScriptUI.addGroup(ui_scriptifyExpressionGroup);
+	ui_scriptifyExpressionValidGroup.alignment = ['fill','top'];
+	var ui_scriptifyExpressionCancelButton = DuAEF.DuScriptUI.addButton(ui_scriptifyExpressionValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+	var ui_scriptifyExpressionValidButton = DuAEF.DuScriptUI.addButton(ui_scriptifyExpressionValidGroup,'Scriptify!',DuAEF.DuBinary.toFile(w25_check_g),"Scriptify the expression",DuAEF.DuBinary.toFile(w25_check_r));
+
+
+	//========== INIT =============
+	ui_SRCompItemSelectButton.setChecked(true);
+	ui_SRFootageItemSelectButton.setChecked(true);
+	ui_SRFolderItemSelectButton.setChecked(true);
+	ui_SRExpressionsSelector.visible = false;
+
+	ui_alignPositionButton.setChecked(true);
+	ui_alignRotationButton.setChecked(true);
+	ui_alignScaleButton.setChecked(true);
+
+	setCurrentSRPanel();
+
+	ui_toolsGroup.tabActivated = setCurrentToolsPanel;
+	if (standAlone) setCurrentToolsPanel();
+
+	//======= CONNECT EVENTS ===========
+
+	ui_renameButton.onClick = function () { setCurrentToolsPanel(1); };
+	ui_renameCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+	ui_renameValidButton.onClick = ui_renameValidButton_clicked;
+
+	ui_SRTypeSelector.onChange = ui_SRTypeSelector_changed;
+	ui_SRCompSelector.onChange = ui_SRCompSelector_changed;
+	ui_SRValidButton.onClick = ui_SRValidButton_clicked;
+	ui_searchReplaceButton.onClick = function () { setCurrentToolsPanel(2); };
+	ui_SRCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+
+	ui_measureButton.onClick = ui_measureButton_clicked;
+	ui_measureCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+	ui_measureValidButton.onClick = ui_measureValidButton_clicked;
+
+	ui_alignButton.onClick = ui_alignValidButton.onClick = ui_alignButton_clicked;
+	ui_alignOptionsButton.onClick = function () { setCurrentToolsPanel(4); };
+	ui_alignCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+
+	if (settings.data.uiMode > 0) ui_removeExpressionsButton.onClick = ui_removeExpressionsButton_clicked;
+
+	if (settings.data.uiMode > 0) ui_copyExpButton.onClick = ui_copyExpButton_clicked;
+	if (settings.data.uiMode > 0) ui_pasteExpButton.onClick = ui_pasteExpButton_clicked;
+
+	ui_editModeButton.onClick = ui_editModeButton_clicked;
+
+	if (settings.data.uiMode == 2)
+	{
+		ui_propInfoButton.onClick = ui_propInfoValidButton.onClick = ui_propPreExp.onClick = ui_propInfoButton_clicked;
+		ui_propInfoCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+
+		ui_scriptifyExpressionButton.onClick = ui_scriptifyExpressionValidButton.onClick = ui_scriptifyExpressionButton_clicked;
+		ui_scriptifyExpressionCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+	}
+
+	debugLog.stopTimer("Misc. tools ready.");
+}

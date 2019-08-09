@@ -136,15 +136,17 @@ DuAEF.Duik.Bone.BoneTypes =
 
 /**
 	* Creates a stand alone bone in the comp
-	* @param {CompItem} comp - The containing composition
+	* @param {CompItem} [comp=DuAEF.DuAE.Project.getActiveComp()] - The containing composition
 	* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
 	* @param {DuAEF.Duik.Bone.BoneTypes} [type=DuAEF.Duik.Bone.BoneTypes.PIN] - The type
 	* @return {Bone} The bone
 */
 DuAEF.Duik.Bone.createBone = function(comp,size,type)
 {
-	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	comp = def(comp, DuAEF.DuAE.Project.getActiveComp());
 	if (!comp) return;
+	type = def(type, DuAEF.Duik.Bone.BoneTypes.PIN);
+	
 	//create
 	var bone = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(bone,"Bone",DuAEF.Duik.LayerTypes.BONE);
@@ -542,16 +544,17 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 		'var origOutTang = origPath.outTangents();\n' +
 		'var closed = origPath.isClosed();\n' +
 		'var fxName = "B | " + origPath.propertyGroup().name;\n' +
-
+		'var numPoints = 0;\n' +
 		'for (var i = 1, num = thisLayer("Effects").numProperties ; i <= num; i++)\n' +
 		'{\n' +
 		'var fx = effect(i);\n' +
 		'if (fx.name.indexOf(fxName) == 0)\n' +
 		'{\n';
-	if (layer instanceof ShapeLayer) exp += 'origPoints[i-1] = fromWorld(fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + '));\n';
-	else exp += 'origPoints[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n';
-	exp += 'origInTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint + ')-fx(1);\n' +
-		'origOutTang[i-1] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint + ')-fx(1);\n' +
+	if (layer instanceof ShapeLayer) exp += 'origPoints[numPoints] = fromWorld(fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + '));\n';
+	else exp += 'origPoints[numPoints] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint + ');\n';
+	exp += 'origInTang[numPoints] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint + ')-fx(1);\n' +
+		'origOutTang[numPoints] = fx(' + DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint + ')-fx(1);\n' +
+		'numPoints++;\n' +
 		'}\n' +
 		'}\n' +
 		'createPath(origPoints,origInTang,origOutTang,closed);';
@@ -862,13 +865,15 @@ DuAEF.Duik.Bone.addBones = function (propertyGroup, size, tangents)
 /**
  * Gets Bones in the comp or the selection.
  * @memberof DuAEF.Duik.Bone
- * @param {CompItem}	comp	- The composition where to get the bones
+ * @param {CompItem}	[comp]	- The composition where to get the bones. The active comp if not provided
  * @param {boolean} [selectedOnly=false] - Selected layers only
  * @return {Bone[]}	The bones.
  */
 DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
 {
-	if (selectedOnly == undefined) selectedOnly = false;
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+	if (typeof selectedOnly === 'undefined') selectedOnly = false;
 
 	var bones = [];
 	//get layers
@@ -963,16 +968,4 @@ DuAEF.Duik.Bone.linkPositionToBone = function (prop, boneLayer, keepOffset)
 	if (prop.canSetExpression) prop.expression = posExp;
 
 	return effect;
-}
-
-/**
-	* Links a bezier path to a set of layers
-	* @param {Property|PropertyInfo} prop - The bezier path to link
-	* @param {Layer} vertexLayers - The parent layer for vertices
-	* @param {Layer} [inTangentLayers] - The parent layer for inTangents. If not provided or empty array, will link tangents to the effect on vertexLayers
-	* @param {Layer} [outTangentLayers] - The parent layer for outTangents
-*/
-DuAEF.Duik.Bone.shapeToBones = function (prop, vertexLayers, inTangentLayers, outTangentLayers)
-{
-
 }

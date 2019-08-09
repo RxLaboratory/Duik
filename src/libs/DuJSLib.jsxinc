@@ -233,6 +233,43 @@ Iterator.prototype.lastItem = function ()
 DuAEF.DuJS = {};
 
 /**
+ * Assigns a default value to a var if it's undefined.
+ * @param {object} val - The variable to set
+ * @param {object} defaultVal - The default value
+ * @param {boolean} [doPostInit=true] - True to trigger the post-init method of DuAEF when run.<br />
+ * Set it to false if it is used in a method which has to run during initialisation of your script,<br />
+ * and true if it is used in a method run by the user later.
+ * @return {object} The var
+ */
+def = function(val,defaultVal,doPostInit)
+{
+	doPostInit = typeof doPostInit === 'undefined' ? true : doPostInit;
+	if (doPostInit) DuAEF.postInit();
+	return typeof val === 'undefined' ? defaultVal : val;
+}
+
+/**
+ * Improved typeof which returns the type of object instead of 'object'
+ * @param {any} exp - The expression to check.
+ * @return {string} The type. For primitives, in lower case ('string', 'number', 'boolean', 'null', 'undefined')
+*/
+DuAEF.DuJS.typeof = function (value) {
+    var type = typeof value;
+
+    switch(type) {
+        case 'object':
+        return value === null ? 'null' : Object.prototype.toString.call(value).
+            match(/^\[object (.*)\]$/)[1]
+
+        case 'function':
+        return 'Function';
+
+        default:
+        return type;
+    }
+}
+
+/**
 	* JavaScript Array related methods
 	* @namespace
 	* @memberof DuAEF.DuJS
@@ -289,9 +326,9 @@ DuAEF.DuJS.Array.indexOf = function (arr,value,comparisonFunction)
 DuAEF.DuJS.Array.hasDuplicates = function (arr)
 {
 	for (var i = 0;i<arr.length-1;i++) {
-	for (var j=i+1;j<arr.length;j++) {
-	if (arr[i] === arr[j]) return true;
-	}
+		for (var j=i+1;j<arr.length;j++) {
+			if (arr[i] === arr[j]) return true;
+		}
 	}
 	return false;
 }
@@ -463,6 +500,24 @@ DuAEF.DuJS.Fs.getBasename = function(pathOrFile)
 }
 
 /**
+	* Returns the extension of the given path or file
+	* @memberof DuAEF.DuJS.Fs
+	* @example
+	* DuAEF.DuJS.Fs.getExtension(new File("D:/code/open/Duik/shape.other.test")) // "test"
+	* DuAEF.DuJS.Fs.getExtension("D:/code/open/Duik/shape.test") // "test"
+	* @param {String|File}	 [pathOrFile]	- The file or the path
+	* @return {String} The extension
+*/
+DuAEF.DuJS.Fs.getExtension = function(pathOrFile)
+{
+    if (pathOrFile instanceof File) pathOrFile = pathOrFile.absoluteURI;
+    var name = pathOrFile.split("/").pop();
+    name = name.split("\\").pop();
+    if(name.indexOf(".") > 0) return name.split(".").pop();
+    return name;
+}
+
+/**
 	* Switch the extension of the given path. Create a new path from a given path and a given extension.
 	* @memberof DuAEF.DuJS.Fs
 	* @param {String|File}	 [pathOrFile]	- The file or the path
@@ -537,7 +592,7 @@ DuAEF.DuJS.Fs.parseJSON = function(file)
 	if (json == '') return null;
 	var data = {};
 
-	try { data = JSON.parse(json); } catch (e) { if (DuAEF.debug) alert(e.description + '\n\nJSON DATA:\n\n' + json); }
+	try { data = DuAEF.JSON.parse(json); } catch (e) { if (DuAEF.debug) alert(e.description + '\n\nJSON DATA:\n\n' + json); }
 	return data;
 }
 
@@ -552,7 +607,7 @@ DuAEF.DuJS.Fs.saveJSON = function (obj,file)
 {
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess) return false;
 	if (!(file instanceof File)) file = new File(file);
-	var data = JSON.stringify(obj,null,4);
+	var data = DuAEF.JSON.stringify(obj,null,4);
 	//save to file
 	file.encoding = 'UTF-8';
 	if (file.open('w'))
@@ -629,6 +684,35 @@ DuAEF.DuJS.Fs.saveFileDialog = function(prompt, filter, defaultExtension)
 	}
 
 	return saveFile;
+}
+
+/**
+	* Image sequences tools
+	* @namespace
+	* @memberof DuAEF.DuJS.Fs
+*/
+DuAEF.DuJS.Fs.ImageSequence  ={};
+
+/**
+	* Gets the number of a frame from an image sequence<br />
+	* The number must be right before the extension.
+	* @param {string}	path	- The path of the frame
+*/
+DuAEF.DuJS.Fs.ImageSequence.getNumber = function(path)
+{
+	var string_noExt = path.substring(0,path.lastIndexOf('.'));
+	var numberi = 0;
+	var namei = 0;
+	for(var i = string_noExt.length-1;i>=0;i--)
+	{
+		if(isNaN(parseInt(string_noExt.charAt(i))))
+		{
+			numberi = i+1;
+			break;
+		}
+	}
+	number = string_noExt.substring(numberi,string_noExt.length);
+	return number;
 }
 
 /**
@@ -765,6 +849,28 @@ DuAEF.DuJS.Math.clamp = function (values, min, max)
 	}
 	if (isArray) return result;
 	else return result[0];
+}
+
+/**
+	* Converts the number from degrees to radians
+	* @memberof DuAEF.DuJS.Math
+	* @param {number} value - the value
+	* @return {float} The value in radians
+*/
+DuAEF.DuJS.Math.toRadians = function (value)
+{
+	return value * Math.PI / 180;
+}
+
+/**
+	* Converts the number from radians to degrees
+	* @memberof DuAEF.DuJS.Math
+	* @param {number} value - the value
+	* @return {float} The value in degrees
+*/
+DuAEF.DuJS.Math.toDegrees = function (value)
+{
+	return value * 180 / Math.PI;
 }
 
 /**
@@ -1072,6 +1178,30 @@ DuAEF.DuJS.Color.Colors =
 };
 
 /**
+ * Checks if this color is valid ([R,V,B,A] in the range 0.0 ... 1.0)
+ * @param {float[]} color - The color to validate
+ * @param {boolean} [ignoreAlpha=false] - Will return true even if the array does not have any alpha value
+ * @return {boolean} true if the color is valid
+ */
+DuAEF.DuJS.Color.validateColor = function (color, ignoreAlpha)
+{
+	ignoreAlpha = def( ignoreAlpha, false, false );
+	if ( !DuAEF.DuJS.typeof(color) == 'Array' ) return false;
+	var numChannels = color.length;
+	if ( numChannels != 4 && !ignoreAlpha ) return false;
+	if ( numChannels != 4 && numChannels != 3 ) return false;
+	for (var i = 0, numChannels; i < numChannels; i++)
+	{
+		var c = color[i];
+		if (isNaN(c)) return false;
+		if (!DuAEF.DuJS.typeof(color) == 'number') return false;
+		if (c < 0) return false;
+		if (c > 1) return false;
+	}
+	return true;
+}
+
+/**
 	* Generates a random color
 	* @memberof DuAEF.DuJS.Color
 	* @return {float[]}	The color as an [R,G,B,A] Array with float values between 0.0 and 1.0
@@ -1103,7 +1233,7 @@ DuAEF.DuJS.Color.hexToRGB = function (hexColor,isString)
 			var red = parseInt(hexColor.substr(0,2),16)/255.0;
 			var green = parseInt(hexColor.substr(2,2),16)/255.0;
 			var blue = parseInt(hexColor.substr(4,2),16)/255.0;
-			return [red,green,blue];
+			return [red,green,blue,1];
 		}
 		else
 		{
@@ -1134,6 +1264,93 @@ DuAEF.DuJS.Color.rgbToHex = function (rgbColor)
 	if (hexB.length == 1) hexB = "0" + hexB;
 	var hex = hexR+hexG+hexB;
 	return hex;
+}
+
+/**
+	* Converts an HSL color to RGB
+	* @param {float[]} color - The RGBA color array
+	* @return {float[]} the HSLA color array
+*/
+DuAEF.DuJS.Color.hslToRgb = function (color)
+{
+    var r, g, b;
+	var h = color[0];
+	var s = color[1];
+	var l = color[2];
+
+    if(s == 0)
+	{
+        r = g = b = l; // achromatic
+    }
+	else
+	{
+        function hue2rgb(p, q, t)
+		{
+            if(t < 0) t += 1;
+            if(t > 1) t -= 1;
+            if(t < 1/6) return p + (q - p) * 6 * t;
+            if(t < 1/2) return q;
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        }
+
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return [r, g, b, color[3]];
+}
+
+/**
+	* Converts an RGB color to HSL
+	* @param {float[]} color - The HSLA color array
+	* @return {float[]} the RGBA color array
+*/
+DuAEF.DuJS.Color.rgbToHsl = function (color)
+{
+	var r = color[0];
+	var g = color[1];
+	var b = color[2];
+
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+
+    if(max == min)
+	{
+        h = s = 0; // achromatic
+    }
+	else
+	{
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max)
+		{
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    return [h, s, l, color[3]];
+}
+
+/**
+ * Converts an 8bpc color array to a 32bpc float color array
+ * @param {int[]} color - The RGB(A) color array in 8bpc (0-255 range)
+ * @return {float[]} the RGBA color array
+ */
+DuAEF.DuJS.Color.eightBpcToFloat = function (color)
+{
+	var floatColor = [];
+	for (var i = 0, numChannels = color.length; i < numChannels; i++)
+	{
+		floatColor.push( color[ i ] / 255 );
+	}
+	return floatColor;
 }
 
 /**
@@ -1175,13 +1392,14 @@ DuAEF.DuJS.Date.getMonth = function (string)
 DuAEF.DuJS.Version = {};
 
 /**
- * Compares two versions in the standard form AA.BB.CC
+ * Compares two versions in the standard form AA.BB.CC-BetaX
  * @param {string} vA - The first version
- * @param {string} vB - The other version
+ * @param {string} [vB=DuAEF.scriptVersion] - The other version
  * @return {boolean} True if vA is more recent than vB
 */
 DuAEF.DuJS.Version.compare = function (vA, vB)
 {
+	vB = def(vB, DuAEF.scriptVersion, false);
 	if (vA === vB) return false;
 
 	var vAArray = vA.split('.');
@@ -1243,4 +1461,3 @@ DuAEF.DuJS.Version.compare = function (vA, vB)
 
 	return true;
 }
-

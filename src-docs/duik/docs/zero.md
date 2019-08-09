@@ -1,4 +1,4 @@
-# Zero
+# ![Zero Icon](img\duik-icons\automation\zero-icon-r.png) Zero
 
 !!! hint
     Available in _Standard_ and _Expert_ modes only.

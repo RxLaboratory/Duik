@@ -1,7 +1,9 @@
-# Motion Trail
+# ![Motion Trail Icon](img\duik-icons\motiontrail-icon-r.png) Motion Trail
 
 !!! note
     Available in After Effects CC2018 and above only.
+
+![motion trail panel](img\duik-screenshots\S-Animation\S-Animation-Tools\MotionTrail-panel.PNG)  
 
 The *Motion Trail* tool draws the trajectory of any layer in a shape layer, and can make trails behind (or in front of) them.
 

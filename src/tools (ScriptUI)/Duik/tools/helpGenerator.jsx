@@ -57,13 +57,13 @@ Each file will be converted to a string, stored in a variable named after the fi
 			data += 'var ' + varName + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + varName + 'Link = "https://rainbox-dev.github.io/DuAEF_Duik/Guides/Duik/' + file.name.replace(re,'') + '/"\n\n';
+			data += 'var ' + varName + 'Link = "https://rainbox-dev.github.io/DuAEF/Guides/Duik/' + file.name.replace(re,'') + '/"\n\n';
 		}
 	}
 
 	//write data
 
-	var helpFile = new File(scriptFolder.absoluteURI + '/Duik16_helpStrings.jsxinc');
+	var helpFile = new File(scriptFolder.absoluteURI + '/duik_required/Duik16_helpStrings.jsxinc');
 	helpFile.encoding = 'UTF-8';
 	if (!helpFile.open('w'))
 	{

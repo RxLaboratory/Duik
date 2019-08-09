@@ -1,46 +1,6 @@
 ﻿#include "pseudoEffects/duaef_magic.ffx.jsxinc"
 
 /**
-	* Constructs a Pseudo Effect
-	* @class Structure
-	* @classdesc Describes a pseudo effect
-	* @param  {File} file - The ffx file
-	* @param  {string} [matchName=""] - The matchName
-	* @param  {string} [name=""] - The default name
-	* @property  {File} file - The ffx file
-	* @property  {string} matchName - The matchName
-	* @property  {string} name - The default name
-*/
-function PseudoEffect(file,matchName,name)
-{
-	if(typeof name == 'undefined') name = '';
-	if(typeof matchName == 'undefined') matchName = '';
-	this.file = file;
-	this.matchName = matchName;
-	if (name != '') DuAEF.DuScriptUI.uiStrings.push(name);
-	this.name = tr(name);
-}
-
-/**
-	* This method adds the pseudo effect to a layer
-	* @param {Layer} layer - The layer
-	* @param {string} [name=this.name] - A name for the effect
-	* @return {PropertyGroup|null} The effect or null if there's no matchName
-*/
-PseudoEffect.prototype.apply = function(layer,name)
-{
-	if (this.matchName == '')
-	{
-		DuAEF.DuAE.Layer.applyPreset(layer,this.file);
-		return null;
-	}
-
-	if (typeof name === 'undefined') name = this.name;
-
-	return DuAEF.DuAE.Layer.addPseudoEffect(layer,this.file,this.matchName,name);
-}
-
-/**
 	* Constructs a new KeySpatialProperty
 	* @class KeySpatialProperties
 	* @classdesc Spatial properties of a {@linkcode KeyFrame}.
@@ -168,28 +128,68 @@ function LayerAnim()
 	* This class is able to "fix" effects properties which have been broken by
 	* the addition of another effect on the same layer, as long as the class has been
 	* instanciated before the effect has been broken.
-	* @param {PropertyBase} property - The property
+	* @param {PropertyBase|PropertyInfo} property - The property. If a PropertyInfo is provided, the constructor returns it (it does not make a copy).<br />
+	* This makes it easy to avoid type checking, as you can always pass any property or PropertyInfo to the constructor to be sure to handle a PropertyInfo, without any impact on performance.<br />
+	* @example
+	* myFunction (prop) //This function can be passed either a property or a PropertyInfo
+	* {
+	* propInfo = new PropertyInfo(prop);
+	* prop = propInfo.getProperty();
+	* }
 	* @property {int} index - The propertyIndex
 	* @property {boolean} isEffect - true if this is an effect (sub)property
 	* @property {boolean} riggable  - true if this prop can be rigged (it's a value which can set expressions)
 	* @property {Layer} layer - The layer containing the property
 	* @property {int} dimensions - The number of dimensions, 0 if this is not a dimensionnal value (ie color, text, shape...)
+	* @property {string} name - The name of the property
+	* @property {string} matchName - The matchName of the property
+	* @property {PropertyGroup|null} effect - The effect containing the property
+	* @property {boolean} editable - true if the value of the property can be changed
+	* @property {boolean} numerical - true if the value is a number or an array of numbers
+	* @property {boolean} isPercent - true if the unit is a percentage
+	* @property {boolean} isAngle - true if the unit is a degree
+	* @property {boolean} isPixels - true if the unit is a pixel
+	* @property {int} numKeys - the number of keyframes on the property
+	* @property {bool} group - true if the property is a PropertyGroup
+	* @property {string} unitsText - the name of the unit (localized)
+	* @property {string} unit - the abbreviated unit, as displayed in the UI (localized)
 */
 function PropertyInfo(property)
 {
+	if (property instanceof PropertyInfo) return property;
+	
+	var expressionEnabled = property.expressionEnabled;
+	if (property.propertyType == PropertyType.PROPERTY)
+	{
+		this.numKeys = property.numKeys;
+		this.group = false;
+	}
+	else
+	{
+		this.group = true;
+		this.numKeys = 0;
+	}
 	this.property = property;
+	this.name = property.name;
+	this.matchName = property.matchName;
 	this.index = property.propertyIndex;
 	this.parentIndices  = [this.index];
 	this.isEffect = property.isEffect;
-	var parentProp = property;
-	while (parentProp.parentProperty)
+	this.effect = null;
+	if (!this.isEffect)
 	{
-		// Traverse up the property tree
-		parentProp = parentProp.parentProperty;
-		this.isEffect = parentProp.isEffect;
-		this.parentIndices.unshift(parentProp.propertyIndex);
-		if (this.isEffect) break;
+		var parentProp = property;
+		while (parentProp.parentProperty)
+		{
+			// Traverse up the property tree
+			parentProp = parentProp.parentProperty;
+			this.isEffect = parentProp.isEffect;
+			this.parentIndices.unshift(parentProp.propertyIndex);
+			if (this.isEffect) this.effect = parentProp;
+			if (this.isEffect) break;
+		}
 	}
+	else this.effect = property;
 
 	this.riggable = DuAEF.DuAE.Property.isRiggable(property);
 	this.editable = DuAEF.DuAE.Property.isEditable(property);
@@ -197,8 +197,16 @@ function PropertyInfo(property)
 	this.layer = DuAEF.DuAE.Property.getLayer(property);
 	this.comp = this.layer.containingComp;
 	this.dimensions = DuAEF.DuAE.Property.getDimensions(property);
-	this.isPercent = property.unitsText == 'percent'; //translatable... find something else
-	this.isAngle = property.unitsText == 'degrees'; //translatable... find something else
+	this.unitsText = property.unitsText;
+	this.isPercent = this.unitsText == localize("$$$/AE/TLW/GraphEditor/PercentSource=percent");
+	this.isAngle = this.unitsText == localize("$$$/AE/TLW/GraphEditor/DegreesSource=degrees");
+	this.isPixels = this.unitsText == localize("$$$/AE/TLW/GraphEditor/PixelsSource=pixels");
+	this.unit = "";
+	if (this.isPercent) this.unit = localize("$$$/AE/TLW/GraphEditor/PercentDest=%");
+	if (this.isAngle) this.unit = localize("$$$/AE/TLW/GraphEditor/DegreesDest=°");
+	if (this.isPixels) this.unit = localize("$$$/AE/TLW/GraphEditor/PixelsDest=px");
+
+	if (this.riggable) property.expressionEnabled = expressionEnabled;
 }
 
 /**
@@ -274,6 +282,32 @@ DuAEF.DuAE.Types =
 {
 	VALUE: 1,
 	VELOCITY: 2
+}
+
+/**
+ * Abbreviated units used in the UI.<br />
+ * These strings are localized based on internal After Effects dictionnaries.
+ * @enum {string}
+ * @readonly
+*/
+DuAEF.DuAE.Units =
+{
+	PIXELS: localize("$$$/AE/TLW/GraphEditor/PixelsDest=px"),
+	DEGREES: localize("$$$/AE/TLW/GraphEditor/DegreesDest=°"),
+	PERCENT: localize("$$$/AE/TLW/GraphEditor/PercentDest=%")
+}
+
+/**
+ * Units used in the UI<br />
+ * These strings are localized based on internal After Effects dictionnaries.
+ * @enum {string}
+ * @readonly
+*/
+DuAEF.DuAE.UnitsText =
+{
+	PERCENT: localize("$$$/AE/TLW/GraphEditor/PixelsSource=percent"),
+	DEGREES: localize("$$$/AE/TLW/GraphEditor/DegreesSource=degrees"),
+	PIXELS: localize("$$$/AE/TLW/GraphEditor/PercentSource=pixels")
 }
 
 /**
@@ -612,6 +646,45 @@ DuAEF.DuAE.LayerAttributes =
 }
 
 /**
+ * Loop types
+ * @enum {string}
+ * @readonly
+*/
+DuAEF.DuAE.LoopTypes = 
+{
+	HOLD: 'hold',
+	NONE: 'none',
+	CYCLE: 'cycle',
+	PINGPONG: 'pingpong',
+	OFFSET: 'offset',
+	CONTINUE: 'continue'
+}
+
+/**
+ * Default color labels
+ * @readonly
+ * @todo get real labels (from pref file?)
+ */
+DuAEF.DuAE.ColorLabels = [];
+DuAEF.DuAE.ColorLabels[0]  = [0, 0, 0 ];	// 0. None
+DuAEF.DuAE.ColorLabels[1]  = [121/255, 058/255, 058/255 ];	// 1. Red
+DuAEF.DuAE.ColorLabels[2]  = [144/255, 138/255, 068/255 ];	// 2. Yellow
+DuAEF.DuAE.ColorLabels[3]  = [115/255, 132/255, 130/255 ];	// 3. Aqua
+DuAEF.DuAE.ColorLabels[4]  = [145/255, 124/255, 131/255 ];	// 4. Pink
+DuAEF.DuAE.ColorLabels[5]  = [115/255, 115/255, 131/255 ];	// 5. Lavender
+DuAEF.DuAE.ColorLabels[6]  = [146/255, 127/255, 109/255 ];	// 6. Peach
+DuAEF.DuAE.ColorLabels[7]  = [120/255, 130/255, 120/255 ];	// 7. Sea Foam
+DuAEF.DuAE.ColorLabels[8]  = [082/255, 093/255, 142/255 ];	// 8. Blue
+DuAEF.DuAE.ColorLabels[9]  = [067/255, 112/255, 068/255 ];	// 9. Green
+DuAEF.DuAE.ColorLabels[10] = [101/255, 052/255, 107/255 ];	// 10. Purple
+DuAEF.DuAE.ColorLabels[11] = [146/255, 103/255, 037/255 ];	// 11. Orange
+DuAEF.DuAE.ColorLabels[12] = [094/255, 065/255, 051/255 ];	// 12. Brown
+DuAEF.DuAE.ColorLabels[13] = [152/255, 085/255, 137/255 ];	// 13. Fuchsia
+DuAEF.DuAE.ColorLabels[14] = [061/255, 111/255, 113/255 ];	// 14. Cyan
+DuAEF.DuAE.ColorLabels[15] = [114/255, 105/255, 090/255 ];	// 15. Sandstone
+DuAEF.DuAE.ColorLabels[16] = [045/255, 062/255, 045/255 ];	// 16. DarkGreen
+
+/**
 	* Checks if the param is an AE collection or an Array
 	* @param {Array|Collection} collection - The list to check
 	* @return {boolean} true if collection is a collection, false if it's an array
@@ -709,7 +782,8 @@ DuAEF.DuAE.App.askFilesAndNetworkAccess = function(showAlert,message)
 	if (!DuAEF.DuAE.App.hasFilesAndNetworkAccess)
 	{
 		if (showAlert) alert(message);
-		app.executeCommand(2359);
+		if (DuAEF.DuAE.App.version < 16.1) app.executeCommand(2359);
+		else app.executeCommand(3131);
 		DuAEF.DuAE.App.hasFilesAndNetworkAccess = app.preferences.getPrefAsLong("Main Pref Section","Pref_SCRIPTING_FILE_NETWORK_SECURITY") == 1;
 	}
 	return DuAEF.DuAE.App.hasFilesAndNetworkAccess;
@@ -743,12 +817,75 @@ DuAEF.DuAE.App.getAEVersionName = function(versionAsFloat)
 	else return "Unknown";
 }
 
+//low-level undocumented flag.
+//true if an undo group has been opened and has not been closed yet.
+DuAEF.DuAE.App.openedUndoGroup = false;
+
+//low-level undocumented flag.
+//the name of the currently opened undo group
+DuAEF.DuAE.App.undoGroupName = '';
+
+/**
+ * Begins an undoGroup.<br />
+ * Automatically prepend the group name with the script name.<br />
+ * Using this method is safer than the native one, as DuAEF will try to avoid opening several undo groups at once.<br />
+ * The group name is translatable.
+ * @param {string} groupName - The name of the Undo Group.
+ * @param {boolean} [autoClose=true] - By default, DuAEF will close any previously opened undogroup (which has a different name) to prevent any error.<br />
+ * Set this to <code>false</code> in order to ignore this new group beginning and keep the previously opened one.
+*/
+DuAEF.DuAE.App.beginUndoGroup = function (groupName, autoClose)
+{
+	groupName = def(groupName, "");
+	autoClose = def(autoClose, true);
+
+	if (groupName != "")
+	{
+		DuAEF.DuScriptUI.uiStrings.push( groupName );
+		groupName = tr( groupName );
+	}
+
+	if (DuAEF.DuAE.App.openedUndoGroup)
+	{
+		if ( autoClose && DuAEF.DuAE.App.undoGroupName != groupName ) DuAEF.DuAE.App.endUndoGroup();
+		else return;
+	}
+	app.beginUndoGroup(DuAEF.scriptName + ' | ' + groupName);
+
+	DuAEF.DuAE.App.undoGroupName = groupName;
+
+	DuAEF.DuAE.App.openedUndoGroup = true;
+}
+
+/**
+ * Ends an undoGroup.<br />
+ * Using this method is safer than the native one, as DuAEF will try to avoid opening several undo groups at once.
+*/
+DuAEF.DuAE.App.endUndoGroup = function ()
+{
+	app.endUndoGroup();
+	DuAEF.DuAE.App.openedUndoGroup = false;
+} 
+
+/**
+ * Runs app.executeCommand in a safer way, taking care of undogroups.
+ * @param {int} commandID - The ID of the command as given by app.findMenuCommandID()
+ */
+DuAEF.DuAE.App.executeCommand = function(commandID)
+{
+	//the command will mess undo groups up if there already is one opened.
+	openedUndoGroup = DuAEF.DuAE.App.openedUndoGroup;
+	DuAEF.DuAE.App.endUndoGroup();
+	app.executeCommand(commandID);
+	if (openedUndoGroup) DuAEF.DuAE.App.beginUndoGroup(DuAEF.DuAE.App.undoGroupName);
+}
+
 /**
 	* Cuts the selection (runs the cut menu command)
 */
 DuAEF.DuAE.App.cut = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.CUT);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.CUT);
 }
 
 /**
@@ -756,7 +893,7 @@ DuAEF.DuAE.App.cut = function()
 */
 DuAEF.DuAE.App.copy = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.COPY);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.COPY);
 }
 
 /**
@@ -764,7 +901,7 @@ DuAEF.DuAE.App.copy = function()
 */
 DuAEF.DuAE.App.duplicate = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.DUPLICATE);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.DUPLICATE);
 }
 
 /**
@@ -774,7 +911,7 @@ DuAEF.DuAE.App.duplicate = function()
 */
 DuAEF.DuAE.App.copyWithPropertyLinks = function()
 {
-	if (DuAEF.DuAE.App.version >= 12.0) app.executeCommand(DuAEF.DuAE.menuCommandID.COPY_WITH_PROPERTY_LINKS);
+	if (DuAEF.DuAE.App.version >= 12.0) DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.COPY_WITH_PROPERTY_LINKS);
 	else DuAEF.DuAE.App.copy();
 }
 
@@ -783,7 +920,7 @@ DuAEF.DuAE.App.copyWithPropertyLinks = function()
 */
 DuAEF.DuAE.App.paste = function()
 {
-	app.executeCommand(DuAEF.DuAE.menuCommandID.PASTE);
+	DuAEF.DuAE.App.executeCommand(DuAEF.DuAE.menuCommandID.PASTE);
 }
 
 /**
@@ -1352,15 +1489,15 @@ DuAEF.DuAE.Layer.newUniqueMarkerName = function(newName, layer,increment)
 */
 DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 {
-	if (strict == undefined) strict = false;
-	if (caseSensitive == undefined) caseSensitive = true;
+	if (typeof strict === 'undefined') strict = false;
+	if (typeof caseSensitive === 'undefined') caseSensitive = true;
 
 	var props = [];
 
 	if (!caseSensitive && typeof filter === "string") filter = filter.toLowerCase();
 
 	var selectedProps = layer.selectedProperties;
-	if (filter == undefined)
+	if (typeof filter === 'undefined')
 	{
 		props = props.concat(selectedProps);
 	}
@@ -1378,19 +1515,33 @@ DuAEF.DuAE.Layer.getSelectedProps = function(layer,filter,strict,caseSensitive)
 				matchName = matchName.toLowerCase();
 			}
 
-			if (strict && name === filter) props.push(prop);
-			else if (strict && matchName === filter) props.push(prop);
+			if (strict && name === filter)
+			{
+				props.push(prop);
+			}
+			else if (strict && matchName === filter)
+			{
+				props.push(prop);
+			}
 			else if (typeof filter === "string")
 			{
 				if (name.indexOf(filter) >= 0) props.push(prop);
 				else if (matchName.indexOf(filter) >= 0) props.push(prop);
 			}
-			else if (prop.propertyType == PropertyType.PROPERTY) if (prop.propertyValueType == filter) props.push(prop);
-			else if (prop.propertyType == filter) props.push(prop);
-			else if (typeof filter === "function") if (filter(prop)) props.push(prop);
+			else if (prop.propertyType == PropertyType.PROPERTY)
+			{
+				if (prop.propertyValueType == filter) props.push(prop);
+			}
+			else if (prop.propertyType == filter)
+			{
+				props.push(prop);
+			}
+			else if (typeof filter === "function")
+			{
+				if (filter(prop)) props.push(prop);
+			};
 		}
 	}
-
 	return DuAEF.DuAE.getPropertyInfos(props);
 }
 
@@ -1850,23 +2001,13 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 	var sortedLayers = [];
 	var layersToSort = DuAEF.DuAE.convertCollectionToArray(layers);
 
-	//add layers with no parents
-	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
-	{
-		var l = layersToSort[i];
-		if (l.parent == null)
-		{
-			sortedLayers.push(l);
-			layersToSort.splice(i,1);
-		}
-	}
-
 	//add layers with a parent outside
 	//those with a parent outside of the selection
 	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
 	{
 		var l = layersToSort[i];
 		var parent = l.parent;
+		if (parent == null) continue;
 		var isParentOutside = true;
 		for (var j = 0 ; j < layersToSort.length ; j++ )
 		{
@@ -1877,6 +2018,17 @@ DuAEF.DuAE.Layer.sortByParent = function (layers)
 			}
 		}
 		if (isParentOutside)
+		{
+			sortedLayers.push(l);
+			layersToSort.splice(i,1);
+		}
+	}
+
+	//add layers with no parents
+	for (var i = layersToSort.length - 1 ; i >= 0 ; i--)
+	{
+		var l = layersToSort[i];
+		if (l.parent == null)
 		{
 			sortedLayers.push(l);
 			layersToSort.splice(i,1);
@@ -1949,6 +2101,64 @@ DuAEF.DuAE.Layer.unparent = function (layers)
 	for (var i = layers.length -1 ; i >= 0 ; i--)
 	{
 		layers[i].parent = null;
+	}
+}
+
+/**
+	* (Un)parent the children of the layer.< br/>
+	* When children are unparented, an effect is added and the name of the layer is changed to show the "edit mode" is enabled.<br />
+	* When toggled again, the effect is removed, and the name is restored.
+	* @param {Layer} layer - The layer to toggle.
+*/
+DuAEF.DuAE.Layer.toggleEditMode = function(layer)
+{
+	//a reg exp to retrieve the list of children
+	var reChildren = / \|Duik::ChildrenLayers:([\d,]*)\|/;
+
+	var setEditMode = !reChildren.test(layer.comment);
+
+	var comp = layer.containingComp;
+
+	if (setEditMode)
+	{
+		var children = DuAEF.DuAE.Layer.getChildren(layer);
+		layer.comment = layer.comment + ' |Duik::ChildrenLayers:';
+		for (var j = 0, num = children.length ; j < num ; j++)
+		{
+			var child = children[j];
+			layer.comment = layer.comment + child.index;
+			if (j < children.length -1) layer.comment = layer.comment + ',';
+			child.parent = null;
+		}
+		layer.comment = layer.comment + "|";
+		layer.name = '=EDIT= ' + layer.name;
+         var tint = layer.property('ADBE Effect Parade').addProperty('ADBE Tint');
+         tint.name = 'DUIK EDIT MODE';
+         tint(1).setValue([0.5,0,0,1]);
+         tint(2).setValue([1,0,0,1]);
+	}
+	else
+	{
+		var match = reChildren.exec(layer.comment);
+		if (match.length == 2)
+		{
+			var indices = match[1].split(',');
+			//reparent
+			if (indices.length > 0)
+			{
+				for (var i = 0 ; i < indices.length ; i++)
+				{
+					var index = parseInt(indices[i]);
+					if (isNaN(index)) continue;
+					comp.layer(index).parent = layer;
+				}
+			}
+			//remove comment
+			layer.comment = layer.comment.replace(match[0],'');
+			layer.name = layer.name.replace('=EDIT= ','');
+             var tint = layer.property('ADBE Effect Parade').property('ADBE Tint');
+             if (tint) if (tint.name == 'DUIK EDIT MODE') tint.remove();
+		}
 	}
 }
 
@@ -2067,20 +2277,45 @@ DuAEF.DuAE.Layer.copyToComp = function (layers, destinationComp, withPropertyLin
 }
 
 /**
-	* Parents all unparented layers
-	* @param {Layer[]} layers - The layers to parent
-	* @param {Layer} parent - The parent
+	* Parents all (unparented) layers
+	* @param {Layer|LayerCollection|Layer[]} layers - The layers to parent
+	* @param {Layer} [parent] - The parent. If not defined, will use the last layer of the list
+	* @param {boolean} [unparentedOnly=true] - True to parent only layers which do not have a parent yet 
 */
-DuAEF.DuAE.Layer.parent = function(layers, parent)
+DuAEF.DuAE.Layer.parent = function(layers, parent, unparentedOnly)
 {
-	var it = new Iterator (layers);
-	it.do(function(layer)
+	if (typeof unparentedOnly === 'undefined') unparentedOnly = true;
+	if (typeof parent === 'undefined')
 	{
-		var locked = layer.locked;
-		layer.locked = false;
-		if (layer.parent == null) layer.parent = parent;
-		layer.locked = locked;
-	});
+		if (!layers.length) return;
+		if (layers.length == 1) return;
+		parent = layers[layers.length -1];
+	}
+
+	if (layers.length)
+	{
+		var it = new Iterator (layers);
+		it.do(function(layer)
+		{
+			var locked = layer.locked;
+			layer.locked = false;
+			if ((layer.parent == null && unparentedOnly) || !unparentedOnly)
+			{
+				if (layer.parent != parent && layer != layers[layers.length-1]) layer.parent = parent;
+			}
+			layer.locked = locked;
+		});
+	}
+	else 
+	{
+		var locked = layers.locked;
+		layers.locked = false;
+		if ((layers.parent == null && unparentedOnly) || !unparentedOnly)
+		{
+			if (layers.parent != parent) layers.parent = parent;
+		}
+		layers.locked = locked;
+	}
 }
 
 /**
@@ -2139,10 +2374,147 @@ DuAEF.DuAE.Layer.getPuppetPins = function (layer)
 }
 
 /**
-	* Gets the transformation matrix of the layer from the compostion.<br />
-	* Use Matrix.applyToPoint(point) to transform any coordinate with the matrix returned by this method.
-	* @param {Layer[]} layer - the layer
-	* @return {Matrix} The coordinates.
+* Aligns a layer in position to another layer
+* @param {Layer} layer - The layer to align.
+* @param {Layer} target - The reference layer.
+*/
+DuAEF.DuAE.Layer.alignPosition = function (layer, target)
+{
+	//parent to target
+	var layerParent = layer.parent;
+	if (layerParent != target) layer.parent = target;
+
+	var comp = layer.containingComp;
+
+	//TODO if dimensions dimensions separated
+	//TODO if 3D
+
+	//set position
+	if (layer.transform.position.numKeys == 0) layer.transform.position.setValue(target.transform.anchorPoint.value);
+	else layer.transform.position.setValueAtTime(comp.time, target.transform.anchorPoint.value);
+
+	//reparent
+	if (layerParent != target) layer.parent = layerParent;
+}
+
+/**
+* Aligns a layer's orientation to another layer
+* @param {Layer} layer - The layer to align.
+* @param {Layer} target - The reference layer.
+*/
+DuAEF.DuAE.Layer.alignOrientation = function (layer, target)
+{
+	//parent to target
+	var layerParent = layer.parent;
+	if (layerParent != target) layer.parent = target;
+
+	var comp = layer.containingComp;
+
+	//TODO if 3D/2D
+
+	//set rotation
+	if (layer.transform.rotation.numKeys == 0) layer.transform.rotation.setValue(0);
+	else layer.transform.rotation.setValueAtTime(comp.time, 0);
+
+	//reparent
+	if (layerParent != target) layer.parent = layerParent;
+}
+
+/**
+* Aligns a layer's scale to another layer
+* @param {Layer} layer - The layer to align.
+* @param {Layer} target - The reference layer.
+*/
+DuAEF.DuAE.Layer.alignScale = function (layer, target)
+{
+	//parent to target
+	var layerParent = layer.parent;
+	if (layerParent != target) layer.parent = target;
+
+	var comp = layer.containingComp;
+
+	//TODO 3D
+
+	//set scale
+	if (layer.transform.scale.numKeys == 0) layer.transform.scale.setValue([100,100]);
+	else layer.transform.scale.setValueAtTime(comp.time, [100,100]);
+
+	//reparent
+	if (layerParent != target) layer.parent = layerParent;
+}
+
+/**
+* Aligns a layer's opcaity to another layer
+* @param {Layer} layer - The layer to align.
+* @param {Layer} target - The reference layer.
+*/
+DuAEF.DuAE.Layer.alignOpacity = function (layer, target)
+{
+	var comp = layer.containingComp;
+
+	//set scale
+	if (layer.transform.opacity.numKeys == 0) layer.transform.opacity.setValue(target.transform.opacity.value);
+	else layer.transform.opacity.setValueAtTime(comp.time, target.transform.opacity.value);
+}
+
+/**
+* Aligns the layers' transformations (position, rotation, scale) to another layer
+* @param {Layer[]|LayerCollection} layers - The layers to align.
+* @param {Layer} target - The reference layer.
+* @param {boolean} [position=true] - True to align position.
+* @param {boolean} [rotation=true] - True to align orientation.
+* @param {boolean} [scale=true] - True to align scale.
+* @param {boolean} [opacity=false] - True to align opcacity.
+*/
+DuAEF.DuAE.Layer.align = function (layers, target, position, rotation, scale, opacity)
+{
+	if (typeof position === 'undefined') position = true;
+	if (typeof rotation === 'undefined') rotation = true;
+	if (typeof scale === 'undefined') scale = true;
+	if (typeof opacity === 'undefined') opacity = false;
+
+	var it = new Iterator(layers);
+
+
+	var comp = layers[0].containingComp;
+
+	var targetParent = target.parent;
+	target.parent = null;
+
+	//unparent all layers
+	var parents = [];
+	it.do(function (layer) {
+		if (layer == target) return;
+		//parent to target
+		parents[it.current] = layer.parent;
+		layer.parent = target;
+	});
+
+	//set values
+	it.do(function (layer) {
+		if (layer == target) return;
+
+		if (position) DuAEF.DuAE.Layer.alignPosition(layer, target);
+		if (rotation) DuAEF.DuAE.Layer.alignOrientation(layer, target);
+		if (scale) DuAEF.DuAE.Layer.alignScale(layer, target);
+		if (opacity) DuAEF.DuAE.Layer.alignOpacity(layer, target);
+	});
+
+	//re-parent
+	it.do(function (layer) {
+		if (layer == target) return;
+		//reparent
+		layer.parent = parents[it.current];
+	});
+
+	target.parent = targetParent;
+}
+
+/**
+* Gets the transformation matrix of the layer from the compostion.<br />
+* Use Matrix.applyToPoint(point) to transform any coordinate with the matrix returned by this method.
+* @param {Layer[]} layer - the layer
+* @return {Matrix} The coordinates.
 */
 DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
 {
@@ -2189,7 +2561,7 @@ DuAEF.DuAE.Layer.getTransformMatrix = function(layer)
  * Moves a layer to the coordinates of a spatial property
  * @param {Layer} layer - The layer
  * @param {Property|PropertyInfo} prop - The property
-*/
+ */
 DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 {
 	var propInfo;
@@ -2222,6 +2594,49 @@ DuAEF.DuAE.Layer.moveLayerToProperty = function(layer, prop)
 		layer.position.setValue(prop.value);
 		layer.parent = parent;
 	}
+}
+
+/**
+ * Sets the In and Out points of a layer according to its opacity (cuts at 0%)
+ * @param {Layer} layer - The layer
+ * @param {boolean} [preExpression=false] - Whether to check for the opacity post or pre-expression value
+ */
+DuAEF.DuAE.Layer.autoDuration = function( layer, preExpression )
+{
+	if (typeof preExpression === 'undefined') preExpression = false;
+
+	var comp = layer.containingComp;
+
+	var inPoint = layer.inPoint;
+	var outPoint = layer.outPoint;
+	var inFrame = inPoint / comp.frameDuration;
+	var outFrame = outPoint / comp.frameDuration;
+
+	//search in
+	if (layer.transform.opacity.valueAtTime(inPoint, preExpression) == 0)
+	{
+		for (var i = inFrame; i < outFrame; i++)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) inPoint = time + comp.frameDuration;
+			else break;
+		}
+	}
+
+	//search out 
+	if (layer.transform.opacity.valueAtTime(outPoint, preExpression) == 0)
+	{
+		for (var i = outFrame; i > inFrame; i--)
+		{
+			var time = i * comp.frameDuration;
+			if (layer.transform.opacity.valueAtTime(time, preExpression) == 0) outPoint = time;
+			else break;
+		}
+	}
+
+	//set new in and out points
+	if (inPoint != layer.inPoint) layer.inPoint = inPoint;
+	if (outPoint != layer.outPoint) layer.outPoint = outPoint;
 }
 
 /**
@@ -2377,10 +2792,8 @@ DuAEF.DuAE.Property.isEditable = function (prop)
 	if (prop.propertyType != PropertyType.PROPERTY) return false;
 	if (prop.elided) return false;
 	if (prop.dimensionsSeparated) return false;
-
-	var comp = DuAEF.DuAE.Property.getComp(prop);
-	var time = comp.time;
-
+	if (typeof prop.value === 'undefined') return false;
+	//TODO find a way to detect if prop is hidden without using a try/catch
 	//try to set a value if there's no keyframe
 	if (prop.numKeys == 0)
 	{
@@ -2399,6 +2812,7 @@ DuAEF.DuAE.Property.isEditable = function (prop)
 		try
 		{
 			prop.setValueAtKey(1, prop.keyValue(1));
+			return true;
 		}
 		catch (e)
 		{
@@ -2423,11 +2837,9 @@ DuAEF.DuAE.Property.isRiggable = function (prop)
 	if (!prop.canSetExpression) return false;
 	if (prop.elided) return false;
 	if (prop.dimensionsSeparated) return false;
-
-	//try to set an expression
-	try { prop.expression = prop.expression; return true; } catch (e) { return false; }
-
-	return true;
+	if (typeof prop.expression !== 'string') return false;
+//TODO find a way to detect if prop is hidden without using a try/catch
+	try { prop.expression = prop.expression; return true } catch(e) { return false; }
 }
 
 /**
@@ -2754,13 +3166,15 @@ DuAEF.DuAE.Property.setKey = function (prop,key,timeOffset)
 */
 DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, offset)
 {
-	if (prop instanceof PropertyInfo) prop = prop.getProperty();
-	if (typeof time === 'undefined') time = DuAEF.DuAE.Property.getPropertyComp(prop).time;
-	if (typeof setExpression === 'undefined') setExpression = false;
-	if (typeof replace === 'undefined') replace = false;
-	if (typeof offset === 'undefined') offset = false;
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	var comp = propInfo.comp;
+	time = def(time, comp.time );
+	setExpression = def(setExpression, false);
+	replace = def(replace, false);
+	offset = def(offset, false);
 
-	if (!DuAEF.DuAE.Property.isNumerical(prop)) offset = false;
+	if (!propInfo.numerical) offset = false;
 
 	var dimensions = anim.dimensions;
 
@@ -2769,9 +3183,8 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 	if (anim == null) return true;
 	if (anim.type == 'group') return false;
 
-	if (prop.propertyType === PropertyType.PROPERTY && !prop.elided && prop.canVaryOverTime)
+	if (propInfo.editable)
 	{
-		var comp = DuAEF.DuAE.Property.getComp(prop);
 		//keep current value
 		var val = prop.valueAtTime(comp.time, true);
 
@@ -2782,7 +3195,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 			{
 				prop.removeKey(i);
 			}
-			DuAEF.DuAE.Property.setValue(val);
+			DuAEF.DuAE.Property.setValue(prop, val);
 		}
 
 		//if there are keys, set them
@@ -2819,7 +3232,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 			{
 				if (prop.numKeys == 0)
 				{
-					DuAEF.DuAE.Property.setValue(anim.startValue);
+					DuAEF.DuAE.Property.setValue(prop,anim.startValue);
 				}
 				else
 				{
@@ -2830,7 +3243,7 @@ DuAEF.DuAE.Property.setAnim = function(prop,anim,time,setExpression, replace, of
 		}
 
 		//set the expression
-		if (prop.canSetExpression && setExpression)
+		if (propInfo.riggable && setExpression)
 		{
 			try { prop.expression = anim.expression; } catch(e) { if (DuAEF.debug) alert(e.description); };
 		}
@@ -2983,7 +3396,7 @@ DuAEF.DuAE.Property.selectKeyFrames = function(property,inTime,outTime)
  * Gets an expression link to the property
  * @memberof DuAEF.DuAE.Property
  * @param {Property|PropertyInfo}	prop			- The property
- * @param {bool}		[useThisComp]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
+ * @param {bool}		[useThisComp=false]		- Wether to begin the expression by 'thisComp' or 'comp("name")'
  * @param {bool}		[fromLayer=true]		- Wether to begin the expression by comp.layer or directly from the first prop of the layer
  * @return {str}		The expression link to the property
 */
@@ -3021,7 +3434,7 @@ DuAEF.DuAE.Property.getExpressionLink = function (prop,useThisComp,fromLayer)
 		prop = prop.parentProperty;
 	}
 
-	if (exprCode.indexOf("(") != 0) exprCode = '.' + exprCode;
+	if (exprCode.indexOf("(") != 0 && exprCode != "") exprCode = '.' + exprCode;
 
 	if (fromLayer)
 	{
@@ -3260,19 +3673,64 @@ DuAEF.DuAE.Property.addKey = function(props, typeIn, typeOut, easeInValue, easeO
 }
 
 /**
+ * Computes a percentage from a velocity on a given keyframe. 
+ * @param {Property|PropertyInfo} prop - The property
+ * @param {int} key - The index of the keyframe where to compute the velocity
+ * @return {float[]} The velocities [in, out] as a percentage.
+*/
+DuAEF.DuAE.Property.velocityToPercent = function(prop, key)
+{
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+
+	var speedIn = prop.keyInTemporalEase(key)[0].speed;
+	var speedOut = prop.keyOutTemporalEase(key)[0].speed;
+
+	//get speed just before and after as if it was linear
+	var prevSpeed = 0;
+	var nextSpeed = 0;
+	var val = prop.keyValue(key);
+	var currentTime = prop.keyTime(key);
+	if (key > 1)
+	{
+		var valBefore = prop.keyValue(key-1);
+		var timeBefore = prop.keyTime(key-1);
+		prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (currentTime-timeBefore);
+	}
+
+	if (key < prop.numKeys)
+	{
+		var valAfter = prop.keyValue(key+1);
+		var timeAfter = prop.keyTime(key+1);
+		nextSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (timeAfter-currentTime);
+	}
+
+	//get average speed
+	var speed = (prevSpeed + nextSpeed) / 2;
+
+	//compare to the original speeds 
+	var speedInAsPercent = speedIn / speed * 100;
+	var speedOutAsPercent = speedOut / speed * 100;
+
+	return [speedInAsPercent, speedOutAsPercent];
+}
+
+/**
 	* Changes the ease influences of the selected keys
 	* @param {PropertyBase[]|PropertyInfo[]} props - The properties
 	* @param {int[]|int} [easeInValue] - The in interpolation ease value. Will be ignored if undefined.
 	* @param {int[]|int} [easeOutValue] - The out interpolation ease value. Will be ignored if undefined.
 	* @param {int[]|int} [velocityInValue] - The out interpolation ease value. Will be ignored if undefined.
 	* @param {int[]|int} [velocityOutValue] - The out interpolation ease value. Will be ignored if undefined.
+	* @param {boolean} [velocityAsPercent=false] - Use a percent instead of a value to set velocities.<br />
+	* In this case, the proper velocity value will be deduced by multiplying the max speed of the property by the percent.
 */
-DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityInValue,velocityOutValue)
+DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityInValue,velocityOutValue,velocityAsPercent)
 {
-	if (isNaN(easeInValue) && easeInValue != undefined) easeInValue = 33;
-	if (isNaN(easeOutValue) && easeOutValue != undefined) easeOutValue = 33;
-	if (isNaN(velocityInValue) && velocityInValue != undefined) velocityInValue = 0;
-	if (isNaN(velocityOutValue) && velocityOutValue != undefined) velocityOutValue = 0;
+	if (isNaN(easeInValue) && typeof easeInValue !== 'undefined') easeInValue = 33;
+	if (isNaN(easeOutValue) && typeof easeOutValue !== 'undefined') easeOutValue = 33;
+	if (isNaN(velocityInValue) && typeof velocityInValue !== 'undefined') velocityInValue = 0;
+	if (isNaN(velocityOutValue) && typeof velocityOutValue !== 'undefined') velocityOutValue = 0;
 
 	for (var i = 0; i < props.length ; i++)
 	{
@@ -3280,6 +3738,7 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 		var prop = props[i];
 		if (!(propInfo instanceof PropertyInfo)) propInfo = new PropertyInfo(prop);
 		prop = propInfo.getProperty();
+		var comp = propInfo.comp;
 
 		if (prop.canVaryOverTime)
 		{
@@ -3303,14 +3762,78 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 					}
 				}
 
-				var easeIn =  [ new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[0].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[0].influence) ];
-				var easeOut = [ new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[0].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[0].influence) ];
+				//keep the ease values
+				var easeInValues = [];
+				var easeOutValues = [];
+				easeInValues[0] = typeof easeInValue === 'undefined' ? prop.keyInTemporalEase(key)[0].influence : easeInValue;
+				easeOutValues[0] = typeof easeOutValue === 'undefined' ? prop.keyOutTemporalEase(key)[0].influence : easeOutValue;
 				if (!prop.isSpatial)
 				{
 					for (var j = 1;j < prop.keyInTemporalEase(prop.selectedKeys[k]).length ; j++)
 					{
-						easeIn.push( new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[j].speed, easeInValue != undefined ? easeInValue : prop.keyInTemporalEase(key)[j].influence) );
-						easeOut.push( new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[j].speed, easeOutValue != undefined ? easeOutValue : prop.keyOutTemporalEase(key)[j].influence) );
+						easeInValues.push( typeof easeInValue === 'undefined' ? prop.keyInTemporalEase(key)[j].influence : easeInValue );
+						easeOutValues.push( typeof easeOutValue === 'undefined' ? prop.keyOutTemporalEase(key)[j].influence : easeOutValue );
+					}
+				}
+
+
+				//compute the velocity
+				if (velocityAsPercent)
+				{
+					//get speed just before and after as if it was linear
+					var prevSpeed = 0;
+					var nextSpeed = 0;
+					var val = prop.keyValue(key);
+					var currentTime = prop.keyTime(key);
+					if (key > 1)
+					{
+						var valBefore = prop.keyValue(key-1);
+						var timeBefore = prop.keyTime(key-1);
+						prevSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (currentTime-timeBefore);
+					}
+
+					if (key < prop.numKeys)
+					{
+						var valAfter = prop.keyValue(key+1);
+						var timeAfter = prop.keyTime(key+1);
+						nextSpeed = DuAEF.DuJS.Math.getLength(val, valBefore) / (timeAfter-currentTime);
+					}
+
+					//detect sign
+					var signBefore = 1;
+					var signAfter = 1;
+					if (propInfo.dimensions == 1)
+					{
+						if (val - valBefore < 1) signBefore = -1;
+						if (valAfter - val < 1) signAfter = -1;
+					}
+
+					if (velocityInValue == velocityOutValue)
+					{
+						//select max speed
+						var speed = (prevSpeed + nextSpeed) / 2;
+
+						velocityInValue = velocityInValue * speed / 100 * signBefore;
+						velocityOutValue = velocityOutValue * speed / 100 * signBefore;
+					}
+					else 
+					{
+
+						velocityInValue = velocityInValue * prevSpeed / 100 * signBefore;
+						velocityOutValue = velocityOutValue * nextSpeed / 100 * signAfter;
+					}
+
+				}
+
+				var easeIn =  [ new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[0].speed, easeInValues[0]) ];
+				var easeOut = [ new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[0].speed, easeOutValues[0]) ];
+				
+				if (!prop.isSpatial)
+				{
+					for (var j = 1;j < prop.keyInTemporalEase(prop.selectedKeys[k]).length ; j++)
+					{
+						easeIn.push( new KeyframeEase(velocityInValue != undefined ? velocityInValue : prop.keyInTemporalEase(key)[j].speed, easeInValues[j] ) );
+						easeOut.push( new KeyframeEase(velocityOutValue != undefined ? velocityOutValue : prop.keyOutTemporalEase(key)[j].speed, easeOutValues[j] ) );
 					}
 				}
 
@@ -3318,11 +3841,11 @@ DuAEF.DuAE.Property.setEase = function(props,easeInValue,easeOutValue,velocityIn
 				var inType = KeyframeInterpolationType.BEZIER;
 				var outType = KeyframeInterpolationType.BEZIER;
 
-				if (easeInValue == undefined && velocityInValue == undefined)
+				if (typeof easeInValue === 'undefined' && typeof velocityInValue === 'undefined')
 				{
 					inType = prop.keyInInterpolationType(key);
 				}
-				if (easeOutValue == undefined && velocityOutValue == undefined)
+				if (typeof easeOutValue === 'undefined' && typeof velocityOutValue === 'undefined')
 				{
 					outType = prop.keyOutInterpolationType(key);
 				}
@@ -3388,55 +3911,55 @@ DuAEF.DuAE.Property.setSpatialInterpolation = function (prop,typeIn,typeOut)
 			if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
 			{
 				prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0,0],[0,0,0]);
-    		}
-    		else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-    		{
-    		    prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
-    		}
+			}
+			else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+			{
+				prop.setSpatialTangentsAtKey(prop.selectedKeys[k],[0,0],[0,0]);
+			}
 		}
 		else if (typeIn == KeyframeInterpolationType.BEZIER)
 		{
 			prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
-            prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
-            var keyIndex = prop.selectedKeys[k];
-            if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
-            {
-                if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0 && prop.keyInSpatialTangent(keyIndex)[2] == 0)
-                {
-                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
-                }
-                prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0,0]);
-            }
-            else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-            {
-                if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0)
-                {
-                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
-                }
-                prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0]);
-            }
+			prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+			var keyIndex = prop.selectedKeys[k];
+			if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+			{
+				if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0 && prop.keyInSpatialTangent(keyIndex)[2] == 0)
+				{
+					prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+				}
+				prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0,0]);
+			}
+			else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+			{
+				if (prop.keyInSpatialTangent(keyIndex)[0] == 0 && prop.keyInSpatialTangent(keyIndex)[1] == 0)
+				{
+					prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+				}
+				prop.setSpatialTangentsAtKey(keyIndex,prop.keyInSpatialTangent(keyIndex),[0,0]);
+			}
 		}
 		else if (typeIn == KeyframeInterpolationType.LINEAR)
 		{
 			prop.setSpatialContinuousAtKey(prop.selectedKeys[k],false);
-            prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
-            var keyIndex = prop.selectedKeys[k];
-            if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
-            {
-                if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0 && prop.keyOutSpatialTangent(keyIndex)[2] == 0)
-                {
-                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
-                }
-                prop.setSpatialTangentsAtKey(keyIndex,[0,0,0],prop.keyOutSpatialTangent(keyIndex));
-            }
-            else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-            {
-                if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0)
-                {
-                    prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
-                }
-                prop.setSpatialTangentsAtKey(keyIndex,[0,0],prop.keyOutSpatialTangent(keyIndex));
-            }
+			prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],false);
+			var keyIndex = prop.selectedKeys[k];
+			if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+			{
+				if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0 && prop.keyOutSpatialTangent(keyIndex)[2] == 0)
+				{
+					prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+				}
+				prop.setSpatialTangentsAtKey(keyIndex,[0,0,0],prop.keyOutSpatialTangent(keyIndex));
+			}
+			else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+			{
+				if (prop.keyOutSpatialTangent(keyIndex)[0] == 0 && prop.keyOutSpatialTangent(keyIndex)[1] == 0)
+				{
+					prop.setSpatialAutoBezierAtKey(prop.selectedKeys[k],true);
+				}
+				prop.setSpatialTangentsAtKey(keyIndex,[0,0],prop.keyOutSpatialTangent(keyIndex));
+			}
 		}
 	}
 }
@@ -3458,30 +3981,30 @@ DuAEF.DuAE.Property.fixSpatialInterpolation = function(prop)
 
 	for (var k=0;k<keyIndices.length-1;k++)
 	{
-	    var key = keyIndices[k];
-	    var nextKey = keyIndices[k+1]
-	    //get this key value
-	    var keyValue = prop.valueAtTime(prop.keyTime(key),true);
-	    //get next key value
-	    var nextKeyValue = prop.valueAtTime(prop.keyTime(key+1),true);
+		var key = keyIndices[k];
+		var nextKey = keyIndices[k+1]
+		//get this key value
+		var keyValue = prop.valueAtTime(prop.keyTime(key),true);
+		//get next key value
+		var nextKeyValue = prop.valueAtTime(prop.keyTime(key+1),true);
 
-	    //compare and set
-	    if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
-	    {
-	        if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1] && keyValue[2] == nextKeyValue[2])
-	        {
-	            prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0,0]);
-	            prop.setSpatialTangentsAtKey(nextKey,[0,0,0],prop.keyOutSpatialTangent(nextKey));
-	        }
-	    }
-	    else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
-	    {
-	        if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1])
-	        {
-	            prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0]);
-	            prop.setSpatialTangentsAtKey(nextKey,[0,0],prop.keyOutSpatialTangent(nextKey));
-	        }
-	    }
+		//compare and set
+		if (prop.propertyValueType == PropertyValueType.ThreeD_SPATIAL)
+		{
+			if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1] && keyValue[2] == nextKeyValue[2])
+			{
+				prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0,0]);
+				prop.setSpatialTangentsAtKey(nextKey,[0,0,0],prop.keyOutSpatialTangent(nextKey));
+			}
+		}
+		else if (prop.propertyValueType == PropertyValueType.TwoD_SPATIAL)
+		{
+			if (keyValue[0] == nextKeyValue[0] && keyValue[1] == nextKeyValue[1])
+			{
+				prop.setSpatialTangentsAtKey(key,prop.keyInSpatialTangent(key),[0,0]);
+				prop.setSpatialTangentsAtKey(nextKey,[0,0],prop.keyOutSpatialTangent(nextKey));
+			}
+		}
 	}
 }
 
@@ -3532,10 +4055,13 @@ DuAEF.DuAE.Property.cleanKeyframes = function(property)
 /**
 	* Gets the average speed of the animated propreties
 	* @param {Property[]|PropertyInfo[]} props - The Properties
-	* @return {float} The average speed
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+	* @return {float} The average speed in unit per second
 */
-DuAEF.DuAE.Property.getAverageSpeed = function(props)
+DuAEF.DuAE.Property.getAverageSpeed = function(props, preExpression)
 {
+	if (typeof preExpression === 'undefined') preExpression = true;
+
 	var averageSpeed = 0;
 	var count = 0;
 
@@ -3549,8 +4075,13 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 
 		var comp = DuAEF.DuAE.Property.getComp(prop);
 		var frames = comp.duration / comp.frameDuration ;
-		var lastTime = prop.keyTime(prop.numKeys);
-		var firstTime = prop.keyTime(1);
+		var lastTime = comp.duration;
+		var firstTime = 0;
+		if (preExpression)
+		{
+			lastTime = prop.keyTime(prop.numKeys);
+			firstTime = prop.keyTime(1);
+		}
 		var lastFrame = lastTime/comp.frameDuration ;
 		var firstFrame = firstTime/comp.frameDuration ;
 		if (lastFrame > frames) lastFrames = frames;
@@ -3559,7 +4090,7 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 		for (var frame = firstFrame ; frame < lastFrame ; frame++)
 		{
 			var time = frame*comp.frameDuration;
-			sum += DuAEF.DuAE.Property.getSpeed(prop,time);
+			sum += DuAEF.DuAE.Property.getSpeed(prop,time, preExpression);
 		}
 		var speed = sum/(lastFrame-firstFrame);
 
@@ -3575,12 +4106,31 @@ DuAEF.DuAE.Property.getAverageSpeed = function(props)
 }
 
 /**
+	* Gets the maximum speed of the animated propreties
+	* @param {Property[]|PropertyInfo[]} props - The Properties
+	* @param {bool}	 [preExpression=true]	- True to get the velocity from keyframes instead of the result of the exression
+	* @return {float} The average speed
+*/
+DuAEF.DuAE.Property.getMaximumSpeed = function(props)
+{
+	var maxSpeed = 0;
+
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		var speed = DuAEF.DuAE.Property.getMaxVelocity(props[i],false);
+		if (speed > maxSpeed) maxSpeed = speed;
+	}
+
+	return maxSpeed;
+}
+
+/**
 	* Gets the speed of a property at a given time
 	* @param {Property|PropertyInfo} prop - The property
 	* @param {float} [time=composition.time] - The time.
 	* @return {float} The speed
 */
-DuAEF.DuAE.Property.getSpeed = function (prop,time)
+DuAEF.DuAE.Property.getSpeed = function (prop,time, preExpression)
 {
 	if (prop instanceof PropertyInfo) prop = prop.getProperty();
 	if (prop.propertyType != PropertyType.PROPERTY) return 0;
@@ -3588,8 +4138,8 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 	var comp = DuAEF.DuAE.Property.getComp(prop);
 	if (time == undefined) time = comp.time;
 
-	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration,false),prop.valueAtTime(time-comp.frameDuration,false));
-	return speed;
+	var speed = DuAEF.DuJS.Math.getLength(prop.valueAtTime(time+comp.frameDuration/2,preExpression),prop.valueAtTime(time-comp.frameDuration/2,preExpression));
+	return speed/comp.frameDuration;
 }
 
 /**
@@ -3601,16 +4151,12 @@ DuAEF.DuAE.Property.getSpeed = function (prop,time)
 */
 DuAEF.DuAE.Property.setExpression = function (property, expr, keepValue)
 {
-	if (typeof keepValue === 'undefined') keepValue = true;
+	keepValue = def(keepValue, true);
 
 	var propInfo = new PropertyInfo(property);
-
-	if (property instanceof PropertyInfo)
-	{
-		property = property.getProperty();
-	}
-
 	if (!propInfo.riggable) return;
+
+	property = propInfo.getProperty();
 
 	var originalValue = property.valueAtTime(propInfo.comp.time, false);
 
@@ -3662,34 +4208,62 @@ DuAEF.DuAE.Property.replaceInExpressions = function (prop,oldString,newString,ca
 DuAEF.DuAE.Property.pickWhip = function (childProp,parentProp,useThisComp)
 {
 	if (!childProp.canSetExpression) return;
-	if (useThisComp == undefined)
+	if (typeof useThisComp === 'undefined')
 	{
 		var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
 		var childComp = DuAEF.DuAE.Property.getComp(childProp);
 		if (parentComp.id == childComp.id) useThisComp = true;
 		else useThisComp = false;
 	}
-	try { childProp.expression = DuAEF.DuAE.Property.getExpressionLink(parentProp,useThisComp); } catch (e) { if (DuAEF.debug) alert(e.description); };
+	var exp = DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp );
+	DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 }
 
 /**
  * Link all the properties found in childProp to all the same properties of parentProp (this is a recursive method)<br />
  * Note: any Property or PropertyGroup (and its subproperties) named "Data" will be ignored.
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase}	childProp			- The child property
- * @param {PropertyBase}	parentProp			- The parent property
- * @param {bool}		[useThisComp]			- Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
-*/
-DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
-{
+ * @param {PropertyBase} childProp - The child property
+ * @param {PropertyBase} parentProp - The parent property
+ * @param {bool} [useThisComp] - Wether to begin the expression by 'thisComp' or 'comp("name")', default: will detect if the properties are in the same comp
+ * @param {LayerItem} [timeLayer=null] - A layer used to offset the time (typically, in case of link between precompositions, the precomposition layer).<br />
+ * When not null, the start time of this layer will be taken into account to get the values and synchronize them.
+ */
+DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp,timeLayer)
+{	
 	if (parentProp.name.toLowerCase() == 'data') return;
 	if (childProp.propertyType == PropertyType.PROPERTY && !childProp.elided && childProp.propertyValueType != PropertyValueType.NO_VALUE)
 	{
+		if (typeof timeLayer === 'undefined') timeLayer = null;
+		
+		if (typeof useThisComp === 'undefined')
+		{
+			var parentComp = DuAEF.DuAE.Property.getComp(parentProp);
+			var childComp = DuAEF.DuAE.Property.getComp(childProp);
+
+			useThisComp = parentComp.id == childComp.id;
+		}
+
 		//copy paste the animation / value
 		var anim = DuAEF.DuAE.Property.getAnim(parentProp,false);
 		if (anim != null) DuAEF.DuAE.Property.setAnim(childProp,anim,0,true,true, false);
+
 		//set the link
-		DuAEF.DuAE.Property.pickWhip(childProp,parentProp,useThisComp);
+		var exp = DuAEF.Duik.expressionIds.LINK + '\n';
+		if (timeLayer != null)
+		{
+			exp += 'var timeLayer = ' + DuAEF.DuAE.Property.getExpressionLink( timeLayer ) + ';\n' +
+				'var st = timeLayer.startTime;\n' +
+				'var t = time + st;\n' +
+				DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + '.valueAtTime(t);';
+
+		}
+		else
+		{
+			exp += DuAEF.DuAE.Property.getExpressionLink( parentProp, useThisComp ) + ';';
+		}
+
+		DuAEF.DuAE.Property.setExpression( childProp, exp, false );
 	}
 	else
 	{
@@ -3714,14 +4288,14 @@ DuAEF.DuAE.Property.linkProperties = function (childProp,parentProp,useThisComp)
 						continue;
 					}
 				}
-				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp);
+				if (insideData == 0) DuAEF.DuAE.Property.linkProperties(childProp(p),subProp,useThisComp,timeLayer);
 			}
 		}
 		else
 		{
 			for (var p = 1, num = childProp.numProperties ; p <= num ; p++)
 			{
-				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp);
+				DuAEF.DuAE.Property.linkProperties(childProp(p),parentProp(p),useThisComp,timeLayer);
 			}
 		}
 	}
@@ -3907,13 +4481,21 @@ DuAEF.DuAE.Property.lock = function(properties)
 /**
  * Removes the expression from the property, keeping the post-expression value.
  * @memberof DuAEF.DuAE.Property
- * @param {PropertyBase} prop - The property
+ * @param {Property|PropertyInfo} prop - The property
 */
 DuAEF.DuAE.Property.removeExpression = function(prop)
 {
-	if (!prop.canSetExpression) return;
-	DuAEF.DuAE.Property.setValue(prop, prop.value);
-	prop.expression = '';
+	if (typeof(prop) === 'undefined') return;
+
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	
+	if (prop.expression == '') return;
+	if (propInfo.riggable)
+	{
+		DuAEF.DuAE.Property.setValue(prop, prop.value);
+		prop.expression = '';
+	}
 }
 
 /**
@@ -4025,21 +4607,12 @@ DuAEF.DuAE.Property.getRange = function(prop,axis,preExpression)
 	if (typeof axis === 'undefined') axis = 0;
 	if (typeof preExpression === 'undefined') preExpression = true;
 
-	var propInfo = prop;
-	if (!prop instanceof PropertyInfo)
-	{
-		propInfo = new PropertyInfo(prop);
-	}
-	else
-	{
-		propInfo = prop;
-		prop = prop.getProperty();
-	}
-
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
 
 	if (!propInfo.numerical) return [];
 
-	if (prop.expression == '') preExpression = true;
+	if (prop.expression == '' || !prop.expressionEnabled) preExpression = true;
 
 	var comp = propInfo.comp;
 	var frames = comp.duration/comp.frameDuration;
@@ -4087,14 +4660,13 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 	if (typeof preExpression === 'undefined') preExpression = true;
 
 	var propInfo = prop;
-	if (!prop instanceof PropertyInfo)
+	if (!(prop instanceof PropertyInfo))
 	{
 		propInfo = new PropertyInfo(prop);
 	}
 	else
 	{
-		propInfo = prop;
-		prop = prop.getProperty();
+		prop = propInfo.getProperty();
 	}
 
 	var velocity = 0;
@@ -4115,8 +4687,28 @@ DuAEF.DuAE.Property.getMaxVelocity = function(prop,preExpression)
 		prevVal = val;
 	}
 
-	return velocity;
+	return velocity/comp.frameDuration;
 
+}
+
+/**
+* Converts the expression as a string which can be copy/pasted and included in a script.
+* @param {Property|PropertyInfo} prop - The property containing the expression.
+* @return {string} The stringified expression.
+*/
+DuAEF.DuAE.Property.scriptifyExpression = function(prop)
+{
+	if (prop instanceof PropertyInfo) prop = prop.getProperty();
+	var exp = prop.expression;
+	var expArray = exp.split('\n');
+	var expString = "var expression = ['" + expArray[0].replace("\r","") + "'";
+	for (var i = 1 ; i < expArray.length ; i++)
+	{
+		expString += ",\n\t'" + expArray[i].replace('\r','') + "'";
+	}
+	expString += "\n\t].join('\\n');";
+
+	return expString;
 }
 
 /**
@@ -4140,11 +4732,65 @@ DuAEF.DuAE.Property.PuppetTool.isRiggable = function (pin)
 }
 
 /**
-	* Shape Layers methods
+	* Bezier Path methods
 	* @namespace
 	* @memberof DuAEF.DuAE.Property
 */
-DuAEF.DuAE.Property.Shape = {};
+DuAEF.DuAE.Property.Bezier = {};
+
+/**
+	* Scriptifies the given shape property.<br/>
+	* @param {Property}	 [shapeProp]	- The path property to export
+	* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
+	* @param {string}	[varName=shape]	- A name for the variable storing the shape
+	* @return {string} The scriptified shape
+*/
+DuAEF.DuAE.Property.Bezier.scriptify = function(pathProperty, offsetToCenter, varName)
+{
+	if (pathProperty instanceof PropertyInfo) pathProperty = pathProperty.getProperty();
+	offsetToCenter = def(offsetToCenter, false);
+	varName = def(varName, 'shape');
+
+	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
+	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
+	offsetToCenter = def(offsetToCenter, false);
+
+	var shape = pathProperty.value;
+	var vertices = shape.vertices;
+
+	if (offsetToCenter)
+	{
+		//get center and offset
+		var sum = [0,0];
+		for (var i = 0 ; i < vertices.length ; i++)
+		{
+			sum[0] += vertices[i][0];
+			sum[1] += vertices[i][1];
+		}
+		var center = sum/vertices.length;
+		//adjust values
+		for (var i = 0 ; i < vertices.length ; i++)
+		{
+			vertices[i][0] -= center[0];
+			vertices[i][1] -= center[1];
+		}
+	}
+
+	var verticesStr = vertices.toSource();
+	var inTangentsStr = shape.inTangents.toSource();
+	var outTangentsStr = shape.outTangents.toSource();
+	var closedStr = shape.closed ? 'true' : 'false';
+
+	var scriptified = [
+		'var ' + varName + ' = new Shape();',
+		varName + '.vertices = ' + verticesStr + ';',
+		varName + '.inTangents = ' + inTangentsStr + ';',
+		varName + '.outTangents = ' + outTangentsStr + ';',
+		varName + '.closed = ' + closedStr + ';'
+		].join('\n');
+
+	return scriptified;
+}
 
 /**
 	* Export the given shape property to the given file <br/>
@@ -4154,115 +4800,47 @@ DuAEF.DuAE.Property.Shape = {};
 	* var prop = props[0].getProperty();
 	* var out = DuAEF.DuAE.Property.Shape.exportToJsxinc(prop, "D:/shape.test");
 	* @param {Property}	 [shapeProp]	- The path property to export
-	* @param {String}	     [file]	- The path to where the jsxinc shape will be written
+	* @param {String}	[file]	- The path or File where the jsxinc shape will be written
 	* @param {boolean}	[offsetToCenter=false]	- If true, offset the path to the center
+	* @param {boolean}	[append=false]	- If true, appends the shape at the end of the file instead of overwriting it.
+	* @param {string}	[varName=shape]	- A name for the variable storing the shape
 	* @return {int} A status code. [0: success, ...]
 */
-DuAEF.DuAE.Property.Shape.exportToJsxinc = function(shapeProp, file, offsetToCenter)
+DuAEF.DuAE.Property.Bezier.exportToJsxinc = function(pathProperty, file, offsetToCenter, append, varName)
 {
-    if (shapeProp.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-    if (shapeProp.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-    if(typeof(offsetToCenter) === 'undefined') offsetToCenter = false;
+	append = def(append, false);
 
-    var shape = shapeProp.value;
-    var vertices = shape.vertices;
+	if (!(file instanceof File)) file = new File(file);
 
-    if (offsetToCenter)
-    {
-        //get center and offset
-        var sum = [0,0];
-        for (var i = 0 ; i < vertices.length ; i++)
-        {
-            sum[0] += vertices[i][0];
-            sum[1] += vertices[i][1];
-        }
-        var center = sum/vertices.length;
-        //adjust values
-        for (var i = 0 ; i < vertices.length ; i++)
-        {
-            vertices[i][0] -= center[0];
-            vertices[i][1] -= center[1];
-        }
-    }
+	var mode = 'w';
+	if (append) mode = 'a';
 
-    var verticesStr = vertices.toSource();
-    var inTangentsStr = shape.inTangents.toSource();
-    var outTangentsStr = shape.outTangents.toSource();
-    var closedStr = shape.closed ? 'true' : 'false';
+	if(!file.open(mode)) return 3;
 
-    var file = new File(file);
-    if(!file.open("w")) return 3
-    var name = DuAEF.DuJS.Fs.getBasename(file);
+	if (append) file.write('\n');
+	file.write( DuAEF.DuAE.Property.Bezier.scriptify( pathProperty, offsetToCenter, varName) );
 
-    file.writeln('var ' + name + ' = new Shape();');
-    file.writeln(name + '.vertices = ' + verticesStr + ';');
-    file.writeln(name + '.inTangents = ' + inTangentsStr + ';');
-    file.writeln(name + '.outTangents = ' + outTangentsStr + ';');
-    file.writeln(name + '.closed = ' + closedStr + ';');
-    file.close();
-    return 0;
-}
-
-/**
-	* Makes a horizontal symetry transformation on the path.
-	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
-*/
-DuAEF.DuAE.Property.Shape.horizontalSymetry = function(pathProperty)
-{
-	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-
-	var shape = pathProperty.value;
-	var vertices = shape.vertices;
-	var inTangents = shape.inTangents;
-	var outTangents = shape.outTangents;
-
-	//get the horizontal center.
-	var center = 0;
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		center += vertices[i][0];
-	}
-	center = center / vertices.length;
-
-	//twice the value for computing symetry
-	center = center*2;
-
-	//compute
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		vertices[i][0] = center - vertices[i][0];
-		inTangents[i][0] = -inTangents[i][0];
-		outTangents[i][0] = -outTangents[i][0];
-	}
-
-	//set
-	shape.vertices = vertices;
-	shape.inTangents = inTangents;
-	shape.outTangents = outTangents;
-	if (pathProperty.numKeys > 0)
-	{
-		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
-	}
-	else
-	{
-		pathProperty.setValue(shape);
-	}
+	file.close();
+	return 0;
 }
 
 /**
 	* Makes a horizontal symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
 	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
-DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
+DuAEF.DuAE.Property.Bezier.horizontalSymetry = function(pathProperties)
 {
+	if (!(pathProperties instanceof Array)) pathProperties = [pathProperties];
+
 	var shapes = [];
 	//get shapes and center
 	var center = 0;
 	var verticesCount = 0;
 	for (var i = 0 ; i < pathProperties.length ; i++)
 	{
-		var shape = pathProperties[i].value;
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		var shape = prop.value;
 		shapes.push(shape);
 		for (var j = 0 ; j < shape.vertices.length; j++)
 		{
@@ -4276,6 +4854,8 @@ DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
 	//compute
 	for (var i = 0 ; i < shapes.length; i++)
 	{
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		var shape = shapes[i];
 		var vertices = shape.vertices;
 		var inTangents = shape.inTangents;
@@ -4289,61 +4869,14 @@ DuAEF.DuAE.Property.Shape.horizontalSymetries = function(pathProperties)
 		shape.vertices = vertices;
 		shape.inTangents = inTangents;
 		shape.outTangents = outTangents;
-		if (pathProperties[i].numKeys > 0)
+		if (prop.numKeys > 0)
 		{
-			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+			prop.setValueAtTime(DuAEF.DuAE.Property.getComp(prop).time,shape);
 		}
 		else
 		{
-			pathProperties[i].setValue(shape);
+			prop.setValue(shape);
 		}
-	}
-}
-
-/**
-	* Makes a vertical symetry transformation on the path.
-	* @param {Property}	pathProperty	- The After Effects Property containing the path to symetrize
-*/
-DuAEF.DuAE.Property.Shape.verticalSymetry = function(pathProperty)
-{
-	if (pathProperty.propertyType !== PropertyType.PROPERTY) throw "Expected a shape property, got a group.";
-	if (pathProperty.propertyValueType !== PropertyValueType.SHAPE) throw "Expected a shape property, got another type of value.";
-
-	var shape = pathProperty.value;
-	var vertices = shape.vertices;
-	var inTangents = shape.inTangents;
-	var outTangents = shape.outTangents;
-
-	//get the horizontal center.
-	var center = 0;
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		center += vertices[i][1];
-	}
-	center = center / vertices.length;
-
-	//twice the value for computing symetry
-	center = center*2;
-
-	//compute
-	for (var i = 0 ; i < vertices.length; i++)
-	{
-		vertices[i][1] = center - vertices[i][1];
-		inTangents[i][1] = -inTangents[i][1];
-		outTangents[i][1] = -outTangents[i][1];
-	}
-
-	//set
-	shape.vertices = vertices;
-	shape.inTangents = inTangents;
-	shape.outTangents = outTangents;
-	if (pathProperty.numKeys > 0)
-	{
-		pathProperty.setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperty).time,shape);
-	}
-	else
-	{
-		pathProperty.setValue(shape);
 	}
 }
 
@@ -4351,15 +4884,19 @@ DuAEF.DuAE.Property.Shape.verticalSymetry = function(pathProperty)
 	* Makes a vertical symetry transformation on the paths, using the same axis of symetry for all shapes (shapes must be on the same layer).
 	* @param {Property[]}	pathProperties	- The After Effects Properties containing the paths to symetrize
 */
-DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
+DuAEF.DuAE.Property.Bezier.verticalSymetry = function(pathProperties)
 {
+	if (!(pathProperties instanceof Array)) pathProperties = [pathProperties];
+
 	var shapes = [];
 	//get shapes and center
 	var center = 0;
 	var verticesCount = 0;
 	for (var i = 0 ; i < pathProperties.length ; i++)
 	{
-		var shape = pathProperties[i].value;
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
+		var shape = prop.value;
 		shapes.push(shape);
 		for (var j = 0 ; j < shape.vertices.length; j++)
 		{
@@ -4373,6 +4910,8 @@ DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
 	//compute
 	for (var i = 0 ; i < shapes.length; i++)
 	{
+		var prop = pathProperties[i];
+		if (prop instanceof PropertyInfo) prop = prop.getProperty();
 		var shape = shapes[i];
 		var vertices = shape.vertices;
 		var inTangents = shape.inTangents;
@@ -4386,29 +4925,22 @@ DuAEF.DuAE.Property.Shape.verticalSymetries = function(pathProperties)
 		shape.vertices = vertices;
 		shape.inTangents = inTangents;
 		shape.outTangents = outTangents;
-		if (pathProperties[i].numKeys > 0)
+		if (prop.numKeys > 0)
 		{
-			pathProperties[i].setValueAtTime(DuAEF.DuAE.Property.getPropertyComp(pathProperties[i]).time,shape);
+			prop.setValueAtTime(DuAEF.DuAE.Property.getComp(prop).time,shape);
 		}
 		else
 		{
-			pathProperties[i].setValue(shape);
+			prop.setValue(shape);
 		}
 	}
 }
 
 /**
-	* Bezier Paths methods
-	* @namespace
-	* @memberof DuAEF.DuAE.Property
-*/
-DuAEF.DuAE.Property.Bezier = {};
-
-/**
-	* Gets the vertices array in comp coordinates.
-	* @param {Property|PropertyInfo} prop - The property, a bezier path.
-	* @return {float[][]} The vertices in comp coordinates.
-*/
+ * Gets the vertices array in comp coordinates.
+ * @param {Property|PropertyInfo} prop - The property, a bezier path.
+ * @return {float[][]} The vertices in comp coordinates.
+ */
 DuAEF.DuAE.Property.Bezier.verticesToComp = function(pathProperty)
 {
 	var propInfo = DuAEF.DuAE.Property.Bezier.checkProperty(pathProperty);
@@ -4499,4 +5031,30 @@ DuAEF.DuAE.Shape.getTransformMatrix = function(prop)
 	}
 
 	return matrix;
+}
+
+/**
+	* Checks if this shape layers contains only one shape, one fill, and one stroke,\n
+	* just like After Effects creates them at first.
+	* @param {Layer} layer - The layer to test
+	* @return {bool} True if the layer is a shape layer containing only one shape, one fill, and one stroke in a group. False otherwise.
+*/
+DuAEF.DuAE.Shape.isSingleShape = function(layer)
+{
+	if (!(layer instanceof ShapeLayer)) return false;
+
+	var content = layer.property("ADBE Root Vectors Group");
+	if (content.numProperties != 1) return false;
+
+	var shape = content.property("ADBE Vector Group").property("ADBE Vectors Group");
+	if (shape.numProperties != 3) return false;
+
+	var path = shape.property(1);
+	if (path.matchName != "ADBE Vector Shape - Group" && path.matchName != "ADBE Vector Shape - Rect"  && path.matchName != "ADBE Vector Shape - Ellipse"  && path.matchName != "ADBE Vector Shape - Star" ) return false;
+	var stroke = shape.property(2);
+	if (stroke.matchName != "ADBE Vector Graphic - Stroke") return false;
+	var fill = shape.property(3);
+	if (fill.matchName != "ADBE Vector Graphic - Fill") return false;
+
+	return true;
 }

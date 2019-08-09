@@ -1,13 +1,20 @@
-# Bones
+# ![bone icon](img/duik-icons/bone-icon-r.png) Bones
 
 Bones are a very simple yet extremely useful tool. They are layers used to control any spatial property or bezier shape.
 
 ## Creation
 
 1. Select the properties
-2. - Click on the "Bones" button
+2. - Click on the _Bones_ button
     - Maintaining the [Alt] key will pick a random color for the new bones
     - Maintaining the [Ctrl] key will will ignore the tangents when creating bones on bezier paths
+
+![create bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones.PNG)
+
+!!! hint
+    You can remove bone layers and recreate them at any time.  
+    This is especially useful when rigging bezier paths where you do not need to rig all the tangents: you can either remove the ones you don't need, or create them later.  
+    To create missing tangents on a bezier path, select the corresponding tangent _in the effects_ of the layer containing the path, and then click the _Bones_ button.
 
 One bone will be created for each spatial property and for each vertex and tangent of Bezier paths.  
 Bones can be used to control puppet pins, but also for example the emitter of a particle system, the origin of a lens flare, and any Bezier paths (shapes or masks).
@@ -23,6 +30,9 @@ When the property is controlled by a bone, you can rig the bone itself, parent i
 
 In the additionnal panel of the Bones (Standard and Expert modes), you can adjust their appearance.
 All changes made in this panel will affect all selected Bones and the creation of all other Bones.
+
+![edit bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones-EditBones.PNG)
+![edit bones](img/duik-screenshots/S-Rigging/S-Rigging-Links&Constraints/AddBones-EditBones-options.png)
 
 - You can change the size of the Bones, either automatically, relatively to the size of the composition (small, medium and large options), or with an absolute value (custom option).
 
