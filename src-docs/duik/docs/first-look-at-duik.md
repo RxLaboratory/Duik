@@ -4,7 +4,7 @@
 
 ## Help
 
-If you need help, click on the top right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
+If you need help, click on the bottom right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
 
 Take a look at the [frequently asked questions](duik-faq.md) if you don't find a solution to your issue in this user guide.
 
@@ -54,7 +54,7 @@ What is important when working with graphics is the viewport. Duik is as small a
 
 Duik is a comprehensive tool set for rigging and animation. This means there are a **lot** of tools available, but they are categorized in some useful panels, depending on what you're doing (animating, rigging, using cameras...)
 
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/topBar.PNG)
+![](img/duik-screenshots/General/topBar.png)
 
 Each panel can be displayed by clicking on one of the top buttons.  
 The first button, on the left, opens a very simple yet useful [***notes editor***](notes-editor.md).  
@@ -65,8 +65,26 @@ The other buttons display the available panels:
 - [***Animation***](animation.md)
 - [***Camera***](camera.md)
 - [***Import and Export tools***](i-o.md)
+
+On the bottom bar, you'll find some other useful buttons:
+
+![](img/duik-screenshots/General/bottomBar.png)
+
+The ***RX*** icon opens the [*Rainbox Lab.*](https://rainboxlab.org) website where you can find useful information about Duik and other tools.
+
+You can also read the version of Duik you're using, and the two buttons at the right open two other panels:
+
 - [***Settings***](settings.md)
 - [***Help***](contextual-help.md)
+
+#### Individual panels
+
+As Duik is made of a lot of panels and sub-panels, depending on your workflow, sometimes you may lose time constantly switching from one panel to another, or just finding a tool you're not used to. As there are as many workflows as users, to address this issue Duik now comes with a lot of optionnal, individual and [dockable panels](install-duik.md), which you can use as stand-alone scripts. This is a great way to organize your workspace and keep several different panels of Duik opened at once.
+
+![](img/duik-screenshots/General/individual-panels.jpg)
+
+!!! tip
+    Don't forget the *stacked* mode for After Effects panels, which can be nice to keep all your Duik panels at hand.
 
 ### User Experience (UX)
 
