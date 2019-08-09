@@ -2,8 +2,10 @@
 
 # Supported versions of After Effects 
 
-Duik has been tested and is working with all versions of After Effects since CS6. That means it works correctly on:
-CS6 (11), CC (12), CC2014 (13), CC2015 (13.5), CC2017 (14), CC2018 (15), CC2019 (16).
+Duik has been tested and is working with all versions of After Effects since CC2018. That means it works correctly on:
+CC2018 (15), CC2019 (16) and upcoming versions.
+
+It is also known to be working decently on CS6 (11), CC (12), CC2014 (13), CC2015 (13.5), CC2017 (14), but you can't be sure, and Duik does not officially support these versions.
 
 !!! note
     CS6 has a lot of issues with the Script Panels like the ones used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the issues you may have with the UI…
