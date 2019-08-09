@@ -76,6 +76,9 @@ adamplouff, Alex Stanlake, Alexandre Detry, Alexis Gab, Alliesse Thomas, alvukov
 Copyright (c) 2011-2013 Abdulla Abdurakhmanov  
 Original sources are available at https://code.google.com/p/x2js/  
 Licensed under the Apache License, Version 2.0  
+- 2D Transformation Matrix v2.7.5 LT  
+Copyright (c) Epistemex.com 2014-2018  
+Licensed under the MIT license
 - json2  
 See http://www.JSON.org/js.html  
 Public Domain

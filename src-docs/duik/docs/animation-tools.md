@@ -1,6 +1,6 @@
-# Animation Tools
+# ![Animation Tool Icon](img/duik-icons/animtools-icon-r.png) Animation Tools
 
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/animation-tools_normal.PNG)
+![animation tool panel](img\duik-screenshots\S-Animation\S-Animation-Tools\Animation-tool.PNG)
 
 Duik Bassel includes some powerful tools you may need from time to time during the animation process.
 

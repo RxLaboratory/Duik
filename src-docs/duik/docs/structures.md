@@ -1,4 +1,4 @@
-## Structures
+## ![structure icon](img/duik-icons/structure-icon-r.png) Structures
 
 *Structures* are layers you can add in your composition which will drive the animations, like the rig of a real puppet. The process is very simple: **create or import your design** in After Effects, **add _Structures_** and move them to the right spots (the pivots of each limb). Then you can **rig those _Structures_**, instead of the design itself like in previous versions of Duik, and finally **parent the design layers to the corresponding Structure layers**.
 
@@ -11,5 +11,5 @@ This way, **the rig you create is independant from the design**. This means itâ€
 
 ## Panel
 
-![Structures panel (normal)](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/structures_normal.PNG)  
+![Structures panel (standard)](img/duik-screenshots/S-Rigging/S-Rigging-Structures/S-Rigging-Structures.PNG)  
 This is the *Structures* panel as shown in the *Normal* mode.

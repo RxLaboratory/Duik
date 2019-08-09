@@ -1,6 +1,8 @@
-# Animation Blender
+# ![Animation blender Icon](img\duik-icons\animblender-icon-r.png) Animation Blender
 
 The Animation blender is a tool to animate using markers to trigger animations.
+
+![animation blender panel](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\AnimationBlender.PNG)
 
 In a composition, you can have several animations, one after each other.  
 The animation blender is a simple controller (a layer) where you add markers which will trigger these animations.  
@@ -10,6 +12,8 @@ The animation blender is able to blend the animations together during transition
 
 !!! hint
     Once the animation blender have been set up, [a simple tool](animation-blender.md) in the Animation panel (Tools tab) of Duik can be used to easily set the markers to trigger animations.
+
+![animation blender panel options](img\duik-screenshots\S-Rigging\S-Rigging-Links&Constraints\AnimationBlender-option2.png)
 
 There are two things which need to be set up: the animations (the animated properties), and the Blender controller itself.  
 The first part of the panel allows to quickly set the animations, while the second part is used to set the Blender up.

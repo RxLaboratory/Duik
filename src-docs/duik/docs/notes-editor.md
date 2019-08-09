@@ -1,8 +1,8 @@
-# Notes Editor
+## ![Icon](img/duik-icons/notes-icon-red.png) Notes Editor
 
 Duik includes a simple note editor.
 
-![Notes](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/notes.PNG)
+![Notes overview](img/duik-screenshots/Notes.PNG)
 
 All notes you write there will automatically be saved and kept, even if you close After Effects or if it crashes.
 

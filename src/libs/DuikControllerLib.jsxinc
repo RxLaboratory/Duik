@@ -197,12 +197,11 @@ Controller.prototype.bakeAppearance = function ()
 		}
 	}
 
-	if (this.effect)
+	if ( this.effect && this.effectInfo.isEffect )
 	{
 		this.effect = this.effectInfo.getProperty();
 		try { if (this.effect.matchName == DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER) this.effect.remove() } catch (e) { if (DuAEF.debug) alert(e); };
 	}
-
 }
 
 /**
@@ -245,7 +244,9 @@ DuAEF.Duik.Controller.Types =
 	VULVA: 24,
 	WALK_CYCLE: 25,
 	BLENDER: 26,
-	NULL: 27
+	NULL: 27,
+	CONNECTOR: 28,
+	EXPOSE_TRANSFORM: 29
 }
 
 /**
@@ -283,11 +284,13 @@ DuAEF.Duik.Controller.draft = false;
 	* Creates a new controller
 	* @param {CompItem} [comp] - The composition
 	* @param {DuAEF.Duik.Controller.Types} [type=DuAEF.Duik.Controller.defaultType] - The type of Controller.
-	* @param {Layer} [layer] - The layer where to create the controller.
+	* @param {Layerr|Layer[]|LayerCollection} [layer] - The layer(s) where to create the controller.<br />
+	* If several layers are provided, will create the controller at the average center of their world positions.
 	* @param {float}	[size] - The controller size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Controller.sizeHint
+	* @param {boolean} [parent=false] - True to automatically parent the layer(s) to the controller
 	* @return {Controller} The controller
 */
-DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
+DuAEF.Duik.Controller.create = function (comp, type, layer, size, color, parent)
 {
 	if (typeof comp === 'undefined')
 	{
@@ -303,6 +306,8 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	if (!comp) return;
 
 	if (typeof type === 'undefined') type = DuAEF.Duik.Controller.defaultType;
+	if (typeof layer === 'undefined') layer = null;
+	if (typeof parent === 'undefined') parent = false;
 
 	var ctrl;
 	if (type == DuAEF.Duik.Controller.Types.NULL)
@@ -313,12 +318,33 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	else ctrl = comp.layers.addShape();
 	DuAEF.Duik.setDuikMarker(ctrl,"Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
 
-	if (layer && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
+	if (layer != null && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
 	{
-		//center the controller and name it after the layer
-		ctrl.transform.position.setValue(DuAEF.DuAE.Layer.getWorldPos(layer));
-		var newName = DuAEF.Duik.generateName('C',layer.name);
+		//center the controller and name it after the layer(s)
+		var pos = [0,0];
+		var layerName = 'name';
+		if (layer.length)
+		{
+			new Iterator(layer).do(function (l)
+			{
+				pos = pos + DuAEF.DuAE.Layer.getWorldPos(l);
+			});
+			pos = pos / layer.length;
+		}
+		else
+		{
+			pos = DuAEF.DuAE.Layer.getWorldPos(layer);
+			layerName = layer.name;
+		}
+		
+		ctrl.transform.position.setValue(pos);
+
+		//name
+		var newName = DuAEF.Duik.generateName('C',layerName);
 		ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName(newName,comp);
+
+		//parent
+		if (parent) DuAEF.DuAE.Layer.parent(layer, ctrl);
 	}
 
 	DuAEF.Duik.setDuikMarkerParameter(ctrl,DuAEF.Duik.MarkerParameters.CONTROLLER_TYPE,type);
@@ -337,12 +363,14 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 
 	var effect = null;
 
+	var pseudoEffect = null;
+
 	if (type != DuAEF.Duik.Controller.Types.SQUARE && type != DuAEF.Duik.Controller.Types.SLIDER && type != DuAEF.Duik.Controller.Types.DOUBLE_SLIDER && type != DuAEF.Duik.Controller.Types.ANGLE)
 	{
 		//add effect
 		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER,'Controller');
 
-		if (type != DuAEF.Duik.Controller.Types.WALK_CYCLE && type != DuAEF.Duik.Controller.Types.BLENDER)
+		if (type != DuAEF.Duik.Controller.Types.WALK_CYCLE && type != DuAEF.Duik.Controller.Types.BLENDER && type != DuAEF.Duik.Controller.Types.CONNECTOR)
 		{
 			//create anchor
 			var anchorGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -368,18 +396,21 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	}
 	else if (type == DuAEF.Duik.Controller.Types.SLIDER)
 	{
+		pseudoEffect = DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER;
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_SLIDER,'Slider');
+		effect = pseudoEffect.apply(ctrl);
 	}
 	else if (type == DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)
 	{
+		pseudoEffect = DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER;
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_DOUBLE_SLIDER,'Slider');
+		effect = pseudoEffect.apply(ctrl);
 	}
 	else if (type == DuAEF.Duik.Controller.Types.ANGLE)
 	{
+		pseudoEffect = DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE;
 		//add effect
-		effect = DuAEF.DuAE.Layer.addPseudoEffect(ctrl,DuAEF.Duik.PseudoEffects.CONTROLLER_ANGLE,DuAEF.Duik.PseudoEffectsMatchNames.CONTROLLER_ANGLE,'Angle');
+		effect = pseudoEffect.apply(ctrl);
 	}
 
 	var iconGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -917,6 +948,51 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 
 		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Blender',comp);
 	}
+	else if (type == DuAEF.Duik.Controller.Types.CONNECTOR)
+	{
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		var ConnectorShape = new Shape();
+		ConnectorShape.vertices = [[13.001953125, 0.9476318359375], [12.79296875, 1.2171630859375], [11.4091186523438, 1.4261474609375], [11.1181640625, 2.10687255859375], [11.91796875, 3.1385498046875], [11.9921264648438, 3.3255615234375], [11.9257202148438, 3.4974365234375], [10.482421875, 4.8358154296875], [10.2880249023438, 4.7684326171875], [9.255859375, 3.9608154296875], [8.576171875, 4.24505615234375], [8.35845947265625, 5.6356201171875], [8.08984375, 5.84503173828125], [6.42962646484375, 5.84503173828125], [6.1611328125, 5.6209716796875], [5.951171875, 4.24505615234375], [5.2783203125, 3.9686279296875], [4.22467041015625, 4.7684326171875], [4.03717041015625, 4.8358154296875], [3.85052490234375, 4.75335693359375], [2.61627197265625, 3.4974365234375], [2.564453125, 3.3255615234375], [2.6240234375, 3.15325927734375], [3.40911865234375, 2.1292724609375], [3.1025390625, 1.3890380859375], [1.734375, 1.18682861328125], [1.51751708984375, 0.9178466796875], [1.51751708984375, -0.74188232421875], [1.7197265625, -1.0113525390625], [3.1103515625, -1.2203369140625], [3.4013671875, -1.90838623046875], [2.6015625, -2.9400634765625], [2.52734375, -3.1197509765625], [2.59375, -3.2916259765625], [4.03717041015625, -4.62994384765625], [4.2314453125, -4.55523681640625], [5.263671875, -3.75494384765625], [5.943359375, -4.0391845703125], [6.1611328125, -5.42987060546875], [6.42962646484375, -5.6392822265625], [8.08984375, -5.6392822265625], [8.35845947265625, -5.4151611328125], [8.568359375, -4.0391845703125], [9.24127197265625, -3.76287841796875], [10.302734375, -4.56268310546875], [10.482421875, -4.62994384765625], [10.6689453125, -4.55523681640625], [11.9033203125, -3.28424072265625], [11.9550170898438, -3.1197509765625], [11.8955688476563, -2.94732666015625], [11.1103515625, -1.9234619140625], [11.4169311523438, -1.1905517578125], [12.78515625, -0.9810791015625], [13.001953125, -0.7120361328125]];
+		ConnectorShape.inTangents = [[0, 0], [0.11920166015625, -0.02239990234375], [0, 0], [0.11920166015625, -0.21685791015625], [-0.27630615234375, -0.33642578125], [0, -0.06744384765625], [0.04400634765625, -0.05230712890625], [0.25390625, 0], [0.05963134765625, 0.03759765625], [0, 0], [0.2314453125, -0.0748291015625], [0.1201171875, -0.44830322265625], [0.13482666015625, 0], [0, 0], [0.01458740234375, 0.126953125], [0, 0], [0.216796875, 0.11181640625], [0, 0], [0.0672607421875, 0], [0.05181884765625, 0.05267333984375], [0.31439208984375, 0.43359375], [0, 0.0595703125], [-0.03704833984375, 0.05267333984375], [-0.25384521484375, 0.35107421875], [0.0751953125, 0.25390625], [0, 0], [0, 0.12701416015625], [0, 0], [-0.1123046875, 0.02252197265625], [0, 0], [-0.119140625, 0.2242431640625], [0.2763671875, 0.33642578125], [0, 0.0673828125], [-0.037109375, 0.05224609375], [-0.25390625, 0], [-0.0595703125, -0.0450439453125], [0, 0], [-0.23138427734375, 0.07470703125], [-0.12005615234375, 0.44830322265625], [-0.13470458984375, 0], [0, 0], [-0.01470947265625, -0.12701416015625], [0, 0], [-0.216796875, -0.11175537109375], [0, 0], [-0.0673828125, 0], [-0.05181884765625, -0.0450439453125], [-0.314453125, -0.4410400390625], [0, -0.05963134765625], [0.03704833984375, -0.0528564453125], [0.25390625, -0.35107421875], [-0.0750732421875, -0.24658203125], [0, 0], [0, -0.12689208984375]];
+		ConnectorShape.outTangents = [[0, 0.1123046875], [0, 0], [-0.08197021484375, 0.23931884765625], [0.25390625, 0.36614990234375], [0.04486083984375, 0.05230712890625], [0, 0.06689453125], [-0.1796875, 0.23931884765625], [-0.0673828125, 0], [0, 0], [-0.216796875, 0.1123046875], [-0.052734375, 0.45599365234375], [-0.029296875, 0.11962890625], [0, 0], [-0.13470458984375, 0], [0, 0], [-0.2314453125, -0.0748291015625], [0, 0], [-0.05279541015625, 0.044921875], [-0.06744384765625, 0], [-0.3963623046875, -0.35888671875], [-0.037109375, -0.05230712890625], [0, -0.06744384765625], [0.25390625, -0.34381103515625], [-0.12689208984375, -0.2392578125], [0, 0], [-0.126953125, -0.02239990234375], [0, 0], [0, -0.11224365234375], [0, 0], [0.07421875, -0.23919677734375], [-0.25390625, -0.35888671875], [-0.044921875, -0.05230712890625], [0, -0.06689453125], [0.1796875, -0.24664306640625], [0.0672607421875, 0], [0, 0], [0.216796875, -0.1124267578125], [0.05267333984375, -0.4560546875], [0.029296875, -0.11956787109375], [0, 0], [0.13482666015625, 0], [0, 0], [0.23150634765625, 0.07470703125], [0, 0], [0.044921875, -0.04486083984375], [0.06744384765625, 0], [0.396484375, 0.36669921875], [0.037109375, 0.04486083984375], [0, 0.0673828125], [-0.25390625, 0.34368896484375], [0.12701416015625, 0.23931884765625], [0, 0], [0.12701416015625, 0.02239990234375], [0, 0]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+		shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		ConnectorShape.vertices = [[7.259765625, -1.8111572265625], [5.34576416015625, 0.10296630859375], [7.259765625, 2.0169677734375], [9.173828125, 0.10296630859375]];
+		ConnectorShape.inTangents = [[1.0546875, 0], [0, -1.05419921875], [-1.05474853515625, 0], [0, 1.05419921875]];
+		ConnectorShape.outTangents = [[-1.05474853515625, 0], [0, 1.05419921875], [1.0546875, 0], [0, -1.05419921875]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+		shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		ConnectorShape.vertices = [[-5.81573486328125, 6.42767333984375], [-4.48248291015625, 7.76092529296875], [-4.48248291015625, 11.6138305664063], [-5.81573486328125, 12.9471435546875], [-9.66864013671875, 12.9471435546875], [-11.001953125, 11.6138305664063], [-11.001953125, 7.76092529296875], [-9.66864013671875, 6.42767333984375]];
+		ConnectorShape.inTangents = [[0, 0], [0, -0.73516845703125], [0, 0], [0.73516845703125, 0], [0, 0], [0, 0.7352294921875], [0, 0], [-0.7352294921875, 0]];
+		ConnectorShape.outTangents = [[0.73516845703125, 0], [0, 0], [0, 0.7352294921875], [0, 0], [-0.7352294921875, 0], [0, 0], [0, -0.73516845703125], [0, 0]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+		shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		ConnectorShape.vertices = [[-5.81573486328125, 4.42767333984375], [-9.66864013671875, 4.42767333984375], [-13.001953125, 7.76092529296875], [-13.001953125, 11.6138305664063], [-9.66864013671875, 14.9471435546875], [-5.81573486328125, 14.9471435546875], [-2.48248291015625, 11.6138305664063], [-2.48248291015625, 7.76092529296875], [-5.81573486328125, 4.42767333984375]];
+		ConnectorShape.inTangents = [[0, 0], [0, 0], [0, -1.84088134765625], [0, 0], [-1.8409423828125, 0], [0, 0], [0, 1.8409423828125], [0, 0], [1.84088134765625, 0]];
+		ConnectorShape.outTangents = [[0, 0], [-1.8409423828125, 0], [0, 0], [0, 1.8409423828125], [0, 0], [1.84088134765625, 0], [0, 0], [0, -1.84088134765625], [0, 0]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+		shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		ConnectorShape.vertices = [[-2.48248291015625, -11.0528564453125], [-2.48248291015625, -11.61376953125], [-5.81573486328125, -14.9470825195313], [-9.66864013671875, -14.9470825195313], [-13.001953125, -11.61376953125], [-13.001953125, -7.7608642578125], [-9.66864013671875, -4.42755126953125], [-5.81573486328125, -4.42755126953125], [-2.48248291015625, -7.7608642578125], [-2.48248291015625, -9.0528564453125], [5.998046875, -9.0528564453125], [5.998046875, -7.0528564453125], [7.998046875, -7.0528564453125], [7.998046875, -11.0528564453125]];
+		ConnectorShape.inTangents = [[0, 0], [0, 0], [1.84088134765625, 0], [0, 0], [0, -1.84088134765625], [0, 0], [-1.8409423828125, 0], [0, 0], [0, 1.84088134765625], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		ConnectorShape.outTangents = [[0, 0], [0, -1.84088134765625], [0, 0], [-1.8409423828125, 0], [0, 0], [0, 1.84088134765625], [0, 0], [1.84088134765625, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+		shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
+		ConnectorShape.vertices = [[2.18756103515625, 11.0819702148438], [3.90435791015625, 12.8045654296875], [4.126953125, 13.3319702148438], [3.90435791015625, 13.8592529296875], [3.46484375, 14.3045654296875], [2.93756103515625, 14.5213623046875], [2.40435791015625, 14.3045654296875], [-0.94793701171875, 10.9471435546875], [-1.001953125, 10.9471435546875], [-1.001953125, 10.89306640625], [-1.41015625, 10.4842529296875], [-1.626953125, 9.95697021484375], [-1.41015625, 9.42376708984375], [-1.001953125, 9.01611328125], [-1.001953125, 8.9471435546875], [-0.932861328125, 8.9471435546875], [2.40435791015625, 5.61517333984375], [2.93756103515625, 5.3924560546875], [3.46484375, 5.61517333984375], [3.90435791015625, 6.04876708984375], [4.126953125, 6.58197021484375], [3.90435791015625, 7.11517333984375], [2.18756103515625, 8.83197021484375], [5.998046875, 8.83197021484375], [5.998046875, 6.9471435546875], [7.998046875, 6.9471435546875], [7.998046875, 10.9471435546875]];
+		ConnectorShape.inTangents = [[0, 0], [0, 0], [0, -0.1993408203125], [0.14056396484375, -0.13482666015625], [0, 0], [0.19915771484375, 0], [0.14056396484375, 0.134765625], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0.19915771484375], [-0.13482666015625, 0.14056396484375], [0, 0], [0, 0], [0, 0], [0, 0], [-0.1993408203125, 0], [-0.140625, -0.1407470703125], [0, 0], [0, -0.1993408203125], [0.14056396484375, -0.1407470703125], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		ConnectorShape.outTangents = [[0, 0], [0.14056396484375, 0.134765625], [0, 0.19915771484375], [0, 0], [-0.13482666015625, 0.134765625], [-0.1993408203125, 0], [0, 0], [0, 0], [0, 0], [0, 0], [-0.13482666015625, -0.13482666015625], [0, -0.1993408203125], [0, 0], [0, 0], [0, 0], [0, 0], [0.14056396484375, -0.1407470703125], [0.19915771484375, 0], [0, 0], [0.14056396484375, 0.14056396484375], [0, 0.19915771484375], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
+		ConnectorShape.closed = true;
+		shape1('ADBE Vector Shape').setValue(ConnectorShape);
+
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Connector',comp);
+	}
 	else if (type == DuAEF.Duik.Controller.Types.CLAWS)
 	{
 		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
@@ -1015,14 +1091,44 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 
 		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Hoof',comp);
 	}
+	else if (type == DuAEF.Duik.Controller.Types.EXPOSE_TRANSFORM)
+	{
+		var shape0 = new Shape();
+		shape0.vertices = [[11.4648590087891, -13.98828125], [11.4648590087891, -12.05126953125], [4.00045776367188, -4.5400390625], [3.95365905761719, -4.634765625], [3.90625, -4.91796875], [3.90625, -26.08203125], [4.35494995117188, -27.14501953125], [5.41795349121094, -27.59375], [9.95315551757813, -27.59375], [11.0161590576172, -27.14501953125], [11.4648590087891, -26.08203125], [11.4648590087891, -24.5703125], [8.81935119628906, -24.5703125], [8.55955505371094, -24.4521484375], [8.44134521484375, -24.1923828125], [8.44134521484375, -23.4365234375], [8.55955505371094, -23.1767578125], [8.81935119628906, -23.05859375], [11.4648590087891, -23.05859375], [11.4648590087891, -20.03515625], [8.81935119628906, -20.03515625], [8.55955505371094, -19.9169921875], [8.44134521484375, -19.6572265625], [8.44134521484375, -18.9013671875], [8.55955505371094, -18.6416015625], [8.81935119628906, -18.5234375], [11.4648590087891, -18.5234375], [11.4648590087891, -15.5], [8.81935119628906, -15.5], [8.55955505371094, -15.3818359375], [8.44134521484375, -15.1220703125], [8.44134521484375, -14.3662109375], [8.55955505371094, -14.1064453125], [8.81935119628906, -13.98828125]];
+		shape0.inTangents = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0.06298828125], [0, 0], [-0.29930114746094, 0.29931640625], [-0.40969848632813, 0], [0, 0], [-0.29940795898438, -0.29931640625], [0, -0.4091796875], [0, 0], [0, 0], [0.07859802246094, -0.07861328125], [0, -0.0947265625], [0, 0], [-0.07859802246094, -0.07861328125], [-0.09429931640625, 0], [0, 0], [0, 0], [0, 0], [0.07859802246094, -0.07861328125], [0, -0.0947265625], [0, 0], [-0.07859802246094, -0.07861328125], [-0.09429931640625, 0], [0, 0], [0, 0], [0, 0], [0.07859802246094, -0.07861328125], [0, -0.0947265625], [0, 0], [-0.07859802246094, -0.07861328125], [-0.09429931640625, 0]];
+		shape0.outTangents = [[0, 0], [0, 0], [0, 0], [-0.03181457519531, -0.1259765625], [0, 0], [0, -0.4091796875], [0.29930114746094, -0.29931640625], [0, 0], [0.40959167480469, 0], [0.29928588867188, 0.29931640625], [0, 0], [0, 0], [-0.09429931640625, 0], [-0.07859802246094, 0.07861328125], [0, 0], [0, 0.0947265625], [0.07859802246094, 0.07861328125], [0, 0], [0, 0], [0, 0], [-0.09429931640625, 0], [-0.07859802246094, 0.07861328125], [0, 0], [0, 0.0947265625], [0.07859802246094, 0.07861328125], [0, 0], [0, 0], [0, 0], [-0.09429931640625, 0], [-0.07859802246094, 0.07861328125], [0, 0], [0, 0.0947265625], [0.07859802246094, 0.07861328125], [0, 0]];
+		shape0.closed = true;
+		var shape1 = new Shape();
+		shape1.vertices = [[26.5820465087891, -10.96484375], [27.6450500488281, -10.51611328125], [28.09375, -9.453125], [28.09375, -4.91796875], [27.6450500488281, -3.85498046875], [26.5820465087891, -3.40625], [5.41795349121094, -3.40625], [5.13424682617188, -3.45361328125], [5.04005432128906, -3.5009765625], [12.5512542724609, -10.96484375], [14.4882507324219, -10.96484375], [14.4882507324219, -8.3193359375], [14.6064453125, -8.0595703125], [14.8662567138672, -7.94140625], [15.6220550537109, -7.94140625], [15.8818511962891, -8.0595703125], [15.9999542236328, -8.3193359375], [15.9999542236328, -10.96484375], [19.0234527587891, -10.96484375], [19.0234527587891, -8.3193359375], [19.1415557861328, -8.0595703125], [19.4013519287109, -7.94140625], [20.1572570800781, -7.94140625], [20.4169464111328, -8.0595703125], [20.53515625, -8.3193359375], [20.53515625, -10.96484375], [23.5585479736328, -10.96484375], [23.5585479736328, -8.3193359375], [23.6767578125, -8.0595703125], [23.9365539550781, -7.94140625], [24.6923522949219, -7.94140625], [24.9521484375, -8.0595703125], [25.0703582763672, -8.3193359375], [25.0703582763672, -10.96484375]];
+		shape1.inTangents = [[0, 0], [-0.29939270019531, -0.29931640625], [0, -0.4091796875], [0, 0], [0.29930114746094, -0.29931640625], [0.40960693359375, 0], [0, 0], [0.12600708007813, 0.03173828125], [0, 0], [0, 0], [0, 0], [0, 0], [-0.07859802246094, -0.07861328125], [-0.09429931640625, 0], [0, 0], [-0.07859802246094, 0.07861328125], [0, 0.0947265625], [0, 0], [0, 0], [0, 0], [-0.07859802246094, -0.07861328125], [-0.09419250488281, 0], [0, 0], [-0.07859802246094, 0.07861328125], [0, 0.0947265625], [0, 0], [0, 0], [0, 0], [-0.07861328125, -0.07861328125], [-0.09429931640625, 0], [0, 0], [-0.07859802246094, 0.07861328125], [0, 0.0947265625], [0, 0]];
+		shape1.outTangents = [[0.40960693359375, 0], [0.29930114746094, 0.29931640625], [0, 0], [0, 0.4091796875], [-0.29939270019531, 0.29931640625], [0, 0], [-0.06300354003906, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0.0947265625], [0.07861328125, 0.07861328125], [0, 0], [0.09429931640625, 0], [0.07859802246094, -0.07861328125], [0, 0], [0, 0], [0, 0], [0, 0.0947265625], [0.07868957519531, 0.07861328125], [0, 0], [0.09419250488281, 0], [0.07861328125, -0.07861328125], [0, 0], [0, 0], [0, 0], [0, 0.0947265625], [0.07859802246094, 0.07861328125], [0, 0], [0.09429931640625, 0], [0.07859802246094, -0.07861328125], [0, 0], [0, 0]];
+		shape1.closed = true;
+		var shape2 = new Shape();
+		shape2.vertices = [[24.1157531738281, -12.4951171875], [23.1157531738281, -13.4951171875], [14.5107574462891, -22.10009765625], [13.5107574462891, -23.10009765625], [14.5107574462891, -24.10009765625], [25.1157531738281, -13.4951171875]];
+		shape2.inTangents = [[0.55220031738281, 0], [0, 0.55224609375], [4.74459838867188, 0], [0, 0.55224609375], [-0.55230712890625, 0], [0, -5.84765625]];
+		shape2.outTangents = [[-0.55230712890625, 0], [0, -4.74462890625], [-0.55230712890625, 0], [0, -0.55224609375], [5.84759521484375, 0], [0, 0.55224609375]];
+		shape2.closed = true;
+
+		var shapeProp = iconContent.addProperty("ADBE Vector Shape - Group");
+		shapeProp('ADBE Vector Shape').setValue(shape0);
+		shapeProp = iconContent.addProperty("ADBE Vector Shape - Group");
+		shapeProp('ADBE Vector Shape').setValue(shape1);
+		shapeProp = iconContent.addProperty("ADBE Vector Shape - Group");
+		shapeProp('ADBE Vector Shape').setValue(shape2);
+		
+		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		stroke("ADBE Vector Fill Color").expression = 'effect("Controller")(2)';
+
+		if (!layer) ctrl.name = DuAEF.DuAE.Comp.newUniqueLayerName('C | Expose Transform',comp);
+	}
 	else if (type == DuAEF.Duik.Controller.Types.SLIDER)
 	{
 		var shape1 = iconContent.addProperty("ADBE Vector Shape - Ellipse");
-		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(3))/5-2;\n[c, c]';
+		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + '))/5-2;\n[c, c]';
 		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
-		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
+		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(' + pseudoEffect.index["HandleColorColor"] + ')';
 
-		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
+		iconGroup.transform.opacity.expression = 'effect("Slider")(' + pseudoEffect.index["HandleOpacitySlider"] + ')';
 
 		ctrl.position.expression = '[value[0],0];';
 
@@ -1051,17 +1157,17 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
-		rectangle("ADBE Vector Rect Size").expression = 'var fx = thisComp.layer("' + ctrl.name + '").effect("Slider");\nc = fx(3).value/100*20;\nx = fx(8).value+c;\n[x,c]';
-		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(3)/100*10';
+		rectangle("ADBE Vector Rect Size").expression = 'var fx = thisComp.layer("' + ctrl.name + '").effect("Slider");\nc = fx(' + pseudoEffect.index["HandleSizeSlider"] + ').value/100*20;\nx = fx(' + pseudoEffect.index["SliderSizeSlider"] + ').value+c;\n[x,c]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ')/100*10';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(7).value';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(' + pseudoEffect.index["SliderColorColor"] + ').value';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+		effect( pseudoEffect.index["ValueSlider"] ).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
 						'x = ctrl.transform.position[0];\n' +
-						'c = ctrl.effect("Slider")(3).value/100*20;\n' +
-						'h = ctrl.effect("Slider")(8).value+c;\n' +
+						'c = ctrl.effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ').value/100*20;\n' +
+						'h = ctrl.effect("Slider")(' + pseudoEffect.index["SliderSizeSlider"] + ').value+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
@@ -1069,11 +1175,11 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 	else if (type == DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)
 	{
 		var shape1 = iconContent.addProperty("ADBE Vector Shape - Ellipse");
-		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(3))/5-2;\n[c, c]';
+		shape1('ADBE Vector Ellipse Size').expression = 'c = (effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + '))/5-2;\n[c, c]';
 		var stroke = iconContent.addProperty("ADBE Vector Graphic - Fill");
-		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(2)';
+		stroke("ADBE Vector Fill Color").expression = 'effect("Slider")(' + pseudoEffect.index["HandleColorColor"] + ')';
 
-		iconGroup.transform.opacity.expression = 'effect("Slider")(4)';
+		iconGroup.transform.opacity.expression = 'effect("Slider")(' + pseudoEffect.index["HandleOpacitySlider"] + ')';
 
 		//create anchor
 		var ctrlBG = comp.layers.addShape();
@@ -1101,45 +1207,39 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var rectangle = anchorContent.addProperty("ADBE Vector Shape - Rect");
-		rectangle("ADBE Vector Rect Size").expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\nc = ctrl.effect("Slider")(3)/100*20;\nx = ctrl.effect("Slider")(8)+c;\n[x,x]';
-		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(3)/100*10';
+		rectangle("ADBE Vector Rect Size").expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\nc = ctrl.effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ')/100*20;\nx = ctrl.effect("Slider")(' + pseudoEffect.index["SliderSizeSlider"] + ')+c;\n[x,x]';
+		rectangle("ADBE Vector Rect Roundness").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ')/100*10';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(7)';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Slider")(' + pseudoEffect.index["SliderColorColor"] + ')';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+		effect(pseudoEffect.index["X ValueSlider"]).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
 						'x = ctrl.transform.position[0];\n' +
-						'c = ctrl.effect("Slider")(3)/100*20;\n' +
-						'h = ctrl.effect("Slider")(8)+c;\n' +
+						'c = ctrl.effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ')/100*20;\n' +
+						'h = ctrl.effect("Slider")(' + pseudoEffect.index["SliderSizeSlider"] + ')+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
-		effect(19).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
+		effect(pseudoEffect.index["Y ValueSlider"]).expression = 'ctrl = thisComp.layer("' + ctrl.name + '");\n' +
 						'x = ctrl.transform.position[1];\n' +
-						'c = ctrl.effect("Slider")(3)/100*20;\n' +
-						'h = ctrl.effect("Slider")(8)+c;\n' +
+						'c = ctrl.effect("Slider")(' + pseudoEffect.index["HandleSizeSlider"] + ')/100*20;\n' +
+						'h = ctrl.effect("Slider")(' + pseudoEffect.index["SliderSizeSlider"] + ')+c;\n' +
 						'h = h-c;\n' +
 						'h = h/2;\n' +
 						'linear(x,-h,h,-100,100);';
-		effect(20).expression = '[effect("Slider")(18),effect("Slider")(19)]';
+		effect( pseudoEffect.index["2D ValuePoint"] ).expression = '[effect("Slider")(' + pseudoEffect.index["X ValueSlider"] + '),effect("Slider")(' + pseudoEffect.index["Y ValueSlider"] + ')]';
 	}
 	else if (type == DuAEF.Duik.Controller.Types.ANGLE)
 	{
-		var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
-		var angleShape = new Shape();
-		angleShape.vertices = [[0, 0.25], [0, -24.5]];
-		angleShape.inTangents = [[0, 0], [0, 0]];
-		angleShape.outTangents = [[0, 0], [0, 0]];
-		angleShape.closed = false;
-		shape1('ADBE Vector Shape').setValue(angleShape);
-		var stroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'effect("Angle")(2)';
-		stroke("ADBE Vector Stroke Width").setValue(1.5);
-		stroke("ADBE Vector Stroke Line Cap").setValue(2);
-
-		iconGroup.transform.opacity.expression = 'effect("Angle")(4)';
-		iconGroup.transform.scale.expression = '[effect("Angle")(3)*2,effect("Angle")(3)*2]';
+		var shape1 = iconContent.addProperty("ADBE Vector Shape - Rect");
+         shape1("ADBE Vector Rect Size").setValue([2,25]);
+         shape1("ADBE Vector Rect Position").setValue([0,-12]);
+		var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
+		fill("ADBE Vector Fill Color").expression = 'effect("Angle")(2)';
+        
+		iconGroup.transform.opacity.expression = 'effect("Angle")(' + pseudoEffect.index["HandleOpacitySlider"] + ')';
+		iconGroup.transform.scale.expression = '[effect("Angle")(' + pseudoEffect.index["HandleSizeSlider"] + ')*2,effect("Angle")(' + pseudoEffect.index["HandleSizeSlider"] + ')*2]';
 
 		//create anchor
 		var ctrlBG = comp.layers.addShape();
@@ -1167,13 +1267,13 @@ DuAEF.Duik.Controller.create = function (comp,type,layer,size,color)
 		anchorGroup.name = 'Anchor';
 		var anchorContent = anchorGroup.property("ADBE Vectors Group");
 		var circle = anchorContent.addProperty("ADBE Vector Shape - Ellipse");
-		circle("ADBE Vector Ellipse Size").expression = 'x = thisComp.layer("' + ctrl.name + '").effect("Angle")(8);\n[x,x]';
+		circle("ADBE Vector Ellipse Size").expression = 'x = thisComp.layer("' + ctrl.name + '").effect("Angle")(' + pseudoEffect.index["SliderSizeSlider"] + ');\n[x,x]';
 		var stroke = anchorContent.addProperty("ADBE Vector Graphic - Stroke");
-		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Angle")(7)';
+		stroke("ADBE Vector Stroke Color").expression = 'thisComp.layer("' + ctrl.name + '").effect("Angle")(' + pseudoEffect.index["SliderColorColor"] + ')';
 		stroke("ADBE Vector Stroke Width").expression = '100/content("Anchor").transform.scale[0]';
 		stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
-		effect(18).expression = 'thisComp.layer("' + ctrl.name + '").transform.rotation';
+		effect(pseudoEffect.index["AngleAngle"]).expression = 'thisComp.layer("' + ctrl.name + '").transform.rotation';
 	}
 
 	ctrl = new Controller(ctrl,type);

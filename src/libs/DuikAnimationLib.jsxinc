@@ -354,11 +354,15 @@ DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
 /**
 	* Activate the time remapping on the layers, adding some useful controls or expressions
 	* @param {Layer[]|LayerCollection} layers - The layers
-	* @param {string} [loopType] - Looping time, 'in' or 'out'
+	* @param {DuAEF.DuAE.LoopTypes} [loopInType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopIn
+	* @param {DuAEF.DuAE.LoopTypes} [loopOutType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopOut
 */
-DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
+DuAEF.Duik.Animation.timeRemap = function (layers, loopInType, loopOutType)
 {
-	if (layers == undefined) return;
+	if (typeof layers === 'undefined') return;
+	if (typeof loopInType === 'undefined') loopInType = DuAEF.DuAE.LoopTypes.HOLD;
+	if (typeof loopInType === 'undefined') loopOutType = DuAEF.DuAE.LoopTypes.HOLD;
+
 	if (layers.length == 0 ) return;
 	var it = new Iterator(layers);
 	while (!it.atEnd)
@@ -372,19 +376,22 @@ DuAEF.Duik.Animation.timeRemap = function (layers,loopType)
 
 		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
 
-		layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
-		layer.timeRemap.removeKey(3);
-		if (loopType == "out")
+		if (layer.inPoint < lastValueTime)
 		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
 			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
-			layer.timeRemap.expression = "loopOut();";
 		}
-		if (loopType == "in")
+		else
 		{
-			layer.timeRemap.setValueAtTime(lastValueTime+comp.frameDuration,0);
-			layer.timeRemap.expression = "loopIn();";
-			layer.inPoint = 0;
+			layer.timeRemap.removeKey(2);
 		}
+		
+
+		if (loopInType != DuAEF.DuAE.LoopTypes.NONE) layer.inPoint = 0;
+		if (loopOutType != DuAEF.DuAE.LoopTypes.NONE) layer.outPoint = comp.duration;
+
+		DuAEF.Duik.Automation.loop(layer.timeRemap, undefined, loopInType, loopOutType);
 	}
 }
 
@@ -654,7 +661,7 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 	if (controllers.length == 0) return -3;
 
 	//check for parenting and list layers
-	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 1");
+
 	app.beginSuppressDialogs();
 
 	DuAEF.DuAE.Comp.setUniqueCompName(comp);
@@ -675,12 +682,8 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		controller.bakeAppearance();
 	});
 
-	app.endUndoGroup();
-
 	//copy controllers
 	var newCtrlLayers = DuAEF.DuAE.Layer.copyToComp(ctrlLayers, comp);
-
-	app.beginUndoGroup('Duik | ' + "Extract controllers - Part 2");
 
 	//Add null at position precomp.width/2 precomp.height/2
 	var nullLayer = comp.layers.addNull();
@@ -706,6 +709,9 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		//use locators for all controllers parented to something else than a controller or nothing
 		if (ctrlLayer.reparent) DuAEF.Duik.Rigging.parent(newCtrlLayer, ctrlLayer.parent);
 
+		//remove expressions in the data of the child effect 
+		DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
+
 		if (useMasterProperties)
 		{
 			//transform
@@ -729,22 +735,47 @@ DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMas
 		else
 		{
 			//transform
-			DuAEF.DuAE.Property.linkProperties(ctrlLayer.transform,newCtrlLayer.transform);
-			//remove expressions in the data of the child effect 
-			DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer.transform, newCtrlLayer.transform, undefined, preComposition );
 			//effects
-			DuAEF.DuAE.Property.linkProperties(ctrlLayer('ADBE Effect Parade'),newCtrlLayer('ADBE Effect Parade'));
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer('ADBE Effect Parade'), newCtrlLayer('ADBE Effect Parade'), undefined, preComposition );
 		}
 		//set params to keep the link
 		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOCOMP, preComp.id);
 		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOLAYER, ctrlLayer.name);
 	}
 
-	app.endUndoGroup();
 	app.endSuppressDialogs(false);
 
 	return 1;
 }
+
+/**
+	* Adds a slider on a precomposition layer, and markers on the layer, with keyframes representing the animation exposure of the layers inside the precomposition
+	* @memberof Duik
+	* @param {LayerItem} precomp - The layer of the precomposition
+*/
+DuAEF.Duik.Animation.getPrecompExposure = function (precomp)
+{
+	//get source comp
+	var comp = precomp.source;
+
+	//if not a precomp, skip
+	if (!(comp instanceof CompItem)) throw "The layer must be a precomposition.";
+
+	//add slider
+	var slider = precomp.Effects.addProperty("ADBE Slider Control");
+	slider.name = "Detected Exposure";
+
+	//detect exposure
+	for (var i = 1 ; i <= comp.numLayers ; i++)
+	{
+		var layer = comp.layer(i);
+		slider(1).setValueAtTime(precomp.startTime + layer.inPoint,layer.inPoint);
+		slider(1).setInterpolationTypeAtKey(slider(1).numKeys,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+		precomp.marker.setValueAtTime(precomp.startTime + layer.inPoint,new MarkerValue(''));
+	}
+}
+
 
 /**
 	* Animation Blender

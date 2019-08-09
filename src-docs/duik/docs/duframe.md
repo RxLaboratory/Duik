@@ -1,4 +1,6 @@
-# **DuFrame**: framing grids and guides.
+# ![DuFrame Icon](img\duik-icons\frameguide-icon-r.png) **DuFrame**: framing grids and guides.
+
+![frame guide panel](img\duik-screenshots\S-Camera\FrameGuide-panel.PNG)
 
 **Duframe is a very simple tool which creates different types of grids and guides on a Shape Layer, which you can extensively configure, to help the composition of the image.**
 

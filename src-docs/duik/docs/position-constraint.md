@@ -1,4 +1,4 @@
-# Position Constraint
+# ![Constraints Icon](img/duik-icons/positionconstraint-icon-r.png) Position Constraint
 
 !!! hint
     Available in _Standard_ and _Expert_ modes only.

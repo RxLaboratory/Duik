@@ -1,6 +1,6 @@
 [TOC]
 
-# Connector
+# ![Connector Icon](img/duik-icons/constraint-icon-r.png) Connector
 
 The Connector is a way to control almost any property in After Effects with any other property, a bit like parenting between layers, but with properties.
 
@@ -21,11 +21,60 @@ When the master property value is at the predefined minimum, the child property 
 
 As the connector uses the same principle as time remapping, it is able to connect almost any type of property to any other type of property, which makes it a very powerful tool, even on older versions of After Effects.
 
+### Slave (controlled) property
+
 The slave property can be of any type which can be animated with keyframes and have an expression (numerical and spatial values, shapes, texts...)
 
-The master property must be of a type which is numerical (but can be multi-dimentionnal), like sliders, angles, position, scale, colors...
+### Master (controller) property
+
+The master property can be of any numerical type (but can be multi-dimentionnal):
+
+- Slider
+- Angle
+- Position
+- Scale
+- Opacity
+- Color
+- etc.
+
+That said, Duik provides several pre-rigged and very useful controllers which are meant to be used with the connector.
+
+#### Slider, 2D Slider, Angle
+
+These are layers which provide a nice UI in the composition panel to control your animation. They're especially used for facial rigging, but can be nice for a lot of different things.
+
+#### Spatial Effector and Effector Map
+
+The [*Effector*](effector.md) is a intuitive way to spatially control the slave properties, as the [*Effector Map*](effector-map.md) does the same but using the color or alpha channel from a texture layer.
+
+#### Expose Transform
+
+The [*Expose Transform*](expose-transform.md) tool is an object (a controller) which will measure and **expose angles, orientations, coordinates and distances between two layers**.
+
+!!! hint
+    The [IK effect](autorig.md#ik-fk) on controllers exposes the distance between the end and the root of the limb, which may be very useful with the connector, to connect anything to the bending of the limb.
+
+###
 
 ## How to set the connector up
+
+### Quick setup
+
+To set the connector up ver quickly, you can do it the quick way:
+
+1. It is advised to first add the needed keyframes on the slave properties, though this can be done or modified afterwards. Just animate the slave property as you need it to change when the master (controller) property goes from its minimum to its maximum.
+2. Select the slave properties in the composition
+3. Click the "Connector" button
+
+Duik will create or use any preexisting "Connector" controller, and add a slider in the effects of this layer. This slider is a simple percent ranging from 0 to 100 which will control the selected properties.  
+This is the simplest and quickiest way to use the connector.  
+If you need to have the controller in another composition, you can either use the "Extract controllers" tool from the parent composition, or just copy and paste the controller to the new composition, and link the percent with an expression, simply using the pickwhip.
+
+Read further to learn how to do more advanced stuff with the connector, in the additionnal panel.
+
+### Standard setup
+
+Using the standard setup, you can do more things than the quick setup, like connecting from a composition to another, and be able to choose almost _any property_ as a controller (see the section above, [Property types handled by the connector](#property-types-handled-by-the-connector)).
 
 1. It is advised to first add the needed keyframes on the slave property, though this can be done or modified afterwards. Just animate the slave property as you need it to change when the master property goes from its minimum to its maximum.
 2. a. Select the master property in the timeline, and click on "Pick Master Property". The name of the master property will be shown on the button.  

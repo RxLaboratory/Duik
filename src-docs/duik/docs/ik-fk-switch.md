@@ -1,4 +1,4 @@
-# IK/FK Switch
+# ![Constraints Icon](img/duik-icons/ikfk-icon-r.png) IK/FK Switch
 
 *IK/FK Switch* is an easy way to switch between IK and FK during the animation, if the layers have been rigged by Duik Bassel.
 
@@ -13,5 +13,7 @@ The switch happens in two steps:
 2. Duik actually switches between the IK and the FK, adding keyframes at the current time.
 
 ## Additionnal Panel
+
+![animation tool panel](img\duik-screenshots\S-Animation\S-Animation-Tools\Ikfk-additionnalpanel.PNG)
 
 In the additionnal panel, you can manually snap FK on the IK or the inverse, without actually switching between IK and FK, if ever you need it.

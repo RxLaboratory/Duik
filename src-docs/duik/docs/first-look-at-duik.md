@@ -4,11 +4,11 @@
 
 ## Help
 
-If you need help, click on the top right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
+If you need help, click on the bottom right button in Duik to open the [contextual help](contextual-help.md), or hold the [Shift] button on your keyboard while clicking on any button to get some [help](contextual-help.md).
 
 Take a look at the [frequently asked questions](duik-faq.md) if you don't find a solution to your issue in this user guide.
 
-If you're still stuck, come and ask for help on [the official forum](https://forum.rainboxprod.coop) or on [Discord](https://discord.gg/hNuKny8)!
+If you're still stuck, come and ask for help on [the official forum](https://forum.rainboxprod.coop) or on [our live chat server](http://chat.rainboxprod.coop)!
 
 ## How Duik works
 
@@ -54,7 +54,7 @@ What is important when working with graphics is the viewport. Duik is as small a
 
 Duik is a comprehensive tool set for rigging and animation. This means there are a **lot** of tools available, but they are categorized in some useful panels, depending on what you're doing (animating, rigging, using cameras...)
 
-![](https://raw.githubusercontent.com/Rainbox-dev/DuAEF_Duik/master/docs/media/wiki/screenshots/panels/topBar.PNG)
+![](img/duik-screenshots/General/topBar.png)
 
 Each panel can be displayed by clicking on one of the top buttons.  
 The first button, on the left, opens a very simple yet useful [***notes editor***](notes-editor.md).  
@@ -65,8 +65,26 @@ The other buttons display the available panels:
 - [***Animation***](animation.md)
 - [***Camera***](camera.md)
 - [***Import and Export tools***](i-o.md)
+
+On the bottom bar, you'll find some other useful buttons:
+
+![](img/duik-screenshots/General/bottomBar.png)
+
+The ***RX*** icon opens the [*Rainbox Lab.*](https://rainboxlab.org) website where you can find useful information about Duik and other tools.
+
+You can also read the version of Duik you're using, and the two buttons at the right open two other panels:
+
 - [***Settings***](settings.md)
 - [***Help***](contextual-help.md)
+
+#### Individual panels
+
+As Duik is made of a lot of panels and sub-panels, depending on your workflow, sometimes you may lose time constantly switching from one panel to another, or just finding a tool you're not used to. As there are as many workflows as users, to address this issue Duik now comes with a lot of optionnal, individual and [dockable panels](install-duik.md), which you can use as stand-alone scripts. This is a great way to organize your workspace and keep several different panels of Duik opened at once.
+
+![](img/duik-screenshots/General/individual-panels.jpg)
+
+!!! tip
+    Don't forget the *stacked* mode for After Effects panels, which can be nice to keep all your Duik panels at hand.
 
 ### User Experience (UX)
 
@@ -85,6 +103,18 @@ Of course, Duik does not want you to be or feel limited to what you can do. Alth
 
 Duik can also be personalized through some [settings](settings.md) so you can adapt it to your tastes, even if you have very bad tastes.
 
+### Rookie, standard or expert mode
+
+As Duik includes a lot of tools, it has been decided to filter them and adapt the user interface depending on the level of the user, to make it easier for beginners, while quicker and more complete to the most advanced users.
+
+There are three different modes for the user interface, depending on your level:
+
+- ***Rookie*** is the simplest one, recommended if this is the first time you use Duik Bassel. Only the most used and simplest tools are available, and the user interface is thought to be as easy to use as possible.
+
+- ***Standard*** has all the tools available, in a nice and easy-to-use user interface.
+
+- ***Expert*** is the smallest mode, and may be a bit more complex to use as there are less texts to explain what do the buttons do.
+
 ## What Duik does in After Effects
 
 The After Effects features mainly used by Duik are:
@@ -102,12 +132,14 @@ The After Effects features mainly used by Duik are:
 Although Duik uses existing layer types in After Effects (mostly shape layers and null objects), the layers it creates have a specific use and can be considered as new layer types.
 Layers created by Duik have a marker at their beginning, showing how Duik uses them (their "Duik Type"), and containing important data that Duik needs to work with them. **Do not remove these markers** (but you can move them away, even before the beginning of the comp to hide them, if you find them annoying).
 
-The types defined by Duik are:
+The types defined by Duik are: 
+
 - [Controllers](controllers.md) can be shape layers or null objects (depending on a setting in the [controller editor](controller-tools.md) panel). They are used to manipulate and animate compositions rigged by Duik.
 - [Structures](structures.md) are shape layers used to actually rig characters and props. They should not be manipulated by the animator and can be hidden as soon as the rigging process is finished.
 - [Bones](bones.md) are shape layers which control spatial properties of effects or bezier shapes and masks. They are usually parented to Structures to be rigged and animated, but sometimes can be animated themselves just to control the position of an effect, or parent it to anything else.
 - [Locators](parent-accross-compositions.md) are null objects used to expose the absolute transformations of another layer in a composition, and to create links between layers and compositions.
 - (Spatial) [Effectors](effector.md) are a special type of controllers used to drive properties and motion depending on spatial coordinates.
+
 
 There are other types of layers used by Duik, which are more specific to some tools.
 

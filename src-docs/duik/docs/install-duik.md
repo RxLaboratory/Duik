@@ -2,52 +2,59 @@
 
 # Supported versions of After Effects 
 
-## Tested
-
 Duik has been tested and is working with all versions of After Effects since CS6. That means it works correctly on:
 CS6 (11), CC (12), CC2014 (13), CC2015 (13.5), CC2017 (14), CC2018 (15), CC2019 (16).
 
-Note: CS6 has a lot of issues with Script Panels like the one used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the UI issues you may have... You also have to know that the performance is pretty poor with CS6.
+!!! note
+    CS6 has a lot of issues with the Script Panels like the ones used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the issues you may have with the UI…
 
-## Untested
-
-Note that it may also work on CS4, CS5, and CS5.5 but we do not test it on these versions. Just try if you still use one of those.
-
-## Not supported
-
-All versions before CS4 won't be able to correctly run Duik, sorry! It's time to update...
+!!! warning
+    All versions before CS6 can not run Duik, sorry! It’s time to update…
 
 # Installation
 
-**1 - Download** Duik from the [official website](https://rainboxprod.coop/en/tools/duik/).
+## **1 - Download** Duik from the [official website](https://rainboxprod.coop/en/tools/duik/).
 
 
-**2 - Unzip** the files you have downloaded.
+## **2 - Unzip** the files you have downloaded.
+
+You'll find several folders and files.
+
+- *"README.txt"* contains a lot of information to help you get started with Duik.
+- The *Help* folder contains this help pages. Double click on the file "index.html" to open it.
+- The *Tools* folder contains some tools for other third-party software, like a script to export TVPaint animations.
+- The *ScriptUI Panels* folder contains the actual *Duik Bassel* script you need to install.
+- The *Optionnal Panels* folder contains [optionnal individual panels](first-look-at-duik.md#individual-panels) to use with Duik. You can choose to install any of them or not at all.
 
 
-**3 -** There are several ways to install Duik very easily:  
+## **3 -** There are several ways to install Duik very easily:  
 
-a. Copy all the files to:
+### a. Copy the files
+
+Copy all the files from the *ScriptUI Panels* folder to:
 
 - Windows: `C:\Program Files\Adobe\Adobe After Effects CC\Support Files\Scripts\ScriptUI Panels\`  
-- Mac OS: `/Applications/Adobe After Effects CC/Scripts/ScriptUI Panels`  
+- Mac OS: `/Applications/Adobe After Effects CC/Scripts/ScriptUI Panels`
+
+You can also copy the [optionnal individual panels](first-look-at-duik.md#individual-panels) of your choice from the *Optionnal Panels* to the same folders.
+
 You may need administrator privileges to install Duik this way. If you don't have them, see the other ways below.
 
 !!! Warning
     With the other installation methods, some features using third party tools, like transcoding sound when exporting to Adobe Audition, may not work correctly.
 
-b. This method works only on the most recent versions of After Effects (since CC2018):  
+### b. Shortcut for After Effects CC2018 and more recent
 
 - Open After Effects  
 - *Windows*: Holding the [Alt] and [Shift] keys, drag and drop the file `Duik Bassel.jsx` onto the project panel.  
 - *Mac OS*: Holding the [Options] and [Shift] keys, drag and drop the file `Duik Bassel.jsx` onto the project panel.  
 
-c. This method works only on the latest versions of After Effects (since CC2019):  
+### c. Using the menu for After Effects CC2019 and more recent
 
 - Open After Effects  
 - Use the `File/Scritps/Install ScriptUI Panel...` menu to select and install `Duik Bassel.jsx`.  
 
-**4 - Restart** After Effects and Duik will be available in the "Window" menu.
+## **4 - Restart** After Effects and Duik will be available in the "Window" menu.
 
 # Without installation 
 

@@ -1,4 +1,6 @@
-# Import TVPaint Camera
+# ![import TVPaint Camera Icon](img\duik-icons\tvpcam-icon-r.png) Import TVPaint Camera
+
+![import tvpaint cam panel](img\duik-screenshots\S-Camera\ImportTVPaint-panel.PNG)
 
 Duik can re-create any TVPaint camera animation in After Effects.
 
@@ -7,9 +9,15 @@ Duik can re-create any TVPaint camera animation in After Effects.
 1. Export the camera from TVPaint (this is done from the camera settings in TVPaint).
 2. This camera can be imported along with its animation - position, scale, rotation - in After Effects.
 
-Once the camera has been imported, you can copy/paste its animation on a camera created with the 2D Camera tool of Duik: the position can be copied to the position of the camera or the pan, scale on the zoom or truck in/out, and rotation on the tilt. Cf. 2D Camera.
+Once the camera has been imported, you can copy/paste its animation on a camera created with the [2D Camera](camera-2d.md) tool of Duik:
+
+- Copy the position property either to the position of the camera or the pan effect
+- Copy the scale property either on the zoom or truck in/out effect
+- Copy the rotation on the tilt effect.
 
 ## Additionnal panel
+
+![import tvpaint cam option](img\duik-screenshots\S-Camera\ImportTVPaint-optn.PNG)
 
 - There are three ways to re-create the camera in After Effects:
 

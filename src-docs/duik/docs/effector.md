@@ -1,4 +1,4 @@
-# Effector
+# ![effector Icon](img\duik-icons\automation\effector-icon-r.png) Effector
 
 The "Effector" is a way to control properties depending on a spatial effector.
 

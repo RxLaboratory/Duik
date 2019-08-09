@@ -4,7 +4,81 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 ## 16.1.0 (in development)
 
-This part will be completed when 16.1.0 will be released... Be patient ;)
+#### New (UX/UI)
+
+- Duik is now available split in several optionnal pannels. This means each tab of Duik can be now in its own panel and docked separately into the user interface of After Effects.
+
+#### New (Links & Constraints)
+
+- A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
+- The [***Auto-Parent***](auto-parent.md) tool helps you parent layers very quickly.
+- The additional panel for the [***Bone***](bones.md) now includes a button to select and show or hide all the bones in the composition.
+- The [***Connector***](connector.md) now works with a spatial effector, a texture effector or the new [***Expose Transform***](expose-transform.md) tool too.
+- The [***Expose Transform***](expose-transform.md) tool is very useful with the [*Connector*](connector.md) or to build your own expressions and automate a lot of stuff.
+- The [IK effect](autorig.md#ik-fk) on controllers now exposes the distance between the end and the root of the limb, which may be very useful with the connector or in your own expressions.
+
+#### New (Automations)
+
+- The new [***Effector Map***](effector-map.md) tool is able to connect any property to a texture effector.
+
+#### New (Controllers)
+
+- A [*tag controller*](controller-tools.md) tool to set any layer so Duik can recognise it as a controller (very useful for the [*extract controllers*](controller-tools.md#extract-controllers) tool for example).
+- Hold the [Alt] button when creating controllers to create only one controller centered on the average positions of the selected layers.
+- Hold the [Ctrl] button to automatically parent the selected layers to the newly created controller(s).
+
+#### New (Other rigging tools)
+
+- A tool to [***Align Layers***](rigging-tools.md#align-layers) in the rigging tools panel.
+- With the [***Edit mode***](rigging-tools.md#toggle-edit-mode), you can (un/re)parent all the children of a layer.
+- You can [***Remove expressions***](rigging-tools.md#remove-expressions) while keeping the post-expression value.
+- It is easy to [***Copy & Paste Expressions***](rigging-tools.md#copy-paste-expressions) without changing the current value of several properties at once with the copy and paste expressions buttons.
+- Some other advanced rigging tools have been added, useful for those who create their own expressions or scripts (expert mode only):  
+    - You can get some [***Property Info***](rigging-tools.md#get-property-info) about the selected property, like its index, its matchName, the expression link to it, etc.
+    - A [***Scriptify expression***](rigging-tools.md#scriptify-expression) tool makes it quick to include an expression as a string in a .jsx script.
+
+#### New (Other)
+
+- Reimplemented and improved the [_TVPaint_] import tool from Duik 15. Duik now also imports JSON exported from TVPaint 11+, in a simpler and stabler way than the script provided by TVPaint (and with the ability to choose which layers to import).
+- Added **German translation**.
+- The interpolation adjustment tools in the [***Keyframes***](keyframe-tools.md) has been greatly improved, with sliders for velocity and buttons with useful predefined values.
+
+#### Improvements
+
+- The [_Connector_](connector.md) can now be used in a single click (creates a controller layer automatically).
+- The [_Connector_](connector.md) User Interface for the additionnal panel has been improved a bit to be clearer and easier to use.
+- When used on opacities, the [_Connector_](connector.md) automatically makes the layer visible.
+- When [_Structures_](structures.md) are created with something selected in the composition (Bezier paths, puppet pins, or layers), Duik will try to create these Structures on the selection and name them after the selected elements.
+- If you hold the [Ctrl] key and there was a selection (path, pins or layers) in the composition when creating [ _Structures_](structures.md), Duik will automatically link (parent or expression) the selection to the _Structures_.
+- The head controller with the [_Autorig_](autorig.md) now controls the head position too.
+- The preferences (and language files) of Duik are now saved by default in a "Duik" subfolder of your "Documents" folder, instead of directly in the "Documents" folder. You can still change the location of the preferences in the settings panel of Duik.
+- The [_Structures_](structures.md) colors for predefined limbs have been improved to better show the hierarchy.
+- The User Interface has been tweaked to fix some details and improve the overall User Experience.
+- All buttons for showing or hiding stuff (Structures, bones, controllers...) can now invert the visibility with holding the [Alt] button, instead of showing or hiding them all.
+- The [_Structures_](structures.md) layer names are now translated to the language set in the settings (if the translation file is up-to-date).
+- The [_Path Constraint_](path-constraint.md) effect now has a "*Path Offset*" option.
+- The [*Add Bones*](bones.md) button now creates a single bone if nothing is selected, which you can then use any way you want.
+
+#### Fixes
+
+- The version of Duik is now checked correctly (even for alpha and beta tests), and there is no warning if the version installed is the same than the available one.
+- The [*extract controllers*](controller-tools.md#extract-controllers) tool now takes the precomposition start time into account in the links, thus you can safely move the precomposed character in time.
+- The [*Search and replace*](rigging-tools.md) now correctly ignores locked layers.
+- Adding [*Bones*](bones.md) on shapes on a layer which already has some effects now works correctly.
+- The [*Parent Constraint*](parent-constraint.md) now works correctly when the composition start time is not 0.
+- [*Auto-rig*](autorig.md) freezing when there's only one layer selected.
+- Fixed some bugs when creating [*IK*](autorig.md) on standard layers instead of _Structures_.
+- The show/hide button for [*Structures*](structures.md) now works correctly.
+- Fixed the scale expression for the [*2D Camera*](camera-2d.md).
+- The [*Wheel*](wheel.md) and [*Parent Constraint*](parent-constraint.md) now correctly generate motion blur (which can be adjusted to fix performance issues).
+- Fixed animations not [importing](import.md)  when interpolation values are invalid.
+- Fixed 3D [Controllers extraction](controller-tools.md).
+- The [*List*](duik-list.md) does not anymore add an offset on the value when added on a property without keyframes.
+- The [*Move Away*](move-away.md) does not generate an expression error anymore when the layer is at the same location as its parent.
+- Some checkboxes not working in the UI are fixed.
+- Duik is now launched correctly on first launch if the *File and Network Preference* of After Effects was unchecked.
+- The [*Walk Cycle*](alk-cycle.md) is now applied correctly when controllers are null layers.
+- Controllers are extracted without generating expression errors when using master properties.
 
 ## 16.0.12
 
@@ -31,9 +105,11 @@ This part will be completed when 16.1.0 will be released... Be patient ;)
 #### Improvements
 
 - [Alt + Click] on the [*Zero*](zero.md) button resets the position, rotation and scale of the layer.
+- The User Interface has been tweaked to make it always better.
 
 #### Fixes
 
+- When picking properties with Duik tools, if there is a disabled expression, it stays disabled instead of being enabled by the tool.
 - UI: The buttons can now be clicked anywhere and not only on the text or the icon (except on CS6).
 - Fixed the issue when sometimes two [*Bones*](bones.md) were created for the same puppet pin.
 - Fixed the expressions for the [*walk cycle*](walk-cycle.md) with the new expression engine. If errors are still generated, you can jut ignore them, they'll disappear as soon as you use the controller.

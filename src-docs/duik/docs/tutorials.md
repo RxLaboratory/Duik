@@ -11,7 +11,11 @@ We're making official tutorials, and there are a lot of other tutorials on the i
 
 - English
 
-    [**Character Rigging course with Duik Bassel**](https://en.tuto.com/after-effects/the-official-character-rigging-course-with-duik-bassel-after-effects,115371.html?cc=vyKT3i) (8h56mn).
+    [**The official character rigging course with Duik Bassel**](https://en.tuto.com/after-effects/the-official-character-rigging-course-with-duik-bassel-after-effects,115371.html?cc=vyKT3i) (9h).
+
+- Français
+
+    [**Introduction au rigging**](https://en.tuto.com/after-effects/the-official-character-rigging-course-with-duik-bassel-after-effects,115371.html?cc=vyKT3i), la conférence de Duduf en 2015 (1h).
 
 ### Animation Course
 

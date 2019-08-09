@@ -1,6 +1,6 @@
 # About
 
-*DuAEF* is a toolset for After Effects which includes (most of) the tools [Duduf](http://duduf.com) & [Rainbox](https://rainboxprod.coop) develop for their productions.
+*DuAEF | After Effects Framework* is a toolset for After Effects which includes (most of) the tools [Duduf](http://duduf.com) & [Rainbox](https://rainboxprod.coop) develop for their productions.
 
 ## End User Tools included in *DuAEF*
 
@@ -32,3 +32,8 @@ Any help to develop *DuAEF*, *Duik* and all the tools is very appreciated!
 We need **feedback**, **feature requests**, **bug reports**, **translations**, **code contribution**... Anything, really! Whether you're a developer or not, anyone can contribute!
 
 Read the [contributing guide](contributing-guide.md) to get started.
+
+## Credits
+
+DuAEF could not exist with the contributions of the developpers, the moral and financial support of its users, and the use of other free tools permitted by open source and free licenses.  
+The complete list of supporters and contributors if [here](credits.md), we can not thank you enough for what you did for the animation community.
