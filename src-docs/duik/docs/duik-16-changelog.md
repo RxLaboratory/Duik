@@ -4,6 +4,10 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 ## 16.1.0 (in development)
 
+#### New (UX/UI)
+
+- Duik is now available split in several optionnal pannels. This means each tab of Duik can be now in its own panel and docked separately into the user interface of After Effects.
+
 #### New (Links & Constraints)
 
 - A tool to [***Separate Dimensions***](separate-dimensions.md) of any property, including colors which can be animated both as RGB or HSL.
