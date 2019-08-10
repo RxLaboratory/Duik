@@ -54,9 +54,18 @@ What is important when working with graphics is the viewport. Duik is as small a
 
 Duik is a comprehensive tool set for rigging and animation. This means there are a **lot** of tools available, but they are categorized in some useful panels, depending on what you're doing (animating, rigging, using cameras...)
 
+When launched, Duik displays a welcome screen showing these categories.
+
+![](img/duik-screenshots/General/welcomeScreen.png)
+
+!!! tip
+    This welcome screen can be [de-activated](settings.md) to get to the latest used panel as soon as Duik is launched, but this greatly increases its launch time.
+
+Later, these categories are always available on the top bar.
+
 ![](img/duik-screenshots/General/topBar.png)
 
-Each panel can be displayed by clicking on one of the top buttons.  
+Each panel can be displayed by clicking on one of these top buttons.  
 The first button, on the left, opens a very simple yet useful [***notes editor***](notes-editor.md).  
 
 The other buttons display the available panels:
