@@ -47,8 +47,8 @@ QString Builder::build(Script *s)
         QString trimmedLine = line.trimmed();
 
         //check if there's an include
-        QRegularExpression reInclude("#include +");
-        QRegularExpression reIncludePath("#includepath +");
+        QRegularExpression reInclude("#include +(.+);?");
+        QRegularExpression reIncludePath("#includepath +(.+);?");
 
         //if #include
         if (reInclude.match(trimmedLine).hasMatch())
