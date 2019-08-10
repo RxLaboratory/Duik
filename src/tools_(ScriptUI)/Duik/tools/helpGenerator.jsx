@@ -36,7 +36,7 @@ Each file will be converted to a string, stored in a variable named after the fi
 	}
 
 	var scriptFolder = new File($.fileName).parent.parent;
-	var helpFolder = Folder.selectDialog("Please select the root folder of the help files (wiki/duik/contextual-help)");
+	var helpFolder = new Folder(scriptFolder.parent.parent.parent.absoluteURI + '/src-docs/duik/contextual-help/');
 	if (!helpFolder) return;
 	var helpContent = helpFolder.getFiles(isFolder);
 
