@@ -87,8 +87,23 @@ function loadSettings ()
 
 	//create Debug log
 	var settingsPath = settings.file.path;
-	debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt');
+	if (DuAEF_DUIK.debugLog == null)
+	{
+		var level = DuAEF.Debug.LogLevel.WARNING;
+		if (DuAEF.debug) level = DuAEF.Debug.LogLevel.VERBOSE;
+		debugLog = new DebugLog(settingsPath + '/Duik_debug_log.txt',true,level,true);
+		DuAEF_DUIK.debugLog = debugLog;
+		
+	}
+	else 
+	{
+		debugLog = DuAEF_DUIK.debugLog;
+	}
+	DuAEF.Debug.DebugLog = debugLog;
+
 	debugLog.startTimer("Loading Duik");
+	debugLog.log(DuAEF.scriptName + " | v" + DuAEF.scriptVersion);
+	
 
 	//settings folder
 	var settingsPath = settings.file.parent.absoluteURI + '/';
@@ -146,6 +161,8 @@ function loadSettings ()
 
 function checkUpdates()
 {
+	debugLog.log("Checking for Duik updates.");
+
 	if (DuAEF.debug || !settings.data.checkUpdatesAtStartup)
 	{
 		createUI();
@@ -158,6 +175,7 @@ function checkUpdates()
 	//if we've checked in the last 24 hours
 	if(now - lastCheck < 24*60*60*1000)
 	{
+		debugLog.log("Updates already checked today.");
 		createUI();
 		return;
 	}
@@ -185,9 +203,13 @@ function checkUpdates()
 	//if current version is higher than the new version on the server
 	if (DuAEF.DuJS.Version.compare(version, newVersion))
 	{
+		debugLog.log("Current version is up-to-date.");
 		createUI();
 		return;
 	}
+
+	debugLog.log("New version available: " + newVersion);
+	debugLog.log("Current version is: " + version);
 
 	var ui_newVersionGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
 	ui_newVersionGroup.alignment = ['fill','fill'];
@@ -209,6 +231,7 @@ function checkUpdates()
 
 	ui_newVersionOpenButton.onClick = function ()
 	{
+		debugLog.log("Opening website.");
 		DuAEF.DuSystem.openURL(item.link);
 		ui_newVersionGroup.visible = false;
 		createUI();
@@ -227,6 +250,7 @@ function checkUpdates()
 
 	ui_newVersionIgnoreButton.onClick = function ()
 	{
+		debugLog.log("Ignored new version.");
 		ui_newVersionGroup.visible = false;
 		createUI();
 	}
