@@ -32,6 +32,12 @@
 DuAEF.Debug = {};
 
 /**
+ * Set this attribute to a DebugLog you have created to automatically add some debug infos to the log (like catched errors).
+ * @type {DebugLog|null}
+ */
+DuAEF.Debug.DebugLog = null;
+
+/**
  * The log levels
  * @enum {int}
  * @readonly
@@ -44,6 +50,46 @@ DuAEF.Debug.LogLevel =
 	CRITICAL: 3,
 	FATAL: 4,
 	NO_DEBUG: 5
+}
+
+/**
+ * Logs a message to DuAEF.Debug.DebugLog if it has been set.
+ * @param {string} message - The message to log
+ * @param {DuAEF.Debug.LogLevel} [level=DuAEF.Debug.LogLevel.DEBUG] - The level of the message
+ */
+DuAEF.Debug.log = function (message,level)
+{
+	if ( DuAEF.Debug.DebugLog != null ) DuAEF.Debug.DebugLog.log( message,level );
+}
+
+/**
+ * This methods shows an alert with an error thrown if DuAEF.debug is set to true, and logs it in DuAEF.Debug.DebugLog if it has been set.
+ * @param {Error} error - An error thrown and catched
+ */
+DuAEF.Debug.error = function (error)
+{
+	var errorString = 'An error has occured in file\n' + error.fileName + '\nat line ' + error.line + '\n\n' + error.description;
+	DuAEF.Debug.log( errorString, DuAEF.Debug.LogLevel.WARNING );
+	if ( DuAEF.debug )
+	{
+		alert( errorString );
+	}
+}
+
+/**
+ * Runs a method safely, i.e. enclosed in a try...catch, and logs any error thrown.
+ * @param {function} callback - The method to run
+ */
+DuAEF.Debug.safeRun = function (callback)
+{
+	try
+	{
+		callback();
+	}
+	catch ( error )
+	{
+		DuAEF.Debug.error(error);
+	}
 }
 
 /**
@@ -104,6 +150,8 @@ function DebugLog(pathOrFile,clear,logLevel,enabled)
 
 	this.elapsed = 0;
 	this.running = false;
+
+	this.log( "\n=========== NEW LOG =============\n=================================" , DuAEF.Debug.LogLevel.NO_DEBUG);
 }
 
 /**
