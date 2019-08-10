@@ -25,6 +25,7 @@ QString Builder::build(Script *s)
     QString builtScript = "";
 
     QFile *scriptFile = s->file();
+    QFileInfo scriptInfo(*scriptFile);
 
     //Check script file integrity
     if (!scriptFile->exists())
@@ -36,6 +37,18 @@ QString Builder::build(Script *s)
     {
         return builtScript;
     }
+
+    //add a comment header with the original name of the file
+
+    QString fileName = scriptInfo.baseName();
+    QString spacers = "";
+    for (int i = 0; i < fileName.count(); ++i)
+    {
+        spacers += "-";
+    }
+    builtScript += "// ==================== |-" + spacers + "-| ====================\n";
+    builtScript += "// ==================== | " + fileName + " | ====================\n";
+    builtScript += "// ==================== |-" + spacers + "-| ====================\n\n";
 
     //go with data
     int lineNumber = 0;
