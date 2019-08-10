@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-DEFINES += APPVERSION=\\\"0.0.1-Alpha\\\"
+DEFINES += APPVERSION=\\\"0.0.2-Alpha\\\"
 
 TARGET = Dubuilder
 TEMPLATE = app
