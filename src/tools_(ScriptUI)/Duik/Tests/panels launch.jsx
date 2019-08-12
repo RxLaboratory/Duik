@@ -1,1 +1,3 @@
-app.executeCommand(app.findMenuCommandId("Duik Bassel.1.jsx"))
+$.level = 2;
+alert(Folder.appPackage);
+debugger;

@@ -757,6 +757,7 @@ DuAEF.DuAE.App = {};
 	* @readonly
 	* @type {float}
 	*/
+	DuAEF.DuAE.App.versionAsString = v[1];
 	DuAEF.DuAE.App.version = parseFloat(v[1]);
 
 	/**
@@ -869,15 +870,37 @@ DuAEF.DuAE.App.endUndoGroup = function ()
 
 /**
  * Runs app.executeCommand in a safer way, taking care of undogroups.
- * @param {int} commandID - The ID of the command as given by app.findMenuCommandID()
+ * @param {int|string} commandID - The ID of the command as given by app.findMenuCommandID(), or if it is a string, the name of the command.
  */
 DuAEF.DuAE.App.executeCommand = function(commandID)
 {
+	if (commandID === "") return;
+	if (DuAEF.DuJS.typeof(commandID) == 'string') commandID = app.findMenuCommandId(commandID);
 	//the command will mess undo groups up if there already is one opened.
 	openedUndoGroup = DuAEF.DuAE.App.openedUndoGroup;
 	DuAEF.DuAE.App.endUndoGroup();
 	app.executeCommand(commandID);
 	if (openedUndoGroup) DuAEF.DuAE.App.beginUndoGroup(DuAEF.DuAE.App.undoGroupName);
+}
+
+/**
+ * Opens a ScriptUI Panel if it is installed, or displays an alert otherwise.
+ * @param {string} panelScriptName - The Script name of the panel "script.jsx"
+ */
+DuAEF.DuAE.App.openScriptUIPanel = function (panelScriptName)
+{
+	if ( panelScriptName == "") return;
+	var scriptUIFile = new File(Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + panelScriptName );
+	if (!scriptUIFile.exists)
+	{
+		scriptUIFile = new File(Folder.userData.absoluteURI + '/Adobe/After Effects/' + DuAEF.DuAE.App.versionAsString + '/Scripts/ScriptUI Panels/' + panelScriptName);
+	}
+	if (!scriptUIFile.exists)
+	{
+		alert("The panel " + panelScriptName + " is not installed.");
+		return;
+	}
+	DuAEF.DuAE.App.executeCommand(panelScriptName);
 }
 
 /**

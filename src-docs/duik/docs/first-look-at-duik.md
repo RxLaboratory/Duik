@@ -92,6 +92,8 @@ As Duik is made of a lot of panels and sub-panels, depending on your workflow, s
 
 ![](img/duik-screenshots/General/individual-panels.jpg)
 
+When these stand-alone panels are installed, you can also quickly open them by [Alt] + Click on the tab buttons in the Duik Bassel main panel.
+
 !!! tip
     Don't forget the *stacked* mode for After Effects panels, which can be nice to keep all your Duik panels at hand.
 
