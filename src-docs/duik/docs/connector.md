@@ -54,7 +54,9 @@ The [*Expose Transform*](expose-transform.md) tool is an object (a controller) w
 !!! hint
     The [IK effect](autorig.md#ik-fk) on controllers exposes the distance between the end and the root of the limb, which may be very useful with the connector, to connect anything to the bending of the limb.
 
-###
+#### IK
+
+If you pick a controller with an IK effect, the connector is able to connect either the IK Length, the stretch of the upper part of the limb or the stretch of the lower part of the limb.
 
 ## How to set the connector up
 
