@@ -1,0 +1,1 @@
+app.executeCommand(app.findMenuCommandId("Duik Bassel.1.jsx"))
