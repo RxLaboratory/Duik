@@ -79,7 +79,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Move Away*](move-away.md) does not generate an expression error anymore when the layer is at the same location as its parent.
 - Some checkboxes not working in the UI are fixed.
 - Duik is now launched correctly on first launch if the *File and Network Preference* of After Effects was unchecked.
-- The [*Walk Cycle*](alk-cycle.md) is now applied correctly when controllers are null layers.
+- The [*Walk Cycle*](walk-cycle.md) is now applied correctly when controllers are null layers.
 - Controllers are extracted without generating expression errors when using master properties.
 
 ## 16.0.12
