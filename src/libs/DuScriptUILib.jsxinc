@@ -995,6 +995,7 @@ DuAEF.DuScriptUI.addCheckBox = function( container, text, image, helpTip, imageC
     duCheckBox.imageOver = imageOver;
     duCheckBox.imageChecked = imageChecked;
     duCheckBox.onClick = function() {};
+    duCheckBox.onAltClick = function() {};
     duCheckBox.checked = duCheckBox.value = false;
     duCheckBox.textChecked = textChecked;
     duCheckBox.defaultText = text;
@@ -1103,6 +1104,11 @@ DuAEF.DuScriptUI.addCheckBox = function( container, text, image, helpTip, imageC
         DuAEF.Debug.safeRun(duCheckBox.onClick);
     }
 
+    duCheckBox.altClicked = function()
+    {
+        DuAEF.Debug.safeRun(duCheckBox.onAltClick);
+    }
+
     duCheckBox.highlight = function( e )
     {
         e.stopPropagation();
@@ -1135,7 +1141,11 @@ DuAEF.DuScriptUI.addCheckBox = function( container, text, image, helpTip, imageC
         else if ( outLine ) DuAEF.DuScriptUI.setBackgroundColor( outLine, DuAEF.DuJS.Color.Colors.DARK_GREY, true );
     }
 
-    duCheckBox.group.addEventListener( "mousedown", duCheckBox.clicked, true );
+    duCheckBox.group.addEventListener( "mousedown", function(e)
+    {
+        if ( e.altKey ) duCheckBox.altClicked();
+        else duCheckBox.clicked(e);
+    }, true );
     // Hack - CS6 Bug on mouseover with images
     if ( DuAEF.DuAE.App.version >= 11 && DuAEF.DuAE.App.version < 12 )
     {
@@ -3242,6 +3252,7 @@ DuAEF.DuScriptUI.createLayerPickerDialog = function( title )
  * @property {int} index - The currently visible tab.
  * @property {Group} buttonsGroup - The ScriptUI Group containing the buttons
  * @property {Group} mainGroup - The ScriptUI Group containing the tabs
+ * @property {string} scriptUIPanel - The file name ("script.jsx") of a scriptUI Panel. Alt+Click on this tab will open/close this panel.
  * @property {TabPanel~onChange} onChange - Called when the index changes.
  */
 
@@ -3354,6 +3365,8 @@ DuAEF.DuScriptUI.addTabPanel = function( container )
         tab.build = function( theTab ) {};
         tab.built = false;
 
+        tab.scriptUIPanel = "";
+
         tab.button = button;
 
         //add to the list
@@ -3365,6 +3378,11 @@ DuAEF.DuScriptUI.addTabPanel = function( container )
         button.onClick = function()
         {
             panel.setCurrentIndex( button.index );
+        }
+
+        button.onAltClick = function()
+        {
+            DuAEF.DuAE.App.openScriptUIPanel(tab.scriptUIPanel);
         }
 
         return tab;
