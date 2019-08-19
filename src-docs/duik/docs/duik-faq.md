@@ -66,6 +66,11 @@ To change the mode of the user interface and switch to _Normal_ or _Expert_ mode
 
 This is a bug in After Effects CC2014 and CC2014.1, it is not an issue from Duik. Update After Effects to CC2014.2, or upgrade to a newer version.
 
+### Duik worked well, but it won't start anymore. What can I do?
+
+Sometimes, the files Duik needs to run smoothly get corrupted, especially (but not only) on Mac OS. If this is the case, Duik may not even be able to start anymore, or may be showing a script alert at start.
+In this case, follow [the procedure described here](install-duik.md#fix-uninstall-duik) to re-initialize it.
+
 ## Changes between Duik Bassel, Duik 15 and older versions
 
 ### Duik 15 came with an installer, Duik Bassel is just a zip, why?
