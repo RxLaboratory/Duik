@@ -73,3 +73,5 @@ If for any reason Duik won't start anymore (this happens sometimes when the sett
 - Start the main panel of Duik from the *Window* menu.
 - A checkbox should be available allowing you to re-initialize Duik. Check it, then click on the button to open the preferences and re-enable the "*Allow scripts to write files...*" option.
 - A few alerts should be shown, as Duik wipes its own files to be re-initialized ;)
+
+If you want to remove Duik, and be sure to remove all the files it left behind, you'll have to remove its panels by yourself from the *ScriptUI Panels* and then run the *Uninstall Duik.jsx* script provided with Duik, throught the *File/Scripts/Run Script...* menu in After Effects.
