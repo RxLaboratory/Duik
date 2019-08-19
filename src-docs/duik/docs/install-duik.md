@@ -64,3 +64,12 @@ You'll always be able to run Duik without even installing it. This is a good way
 
 - Unzip all the files in any folder.  
 - Launch After Effects, and start Duik via the `File/Scripts/Run script file...` menu.
+
+# Fix / Uninstall Duik
+
+If for any reason Duik won't start anymore (this happens sometimes when the settings file gets corrupted for example, especially on Mac OS...), you can try to fix it with this simple procedure:
+
+- In the preferences of After Effects, disable the option "*Allow scripts to write files and access network*" which is either in the *General* section or the *Scripts and Expressions* section, depending on the version of After Effects.
+- Start the main panel of Duik from the *Window* menu.
+- A checkbox should be available allowing you to re-initialize Duik. Check it, then click on the button to open the preferences and re-enable the "*Allow scripts to write files...*" option.
+- A few alerts should be shown, as Duik wipes its own files to be re-initialized ;)

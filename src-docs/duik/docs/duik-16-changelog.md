@@ -9,6 +9,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Duik is now available split in several optionnal pannels. This means each tab of Duik can be now in its own panel and docked separately into the user interface of After Effects.
 - Individual panels can be opened by [Alt] + Click on the tab buttons.
 - Duik now uses a [welcome screen](first-look-at-duik.md#categorization) at startup, which greatly improves launch time.
+- In order to fix any problem with Duik, like its settings file getting corrupted sometimes on Mac, there's now [a way to re-initialize everything](install-duik.md#fix-uninstall-duik).
 
 #### New (Links & Constraints)
 
