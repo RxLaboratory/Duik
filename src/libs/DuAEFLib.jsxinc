@@ -27,18 +27,29 @@ DuAEF.version = "0.1.0-Beta";
 */
 DuAEF.debug = false;
 /**
-* Sets the name of the script using this instance of DuAEF.
+* The name of the script using this instance of DuAEF. Must be set by {@link  DuAEF.init}.
 * @memberof DuAEF
 * @type {string}
+* @readonly
 */
 DuAEF.scriptName = "DuAEF";
+
 /**
-* Sets the version of the script using this instance of DuAEF.<br />
-* 
+* The version of the script using this instance of DuAEF. Must be set by {@link  DuAEF.init}.
 * @memberof DuAEF
 * @type {string}
+* @readonly
 */
 DuAEF.scriptVersion = "0.0.0";
+
+/**
+* True if the script is run for the first time (new or the version has changed since last run)
+* @memberof DuAEF
+* @type {boolean}
+* @readonly
+*/
+DuAEF.scriptFirstRun = true;
+
 /**
  * The current DuAEF File
  * @readonly
@@ -46,6 +57,24 @@ DuAEF.scriptVersion = "0.0.0";
  * @type {File}
  */
 DuAEF.file = new File($.fileName);
+
+/**
+ * Enum for states.
+ * @readonly
+ * @enum {int}
+ */
+DuAEF.States =
+{
+	NOT_SET: -1,
+	INIT: 0,
+	RUNTIME: 1
+};
+
+/**
+ * The current state of the script
+ * @type {DuAEF.States}
+ */
+DuAEF.state = DuAEF.States.NOT_SET;
 
 /**
 * Includes binaries needed by some libraries, like pngquant for DuQuantLib or FFmpeg for DuFFmpegLib.<br />
@@ -82,19 +111,39 @@ DuAEF.bin = {};
 
 })();
 
-//low-level undocumented method
-//this method is called only once at runtime, to run some post-init setup
-//and any other delayed initialisation
-DuAEF.postInit = function ()
+/**
+ * This method has to be called once at the very beginning of the script, just after the inclusion of DuAEF <code>#include DuAEF.jsxinc</code>
+ * @param {string} [scriptName="DuAEF"] - The name of your script, as it has to be displayed in the UI and the filesystem
+ * @param {string} [scriptVersion="0.0.0"] - The version of your script, in the form "XX.XX.XX-Comment", for example "1.0.12-Beta". The "-Comment" part is optional.
+ */
+DuAEF.init = function (scriptName, scriptVersion)
 {
-	//run only once
-	if (DuAEF.postInit.done) return;
-	//do all post inits
-	DuAEF.Duik.Structure.postInit();
+	DuAEF.state = DuAEF.States.INIT;
 
-	DuAEF.postInit.done = true;
+	scriptName = def( scriptName, "DuAEF" );
+	scriptVersion = def( scriptVersion, "0.0.0" );
+	DuAEF.scriptName = scriptName;
+	DuAEF.scriptVersion = scriptVersion;
+
+	//check if this script has already been run once
+	// Check the version from latest run
+	if (app.settings.haveSetting(DuAEF.scriptName, "version"))
+	{
+		var prevVersion = app.settings.getSetting(DuAEF.scriptName, "version");
+		if (prevVersion == DuAEF.scriptVersion) DuAEF.scriptFirstRun = false;
+	}
 }
 
-//flag to run the post init only once
-DuAEF.postInit.done = false;
+/**
+ * This method has to be called once at the end of the script, when everything is ready and the main UI visible (after any prompt or setup during startup).
+ */
+DuAEF.enterRunTime = function ()
+{
+	app.settings.saveSetting(DuAEF.scriptName, "version", DuAEF.scriptVersion);
+	DuAEF.state = DuAEF.States.RUNTIME;
+
+	//do post init methods
+	DuAEF.Duik.Structure.postInit();
+}
+
 
