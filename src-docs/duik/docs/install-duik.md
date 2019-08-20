@@ -71,6 +71,9 @@ If for any reason Duik won't start anymore (this happens sometimes when the sett
 
 - In the preferences of After Effects, disable the option "*Allow scripts to write files and access network*" which is either in the *General* section or the *Scripts and Expressions* section, depending on the version of After Effects.
 - Start the main panel of Duik from the *Window* menu.
+
+![](img/duik-screenshots/General/fix-install.png)
+
 - A checkbox should be available allowing you to re-initialize Duik. Check it, then click on the button to open the preferences and re-enable the "*Allow scripts to write files...*" option.
 - A few alerts should be shown, as Duik wipes its own files to be re-initialized ;)
 
