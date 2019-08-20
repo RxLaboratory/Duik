@@ -1,8 +1,8 @@
-## ![Controller Icon](img/duik-icons/controller-hand-icon-r.png) Controllers
+# ![Controller Icon](img/duik-icons/controller-hand-icon-r.png) Controllers
 
 As the controllers are going to be the interface between the animator and the character, they have to be intuitive and easy to manipulate. That’s why Duik Bassel not only introduces new shapes to make them easier to recognize, but there is also visual feedback on the controllers to see what the controllers are doing! And of course, they can be easily personalized, you can change their colors and shapes as you wish.
 
-![Controllers GIF](https://rainboxprod.coop/rainbox/wp-content/uploads/controllers.gif)
+![Controllers GIF](img/examples/controllers.gif)
 
 ## Panel
 
@@ -18,3 +18,10 @@ There are 3 special shapes: the slider, the 2D slider and the angle controllers.
 
 !!! hint
     Controllers are standard shape layers. You can draw anything you want in the content of a controller, therefore using custom shapes is possible.
+
+## Shortcuts
+
+- **[Click]** on a controller inb the panel to create one per selected layer in the composition. Each controller will be located at the anchor point of the corresponding layer.
+- Hold **[Alt]** when clicking to create only one controller centered in all the selected layers in the composition.
+- Hold **[Ctrl]** when clicking to auyomatically parent the layer(s) to the new controller(s)
+- You can combine **[Alt] + [Ctrl]** to create only one controller and parent the layers.
