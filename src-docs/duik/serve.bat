@@ -1,3 +1,3 @@
 start "mkdocs server" cmd /c "mkdocs serve"
-timeout /t 5
-start http://127.0.0.1:8001
+timeout 5
+start cmd /c "explorer http://127.0.0.1:8001"
