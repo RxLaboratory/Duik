@@ -2,25 +2,20 @@
 
 # Controller Tools
 
-## ![select controller icon](img/duik-icons/selectcontroller_r.png) Select Controllers
+![controllers pannel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/Controllers-pannel.PNG)  
+This is the Controllers panel in *Normal* mode.
 
-![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/SelectController.PNG)
+## ![select controller icon](img/duik-icons/selectcontroller_r.png) Select Controllers
 
 Click the *Select controllers* button to select all the Controllers in the composition.
 
-
-
 ## ![show controller icon](img/duik-icons/showhand_r.png) Show / Hide Controllers
-
-![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ControllersShowHide.PNG)
 
 Shows or hides all (or selected) *Controllers* found in the composition.
 
 If there is no layer selected, this will show of hide all *Controllers* in the composition, or else it will use the layer selection.
 
 ## ![extract controller icon](img/duik-icons/extractcontrollers_r.png) Extract Controllers
-
-![select controller panel](img/duik-screenshots/S-Rigging/S-Rigging-Controllers/ExtractControllers.PNG)
 
 In most cases, it is easier to have rigs (for characters or other items) in their own precompositions, but this is not the most handy way to animate, especially when you have several characters in the same shot or if you need to see the background.
 
@@ -50,7 +45,7 @@ You can choose to extract controllers using expressions or Master Properties.
     3. Select this rigged precomposition, and extract controllers with Duik, using Master Properties.
     4. "Animation Comp" can now be duplicated; each new copy can have its own animation, and this way you can have as many animations as you wish with a single rig.
 
-## Tag Controllers
+## ![edit controller icon](img/duik-icons/taghand_r.png) Tag Controllers
 
 Sometimes, you may want to use custom layers as controllers (for example, if you designed it yourself in Photoshop, or want to use any existing layer as a controller).  
 In this case, you can use this _tag_ tool on these layers so Duik can recognise them as controllers when using other controller tools, like [*Extract controllers*](#extract-controllers).
