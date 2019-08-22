@@ -1,0 +1,99 @@
+// FUNCTIONS
+
+var namespaces = {
+    'Duik':{
+        'Rigging':{
+            'IK':"",
+            'Hominoid':"",
+            'Leg':"",
+            'Arm':"",
+            'Create_Controller':""
+        },
+        'Camera':{
+            '2D_Camera':""
+        }
+    }
+}
+
+var separators = /[\s,\.\/;:]+/;
+
+function buildCmd ()
+{
+    var userInput = ui_cmdEdit.text.toLowerCase();
+
+    if (userInput.length == 0 )
+    {
+        ui_cmdStatic.text = 'Start typing a command...';
+        return;
+    }
+
+    ui_cmdStatic.text = '';
+
+    userInputArray = userInput.split( separators );
+
+    var currentNamespace = namespaces;
+    var start = true;
+
+    for ( var i = 0, num = userInputArray.length; i < num; i++ )
+    {
+        var input = userInputArray[i];
+        for (name in currentNamespace)
+        {
+            if (name.toLowerCase().indexOf(input) == 0)
+            {
+                if (!start) ui_cmdStatic.text += " > ";
+                start = false;
+                ui_cmdStatic.text += name;
+                currentNamespace = currentNamespace[name];
+                break;
+            }
+        }
+    }
+}
+
+function processCmd()
+{
+    var cmdArray = ui_cmdStatic.text.split(' > ');
+    if (cmdArray.length == 0) return;
+
+    if (cmdArray[cmdArray.length - 1] == 'Leg')
+    {
+        var type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
+
+		app.beginUndoGroup('Duik | ' + "Create leg structure");
+
+		//DuAEF.DuAE.Project.setProgressMode(true);
+
+		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+
+		DuAEF.Duik.Structure.createLeg(true,true,true,true);
+
+		//DuAEF.DuAE.Project.setProgressMode(false);
+
+		app.endUndoGroup();
+    }
+    else if (cmdArray[cmdArray.length - 1] == 'Arm')
+    {
+        app.beginUndoGroup('Duik | ' + "Create arm structure");
+
+		DuAEF.DuAE.Project.setProgressMode(true);
+
+		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+
+		DuAEF.Duik.Structure.createArm(true,true,true,true,false);
+
+		DuAEF.DuAE.Project.setProgressMode(false);
+
+		app.endUndoGroup();
+    }
+}
+
+// UI
+ui_palette.alignChildren = ['fill','top'];
+var ui_cmdEdit = ui_palette.add('edittext');
+var ui_cmdStatic = ui_palette.add('statictext',undefined,'Start typing a command...');
+
+ui_cmdEdit.onChanging = buildCmd;
+ui_cmdEdit.onChange = processCmd;
