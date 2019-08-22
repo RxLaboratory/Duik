@@ -10,6 +10,9 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Individual panels can be opened by [Alt] + Click on the tab buttons.
 - Duik now uses a [welcome screen](first-look-at-duik.md#categorization) at startup, which greatly improves launch time.
 - In order to fix any problem with Duik, like its settings file getting corrupted sometimes on Mac, there's now [a way to re-initialize everything](install-duik.md#fix-uninstall-duik).
+- Added some buttons with useful links:  
+    - At the bottom of the panel: *Bug Report* and *Feature Request*
+    - In the help window: *Forum* and *Live Chat*
 
 #### New (Links & Constraints)
 
