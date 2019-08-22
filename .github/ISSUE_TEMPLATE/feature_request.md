@@ -1,21 +1,20 @@
-# Feature Request
-<!-- Please describe precisely here what is the feature you miss... -->
+---
+name: Feature request
+about: Suggest an idea
+title: ''
+labels: Enhancement
+assignees: ''
 
-### Tool
-<!-- Remove what is not concerned by this issue and keep only the tool this is about -->
-- DuAEF
-- Duik
-- Dugr
-- WuStoryboarder
+---
 
-### Steps
-<!-- Explain exactly here what you're doing, what's your workflow -->
-1. 
-2. 
-3. 
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
-### Expected behaviour
-<!-- Tell us what you expect the software to do -->
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-### Actual behaviour
-<!-- Telle us what it's actually doing instead of what you expect -->
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
+
+**Additional context**
+Add any other context or screenshots about the feature request here.
