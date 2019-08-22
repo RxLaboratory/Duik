@@ -16,6 +16,11 @@ Steps to reproduce the behavior:
 2. 
 3. 
 
+**Error description, if any**
+File: 
+Line number:
+Error message: 
+
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
