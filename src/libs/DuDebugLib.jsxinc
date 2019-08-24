@@ -64,7 +64,7 @@ DuAEF.Debug.log = function (message,level)
 
 /**
  * This methods shows an alert with an error thrown if DuAEF.debug is set to true, and logs it in DuAEF.Debug.DebugLog if it has been set.
- * @param {Error} error - An error thrown and catched
+ * @param {Error|string} error - An error thrown and catched
  */
 DuAEF.Debug.error = function (error)
 {
@@ -77,13 +77,15 @@ DuAEF.Debug.error = function (error)
 }
 
 /**
- * Runs a method safely, i.e. enclosed in a try...catch, and logs any error thrown.<br />
- * arguments can be added after the first parameter, they will be passed to the callback
- * @param {function} callback - The method to run
+ * Runs a method/script safely, i.e. enclosed in a try...catch, and logs any error thrown.<br />
+ * arguments can be added after the first parameter, they will be passed to the callback.<br />
+ * The callback is enclosed in a function to make sure it does not create global variables.
+ * @param {function|string} callback - The method to run, or a script as a string
  */
 DuAEF.Debug.safeRun = function (callback)
 {
-	try
+	var call = callback;
+	if (DuAEF.DuJS.typeof(callback) != 'string')
 	{
 		var args = [];
 		for (var i = 1, num = arguments.length; i < num; i++)
@@ -92,7 +94,13 @@ DuAEF.Debug.safeRun = function (callback)
 		}
 		var params = args.join(',');
 		var call = 'callback(' + params + ');'
-		eval(call);
+	}
+	
+	try
+	{
+		(function(){
+			eval(call);
+		})();
 	}
 	catch ( error )
 	{
