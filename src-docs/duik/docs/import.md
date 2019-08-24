@@ -40,6 +40,7 @@ Imports a rig previously exported in a JSON format (XML may be added too).
     - the animation exposure can optionnally be set directly on the frames instead of using time remapping,  
     - there is one level of precomposition less, so the resulting compositions are a bit cleaner,  
     - the camera is not imported with the clip, as it can be imported using the better [_TVPaint Camera_](import-tvpaint-camera.md) import tool, with more options and precision, and which can be set on a [_2D camera_](camera-2d.md) created by Duik.
+    - The Duik importer handles more blending modes than the one provided with TVPaint.
 
 ### TVPaint 11 and newer
 

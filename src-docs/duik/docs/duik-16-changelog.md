@@ -45,7 +45,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New (Other)
 
-- Reimplemented and improved the [_TVPaint_] import tool from Duik 15. Duik now also imports JSON exported from TVPaint 11+, in a simpler and stabler way than the script provided by TVPaint (and with the ability to choose which layers to import).
+- Reimplemented and improved the [_TVPaint_](import.md#clip-from-tvpaint) import tool from Duik 15. Duik now also imports JSON exported from TVPaint 11+, in a simpler and stabler way than the script provided by TVPaint (and with the ability to choose which layers to import).
 - Added **German translation**.
 - The interpolation adjustment tools in the [***Keyframes***](keyframe-tools.md) has been greatly improved, with sliders for velocity and buttons with useful predefined values.
 
@@ -86,6 +86,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - Duik is now launched correctly on first launch if the *File and Network Preference* of After Effects was unchecked.
 - The [*Walk Cycle*](walk-cycle.md) is now applied correctly when controllers are null layers.
 - Controllers are extracted without generating expression errors when using master properties.
+- The [*Paint Rig*](paint-rig.md) now works correctly with the cloner and eraser tool too.
 
 ## 16.0.12
 
