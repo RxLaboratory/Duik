@@ -19,9 +19,16 @@ There are 3 special shapes: the slider, the 2D slider and the angle controllers.
 !!! hint
     Controllers are standard shape layers. You can draw anything you want in the content of a controller, therefore using custom shapes is possible.
 
+![Null icon](img/duik-icons/nullobject_r.png)
+
+The bottom right button creates a null layer instead of a Shape layer to be used as a controller.
+
 ## Shortcuts
 
-- **[Click]** on a controller inb the panel to create one per selected layer in the composition. Each controller will be located at the anchor point of the corresponding layer.
+- **[Click]** on a controller in the panel to create one per selected layer in the composition. Each controller will be located at the anchor point of the corresponding layer.
 - Hold **[Alt]** when clicking to create only one controller centered in all the selected layers in the composition.
 - Hold **[Ctrl]** when clicking to auyomatically parent the layer(s) to the new controller(s)
 - You can combine **[Alt] + [Ctrl]** to create only one controller and parent the layers.
+
+!!! tip
+    Controllers created as Null layers will be 3D layers if the corresponding selected layer in the composition is a 3D Layer.
