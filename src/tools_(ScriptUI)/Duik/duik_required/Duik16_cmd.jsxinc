@@ -1,99 +1,344 @@
 // FUNCTIONS
 
-var namespaces = {
-    'Duik':{
-        'Rigging':{
-            'IK':"",
-            'Hominoid':"",
-            'Leg':"",
-            'Arm':"",
-            'Create_Controller':""
+//build UI in a function to avoid conflicts with scripts excuted by the commandline
+(function()
+{
+    var namespaces = {
+        _type: 'namespace',
+        'Duik':
+        {
+            _type: 'namespace',
+            _readonly: true,
+            'Rigging':
+            {
+                _type: 'namespace',
+                'IK':
+                {
+                    _type: 'script',
+                    _src: ''
+                },
+                'Hominoid':
+                {
+                    _type: 'script',
+                    _src: ''
+                },
+                'Leg':
+                {
+                    _type: 'script',
+                    _src: "var type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;\napp.beginUndoGroup( 'Duik | ' + 'Create leg structure' );\nDuAEF.DuAE.Project.setProgressMode(true);\nvar layers = DuAEF.DuAE.Comp.getSelectedLayers();\nDuAEF.Duik.Structure.createLeg( true, true, true, true );\nDuAEF.DuAE.Project.setProgressMode(false);\napp.endUndoGroup();"
+                },
+                'Arm':
+                {
+                    _type: 'script',
+                    _src: "app.beginUndoGroup( 'Duik | ' + \"Create arm structure\" );\nDuAEF.DuAE.Project.setProgressMode( true );\nvar layers = DuAEF.DuAE.Comp.getSelectedLayers();\nDuAEF.Duik.Structure.createArm( true, true, true, true, false );\nDuAEF.DuAE.Project.setProgressMode( false );\napp.endUndoGroup();"
+                },
+                'Create_Controller':
+                {
+                    _type: 'script',
+                    _src: ''
+                }
+            },
+            'Camera':
+            {
+                _type: 'namespace',
+                '2D_Camera':
+                {
+                    _type: 'script',
+                    src: ''
+                }
+            }
         },
-        'Camera':{
-            '2D_Camera':""
+        'After_Effects':
+        {
+            _readonly: true,
+            _type: 'namespace',
+            'Layers':
+            {
+                _type: 'namespace'
+            }
+        },
+        'Custom':
+        {
+            _readonly: false,
+            _type: 'namespace'
         }
     }
-}
 
-var separators = /[\s,\.\/;:]+/;
-
-function buildCmd ()
-{
-    var userInput = ui_cmdEdit.text.toLowerCase();
-
-    if (userInput.length == 0 )
+    if (settings.data.uiMode >= 2)
     {
-        ui_cmdStatic.text = 'Start typing a command...';
-        return;
-    }
-
-    ui_cmdStatic.text = '';
-
-    userInputArray = userInput.split( separators );
-
-    var currentNamespace = namespaces;
-    var start = true;
-
-    for ( var i = 0, num = userInputArray.length; i < num; i++ )
-    {
-        var input = userInputArray[i];
-        for (name in currentNamespace)
-        {
-            if (name.toLowerCase().indexOf(input) == 0)
+        namespaces['Dev'] = {
+            _readonly: false,
+            _type: 'namespace',
+            'Stringify_Script':
             {
-                if (!start) ui_cmdStatic.text += " > ";
-                start = false;
-                ui_cmdStatic.text += name;
-                currentNamespace = currentNamespace[name];
-                break;
+                _type: 'script',
+                _readonly: false,
+                _src: '(function ()\n{\n    var file = File.openDialog ("Select Script", "ExtendScript:*.jsx,*.jsxinc;JavaScript:*.js;All Files:*.*");\n    if (!file) return;\n    var saveFile = DuAEF.DuJS.Fs.saveFileDialog( "Save string...", "Text:*.txt;All Files:*.*", ".txt" );\n    if (!saveFile) return;\n    var scriptAsString = DuAEF.DuJS.Fs.readFile(file);\n    scriptAsString = DuAEF.DuJS.String.replace(scriptAsString, "\\\\", "\\\\\\\\");\n    scriptAsString = DuAEF.DuJS.String.replace(scriptAsString, "\\n", "\\\\n");\n    scriptAsString = DuAEF.DuJS.String.replace(scriptAsString, "\\r", "\\\\r");\n    scriptAsString = DuAEF.DuJS.String.replace(scriptAsString, "\\t", "\\\\t");\n    scriptAsString = DuAEF.DuJS.String.replace(scriptAsString, "\\"", "\\\\\\"");\n    scriptAsString = "\\"" + scriptAsString + "\\"";\n   DuAEF.DuJS.Fs.writeTextFile(saveFile, scriptAsString);\n})();'
             }
         }
     }
-}
 
-function processCmd()
+    var separators = /[\s,\.\/;:]+/;
+
+    function buildCmd ()
+    {
+        var userInput = ui_cmdEdit.text.toLowerCase();
+
+        if ( userInput.length == 0 )
+        {
+            ui_infoText.text = 'Start typing a command...';
+            populateList( namespaces );
+            return;
+        }
+
+        ui_infoText.text = '';
+
+        userInputArray = userInput.split( separators );
+
+        currentNamespace = namespaces;
+        var start = true;
+
+        for ( var i = 0, num = userInputArray.length; i < num; i++ )
+        {
+            var input = userInputArray[ i ];
+            for ( name in currentNamespace )
+            {
+                if ( name.indexOf('_') == 0 ) continue;
+                if ( name.toLowerCase().indexOf( input ) == 0 )
+                {
+                    if ( !start ) ui_infoText.text += " > ";
+                    start = false;
+                    ui_infoText.text += name;
+                    currentNamespace = currentNamespace[ name ];
+                    break;
+                }
+            }
+        }
+
+        populateList( currentNamespace )
+    }
+
+    function populateList( ns )
+    {
+        ui_listSourceButton.enabled = false;
+        if (!isNamespace(ns)) return;
+        //populate list
+        ui_list.removeAll();
+        for (name in ns)
+        {
+            if ( name.indexOf('_') == 0 ) continue;
+            var text = name;
+            if (typeof ns[name]._type !== undefined)
+            {
+                if (ns[name]._type == 'namespace') text += ' > ...';
+            }
+            ui_list.add('item',text);
+        }
+    }
+
+    function processCmd ()
+    {
+        var item = getCurrentNamespace();
+        
+        if (DuAEF.DuJS.typeof(item._type) != 'string') return;
+        if (!isScript(item)) return;
+        if (DuAEF.DuJS.typeof(item._src) != 'string') return;
+        DuAEF.Debug.safeRun( item._src );
+    }
+    
+    function showList (e)
+    {
+        if(!ui_listWindow.visible)
+        {
+            var x = e.screenX - e.clientX;
+            var y = e.screenY - e.clientY;
+            ui_listWindow.location = [ x-210, y ];
+            DuAEF.DuScriptUI.showUI(ui_listWindow);
+        }
+        else ui_listWindow.hide();
+    }
+
+    function selectItem()
+    {
+        if (!ui_list.selection) return;
+        // the current selection text
+        var text = ui_list.selection.text.replace(' > ...','');
+
+        //if we're already at a script level, remove it
+        var currentItem = getCurrentNamespace();
+        if (isScript(currentItem))
+        {
+            back();
+        }
+
+        var item = getCurrentNamespace()[text];
+
+        ui_cmdEdit.text += text
+        if (isNamespace(item)) ui_cmdEdit.text += ' ';
+        buildCmd();
+
+        if (isScript(item)) processCmd();
+    }
+
+    function showSourceTab()
+    {
+        ui_listGroup.visible = false;
+        ui_sourceGroup.visible = true;
+    }
+
+    function showListTab()
+    {
+        ui_listGroup.visible = true;
+        ui_sourceGroup.visible = false;
+    }
+
+    function clearCommand()
+    {
+        ui_cmdEdit.text = '';
+        buildCmd ();
+    }
+
+    function back()
+    {
+        var text = DuAEF.DuJS.String.trim(ui_cmdEdit.text)
+        text = text.split(' ');
+        text.pop();
+        text = text.join(' ');
+        if (text != '') text += ' ';
+        ui_cmdEdit.text = text;
+        buildCmd ()
+    }
+
+    function isScript(item)
+    {
+        if (DuAEF.DuJS.typeof(item) == 'undefined') return false;
+        if (DuAEF.DuJS.typeof(item._type) == 'undefined') return true;
+        else
+        {
+            return item._type == 'script';
+        }
+    }
+
+    function isNamespace(item)
+    {
+        if (DuAEF.DuJS.typeof(item) == 'undefined') return false;
+        if (DuAEF.DuJS.typeof(item._type) != 'undefined')
+        {
+            return item._type == 'namespace';
+        }
+        else return false;
+    }
+
+    function getCurrentNamespace()
+    {
+        //TODO has to return a namespace, not a script
+        //stop the loop when a script is found
+        //implement a getCurrentScript method
+        //update usage in all other functions
+
+        if (ui_cmdEdit.text == '') return namespaces;
+        var cmd = DuAEF.DuJS.String.trim(ui_infoText.text)
+        var cmdArray = cmd.split( ' > ' );
+        var ns = namespaces;
+        for (var i =0, num = cmdArray.length; i < num; i++)
+        {
+            ns = ns[cmdArray[i]];
+        }
+        return ns;
+    }
+
+    function loadItem()
+    {
+        //TODO if an script has been selected before, does not work
+        //see TODO in getCurrentNamespace
+
+        if (!ui_list.selection) return;
+        var text = ui_list.selection.text.replace(' > ...','');
+        var item = getCurrentNamespace()[text];
+        if (DuAEF.DuJS.typeof(item) == 'undefined') return null;
+        if (isScript(item))
+        {
+            ui_source.text = item._src;
+            ui_listSourceButton.enabled = isScript(item);
+        }
+        
+        return item;
+    }
+
+    // List Window
+    var ui_listWindow = DuAEF.DuScriptUI.createUI(null, "Duik Cmd List", ['fill','fill']);
+    ui_listWindow.minimumSize.height = 300;
+    ui_listWindow.minimumSize.width = 200;
+    // a stacked group for the list or source
+    var ui_listStack = DuAEF.DuScriptUI.addGroup( ui_listWindow.contents,'stack');
+    ui_listStack.alignment = ['fill','fill'];
+    // add list
+    var ui_listGroup = DuAEF.DuScriptUI.addGroup( ui_listStack,'column');
+    ui_listGroup.alignment = ['fill','fill'];
+    var ui_listNavButtonsGroup = DuAEF.DuScriptUI.addGroup( ui_listGroup);
+    ui_listNavButtonsGroup.alignment = ['fill','top'];
+    var ui_listClearButton = DuAEF.DuScriptUI.addButton(ui_listNavButtonsGroup, 'Clear', DuAEF.DuBinary.toFile(w14_cancel_m), 'Clear command', DuAEF.DuBinary.toFile(w14_cancel_l));
+    var ui_listPreviousButton = DuAEF.DuScriptUI.addButton(ui_listNavButtonsGroup, 'Previous', DuAEF.DuBinary.toFile(w14_previousframe_m), 'Get back', DuAEF.DuBinary.toFile(w14_previousframe_l));
+    var ui_list = ui_listGroup.add('listbox');
+    ui_list.alignment = ['fill','fill'];
+    var ui_listButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_listGroup);
+    ui_listButtonsGroup.alignment = ['fill','bottom'];
+    var ui_listSourceButton = DuAEF.DuScriptUI.addButton(ui_listButtonsGroup, 'View Source', DuAEF.DuBinary.toFile(w14_js_l), 'View source code', DuAEF.DuBinary.toFile(w14_js_r));
+    ui_listSourceButton.enabled = false;
+    var ui_listSelectButton = DuAEF.DuScriptUI.addButton(ui_listButtonsGroup, 'Select', DuAEF.DuBinary.toFile(w14_check_l), 'Select item', DuAEF.DuBinary.toFile(w14_check_r));
+    // source
+    var ui_sourceGroup = DuAEF.DuScriptUI.addGroup( ui_listStack,'column');
+    ui_sourceGroup.alignment = ['fill','fill'];
+    var ui_source = ui_sourceGroup.add('edittext', undefined, '', {multiline:true, readonly:true});
+    ui_source.alignment = ['fill','fill'];
+    var ui_sourceBackButton = DuAEF.DuScriptUI.addButton(ui_sourceGroup, 'Back', DuAEF.DuBinary.toFile(w14_back_l), 'Back to the list', DuAEF.DuBinary.toFile(w14_back_r));
+    ui_sourceBackButton.alignment = ['fill','bottom'];
+    ui_sourceGroup.visible = false;
+    //close button
+    var ui_listCloseButton = DuAEF.DuScriptUI.addButton(ui_listWindow.contents, 'Close', DuAEF.DuBinary.toFile(w14_cancel_m), 'Select item', DuAEF.DuBinary.toFile(w14_cancel_l));
+    ui_listCloseButton.alignment = ['fill', 'bottom'];
+
+    // UI
+    ui_palette.alignChildren = [ 'fill', 'top' ];
+
+    var ui_cmdGroup = DuAEF.DuScriptUI.addGroup(ui_palette, 'row');
+    var ui_clearButton = DuAEF.DuScriptUI.addButton(ui_cmdGroup, '', DuAEF.DuBinary.toFile(w14_cancel_m), 'Clear command', DuAEF.DuBinary.toFile(w14_cancel_l));
+    ui_clearButton.alignment = ['left','center'];
+    var ui_backButton = DuAEF.DuScriptUI.addButton(ui_cmdGroup, '', DuAEF.DuBinary.toFile(w14_previousframe_m), 'Get back', DuAEF.DuBinary.toFile(w14_previousframe_l));
+    ui_backButton.alignment = ['left','center'];
+    var ui_cmdEdit = ui_cmdGroup.add( 'edittext' );
+    ui_cmdEdit.alignment = ['fill','fill'];
+    var ui_cmdButton = DuAEF.DuScriptUI.addButton(ui_cmdGroup, '', DuAEF.DuBinary.toFile(w18_play_l), 'Run command', DuAEF.DuBinary.toFile(w18_play_r));
+    ui_cmdButton.alignment = ['right','center'];
+
+    var ui_infoGroup = DuAEF.DuScriptUI.addGroup(ui_palette, 'row');
+    var ui_infoButton = DuAEF.DuScriptUI.addButton(ui_infoGroup, '', DuAEF.DuBinary.toFile(w18_list_l), 'Show all commands...', DuAEF.DuBinary.toFile(w18_list_r));
+    ui_infoButton.alignment = ['left','center'];
+    var ui_infoText = ui_infoGroup.add( 'statictext', undefined, 'Start typing a command...' );
+    ui_infoText.alignment = ['fill','fill'];
+
+    //populate list
+    populateList( namespaces );
+
+    var process = false;
+
+    ui_infoButton.addEventListener( "click", showList, true );
+    ui_listCloseButton.onClick = showList;
+    ui_listSourceButton.onClick = showSourceTab;
+    ui_sourceBackButton.onClick = showListTab;
+    ui_list.onChange = loadItem;
+    ui_clearButton.onClick = ui_listClearButton.onClick = clearCommand;
+    ui_backButton.onClick = ui_listPreviousButton.onClick = back;
+    ui_cmdEdit.onChanging = buildCmd;
+    ui_cmdEdit.addEventListener('keydown', function(e){ if (e.keyName == 'Enter') processCmd(); } );
+    ui_cmdButton.onClick = processCmd;
+    ui_listSelectButton.onClick = ui_list.onDoubleClick = selectItem;
+
+})();
+
+
+//the function to exec scripts
+function duik_runCmd(cmd)
 {
-    var cmdArray = ui_cmdStatic.text.split(' > ');
-    if (cmdArray.length == 0) return;
 
-    if (cmdArray[cmdArray.length - 1] == 'Leg')
-    {
-        var type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
-
-		app.beginUndoGroup('Duik | ' + "Create leg structure");
-
-		//DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-
-		DuAEF.Duik.Structure.createLeg(true,true,true,true);
-
-		//DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
-    }
-    else if (cmdArray[cmdArray.length - 1] == 'Arm')
-    {
-        app.beginUndoGroup('Duik | ' + "Create arm structure");
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-
-		DuAEF.Duik.Structure.createArm(true,true,true,true,false);
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
-    }
 }
-
-// UI
-ui_palette.alignChildren = ['fill','top'];
-var ui_cmdEdit = ui_palette.add('edittext');
-var ui_cmdStatic = ui_palette.add('statictext',undefined,'Start typing a command...');
-
-ui_cmdEdit.onChanging = buildCmd;
-ui_cmdEdit.onChange = processCmd;
