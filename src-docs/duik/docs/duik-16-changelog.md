@@ -64,6 +64,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [_Structures_](structures.md) layer names are now translated to the language set in the settings (if the translation file is up-to-date).
 - The [_Path Constraint_](path-constraint.md) effect now has a "*Path Offset*" option.
 - The [*Add Bones*](bones.md) button now creates a single bone if nothing is selected, which you can then use any way you want.
+- The performance of the [*Search and Replace*](rigging-tools.md#search-and-replace) tool has been slightly improved for expressions. There's still some ongoing work to dramatically improve it's performance.
 
 #### Fixes
 
