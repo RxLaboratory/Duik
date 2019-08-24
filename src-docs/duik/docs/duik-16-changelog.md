@@ -65,6 +65,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [_Path Constraint_](path-constraint.md) effect now has a "*Path Offset*" option.
 - The [*Add Bones*](bones.md) button now creates a single bone if nothing is selected, which you can then use any way you want.
 - The performance of the [*Search and Replace*](rigging-tools.md#search-and-replace) tool has been slightly improved for expressions. There's still some ongoing work to dramatically improve it's performance.
+- [*Controllers*](controllers.md) as null layers are 3D layers when the selected layer is 3D.
 
 #### Fixes
 
