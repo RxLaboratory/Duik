@@ -1,8 +1,8 @@
-// FUNCTIONS
-
-//build UI in a function to avoid conflicts with scripts excuted by the commandline
-(function()
+//be careful with vars
+(function ()
 {
+    // BUILT-IN SCRIPTS
+
     var namespaces = {
         _type: 'namespace',
         'Duik':
@@ -80,6 +80,152 @@
 
     var separators = /[\s,\.\/;:]+/;
 
+    // FUNCTIONS
+
+    function getCurrentNamespace()
+    {
+        if (ui_cmdEdit.text == '') return namespaces;
+        var cmd = DuAEF.DuJS.String.trim(ui_infoText.text)
+        var cmdArray = cmd.split( ' > ' );
+        var ns = namespaces;
+        for (var i =0, num = cmdArray.length; i < num; i++)
+        {
+            var item = ns[cmdArray[i]];
+            if (!isNamespace(item)) return ns;
+            ns = item;
+        }
+        return ns;
+    }
+
+    function getCurrentScript()
+    {
+        if (ui_cmdEdit.text == '') return null;
+        var cmd = DuAEF.DuJS.String.trim(ui_infoText.text)
+        var cmdArray = cmd.split( ' > ' );
+        var scriptCmd = cmdArray[cmdArray.length-1];
+        var ns = getCurrentNamespace();
+        var item = ns[scriptCmd];
+        if (item)
+        {
+            if (isScript(item)) return item;
+        }
+        return null;
+    }
+
+    function populateList( ns )
+    {
+        ui_listSourceButton.enabled = false;
+        if (!isNamespace(ns)) return;
+        //populate list
+        ui_list.removeAll();
+        for (name in ns)
+        {
+            if ( name.indexOf('_') == 0 ) continue;
+            var text = name;
+            if (typeof ns[name]._type !== undefined)
+            {
+                if (ns[name]._type == 'namespace') text += ' > ...';
+            }
+            ui_list.add('item',text);
+        }
+    }
+
+    function isScript(item)
+    {
+        if (!DuAEF.DuJS.typeof(item)) return false;
+        if (DuAEF.DuJS.typeof(item._type) == 'undefined') return true;
+        else
+        {
+            return item._type == 'script';
+        }
+    }
+
+    function isNamespace(item)
+    {
+        if (!DuAEF.DuJS.typeof(item)) return false;
+        if (DuAEF.DuJS.typeof(item._type) != 'undefined')
+        {
+            return item._type == 'namespace';
+        }
+        else return false;
+    }
+
+    // EVENTS
+    function showList (e)
+    {
+        if(!ui_listWindow.visible)
+        {
+            var x = e.screenX - e.clientX;
+            var y = e.screenY - e.clientY;
+            ui_listWindow.location = [ x-210, y ];
+            DuAEF.DuScriptUI.showUI(ui_listWindow);
+        }
+        else ui_listWindow.hide();
+    }
+
+    function showSourceTab()
+    {
+        ui_listGroup.visible = false;
+        ui_sourceGroup.visible = true;
+    }
+
+    function showListTab()
+    {
+        ui_listGroup.visible = true;
+        ui_sourceGroup.visible = false;
+    }
+
+    function loadItem()
+    {
+        if (!ui_list.selection) return;
+        var text = ui_list.selection.text.replace(' > ...','');
+        var item = getCurrentNamespace()[text];
+        if (!DuAEF.DuJS.typeof(item)) return;
+        if (isScript(item))
+        {
+            ui_source.text = item._src;
+            ui_listSourceButton.enabled = isScript(item);
+        }
+    }
+
+    function selectItem()
+    {
+        if (!ui_list.selection) return;
+        // the current selection text
+        var text = ui_list.selection.text.replace(' > ...','');
+
+        //if we're already at a script level, remove it
+        if (getCurrentScript())
+        {
+            back();
+        }
+
+        var item = getCurrentNamespace()[text];
+
+        ui_cmdEdit.text += text
+        if (isNamespace(item)) ui_cmdEdit.text += ' ';
+        buildCmd();
+
+        if (isScript(item)) processCmd();
+    }
+
+    function clearCommand()
+    {
+        ui_cmdEdit.text = '';
+        buildCmd ();
+    }
+
+    function back()
+    {
+        var text = DuAEF.DuJS.String.trim(ui_cmdEdit.text)
+        text = text.split(' ');
+        text.pop();
+        text = text.join(' ');
+        if (text != '') text += ' ';
+        ui_cmdEdit.text = text;
+        buildCmd ()
+    }
+
     function buildCmd ()
     {
         var userInput = ui_cmdEdit.text.toLowerCase();
@@ -118,152 +264,15 @@
         populateList( currentNamespace )
     }
 
-    function populateList( ns )
-    {
-        ui_listSourceButton.enabled = false;
-        if (!isNamespace(ns)) return;
-        //populate list
-        ui_list.removeAll();
-        for (name in ns)
-        {
-            if ( name.indexOf('_') == 0 ) continue;
-            var text = name;
-            if (typeof ns[name]._type !== undefined)
-            {
-                if (ns[name]._type == 'namespace') text += ' > ...';
-            }
-            ui_list.add('item',text);
-        }
-    }
-
     function processCmd ()
     {
-        var item = getCurrentNamespace();
-        
-        if (DuAEF.DuJS.typeof(item._type) != 'string') return;
-        if (!isScript(item)) return;
+        var item = getCurrentScript();
+        if (!item) return;
+
         if (DuAEF.DuJS.typeof(item._src) != 'string') return;
         DuAEF.Debug.safeRun( item._src );
     }
-    
-    function showList (e)
-    {
-        if(!ui_listWindow.visible)
-        {
-            var x = e.screenX - e.clientX;
-            var y = e.screenY - e.clientY;
-            ui_listWindow.location = [ x-210, y ];
-            DuAEF.DuScriptUI.showUI(ui_listWindow);
-        }
-        else ui_listWindow.hide();
-    }
 
-    function selectItem()
-    {
-        if (!ui_list.selection) return;
-        // the current selection text
-        var text = ui_list.selection.text.replace(' > ...','');
-
-        //if we're already at a script level, remove it
-        var currentItem = getCurrentNamespace();
-        if (isScript(currentItem))
-        {
-            back();
-        }
-
-        var item = getCurrentNamespace()[text];
-
-        ui_cmdEdit.text += text
-        if (isNamespace(item)) ui_cmdEdit.text += ' ';
-        buildCmd();
-
-        if (isScript(item)) processCmd();
-    }
-
-    function showSourceTab()
-    {
-        ui_listGroup.visible = false;
-        ui_sourceGroup.visible = true;
-    }
-
-    function showListTab()
-    {
-        ui_listGroup.visible = true;
-        ui_sourceGroup.visible = false;
-    }
-
-    function clearCommand()
-    {
-        ui_cmdEdit.text = '';
-        buildCmd ();
-    }
-
-    function back()
-    {
-        var text = DuAEF.DuJS.String.trim(ui_cmdEdit.text)
-        text = text.split(' ');
-        text.pop();
-        text = text.join(' ');
-        if (text != '') text += ' ';
-        ui_cmdEdit.text = text;
-        buildCmd ()
-    }
-
-    function isScript(item)
-    {
-        if (DuAEF.DuJS.typeof(item) == 'undefined') return false;
-        if (DuAEF.DuJS.typeof(item._type) == 'undefined') return true;
-        else
-        {
-            return item._type == 'script';
-        }
-    }
-
-    function isNamespace(item)
-    {
-        if (DuAEF.DuJS.typeof(item) == 'undefined') return false;
-        if (DuAEF.DuJS.typeof(item._type) != 'undefined')
-        {
-            return item._type == 'namespace';
-        }
-        else return false;
-    }
-
-    function getCurrentNamespace()
-    {
-        //TODO has to return a namespace, not a script
-        //stop the loop when a script is found
-        //implement a getCurrentScript method
-        //update usage in all other functions
-
-        if (ui_cmdEdit.text == '') return namespaces;
-        var cmd = DuAEF.DuJS.String.trim(ui_infoText.text)
-        var cmdArray = cmd.split( ' > ' );
-        var ns = namespaces;
-        for (var i =0, num = cmdArray.length; i < num; i++)
-        {
-            ns = ns[cmdArray[i]];
-        }
-        return ns;
-    }
-
-    function loadItem()
-    {
-        //TODO if an script has been selected before, does not work
-        //see TODO in getCurrentNamespace
-
-        if (!ui_list.selection) return;
-        var text = ui_list.selection.text.replace(' > ...','');
-        var item = getCurrentNamespace()[text];
-        if (DuAEF.DuJS.typeof(item) == 'undefined') return null;
-        if (isScript(item))
-        {
-            ui_source.text = item._src;
-            ui_listSourceButton.enabled = isScript(item);
-        }
-        
-        return item;
-    }
 
     // List Window
     var ui_listWindow = DuAEF.DuScriptUI.createUI(null, "Duik Cmd List", ['fill','fill']);
@@ -335,10 +344,3 @@
     ui_listSelectButton.onClick = ui_list.onDoubleClick = selectItem;
 
 })();
-
-
-//the function to exec scripts
-function duik_runCmd(cmd)
-{
-
-}
