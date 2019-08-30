@@ -23,62 +23,37 @@ function ui_buildStructures(ui_structuresMainGroup)
 
 	// ============= EVENTS =============
 
+	#include 'Duik16_structures_functions.jsxinc'
+	
 	//HOMINOID
 	function ui_humanButton_clicked(walk)
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
+		walk = def( walk, false);
 
-		var numSpine = parseInt(ui_spineEdit.text);
-		if (isNaN(numSpine)) numSpine = 0;
-		var numNeck = parseInt(ui_neckEdit.text);
-		if (isNaN(numNeck)) numNeck = 0;
+		var numSpine = parseInt( ui_spineEdit.text );
+		if ( isNaN( numSpine ) ) numSpine = 0;
+		var numNeck = parseInt( ui_neckEdit.text );
+		if ( isNaN( numNeck ) ) numNeck = 0;
 		var type = DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE;
-		var sizeUnit = comp.height/12;
 
-		app.beginUndoGroup('Duik | ' + "Create hominoid structure");
+		var structs = DuAEF_DUIK.structures.mammal (
+			DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE,
+			numSpine,
+			numNeck,
+			ui_hipsButton.checked,
+			ui_headButton.checked,
+			ui_armShoulderButton.checked,
+			ui_armHumerusButton.checked,
+			ui_armRadiusButton.checked,
+			ui_armHandButton.checked,
+			ui_legFemurButton.checked,
+			ui_legTibiaButton.checked,
+			ui_legFootButton.checked,
+			ui_legClawsButton.checked
+			)
 
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		var structureLayers = [];
-		var structures = [];
-
-		//SPINE
-		var originPos = [comp.width/2,comp.height/2+sizeUnit];
-		var structure = DuAEF.Duik.Structure.createSpine(ui_hipsButton.checked,numSpine,numNeck,ui_headButton.checked,undefined,originPos);
-		structure = structure[0];
-		structureLayers = structureLayers.concat(structure.elements);
-		structures.push(structure);
-		DuAEF.DuAE.Comp.unselectLayers(comp);
-		//LEFT ARM
-		originPos = [comp.width/2-sizeUnit,4*sizeUnit];
-		if (ui_armShoulderButton.checked) originPos = [comp.width/2-sizeUnit/2,4*sizeUnit];
-		structure = DuAEF.Duik.Structure.createArm(ui_armShoulderButton.checked,ui_armHumerusButton.checked,ui_armRadiusButton.checked,ui_armHandButton.checked,false,undefined,type,undefined,originPos);
-		structure = structure[0];
-		structureLayers = structureLayers.concat(structure.elements);
-		structures.push(structure);
-		DuAEF.DuAE.Comp.unselectLayers(comp);
-		//RIGHT ARM
-		originPos = [comp.width/2+sizeUnit,4*sizeUnit];
-		if (ui_armShoulderButton.checked) originPos = [comp.width/2+sizeUnit/2,4*sizeUnit];
-		structure = DuAEF.Duik.Structure.createArm(ui_armShoulderButton.checked,ui_armHumerusButton.checked,ui_armRadiusButton.checked,ui_armHandButton.checked,false,undefined,type,undefined,originPos,true);
-		structure = structure[0];
-		structureLayers = structureLayers.concat(structure.elements);
-		structures.push(structure);
-		DuAEF.DuAE.Comp.unselectLayers(comp);
-		//LEFT LEG
-		originPos = [comp.width/2-sizeUnit/2,comp.height/2+sizeUnit];
-		structure = DuAEF.Duik.Structure.createLeg(ui_legFemurButton.checked,ui_legTibiaButton.checked,ui_legFootButton.checked,ui_legClawsButton.checked,undefined,type,undefined,originPos);
-		structure = structure[0];
-		structureLayers = structureLayers.concat(structure.elements);
-		structures.push(structure);
-		DuAEF.DuAE.Comp.unselectLayers(comp);
-		//RIGHT LEG
-		originPos = [comp.width/2+sizeUnit/2,comp.height/2+sizeUnit];
-		structure = DuAEF.Duik.Structure.createLeg(ui_legFemurButton.checked,ui_legTibiaButton.checked,ui_legFootButton.checked,ui_legClawsButton.checked,undefined,type,undefined,originPos);
-		structure = structure[0];
-		structureLayers = structureLayers.concat(structure.elements);
-		structures.push(structure);
+		var structures = structs[0];
+		var structureLayers = structs[1];
 
 		if (walk)
 		{
@@ -89,11 +64,6 @@ function ui_buildStructures(ui_structuresMainGroup)
 			for (var i = 0,num = ctrls.length ; i < num ; i++) { ctrls[i].bakeAppearance(); }
 			DuAEF.Duik.Automation.autoWalk(ctrls);
 		}
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
-
 		setCurrentStructuresPanel(0);
 	}
 
@@ -169,28 +139,15 @@ function ui_buildStructures(ui_structuresMainGroup)
 		if (ui_armDigiButton.checked) type = DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE;
 		if (ui_armUnguButton.checked) type = DuAEF.Duik.Autorig.AnimalTypes.UNGULATE;
 
-		app.beginUndoGroup('Duik | ' + "Create arm structure");
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		var layerToRemove = null;
-		var linkPath = settings.data.structureLinkPaths;
-		if (forceLink) linkPath = !settings.data.structureLinkPaths;
-		if (layers.length == 1 && !linkPath)
-		{
-			var l = layers[0];
-			if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
-		}
-
-		DuAEF.Duik.Structure.createArm(ui_armShoulderButton.checked,ui_armHumerusButton.checked,ui_armRadiusButton.checked,ui_armHandButton.checked,ui_armClawsButton.checked,undefined,type,undefined, undefined, undefined, forceLink);
-
-		if (layerToRemove != null) layerToRemove.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.arm (
+			type,
+			ui_armShoulderButton.checked,
+			ui_armHumerusButton.checked,
+			ui_armRadiusButton.checked,
+			ui_armHandButton.checked,
+			ui_armClawsButton.checked,
+			forceLink
+		);
 
 		setCurrentStructuresPanel(0);
 	}
@@ -248,28 +205,14 @@ function ui_buildStructures(ui_structuresMainGroup)
 		if (ui_legDigiButton.checked) type = DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE;
 		if (ui_legUnguButton.checked) type = DuAEF.Duik.Autorig.AnimalTypes.UNGULATE;
 
-		app.beginUndoGroup('Duik | ' + "Create leg structure");
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		var layerToRemove = null;
-		var linkPath = settings.data.structureLinkPaths;
-		if (forceLink) linkPath = !settings.data.structureLinkPaths;
-		if (layers.length == 1 && !linkPath)
-		{
-			var l = layers[0];
-			if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
-		}
-
-		DuAEF.Duik.Structure.createLeg(ui_legFemurButton.checked,ui_legTibiaButton.checked,ui_legFootButton.checked,ui_legClawsButton.checked,undefined,type, undefined, undefined, forceLink);
-
-		if (layerToRemove != null) layerToRemove.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.leg(
+			type,
+			ui_legFemurButton.checked,
+			ui_legTibiaButton.checked,
+			ui_legFootButton.checked,
+			ui_legClawsButton.checked,
+			forceLink
+		);
 
 		setCurrentStructuresPanel(0);
 	}
@@ -277,36 +220,19 @@ function ui_buildStructures(ui_structuresMainGroup)
 	//SPINE
 	function ui_spineValidButton_clicked(forceLink)
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
+		
 		var numSpine = parseInt(ui_spineEdit.text);
 		if (isNaN(numSpine)) numSpine = 0;
 		var numNeck = parseInt(ui_neckEdit.text);
 		if (isNaN(numNeck)) numNeck = 0;
 
-		app.beginUndoGroup('Duik | ' + "Create spine structure");
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		var layerToRemove = null;
-		var linkPath = settings.data.structureLinkPaths;
-		if (forceLink) linkPath = !settings.data.structureLinkPaths;
-		if (layers.length == 1 && !linkPath)
-		{
-			var l = layers[0];
-			if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
-		}
-
-		DuAEF.Duik.Structure.createSpine(ui_hipsButton.checked,numSpine,numNeck,ui_headButton.checked, undefined, undefined, forceLink);
-
-		if (layerToRemove != null) layerToRemove.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.spine(
+			numSpine,
+			numNeck,
+			ui_hipsButton.checked,
+			ui_headButton.checked,
+			forceLink
+		);
 
 		setCurrentStructuresPanel(0);
 	}
@@ -314,34 +240,13 @@ function ui_buildStructures(ui_structuresMainGroup)
 	//TAIL
 	function ui_tailValidButton_clicked(forceLink)
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
 		var numTail = parseInt(ui_tailEdit.text);
-		if (isNaN(numTail)) return;
+    	if (isNaN(numTail)) return;
 
-		app.beginUndoGroup('Duik | ' + "Create tail structure");
-
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		var layerToRemove = null;
-		var linkPath = settings.data.structureLinkPaths;
-		if (forceLink) linkPath = !settings.data.structureLinkPaths;
-		if (layers.length == 1 && !linkPath)
-		{
-			var l = layers[0];
-			if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
-		}
-
-		DuAEF.Duik.Structure.createTail(numTail, undefined, forceLink);
-
-		if (layerToRemove != null) layerToRemove.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.tail(
+			numTail,
+			forceLink
+		);
 
 		setCurrentStructuresPanel(0);
 	}
@@ -359,135 +264,37 @@ function ui_buildStructures(ui_structuresMainGroup)
 
 	function ui_customStructureButton_clicked(randomColor, forceLink)
 	{
-		//get current comp
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
 		var num = parseInt(ui_structuresCustomNumberEdit.text);
-		var pColor = DuAEF.Duik.Structure.color;
-		if (randomColor) DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM;
-		app.beginUndoGroup('Duik | ' + "Create structure");
 
-		DuAEF.DuAE.Project.setProgressMode(true);
-
-		//if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		var layerToRemove = null;
-		var linkPath = settings.data.structureLinkPaths;
-		if (forceLink) linkPath = !settings.data.structureLinkPaths;
-		if (layers.length == 1 && !linkPath)
-		{
-			var l = layers[0];
-			if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
-		}
-
-		DuAEF.Duik.Structure.addStructures(num, comp, ui_structuresCustomNameEdit.text, false, forceLink);
-
-		if (layerToRemove != null) layerToRemove.remove();
-
-		DuAEF.DuAE.Project.setProgressMode(false);
-
-		app.endUndoGroup();
-		DuAEF.Duik.Structure.color = pColor;
+		DuAEF_DUIK.structures.custom(
+			num,
+			ui_structuresCustomNameEdit.text,
+			forceLink,
+			randomColor
+		);
 		setCurrentStructuresPanel(0);
 	}
 
 	function ui_structuresShowButton_clicked(invert)
 	{
-		if (typeof invert === 'undefined') invert = false;
-		var structures = DuAEF.Duik.Structure.getStructureLayers();
-
-		if (structures.length == 0) return;
-
-		app.beginUndoGroup('Duik - ' + "Show/hide structures");
-		var visible = !structures[0].enabled;
-		for (var i = 0 ; i < structures.length ; i++)
-		{
-			if (invert) structures[i].enabled = !structures[i].enabled;
-			else structures[i].enabled = visible;
-		}
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.show ( invert );
 	}
 
 	function ui_structuresEditModeButton_clicked()
 	{
-		//get from first element
-		var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
-
-		app.beginUndoGroup('Duik - ' + "Edit structures");
-		for (var i = 0 ; i < structures.length ; i++)
-		{
-			structures[i].toggleEditMode();
-		}
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.edit( );
 	}
 
 	function ui_structuresSelectButton_clicked()
 	{
-		app.beginUndoGroup('Duik - ' + "Select structures");
-		DuAEF.Duik.Structure.selectStructures(undefined, DuAEF.Duik.Structure.SelectionModes.ALL);
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.select();
 	}
 
 	function ui_structuresDuplicateButton_clicked()
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
-		var structures;
-		if (comp.selectedLayers.length == 0) structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ALL);
-		else structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ELEMENT);
-
-		if (structures.length == 0) return;
-
-		app.beginUndoGroup('Duik - ' + "Duplicate structures");
-		var autorigIds = [];
-		var newStructures = [];
-
-		var it = new Iterator(structures);
-		it.do(function(structure)
-		{
-			var newStructure  = structure.duplicate();
-			newStructures.push(newStructure);
-
-			//adjust autorig id
-			if (newStructure.elements.length > 0)
-			{
-				var element = newStructure.elements[0];
-				var params = DuAEF.Duik.getDuikMarkerParameters(element);
-				var newAutorigId = -1;
-				var autorigId = -1;
-				if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ID]) autorigId = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
-				else return;
-
-				for (var i = 0, num = autorigIds.length; i < num; i++)
-				{
-					if (autorigIds[i][0] == autorigId) newAutorigId = autorigIds[i][1];
-				}
-
-				if (newAutorigId == -1)
-				{
-					newAutorigId = new Date().getTime();
-					autorigIds.push([autorigId,newAutorigId]);
-				}
-
-				var itElements = new Iterator(structure.elements);
-				itElements.do(function(elmt)
-				{
-					DuAEF.Duik.setDuikMarkerParameter(elmt,DuAEF.Duik.MarkerParameters.AUTORIG_ID,newAutorigId);
-				});
-			}
-
-		});
-
-		//select all structures
-		var itNew = new Iterator(newStructures);
-		itNew.do(function(structure)
-		{
-			structure.select();
-		});
-
-		app.endUndoGroup();
+		DuAEF_DUIK.structures.duplicate( );
 	}
+
 
 	// ============= UI =================
 
