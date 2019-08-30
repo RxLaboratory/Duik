@@ -1,0 +1,383 @@
+// The namespace
+DuAEF_DUIK.structures = {}
+
+// The list of functions as { name:'name', fn:'call()' }
+DuAEF_DUIK.structures.functions = []
+
+//The functions
+
+//TODO adjust autorig for animals/quadrupeds
+DuAEF_DUIK.structures.functions.push( { name:"Hominoid", fn:"DuAEF_DUIK.structures.mammal()" } );
+DuAEF_DUIK.structures.functions.push( { name:"Digitigrade", fn:"DuAEF_DUIK.structures.mammal( DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE )" } );
+DuAEF_DUIK.structures.functions.push( { name:"Ungulate", fn:"DuAEF_DUIK.structures.mammal( DuAEF.Duik.Autorig.AnimalTypes.Ungulate )" } );
+DuAEF_DUIK.structures.functions.push( { name:"Plantigrade", fn:"DuAEF_DUIK.structures.mammal( DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE , 2, 1, true, true, true, true, true, true, true)" } );
+DuAEF_DUIK.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder, humerus, radius, hand, frontClaws, femur, tibia, foot, backClaws)
+{
+    //defaults
+    type = def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE );
+    numSpine = def( numSpine, 2);
+    numNeck = def( numNeck, 1);
+    hips = def( hips, true);
+    head = def( head, true);
+
+    shoulder = def( shoulder, true );
+    humerus = def( humerus, true );
+    radius = def( radius, true );
+    hand = def( hand, true );
+    if ( type == def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE ) )
+    {
+        frontClaws = def( frontClaws, false);
+    }
+    else
+    {
+        frontClaws = def( frontClaws, true);
+    }
+    
+
+    femur = def( femur, true );
+    tibia = def( tibia, true );
+    foot = def( foot, true );
+    backClaws = def( backClaws, true );
+
+
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if ( !comp ) return;
+
+    var sizeUnit = comp.height / 12;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Create hominoid structure" );
+    DuAEF.DuAE.Project.setProgressMode( true );
+
+    var structureLayers = [];
+    var structures = [];
+
+    //SPINE
+    var originPos = [ comp.width / 2, comp.height / 2 + sizeUnit ];
+    var structure = DuAEF.Duik.Structure.createSpine( hips, numSpine, numNeck, head, undefined, originPos );
+    structure = structure[ 0 ];
+    structureLayers = structureLayers.concat( structure.elements );
+    structures.push( structure );
+    DuAEF.DuAE.Comp.unselectLayers( comp );
+    //LEFT ARM
+    originPos = [ comp.width / 2 - sizeUnit, 4 * sizeUnit ];
+    if ( shoulder ) originPos = [ comp.width / 2 - sizeUnit / 2, 4 * sizeUnit ];
+    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, undefined, originPos );
+    structure = structure[ 0 ];
+    structureLayers = structureLayers.concat( structure.elements );
+    structures.push( structure );
+    DuAEF.DuAE.Comp.unselectLayers( comp );
+    //RIGHT ARM
+    originPos = [ comp.width / 2 + sizeUnit, 4 * sizeUnit ];
+    if ( shoulder ) originPos = [ comp.width / 2 + sizeUnit / 2, 4 * sizeUnit ];
+    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, undefined, originPos, true );
+    structure = structure[ 0 ];
+    structureLayers = structureLayers.concat( structure.elements );
+    structures.push( structure );
+    DuAEF.DuAE.Comp.unselectLayers( comp );
+    //LEFT LEG
+    originPos = [ comp.width / 2 - sizeUnit / 2, comp.height / 2 + sizeUnit ];
+    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, undefined, originPos );
+    structure = structure[ 0 ];
+    structureLayers = structureLayers.concat( structure.elements );
+    structures.push( structure );
+    DuAEF.DuAE.Comp.unselectLayers( comp );
+    //RIGHT LEG
+    originPos = [ comp.width / 2 + sizeUnit / 2, comp.height / 2 + sizeUnit ];
+    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, undefined, originPos );
+    structure = structure[ 0 ];
+    structureLayers = structureLayers.concat( structure.elements );
+    structures.push( structure );
+
+    DuAEF.DuAE.App.endUndoGroup( );
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    return [structures, structureLayers];
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Arm", fn:"DuAEF_DUIK.structures.arm()" } );
+DuAEF_DUIK.structures.functions.push( { name:"Arm_Digitigrade", fn:"DuAEF_DUIK.structures.arm(DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE)" } );
+DuAEF_DUIK.structures.functions.push( { name:"Arm_Ungulate", fn:"DuAEF_DUIK.structures.arm(DuAEF.Duik.Autorig.AnimalTypes.UNGULATE)" } );
+DuAEF_DUIK.structures.functions.push( { name:"Arm_Plantigrade", fn:"DuAEF_DUIK.structures.arm(DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE, true, true, true, true, true)" } );
+DuAEF_DUIK.structures.arm = function ( type, shoulder, humerus, radius, hand, claws, forceLink)
+{
+    forceLink = def( forceLink, false);
+    type = def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE);
+    shoulder = def( shoulder, true);
+    humerus = def( humerus, true);
+    radius = def( radius, true);
+    hand = def( hand, true);
+    if (type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) claws = def( claws, false);
+    else claws = def( claws, true);
+
+    DuAEF.DuAE.App.beginUndoGroup("Create arm structure");
+
+    DuAEF.DuAE.Project.setProgressMode(true);
+
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    var layerToRemove = null;
+    var linkPath = settings.data.structureLinkPaths;
+    if (forceLink) linkPath = !settings.data.structureLinkPaths;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
+    }
+
+    DuAEF.Duik.Structure.createArm(shoulder, humerus, radius, hand, claws,undefined,type,undefined, undefined, undefined, forceLink);
+
+    if (layerToRemove != null) layerToRemove.remove();
+
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Leg", fn:"DuAEF_DUIK.structures.leg()" } );
+DuAEF_DUIK.structures.functions.push( { name:"Leg_Digitigrade", fn:"DuAEF_DUIK.structures.leg(DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE)" } );
+DuAEF_DUIK.structures.functions.push( { name:"Leg_Ungulate", fn:"DuAEF_DUIK.structures.leg(DuAEF.Duik.Autorig.AnimalTypes.UNGULATE)" } );
+DuAEF_DUIK.structures.functions.push( { name:"Leg_Plantigrade", fn:"DuAEF_DUIK.structures.leg(DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE, true, true, true, true)" } );
+DuAEF_DUIK.structures.leg = function ( type, femur, tibia, foot, claws, forceLink)
+{
+    forceLink = def( forceLink, false);
+    type = def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE);
+    femur = def( femur, true);
+    tibia = def( tibia, true);
+    foot = def( foot, true);
+    if (type == DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE) claws = def( claws, false);
+    else claws = def( claws, true);
+    
+    DuAEF.DuAE.App.beginUndoGroup("Create leg structure");
+
+    DuAEF.DuAE.Project.setProgressMode(true);
+
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    var layerToRemove = null;
+    var linkPath = settings.data.structureLinkPaths;
+    if (forceLink) linkPath = !settings.data.structureLinkPaths;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
+    }
+
+    DuAEF.Duik.Structure.createLeg( femur, tibia, foot, claws,undefined,type, undefined, undefined, forceLink);
+
+    if (layerToRemove != null) layerToRemove.remove();
+
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Spine", fn:"DuAEF_DUIK.structures.spine()" } );
+DuAEF_DUIK.structures.spine = function ( numSpine, numNeck, hips, head, forceLink )
+{
+    forceLink = def( forceLink, false);
+    numSpine = def( numSpine, 2);
+    numNeck = def( numNeck, 1);
+    hips = def( hips, true);
+    head = def( head, true);
+
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+    
+    DuAEF.DuAE.App.beginUndoGroup("Create spine structure");
+
+    DuAEF.DuAE.Project.setProgressMode(true);
+
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    var layerToRemove = null;
+    var linkPath = settings.data.structureLinkPaths;
+    if (forceLink) linkPath = !settings.data.structureLinkPaths;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
+    }
+
+    DuAEF.Duik.Structure.createSpine(hips ,numSpine,numNeck, head, undefined, undefined, forceLink);
+
+    if (layerToRemove != null) layerToRemove.remove();
+
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Tail", fn:"DuAEF_DUIK.structures.tail()" } );
+DuAEF_DUIK.structures.tail = function ( numTail, forceLink )
+{
+    forceLink = def( forceLink, false);
+    numTail = def( numTail, 3);
+
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Create tail structure");
+
+    DuAEF.DuAE.Project.setProgressMode(true);
+
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    var layerToRemove = null;
+    var linkPath = settings.data.structureLinkPaths;
+    if (forceLink) linkPath = !settings.data.structureLinkPaths;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
+    }
+
+    DuAEF.Duik.Structure.createTail(numTail, undefined, forceLink);
+
+    if (layerToRemove != null) layerToRemove.remove();
+
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Custom Structures", fn:"DuAEF_DUIK.structures.custom()" } );
+DuAEF_DUIK.structures.custom = function ( num, name, forceLink, randomColor )
+{
+    randomColor = def( randomColor, false);
+    num = def( num, 1);
+    forceLink = def( forceLink, false);
+    name = def( name, 'Structure');
+
+    //get current comp
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+    
+    var pColor = DuAEF.Duik.Structure.color;
+    if (randomColor) DuAEF.Duik.Structure.color = DuAEF.DuJS.Color.Colors.RANDOM;
+    DuAEF.DuAE.App.beginUndoGroup("Create structure");
+
+    DuAEF.DuAE.Project.setProgressMode(true);
+
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    var layerToRemove = null;
+    var linkPath = settings.data.structureLinkPaths;
+    if (forceLink) linkPath = !settings.data.structureLinkPaths;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEF.DuAE.Shape.isSingleShape(l)) layerToRemove = l;
+    }
+
+    DuAEF.Duik.Structure.addStructures(num, comp, name, false, forceLink);
+
+    if (layerToRemove != null) layerToRemove.remove();
+
+    DuAEF.DuAE.Project.setProgressMode(false);
+
+    DuAEF.DuAE.App.endUndoGroup();
+    DuAEF.Duik.Structure.color = pColor;
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Show / Hide all structures", fn:"DuAEF_DUIK.structures.show()" } );
+DuAEF_DUIK.structures.show = function ( invert )
+{
+    invert = def( invert, false);
+
+    var structures = DuAEF.Duik.Structure.getStructureLayers();
+
+    if (structures.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Show/hide structures");
+    var visible = !structures[0].enabled;
+    for (var i = 0 ; i < structures.length ; i++)
+    {
+        if (invert) structures[i].enabled = !structures[i].enabled;
+        else structures[i].enabled = visible;
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Edit Mode", fn:"DuAEF_DUIK.structures.edit()" } );
+DuAEF_DUIK.structures.edit = function (  )
+{
+    //get from first element
+    var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+
+    DuAEF.DuAE.App.beginUndoGroup("Edit structures");
+    for (var i = 0 ; i < structures.length ; i++)
+    {
+        structures[i].toggleEditMode();
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Select all structures", fn:"DuAEF_DUIK.structures.select()" } );
+DuAEF_DUIK.structures.select = function (  )
+{
+    DuAEF.DuAE.App.beginUndoGroup("Select structures");
+    DuAEF.Duik.Structure.selectStructures(undefined, DuAEF.Duik.Structure.SelectionModes.ALL);
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.structures.functions.push( { name:"Duplicate structures", fn:"DuAEF_DUIK.structures.duplicate()" } );
+DuAEF_DUIK.structures.duplicate = function (  )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    var structures;
+    if (comp.selectedLayers.length == 0) structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ALL);
+    else structures = DuAEF.Duik.Structure.getStructures(comp, DuAEF.Duik.Structure.SelectionModes.ELEMENT);
+
+    if (structures.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Duplicate structures");
+    var autorigIds = [];
+    var newStructures = [];
+
+    var it = new Iterator(structures);
+    it.do(function(structure)
+    {
+        var newStructure  = structure.duplicate();
+        newStructures.push(newStructure);
+
+        //adjust autorig id
+        if (newStructure.elements.length > 0)
+        {
+            var element = newStructure.elements[0];
+            var params = DuAEF.Duik.getDuikMarkerParameters(element);
+            var newAutorigId = -1;
+            var autorigId = -1;
+            if (params[DuAEF.Duik.MarkerParameters.AUTORIG_ID]) autorigId = params[DuAEF.Duik.MarkerParameters.AUTORIG_ID];
+            else return;
+
+            for (var i = 0, num = autorigIds.length; i < num; i++)
+            {
+                if (autorigIds[i][0] == autorigId) newAutorigId = autorigIds[i][1];
+            }
+
+            if (newAutorigId == -1)
+            {
+                newAutorigId = new Date().getTime();
+                autorigIds.push([autorigId,newAutorigId]);
+            }
+
+            var itElements = new Iterator(structure.elements);
+            itElements.do(function(elmt)
+            {
+                DuAEF.Duik.setDuikMarkerParameter(elmt,DuAEF.Duik.MarkerParameters.AUTORIG_ID,newAutorigId);
+            });
+        }
+
+    });
+
+    //select all structures
+    var itNew = new Iterator(newStructures);
+    itNew.do(function(structure)
+    {
+        structure.select();
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
