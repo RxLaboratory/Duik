@@ -97,6 +97,10 @@ When these stand-alone panels are installed, you can also quickly open them by [
 !!! tip
     Don't forget the *stacked* mode for After Effects panels, which can be nice to keep all your Duik panels at hand.
 
+![](img/duik-screenshots/duik-cmd.png)
+
+Among these individual panels, you'll also find a special one, the [Duik Cmd](duik-cmd.md) panel...
+
 ### User Experience (UX)
 
 For every feature in Duik, the goal is to have a consistent workflow, the fastest possible, the easiest possible.
