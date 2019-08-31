@@ -89,6 +89,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Walk Cycle*](walk-cycle.md) is now applied correctly when controllers are null layers.
 - Controllers are extracted without generating expression errors when using master properties.
 - The [*Paint Rig*](paint-rig.md) now works correctly with the cloner and eraser tool too.
+- Fixed the expressions errors in the [2D Camera](camera-2d.md) on non-English After Effects.
 
 ## 16.0.12
 
