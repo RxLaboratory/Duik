@@ -1,0 +1,317 @@
+// The namespace
+DuAEF_DUIK.constraints = {}
+
+// The list of functions as { name:'name', fn:'call()' }
+DuAEF_DUIK.constraints.functions = []
+
+//The functions
+
+DuAEF_DUIK.constraints.functions.push( { name:"Auto-rig & IK", fn:"DuAEF_DUIK.constraints.autorig()" } );
+DuAEF_DUIK.constraints.autorig = function ( bakeStructures )
+{
+    bakeStructures = def ( bakeStructures, true );
+
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    if ( layers.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Autorig" );
+
+    DuAEF.DuAE.Project.setProgressMode( true );
+
+    DuAEF.Duik.Autorig.rig( layers, settings.data.autorigTailIK, !settings.data.ik3Layer );
+
+    if ( bakeStructures )
+    {
+        var structure = new Structure( layers );
+        structure.bakeAppearence();
+    }
+
+    DuAEF.DuAE.Project.setProgressMode( false );
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Connector", fn:"DuAEF_DUIK.constraints.quickConnector()" } );
+DuAEF_DUIK.constraints.quickConnector = function ()
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if ( props.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Connector" );
+    DuAEF.Duik.Rigging.quickConnector( props );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Bones", fn:"DuAEF_DUIK.constraints.bones()" } );
+DuAEF_DUIK.constraints.bones = function ( randomColor, tangents )
+{
+    randomColor = def( randomColor, false );
+    tangents = def( tangents, true );
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+
+    //just create a single bone without any prop
+    if (props.length == 0)
+    {
+        DuAEF.DuAE.App.beginUndoGroup( "Create bones" );
+
+        var bone = DuAEF.Duik.Bone.createBone();
+        bone.layer.selected = true;
+
+        DuAEF.DuAE.App.endUndoGroup();
+
+        return;
+    }
+
+    DuAEF.DuAE.App.beginUndoGroup( "Create bones" );
+
+    DuAEF.DuAE.Project.setProgressMode( true );
+
+    if ( randomColor ) DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.random();
+    else DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.hexToRGB( settings.data.boneColor );
+    var bones = [];
+    var itProps = new Iterator( props );
+    itProps.do( function( prop )
+    {
+        bones = bones.concat( DuAEF.Duik.Bone.addBone( prop, undefined, tangents ) );
+    } );
+
+    //if nothing was created
+    if ( bones.length == 0 )
+    {
+        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        var itLayers = new Iterator( layers );
+
+        //Try to find puppet pins
+        itLayers.do( function( layer )
+        {
+            var pins = DuAEF.DuAE.Layer.getPuppetPins( layer );
+            var itPins = new Iterator( pins );
+            itPins.do( function( pin )
+            {
+                bones.push( DuAEF.Duik.Bone.addBone( pin, undefined, tangents ) );
+            } );
+        } );
+
+        //Try any spatial property
+        if ( bones.length == 0 )
+        {
+            itProps.do( function( prop )
+            {
+                bones = bones.concat( DuAEF.Duik.Bone.addBones( prop, undefined, tangents ) );
+            } );
+        }
+
+    }
+
+    DuAEF.DuAE.Comp.selectLayers( bones );
+
+    DuAEF.DuAE.Project.setProgressMode( false );
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Quick Parent", fn:"DuAEF_DUIK.constraints.autoParent()" } );
+DuAEF_DUIK.constraints.autoParent = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    DuAEF.DuAE.App.beginUndoGroup( "Auto-parent layers" );
+    DuAEF.DuAE.Layer.parent( layers );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Parent Constraint", fn:"DuAEF_DUIK.constraints.parentConstraint()" } );
+DuAEF_DUIK.constraints.parentConstraint = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    if ( layers.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Parent link" );
+    for ( var i = 0; i < layers.length; i++ )
+    {
+        DuAEF.Duik.Rigging.parentConstraint( layers[ i ] );
+    }
+    DuAEF.DuAE.Comp.selectLayers( layers );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Path Constraint", fn:"DuAEF_DUIK.constraints.pathConstraint()" } );
+DuAEF_DUIK.constraints.pathConstraint = function ( path )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if ( !comp ) return false;
+
+    var layers = comp.selectedLayers;
+
+    if ( typeof path === 'undefined' && layers.length < 2) return false; 
+
+    if ( typeof path === 'undefined' ) 
+    {
+        var pathLayer = layers.pop();
+        var pathProps = DuAEF.DuAE.Layer.getSelectedProps( pathLayer, PropertyValueType.SHAPE )
+        if (pathProps.length == 0) return false;
+        path = pathProps.pop();
+    }
+
+    DuAEF.DuAE.App.beginUndoGroup( "Path constraint" );
+    var it = new Iterator(layers);
+    it.do(function (layer) {
+        DuAEF.Duik.Rigging.pathConstraint( layer, path );
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+
+    return true;
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Position Constraint", fn:"DuAEF_DUIK.constraints.positionConstraint()" } );
+DuAEF_DUIK.constraints.positionConstraint = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    if ( layers.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Orientation Constraint" );
+    for ( var i = 0; i < layers.length; i++ )
+    {
+        DuAEF.Duik.Rigging.positionConstraint( layers[ i ] );
+    }
+    DuAEF.DuAE.Comp.selectLayers( layers );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Orientation Constraint", fn:"DuAEF_DUIK.constraints.orientationConstraint()" } );
+DuAEF_DUIK.constraints.orientationConstraint = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    if ( layers.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Orientation Constraint" );
+    for ( var i = 0; i < layers.length; i++ )
+    {
+        DuAEF.Duik.Rigging.orientationConstraint( layers[ i ] );
+    }
+    DuAEF.DuAE.Comp.selectLayers( layers );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"List", fn:"DuAEF_DUIK.constraints.list()" } );
+DuAEF_DUIK.constraints.list = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+	if (props.length == 0) return;
+
+	DuAEF.DuAE.App.beginUndoGroup( "List" );
+
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	for (var i = 0 ; i < props.length ; i++)
+	{
+		DuAEF.Duik.Automation.list(props[i]);
+	}
+	DuAEF.DuAE.Comp.selectLayers(layers);
+
+	DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Expose Transform", fn:"DuAEF_DUIK.constraints.exposeTransform()" } );
+DuAEF_DUIK.constraints.exposeTransform = function ( )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Expose Transform");
+
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    var ctrls = [];
+    if (layers.length == 0) ctrls.push(DuAEF.Duik.Rigging.exposeTransform(comp));
+    else
+    {
+        for (var  i = 0, num = layers.length ; i < num ; i++)
+        {
+            var ctrl = DuAEF.Duik.Rigging.exposeTransform(comp,layers[i]);
+            ctrls.push(ctrl);
+        }
+    }
+
+    DuAEF.DuAE.Comp.selectLayers(ctrls);
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Zero", fn:"DuAEF_DUIK.constraints.zero()" } );
+DuAEF_DUIK.constraints.zero = function ( )
+{
+    DuAEF.DuAE.Comp.doSelectedLayers( DuAEF.Duik.Rigging.addZero, "Add zero" );
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Reset Transform (PRS)", fn:"DuAEF_DUIK.constraints.resetPRS()" } );
+DuAEF_DUIK.constraints.resetPRS = function ( )
+{
+    DuAEF.DuAE.Comp.doSelectedLayers( DuAEF.Duik.Animation.resetPRS, "Reset PRS" );
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Lock Property", fn:"DuAEF_DUIK.constraints.lockProperty()" } );
+DuAEF_DUIK.constraints.lockProperty = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if ( props.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Lock properties" );
+
+    DuAEF.DuAE.Property.lock( props );
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Separate Dimensions", fn:"DuAEF_DUIK.constraints.separateDimensions()" } );
+DuAEF_DUIK.constraints.separateDimensions = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if ( props.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Separate dimensions" );
+
+    for ( var i = 0, num = props.length; i < num; i++ )
+    {
+        DuAEF.Duik.Rigging.separateDimensions( props[ i ] );
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Locator", fn:"DuAEF_DUIK.constraints.locator()" } );
+DuAEF_DUIK.constraints.locator = function ( )
+{
+     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+
+    DuAEF.DuAE.App.beginUndoGroup( "Add Locator(s)" );
+
+    if ( layers.length )
+    {
+        new Iterator( layers ).do( function( layer )
+        {
+            DuAEF.Duik.Rigging.addLocator( layer );
+        } );
+    }
+    else
+    {
+        DuAEF.Duik.Rigging.addLocator();
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+DuAEF_DUIK.constraints.functions.push( { name:"Extract Locators", fn:"DuAEF_DUIK.constraints.extractLocators()" } );
+DuAEF_DUIK.constraints.extractLocators = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    if ( layers.length == 0 ) return;
+
+    DuAEF.DuAE.App.beginUndoGroup( "Extract Locators" );
+
+    new Iterator( layers ).do( function( layer )
+    {
+        DuAEF.Duik.Rigging.extractLocators( layer );
+    } );
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
