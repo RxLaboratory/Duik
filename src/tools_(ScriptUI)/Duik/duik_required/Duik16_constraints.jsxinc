@@ -349,12 +349,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_connectorButton_clicked ()
     {
-        var props = DuAEF.DuAE.Comp.getSelectedProps();
-        if ( props.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Connector" );
-        DuAEF.Duik.Rigging.quickConnector( props );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.quickConnector();
     }
 
     function ui_connectorPropList_changed ()
@@ -829,103 +824,37 @@ function ui_buildConstraints ( ui_constraintsGroup )
         app.endUndoGroup();
     }
 
-
     function ui_bonesButton_clicked ( randomColor, tangents )
     {
-        var props = DuAEF.DuAE.Comp.getSelectedProps();
-
-        //just create a single bone without any prop
-        if (props.length == 0)
-        {
-            DuAEF.DuAE.App.beginUndoGroup( "Create bones" );
-
-            var bone = DuAEF.Duik.Bone.createBone();
-            bone.layer.selected = true;
-
-            DuAEF.DuAE.App.endUndoGroup();
-
-            return;
-        }
-
-        DuAEF.DuAE.App.beginUndoGroup( "Create bones" );
-
-        DuAEF.DuAE.Project.setProgressMode( true );
-
-        if ( randomColor ) DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.random();
-        else DuAEF.Duik.Bone.color = DuAEF.DuJS.Color.hexToRGB( settings.data.boneColor );
-        var bones = [];
-        var itProps = new Iterator( props );
-        itProps.do( function( prop )
-        {
-            bones = bones.concat( DuAEF.Duik.Bone.addBone( prop, undefined, tangents ) );
-        } );
-
-        //if nothing was created
-        if ( bones.length == 0 )
-        {
-            var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-            var itLayers = new Iterator( layers );
-
-            //Try to find puppet pins
-            itLayers.do( function( layer )
-            {
-                var pins = DuAEF.DuAE.Layer.getPuppetPins( layer );
-                var itPins = new Iterator( pins );
-                itPins.do( function( pin )
-                {
-                    bones.push( DuAEF.Duik.Bone.addBone( pin, undefined, tangents ) );
-                } );
-            } );
-
-            //Try any spatial property
-            if ( bones.length == 0 )
-            {
-                itProps.do( function( prop )
-                {
-                    bones = bones.concat( DuAEF.Duik.Bone.addBones( prop, undefined, tangents ) );
-                } );
-            }
-
-        }
-
-        DuAEF.DuAE.Comp.selectLayers( bones );
-
-        DuAEF.DuAE.Project.setProgressMode( false );
-
-        DuAEF.DuAE.App.endUndoGroup();
+        DuAEF_DUIK.constraints.bones(
+            randomColor,
+            tangents
+        );
     }
 
     function ui_autoParentButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-        app.beginUndoGroup( 'Duik | ' + "Auto-parent layers" );
-        DuAEF.DuAE.Layer.parent( layers );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.autoParent();
     }
 
     function ui_parentButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.unselectLayers();
-        if ( layers.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Parent link" );
-        for ( var i = 0; i < layers.length; i++ )
-        {
-            DuAEF.Duik.Rigging.parentConstraint( layers[ i ] );
-        }
-        DuAEF.DuAE.Comp.selectLayers( layers );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.parentConstraint();
     }
 
     function ui_pathConstraintButton_clicked ()
     {
-        pathConstraintPathProp = null;
-        ui_pathConstraintLabel.text = "Select path...";
-        ui_pathConstraintValidButton.enabled = false;
-        if (settings.data.uiMode < 2) ui_pathConstraintSeparator.enabled = false;
-        ui_pathConstraintValidButton.icon.image = ui_pathConstraintValidButton.standardImage = DuAEF.DuBinary.toFile( w25_pathconstraint_m );
-        pathConstraintPathProp = null;
-        setCurrentConstraintsPanel( 1 );
+        ok = DuAEF_DUIK.constraints.pathConstraint();
+        if (!ok)
+        {
+            pathConstraintPathProp = null;
+            ui_pathConstraintLabel.text = "Select path...";
+            ui_pathConstraintValidButton.enabled = false;
+            if (settings.data.uiMode < 2) ui_pathConstraintSeparator.enabled = false;
+            ui_pathConstraintValidButton.icon.image = ui_pathConstraintValidButton.standardImage = DuAEF.DuBinary.toFile( w25_pathconstraint_m );
+            pathConstraintPathProp = null;
+            setCurrentConstraintsPanel( 1 );
+        }
     }
 
     function ui_pathConstraintPickButton_clicked ()
@@ -946,94 +875,48 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_pathConstraintValidButton_clicked ()
     {
-        var comp = DuAEF.DuAE.Project.getActiveComp();
-        if ( !comp ) return;
-        if ( !pathConstraintPathProp ) return;
-
-        var layers = comp.selectedLayers;
-
-        app.beginUndoGroup( 'Duik | ' + "Path constraint" );
-        DuAEF.Duik.Rigging.pathConstraint( layers[ 0 ], pathConstraintPathProp );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.pathConstraint(
+            pathConstraintPathProp
+        );
+        setCurrentConstraintsPanel( 0 );
     }
 
     function ui_positionConstraintButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.unselectLayers();
-        if ( layers.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Orientation Constraint" );
-        for ( var i = 0; i < layers.length; i++ )
-        {
-            DuAEF.Duik.Rigging.positionConstraint( layers[ i ] );
-        }
-        DuAEF.DuAE.Comp.selectLayers( layers );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.positionConstraint();
     }
 
     function ui_orientationConstraintButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.unselectLayers();
-        if ( layers.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Orientation Constraint" );
-        for ( var i = 0; i < layers.length; i++ )
-        {
-            DuAEF.Duik.Rigging.orientationConstraint( layers[ i ] );
-        }
-        DuAEF.DuAE.Comp.selectLayers( layers );
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.orientationConstraint();
     }
 
     function ui_listConstaintsButton_clicked ()
     {
-        shared.addList();
+        DuAEF_DUIK.constraints.list();
     }
 
     function ui_zeroButton_clicked ()
     {
-        DuAEF.DuAE.Comp.doSelectedLayers( DuAEF.Duik.Rigging.addZero, "Duik | Add zero" );
+        DuAEF_DUIK.constraints.zero();
     }
 
     function ui_zeroButton_altClicked ()
     {
-        DuAEF.DuAE.Comp.doSelectedLayers( DuAEF.Duik.Animation.resetPRS, "Duik | Reset PRS" );
+        DuAEF_DUIK.constraints.resetPRS();
     }
 
     function ui_lockButton_clicked ()
     {
-        var props = DuAEF.DuAE.Comp.getSelectedProps();
-        if ( props.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Lock properties" );
-
-        DuAEF.DuAE.Property.lock( props );
-
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.lockProperty();
     }
 
     function ui_autorigButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.unselectLayers();
-        if ( layers.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Autorig" );
-
-        DuAEF.DuAE.Project.setProgressMode( true );
-
-        DuAEF.Duik.Autorig.rig( layers, settings.data.autorigTailIK, !settings.data.ik3Layer );
-
-        if ( ui_autorigBakeStructuresButton.checked )
-        {
-            var structure = new Structure( layers );
-            structure.bakeAppearence();
-        }
-
-        DuAEF.DuAE.Project.setProgressMode( false );
-
+        DuAEF_DUIK.constraints.autorig(
+            ui_autorigBakeStructuresButton.checked
+        );
         setCurrentConstraintsPanel( 0 );
-
-        app.endUndoGroup();
     }
 
     function ui_autorigBakeStructuresButton_clicked ()
@@ -1068,38 +951,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_locatorButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-
-        app.beginUndoGroup( 'Duik | ' + "Add Locator(s)" );
-
-        if ( layers.length )
-        {
-            new Iterator( layers ).do( function( layer )
-            {
-                DuAEF.Duik.Rigging.addLocator( layer );
-            } );
-        }
-        else
-        {
-            DuAEF.Duik.Rigging.addLocator();
-        }
-
-        app.endUndoGroup();
+       DuAEF_DUIK.constraints.locator();
     }
 
     function ui_extractLocatorsButton_clicked ()
     {
-        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-        if ( layers.length == 0 ) return;
-
-        app.beginUndoGroup( 'Duik | ' + "Extract Locators" );
-
-        new Iterator( layers ).do( function( layer )
-        {
-            DuAEF.Duik.Rigging.extractLocators( layer );
-        } );
-
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.extractLocators();
     }
 
     function ui_parentCompButton_clicked ()
@@ -1170,41 +1027,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_separateDimensionsButton_clicked ()
     {
-        var props = DuAEF.DuAE.Comp.getSelectedProps();
-        if ( props.length == 0 ) return;
-
-        app.beginUndoGroup( "Duik | " + "Separate dimensions" );
-
-        for ( var i = 0, num = props.length; i < num; i++ )
-        {
-            DuAEF.Duik.Rigging.separateDimensions( props[ i ] );
-        }
-
-        app.endUndoGroup();
+        DuAEF_DUIK.constraints.separateDimensions();
     }
 
     function ui_etmButton_clicked()
     {
-        var comp = DuAEF.DuAE.Project.getActiveComp();
-	    if (!comp) return;
-
-        DuAEF.DuAE.App.beginUndoGroup("Expose Transform");
-
-        var layers = DuAEF.DuAE.Comp.unselectLayers();
-        var ctrls = [];
-        if (layers.length == 0) ctrls.push(DuAEF.Duik.Rigging.exposeTransform(comp));
-        else
-        {
-            for (var  i = 0, num = layers.length ; i < num ; i++)
-            {
-                var ctrl = DuAEF.Duik.Rigging.exposeTransform(comp,layers[i]);
-                ctrls.push(ctrl);
-            }
-        }
-
-        DuAEF.DuAE.Comp.selectLayers(ctrls);
-
-        DuAEF.DuAE.App.endUndoGroup();
+        DuAEF_DUIK.constraints.exposeTransform();
     }
 
     //========== UI ==============
