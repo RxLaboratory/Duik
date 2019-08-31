@@ -559,6 +559,7 @@ Duik.constraints.functions.push( { name:"Path Constraint", fn:"Duik.constraints.
  * Path Constraint
  * @param {Property} [path] - The path to use to constrain the selected layers.<br />
  * If undefined, Duik will use the first path selected on the last selected layer.
+ * @return {boolean} True if a constraint was created, false if no path was found and nothing has been done
  */
 Duik.constraints.pathConstraint = function ( path )
 {
@@ -1247,5 +1248,705 @@ Duik.structures.duplicate = function (  )
         structure.select();
     });
 
+    DuAEF.DuAE.App.endUndoGroup();
+}// ==================== |------------------------------| ====================
+// ==================== | Duik16_controllers_functions | ====================
+// ==================== |------------------------------| ====================
+
+/**
+ * Duik {@link http://duaef-docs.rainboxlab.org/Guides/Duik/automations.html Controllers}<br />
+ * Read the {@link http://duik-docs.rainboxlab.org | Duik User Guide} > {@link http://duaef-docs.rainboxlab.org/Guides/Duik/automations.html Controllers} for more information about each method.<br />
+ * <code>#include 'Duik16_controllers_functions.jsxinc'</code>
+ * @namespace
+ */
+Duik.controllers = {}
+
+/**
+ * All the controller methods stored as objects which can be parsed easily, for example to automatically build a ui with a button for each method.
+ * @property {string} name - A display name for the method
+ * @property {string} fn - The source script to eval
+ */
+Duik.controllers.functions = []
+
+//The functions
+
+Duik.controllers.functions.push( { name:"Rotation", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.ROTATION)" } );
+Duik.controllers.functions.push( { name:"X_Position", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.X_POSITION)" } );
+Duik.controllers.functions.push( { name:"Y_Position", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.Y_POSITION)" } );
+Duik.controllers.functions.push( { name:"Position", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.POSITION)" } );
+Duik.controllers.functions.push( { name:"Transform", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.TRANSFORM)" } );
+Duik.controllers.functions.push( { name:"Eye", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.EYE)" } );
+Duik.controllers.functions.push( { name:"Camera", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.CAMERA)" } );
+Duik.controllers.functions.push( { name:"Slider", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.SLIDER)" } );
+Duik.controllers.functions.push( { name:"2D_Slider", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.DOUBLE_SLIDER)" } );
+Duik.controllers.functions.push( { name:"Angle", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.ANGLE)" } );
+Duik.controllers.functions.push( { name:"Head", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.HEAD)" } );
+Duik.controllers.functions.push( { name:"Foot", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.FOOT)" } );
+Duik.controllers.functions.push( { name:"Claws", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.CLAWS)" } );
+Duik.controllers.functions.push( { name:"Hoof", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.HOOF)" } );
+Duik.controllers.functions.push( { name:"Hand", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.HAND)" } );
+Duik.controllers.functions.push( { name:"Hips", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.HIPS)" } );
+Duik.controllers.functions.push( { name:"Spine", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.BODY)" } );
+Duik.controllers.functions.push( { name:"Shoulders", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.SHOULDERS)" } );
+Duik.controllers.functions.push( { name:"Tail", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.TAIL)" } );
+Duik.controllers.functions.push( { name:"Null", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.NULL)" } );
+/**
+ * Creates an controller
+ * @param {DuAEF.Duik.Controller.Types} [type = DuAEF.Duik.Controller.Types.TRANSFORM] - The type of the controller. See the {@link http://duaef-reference.rainboxlab.org DuAEF} reference for more information.
+ * @param {boolean} [parent = false] - Wether to parent the selected layers to the controllers
+ * @param {boolean} [single = false] - Wether to create a single controller for all the layers
+ * @return {Controller[]} the controllers created. See the {@link http://duaef-reference.rainboxlab.org DuAEF} reference for more information about the <code>Controller</code> object.
+ */
+Duik.controllers.create = function ( type, parent, single )
+{
+    type = def( type, DuAEF.Duik.Controller.Types.TRANSFORM);
+    parent = def (parent, false);
+    single = def (single, false);
+
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return null;
+
+	DuAEF.DuAE.App.beginUndoGroup( "Create controller");
+
+	var layers = DuAEF.DuAE.Comp.unselectLayers();
+	var ctrls = [];
+	if (layers.length == 0) ctrls.push(DuAEF.Duik.Controller.create(comp,type));
+	else if (single)
+	{
+		var ctrl = DuAEF.Duik.Controller.create(comp,type,layers, undefined, undefined, parent);
+		ctrls.push(ctrl.layer);
+	}
+    else
+	{
+		for (var  i = 0 ; i < layers.length ; i++)
+		{
+			var ctrl = DuAEF.Duik.Controller.create(comp,type,layers[i], undefined, undefined, parent);
+			ctrls.push(ctrl.layer);
+		}
+	}
+
+	DuAEF.DuAE.Comp.selectLayers(ctrls);
+
+	DuAEF.DuAE.App.endUndoGroup();
+
+	return ctrls;
+}
+
+Duik.controllers.functions.push( { name:"PE_Eye", fn:"Duik.controllers.pseudoEffect(DuAEF.Duik.PseudoEffects.EYES)" } );
+Duik.controllers.functions.push( { name:"PE_Fingers", fn:"Duik.controllers.pseudoEffect(DuAEF.Duik.PseudoEffects.FINGERS)" } );
+Duik.controllers.functions.push( { name:"PE_Hand", fn:"Duik.controllers.pseudoEffect(DuAEF.Duik.PseudoEffects.HAND)" } );
+Duik.controllers.functions.push( { name:"PE_Head", fn:"Duik.controllers.pseudoEffect(DuAEF.Duik.PseudoEffects.HEAD)" } );
+/**
+ * Adds a controller pseudo effect on the selected layers
+ * @param {DuAEF.Duik.Controller.Types} type - The type of pseudo effect, one of: EYES, FINGERS, HAND, HEAD. See the {@link http://duaef-reference.rainboxlab.org DuAEF} reference for more information.
+ */
+Duik.controllers.pseudoEffect = function ( type )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+
+    DuAEF.DuAE.App.beginUndoGroup("Add Pseudo-Effect");
+
+    for (var i = 0, num = layers.length; i < num; i++)
+    {
+        //add effect
+        DuAEF.DuAE.Layer.applyPreset(layers[i],type);
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.controllers.functions.push( { name:"Select all", fn:"Duik.controllers.select()" } );
+/**
+ * Selects all controllers in the composition
+ */
+Duik.controllers.select = function (  )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    var ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
+    if (ctrls.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Select controllers");
+    DuAEF.DuAE.Comp.unselectLayers(comp);
+    for (var i = 0 ; i < ctrls.length ; i++)
+    {
+        ctrls[i].layer.selected = true;
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.controllers.functions.push( { name:"Show / Hide", fn:"Duik.controllers.show()" } );
+/**
+ * Shows or hides all controllers in the composition
+ * @param {boolean} [invert=false] - If true, inverts the controller visibilities
+ */
+Duik.controllers.show = function ( invert )
+{
+    invert = def (invert, false);
+
+    var ctrls = DuAEF.Duik.Controller.getControllers();
+
+    if (ctrls.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Show/hide controllers");
+    var visible = !ctrls[0].layer.enabled;
+    for (var i = 0 ; i < ctrls.length ; i++)
+    {
+        if (invert) ctrls[i].layer.enabled = !ctrls[i].layer.enabled;
+        else ctrls[i].layer.enabled = visible;
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.controllers.functions.push( { name:"Extract", fn:"Duik.controllers.extract()" } );
+/**
+ * Extracts the controllers from the selected precomposition
+ * @param {boolean} [useMasterProperties=false] - Wether to use master properties instead of expressions to extract the controllers.
+ */
+Duik.controllers.extract = function ( useMasterProperties )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+	var precomp = layers[0];
+
+	DuAEF.DuAE.App.beginUndoGroup("Extract Controllers");
+
+	var result = DuAEF.Duik.Animation.extractControllersFromComp(precomp,useMasterProperties);
+
+	DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.controllers.functions.push( { name:"Tag", fn:"Duik.controllers.tag()" } );
+/**
+ * Tags the layers as controllers
+ */
+Duik.controllers.tag = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    DuAEF.DuAE.App.beginUndoGroup("Tag controllers");
+    for (var i = 0, num = layers.length; i < num; i++)
+    {
+        DuAEF.Duik.setDuikMarker(layers[i], "Controller", DuAEF.Duik.LayerTypes.CONTROLLER);
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}// ==================== |------------------------| ====================
+// ==================== | Duik16_tools_functions | ====================
+// ==================== |------------------------| ====================
+
+/**
+ * Duik {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Tools}<br />
+ * Read the {@link http://duik-docs.rainboxlab.org Duik User Guide} > {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Tools} for more information about each method.<br />
+ * <code>#include 'Duik16_tools_functions.jsxinc'</code>
+ * @namespace
+ */
+Duik.tools = {}
+
+/**
+ * All the tools methods stored as objects which can be parsed easily, for example to automatically build a ui with a button for each method.
+ * @property {string} name - A display name for the method
+ * @property {string} fn - The source script to eval
+ */
+Duik.tools.functions = []
+
+//The functions
+
+Duik.tools.functions.push( { name:"Align layers", fn:"Duik.tools.align()" } );
+/**
+ * Align selected Layers to the last selected one
+ * @param {boolean} [position=true] - Wether to align the position.
+ * @param {boolean} [rotation=true] - Wether to align the rotation.
+ * @param {boolean} [scale=true] - Wether to align the scale.
+ * @param {boolean} [opacity=true] - Wether to align the opacity.
+ */
+Duik.tools.align = function ( position, rotation, scale, opacity )
+{
+    position = def (position, true);
+    rotation = def (rotation, true);
+    scale = def (scale, true);
+    opacity = def (opacity, false);
+
+
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    if (layers.length == 0) return;
+
+    var target = layers.pop();
+
+    DuAEF.DuAE.App.beginUndoGroup("Align layers");
+    DuAEF.DuAE.Layer.align(
+        layers,
+        target,
+        position,
+        rotation,
+        scale,
+        opacity
+    );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.tools.functions.push( { name:"Edit Mode", fn:"Duik.tools.editMode()" } );
+/**
+ * Toggle Edit Mode on selected layers.
+ */
+Duik.tools.editMode = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    DuAEF.DuAE.App.beginUndoGroup("Edit mode");
+    for (var i = 0, num = layers.length ; i < num ; i++)
+    {
+        DuAEF.DuAE.Layer.toggleEditMode(layers[i]);
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.tools.functions.push( { name:"Remove Expressions", fn:"Duik.tools.removeExpressions()" } );
+/**
+ * Remove expressions from selected properties.
+ */
+Duik.tools.removeExpressions = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+
+    DuAEF.DuAE.App.beginUndoGroup("Remove expressions");
+    if (props.length > 0)
+    {
+        for (var i = 0, num = props.length; i < num; i++)
+        {
+            DuAEF.DuAE.Property.removeExpression(props[i]);
+        }
+    }
+    else
+    {
+        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        for (var i = 0, num = layers.length; i < num; i++)
+        {
+            DuAEF.DuAE.Property.removeExpressions(layers[i]);
+        }
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+/**
+ * The expression which has been copied by {@link Duik.tools.copyExpression} and which can be pasted by {@link Duik.tools.pasteExpression}.
+ */
+Duik.tools.copiedExpression = '';
+
+Duik.tools.functions.push( { name:"Copy Expression", fn:"Duik.tools.copyExpression()" } );
+/**
+ * Copies the expression from the selected property. You can paste it with {@link Duik.tools.pasteExpression}.
+ * @return {string} The expression
+ */
+Duik.tools.copyExpression = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0) return;
+    prop = props.pop();
+
+    if (prop.riggable)
+    {
+        prop = prop.getProperty();
+        Duik.tools.copiedExpression = prop.expression;
+    }
+    return Duik.tools.copiedExpression;
+}
+
+Duik.tools.functions.push( { name:"Paste Expression", fn:"Duik.tools.pasteExpression()" } );
+/**
+ * Pastes the expression previously copied with {@link Duik.tools.copyExpression} to the selected properties
+ * @param {string} [expression] - The expression to set. If not provided, will automatically use the expression copied by {@link Duik.tools.copyExpression}.
+ */
+Duik.tools.pasteExpression = function ( expression )
+{
+    expression = def (expression , Duik.tools.copiedExpression);
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Paste expression");
+    
+    new Iterator(props).do(function(prop)
+    {
+        if (prop.riggable)
+        {
+            var p = prop.getProperty();
+            p.expression = expression;
+        }
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+}// ==================== |----------------------------| ====================
+// ==================== | Duik16_animation_functions | ====================
+// ==================== |----------------------------| ====================
+
+/**
+ * Duik {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Animation}<br />
+ * Read the {@link http://duik-docs.rainboxlab.org Duik User Guide} > {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Animation} for more information about each method.<br />
+ * @namespace
+ */
+Duik.animation = {}
+
+/**
+ * All the animation methods stored as objects which can be parsed easily, for example to automatically build a ui with a button for each method.
+ * @property {string} name - A display name for the method
+ * @property {string} fn - The source script to eval
+ */
+Duik.animation.functions = []
+
+//The functions
+
+Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
+/**
+ * Automatically clean the animation of the selected properties.
+ * @param {boolean} [spatialInterpolation=true] - Wether to fix spatial interpolation.
+ * @param {boolean} [smoothCurves=true] - Wether to apply a smart algorithm to smooth the curves.
+ * @param {boolean} [removeUnnecessaryKeys=true] - Wether to remove all redundants keyframes.
+ * @param {boolean} [smoothIn=true] - Wether to smooth the incoming curve if smoothCurves is set to true
+ * @param {boolean} [smoothOut=true] - Wether to smooth the outgoing curve if smoothCurves is set to true
+ */
+Duik.animation.klean = function ( spatialInterpolation, smoothCurves, removeUnnecessaryKeys, smoothIn, smoothOut )
+{
+    spatialInterpolation = def (spatialInterpolation, true);
+    smoothCurves = def (smoothCurves, true);
+    removeUnnecessaryKeys = def (removeUnnecessaryKeys, true);
+    smoothIn = def (smoothIn, true);
+    smoothOut = def (smoothOut, true);
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Kleaner");
+
+    for (var i = 0 ; i < props.length ; i++)
+    {
+        //SPATIAL AUTO
+        if ( spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
+        //SMART SMOOTH
+        if ( smoothCurves ) DuAEF.Duik.Animation.smartInterpolation(props[i], smoothIn , smoothOut);
+        //CLEAN
+        if ( removeUnnecessaryKeys ) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+/**
+ * The animation copied by {@link Duik.animation.copy} which can be pasted with {@link Duik.animation.paste}. 
+ */
+Duik.animation.copied = {}
+
+Duik.animation.functions.push( { name:"Copy Animation", fn:"Duik.animation.copy()" } );
+/**
+ * Copies the animation from the selected properties. Use {@link Duik.animation.paste} to paste it.
+ */
+Duik.animation.copy = function ( )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    var layers = comp.selectedLayers;
+    if (layers.length == 0) return;
+
+    copiedAnim = [];
+
+    for (var i = 0 ; i < layers.length ; i++)
+    {
+        copiedAnim.push(DuAEF.DuAE.Layer.getAnim(layers[i],true));
+    }
+    //get the first keyframe time to offset when pasting
+    copiedAnim.firstKeyFrameTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+
+    Duik.animation.copied = copiedAnim;
+}
+
+Duik.animation.functions.push( { name:"Paste", fn:"Duik.animation.paste()" } );
+Duik.animation.functions.push( { name:"Paste_Reverse", fn:"Duik.animation.paste( false, false, true )" } );
+Duik.animation.functions.push( { name:"Paste_Offset", fn:"Duik.animation.paste( false, true )" } );
+Duik.animation.functions.push( { name:"Paste_Replace", fn:"Duik.animation.paste( true )" } );
+/**
+ * Pastes the animation previously copied by {@link Duik.animation.copy} to the selected properties.
+ * @param {boolean} replace - Wether to completely erase and replace the current animation
+ * @param {boolean} offset - Wether to offset the animation from the current value
+ * @param {boolean} reverse - Wether to reverse the animation
+ */
+Duik.animation.paste = function ( replace, offset, reverse )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    if (layers.length == 0) layers = comp.layers;
+    if (layers.length == 0) return;
+
+    //options
+    var time = comp.time-copiedAnim.firstKeyFrameTime;
+    replace = def( replace, false );
+    offset = def( offset, false );
+    reverse = def( reverse, false );
+
+    DuAEF.DuAE.App.beginUndoGroup("Paste animation");
+
+    var remaining = DuAEF.DuAE.Layer.setAnims(layers, Duik.animation.copied, time, undefined, undefined, undefined, replace, undefined, offset, reverse);
+
+    if (remaining.length > 0)
+    {
+        var ui_pasteLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
+
+        for (var i = 0, num = remaining.length; i < num; i++)
+        {
+            ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+            //try to preselect by name
+            var ok = false;
+            for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
+            {
+                var l = comp.layer(j);
+                if (l.name == remaining[i]._name)
+                {
+                    ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
+                    ok = true;
+                    break;
+                }
+            }
+            if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
+        }
+
+        ui_pasteLayerPicker.onAccept = function () {DuAEF.DuAE.App.beginUndoGroup("Paste animation"); DuAEF.DuAE.Layer.setAllAnims(ui_pasteLayerPicker.getLayers(), Duik.animation.copied, time, undefined, undefined, undefined, replace, undefined, offset, false); DuAEF.DuAE.App.endUndoGroup();};
+
+        DuAEF.DuScriptUI.showUI(ui_pasteLayerPicker);
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+
+}
+
+Duik.animation.functions.push( { name:"IK/FK Switch", fn:"Duik.animation.switchIkFk( )" } );
+/**
+ * Switches the selected controller between IK and FK
+ */
+Duik.animation.switchIkFk = function ( )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("FK/IK Switch");
+
+    var it = new Iterator(comp.selectedLayers);
+    it.do(function (layer) {
+        DuAEF.Duik.Animation.switchIkFk(layer);
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.animation.functions.push( { name:"Motion Trail", fn:"Duik.animation.motionTrail( )" } );
+/**
+ * Draws the trajectory of the selected layers
+ * @param {float[]|null} [color=null] - The [R,G,B,A] color of the trails. Random color if set to null.
+ * @param {boolean} [useExisting=true] - Wether to use the existing motion trail layer, if any
+ */
+Duik.animation.motionTrail = function ( color, useExisting )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Motion trail");
+
+    color = def(color, null);
+    useExisting = def(useExisting, true);
+
+    //trail layer
+    var trailLayer = null;
+    if ( useExisting )
+    {
+        for (var i = 1 ; i <= comp.numLayers ; i++)
+        {
+            var layer = comp.layer(i);
+            if (layer instanceof ShapeLayer && layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL))
+            {
+                trailLayer = layer;
+                break;
+            }
+        }
+    }
+
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+
+    if (layers.length > 0)
+    {
+        for (var i = 0 ; i < layers.length ; i++)
+        {
+            trailLayer = DuAEF.Duik.Animation.motionTrail(comp,layers[i],trailLayer,color);
+        }
+    }
+    else
+    {
+        DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer);
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.animation.functions.push( { name:"X-Sheet", fn:"Duik.animation.xSheet( )" } );
+/**
+ * Adds an Exposure Sheet (X-Sheet) effect on the selected layers or composition
+ * @param {boolean} [autoDetect=false] - If true, will try to detect and animate the best exposure values for a nice traditionnal look.
+ */
+Duik.animation.xSheet = function ( autoDetect )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+    if (!comp) return;
+
+    autoDetect = def (autoDetect, false);
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    DuAEF.DuAE.App.beginUndoGroup("X-Sheet");
+
+    var ok = false;
+    if (props.length > 0)
+    {
+        var effect = null;
+        for (var i = 0 ; i < props.length ; i++)
+        {
+            effect = DuAEF.Duik.Animation.xSheet(comp,props[i],effect);
+            if (effect != null) ok = true;
+        }
+    }
+    if (!ok)
+    {
+        effect = DuAEF.Duik.Animation.xSheet(comp);
+    }
+
+    if ( autoDetect && props.length > 0)
+    {
+        //detect limit
+        var averageSpeed = DuAEF.DuAE.Property.getAverageSpeed(props);
+        if (averageSpeed > 0)
+        {
+            var precision = averageSpeed*2.5;
+            var frames = comp.duration / comp.frameDuration;
+            //set Keyframes
+            var step = 0;
+            effect(19).addKey(0);
+            for (var frame = 0 ; frame < frames ; frame++)
+            {
+                var time = frame*comp.frameDuration;
+
+                var maxSpeed = 0;
+                for (var j = 0 ; j < props.length ; j++)
+                {
+                    var prop = props[j].getProperty();
+                    var speedTest = DuAEF.DuAE.Property.getSpeed(prop,time);
+                    if (speedTest > maxSpeed) maxSpeed = speedTest;
+                }
+
+                step += maxSpeed;
+
+                if (step >= precision && averageSpeed > 0)
+                {
+                    step = 0;
+                    effect(19).addKey(time);
+                }
+            }
+            effect(7).setValue(2);
+        }
+
+    }
+
+    DuAEF.DuAE.App.endUndoGroup();
+
+}
+
+Duik.animation.functions.push( { name:"Time Remapping", fn:"Duik.animation.timeRemap( )" } );
+/**
+ * Activates time remapping on the selected layers, and add the looper {@link Duik.constraints.loop} to it.
+ */
+Duik.animation.timeRemap = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    DuAEF.DuAE.App.beginUndoGroup("Time Remap");
+    DuAEF.Duik.Animation.timeRemap(layers);
+    DuAEF.DuAE.App.endUndoGroup();
+}// ==================== |-------------------------| ====================
+// ==================== | Duik16_camera_functions | ====================
+// ==================== |-------------------------| ====================
+
+/**
+ * Duik {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Camera}<br />
+ * Read the {@link http://duik-docs.rainboxlab.org Duik User Guide} > {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Camera} for more information about each method.<br />
+ * @namespace
+ */
+Duik.camera = {}
+
+/**
+ * All the camera methods stored as objects which can be parsed easily, for example to automatically build a ui with a button for each method.
+ * @property {string} name - A display name for the method
+ * @property {string} fn - The source script to eval
+ */
+Duik.camera.functions = []
+
+//The functions
+
+Duik.camera.functions.push( { name:"Rig", fn:"Duik.camera.rig()" } );
+/**
+ * Rigs the selected 3D Camera
+ */
+Duik.camera.rig = function (  )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+    var numLayers = layers.length;
+    if (numLayers == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Camera rig");
+
+    var it = new Iterator(layers);
+    it.do(function (layer)
+    {
+        if (layer instanceof CameraLayer)
+        {
+            DuAEF.Duik.Camera.rigCamera(layer);
+        }
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.camera.functions.push( { name:"Scale Z-Link", fn:"Duik.camera.zLink()" } );
+/**
+ * Toggles the scale Z-link on the selected 3D Layers
+ */
+Duik.camera.zLink = function (  )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    if (layers.length  == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Toggle Scale Z-Link");
+
+    DuAEF.Duik.Camera.toggleScaleZLink(layers);
+
+    DuAEF.DuAE.App.endUndoGroup();
+
+}
+
+Duik.camera.functions.push( { name:"2D Camera", fn:"Duik.camera.create2DCam()" } );
+/**
+ * Creates a 2D multi-plane camera
+ */
+Duik.camera.create2DCam = function (  )
+{
+    DuAEF.DuAE.App.beginUndoGroup("2D Camera");
+
+    DuAEF.Duik.Camera.create2DCam();
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.camera.functions.push( { name:"Framing guides", fn:"Duik.camera.frame()" } );
+/**
+ * Adds framing guides to the composition
+ */
+Duik.camera.frame = function (  )
+{
+    DuAEF.DuAE.App.beginUndoGroup("Framing Guides");
+    DuAEF.Duik.Camera.addFrame();
     DuAEF.DuAE.App.endUndoGroup();
 }
