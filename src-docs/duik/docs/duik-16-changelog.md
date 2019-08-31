@@ -6,8 +6,8 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 
 #### New (UX/UI)
 
-- Duik is now available split in several optionnal pannels. This means each tab of Duik can be now in its own panel and docked separately into the user interface of After Effects.
-- Individual panels can be opened by [Alt] + Click on the tab buttons.
+- Duik is now available split in several optional pannels. This means each tab of Duik can be now in its own panel and docked separately into the user interface of After Effects.
+- Individual panels can be opened by [Alt] + [Click] on the tab buttons.
 - Duik now uses a [welcome screen](first-look-at-duik.md#categorization) at startup, which greatly improves launch time.
 - In order to fix any problem with Duik, like its settings file getting corrupted sometimes on Mac, there's now [a way to re-initialize everything](install-duik.md#fix-uninstall-duik).
 - Added some buttons with useful links:  
@@ -66,6 +66,7 @@ This is the list of what has changed since the first Alpha version of Duik Basse
 - The [*Add Bones*](bones.md) button now creates a single bone if nothing is selected, which you can then use any way you want.
 - The performance of the [*Search and Replace*](rigging-tools.md#search-and-replace) tool has been slightly improved for expressions. There's still some ongoing work to dramatically improve it's performance.
 - [*Controllers*](controllers.md) as null layers are 3D layers when the selected layer is 3D.
+- The [*Path Constraint*](path-constraint.md) can now be created in a single click.
 
 #### Fixes
 
