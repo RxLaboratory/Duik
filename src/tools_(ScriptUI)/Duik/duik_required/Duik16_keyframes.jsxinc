@@ -32,23 +32,13 @@
 
 	function ui_kleanerButton_clicked()
 	{
-		var props = DuAEF.DuAE.Comp.getSelectedProps();
-		if (props.length == 0) return;
-
-		app.beginUndoGroup('Duik | ' + "Kleaner");
-
-
-		for (var i = 0 ; i < props.length ; i++)
-		{
-			//SPATIAL AUTO
-			if (ui_spatialAutoButton.checked) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
-			//SMART SMOOTH
-			if (ui_smartSmoothButton.checked) DuAEF.Duik.Animation.smartInterpolation(props[i],ui_smartEaseStartButton.checked,ui_smartEaseEndButton.checked);
-			//CLEAN
-			if (ui_kleanerKeysButton.checked) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
-		}
-
-		app.endUndoGroup();
+		Duik.animation.klean(
+			ui_spatialAutoButton.checked,
+			ui_smartSmoothButton.checked,
+			ui_kleanerKeysButton.checked,
+			ui_smartEaseStartButton.checked,
+			ui_smartEaseEndButton.checked
+		);
 	}
 
 	if (settings.data.uiMode == 1)
@@ -493,69 +483,16 @@
 
 	function ui_copyAnimButton_clicked()
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
-		var layers = comp.selectedLayers;
-		if (layers.length == 0) return;
-
-		copiedAnim = [];
-
-		for (var i = 0 ; i < layers.length ; i++)
-		{
-			copiedAnim.push(DuAEF.DuAE.Layer.getAnim(layers[i],true));
-		}
-		//get the first keyframe time to offset when pasting
-		copiedAnim.firstKeyFrameTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+		Duik.animation.copy();
 	}
 
 	function ui_pasteAnimButton_clicked()
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		if (layers.length == 0) layers = comp.layers;
-		if (layers.length == 0) return;
-
-		//options
-		var time = comp.time-copiedAnim.firstKeyFrameTime;
-		var replace = ui_pasteAnimationReplaceButton.checked;
-		var offset =  ui_pasteAnimationOffsetSelector.index == 0;
-		var reverse = ui_pasteAnimationReverseButton.checked;
-
-		app.beginUndoGroup('Duik | ' + "Paste animation");
-
-		var remaining = DuAEF.DuAE.Layer.setAnims(layers, copiedAnim, time, undefined, undefined, undefined, replace, undefined, offset, reverse);
-
-		if (remaining.length > 0)
-		{
-			var ui_pasteLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
-
-			for (var i = 0, num = remaining.length; i < num; i++)
-			{
-				ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
-				//try to preselect by name
-				var ok = false;
-				for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
-				{
-					var l = comp.layer(j);
-					if (l.name == remaining[i]._name)
-					{
-						ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
-						ok = true;
-						break;
-					}
-				}
-				if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
-			}
-
-			ui_pasteLayerPicker.onAccept = function () {app.beginUndoGroup('Duik | ' + "Paste animation"); DuAEF.DuAE.Layer.setAllAnims(ui_pasteLayerPicker.getLayers(), copiedAnim, time, undefined, undefined, undefined, replace, undefined, offset, false); app.endUndoGroup();};
-
-			DuAEF.DuScriptUI.showUI(ui_pasteLayerPicker);
-		}
-
-		app.endUndoGroup();
+		Duik.animation.paste(
+			ui_pasteAnimationReplaceButton.checked,
+			ui_pasteAnimationOffsetSelector.index == 0,
+			ui_pasteAnimationReverseButton.checked
+		);
 		setCurrentAnimationPanel(0);
 	}
 
