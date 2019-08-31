@@ -17,10 +17,10 @@ function ui_buildControllers(ui_controllersMainGroup)
 	function createCtrlrButton(group,icon,iconOver,type)
 	{
 		var btn = DuAEF.DuScriptUI.addButton(group,'',DuAEF.DuBinary.toFile(icon),'',DuAEF.DuBinary.toFile(iconOver));
-		btn.onClick = function () {shared.createController(type);};
-		btn.onAltClick = function () {shared.createControllerAlt(type);};
-		btn.onCtrlClick = function () {shared.createController(type, true);};
-		btn.onCtrlAltClick = function () {shared.createControllerAlt(type, true);};
+		btn.onClick = function () {Duik.controllers.create(type);};
+		btn.onAltClick = function () {Duik.controllers.create(type,false,true);};
+		btn.onCtrlClick = function () {Duik.controllers.create(type, true);};
+		btn.onCtrlAltClick = function () {Duik.controllers.create(type, true, true);};
 		return btn;
 	}
 
@@ -28,41 +28,12 @@ function ui_buildControllers(ui_controllersMainGroup)
 
 	function ui_controllersSelectButton_clicked()
 	{
-		var comp = DuAEF.DuAE.Project.getActiveComp();
-		if (!comp) return;
-
-		var ctrls = DuAEF.Duik.Controller.getControllers(comp,false);
-		if (ctrls.length == 0) return;
-
-		app.beginUndoGroup('Duik - ' + "Select controllers");
-		DuAEF.DuAE.Comp.unselectLayers(comp);
-		for (var i = 0 ; i < ctrls.length ; i++)
-		{
-			ctrls[i].layer.selected = true;
-		}
-		app.endUndoGroup();
+		Duik.controllers.select();
 	}
 
 	function ui_controllersShowButton_clicked(invert)
 	{
-		if (typeof invert === 'undefined') invert = false;
-		var ctrls = DuAEF.Duik.Controller.getControllers();
-
-		if (ctrls.length == 0) return;
-
-		app.beginUndoGroup('Duik - ' + "Show/hide controllers");
-		var visible = !ctrls[0].layer.enabled;
-		for (var i = 0 ; i < ctrls.length ; i++)
-		{
-			if (invert) ctrls[i].layer.enabled = !ctrls[i].layer.enabled;
-			else ctrls[i].layer.enabled = visible;
-		}
-		app.endUndoGroup();
-	}
-
-	function ui_extractControllersMPCtrlSelector_changed()
-	{
-		shared.extractUsingMP = ui_extractControllersMPCtrlSelector.index == 1;
+		Duik.controllers.show(invert);
 	}
 
 	function ui_extractControllersCtrlOptionsButton_clicked()
@@ -74,18 +45,11 @@ function ui_buildControllers(ui_controllersMainGroup)
 
 	function ui_tagControllersButton_clicked()
 	{
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
-		app.beginUndoGroup('Duik | ' + "Tag controllers");
-		for (var i = 0, num = layers.length; i < num; i++)
-		{
-			DuAEF.Duik.setDuikMarker(layers[i], "Controller", DuAEF.Duik.LayerTypes.CONTROLLER);
-		}
-		app.endUndoGroup();
+		Duik.controllers.tag();
 	}
 
 	function ui_pseudoEffectsValidButton_clicked()
 	{
-		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
 		var pseudoEffect;
 		if (ui_pseudoEffectsSelector.index == 0) pseudoEffect = DuAEF.Duik.PseudoEffects.EYES;
 		else if (ui_pseudoEffectsSelector.index == 1) pseudoEffect = DuAEF.Duik.PseudoEffects.FINGERS;
@@ -93,16 +57,18 @@ function ui_buildControllers(ui_controllersMainGroup)
 		else if (ui_pseudoEffectsSelector.index == 3) pseudoEffect = DuAEF.Duik.PseudoEffects.HEAD;
 		else return;
 
-		app.beginUndoGroup('Duik - ' + "Add Pseudo-Effect");
-
-		for (var i = 0, num = layers.length; i < num; i++)
-		{
-			//add effect
-			DuAEF.DuAE.Layer.applyPreset(layers[i],pseudoEffect);
-		}
-		app.endUndoGroup();
+		Duik.controllers.pseudoEffect(
+			pseudoEffect
+		);
 	}
 	
+	function ui_extractControllersCtrlValidButton_clicked()
+	{
+		useMp = false;
+		if (DuAEF.DuAE.App.version >= 15.1) useMp = ui_extractControllersMPCtrlSelector.index == 1;
+		Duik.controllers.extract( useMp );
+		setCurrentControllersPanel(0);
+	}
 
 	//================= UI ========================
 
@@ -221,14 +187,13 @@ function ui_buildControllers(ui_controllersMainGroup)
 	ui_pseudoEffectsCancelButton.onClick = function () { setCurrentControllersPanel(0); };
 	ui_pseudoEffectsValidButton.onClick = function () { ui_pseudoEffectsValidButton_clicked(); setCurrentControllersPanel(0); };
 
-	ui_extractControllersCtrlValidButton.onClick = function () { shared.extractControllers(); setCurrentControllersPanel(0); };
-	ui_extractControllersCtrlButton.onClick = shared.extractControllers;
+	ui_extractControllersCtrlValidButton.onClick = ui_extractControllersCtrlValidButton_clicked;
+	ui_extractControllersCtrlButton.onClick = ui_extractControllersCtrlValidButton_clicked;
 	if (DuAEF.DuAE.App.version >= 15.1)
 	{
 		ui_extractControllersCtrlOptionsButton.onClick = ui_extractControllersCtrlOptionsButton_clicked;
 	}
 	ui_extractControllersCtrlCancelButton.onClick = function () {setCurrentControllersPanel(0);};
-	ui_extractControllersMPCtrlSelector.onChange = ui_extractControllersMPCtrlSelector_changed;
 
 	ui_tagControllersButton.onClick = ui_tagControllersButton_clicked;
 
