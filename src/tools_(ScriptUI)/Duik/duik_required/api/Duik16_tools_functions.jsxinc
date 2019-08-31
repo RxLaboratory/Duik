@@ -1,0 +1,141 @@
+/**
+ * Duik {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Tools}<br />
+ * Read the {@link http://duik-docs.rainboxlab.org Duik User Guide} > {@link http://duaef-docs.rainboxlab.org/Guides/Duik/constraints.html Tools} for more information about each method.<br />
+ * <code>#include 'Duik16_tools_functions.jsxinc'</code>
+ * @namespace
+ */
+Duik.tools = {}
+
+/**
+ * All the tools methods stored as objects which can be parsed easily, for example to automatically build a ui with a button for each method.
+ * @property {string} name - A display name for the method
+ * @property {string} fn - The source script to eval
+ */
+Duik.tools.functions = []
+
+//The functions
+
+Duik.tools.functions.push( { name:"Align layers", fn:"Duik.tools.align()" } );
+/**
+ * Align selected Layers to the last selected one
+ * @param {boolean} [position=true] - Wether to align the position.
+ * @param {boolean} [rotation=true] - Wether to align the rotation.
+ * @param {boolean} [scale=true] - Wether to align the scale.
+ * @param {boolean} [opacity=true] - Wether to align the opacity.
+ */
+Duik.tools.align = function ( position, rotation, scale, opacity )
+{
+    position = def (position, true);
+    rotation = def (rotation, true);
+    scale = def (scale, true);
+    opacity = def (opacity, false);
+
+
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    if (layers.length == 0) return;
+
+    var target = layers.pop();
+
+    DuAEF.DuAE.App.beginUndoGroup("Align layers");
+    DuAEF.DuAE.Layer.align(
+        layers,
+        target,
+        position,
+        rotation,
+        scale,
+        opacity
+    );
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.tools.functions.push( { name:"Edit Mode", fn:"Duik.tools.editMode()" } );
+/**
+ * Toggle Edit Mode on selected layers.
+ */
+Duik.tools.editMode = function ( )
+{
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+    DuAEF.DuAE.App.beginUndoGroup("Edit mode");
+    for (var i = 0, num = layers.length ; i < num ; i++)
+    {
+        DuAEF.DuAE.Layer.toggleEditMode(layers[i]);
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.tools.functions.push( { name:"Remove Expressions", fn:"Duik.tools.removeExpressions()" } );
+/**
+ * Remove expressions from selected properties.
+ */
+Duik.tools.removeExpressions = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+
+    DuAEF.DuAE.App.beginUndoGroup("Remove expressions");
+    if (props.length > 0)
+    {
+        for (var i = 0, num = props.length; i < num; i++)
+        {
+            DuAEF.DuAE.Property.removeExpression(props[i]);
+        }
+    }
+    else
+    {
+        var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+        for (var i = 0, num = layers.length; i < num; i++)
+        {
+            DuAEF.DuAE.Property.removeExpressions(layers[i]);
+        }
+    }
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+/**
+ * The expression which has been copied by {@link Duik.tools.copyExpression} and which can be pasted by {@link Duik.tools.pasteExpression}.
+ */
+Duik.tools.copiedExpression = '';
+
+Duik.tools.functions.push( { name:"Copy Expression", fn:"Duik.tools.copyExpression()" } );
+/**
+ * Copies the expression from the selected property. You can paste it with {@link Duik.tools.pasteExpression}.
+ * @return {string} The expression
+ */
+Duik.tools.copyExpression = function ( )
+{
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0) return;
+    prop = props.pop();
+
+    if (prop.riggable)
+    {
+        prop = prop.getProperty();
+        Duik.tools.copiedExpression = prop.expression;
+    }
+    return Duik.tools.copiedExpression;
+}
+
+Duik.tools.functions.push( { name:"Paste Expression", fn:"Duik.tools.pasteExpression()" } );
+/**
+ * Pastes the expression previously copied with {@link Duik.tools.copyExpression} to the selected properties
+ * @param {string} [expression] - The expression to set. If not provided, will automatically use the expression copied by {@link Duik.tools.copyExpression}.
+ */
+Duik.tools.pasteExpression = function ( expression )
+{
+    expression = def (expression , Duik.tools.copiedExpression);
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0) return;
+
+    DuAEF.DuAE.App.beginUndoGroup("Paste expression");
+    
+    new Iterator(props).do(function(prop)
+    {
+        if (prop.riggable)
+        {
+            var p = prop.getProperty();
+            p.expression = expression;
+        }
+    });
+
+    DuAEF.DuAE.App.endUndoGroup();
+}
