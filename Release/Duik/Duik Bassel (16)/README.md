@@ -43,7 +43,7 @@ You'll find several folders and files.
 - The *Help* folder contains this help pages. Double click on the file "index.html" to open it.
 - The *Tools* folder contains some tools for other third-party software, like a script to export TVPaint animations.
 - The *ScriptUI Panels* folder contains the actual *Duik Bassel* script you need to install.
-- The *Optionnal Panels* folder contains [optionnal individual panels](first-look-at-duik.md#individual-panels) to use with Duik. You can choose to install any of them or not at all.
+- The *Optional Panels* folder contains [optionnal individual panels](first-look-at-duik.md#individual-panels) to use with Duik. You can choose to install any of them or not at all.
 
 
 ## **3 -** There are several ways to install Duik very easily:  
