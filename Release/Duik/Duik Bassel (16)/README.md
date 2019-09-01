@@ -38,7 +38,8 @@ All versions before CS6 won't be able to correctly run Duik, sorry! Time to upda
 
 You'll find several folders and files.
 
-- *"README.txt"* contains a lot of information to help you get started with Duik.
+- *"README"* contains a lot of information to help you get started with Duik.
+- *"LICENSE"* contains the license of Duik, the [GNU-GPL v3](https://www.gnu.org/licenses/gpl-3.0.html).
 - The *Help* folder contains this help pages. Double click on the file "index.html" to open it.
 - The *Tools* folder contains some tools for other third-party software, like a script to export TVPaint animations.
 - The *ScriptUI Panels* folder contains the actual *Duik Bassel* script you need to install.
