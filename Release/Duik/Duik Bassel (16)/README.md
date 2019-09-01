@@ -23,7 +23,7 @@ CC2018 (15), CC2019 (16) and upcoming versions.
 
 It is also known to be working decently on CS6 (11), CC (12), CC2014 (13), CC2015 (13.5), CC2017 (14), but you can't be sure, and Duik does not officially support these versions.
 
-Note: CS6 has a lot of issues with Script Panels like the one used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the UI issues you may have... You also have to know that the performance is pretty poor with CS6.
+!!! Note: CS6 has a lot of issues with Script Panels like the one used by Duik. Duik will work on CS6, but you may have to close and re-open it often to fix the UI issues you may have... You also have to know that the performance is pretty poor with CS6.
 
 ### Not supported
 
