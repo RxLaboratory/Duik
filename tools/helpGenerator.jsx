@@ -34,9 +34,8 @@ Each file will be converted to a string, stored in a variable named after the fi
 	{
 		return file instanceof File;
 	}
-
 	var scriptFolder = new File($.fileName).parent.parent;
-	var helpFolder = new Folder(scriptFolder.parent.parent.parent.absoluteURI + '/src-docs/duik/contextual-help/');
+	var helpFolder = new Folder(scriptFolder.parent.absoluteURI + '/DuAEF_Duik_Docs/src/contextual-help/');
 	if (!helpFolder) return;
 	var helpContent = helpFolder.getFiles(isFolder);
 
@@ -57,13 +56,13 @@ Each file will be converted to a string, stored in a variable named after the fi
 			data += 'var ' + varName + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + varName + 'Link = "https://rainbox-dev.github.io/DuAEF/Guides/Duik/' + file.name.replace(re,'') + '/"\n\n';
+			data += 'var ' + varName + 'Link = "https://duik-docs.rainboxlab.org/"\n\n';
 		}
 	}
 
 	//write data
 
-	var helpFile = new File(scriptFolder.absoluteURI + '/duik_required/Duik16_helpStrings.jsxinc');
+	var helpFile = new File(scriptFolder.absoluteURI + '/src/duik_required/Duik16_helpStrings.jsxinc');
 	helpFile.encoding = 'UTF-8';
 	if (!helpFile.open('w'))
 	{
