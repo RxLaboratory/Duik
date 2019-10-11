@@ -26,7 +26,7 @@
  *  })(this);
  * @author Nicolas Dufresne and contributors
  * @copyright 2017 - 2019 Nicolas Dufresne, Rainbox Productions
- * @version 16.1
+ * @version 16.2
  * @license GPL-3.0 <br />
  * Duik is free software: you can redistribute it and/or modify<br />
  * it under the terms of the GNU General Public License as published by<br />
@@ -1596,31 +1596,50 @@ Duik.animation.functions = []
 Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
 /**
  * Automatically clean the animation of the selected properties.
- * @param {boolean} [spatialInterpolation=true] - Wether to fix spatial interpolation.
+ * @param {boolean} [separateDimensions=true] - Wether to separate the dimensions of the property before kleaning it.
+ * @param {boolean} [spatialInterpolation=true] - Wether to fix spatial interpolation (when dimensions are not separated).
  * @param {boolean} [smoothCurves=true] - Wether to apply a smart algorithm to smooth the curves.
+ * @param {boolean} [smoothUsingExpression=true] - Wether to smooth the curves using expressions. Set to false to adjust directly the interpolation of the keyframes.
  * @param {boolean} [removeUnnecessaryKeys=true] - Wether to remove all redundants keyframes.
  * @param {boolean} [smoothIn=true] - Wether to smooth the incoming curve if smoothCurves is set to true
  * @param {boolean} [smoothOut=true] - Wether to smooth the outgoing curve if smoothCurves is set to true
  */
-Duik.animation.klean = function ( spatialInterpolation, smoothCurves, removeUnnecessaryKeys, smoothIn, smoothOut )
+Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoothCurves, smoothUsingExpression, removeUnnecessaryKeys, smoothIn, smoothOut )
 {
+    separateDimensions = def (separateDimensions, true);
     spatialInterpolation = def (spatialInterpolation, true);
     smoothCurves = def (smoothCurves, true);
     removeUnnecessaryKeys = def (removeUnnecessaryKeys, true);
     smoothIn = def (smoothIn, true);
     smoothOut = def (smoothOut, true);
+    smoothUsingExpression = def (smoothUsingExpression, true);
 
     var props = DuAEF.DuAE.Comp.getSelectedProps();
     if (props.length == 0) return;
 
     DuAEF.DuAE.App.beginUndoGroup("Kleaner");
 
-    for (var i = 0 ; i < props.length ; i++)
+    if (separateDimensions)
+    {
+        var newProps = [];
+        for (var i = 0, num = props.length ; i < num ; i++)
+        {
+            newProps = newProps.concat(DuAEF.Duik.Rigging.separateDimensions(props[i]));
+        }
+        props = newProps;
+    }
+
+    var effect = null;
+    for (var i = 0, num = props.length ; i < num ; i++)
     {
         //SPATIAL AUTO
-        if ( spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
+        if (!separateDimensions && spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
         //SMART SMOOTH
-        if ( smoothCurves ) DuAEF.Duik.Animation.smartInterpolation(props[i], smoothIn , smoothOut);
+        if ( smoothCurves ) effect = DuAEF.Duik.Animation.smartInterpolation(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
+    }
+
+    for (var i = 0, num = props.length; i < num; i++)
+    {
         //CLEAN
         if ( removeUnnecessaryKeys ) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
     }
