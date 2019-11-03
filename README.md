@@ -18,7 +18,7 @@ Duik’s comprehensiveness and ease of use have made it a script used in numerou
 
 - You can find a lot of information and documentation from our website: [rainboxlab.org](https://rainboxlab.org)
 - **Comprehensive Documentation** of Duik: [duik-docs.rainboxlab.org](http://duik-docs.rainboxlab.org)
-- You can buy the **printed user guide** and help the development of Duik: [https://rainboxlab.org/shop/duik-user-guide/](https://rainboxlab.org/shop/duik-user-guide/
+- You can buy the **printed user guide** and help the development of Duik: https://rainboxlab.org/shop/duik-user-guide/
 - **Tutorials**: https://rainboxlab.org/tag/tutorials/
 - User forum: [forum.rainboxlab.org](http://forum.rainboxlab.org)   
 - Developers and users chat: [chat.rainboxlab.org](http://chat.rainboxlab.org)
