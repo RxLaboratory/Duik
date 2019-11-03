@@ -23,7 +23,7 @@
 	debugLog.checkTimer("Building UI");
 
 	//the main TabPanel
-	var ui_mainTabPanel = DuAEF.DuScriptUI.addTabPanel(ui_palette, settings.data.uiMode != 2);
+	var ui_mainTabPanel = DuAEF.DuScriptUI.addTabPanel(ui_palette, settings.data.uiMode < 2);
 	DuAEF.DuScriptUI.setBackgroundColor(ui_mainTabPanel.buttonsGroup, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY);
 	ui_mainTabPanel.buttonsGroup.alignChildren = ['right', 'fill'];
 
@@ -37,6 +37,9 @@
 	var ui_riggingTab = ui_mainTabPanel.addTab('', DuAEF.DuBinary.toFile(w18_rig_l), "Rigging", DuAEF.DuBinary.toFile(w18_rig_r));
 	ui_riggingTab.button.setHelp('Rigging', riggingHelp, riggingLink);
 	ui_riggingTab.scriptUIPanel = "Duik Rigging.jsx";
+	var ui_automationTab = ui_mainTabPanel.addTab('', DuAEF.DuBinary.toFile(w18_automation_l), "Automations", DuAEF.DuBinary.toFile(w18_automation_r));
+	ui_automationTab.button.setHelp('Automations', automationsHelp, automationsLink);
+	ui_automationTab.scriptUIPanel = "Duik Automations.jsx";
 	var ui_animationTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_kbez_l),"Animation",DuAEF.DuBinary.toFile(w18_kbez_r));
 	ui_animationTab.button.setHelp('Animation',animationHelp,animationLink);
 	ui_animationTab.scriptUIPanel = "Duik Animation.jsx";
@@ -46,6 +49,9 @@
 	var ui_ioTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_io_l),"I/O Tools",DuAEF.DuBinary.toFile(w18_io_r));
 	ui_ioTab.button.setHelp('Import / Export',ioHelp,ioLink);
 	ui_ioTab.scriptUIPanel = "Duik Import-Export.jsx";
+	var ui_toolsTab = ui_mainTabPanel.addTab('',DuAEF.DuBinary.toFile(w18_tools_l),"Tools",DuAEF.DuBinary.toFile(w18_tools_r));
+	ui_toolsTab.button.setHelp('Tools',riggingtoolsHelp,riggingtoolsLink);
+	ui_toolsTab.scriptUIPanel = "Duik Tools.jsx";
 
 	//=== PANELS ===
 
@@ -55,11 +61,15 @@
 	#include 'Duik16_animation.jsxinc'
 	#include 'Duik16_camera.jsxinc'
 	#include 'Duik16_io.jsxinc'
+	#include 'Duik16_automations.jsxinc'
+	#include 'Duik16_tools.jsxinc'
 
 	ui_riggingTab.build = ui_buildRigging;
 	ui_animationTab.build = ui_buildAnimation;
 	ui_cameraTab.build = ui_buildCamera;
 	ui_ioTab.build = ui_buildIO;
+	ui_automationTab.build = ui_buildAutomations;
+	ui_toolsTab.build = ui_buildTools;
 
 	debugLog.checkTimer("Panels ready.");
 
@@ -76,8 +86,6 @@
 		settings.data.currentPanel = ui_mainTabPanel.index;
 		settings.save();
 	}
-	//bottom
-	//ui_rainboxURL.addEventListener('mousedown',ui_bottomGroup_clicked,true);
 
 	//=== INIT ===
 	debugLog.checkTimer("Showing welcome panel.");
@@ -90,74 +98,105 @@
         welcomeGroup.spacing = 2;
         welcomeGroup.margins = 0;
 
-		var welcomeLabel = DuAEF.DuScriptUI.addStaticText(welcomeGroup, "Welcome to Duik Bassel.1!");
-		welcomeLabel.alignment = ['center','top'];
-		var welcomeRiggingButton = DuAEF.DuScriptUI.addButton(
-			welcomeGroup,
-			"Rigging",
-			DuAEF.DuBinary.toFile(w32_rig_l),
-			undefined,
-			DuAEF.DuBinary.toFile(w32_rig_r));
-		welcomeRiggingButton.alignment = ['fill','fill'];
-		var welcomeAnimationButton = DuAEF.DuScriptUI.addButton(
-			welcomeGroup,
-			"Animation",
-			DuAEF.DuBinary.toFile(w32_kbez_l),
-			undefined,
-			DuAEF.DuBinary.toFile(w32_kbez_r));
-		welcomeAnimationButton.alignment = ['fill','fill'];
-		var welcomeCameraButton = DuAEF.DuScriptUI.addButton(
-			welcomeGroup,
-			"Camera",
-			DuAEF.DuBinary.toFile(w32_camera_l),
-			undefined,
-			DuAEF.DuBinary.toFile(w32_camera_r));
-		welcomeCameraButton.alignment = ['fill','fill'];
-		var welcomeIOButton = DuAEF.DuScriptUI.addButton(
-			welcomeGroup,
-			"Import/Export",
-			DuAEF.DuBinary.toFile(w32_io_l),
-			undefined,
-			DuAEF.DuBinary.toFile(w32_io_r));
-		welcomeIOButton.alignment = ['fill','fill'];
-		var welcomeHelpButton = DuAEF.DuScriptUI.addButton(
-			welcomeGroup,
-			"Get help",
-			DuAEF.DuBinary.toFile(w32_help_l),
-			undefined,
-			DuAEF.DuBinary.toFile(w32_help_r));
+		var welcomeLabel = DuAEF.DuScriptUI.addStaticText(welcomeGroup, "Welcome to " + DuAEF.scriptName + "!");
+		if (settings.data.uiMode > 2) welcomeLabel.alignment = ['center', 'center'];
 
-		welcomeHelpButton.alignment = ['fill','bottom'];
+		if (settings.data.uiMode <= 2)
+		{
+			var welcomeButtonsGroup = DuAEF.DuScriptUI.addGroup( welcomeGroup, 'column');
+			welcomeButtonsGroup.alignment = ['fill','fill'];
+			var welcomeRiggingButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Rigging",
+				DuAEF.DuBinary.toFile(w32_rig_l),
+				"Rigging",
+				DuAEF.DuBinary.toFile(w32_rig_r));
+			welcomeRiggingButton.alignment = ['fill','fill'];
+			var welcomeAutomationsButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Automations",
+				DuAEF.DuBinary.toFile(w32_automation_l),
+				"Automation",
+				DuAEF.DuBinary.toFile(w32_automation_r));
+			welcomeAutomationsButton.alignment = ['fill','fill'];
+			var welcomeAnimationButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Animation",
+				DuAEF.DuBinary.toFile(w32_kbez_l),
+				"Animation",
+				DuAEF.DuBinary.toFile(w32_kbez_r));
+			welcomeAnimationButton.alignment = ['fill','fill'];
+			var welcomeCameraButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Camera",
+				DuAEF.DuBinary.toFile(w32_camera_l),
+				"Camera",
+				DuAEF.DuBinary.toFile(w32_camera_r));
+			welcomeCameraButton.alignment = ['fill','fill'];
+			var welcomeIOButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Import/Export",
+				DuAEF.DuBinary.toFile(w32_io_l),
+				"Import/Export",
+				DuAEF.DuBinary.toFile(w32_io_r));
+			welcomeIOButton.alignment = ['fill','fill'];
+			var welcomeToolsButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Tools",
+				DuAEF.DuBinary.toFile(w32_tools_l),
+				"Tools",
+				DuAEF.DuBinary.toFile(w32_tools_r));
+			welcomeToolsButton.alignment = ['fill','fill'];
+			var welcomeHelpButton = DuAEF.DuScriptUI.addButton(
+				welcomeButtonsGroup,
+				"Get help",
+				DuAEF.DuBinary.toFile(w32_help_l),
+				"Help",
+				DuAEF.DuBinary.toFile(w32_help_r));
+			welcomeHelpButton.alignment = ['fill','bottom'];
 
-		welcomeRiggingButton.onClick = function ()
-		{
-			welcomeGroup.visible = false;
-			ui_mainTabPanel.setCurrentIndex( 0 );
-		}
-		welcomeAnimationButton.onClick = function ()
-		{
-			welcomeGroup.visible = false;
-			ui_mainTabPanel.setCurrentIndex( 1 );
-		}
-		welcomeCameraButton.onClick = function ()
-		{
-			welcomeGroup.visible = false;
-			ui_mainTabPanel.setCurrentIndex( 2 );
-		}
-		welcomeIOButton.onClick = function ()
-		{
-			welcomeGroup.visible = false;
-			ui_mainTabPanel.setCurrentIndex( 3 );
-		}
-		welcomeHelpButton.onClick = function ()
-		{
-			DuAEF.DuScriptUI.showHelp();
-		}
+			welcomeRiggingButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 0 );
+			}
+			welcomeAutomationsButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 1 );
+			}
+			welcomeAnimationButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 2 );
+			}
+			welcomeCameraButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 3 );
+			}
+			welcomeIOButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 4 );
+			}
+			welcomeToolsButton.onClick = function ()
+			{
+				welcomeGroup.visible = false;
+				ui_mainTabPanel.setCurrentIndex( 5 );
+			}
+			welcomeHelpButton.onClick = function ()
+			{
+				DuAEF.DuScriptUI.showHelp();
+			}
 
-		welcomeRiggingButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Rigging.jsx"); };
-		welcomeAnimationButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Animation.jsx"); };
-		welcomeCameraButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Camera.jsx"); };
-		welcomeIOButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Import-Export.jsx"); };
+			welcomeRiggingButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Rigging.jsx"); };
+			welcomeAnimationButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Animation.jsx"); };
+			welcomeCameraButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Camera.jsx"); };
+			welcomeIOButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Import-Export.jsx"); };
+			welcomeToolsButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Tools.jsx"); };
+			welcomeAutomationsButton.onAltClick = function () { DuAEF.DuAE.App.openScriptUIPanel("Duik Automations.jsx"); };
+		}	
 	}
 	else 
 	{
