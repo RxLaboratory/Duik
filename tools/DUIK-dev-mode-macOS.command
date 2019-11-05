@@ -9,6 +9,9 @@ rsync -a $duaef/src/libs  $duik/src/  --include \*/ --exclude \*;
 for file in $duaef/src/libs/icons/*; do ln -s $file $duik/src/libs/icons;done;
 for file in $duaef/src/libs/pseudoEffects/*; do ln -s $file $duik/src/libs/pseudoEffects;done;
 for file in $duaef/src/libs/expressionLib/*; do ln -s $file $duik/src/libs/expressionLib;done;
+for file in $duaef/src/libs/DuAELib/*; do ln -s $file $duik/src/libs/DuAELib;done;
+for file in $duaef/src/libs/DuikLib/*; do ln -s $file $duik/src/libs/DuikLib;done;
+for file in $duaef/src/libs/third-party/*; do ln -s $file $duik/src/libs/third-party;done;
 for file in $duaef/src/libs/*.jsxinc; do ln -s $file $duik/src/libs;done;
 
 #ln DUAEF(maybe you should delete the origin DuAEF.jsxinc in the DUIK src folder first)
