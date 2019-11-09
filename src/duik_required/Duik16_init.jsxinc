@@ -6,6 +6,7 @@ ui_mainPalette.contents.orientation = 'stack';
 
 //=========== GLOBAL VARIABLES =============
 var settingsFile, settings, settingsPath, debugLog;
+var showNews = true;
 
 //=========== FILE AND NETWORK ACCESS ===========
 
@@ -24,7 +25,7 @@ function loadSettings ()
 	//if the version has changed, update some settings
 	if (version != settings.data.duikVersion)
 	{
-		settings.data.newsAtStartup = true;
+		settings.data.showWelcomeScreen = true;
 		settings.save();
 	}
 	settings.data.duikVersion = version;
@@ -36,7 +37,6 @@ function loadSettings ()
 	if (typeof settings.data.uiMode === 'undefined') settings.data.uiMode = 0;
 	if (typeof settings.data.debug === 'undefined') settings.data.debug = false;
 	if (typeof settings.data.checkUpdatesAtStartup === 'undefined') settings.data.checkUpdatesAtStartup = true;
-	if (typeof settings.data.newsAtStartup === 'undefined') settings.data.newsAtStartup = true;
 	if (typeof settings.data.currentPanel === 'undefined') settings.data.currentPanel = 0;
 	if (typeof settings.data.updateCheckDate === 'undefined') settings.data.updateCheckDate = new Date(2018,6,9).getTime(); //this is the public release date of Duik Bassel July, 9th 2018
 	if (typeof settings.data.showWelcomeScreen === 'undefined') settings.data.showWelcomeScreen = true;
@@ -170,7 +170,7 @@ function checkUpdates()
 
 	if (DuAEF.debug || !settings.data.checkUpdatesAtStartup)
 	{
-		createUI();
+		getNews();
 		return;
 	}
 
@@ -181,20 +181,20 @@ function checkUpdates()
 	if(now - lastCheck < 24*60*60*1000)
 	{
 		debugLog.log("Updates already checked today.");
-		createUI();
+		getNews();
 		return;
 	}
 
 	var channel = shared.checkForUpdate(false);
 	if (!channel)
 	{
-		createUI();
+		getNews();
 		return;
 	}
 
 	if (channel.items.length == 0)
 	{
-		createUI();
+		getNews();
 		return;
 	}
 
@@ -209,7 +209,7 @@ function checkUpdates()
 	if (!DuAEF.DuJS.Version.compare(newVersion))
 	{
 		debugLog.log("Current version is up-to-date.");
-		createUI();
+		getNews();
 		return;
 	}
 
@@ -239,7 +239,7 @@ function checkUpdates()
 		debugLog.log("Opening website.");
 		DuAEF.DuSystem.openURL(item.link);
 		ui_newVersionGroup.visible = false;
-		createUI();
+		getNews();
 	}
 
 	/*ui_newVersionUpdateButton.onClick = function ()
@@ -257,9 +257,38 @@ function checkUpdates()
 	{
 		debugLog.log("Ignored new version.");
 		ui_newVersionGroup.visible = false;
-		createUI();
+		getNews();
 	}
 
 	DuAEF.DuScriptUI.showUI(ui_mainPalette, false);
 
+}
+
+//============= Get News =================
+
+function getNews()
+{
+	if (!DuAEF.scriptFirstRun && debugLog)
+	{
+		debugLog.log("Checking news...");
+
+		//check only if it has not been checked today
+		var lastCheck = settings.data.news.lastCheck;
+		var now = new Date().getTime();
+		//if we've checked in the last 24 hours
+		if ( (now - lastCheck) < 24*60*60*1000)
+		{
+			debugLog.log("News already checked today.");
+			DuAEF.DuScriptUI.setNews(settings.data.news.items);
+			showNews = false;
+		}
+		else
+		{
+			settings.data.news.items = DuAEF.DuScriptUI.getNews('rainboxprod.net','wp/?call_custom_simple_rss=1&csrp_show_meta=0&csrp_cat=20', 'DUIK/' + version);
+			settings.data.news.lastCheck = new Date().getTime();
+			settings.save();
+			debugLog.log("Got news.");
+		}
+	}
+	createUI();
 }
