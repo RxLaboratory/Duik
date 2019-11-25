@@ -1,54 +1,35 @@
-# DuAEF
-Duduf After Effects ExtendScript Framework
+# Duik
+Rigging and Animation tool set for After Effects
 
 ## What's this?
 
-***DuAEF*** is a set of **classes**, **methods** and **tools** to ease the scripting process in **After Effects**, as long as adding features (like [pngquant](https://pngquant.org/), [ffmpeg](https://ffmpeg.org/), or [json](http://json.org/)) not available in After Effects/ExtendScript.
-It is very easy to use and **[documented](https://rainbox-dev.github.io/DuAEF_Duik/)**.
+***Duik*** is a comprehensive animation and rigging toolset for Adobe After Effects.
+
+**It provides the main rigging tools**, found in any 3D software, like IK, controllers, and bones, but adapts them to 2D animation in After Effects. With Duik you can rig complex characters and use advanced animation techniques usually found in 3D softwares.
+If you do not know what *rigging* means, it may be because it is a bit too soon for you to use those tools.
+
+**Duik has plenty of animation tools too** - managing keyframes and interpolations, traditional animation, animation exposure, etc. - and automations too, like wiggle, spring, swing, wheel, etc. which allow you to animate more quickly and easily.
+
+Duik also has some other useful tools, such as camera controls, that are not solely tied to animation but can be really useful for both animators and riggers.
+
+Duik’s comprehensiveness and ease of use have made it a script used in numerous movies across the world.
 
 ## Links
 
-- **Contributing guide**: [wiki/Contributing-Guide](https://github.com/Rainbox-dev/DuAEF_Duik/wiki/Contributing-Guide)
-- Tools: [rainboxprod.coop/en/tools/](https://rainboxprod.coop/en/tools/)
-- User forum: [forum.rainboxprod.coop](http://forum.rainboxprod.coop)
-    - You can create private threads on the forum if you need.    
-- Developers and users chat: [framateam.org](https://framateam.org/signup_user_complete/?id=scystqi16t8njnwhxbiuso94he)
-    - Feel free to come talk with us ! :smile:
-- Developers' documentation: [rainbox-dev.github.io/DuAEF_Duik/](https://rainbox-dev.github.io/DuAEF_Duik/)    
+- You can find a lot of information and documentation from our website: [rainboxlab.org](https://rainboxlab.org)
+- **Comprehensive Documentation** of Duik: [duik-docs.rainboxlab.org](http://duik-docs.rainboxlab.org)
+- You can buy the **printed user guide** and help the development of Duik: https://rainboxlab.org/shop/duik-user-guide/
+- **Tutorials**: https://rainboxlab.org/tag/tutorials/
+- User forum: [forum.rainboxlab.org](http://forum.rainboxlab.org)   
+- Developers and users chat: [chat.rainboxlab.org](http://chat.rainboxlab.org)
    
-## How to use the framework in an After Effects script?
+## Developpers
 
-Just include the framework in your script with this simple code:
+- Duik provides a useful API to easily include its features into your own scripts (provided you use a license compatible with the GNU-GPL v3). It is documented here: [duik-api.rainboxlab.org](http://duik-api.rainboxlab.org).
+- It is part of ***DuAEF***, the Duduf After Effects Framework. The source code and releases of this framework is available [in this github repository](https://github.com/Rainbox-dev/DuAEF), and it is documented here: [duaef-reference.rainboxlab.org](http://duaef-reference.rainboxlab.org).
 
-    #include DuAEF.jsxinc //includes all libraries, as separated files (you'll need the complete /libs/ folder)
-    //OR
-    #include DuAEF_full.jsxinc //includes the whole framework with one single file.
-    
-After one of these two lines, all objects and methods from DuAEF will be available.
+## Contribution
 
-As you can see, you can either use only the "DuAEF_full.jsxinc" file which contains the whole framework, or "DuAEF.jsxinc" file to keep every library in separated files. In most cases, you should use the "full" file. The second one might be easier to use if you plan to modify or personalize the framework.
-
-## Comprehensive reference
-
-The framework reference is available in the [docs](docs) folder, **[click here to view it](https://rainbox-dev.github.io/DuAEF_Duik/)**.
-    
-## Other tools
-
-- The [tools](https://github.com/Rainbox-dev/DuAEF/tree/master/src/tools) subfolder contains some useful scripts, which can be used as example cases of DuAEF use.
-- [DuBuilder](https://github.com/Rainbox-dev/DuAEF/tree/master/DuBuilder) is a stand-alone application written in Qt/C++ to build the scripts. It replaces all includes with the actual source code and lets you distribute your scripts as single files instead of a main script with a lot of includes.
-You can [download the latest (windows-only) version here](https://rainboxprod.coop/downloads/duaef/DuBuilder_0.0.1-Alpha_win64.zip).
-
-## Libraries
-
-The framework is divided into libraries.  
-All libraries are in the [libs](libs) subfolder, the source code is fully documented.  
-There are cross-dependencies between the libraries, so you should not include just some of them, it's easier to include the whole framework with the file "DuAEF_full.jsxinc"
-
-- [DuAECore](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuAECoreLib.jsxinc) contains After Effects related objects and methods.
-- [DuBinary](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuBinaryLib.jsxinc) provides tools to include and extract binary files directly in your script files, allowing to deploy only one .jsx files containing any needed image, preset or executable.
-- [DuFFMpeg](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuFFMpegLib.jsxinc) provides tools to transcode medias using ffmpeg, all in ExtendScript. It includes the FFmpeg binary executable file.
-- [DuJS](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuJSLib.jsxinc) contains JavaScript/ExtendScript useful tools to manipulate Strings, Arrays, Regular Expressions, Math, etc.
-- [DuProcess](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuProcessLib.jsxinc) manages external processes. It provides easy-to-use, cross-platform tools to launch command line tools, and a process queue feature.
-- [DuQuant](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuQuantLib.jsxinc) is an interface to pngquant, a powerful tool to add lossy compression to PNG files, very useful for web design, proxies, or any other case where lightweight PNG images are needed.
-- [DuRenderer](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/DuRendererLib.jsxinc) is an interface to the After Effects renderer, both in the UI or as a background renderer. It also provides PNG lossy compression with pngquant and will provide FFmpeg support to add formats to the standard After Effects renderer.
-- [JSON](https://github.com/Rainbox-dev/DuAEF/blob/master/libs/JSON.jsxinc) is the standard JavaScript [json](http://json.org) implementation.
+- Just read the [contributing guide](https://github.com/Rainbox-dev/DuAEF_Duik/blob/master/CONTRIBUTING.md) here.
+- We're always in need for translations, code, documentation, examples, tutorials, quick tips...
+- don't hesitate to join us on the [forum](http://forum.rainboxlab.org)    or the [chat](http://chat.rainboxlab.org)!

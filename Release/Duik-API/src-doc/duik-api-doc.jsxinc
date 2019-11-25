@@ -18,15 +18,35 @@
  * (function(thisObj) {
  *     //include the API
  *     #include 'Duik16_api.jsxinc'
+ *     //Now the Duik API is available in the Duik object, and DuAEF is also available.
+ *
+ *     //We need to initialize DuAEF before using it. You must provide a script name and version.
+ *     DuAEF.init("Your Awesome Script Name", "1.0.2");
+ *
+ *     //Now you can create your UI if any, and initialize what you need.
+ *     //DuAEF can be of great help, it has a lot of methods for creating the UI, handle After Effects, and more.
+ *     //Read the reference at duaef-reference.rainboxlab.org
+ *
+ *     //When everything is ready and before using the Duik API,
+ *     //We need to tell DuAEF we're entering run state so it can finish to prepare its stuff.
+ *     DuAEF.enterRunTime();
  *     
  *     // Create a hominoid structure
- *     // The whole API is contained in the DuAEF_DUIK object
- *     // but the DuAEF framework is also made available in its own object
+ *     // The whole API is contained in the Duik object
  *     Duik.structures.mammal();
+ *     // Select all Structures
+ *     Duik.structures.select();
+ *     // Run the Autorig
+ *     Duik.constraints.autorig();
+ *     // Select all controllers
+ *     Duik.controllers.select();
+ *     // Make the character walk!
+ *     Duik.automation.walk();
+ *     //Have Fun!
  *  })(this);
  * @author Nicolas Dufresne and contributors
  * @copyright 2017 - 2019 Nicolas Dufresne, Rainbox Productions
- * @version 16.1
+ * @version 16.2.0
  * @license GPL-3.0 <br />
  * Duik is free software: you can redistribute it and/or modify<br />
  * it under the terms of the GNU General Public License as published by<br />
@@ -223,19 +243,11 @@ Duik.automation.functions.push( { name:"Spring", fn:"Duik.automation.spring()" }
  */
 Duik.automation.spring = function (  )
 {
-    var props = DuAEF.DuAE.Comp.getSelectedProps();
-    if (props.length == 0) return;
-
-    DuAEF.DuAE.App.beginUndoGroup("Spring");
-
-    var layers = DuAEF.DuAE.Comp.unselectLayers();
-    for (var i = 0 ; i < props.length ; i++)
-    {
-        DuAEF.Duik.Automation.spring(props[i]);
-    }
-    DuAEF.DuAE.Comp.selectLayers(layers);
-
-    DuAEF.DuAE.App.endUndoGroup();
+    var effect = Duik.animation.klean(false, false, true, true, false);
+    if (effect == null) return;
+    //deactivate the anticipation and the interpolation
+    effect(DuAEF.Duik.PseudoEffects.KLEANER.index['Anticipation_Checkbox']).setValue(0);
+    effect(DuAEF.Duik.PseudoEffects.KLEANER.index['Smart Interpolation_Checkbox']).setValue(0);
 }
 
 Duik.automation.functions.push( { name:"Swing", fn:"Duik.automation.swing()" } );
@@ -852,7 +864,7 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
 
     //SPINE
     var originPos = [ comp.width / 2, comp.height / 2 + sizeUnit ];
-    var structure = DuAEF.Duik.Structure.createSpine( hips, numSpine, numNeck, head, undefined, originPos );
+    var structure = DuAEF.Duik.Structure.createSpine( hips, numSpine, numNeck, head, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
@@ -860,7 +872,7 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
     //LEFT ARM
     originPos = [ comp.width / 2 - sizeUnit, 4 * sizeUnit ];
     if ( shoulder ) originPos = [ comp.width / 2 - sizeUnit / 2, 4 * sizeUnit ];
-    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, undefined, originPos );
+    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
@@ -868,21 +880,21 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
     //RIGHT ARM
     originPos = [ comp.width / 2 + sizeUnit, 4 * sizeUnit ];
     if ( shoulder ) originPos = [ comp.width / 2 + sizeUnit / 2, 4 * sizeUnit ];
-    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, undefined, originPos, true );
+    structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, comp, originPos, true );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
     //LEFT LEG
     originPos = [ comp.width / 2 - sizeUnit / 2, comp.height / 2 + sizeUnit ];
-    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, undefined, originPos );
+    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
     //RIGHT LEG
     originPos = [ comp.width / 2 + sizeUnit / 2, comp.height / 2 + sizeUnit ];
-    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, undefined, originPos );
+    structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
@@ -1399,7 +1411,7 @@ Duik.controllers.show = function ( invert )
 Duik.controllers.functions.push( { name:"Extract", fn:"Duik.controllers.extract()" } );
 /**
  * Extracts the controllers from the selected precomposition
- * @param {boolean} [useMasterProperties=false] - Wether to use master properties instead of expressions to extract the controllers.
+ * @param {boolean} [useMasterProperties=true] - Wether to use master properties instead of expressions to extract the controllers. True if Ae >= 17.0
  */
 Duik.controllers.extract = function ( useMasterProperties )
 {
@@ -1416,18 +1428,34 @@ Duik.controllers.extract = function ( useMasterProperties )
 	DuAEF.DuAE.App.endUndoGroup();
 }
 
+Duik.controllers.functions.push( { name:"Un-Extract", fn:"Duik.controllers.unExtract()" } );
+/**
+ * Un-Extracts the controllers from the selected precomposition
+ */
+Duik.controllers.unExtract = function (  )
+{
+    var comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	var layers = comp.selectedLayers;
+	if (layers.length == 0) return;
+	var precomp = layers[0];
+
+	DuAEF.DuAE.App.beginUndoGroup("Un-Extract Controllers");
+
+	var result = DuAEF.Duik.Animation.unExtractControllersFromComp(precomp);
+
+	DuAEF.DuAE.App.endUndoGroup();
+}
+
+
 Duik.controllers.functions.push( { name:"Tag", fn:"Duik.controllers.tag()" } );
 /**
  * Tags the layers as controllers
  */
 Duik.controllers.tag = function ( )
 {
-    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     DuAEF.DuAE.App.beginUndoGroup("Tag controllers");
-    for (var i = 0, num = layers.length; i < num; i++)
-    {
-        DuAEF.Duik.setDuikMarker(layers[i], "Controller", DuAEF.Duik.LayerTypes.CONTROLLER);
-    }
+    DuAEF.Duik.Controller.tag();
     DuAEF.DuAE.App.endUndoGroup();
 }// ==================== |------------------------| ====================
 // ==================== | Duik16_tools_functions | ====================
@@ -1596,36 +1624,62 @@ Duik.animation.functions = []
 Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
 /**
  * Automatically clean the animation of the selected properties.
- * @param {boolean} [spatialInterpolation=true] - Wether to fix spatial interpolation.
+ * @param {boolean} [separateDimensions=true] - Wether to separate the dimensions of the property before kleaning it.
+ * @param {boolean} [spatialInterpolation=true] - Wether to fix spatial interpolation (when dimensions are not separated).
  * @param {boolean} [smoothCurves=true] - Wether to apply a smart algorithm to smooth the curves.
+ * @param {boolean} [smoothUsingExpression=true] - Wether to smooth the curves using expressions. Set to false to adjust directly the interpolation of the keyframes.
  * @param {boolean} [removeUnnecessaryKeys=true] - Wether to remove all redundants keyframes.
  * @param {boolean} [smoothIn=true] - Wether to smooth the incoming curve if smoothCurves is set to true
  * @param {boolean} [smoothOut=true] - Wether to smooth the outgoing curve if smoothCurves is set to true
+ * @return {Property} The effect created to control the kleaner.
  */
-Duik.animation.klean = function ( spatialInterpolation, smoothCurves, removeUnnecessaryKeys, smoothIn, smoothOut )
+Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoothCurves, smoothUsingExpression, removeUnnecessaryKeys, smoothIn, smoothOut )
 {
+    separateDimensions = def (separateDimensions, true);
     spatialInterpolation = def (spatialInterpolation, true);
     smoothCurves = def (smoothCurves, true);
     removeUnnecessaryKeys = def (removeUnnecessaryKeys, true);
     smoothIn = def (smoothIn, true);
     smoothOut = def (smoothOut, true);
-
-    var props = DuAEF.DuAE.Comp.getSelectedProps();
-    if (props.length == 0) return;
+    smoothUsingExpression = def (smoothUsingExpression, true);
 
     DuAEF.DuAE.App.beginUndoGroup("Kleaner");
 
-    for (var i = 0 ; i < props.length ; i++)
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0)
+    {
+        DuAEF.DuAE.App.endUndoGroup();
+        return null;
+    }
+
+    if (separateDimensions)
+    {
+        var newProps = [];
+        for (var i = 0, num = props.length ; i < num ; i++)
+        {
+            newProps = newProps.concat(DuAEF.Duik.Rigging.separateDimensions(props[i]));
+        }
+        props = newProps;
+    }
+
+    var effect = null;
+    for (var i = 0, num = props.length ; i < num ; i++)
     {
         //SPATIAL AUTO
-        if ( spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
+        if (!separateDimensions && spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
         //SMART SMOOTH
-        if ( smoothCurves ) DuAEF.Duik.Animation.smartInterpolation(props[i], smoothIn , smoothOut);
+        if ( smoothCurves ) effect = DuAEF.Duik.Animation.kleaner(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
+    }
+
+    for (var i = 0, num = props.length; i < num; i++)
+    {
         //CLEAN
         if ( removeUnnecessaryKeys ) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
     }
 
     DuAEF.DuAE.App.endUndoGroup();
+
+    return effect;
 }
 
 /**
@@ -1739,7 +1793,7 @@ Duik.animation.switchIkFk = function ( )
 Duik.animation.functions.push( { name:"Motion Trail", fn:"Duik.animation.motionTrail( )" } );
 /**
  * Draws the trajectory of the selected layers
- * @param {float[]|null} [color=null] - The [R,G,B,A] color of the trails. Random color if set to null.
+ * @param {float[]|null} [color=DuAEF.DuJS.Color.random()] - The [R,G,B,A] color of the trails. Random color if null.
  * @param {boolean} [useExisting=true] - Wether to use the existing motion trail layer, if any
  */
 Duik.animation.motionTrail = function ( color, useExisting )
@@ -1747,25 +1801,15 @@ Duik.animation.motionTrail = function ( color, useExisting )
     var comp = DuAEF.DuAE.Project.getActiveComp();
     if (!comp) return;
 
+    if (color == null) color = DuAEF.DuJS.Color.random();
+
     DuAEF.DuAE.App.beginUndoGroup("Motion trail");
 
-    color = def(color, null);
     useExisting = def(useExisting, true);
 
     //trail layer
     var trailLayer = null;
-    if ( useExisting )
-    {
-        for (var i = 1 ; i <= comp.numLayers ; i++)
-        {
-            var layer = comp.layer(i);
-            if (layer instanceof ShapeLayer && layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL))
-            {
-                trailLayer = layer;
-                break;
-            }
-        }
-    }
+    if (useExisting) trailLayer = DuAEF.Duik.getLayer( DuAEF.Duik.LayerTypes.MOTION_TRAIL );
 
     var layers = DuAEF.DuAE.Comp.unselectLayers();
 
@@ -1778,7 +1822,7 @@ Duik.animation.motionTrail = function ( color, useExisting )
     }
     else
     {
-        DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer);
+        DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer, color);
     }
 
     DuAEF.DuAE.App.endUndoGroup();
@@ -1827,7 +1871,7 @@ Duik.animation.xSheet = function ( autoDetect )
             effect(19).addKey(0);
             for (var frame = 0 ; frame < frames ; frame++)
             {
-                var time = frame*comp.frameDuration;
+                var time = frame * comp.frameDuration;
 
                 var maxSpeed = 0;
                 for (var j = 0 ; j < props.length ; j++)

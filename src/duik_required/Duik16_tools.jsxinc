@@ -14,7 +14,6 @@
 		ui_renameGroup.visible = panel == 1;
 		uiSRGroup.visible = panel == 2;
 		ui_measureGroup.visible = panel == 3;
-		ui_alignGroup.visible = panel == 4;
 		ui_propInfoGroup.visible = panel == 5;
 		ui_scriptifyExpressionGroup.visible = panel == 6;
 	}
@@ -166,50 +165,21 @@
 	{
 		if (ui_SRSearchEdit.text == ui_SRReplaceEdit.text) return;
 
+		DuAEF.DuAE.App.beginUndoGroup("Search and replace");
+		app.beginSuppressDialogs();
+
 		//expressions
 		if (ui_SRTypeSelector.index == 0)
 		{
 			//all comps
 			if (ui_SRCompSelector.index == 1)
 			{
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
-				var itItems = new Iterator(app.project.items);
-				itItems.do(function (item)
-				{
-					if (item instanceof CompItem)
-					{
-						var itLayers = new Iterator(item.layers);
-						itLayers.do(function (layer)
-						{
-							if (layer.locked) return;
-
-							DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
-						});
-					}
-				});
+				DuAEF.DuAE.Project.replaceInExpressions ( ui_SRSearchEdit.text, ui_SRReplaceEdit.text, ui_SRCaseSelector.index == 0 );
 			}
 			//active comp
 			else
 			{
-				var comp = DuAEF.DuAE.Project.getActiveComp();
-				if (!comp) return;
-
-				var layers = [];
-				if (ui_SRLayersSelector.index == 1) layers = comp.selectedLayers;
-				else layers = comp.layers;
-				if (layers.length == 0) return;
-
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
-
-				var it = new Iterator(layers);
-				it.do(function (layer)
-				{
-					if (layer.locked) return;
-					
-					DuAEF.DuAE.Property.replaceInExpressions(layer,ui_SRSearchEdit.text,ui_SRReplaceEdit.text,ui_SRCaseSelector.index == 0);
-				});
+				DuAEF.DuAE.Comp.replaceInExpressions( ui_SRSearchEdit.text, ui_SRReplaceEdit.text, undefined, ui_SRCaseSelector.index == 0, ui_SRLayersSelector.index == 1 )
 			}
 		}
 		//texts
@@ -217,8 +187,6 @@
 		{
 			if (ui_SRCompSelector.index == 1)
 			{
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
 				var itItems = new Iterator(app.project.items);
 				itItems.do(function (item)
 				{
@@ -249,9 +217,6 @@
 				else layers = comp.layers;
 				if (layers.length == 0) return;
 
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
-
 				var it = new Iterator(layers);
 				it.do(function (layer)
 				{
@@ -271,8 +236,6 @@
 		{
 			if (ui_SRCompSelector.index == 1)
 			{
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
 				var itItems = new Iterator(app.project.items);
 				itItems.do(function (item)
 				{
@@ -300,9 +263,6 @@
 				else layers = comp.layers;
 				if (layers.length == 0) return;
 
-				app.beginUndoGroup('Duik | ' + "Search and replace");
-				app.beginSuppressDialogs();
-
 				var it = new Iterator(layers);
 				it.do(function (layer)
 				{
@@ -322,9 +282,6 @@
 
 			if (items.length == 0) return;
 
-			app.beginUndoGroup('Duik | ' + "Search and replace");
-			app.beginSuppressDialogs();
-
 			var it = new Iterator(items);
 			it.do(function (item)
 			{
@@ -339,7 +296,7 @@
 		}
 
 		app.endSuppressDialogs(false);
-		app.endUndoGroup();
+		DuAEF.DuAE.App.endUndoGroup();
 	}
 
 	function ui_measureButton_clicked()
@@ -405,12 +362,13 @@
 		ui_propInfoLink.text = DuAEF.DuAE.Property.getExpressionLink(prop, true, true);
 		//values
 		var preExpression = ui_propPreExp.value;
+		var fastMode = !ui_propPrecision.value;
 		//Min and max val per axis
 		var minVal = "";
 		var maxVal = "";
 		if (prop.dimensions == 1)
 		{
-			var range = DuAEF.DuAE.Property.getRange(prop, 0, preExpression);
+			var range = DuAEF.DuAE.Property.getRange(prop, 0, preExpression, fastMode);
 			minVal = Math.round(range[0]*100)/100;
 			maxVal = Math.round(range[1]*100)/100;
 		}
@@ -443,10 +401,10 @@
 		
 		ui_propMinVal.text = minVal;
 		ui_propMaxVal.text = maxVal;
-		var maxSpeed = Math.round(DuAEF.DuAE.Property.getMaxVelocity(prop, preExpression)*100)/100;
+		var maxSpeed = Math.round(DuAEF.DuAE.Property.getMaxVelocity(prop, preExpression, fastMode)*100)/100;
 		ui_propVelocity.text = maxSpeed;
 		if (maxSpeed == 0) ui_propAverageVelocity.text = 0;
-		else ui_propAverageVelocity.text = Math.round(DuAEF.DuAE.Property.getAverageSpeed([prop], preExpression)*100)/100;
+		else ui_propAverageVelocity.text = Math.round(DuAEF.DuAE.Property.getAverageSpeed([prop], preExpression, fastMode)*100)/100;
 
 		setCurrentToolsPanel(5);
 	}
@@ -470,66 +428,273 @@
 		Duik.tools.pasteExpression();
 	}
 
+	function ui_importAnimButton_clicked()
+	{
+		var comp = DuAEF.DuAE.Project.getActiveComp();
+		if (!comp) return;
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length == 0) layers = comp.layers;
+		if (layers.length == 0) return;
+
+		//Ask for the file
+		var openFile = File.openDialog("Please select the animation file.","JSON: *.DuAEF;*.json,All: *.*");
+		if (!openFile) return;
+
+		//white lists
+		var whiteList;
+		if (!ui_importAnimationKeysAllButton.checked)
+		{
+			whiteList = [];
+			if (ui_importAnimationKeysPosButton.checked)
+			{
+				whiteList.push('ADBE Position');
+				whiteList.push('ADBE Position_0');
+				whiteList.push('ADBE Position_1');
+				whiteList.push('ADBE Position_2');
+			}
+			if (ui_importAnimationKeysRotButton.checked)
+			{
+				whiteList.push('ADBE Orientation');
+				whiteList.push('ADBE Rotate X');
+				whiteList.push('ADBE Rotate Y');
+				whiteList.push('ADBE Rotate Z');
+			}
+			if (ui_importAnimationKeysScaleButton.checked)
+			{
+				whiteList.push('ADBE Scale');
+			}
+			if (ui_importAnimationKeysOpacityButton.checked)
+			{
+				whiteList.push('ADBE Opacity');
+			}
+			if (ui_importAnimationKeysMaskButton.checked)
+			{
+				whiteList.push('ADBE Mask Shape');
+				whiteList.push('ADBE Vector Shape');
+			}
+			if (ui_importAnimationKeysFXButton.checked)
+			{
+				whiteList.push('ADBE Effect Parade');
+			}
+		}
+
+		//options
+		var onlyKeyframes = ui_keyframesSelector.index == 0;
+		var replace = ui_importAnimationReplaceButton.checked;
+		var offset =  ui_importAnimationOffsetSelector.index == 0;
+
+		app.beginUndoGroup('Duik | ' + "Import Animation");
+
+		var data = DuAEF.Interchange.animation.loadAnimFromJson(openFile);
+		var remaining = DuAEF.DuAE.Layer.setAnims(layers, data, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset);
+
+		if (remaining.length > 0)
+		{
+			var ui_importLayerPicker = DuAEF.DuScriptUI.createLayerPickerDialog("Missing layers");
+			for (var i = 0, num = remaining.length; i < num; i++)
+			{
+				ui_importLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+				//try to preselect by name
+				var ok = false;
+				for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
+				{
+					var l = comp.layer(j);
+					if (l.name == remaining[i]._name)
+					{
+						ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
+						ok = true;
+						break;
+					}
+				}
+				if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_importLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
+			}
+
+			ui_importLayerPicker.onAccept = function () {app.beginUndoGroup('Duik | ' + "Import Animation"); DuAEF.DuAE.Layer.setAllAnims( ui_importLayerPicker.getLayers(), remaining, undefined, undefined, undefined, onlyKeyframes, replace , whiteList, offset); app.endUndoGroup();};
+
+			DuAEF.DuScriptUI.showUI(ui_importLayerPicker);
+		}
+
+		app.endUndoGroup();
+	}
+
+	function ui_importAnimationKeysAllButton_clicked()
+	{
+		var checked = ui_importAnimationKeysAllButton.checked;
+		ui_importAnimationKeysPosButton.setChecked(checked);
+		ui_importAnimationKeysRotButton.setChecked(checked);
+		ui_importAnimationKeysScaleButton.setChecked(checked);
+		ui_importAnimationKeysOpacityButton.setChecked(checked);
+		ui_importAnimationKeysMaskButton.setChecked(checked);
+		ui_importAnimationKeysFXButton.setChecked(checked);
+	}
+
+	function ui_exportAnimButton_clicked()
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length == 0) return;
+		var comp = layers[0].containingComp;
+
+		//Asks for a save file
+		var saveFile = DuAEF.DuJS.Fs.saveFileDialog("Where do you want to export the animation?", "DuAEF JSON: *.DuAEF;*.json", "DuAEF");
+		if (!saveFile) return;
+
+		//wether to store only selected keys if there are any
+		var selected = DuAEF.DuAE.Layer.haveSelectedKeys(layers);
+		//start time of the animation to store
+		var startTime = 86339;
+		//end time of the animation to store
+		var endTime = comp.workAreaDuration + comp.workAreaStart;
+
+		// If there are selected keys, look for the time of the first one
+		if (selected)
+		{
+			var testTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
+			if (testTime < startTime) startTime = testTime;
+		}
+		//or the work area
+		else
+		{
+			startTime = app.project.activeItem.workAreaStart;
+		}
+
+		DuAEF.Interchange.animation.exportAnimToJson(saveFile,layers,selected,[startTime,endTime]);
+	}
+
+
 	// ========== UI ==================
 
 	ui_toolsGroup.orientation = 'stack';
 
 	//tools
 	var ui_toolsMainGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2 && !standAlone) DuAEF.DuScriptUI.addSeparator(ui_toolsMainGroup,"Tools");
-	var ui_renameButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Rename...",DuAEF.DuBinary.toFile(w25_rename_l),"Rename stuff",DuAEF.DuBinary.toFile(w25_rename_r));
+	if (settings.data.uiMode < 2 && !standAlone) DuAEF.DuScriptUI.addSeparator(ui_toolsMainGroup,"Tools");
+
+	var ui_textGroup;
+	if ( settings.data.uiMode > 2 ) ui_textGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+	
+	var ui_renameButton = DuAEF.DuScriptUI.addButton(
+		settings.data.uiMode > 2 ? ui_textGroup : ui_toolsMainGroup,
+		settings.data.uiMode > 2 ? '' : "Rename...",
+		DuAEF.DuBinary.toFile(w25_rename_l),
+		"Rename stuff",
+		DuAEF.DuBinary.toFile(w25_rename_r)
+		);
+	if (settings.data.uiMode > 2) ui_renameButton.alignment = ['center','top'];
 	ui_renameButton.setHelp("Rename", riggingtoolsHelp, riggingtoolsLink);
-	var ui_searchReplaceButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Search and replace...",DuAEF.DuBinary.toFile(w25_searchreplace_l),"Search and replace text",DuAEF.DuBinary.toFile(w25_searchreplace_r));
+	var ui_searchReplaceButton = DuAEF.DuScriptUI.addButton(
+		settings.data.uiMode > 2 ? ui_textGroup : ui_toolsMainGroup,
+		settings.data.uiMode > 2 ? '' : "Search and replace...",
+		DuAEF.DuBinary.toFile(w25_searchreplace_l),
+		"Search and replace text",
+		DuAEF.DuBinary.toFile(w25_searchreplace_r)
+		);
+	if (settings.data.uiMode > 2) ui_searchReplaceButton.alignment = ['center','top'];
 	ui_searchReplaceButton.setHelp("Search and Replace", riggingtoolsHelp, riggingtoolsLink);
-	var ui_measureButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Measure distance...",DuAEF.DuBinary.toFile(w25_measure_l),"Measure the distance between two layers",DuAEF.DuBinary.toFile(w25_measure_r));
+	
+	var ui_moveLayersGroup;
+	if (settings.data.uiMode > 2) ui_moveLayersGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+	else if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_toolsMainGroup);
+	
+	var ui_measureButton = DuAEF.DuScriptUI.addButton(
+		settings.data.uiMode > 2 ? ui_moveLayersGroup : ui_toolsMainGroup,
+		settings.data.uiMode > 2 ? '' : "Measure distance...",
+		DuAEF.DuBinary.toFile(w25_measure_l),
+		"Measure the distance between two layers",
+		DuAEF.DuBinary.toFile(w25_measure_r)
+		);
+	if (settings.data.uiMode > 2) ui_measureButton.alignment = ['center','top'];
 	ui_measureButton.setHelp("Measure Distance", riggingtoolsHelp, riggingtoolsLink);
-	var ui_alignButtonsGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
-	var ui_alignButton = DuAEF.DuScriptUI.addButton(ui_alignButtonsGroup,"Align layers",DuAEF.DuBinary.toFile(w25_align_l),"Align two (or more) layers together.\nAll selected layers will be aligned to the last selected one.",DuAEF.DuBinary.toFile(w25_align_r));
+
+	var ui_alignButtonsGroup = DuAEF.DuScriptUI.addGroup(settings.data.uiMode > 2 ? ui_moveLayersGroup : ui_toolsMainGroup,'row');
+	var ui_alignButton = DuAEF.DuScriptUI.addButton(ui_alignButtonsGroup,settings.data.uiMode > 2 ? '' : "Align layers",DuAEF.DuBinary.toFile(w25_align_l),"Align two (or more) layers together.\nAll selected layers will be aligned to the last selected one.",DuAEF.DuBinary.toFile(w25_align_r));
 	ui_alignButton.setHelp("Align Layers", riggingtoolsHelp, riggingtoolsLink);
 	var ui_alignOptionsButton = DuAEF.DuScriptUI.addButton(ui_alignButtonsGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Alignment options",DuAEF.DuBinary.toFile(w14_plus_r));
 	ui_alignOptionsButton.alignment = ['right','center'];
-	var ui_editModeButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Toggle edit mode",DuAEF.DuBinary.toFile(w25_unparent_l),"(Un)parent the children of the layer(s) to be able to adjust the transformation of the layer(s) without affecting the children.",DuAEF.DuBinary.toFile(w25_unparent_r));
+	if (settings.data.uiMode > 2) ui_alignButtonsGroup.alignment = ['center','top'];
+
+	var ui_expressionsGroup;
+	if (settings.data.uiMode > 2) ui_expressionsGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+	else if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_toolsMainGroup);
+
+	var ui_editModeButton = DuAEF.DuScriptUI.addButton(
+		settings.data.uiMode > 2 ? ui_expressionsGroup : ui_toolsMainGroup,
+		settings.data.uiMode > 2 ? '' : "Toggle edit mode",
+		DuAEF.DuBinary.toFile(w25_unparent_l),
+		"(Un)parent the children of the layer(s) to be able to adjust the transformation of the layer(s) without affecting the children.",
+		DuAEF.DuBinary.toFile(w25_unparent_r)
+		);
+	if (settings.data.uiMode > 2) ui_editModeButton.alignment = ['center','top'];
 	ui_editModeButton.setHelp("Edit Mode", riggingtoolsHelp, riggingtoolsLink);
+
 	if (settings.data.uiMode > 0)
 	{
-		var ui_removeExpressionsButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Remove expressions",DuAEF.DuBinary.toFile(w25_removeexpression_l),"Removes the expressions of the selected properties/layers, keeping the post-expression value.",DuAEF.DuBinary.toFile(w25_removeexpression_r));
+		var ui_removeExpressionsButton = DuAEF.DuScriptUI.addButton(
+			settings.data.uiMode > 2 ? ui_expressionsGroup : ui_toolsMainGroup,
+			settings.data.uiMode > 2 ? '' : "Remove expressions",
+			DuAEF.DuBinary.toFile(w25_removeexpression_l),
+			"Removes the expressions of the selected properties/layers, keeping the post-expression value.",
+			DuAEF.DuBinary.toFile(w25_removeexpression_r)
+			);
+		if (settings.data.uiMode > 2) ui_removeExpressionsButton.alignment = ['center','top'];
 		ui_removeExpressionsButton.setHelp("Remove Expressions", riggingtoolsHelp, riggingtoolsLink);
-		var ui_copyExpButton;
-		if (settings.data.uiMode != 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup,"Copy Expression",DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
-		var ui_pasteExpGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
-		if (settings.data.uiMode == 2) ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,'',DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
-		if (settings.data.uiMode == 2) ui_copyExpButton.alignment = ['center','top'];
+		
+		var ui_pasteExpGroup = DuAEF.DuScriptUI.addGroup(settings.data.uiMode > 2 ? ui_expressionsGroup : ui_toolsMainGroup,'row');
+		ui_copyExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,settings.data.uiMode > 2 ? '' : "Copy Expression",DuAEF.DuBinary.toFile(w25_copy_l),"Copy selected expression",DuAEF.DuBinary.toFile(w25_copy_r));
 		ui_copyExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
-		var ui_pasteExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,settings.data.uiMode == 2 ? '' : "Paste expression",DuAEF.DuBinary.toFile(w25_paste_l),"Paste expressions",DuAEF.DuBinary.toFile(w25_paste_r));
-		if (settings.data.uiMode == 2) ui_pasteExpButton.alignment = ['center','top'];
+		var ui_pasteExpButton = DuAEF.DuScriptUI.addButton(ui_pasteExpGroup,settings.data.uiMode >= 2 ? '' : "Paste",DuAEF.DuBinary.toFile(w25_paste_l),"Paste expressions",DuAEF.DuBinary.toFile(w25_paste_r));
 		ui_pasteExpButton.setHelp("Copy and Paste Expressions", riggingtoolsHelp, riggingtoolsLink);
+		if (settings.data.uiMode > 2) ui_pasteExpGroup.alignment = ['center','top'];
 
-	
-		if (settings.data.uiMode == 2)
+		var ui_ioAnimationGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+		var ui_exportAnimButton = DuAEF.DuScriptUI.addButton(ui_ioAnimationGroup,settings.data.uiMode > 2 ? '' : "Export Animation",DuAEF.DuBinary.toFile(w25_exportanim_l),"Export animation",DuAEF.DuBinary.toFile(w25_exportanim_r));
+		ui_exportAnimButton.setHelp('Export Animation',exportHelp, exportLink)
+		var ui_importAnimButtonGroup = DuAEF.DuScriptUI.addGroup(ui_ioAnimationGroup);
+		var ui_importAnimButton = DuAEF.DuScriptUI.addButton(ui_importAnimButtonGroup,settings.data.uiMode >= 2 ? '' : "Import",DuAEF.DuBinary.toFile(w25_importanim_l),"Import animation",DuAEF.DuBinary.toFile(w25_importanim_r));
+		var ui_importAnimOptionsButton = DuAEF.DuScriptUI.addButton(ui_importAnimButtonGroup,'',DuAEF.DuBinary.toFile(w14_plus_m),"Animation import options",DuAEF.DuBinary.toFile(w14_plus_r));
+		ui_importAnimOptionsButton.alignment = ['right','center'];
+		ui_importAnimButton.setHelp("Import Animation",importHelp,importLink);
+		ui_importAnimOptionsButton.setHelp("Import Animation",importHelp,importLink);
+		if (settings.data.uiMode > 2) ui_ioAnimationGroup.alignment = ['center','top'];
+
+		if (settings.data.uiMode >= 2)
 		{
-			var ui_propInfoButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup, "Get prop info...", DuAEF.DuBinary.toFile(w25_propinfo_l), "Gets some useful information about the selected property", DuAEF.DuBinary.toFile(w25_propinfo_r));
+			var ui_propsGroup;
+			if (settings.data.uiMode > 2) ui_propsGroup = DuAEF.DuScriptUI.addGroup(ui_toolsMainGroup,'row');
+
+			var ui_propInfoButton = DuAEF.DuScriptUI.addButton(
+				settings.data.uiMode > 2 ? ui_propsGroup : ui_toolsMainGroup, 
+				settings.data.uiMode > 2 ? '' : "Get prop info...",
+				DuAEF.DuBinary.toFile(w25_propinfo_l),
+				"Gets some useful information about the selected property",
+				DuAEF.DuBinary.toFile(w25_propinfo_r)
+				);
+			if (settings.data.uiMode > 2) ui_propInfoButton.alignment = ['center','top'];
 			ui_propInfoButton.setHelp("Get property info", riggingtoolsHelp, riggingtoolsLink);
-			var ui_scriptifyExpressionButton = DuAEF.DuScriptUI.addButton(ui_toolsMainGroup, "Scriptify expression...", DuAEF.DuBinary.toFile(w25_jsstr_l), "Converts the expression as a string which can be used in a script.", DuAEF.DuBinary.toFile(w25_jsstr_r));
+			var ui_scriptifyExpressionButton = DuAEF.DuScriptUI.addButton(
+				settings.data.uiMode > 2 ? ui_propsGroup : ui_toolsMainGroup, 
+				settings.data.uiMode > 2 ? '' : "Scriptify expression...",
+				DuAEF.DuBinary.toFile(w25_jsstr_l),
+				"Converts the expression as a string which can be used in a script.",
+				DuAEF.DuBinary.toFile(w25_jsstr_r)
+				);
+			if (settings.data.uiMode > 2) ui_scriptifyExpressionButton.alignment = ['center','top'];
 			ui_scriptifyExpressionButton.setHelp("Scriptify expression", riggingtoolsHelp, riggingtoolsLink);
 		}
 	}
 
 	//Align
-	var ui_alignGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_alignGroup,"Align");
+	var ui_alignWindow = DuAEF.DuScriptUI.createPopup("Align layers");
+	var ui_alignGroup = ui_alignWindow.contents;
 	var ui_alignPositionButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Position",DuAEF.DuBinary.toFile(w14_pos_l),"Align the positions of the layers",DuAEF.DuBinary.toFile(w14_pos_r));
 	var ui_alignRotationButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Rotation",DuAEF.DuBinary.toFile(w14_rotation_l),"Align the orientations of the layers",DuAEF.DuBinary.toFile(w14_rotation_r));
 	var ui_alignScaleButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Scale",DuAEF.DuBinary.toFile(w14_scale_l),"Align the scales of the layers",DuAEF.DuBinary.toFile(w14_scale_r));
 	var ui_alignOpacityButton = DuAEF.DuScriptUI.addCheckBox(ui_alignGroup,"Opacity",DuAEF.DuBinary.toFile(w14_opacity_l),"Align the opacities of the layers",DuAEF.DuBinary.toFile(w14_opacity_r));
 	DuAEF.DuScriptUI.addStaticText(ui_alignGroup,"All selected layers will be aligned\nto the last selected one.")
-	var ui_alignValidGroup = DuAEF.DuScriptUI.addGroup(ui_alignGroup);
-	ui_alignValidGroup.alignment = ['fill','top'];
-	var ui_alignCancelButton = DuAEF.DuScriptUI.addButton(ui_alignValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
-	var ui_alignValidButton = DuAEF.DuScriptUI.addButton(ui_alignValidGroup,'Align',DuAEF.DuBinary.toFile(w25_check_g),"Align the layers",DuAEF.DuBinary.toFile(w25_check_r));
+	var ui_alignValidButton = DuAEF.DuScriptUI.addButton(ui_alignGroup,'Align',DuAEF.DuBinary.toFile(w25_check_g),"Align the layers",DuAEF.DuBinary.toFile(w25_check_r));
 
 	//Rename
 	var ui_renameGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_renameGroup,"Rename");
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_renameGroup,"Rename");
 
 	var ui_renameTypeSelector = DuAEF.DuScriptUI.addSelector(ui_renameGroup);
 	ui_renameTypeSelector.addButton("Layers",DuAEF.DuBinary.toFile(w14_aelayers_l),"Rename layers",DuAEF.DuBinary.toFile(w14_aelayers_r));
@@ -568,7 +733,7 @@
 	//Search and replace
 
 	var uiSRGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(uiSRGroup,"Search and replace");
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(uiSRGroup,"Search and replace");
 
 	var ui_SRTypeSelector = DuAEF.DuScriptUI.addSelector(uiSRGroup);
 	ui_SRTypeSelector.addButton("Expressions",DuAEF.DuBinary.toFile(w14_code_l),"Search and replace text in expressions",DuAEF.DuBinary.toFile(w14_code_r));
@@ -589,7 +754,7 @@
 	ui_SRLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w14_selectedlayers_l),"Search and replace text in all layers",DuAEF.DuBinary.toFile(w14_selectedlayers_r));
 	ui_SRLayersSelector.setCurrentIndex(0);
 
-	var ui_SRSelectGroup3 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,settings.data.uiMode == 2 ? 'row' : 'column');
+	var ui_SRSelectGroup3 = DuAEF.DuScriptUI.addGroup(ui_SRSubSelectGroup,settings.data.uiMode >= 2 ? 'row' : 'column');
 	ui_SRSelectGroup3.alignment = ['fill','top'];
 	ui_SRSelectGroup3.alignChildren = ['left','top'];
 	var ui_SRItemsTypeGroup = DuAEF.DuScriptUI.addGroup(ui_SRSelectGroup3,'row');
@@ -623,9 +788,8 @@
 	var ui_SRValidButton = DuAEF.DuScriptUI.addButton(ui_SRValidGroup,'Replace',DuAEF.DuBinary.toFile(w25_check_g),"Search and replace text",DuAEF.DuBinary.toFile(w25_check_r));
 
 	// Measure
-
 	var ui_measureGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_measureGroup,"Measure");
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_measureGroup,"Measure");
 	var ui_measureLabel = DuAEF.DuScriptUI.addStaticText(ui_measureGroup,"Select two layers to measure the distance between them.",undefined,undefined,true,true);
 	ui_measureLabel.maximumSize.width = 150;
 	DuAEF.DuScriptUI.setTextColor(ui_measureLabel, DuAEF.DuJS.Color.Colors.DARK_GREY );
@@ -637,7 +801,7 @@
 	// Prop Info
 
 	var ui_propInfoGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_propInfoGroup,"Property Info");
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_propInfoGroup,"Property Info");
 	var ui_propInfoForm = DuAEF.DuScriptUI.addForm(ui_propInfoGroup);
 	var ui_propInfoIndex = ui_propInfoForm.addField("Index","statictext","0","The index of the property")[1];
 	var ui_propInfoName = ui_propInfoForm.addField("Name","edittext","","The name of the property")[1];
@@ -649,6 +813,7 @@
 	var ui_propVelocity = ui_propInfoForm.addField("Maximum velocity","edittext","","The maximum velocity during the animation.")[1];
 	var ui_propAverageVelocity = ui_propInfoForm.addField("Average velocity","edittext","","The average velocity during the animation.")[1];
 	var ui_propPreExp = ui_propInfoForm.addField("Pre-expression val.","checkbox","","Display pre-expression values.")[1];
+	var ui_propPrecision = ui_propInfoForm.addField("Hi-precision","checkbox","","Samples the values and velocity with a higher precision.\nWarning: this can be quite slong if the composition is very long.")[1];
 	var ui_propInfoValidGroup = DuAEF.DuScriptUI.addGroup(ui_propInfoGroup);
 	ui_propInfoValidGroup.alignment = ['fill','top'];
 	var ui_propInfoCancelButton = DuAEF.DuScriptUI.addButton(ui_propInfoValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
@@ -657,13 +822,36 @@
 	// Scriptify expression
 
 	var ui_scriptifyExpressionGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
-	if (settings.data.uiMode != 2) DuAEF.DuScriptUI.addSeparator(ui_scriptifyExpressionGroup,"Scriptify expression");
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_scriptifyExpressionGroup,"Scriptify expression");
 	var ui_stringifiedExpressionEdit = ui_scriptifyExpressionGroup.add('edittext', undefined, "", {multiline:true});
 	ui_stringifiedExpressionEdit.alignment = ['fill', 'fill'];
 	var ui_scriptifyExpressionValidGroup = DuAEF.DuScriptUI.addGroup(ui_scriptifyExpressionGroup);
 	ui_scriptifyExpressionValidGroup.alignment = ['fill','top'];
 	var ui_scriptifyExpressionCancelButton = DuAEF.DuScriptUI.addButton(ui_scriptifyExpressionValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 	var ui_scriptifyExpressionValidButton = DuAEF.DuScriptUI.addButton(ui_scriptifyExpressionValidGroup,'Scriptify!',DuAEF.DuBinary.toFile(w25_check_g),"Scriptify the expression",DuAEF.DuBinary.toFile(w25_check_r));
+
+	//Import Animation
+	var ui_importAnimationWindow = DuAEF.DuScriptUI.createPopup("Import animation");
+	var ui_importAnimationGroup = ui_importAnimationWindow.contents;
+	var ui_keyframesSelector = DuAEF.DuScriptUI.addSelector(ui_importAnimationGroup);
+	ui_keyframesSelector.addButton("Only keyframes",DuAEF.DuBinary.toFile(w14_keyframesonly_l),"Imports only the keyframes.",DuAEF.DuBinary.toFile(w14_keyframesonly_r));
+	ui_keyframesSelector.addButton("All properties",DuAEF.DuBinary.toFile(w14_allproperties_l),"Sets values on all properties.",DuAEF.DuBinary.toFile(w14_allproperties_r));
+	ui_keyframesSelector.setCurrentIndex(0);
+	var ui_importAnimationKeysTypeGroup = DuAEF.DuScriptUI.addGroup(ui_importAnimationGroup,'row');
+	ui_importAnimationKeysTypeGroup.alignment = ['center','top'];
+	var ui_importAnimationKeysPosButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_pos_l),"Position",DuAEF.DuBinary.toFile(w18_pos_r));
+	var ui_importAnimationKeysRotButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_rotation_l),"Rotation",DuAEF.DuBinary.toFile(w18_rotation_r));
+	var ui_importAnimationKeysScaleButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_scale_l),"Scale",DuAEF.DuBinary.toFile(w18_scale_r));
+	var ui_importAnimationKeysOpacityButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_opacity_l),"Opacity",DuAEF.DuBinary.toFile(w18_opacity_r));
+	var ui_importAnimationKeysMaskButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_mask_l),"Masks",DuAEF.DuBinary.toFile(w18_mask_r));
+	var ui_importAnimationKeysFXButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_fx_l),"FX",DuAEF.DuBinary.toFile(w18_fx_r));
+	var ui_importAnimationKeysAllButton = DuAEF.DuScriptUI.addCheckBox( ui_importAnimationKeysTypeGroup,'' ,DuAEF.DuBinary.toFile(w18_allproperties_l),"All",DuAEF.DuBinary.toFile(w18_allproperties_r));
+	var ui_importAnimationOffsetSelector = DuAEF.DuScriptUI.addSelector(ui_importAnimationGroup);
+	ui_importAnimationOffsetSelector.addButton("Offset",DuAEF.DuBinary.toFile(w14_moveaway_l),"Offset current values",DuAEF.DuBinary.toFile(w14_moveaway_r));
+	ui_importAnimationOffsetSelector.addButton("Absolute",DuAEF.DuBinary.toFile(w14_absolute_l),"Replaces current values",DuAEF.DuBinary.toFile(w14_absolute_r));
+	var ui_importAnimationReplaceButton = DuAEF.DuScriptUI.addCheckBox(ui_importAnimationGroup,'Replace existing keyframes',undefined,"Replaces any existing keyframe on the properties before loading the new animation",undefined);
+	var ui_importAnimationValidButton = DuAEF.DuScriptUI.addButton(ui_importAnimationGroup,"Import",DuAEF.DuBinary.toFile(w25_check_g),"Imports an animation",DuAEF.DuBinary.toFile(w25_check_r));
+	ui_importAnimationValidButton.setHelp("Import Animation",importHelp,importLink);
 
 
 	//========== INIT =============
@@ -675,6 +863,15 @@
 	ui_alignPositionButton.setChecked(true);
 	ui_alignRotationButton.setChecked(true);
 	ui_alignScaleButton.setChecked(true);
+
+	ui_importAnimationOffsetSelector.setCurrentIndex(1);
+	ui_importAnimationKeysPosButton.setChecked(true);
+	ui_importAnimationKeysRotButton.setChecked(true);
+	ui_importAnimationKeysScaleButton.setChecked(true);
+	ui_importAnimationKeysOpacityButton.setChecked(true);
+	ui_importAnimationKeysMaskButton.setChecked(true);
+	ui_importAnimationKeysFXButton.setChecked(true);
+	ui_importAnimationKeysAllButton.setChecked(true);
 
 	setCurrentSRPanel();
 
@@ -698,19 +895,27 @@
 	ui_measureValidButton.onClick = ui_measureValidButton_clicked;
 
 	ui_alignButton.onClick = ui_alignValidButton.onClick = ui_alignButton_clicked;
-	ui_alignOptionsButton.onClick = function () { setCurrentToolsPanel(4); };
-	ui_alignCancelButton.onClick = function () { setCurrentToolsPanel(0); };
-
-	if (settings.data.uiMode > 0) ui_removeExpressionsButton.onClick = ui_removeExpressionsButton_clicked;
-
-	if (settings.data.uiMode > 0) ui_copyExpButton.onClick = ui_copyExpButton_clicked;
-	if (settings.data.uiMode > 0) ui_pasteExpButton.onClick = ui_pasteExpButton_clicked;
+	ui_alignWindow.tieTo(ui_alignOptionsButton);
 
 	ui_editModeButton.onClick = ui_editModeButton_clicked;
 
-	if (settings.data.uiMode == 2)
+	if (settings.data.uiMode > 0)
 	{
-		ui_propInfoButton.onClick = ui_propInfoValidButton.onClick = ui_propPreExp.onClick = ui_propInfoButton_clicked;
+		ui_removeExpressionsButton.onClick = ui_removeExpressionsButton_clicked;
+
+		ui_copyExpButton.onClick = ui_copyExpButton_clicked;
+		ui_pasteExpButton.onClick = ui_pasteExpButton_clicked;
+
+		ui_importAnimButton.onClick = ui_importAnimationValidButton.onClick = ui_importAnimButton_clicked;
+		ui_importAnimationWindow.tieTo(ui_importAnimOptionsButton);
+		ui_importAnimationKeysAllButton.onClick = ui_importAnimationKeysAllButton_clicked;
+
+		ui_exportAnimButton.onClick = ui_exportAnimButton_clicked;
+	}
+
+	if (settings.data.uiMode >= 2)
+	{
+		ui_propInfoButton.onClick = ui_propInfoValidButton.onClick = ui_propPreExp.onClick = ui_propPrecision.onClick = ui_propInfoButton_clicked;
 		ui_propInfoCancelButton.onClick = function () { setCurrentToolsPanel(0); };
 
 		ui_scriptifyExpressionButton.onClick = ui_scriptifyExpressionValidButton.onClick = ui_scriptifyExpressionButton_clicked;

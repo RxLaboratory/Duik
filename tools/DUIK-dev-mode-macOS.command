@@ -11,6 +11,8 @@ for file in $duaef/src/libs/pseudoEffects/*; do ln -s $file $duik/src/libs/pseud
 for file in $duaef/src/libs/expressionLib/*; do ln -s $file $duik/src/libs/expressionLib;done;
 for file in $duaef/src/libs/DuAELib/*; do ln -s $file $duik/src/libs/DuAELib;done;
 for file in $duaef/src/libs/DuikLib/*; do ln -s $file $duik/src/libs/DuikLib;done;
+for file in $duaef/src/libs/DuJSLib/*; do ln -s $file $duik/src/libs/DuJSLib;done;
+for file in $duaef/src/libs/DuScriptUILib/*; do ln -s $file $duik/src/libs/DuScriptUILib;done;
 for file in $duaef/src/libs/third-party/*; do ln -s $file $duik/src/libs/third-party;done;
 for file in $duaef/src/libs/*.jsxinc; do ln -s $file $duik/src/libs;done;
 

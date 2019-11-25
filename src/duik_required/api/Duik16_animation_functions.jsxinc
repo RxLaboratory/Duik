@@ -24,6 +24,7 @@ Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
  * @param {boolean} [removeUnnecessaryKeys=true] - Wether to remove all redundants keyframes.
  * @param {boolean} [smoothIn=true] - Wether to smooth the incoming curve if smoothCurves is set to true
  * @param {boolean} [smoothOut=true] - Wether to smooth the outgoing curve if smoothCurves is set to true
+ * @return {Property} The effect created to control the kleaner.
  */
 Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoothCurves, smoothUsingExpression, removeUnnecessaryKeys, smoothIn, smoothOut )
 {
@@ -35,10 +36,14 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
     smoothOut = def (smoothOut, true);
     smoothUsingExpression = def (smoothUsingExpression, true);
 
-    var props = DuAEF.DuAE.Comp.getSelectedProps();
-    if (props.length == 0) return;
-
     DuAEF.DuAE.App.beginUndoGroup("Kleaner");
+
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    if (props.length == 0)
+    {
+        DuAEF.DuAE.App.endUndoGroup();
+        return null;
+    }
 
     if (separateDimensions)
     {
@@ -56,7 +61,7 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
         //SPATIAL AUTO
         if (!separateDimensions && spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
         //SMART SMOOTH
-        if ( smoothCurves ) effect = DuAEF.Duik.Animation.smartInterpolation(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
+        if ( smoothCurves ) effect = DuAEF.Duik.Animation.kleaner(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
     }
 
     for (var i = 0, num = props.length; i < num; i++)
@@ -66,6 +71,8 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
     }
 
     DuAEF.DuAE.App.endUndoGroup();
+
+    return effect;
 }
 
 /**
@@ -179,7 +186,7 @@ Duik.animation.switchIkFk = function ( )
 Duik.animation.functions.push( { name:"Motion Trail", fn:"Duik.animation.motionTrail( )" } );
 /**
  * Draws the trajectory of the selected layers
- * @param {float[]|null} [color=null] - The [R,G,B,A] color of the trails. Random color if set to null.
+ * @param {float[]|null} [color=DuAEF.DuJS.Color.random()] - The [R,G,B,A] color of the trails. Random color if null.
  * @param {boolean} [useExisting=true] - Wether to use the existing motion trail layer, if any
  */
 Duik.animation.motionTrail = function ( color, useExisting )
@@ -187,25 +194,15 @@ Duik.animation.motionTrail = function ( color, useExisting )
     var comp = DuAEF.DuAE.Project.getActiveComp();
     if (!comp) return;
 
+    if (color == null) color = DuAEF.DuJS.Color.random();
+
     DuAEF.DuAE.App.beginUndoGroup("Motion trail");
 
-    color = def(color, null);
     useExisting = def(useExisting, true);
 
     //trail layer
     var trailLayer = null;
-    if ( useExisting )
-    {
-        for (var i = 1 ; i <= comp.numLayers ; i++)
-        {
-            var layer = comp.layer(i);
-            if (layer instanceof ShapeLayer && layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.MOTION_TRAIL))
-            {
-                trailLayer = layer;
-                break;
-            }
-        }
-    }
+    if (useExisting) trailLayer = DuAEF.Duik.getLayer( DuAEF.Duik.LayerTypes.MOTION_TRAIL );
 
     var layers = DuAEF.DuAE.Comp.unselectLayers();
 
@@ -218,7 +215,7 @@ Duik.animation.motionTrail = function ( color, useExisting )
     }
     else
     {
-        DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer);
+        DuAEF.Duik.Animation.motionTrail(comp,undefined,trailLayer, color);
     }
 
     DuAEF.DuAE.App.endUndoGroup();
@@ -267,7 +264,7 @@ Duik.animation.xSheet = function ( autoDetect )
             effect(19).addKey(0);
             for (var frame = 0 ; frame < frames ; frame++)
             {
-                var time = frame*comp.frameDuration;
+                var time = frame * comp.frameDuration;
 
                 var maxSpeed = 0;
                 for (var j = 0 ; j < props.length ; j++)
