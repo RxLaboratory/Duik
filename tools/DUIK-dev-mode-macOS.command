@@ -12,7 +12,8 @@ for file in $duaef/src/libs/expressionLib/*; do ln -s $file $duik/src/libs/expre
 for file in $duaef/src/libs/DuAELib/*; do ln -s $file $duik/src/libs/DuAELib;done;
 for file in $duaef/src/libs/DuikLib/*; do ln -s $file $duik/src/libs/DuikLib;done;
 for file in $duaef/src/libs/DuJSLib/*; do ln -s $file $duik/src/libs/DuJSLib;done;
-for file in $duaef/src/libs/DuScriptUILib/*; do ln -s $file $duik/src/libs/DuScriptUILib;done;
+for file in $duaef/src/libs/DuScriptUILib/*.jsxinc; do ln -s $file $duik/src/libs/DuScriptUILib;done;
+for file in $duaef/src/libs/DuScriptUILib/icons/*; do ln -s $file $duik/src/libs/DuScriptUILib/icons;done;
 for file in $duaef/src/libs/third-party/*; do ln -s $file $duik/src/libs/third-party;done;
 for file in $duaef/src/libs/*.jsxinc; do ln -s $file $duik/src/libs;done;
 
@@ -21,3 +22,4 @@ ln -s $duaef/src/DuAEF.jsxinc $duik/src;
 
 #edit your Ae path and ln DUIK Bassel.2.jsx 
 ln -s $duik/src/Duik\ Bassel.2.jsx \/Applications\/Adobe\ After\ Effects\ CC\ 2019\/Scripts\/ScriptUI\ Panels;
+ln -s $duik/src/Duik\ Bassel.2.jsx \/Applications\/Adobe\ After\ Effects\ 2020\/Scripts\/ScriptUI\ Panels;
