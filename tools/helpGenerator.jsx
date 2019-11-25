@@ -53,10 +53,11 @@ Each file will be converted to a string, stored in a variable named after the fi
 			var varName = file.name.replace(re,'');
 			re = /.md$/g;
 			varName = varName.replace(re,'');
+			var linkName = file.name.replace(re,'');
 			data += 'var ' + varName + 'Help = ';
 			data += getFileString(file);
 			data += ';\n';
-			data += 'var ' + varName + 'Link = "https://duik-docs.rainboxlab.org/"\n\n';
+			data += 'var ' + varName + 'Link = "https://duik-docs.rainboxlab.org/' + linkName + '.html"\n\n';
 		}
 	}
 
