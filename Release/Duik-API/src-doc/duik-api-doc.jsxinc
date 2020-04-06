@@ -13,52 +13,6 @@
 
 	https://rainboxlab.org
 
-	__Contributors:__
-
-		Nicolas Dufresne - Lead developer
-		Kevin Masson - Developer
-
-	__Translations:__
-
-		eZioPan – Simplified Chinese
-		Ana Arce – Spanish
-		Adam Szczepański – Polish
-		René Andritsch - German
-
-	__Thanks to:__
-
-		Dan Ebberts - Writing the first IK Expressions
-		Eric Epstein - making the IK's work with 3D Layers
-		Kevin Schires – Including images in the script
-		Matias Poggini – Bezier IK feature
-		Eric Epstein - Making the IK's work with 3D Layers
-		Assia Chioukh and Quentin Saint-Georges – User Guides composition
-		Motion Cafe – Ideas and feedback
-		Fous d’anim – Ideas and feedback
-
-	__Duik makes use of:__
-
-		• x2js
-		Copyright (c) 2011-2013 Abdulla Abdurakhmanov
-		Original sources are available at https://code.google.com/p/x2js/
-		Licensed under the Apache License, Version 2.0
-
-		• json2
-		See http://www.JSON.org/js.html
-		Public Domain
-
-		• seedRandom
-		Copyright (c) David Bau
-		Licensed under the MIT license
-
-		• FFMpeg
-		See http://ffmpeg.org
-
-		• DuFFMpeg
-		Copyright (c) 2017 Nicolas Dufresne and Rainbox Productions
-		Sources available at https://github.com/Rainbox-dev/DuFFMpeg
-		Licensed under the GNU General Public License v3
-
 	This file is part of Duik.
 
 		Duik is free software: you can redistribute it and/or modify
@@ -116,7 +70,7 @@
  *  })(this);
  * @author Nicolas Dufresne and contributors
  * @copyright 2017 - 2020 Nicolas Dufresne, Rainbox Productions
- * @version 16.2.8
+ * @version 16.2.9
  * @license GPL-3.0 <br />
  * Duik is free software: you can redistribute it and/or modify<br />
  * it under the terms of the GNU General Public License as published by<br />
@@ -212,6 +166,7 @@ var Duik = {};
 
 var standAlone = true;
 
+//create a settings object
 var settingsFile;
 if (app.settings.haveSetting(DuAEF.scriptName,"settingsFile")) settingsFile = new File(app.settings.getSetting(DuAEF.scriptName,"settingsFile"));
 var settings = new DuSettings(DuAEF.scriptName,settingsFile);// ==================== |----------------------| ====================
@@ -237,6 +192,7 @@ Duik.automation = {}
  */
 Duik.automation.functions = []
 
+//The functions
 
 Duik.automation.functions.push( { name:"Effector", fn:"Duik.automation.effector()" } );
 /**
@@ -254,6 +210,7 @@ Duik.automation.effector = function ( effectorLayer )
 
 	var effector = {};
 
+	//Check if there already is an effector in the selection
 	effector.effectorLayer = effectorLayer;
 
 	var layers = DuAEF.DuAE.Comp.unselectLayers();
@@ -312,6 +269,7 @@ Duik.automation.spring = function (  )
 {
     var effects = Duik.animation.klean(false, false, true, true, false);
     if (effects.length == 0) return;
+    //deactivate the anticipation and the interpolation, and disable simulated mode
     for (var i = 0, n = effects.length; i < n; i++)
     {
         var effect = effects[i];
@@ -486,6 +444,7 @@ Duik.constraints = {}
  */
 Duik.constraints.functions = []
 
+//The functions
 
 Duik.constraints.functions.push( { name:"Auto-rig & IK", fn:"Duik.constraints.autorig()" } );
 /**
@@ -543,6 +502,7 @@ Duik.constraints.bones = function ( randomColor, tangents )
 
     var props = DuAEF.DuAE.Comp.getSelectedProps();
 
+    //just create a single bone without any prop
     if (props.length == 0)
     {
         DuAEF.DuAE.App.beginUndoGroup( "Create bones" );
@@ -568,11 +528,13 @@ Duik.constraints.bones = function ( randomColor, tangents )
         bones = bones.concat( DuAEF.Duik.Bone.addBone( prop, undefined, tangents ) );
     } );
 
+    //if nothing was created
     if ( bones.length == 0 )
     {
         var layers = DuAEF.DuAE.Comp.getSelectedLayers();
         var itLayers = new Iterator( layers );
 
+        //Try to find puppet pins
         itLayers.do( function( layer )
         {
             var pins = DuAEF.DuAE.Layer.getPuppetPins( layer );
@@ -583,6 +545,7 @@ Duik.constraints.bones = function ( randomColor, tangents )
             } );
         } );
 
+        //Try any spatial property
         if ( bones.length == 0 )
         {
             itProps.do( function( prop )
@@ -868,7 +831,9 @@ Duik.structures = {}
  */
 Duik.structures.functions = []
 
+//The functions
 
+//TODO adjust autorig for animals/quadrupeds
 Duik.structures.functions.push( { name:"Hominoid", fn:"Duik.structures.mammal()" } );
 Duik.structures.functions.push( { name:"Digitigrade", fn:"Duik.structures.mammal( DuAEF.Duik.Autorig.AnimalTypes.DIGITIGRADE )" } );
 Duik.structures.functions.push( { name:"Ungulate", fn:"Duik.structures.mammal( DuAEF.Duik.Autorig.AnimalTypes.Ungulate )" } );
@@ -892,6 +857,7 @@ Duik.structures.functions.push( { name:"Plantigrade", fn:"Duik.structures.mammal
  */
 Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder, humerus, radius, hand, frontClaws, femur, tibia, foot, backClaws)
 {
+    //defaults
     type = def( type, DuAEF.Duik.Autorig.AnimalTypes.PLANTIGRADE );
     numSpine = def( numSpine, 2);
     numNeck = def( numNeck, 1);
@@ -929,12 +895,14 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
     var structureLayers = [];
     var structures = [];
 
+    //SPINE
     var originPos = [ comp.width / 2, comp.height / 2 + sizeUnit ];
     var structure = DuAEF.Duik.Structure.createSpine( hips, numSpine, numNeck, head, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
+    //LEFT ARM
     originPos = [ comp.width / 2 - sizeUnit, 4 * sizeUnit ];
     if ( shoulder ) originPos = [ comp.width / 2 - sizeUnit / 2, 4 * sizeUnit ];
     structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, comp, originPos );
@@ -942,6 +910,7 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
+    //RIGHT ARM
     originPos = [ comp.width / 2 + sizeUnit, 4 * sizeUnit ];
     if ( shoulder ) originPos = [ comp.width / 2 + sizeUnit / 2, 4 * sizeUnit ];
     structure = DuAEF.Duik.Structure.createArm( shoulder, humerus, radius, hand, false, undefined, type, comp, originPos, true );
@@ -949,12 +918,14 @@ Duik.structures.mammal = function (type, numSpine, numNeck, hips, head, shoulder
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
+    //LEFT LEG
     originPos = [ comp.width / 2 - sizeUnit / 2, comp.height / 2 + sizeUnit ];
     structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, comp, originPos );
     structure = structure[ 0 ];
     structureLayers = structureLayers.concat( structure.elements );
     structures.push( structure );
     DuAEF.DuAE.Comp.unselectLayers( comp );
+    //RIGHT LEG
     originPos = [ comp.width / 2 + sizeUnit / 2, comp.height / 2 + sizeUnit ];
     structure = DuAEF.Duik.Structure.createLeg( femur, tibia, foot, backClaws, undefined, type, comp, originPos );
     structure = structure[ 0 ];
@@ -996,6 +967,7 @@ Duik.structures.arm = function ( type, shoulder, humerus, radius, hand, claws, f
 
     DuAEF.DuAE.Project.setProgressMode(true);
 
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var layerToRemove = null;
     var linkPath = false;
@@ -1047,6 +1019,7 @@ Duik.structures.leg = function ( type, femur, tibia, foot, claws, forceLink)
 
     DuAEF.DuAE.Project.setProgressMode(true);
 
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var layerToRemove = null;
     var linkPath = false;
@@ -1093,6 +1066,7 @@ Duik.structures.spine = function ( numSpine, numNeck, hips, head, forceLink )
 
     DuAEF.DuAE.Project.setProgressMode(true);
 
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var layerToRemove = null;
     var linkPath = false;
@@ -1134,6 +1108,7 @@ Duik.structures.tail = function ( numTail, forceLink )
 
     DuAEF.DuAE.Project.setProgressMode(true);
 
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var layerToRemove = null;
     var linkPath = false;
@@ -1172,6 +1147,7 @@ Duik.structures.custom = function ( num, name, forceLink, randomColor )
     forceLink = def( forceLink, false);
     name = def( name, 'Structure');
 
+    //get current comp
     var comp = DuAEF.DuAE.Project.getActiveComp();
     if (!comp) return;
     
@@ -1181,6 +1157,7 @@ Duik.structures.custom = function ( num, name, forceLink, randomColor )
 
     DuAEF.DuAE.Project.setProgressMode(true);
 
+    //if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var layerToRemove = null;
     var linkPath = settings.data.structureLinkPaths;
@@ -1230,6 +1207,7 @@ Duik.structures.functions.push( { name:"Edit Mode", fn:"Duik.structures.edit()" 
  */
 Duik.structures.edit = function (  )
 {
+    //get from first element
     var structures = DuAEF.Duik.Structure.getStructures(undefined,DuAEF.Duik.Structure.SelectionModes.ELEMENT);
 
     DuAEF.DuAE.App.beginUndoGroup("Edit structures");
@@ -1276,6 +1254,7 @@ Duik.structures.duplicate = function (  )
         var newStructure  = structure.duplicate();
         newStructures.push(newStructure);
 
+        //adjust autorig id
         if (newStructure.elements.length > 0)
         {
             var element = newStructure.elements[0];
@@ -1305,6 +1284,7 @@ Duik.structures.duplicate = function (  )
 
     });
 
+    //select all structures
     var itNew = new Iterator(newStructures);
     itNew.do(function(structure)
     {
@@ -1331,6 +1311,7 @@ Duik.controllers = {}
  */
 Duik.controllers.functions = []
 
+//The functions
 
 Duik.controllers.functions.push( { name:"Rotation", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.ROTATION)" } );
 Duik.controllers.functions.push( { name:"X_Position", fn:"Duik.controllers.create(DuAEF.Duik.Controller.Types.X_POSITION)" } );
@@ -1410,6 +1391,7 @@ Duik.controllers.pseudoEffect = function ( type )
 
     for (var i = 0, num = layers.length; i < num; i++)
     {
+        //add effect
         DuAEF.DuAE.Layer.applyPreset(layers[i],type);
     }
     DuAEF.DuAE.App.endUndoGroup();
@@ -1527,6 +1509,7 @@ Duik.tools = {}
  */
 Duik.tools.functions = []
 
+//The functions
 
 Duik.tools.functions.push( { name:"Align layers", fn:"Duik.tools.align()" } );
 /**
@@ -1672,6 +1655,7 @@ Duik.animation = {}
  */
 Duik.animation.functions = []
 
+//The functions
 
 Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
 /**
@@ -1718,13 +1702,16 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
     var effects = [];
     for (var i = 0, num = props.length ; i < num ; i++)
     {
+        //SPATIAL AUTO
         if (!separateDimensions && spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
+        //SMART SMOOTH
         if ( smoothCurves ) effect = DuAEF.Duik.Animation.kleaner(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
         effects.push(effect);
     }
 
     for (var i = 0, num = props.length; i < num; i++)
     {
+        //CLEAN
         if ( removeUnnecessaryKeys ) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
     }
 
@@ -1756,6 +1743,7 @@ Duik.animation.copy = function ( )
     {
         copiedAnim.push(DuAEF.DuAE.Layer.getAnim(layers[i],true));
     }
+    //get the first keyframe time to offset when pasting
     copiedAnim.firstKeyFrameTime = DuAEF.DuAE.Layer.firstKeyFrameTime(layers,true);
 
     Duik.animation.copied = copiedAnim;
@@ -1780,6 +1768,7 @@ Duik.animation.paste = function ( replace, offset, reverse )
     if (layers.length == 0) layers = comp.layers;
     if (layers.length == 0) return;
 
+    //options
     var time = comp.time-copiedAnim.firstKeyFrameTime;
     replace = def( replace, false );
     offset = def( offset, false );
@@ -1796,6 +1785,7 @@ Duik.animation.paste = function ( replace, offset, reverse )
         for (var i = 0, num = remaining.length; i < num; i++)
         {
             ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+            //try to preselect by name
             var ok = false;
             for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
             {
@@ -1855,6 +1845,7 @@ Duik.animation.motionTrail = function ( color, useExisting )
 
     useExisting = def(useExisting, true);
 
+    //trail layer
     var trailLayer = null;
     if (useExisting) trailLayer = DuAEF.Duik.getLayer( DuAEF.Duik.LayerTypes.MOTION_TRAIL );
 
@@ -1907,11 +1898,13 @@ Duik.animation.xSheet = function ( autoDetect )
 
     if ( autoDetect && props.length > 0)
     {
+        //detect limit
         var averageSpeed = DuAEF.DuAE.Property.getAverageSpeed(props);
         if (averageSpeed > 0)
         {
             var precision = averageSpeed*2.5;
             var frames = comp.duration / comp.frameDuration;
+            //set Keyframes
             var step = 0;
             effect(19).addKey(0);
             for (var frame = 0 ; frame < frames ; frame++)
@@ -1971,6 +1964,7 @@ Duik.camera = {}
  */
 Duik.camera.functions = []
 
+//The functions
 
 Duik.camera.functions.push( { name:"Rig", fn:"Duik.camera.rig()" } );
 /**
