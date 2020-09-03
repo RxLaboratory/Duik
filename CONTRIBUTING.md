@@ -22,7 +22,7 @@ Use these templates to post your issue, but feel free to adjust it to your needs
 
 ## Translations
 
-Duik uses *DuTF - The Duduf Translation Framework* to translate all its user interface into many languages. Our goal is to make Duik available in as many languages as users are using, plus Esperanto. If you speak a language which is not yet available in Duik, do not hesitate to help translating Duik into it, it's easy and you don't need to be a developper!
+Duik uses *DuTF - The Duduf Translation Framework* to translate all its user interface into many languages. Our goal is to make Duik available in as many languages as users are using, plus Esperanto. If you speak a language which is not yet available in Duik, do not hesitate to help translating Duik into it, it's easy and you don't need to be a developer!
 
 We're trying to gather a nice community willing to translate Duik (and other tools), and in this effort we're also coordinating the translations to make sure people work together, and to avoid two people working at the same time on the same language without knowing each other, so if you'd like to help, **it's best to first [let us know by filling this simple form](https://rainboxlab.org/documentation/translate-the-tools/)**, and **join us on [Discord](http://chat.rainboxlab.org/)**!
 
