@@ -1,6 +1,6 @@
 # Translating Duik
 
-Duik uses *DuTF - The Duduf Translation Framework* to translate all its user interface into many languages. Our goal is to make Duik available in as many languages as users are using, plus [Esperanto](https://en.wikipedia.org/wiki/Esperanto). If you speak a language which is not yet available in Duik, do not hesitate to help translating Duik into it, it's easy and you don't need to be a developer!
+Duik uses *DuTF - The Duduf Translation Framework* to translate all its user interface into many languages. Our goal is to make Duik available in as many languages as users are using, plus [Esperanto](https://en.wikipedia.org/wiki/Esperanto). If you speak a language which is not yet available in Duik, do not hesitate to help translating Duik, it's easy and you don't need to be a developer!
 
 ## Status
 
