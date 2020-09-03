@@ -50,7 +50,7 @@ It's best to [join us on our *Discord* server](http://chat.rainboxlab.org/) so t
 
 ### 3. Download *DuTranslator*
 
-*DuTranslator* is the application used by *DuTF - The Duduf Translation Framework* to help non-developers contribute with their translations. It's very easy to use, and comes with a [comprehensive documentation available here](http://dutranslator-docs.rainboxlab.org).
+[*DuTranslator*](https://rainboxlab.org/tools/dutf/) is the application used by *DuTF - The Duduf Translation Framework* to help non-developers contribute with their translations. It's very easy to use, and comes with a [comprehensive documentation available here](http://dutranslator-docs.rainboxlab.org).
 
 ### 4. Install the latest version of Duik
 
