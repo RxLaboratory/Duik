@@ -62,6 +62,8 @@ Make sure you have installed [the latest version of Duik](https://rainboxlab.org
 
 If you plan to update an existing translation, you'll just have to edit the corresponding translation file with *DuTranslator*. The translation files are available in your *Documents* folder, in a *Duik Bassel* subfolder. There is one *.json* file for each language, which you can recognise with its [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
 
+You can also get these translation files [here](https://github.com/Rainbox-dev/DuAEF_Duik/tree/master/src/duik_required/translation). (open the corresponding *.json* file, click on the "raw" button, then save the page [Ctrl+S]).
+
 #### 5.B. Create a new translation
 
 If you're starting a translation to a new language, grab [the empty template here](https://github.com/Rainbox-dev/DuAEF_Duik/blob/master/src/duik_required/translation/Duik%20Bassel_new.json) (click on the "raw" button, then save the page [Ctrl+S]).
