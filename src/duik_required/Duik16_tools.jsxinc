@@ -16,6 +16,7 @@
 		ui_measureGroup.visible = panel == 3;
 		ui_propInfoGroup.visible = panel == 5;
 		ui_scriptifyExpressionGroup.visible = panel == 6;
+		ui_expressionLinksGroup.visible = panel == 7;
 	}
 
 	function initToolsUI()
@@ -297,6 +298,30 @@
 
 		app.endSuppressDialogs(false);
 		DuAEF.DuAE.App.endUndoGroup();
+	}
+
+	function ui_ELCompSelector_changed()
+	{
+		if (ui_ELCompSelector.index == 0) ui_ELLayersSelector.visible = true;
+		else ui_ELLayersSelector.visible = false;
+	}
+
+	function ui_ELThisCompButton_clicked()
+	{
+		Duik.tools.removeThisComp(
+			ui_ELCompSelector.index == 0,
+			ui_ELCompSelector.index == 2,
+			ui_ELLayersSelector.index == 1
+			);
+	}
+
+	function ui_ELCompButton_clicked()
+	{
+		Duik.tools.removeComp(
+			ui_ELCompSelector.index == 0,
+			ui_ELCompSelector.index == 2,
+			ui_ELLayersSelector.index == 1
+			);
 	}
 
 	function ui_measureButton_clicked()
@@ -633,6 +658,16 @@
 
 	if (settings.data.uiMode > 0)
 	{
+		var ui_expressionLinksButton = DuAEF.DuScriptUI.addButton(
+			settings.data.uiMode > 2 ? ui_expressionsGroup : ui_toolsMainGroup,
+			settings.data.uiMode > 2 ? '' : "Expression links tools",
+			DuAEF.DuBinary.toFile(w25_ae_pickwhip_l),
+			"Tools to adjust how expression links are made.",
+			DuAEF.DuBinary.toFile(w25_ae_pickwhip_r)
+			);
+		if (settings.data.uiMode > 2) ui_expressionLinksButton.alignment = ['center','top'];
+		ui_expressionLinksButton.setHelp("Remove Expressions", riggingtoolsHelp, riggingtoolsLink);
+
 		var ui_removeExpressionsButton = DuAEF.DuScriptUI.addButton(
 			settings.data.uiMode > 2 ? ui_expressionsGroup : ui_toolsMainGroup,
 			settings.data.uiMode > 2 ? '' : "Remove expressions",
@@ -792,6 +827,39 @@
 	var ui_SRCancelButton = DuAEF.DuScriptUI.addButton(ui_SRValidGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
 	var ui_SRValidButton = DuAEF.DuScriptUI.addButton(ui_SRValidGroup,'Replace',DuAEF.DuBinary.toFile(w25_check_g),"Search and replace text",DuAEF.DuBinary.toFile(w25_check_r));
 
+	// Expression links
+	var ui_expressionLinksGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
+	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_expressionLinksGroup,"Expression links tools");
+
+	var ui_ELSubSelectGroup = DuAEF.DuScriptUI.addGroup(ui_expressionLinksGroup,'stack');
+	var ui_ELSelectGroup2 = DuAEF.DuScriptUI.addGroup(ui_ELSubSelectGroup,'column');
+	var ui_ELCompSelector = DuAEF.DuScriptUI.addSelector(ui_ELSelectGroup2);
+	ui_ELCompSelector.addButton("Active comp.",DuAEF.DuBinary.toFile(w14_comp_l),"Search and replace expressions in the active composition",DuAEF.DuBinary.toFile(w14_comp_r));
+	ui_ELCompSelector.addButton("All comps.",DuAEF.DuBinary.toFile(w14_project_l),"Search and replace expressions in the whole project",DuAEF.DuBinary.toFile(w14_project_r));
+	ui_ELCompSelector.addButton("Selected comps.",DuAEF.DuBinary.toFile(w14_project_l),"Search and replace expressions in the selected compositions",DuAEF.DuBinary.toFile(w14_project_r));
+	ui_ELCompSelector.setCurrentIndex(0);
+
+	var ui_ELLayersSelector = DuAEF.DuScriptUI.addSelector(ui_ELSelectGroup2);
+	ui_ELLayersSelector.addButton("All layers",DuAEF.DuBinary.toFile(w14_alllayers_l),"Search and replace expressions in the selected layers only",DuAEF.DuBinary.toFile(w14_alllayers_r));
+	ui_ELLayersSelector.addButton("Selected layers",DuAEF.DuBinary.toFile(w14_selectedlayers_l),"Search and replace expressions in all layers",DuAEF.DuBinary.toFile(w14_selectedlayers_r));
+	ui_ELLayersSelector.setCurrentIndex(0);
+
+	var ui_ELCompGroup = DuAEF.DuScriptUI.addGroup(ui_expressionLinksGroup, 'row');
+	var ui_ELThisCompButton = DuAEF.DuScriptUI.addButton(
+		ui_ELCompGroup,
+		"Remove 'thisComp'",
+		undefined,
+		"Replaces all 'thisComp' occurences by 'comp(\"name\")'"
+	)
+	var ui_ELCompButton = DuAEF.DuScriptUI.addButton(
+		ui_ELCompGroup,
+		"Remove 'comp(\"name\")'",
+		undefined,
+		"Replaces all 'comp(\"name\")' occurences by 'thisComp'"
+	)
+
+	var ui_ELCancelButton = DuAEF.DuScriptUI.addButton(ui_expressionLinksGroup,'Back',DuAEF.DuBinary.toFile(w25_back_m),"Back",DuAEF.DuBinary.toFile(w25_back_r));
+
 	// Measure
 	var ui_measureGroup = DuAEF.DuScriptUI.addGroup(ui_toolsGroup,'column');
 	if (settings.data.uiMode < 2) DuAEF.DuScriptUI.addSeparator(ui_measureGroup,"Measure");
@@ -906,6 +974,12 @@
 
 	if (settings.data.uiMode > 0)
 	{
+		ui_expressionLinksButton.onClick = function () { setCurrentToolsPanel(7); };
+		ui_ELCompSelector.onChange = ui_ELCompSelector_changed;
+		ui_ELCancelButton.onClick = function () { setCurrentToolsPanel(0); };
+		ui_ELThisCompButton.onClick = ui_ELThisCompButton_clicked;
+		ui_ELCompButton.onClick = ui_ELCompButton_clicked;
+
 		ui_removeExpressionsButton.onClick = ui_removeExpressionsButton_clicked;
 		ui_removeExpressionsButton.onAltClick = ui_removeExpressionsButton_altClicked;
 
