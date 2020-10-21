@@ -1,7 +1,6 @@
 #include "duik_required/Duik16_header.jsxinc";
 
 var standAlone = true;
-var noSettings = true;
 
 #include "duik_required/Duik16_cmd.jsxinc";
 
