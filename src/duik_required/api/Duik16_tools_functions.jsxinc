@@ -63,20 +63,61 @@ Duik.tools.editMode = function ( )
     DuAEF.DuAE.App.endUndoGroup();
 }
 
+Duik.tools.functions.push( { name:"Remove thisComp", fn:"Duik.tools.removeThisComp()" } );
+/**
+ * Replace all <code>thisComp</code> occurences by <code>comp("name")</code>.
+ * @param {bool} [currentComp=true] true: in current compositions, false: in all compositions of the project
+ * @param {bool} [selectedComps=false] When currentComp is false, true to replace only in selected compositions
+ * @param {bool} [selectedLayers=false] When currentComp is true, wether to replace only on selected layers
+ */
+Duik.tools.removeThisComp = function ( currentComp, selectedComps, selectedLayers )
+{
+    currentComp = def(currentComp, true);
+    selectedComps = def(selectedComps, false);
+    selectedLayers = def(selectedLayers, false);
+
+    DuAEF.DuAE.App.beginUndoGroup("Remove 'thisComp'");
+    if (currentComp) DuAEF.DuAE.Comp.removeThisCompInExpressions(selectedLayers);
+    else DuAEF.DuAE.Project.removeThisCompInExpressions(selectedComps);
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.tools.functions.push( { name:"Remove Comp(\"name\")", fn:"Duik.tools.removeComp()" } );
+/**
+ * Replace all <code>comp("name")</code> occurences by <code>thisComp</code>.
+ * @param {bool} [currentComp=true] true: in current compositions, false: in all compositions of the project
+ * @param {bool} [selectedComps=false] When currentComp is false, true to replace only in selected compositions
+ * @param {bool} [selectedLayers=false] When currentComp is true, wether to replace only on selected layers
+ */
+Duik.tools.removeComp = function ( currentComp, selectedComps, selectedLayers )
+{
+    currentComp = def(currentComp, true);
+    selectedComps = def(selectedComps, false);
+    selectedLayers = def(selectedLayers, false);
+
+    DuAEF.DuAE.App.beginUndoGroup("Remove 'thisComp'");
+    if (currentComp) DuAEF.DuAE.Comp.removeCompInExpressions(selectedLayers);
+    else DuAEF.DuAE.Project.removeCompInExpressions(selectedComps);
+    DuAEF.DuAE.App.endUndoGroup();
+}
+
 Duik.tools.functions.push( { name:"Remove Expressions", fn:"Duik.tools.removeExpressions()" } );
 /**
  * Remove expressions from selected properties.
+ * @param {bool} [keepPostExpressionValue=true] Set to false to just remove the expressions and get back the pre expression value
  */
-Duik.tools.removeExpressions = function ( )
+Duik.tools.removeExpressions = function ( keepPostExpressionValue )
 {
-    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    keepPostExpressionValue = def (keepPostExpressionValue, true);
 
+    var props = DuAEF.DuAE.Comp.getSelectedProps();
+    
     DuAEF.DuAE.App.beginUndoGroup("Remove expressions");
     if (props.length > 0)
     {
         for (var i = 0, num = props.length; i < num; i++)
         {
-            DuAEF.DuAE.Property.removeExpression(props[i]);
+            DuAEF.DuAE.Property.removeExpression(props[i], undefined, keepPostExpressionValue);
         }
     }
     else
@@ -84,7 +125,7 @@ Duik.tools.removeExpressions = function ( )
         var layers = DuAEF.DuAE.Comp.getSelectedLayers();
         for (var i = 0, num = layers.length; i < num; i++)
         {
-            DuAEF.DuAE.Property.removeExpressions(layers[i]);
+            DuAEF.DuAE.Property.removeExpressions(layers[i], undefined, keepPostExpressionValue);
         }
     }
     DuAEF.DuAE.App.endUndoGroup();

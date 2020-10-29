@@ -24,7 +24,7 @@ Duik.animation.functions.push( { name:"Klean", fn:"Duik.animation.klean()" } );
  * @param {boolean} [removeUnnecessaryKeys=true] - Wether to remove all redundants keyframes.
  * @param {boolean} [smoothIn=true] - Wether to smooth the incoming curve if smoothCurves is set to true
  * @param {boolean} [smoothOut=true] - Wether to smooth the outgoing curve if smoothCurves is set to true
- * @return {Property} The effect created to control the kleaner.
+ * @return {Property[]} The effects created to control the kleaner.
  */
 Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoothCurves, smoothUsingExpression, removeUnnecessaryKeys, smoothIn, smoothOut )
 {
@@ -38,6 +38,7 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
 
     DuAEF.DuAE.App.beginUndoGroup("Kleaner");
 
+    var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     var props = DuAEF.DuAE.Comp.getSelectedProps();
     if (props.length == 0)
     {
@@ -56,12 +57,15 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
     }
 
     var effect = null;
+    var effects = [];
     for (var i = 0, num = props.length ; i < num ; i++)
     {
         //SPATIAL AUTO
         if (!separateDimensions && spatialInterpolation ) DuAEF.DuAE.Property.fixSpatialInterpolation(props[i]);
         //SMART SMOOTH
         if ( smoothCurves ) effect = DuAEF.Duik.Animation.kleaner(props[i], smoothUsingExpression, smoothIn , smoothOut, effect);
+
+        if (effect != null) effects.push(effect);
     }
 
     for (var i = 0, num = props.length; i < num; i++)
@@ -70,9 +74,11 @@ Duik.animation.klean = function ( separateDimensions, spatialInterpolation, smoo
         if ( removeUnnecessaryKeys ) DuAEF.DuAE.Property.cleanKeyframes(props[i]);
     }
 
+    DuAEF.DuAE.Comp.selectLayers( layers );
+
     DuAEF.DuAE.App.endUndoGroup();
 
-    return effect;
+    return effects;
 }
 
 /**

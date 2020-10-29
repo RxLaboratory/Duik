@@ -2,8 +2,7 @@
 
 var standAlone = true;
 #include "duik_required/Duik16_animation.jsxinc"
-ui_palette.alignChildren = ['fill','fill'];
-ui_buildAnimation( ui_palette );
+ui_buildAnimation( ui_palette.mainGroup );
 
 #include "duik_required/Duik16_footer.jsxinc"
 

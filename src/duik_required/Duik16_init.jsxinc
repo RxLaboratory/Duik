@@ -1,19 +1,18 @@
-//=========== PALETTE ======================
-
-//create main palette
-var ui_mainPalette = DuAEF.DuScriptUI.createUI(obj, scriptName, ['fill','fill']);
-ui_mainPalette.contents.orientation = 'stack';
+//=========== REINIT FUNCTION ===================
+#include "Duik16_reinit.jsxinc"
 
 //=========== GLOBAL VARIABLES =============
 var settingsFile, settings, settingsPath, debugLog;
 var showNews = true;
 
-//=========== FILE AND NETWORK ACCESS ===========
+var thisScriptFile = new File($.fileName);
 
-DuAEF.DuScriptUI.askFilesAndNetworkAccess( ui_mainPalette, loadSettings, scriptName, !DuAEF.scriptFirstRun, wipeDuik );
+//===== NEED FILE AND NETWORK ACCESS =====
+//Let's create a temp group we can hide later
+obj.orientation = 'stack';
+obj.alignChildren = ['fill', 'fill'];
+DuAEF.DuScriptUI.askFilesAndNetworkAccess( obj, loadSettings, scriptName, !DuAEF.scriptFirstRun, wipeDuik );
 
-//=========== REINIT FUNCTION ===================
-#include "Duik16_reinit.jsxinc"
 
 //=========== SETTINGS ===========
 function loadSettings ()
@@ -33,7 +32,7 @@ function loadSettings ()
 	//load settings
 
 	//general
-	if (typeof settings.data.scriptFile === 'undefined') settings.data.scriptFile = thisScriptFile.absoluteURI;
+	
 	if (typeof settings.data.uiMode === 'undefined') settings.data.uiMode = 0;
 	if (typeof settings.data.debug === 'undefined') settings.data.debug = false;
 	if (typeof settings.data.checkUpdatesAtStartup === 'undefined') settings.data.checkUpdatesAtStartup = true;
@@ -41,9 +40,18 @@ function loadSettings ()
 	if (typeof settings.data.updateCheckDate === 'undefined') settings.data.updateCheckDate = new Date(2018,6,9).getTime(); //this is the public release date of Duik Bassel July, 9th 2018
 	if (typeof settings.data.showWelcomeScreen === 'undefined') settings.data.showWelcomeScreen = true;
 	DuAEF.debug = settings.data.debug;
+
+    //Let's store this script File
+    if ( DuAEF.debug ) thisScriptFile = new File( thisScriptFile.parent.parent.absoluteURI + "/" + DuAEF.scriptName + ".jsx" );
+    if (typeof settings.data.scriptFile === 'undefined') settings.data.scriptFile = thisScriptFile.absoluteURI;
 	
 	//rigging
 	if (typeof settings.data.currentRiggingPanel === 'undefined') settings.data.currentRiggingPanel = 0;
+	if (typeof settings.data.locatorExtractUsingMP === 'undefined')
+	{
+		if (DuAEF.DuAE.App.version.version >= 17) settings.data.locatorExtractUsingMP = true;
+		else settings.data.locatorExtractUsingMP = false;
+	}
 
 	//controllers
 	if (typeof settings.data.controllerSizeHint === 'undefined') settings.data.controllerSizeHint = 0;
@@ -117,10 +125,15 @@ function loadSettings ()
 	DuAEF.DuBinary.toFile(Duik_Bassel_fr,settingsPath + 'Duik Bassel_fr.json');
 	#include 'translation/Duik Bassel_es.json.jsxinc'
 	DuAEF.DuBinary.toFile(Duik_Bassel_es,settingsPath + 'Duik Bassel_es.json');
+	#include 'translation/Duik Bassel_eo.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_eo,settingsPath + 'Duik Bassel_eo.json');
 	#include 'translation/Duik Bassel_zh.json.jsxinc'
 	DuAEF.DuBinary.toFile(Duik_Bassel_zh,settingsPath + 'Duik Bassel_zh.json');
 	#include 'translation/Duik Bassel_de.json.jsxinc'
 	DuAEF.DuBinary.toFile(Duik_Bassel_de,settingsPath + 'Duik Bassel_de.json');
+	#include 'translation/Duik Bassel_ru.json.jsxinc'
+	DuAEF.DuBinary.toFile(Duik_Bassel_ru,settingsPath + 'Duik Bassel_ru.json');
+
 
 	DuAEF.Dutranslator.Settings.folder = settingsPath;
 	DuAEF.Dutranslator.Settings.prefix = 'Duik Bassel_';
@@ -130,12 +143,22 @@ function loadSettings ()
 	//if language has never been set
 	if (typeof settings.data.language === 'undefined')
 	{
-		var ui_languageSetGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+		var ui_languageSetGroup = DuAEF.DuScriptUI.addGroup(obj, 'column');
 
 		ui_languageSetGroup.add('statictext', undefined, "Choose a language among these available languages to launch Duik Bassel.",{multiline:true});
 		ui_languageSetGroup.add('statictext', undefined, "You can also change the language at any time in the settings tab of Duik",{multiline:true});
-		var lDdd = ui_languageSetGroup.add('dropdownlist', undefined, DuAEF.Dutranslator.getPrettyNames());
+		var prettyNames = DuAEF.Dutranslator.getPrettyNames();
+		var lDdd = ui_languageSetGroup.add('dropdownlist', undefined, prettyNames);
 		lDdd.selection = 0;
+		// find esperanto by default
+		for (var i = 0, num = prettyNames.length; i < num; i++)
+		{
+			if (prettyNames[i] == "Esperanto")
+			{
+				lDdd.selection = i;
+				break;
+			}
+		}
 		var lDok = ui_languageSetGroup.add('button', undefined, "Ok");
 		lDok.onClick = function ()
 		{
@@ -150,7 +173,7 @@ function loadSettings ()
 			checkUpdates();
 		}
 
-		DuAEF.DuScriptUI.showUI(ui_mainPalette, false);
+		DuAEF.DuScriptUI.showUI(obj, false);
 		return;
 	}
 	else
@@ -159,8 +182,6 @@ function loadSettings ()
 		checkUpdates();
 	}
 }
-
-//================== UPDATES ===================
 
 function checkUpdates()
 {
@@ -214,7 +235,7 @@ function checkUpdates()
 	debugLog.log("New version available: " + newVersion);
 	debugLog.log("Current version is: " + version);
 
-	var ui_newVersionGroup = DuAEF.DuScriptUI.addGroup(ui_mainPalette.contents,'column');
+	var ui_newVersionGroup = DuAEF.DuScriptUI.addGroup(obj, 'column');
 	ui_newVersionGroup.alignment = ['fill','fill'];
 	ui_newVersionGroup.alignChildren = ['fill','top'];
 	DuAEF.DuScriptUI.addSeparator(ui_newVersionGroup, "A new version of Duik is available!");
@@ -258,6 +279,5 @@ function checkUpdates()
 		createUI();
 	}
 
-	DuAEF.DuScriptUI.showUI(ui_mainPalette, false);
-
+	DuAEF.DuScriptUI.showUI(obj, false);
 }

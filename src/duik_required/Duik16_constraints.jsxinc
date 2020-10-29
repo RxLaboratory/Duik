@@ -43,7 +43,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
         connector.masterProp = null;
         connector.masterLayer = null;
         connector.type = 1;
-        connectorMasterLabel.text = "Choose master property";
+        connectorMasterLabel.text = "Choose / create a controlling prop.";
         ui_connectorMaximumEdit.suffix = '';
         ui_connectorMinimumEdit.suffix = '';
         ui_connectorMinimumEdit.setText( "0" );
@@ -128,7 +128,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
         ui_connectorMinimumEdit.setSuffix( info.unit );
         ui_connectorMaximumEdit.setSuffix( info.unit );
 
-        //use a percent if this is a 2DS Slider
+        //use a percent if this is a 2D Slider
         if (connector.masterProp.matchName.indexOf( DuAEF.Duik.PseudoEffects.CONTROLLER_DOUBLE_SLIDER.matchName ) == 0) 
         {
             ui_connectorMinimumEdit.setSuffix( "%" );
@@ -280,11 +280,6 @@ function ui_buildConstraints ( ui_constraintsGroup )
         
         ui_connectorForm.enabled = isReady;
 
-        if ( settings.data.uiMode < 2 )
-        {
-            ui_connectorSeparator2.enabled = isReady;
-        }
-
         if (isReady)
         {
             ui_connectorAxisLabel.enabled = connector.type == 1 || connector.type == 3 || connector.type == 4;
@@ -404,7 +399,9 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
         var axis = 0;
         if ( ui_connectorAxisList.selection ) axis = ui_connectorAxisList.selection.index;
-        var range = DuAEF.DuAE.Property.getRange( connector.masterProp, axis, true, true );
+        var preExpression = true;
+        if ( connector.masterProp.numKeys < 2 ) preExpression = false;
+        var range = DuAEF.DuAE.Property.getRange( connector.masterProp, axis, preExpression, true );
 
         if ( range.length != 2 ) return;
 
@@ -838,6 +835,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
         Duik.constraints.autoParent();
     }
 
+    function ui_autoParentButton_altClicked ()
+    {
+        Duik.constraints.autoParent(true);
+    }
+
     function ui_parentButton_clicked ()
     {
         Duik.constraints.parentConstraint();
@@ -957,7 +959,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     function ui_extractLocatorsButton_clicked ()
     {
-        Duik.constraints.extractLocators();
+        Duik.constraints.extractLocators( settings.data.locatorExtractUsingMP );
     }
 
     function ui_parentCompButton_clicked ()
@@ -993,7 +995,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
         app.beginUndoGroup( 'Duik | ' + "Parent" );
 
-        DuAEF.Duik.Rigging.parent( layers, layer );
+        DuAEF.Duik.Rigging.parent( layers, layer, settings.data.locatorExtractUsingMP );
 
         app.endUndoGroup();
 
@@ -1034,6 +1036,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
     function ui_etmButton_clicked()
     {
         Duik.constraints.exposeTransform();
+    }
+
+    function ui_extractLocatorsMPSelector_changed()
+    {
+        settings.data.locatorExtractUsingMP = ui_extractLocatorsMPSelector.index == 1;
+		settings.save();
     }
 
     //========== UI ==============
@@ -1081,8 +1089,8 @@ function ui_buildConstraints ( ui_constraintsGroup )
     if ( settings.data.uiMode >= 2 ) ui_constraintsMainGroup.alignment = [ 'center', 'top' ];
     if ( settings.data.uiMode > 0 )
     {
-        var ui_autoParentButton = DuAEF.DuScriptUI.addButton( ui_constraintsMainGroup, settings.data.uiMode >= 2 ? '' : "Auto-Parent", DuAEF.DuBinary.toFile( w25_autoparent_l ), "Parent layers to the last selected one", DuAEF.DuBinary.toFile( w25_autoparent_r ) );
-        ui_autoParentButton.setHelp( "Auto-Parent", parentconstraintHelp, parentconstraintLink );
+        var ui_autoParentButton = DuAEF.DuScriptUI.addButton( ui_constraintsMainGroup, settings.data.uiMode >= 2 ? '' : "Auto-Parent", DuAEF.DuBinary.toFile( w25_autoparent_l ), "Parent layers to the last selected one.\nAlt+Click: parent only the orphans.", DuAEF.DuBinary.toFile( w25_autoparent_r ) );
+        ui_autoParentButton.setHelp( "Auto-Parent", '', 'https://duik-docs.rainboxlab.org/auto-parent.html' );
     }
     var ui_parentButton = DuAEF.DuScriptUI.addButton( ui_constraintsMainGroup, settings.data.uiMode >= 2 ? '' : "Parent constraint", DuAEF.DuBinary.toFile( w25_parent_l ), "Link layers together (animatable)", DuAEF.DuBinary.toFile( w25_parent_r ) );
     ui_parentButton.setHelp( "Parent Constraint", parentconstraintHelp, parentconstraintLink );
@@ -1142,6 +1150,17 @@ function ui_buildConstraints ( ui_constraintsGroup )
     var ui_blenderSetupCancelButton = DuAEF.DuScriptUI.addButton( ui_blenderSetupValidGroup, "Back", DuAEF.DuBinary.toFile( w25_back_m ), "Back", DuAEF.DuBinary.toFile( w25_back_r ) );
     var ui_blenderSetupValidButton = DuAEF.DuScriptUI.addButton( ui_blenderSetupValidGroup, "Blend!", DuAEF.DuBinary.toFile( w25_check_g ), "Sets the properties and the blender up.", DuAEF.DuBinary.toFile( w25_check_r ) );
 
+    // Locators use MPs
+    if (DuAEF.DuAE.App.version.version >= 15.1 && settings.data.uiMode > 1)
+	{
+        var ui_extractLocatorsOptionsWindow = DuAEF.DuScriptUI.createPopup( "Extract Locators" );
+        var ui_extractLocatorsOptionsGroup = ui_extractLocatorsOptionsWindow.contents;
+        var ui_extractLocatorsMPSelector = DuAEF.DuScriptUI.addSelector(ui_extractLocatorsOptionsGroup);
+        ui_extractLocatorsMPSelector.addButton("Use expressions",DuAEF.DuBinary.toFile(w25_js_l),"Use expressions to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_js_r));
+        ui_extractLocatorsMPSelector.addButton("Use master properties",DuAEF.DuBinary.toFile(w25_masterprops_l),"Use master properties to link the controllers to the precomp",DuAEF.DuBinary.toFile(w25_masterprops_r));
+        var ui_extractLocatorsValidButton = DuAEF.DuScriptUI.addButton(ui_extractLocatorsOptionsGroup,"Extract!",DuAEF.DuBinary.toFile(w25_check_g),"Extract controllers from the precomposition",DuAEF.DuBinary.toFile(w25_check_r));
+    }
+
     //parent between comps
     var ui_parentCompGroup = DuAEF.DuScriptUI.addGroup( ui_constraintsGroup, 'column' );
     DuAEF.DuScriptUI.addSeparator( ui_parentCompGroup, settings.data.uiMode < 2 ? "Parent accross comps" : '' );
@@ -1153,15 +1172,20 @@ function ui_buildConstraints ( ui_constraintsGroup )
     var ui_parentCompValidButton = DuAEF.DuScriptUI.addButton( ui_parentCompGroup, "Parent", DuAEF.DuBinary.toFile( w25_check_g ), "Parent the selected layers to the chosen layer.", DuAEF.DuBinary.toFile( w25_check_r ) );
     ui_parentCompValidButton.setHelp( "Parent Accross Compositions", parentaccrosscompositionsHelp, parentaccrosscompositionsLink );
     ui_parentCompValidButton.enabled = false;
-    if ( settings.data.uiMode != 0 )
+    if ( settings.data.uiMode > 1 )
     {
-        DuAEF.DuScriptUI.addSeparator( ui_parentCompGroup, settings.data.uiMode >= 2 ? '' : "Tools" );
+        DuAEF.DuScriptUI.addSeparator( ui_parentCompGroup, settings.data.uiMode >= 3 ? '' : "Tools" );
         var ui_parentCompToolsGroup = DuAEF.DuScriptUI.addGroup( ui_parentCompGroup, settings.data.uiMode >= 2 ? 'row' : 'column' );
         var ui_locatorButton = DuAEF.DuScriptUI.addButton( ui_parentCompToolsGroup, "Add locator", DuAEF.DuBinary.toFile( w18_target_l ), "Add a \"locator\" in the composition", DuAEF.DuBinary.toFile( w18_target_r ) );
         var ui_extractLocatorsButton = DuAEF.DuScriptUI.addButton( ui_parentCompToolsGroup, "Extract locators", DuAEF.DuBinary.toFile( w18_extractloc_l ), "Extract \"locators\" from the precomposition", DuAEF.DuBinary.toFile( w18_extractloc_r ) );
+        if (DuAEF.DuAE.App.version.version >= 15.1)
+	    {
+            ui_extractLocatorsOptionsButton = DuAEF.DuScriptUI.addButton( ui_parentCompToolsGroup, '', DuAEF.DuBinary.toFile( w14_plus_m ), "Extract locators options", DuAEF.DuBinary.toFile( w14_plus_r ) );
+            ui_extractLocatorsOptionsButton.alignment = [ 'right', 'center' ];
+            ui_extractLocatorsOptionsWindow.tieTo( ui_extractLocatorsOptionsButton );
+        }
     }
     var ui_parentCompCancelButton = DuAEF.DuScriptUI.addButton( ui_parentCompGroup, "Back", DuAEF.DuBinary.toFile( w25_back_m ), "Back", DuAEF.DuBinary.toFile( w25_back_r ) );
-
 
     //autorig options
     var ui_autorigWindow = DuAEF.DuScriptUI.createPopup( "Auto-Rig & IK" );
@@ -1272,22 +1296,38 @@ function ui_buildConstraints ( ui_constraintsGroup )
     var ui_connectorGroup = DuAEF.DuScriptUI.addGroup( ui_constraintsGroup, 'column' );
     DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, settings.data.uiMode < 2 ? "Connector" : '' );
     ui_connectorGroup.alignChildren = [ 'center', 'top' ];
-    var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Master selection/creation", DuAEF.DuJS.Color.Colors.DARK_GREY );
+
+    var ui_connectorCreateGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, 'row' );
+
+    if ( settings.data.uiMode < 2 )
+    {
+        DuAEF.DuScriptUI.addStaticText(ui_connectorCreateGroup, "Create: ");
+    }
+
+    var ui_connectorSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCreateGroup, '', DuAEF.DuBinary.toFile( w25_slider_l ), 'Create a slider controller', DuAEF.DuBinary.toFile( w25_slider_r ) );
+    var ui_connectorDoubleSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCreateGroup, '', DuAEF.DuBinary.toFile( w25_doubleslider_l ), 'Create a 2D slider controller', DuAEF.DuBinary.toFile( w25_doubleslider_r ) );
+    var ui_connectorAngleButton = DuAEF.DuScriptUI.addButton( ui_connectorCreateGroup, '', DuAEF.DuBinary.toFile( w25_angle_l ), 'Create an angle controller', DuAEF.DuBinary.toFile( w25_angle_r ) );
+    var ui_connectorEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCreateGroup, '', DuAEF.DuBinary.toFile( w25_effector_l ), 'Create a spatial effector', DuAEF.DuBinary.toFile( w25_effector_r ) );
+    var ui_connectorEtmButton = DuAEF.DuScriptUI.addButton( ui_connectorCreateGroup, "", DuAEF.DuBinary.toFile( w25_ruler_l ), "Create an 'Expose Transform' controller", DuAEF.DuBinary.toFile( w25_ruler_r ) );
+
+    var ui_connectorPickGroup = ui_connectorCreateGroup;
+
+    if ( settings.data.uiMode < 2 )
+    {
+        ui_connectorPickGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, 'row' );
+        ui_connectorPickGroup.alignment = ['fill','top'];
+        DuAEF.DuScriptUI.addStaticText(ui_connectorPickGroup, "Or pick:").alignment = ['left','center'];
+    }
+
+    var ui_connectorMapEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorPickGroup, settings.data.uiMode < 2 ? "Texture" : "", DuAEF.DuBinary.toFile( w25_picktexture_l ), 'Select a texture layer (map)', DuAEF.DuBinary.toFile( w25_picktexture_r ) );
+	var ui_connectorPickButton = DuAEF.DuScriptUI.addButton( ui_connectorPickGroup, settings.data.uiMode < 2 ? "Property" : "", DuAEF.DuBinary.toFile( w25_pickproperty_l ), "Select a master property", DuAEF.DuBinary.toFile( w25_pickproperty_r ) );
+
+    var connectorMasterLabel = DuAEF.DuScriptUI.addStaticText( ui_connectorGroup, "Choose / create a controlling prop.", DuAEF.DuJS.Color.Colors.DARK_GREY );
 	connectorMasterLabel.characters = 20;
 	connectorMasterLabel.justify = 'center';
-    
-    var ui_connectorCtrlGroup = DuAEF.DuScriptUI.addGroup( ui_connectorGroup, 'row' );
-    var ui_connectorSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_slider_l ), 'Create a slider controller', DuAEF.DuBinary.toFile( w25_slider_r ) );
-    var ui_connectorDoubleSliderButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_doubleslider_l ), 'Create a 2D slider controller', DuAEF.DuBinary.toFile( w25_doubleslider_r ) );
-    var ui_connectorAngleButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_angle_l ), 'Create an angle controller', DuAEF.DuBinary.toFile( w25_angle_r ) );
-    var ui_connectorEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_effector_l ), 'Create a spatial effector', DuAEF.DuBinary.toFile( w25_effector_r ) );
-    var ui_connectorMapEffectorButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, '', DuAEF.DuBinary.toFile( w25_picktexture_l ), 'Select a texture layer (map)', DuAEF.DuBinary.toFile( w25_picktexture_r ) );
-	var ui_connectorPickButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, "", DuAEF.DuBinary.toFile( w25_pickproperty_l ), "Select a master property", DuAEF.DuBinary.toFile( w25_pickproperty_r ) );
-	var ui_connectorEtmButton = DuAEF.DuScriptUI.addButton( ui_connectorCtrlGroup, "", DuAEF.DuBinary.toFile( w25_ruler_l ), "Create an 'Expose Transform' controller", DuAEF.DuBinary.toFile( w25_ruler_r ) );
 
-    if ( settings.data.uiMode < 2 ) var ui_connectorSeparator2 = DuAEF.DuScriptUI.addSeparator( ui_connectorGroup, "Master setup" );
     var ui_connectorForm = DuAEF.DuScriptUI.addForm( ui_connectorGroup );
-    DuAEF.DuScriptUI.setBackgroundColor( ui_connectorForm, DuAEF.DuJS.Color.Colors.VERY_DARK_GREY );
+    DuAEF.DuScriptUI.setBackgroundColor( ui_connectorForm, DuAEF.DuJS.Color.Colors.ABYSS_GREY );
     ui_connectorForm.alignment = [ 'fill', 'top' ];
     var ui_connectorPropLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Property: " );
     var ui_connectorAxisLabel = ui_connectorForm.labels.add( 'statictext', undefined, "Placeholder: " );
@@ -1343,6 +1383,12 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_constraintsGroup.tabActivated = setCurrentConstraintsPanel;
     if (standAlone) setCurrentConstraintsPanel();
 
+    if (DuAEF.DuAE.App.version.version >= 15.1 && settings.data.uiMode > 1)
+	{
+        if ( settings.data.locatorExtractUsingMP ) ui_extractLocatorsMPSelector.setCurrentIndex( 1 );
+        else ui_extractLocatorsMPSelector.setCurrentIndex( 0 );
+    }
+
     //=========== CONNECT EVENTS ===========
 
     ui_autorigButton.onClick = ui_autorigValidButton.onClick = ui_autorigButton_clicked;
@@ -1353,11 +1399,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
 
     if ( settings.data.uiMode > 0 )
     {
-        ui_IKOptionsValidButton.onClick = ui_IKButton.onClick = shared.createIK;
+        ui_IKOptionsValidButton.onClick = ui_IKButton.onClick = Duik.constraints.ik;
         ui_IKOptionsWindow.tieTo(ui_IKOptionsButton);
 
         ui_ikOptionsSelector.onChange = ui_ikOptionsSelector_changed;
-        if ( settings.data.uiMode > 0 ) ui_bezierIKButton.onClick = shared.createBezierIK;
+        if ( settings.data.uiMode > 0 ) ui_bezierIKButton.onClick = Duik.constraints.bezierIk;
         ui_fkButton.onClick = ui_fkButton_clicked;
     }
 
@@ -1403,18 +1449,11 @@ function ui_buildConstraints ( ui_constraintsGroup )
     ui_connectorPropertiesButton.onClick = ui_connectorPropertiesButton_clicked;
     ui_connectorOpacitiesButton.onClick = ui_connectorOpacitiesButton_clicked;
 
-    ui_bonesButton.addEventListener( "click", function( e )
-    {
-        var randomColor = e.altKey;
-        var tangents = !e.ctrlKey;
-        ui_bonesButton_clicked( randomColor, tangents );
-    }, true );
-    ui_bonesValidButton.addEventListener( "click", function( e )
-    {
-        var randomColor = e.altKey;
-        var tangents = !e.ctrlKey;
-        ui_bonesButton_clicked( randomColor, tangents );
-    }, true );
+    ui_bonesButton.onClick = ui_bonesValidButton.onClick = function () { ui_bonesButton_clicked( false, true ) };
+    ui_bonesButton.onAltClick = ui_bonesValidButton.onAltClick = function () { ui_bonesButton_clicked( true, true ) };
+    ui_bonesButton.onCtrlClick = ui_bonesValidButton.onCtrlClick = function () { ui_bonesButton_clicked( false, false ) };
+    ui_bonesButton.onCtrlAltClick = ui_bonesValidButton.onCtrlAltClick = function () { ui_bonesButton_clicked( true, false ) };
+
     if ( settings.data.uiMode > 0 ) ui_bonesOptionsButton.onClick = function()
     {
         setCurrentConstraintsPanel( 2 );
@@ -1447,6 +1486,7 @@ function ui_buildConstraints ( ui_constraintsGroup )
     };
 
     ui_parentButton.onClick = ui_parentButton_clicked;
+
     ui_parentCompButton.onClick = ui_parentCompButton_clicked;
     ui_parentCompCancelButton.onClick = function()
     {
@@ -1475,11 +1515,17 @@ function ui_buildConstraints ( ui_constraintsGroup )
         ui_etmButton.onClick = ui_etmButton_clicked;
 
         ui_autoParentButton.onClick = ui_autoParentButton_clicked;
+        ui_autoParentButton.onAltClick = ui_autoParentButton_altClicked;
 
-        ui_locatorButton.onClick = ui_locatorButton_clicked;
-        ui_extractLocatorsButton.onClick = ui_extractLocatorsButton_clicked;
         ui_lockButton.onClick = ui_lockButton_clicked;
         ui_separateDimensionsButton.onClick = ui_separateDimensionsButton_clicked;
+    }
+
+    if ( settings.data.uiMode > 1 )
+    {
+        ui_locatorButton.onClick = ui_locatorButton_clicked;
+        ui_extractLocatorsButton.onClick = ui_extractLocatorsValidButton.onClick = ui_extractLocatorsButton_clicked;
+        ui_extractLocatorsMPSelector.onChange = ui_extractLocatorsMPSelector_changed;
     }
 
     debugLog.stopTimer( "Constraints ready." );
