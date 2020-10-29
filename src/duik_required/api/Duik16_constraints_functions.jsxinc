@@ -27,6 +27,16 @@ Duik.constraints.autorig = function ( bakeStructures )
     var layers = DuAEF.DuAE.Comp.unselectLayers();
     if ( layers.length == 0 ) return;
 
+    //check if there are 3D Layers
+    for (var i = 0, n = layers.length; i < n; i++)
+    {
+        if (layers[i].threeDLayer)
+        {
+            alert(tr("Some of the selected layers are 3D, but the auto-rig can't rig 3D layers, sorry!"));
+            return;
+        }
+    }
+
     DuAEF.DuAE.App.beginUndoGroup( "Autorig" );
 
     DuAEF.DuAE.Project.setProgressMode( true );
@@ -42,6 +52,48 @@ Duik.constraints.autorig = function ( bakeStructures )
     DuAEF.DuAE.Project.setProgressMode( false );
 
     DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.constraints.functions.push( { name:"IK", fn:"Duik.constraints.ik()" } );
+/**
+ * Create IK using selected layers
+ */
+Duik.constraints.ik = function (  )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+	DuAEF.DuAE.App.beginUndoGroup( "IK" );
+
+	DuAEF.DuAE.Project.setProgressMode(true);
+
+	var ctrl = DuAEF.Duik.Rigging.ik(layers,null,false,!settings.data.ik3Layer);
+	if(ctrl.length > 1) ctrl = ctrl[1];
+	else ctrl = ctrl[0];
+	ctrl.layer.selected = true;
+
+	DuAEF.DuAE.Project.setProgressMode(false);
+
+	DuAEF.DuAE.App.endUndoGroup();
+}
+
+Duik.constraints.functions.push( { name:"Bézier IK", fn:"Duik.constraints.bezierIk()" } );
+/**
+ * Create Bézier IK using selected layers
+ */
+Duik.constraints.bezierIk = function (  )
+{
+    var layers = DuAEF.DuAE.Comp.unselectLayers();
+	if (layers.length == 0) return;
+	DuAEF.DuAE.App.beginUndoGroup( "Bézier IK" );
+
+	DuAEF.DuAE.Project.setProgressMode(true);
+
+	var ctrl = DuAEF.Duik.Rigging.ik(layers,undefined,true);
+	ctrl[1].layer.selected = true;
+
+	DuAEF.DuAE.Project.setProgressMode(false);
+
+	app.endUndoGroup();
 }
 
 Duik.constraints.functions.push( { name:"Connector", fn:"Duik.constraints.quickConnector()" } );
@@ -133,14 +185,17 @@ Duik.constraints.bones = function ( randomColor, tangents )
 }
 
 Duik.constraints.functions.push( { name:"Quick Parent", fn:"Duik.constraints.autoParent()" } );
+Duik.constraints.functions.push( { name:"Quick Parent Orphans", fn:"Duik.constraints.autoParent(true)" } );
 /**
- * Auto-Parent
+ * Auto-Parent. Parent selected layers to the last selected one.
+ * @param {boolean} [orphansOnly=false] - When true, parent only the orphans to the last selected layers
  */
-Duik.constraints.autoParent = function ( )
+Duik.constraints.autoParent = function ( orphansOnly )
 {
+    orphansOnly = def(orphansOnly, false);
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     DuAEF.DuAE.App.beginUndoGroup( "Auto-parent layers" );
-    DuAEF.DuAE.Layer.parent( layers );
+    DuAEF.DuAE.Layer.parent( layers, undefined, orphansOnly );
     DuAEF.DuAE.App.endUndoGroup();
 }
 
@@ -363,8 +418,9 @@ Duik.constraints.locator = function ( )
 Duik.constraints.functions.push( { name:"Extract Locators", fn:"Duik.constraints.extractLocators()" } );
 /**
  * Extract Locators
+ * @param {boolean} [useMasterProperties=true] - Wether to use master properties instead of expressions to extract the controllers. True by default if Ae >= 17.0
  */
-Duik.constraints.extractLocators = function ( )
+Duik.constraints.extractLocators = function ( useMasterProperties )
 {
     var layers = DuAEF.DuAE.Comp.getSelectedLayers();
     if ( layers.length == 0 ) return;
@@ -373,7 +429,7 @@ Duik.constraints.extractLocators = function ( )
 
     new Iterator( layers ).do( function( layer )
     {
-        DuAEF.Duik.Rigging.extractLocators( layer );
+        DuAEF.Duik.Rigging.extractLocators( layer, useMasterProperties );
     } );
 
     DuAEF.DuAE.App.endUndoGroup();
