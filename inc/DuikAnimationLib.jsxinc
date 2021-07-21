@@ -1,0 +1,1976 @@
+﻿/**
+	* Animation tools
+	* @namespace
+	* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Animation = {};
+
+/**
+	* Resets the position, rotation, and scale of the layer.\n
+	* If the layer has a parent, the position will be set to [0,0,0],
+	* Else it will be set to the composition center.
+	* @param {Layer} layer - The layer
+	* @return {AVLayer} The zero, a null
+	*/
+DuAEF.Duik.Animation.resetPRS = function (layer)
+{
+	var comp = layer.containingComp;
+	//is it 3D?
+	var threeD = layer.threeDLayer;
+	//has parent ?
+	var parent = layer.parent !== null;
+	if (threeD)
+	{
+		var positionValue = parent ? [0,0,0] : [comp.width / 2, comp.height / 2, 0];
+		if (layer.transform.position.dimensionsSeparated)
+		{
+			layer.transform.xPosition.setValue(positionValue[0]);
+			layer.transform.yPosition.setValue(positionValue[1]);
+			layer.transform.zPosition.setValue(positionValue[2]);
+		}
+		else 
+		{
+			layer.transform.position.setValue(positionValue);
+		}
+		layer.transform.scale.setValue([100,100,100]);
+		layer.transform.zRotation.setValue(0);
+		layer.transform.xRotation.setValue(0);
+		layer.transform.yRotation.setValue(0);
+		layer.transform.orientation.setValue([0,0,0]);
+	}
+	else
+	{
+		var positionValue = parent ? [0,0] : [comp.width / 2, comp.height / 2];
+		if (layer.transform.position.dimensionsSeparated)
+		{
+			layer.transform.xPosition.setValue(positionValue[0]);
+			layer.transform.yPosition.setValue(positionValue[1]);
+		}
+		else 
+		{
+			layer.transform.position.setValue(positionValue);
+		}
+		layer.transform.scale.setValue([100,100]);
+		layer.transform.rotation.setValue(0);
+	}
+}
+
+/**
+	* Automatically adjust the best bezier interpolations on the keyframes
+	* @param {Property|PropertyInfo} prop - The property containing the keyframes
+	* @param {boolean} [useExpression=true] - Use an expression instead of using the interpolation of the keyframes
+	* @param {boolean} [easeStart=true] - true to ease the first keyframe, false to set it to linear
+	* @param {boolean} [easeEnd=true] - true to ease the last keyframe, false to set it to linear
+	* @param {PropertyGroup} [effect=null] - A pre-existing kleaner effect to use, when useExpression is true
+	* @return {PropertyGroup|null} The effect which controls the expression when useExpression is true
+	* @todo implement a better multidimensionnal algo
+*/
+DuAEF.Duik.Animation.kleaner = function (prop,useExpression,easeStart,easeEnd,effect)
+{
+	useExpression = def(useExpression, true);
+	easeStart = def(easeStart, true);
+	easeEnd = def(easeEnd, true);
+	effect = def(effect, null);
+	var propInfo = new PropertyInfo(prop);
+	prop = propInfo.getProperty();
+	if (!propInfo.editable) return effect;
+	if (useExpression && !propInfo.riggable) useExpression = false;
+	if (prop.numKeys == 0 && !useExpression) return effect;
+
+	var keyframes = prop.selectedKeys;
+	if (keyframes.length == 0 && prop.numKeys > 0)
+	{
+		for (var i = 1, num = prop.numKeys; i <= num; i++)
+		{
+			keyframes.push(i);
+		}
+	}
+
+	//set all keys to linear if 1D
+	if ((propInfo.dimensions == 1 && useExpression) || !useExpression)
+	{
+		for (var k=0, num = keyframes.length; k < num ; k++)
+		{
+			var key = keyframes[k];
+			prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR);
+		}
+	}
+	
+	//smooth!
+	if (useExpression)
+	{
+		if (effect == null)
+		{
+			effect = DuAEF.Duik.PseudoEffects.KLEANER.apply(propInfo.layer);
+		}
+		else if ( DuAEF.DuAE.Property.getLayer(effect).index != propInfo.layer.index )
+		{
+			effect = DuAEF.Duik.PseudoEffects.KLEANER.apply(propInfo.layer);
+		}
+
+		var index = DuAEF.Duik.PseudoEffects.KLEANER.index;
+		prop = propInfo.getProperty();
+		prop.expression = [DuAEF.Duik.expressionIds.KLEANER,
+			'var fx = effect("' + effect.name + '");',
+			'//parameters',
+			'var doAnticipation = fx(' + index['Anticipation_Checkbox'] + ').value;',
+			'var doInterpolation = fx(' + index['Smart Interpolation_Checkbox'] + ').value;',
+			'var doFollowThrough = fx(' + index['Follow Through_Checkbox'] + ').value;',
+			'var damping = fx(' + index['Follow Through_Damping_Slider'] + ').value / 10;',
+			'var elasticity = fx(' + index['Follow Through_Elasticity_Slider'] + ').value / 10;',
+			'var bounce = fx(' + index['Follow Through_Bounce_Checkbox'] + ').value;',
+			'var anticipationDuration = fx(' + index['Anticipation_Duration (s)_Slider'] + ').value;',
+			'var anticipationQuantity = fx(' + index['Anticipation_Amplitude_Slider'] + ').value / 100;',
+			'var slowIn = fx(' + index['Interpolation_Slow In_Slider'] + ').value / 100;',
+			'var slowOut = fx(' + index['Interpolation_Slow Out_Slider'] + ').value / 100;',
+			'var spatialMode = fx(' + index['Spatial Options_Mode_Popup'] + ').value;',
+			'var spatialDoInterpolation = fx(' + index['Spatial Options_Smart Interpolation_Checkbox'] + ').value;',
+			'var moBlurPrecision = fx(' + index['Precision_Slider'] + ').value;',
+			'var elasticityRandom = fx(' + index['Follow Through_Elasticity random_Slider'] + ').value;',
+			'var dampingRandom = fx(' + index['Follow Through_Damping random_Slider'] + ').value;',
+			'var softBody = fx(' + index['Soft Body (simulation)_Soft Body_Checkbox'] + ').value;',
+			'var flexibility = fx(' + index['Soft Body (simulation)_Soft-Body Flexibility_Slider'] + ').value / 100;',
+			'var doOverlap = fx(' + index['Overlap (simulation)_Overlap_Checkbox'] + ').value;',
+			'var overlapDuration = fx(' + index['Overlap (simulation)_Delay (s)_Slider'] + ').value;',
+			'var overlapRandom = fx(' + index['Overlap (simulation)_Overlap random_Slider'] + ').value;',
+			'var threshold = 1 / moBlurPrecision / 1000;',
+			'//useful zero value',
+			'var zeroValue;',
+			'if (value instanceof Array) {',
+			'	if (value.length == 2) zeroValue = [0,0];',
+			'	else if (value.length == 3) zeroValue = [0,0,0];',
+			'	else if (value.length == 4) zeroValue = [0,0,0,0];',
+			'}',
+			'else zeroValue = 0;',
+			'',
+			'//adjust parameters',
+			'var isThisSpatial = isSpatial(thisProperty);',
+			'var isThisPosition = thisProperty === position;',
+			'var simulate = false;',
+			'if (isThisSpatial) {',
+			'	doInterpolation = doInterpolation && spatialDoInterpolation;',
+			'	if (isThisPosition && thisProperty.numKeys > 0) {',
+			'		doOverlap = false;',
+			'		simulate = false;',
+			'	} else {',
+			'		simulate = spatialMode == 2;',
+			'		doOverlap = overlapDuration != 0 && doOverlap && simulate;',
+			'	}',
+			'} else {',
+			'	doOverlap = false;',
+			'}',
+			'if (!doOverlap)',
+			'{',
+			'	overlapDuration = 0;',
+			'}',
+			'',
+			'//adjust elasticity based on flexibility',
+			'if (simulate && softBody && isThisSpatial && !isThisPosition && (doFollowThrough || doOverlap)) {',
+			'  ',
+			'	//get the distance from anchor ratio ',
+			'	var distanceRatio = length(valueAtTime(0), anchorPoint) / (thisLayer.width / 2);',
+			'	//adjust with flexibility',
+			'	distanceRatio = ( 1 + distanceRatio * flexibility ) / 2;',
+			'',
+			'	//elasticity',
+			'	if (doFollowThrough) {',
+			'	  elasticity = elasticity / distanceRatio;',
+			'	  damping = damping / distanceRatio;',
+			'	}',
+			'	if (doOverlap) {',
+			'	  overlapDuration = overlapDuration * distanceRatio;',
+			'	}',
+			'}',
+			'',
+			'// randomness',
+			'seedRandom(0, true);',
+			'if (doFollowThrough) {',
+			'  if (elasticityRandom > 0) elasticity = addNoise(elasticity, elasticityRandom);',
+			'  if (dampingRandom > 0) damping = addNoise(damping, dampingRandom);',
+			'}',
+			'if (doOverlap) {',
+			'  if (doOverlap && overlapRandom > 0) overlapDuration = addNoise(overlapDuration, overlapRandom);',
+			'}',
+			'',
+			'var result = value;',
+			DuAEF.DuExpression.get([
+				'isSpatial',
+				'addNoise',
+				'isAfterLastKey',
+				'isStill',
+				'bezierInterpolation',
+				'getPropWorldSpeed',
+				'getPrevKey',
+				'getNextKey',
+				'getPropWorldVelocity',
+				'getLayerWorldPos',
+				'getPropWorldValue']),
+			'function isKeyTop(k, axis) {',
+			'	var prevSpeed = velocityAtTime(k.time - threshold);',
+			'	var nextSpeed = velocityAtTime(k.time + threshold);',
+			'	if (value instanceof Array) {',
+			'		prevSpeed = prevSpeed[axis];',
+			'		nextSpeed = nextSpeed[axis];',
+			'	}',
+			'	if (Math.abs(prevSpeed) < 0.01 || Math.abs(nextSpeed) < 0.01) return true;',
+			'	return prevSpeed * nextSpeed < 0;',
+			'}',
+			'',
+			'function anticipate() {',
+			'	var anticipation = zeroValue;',
+			'',
+			'	if (isAfterLastKey()) return anticipation;',
+			'	if (numKeys < 2) return anticipation;',
+			'',
+			'	var nextKey = getNextKey(time);',
+			'	var aKey = nextKey;',
+			'	if (!isStill(aKey.time - 0.1, 0.1)) {',
+			'		aKey = getPrevKey(time);',
+			'		if (!isStill(aKey.time - 0.1, 0.1)) return anticipation;',
+			'	}',
+			'	if (aKey.index == numKeys) return anticipation;',
+			'',
+			'	var anticipationMiddle = aKey.time;',
+			'	var anticipationStart = anticipationMiddle - anticipationDuration;',
+			'	var anticipationEnd = key(aKey.index + 1).time;',
+			'	var startValue = anticipation;',
+			'	var midValue = (-valueAtTime(anticipationMiddle + anticipationDuration) + aKey.value) * anticipationQuantity;',
+			'	var endValue = anticipation;',
+			'',
+			'	if (time < anticipationStart) {',
+			'		return anticipation;',
+			'	} else if (time < anticipationMiddle) {',
+			'		if (value instanceof Array) {',
+			'			for (var i = 0; i < value.length; i++) {',
+			'				anticipation[i] = bezierInterpolation(time, anticipationStart, anticipationMiddle, startValue[i], midValue[i], [slowOut, 0, slowIn, 1]);',
+			'			}',
+			'			return anticipation;',
+			'		} else {',
+			'			return bezierInterpolation(time, anticipationStart, anticipationMiddle, startValue, midValue, [slowOut, 0, slowIn, 1]);',
+			'		}',
+			'	} else if (time <= anticipationEnd) {',
+			'		if (value instanceof Array) {',
+			'			for (var i = 0; i < value.length; i++) {',
+			'				anticipation[i] = bezierInterpolation(time, anticipationMiddle, anticipationEnd, midValue[i], endValue[i], [slowOut, 0, slowIn, 1]);',
+			'			}',
+			'			return anticipation;',
+			'		} else {',
+			'			return bezierInterpolation(time, anticipationMiddle, anticipationEnd, midValue, endValue, [slowOut, 0, slowIn, 1]);',
+			'		}',
+			'	} else {',
+			'		return anticipation;',
+			'	}',
+			'}',
+			'',
+			'function followThroughAtTime(t) {',
+			'	var fThrough = zeroValue;',
+			'',
+			'	//checks',
+			'	if (elasticity == 0) return fThrough;',
+			'	var propSpeed;',
+			'	if (!simulate) {',
+			'		if (numKeys < 2) return fThrough;',
+			'		if (nearestKey(t).index == 1) return fThrough;',
+			'		propSpeed = length(velocityAtTime(t));',
+			'		if (propSpeed >= threshold) return fThrough;',
+			'	} else {',
+			'		propSpeed = getPropWorldSpeed(t, thisProperty);',
+			'		if (propSpeed >= threshold) return fThrough;',
+			'	}',
+			'',
+			'	//check state and time',
+			'	var fThroughStart = 0;',
+			'	var fThroughTime = 0;',
+			'',
+			'	if (simulate) {',
+			'		var speedI = getPropWorldSpeed(t, thisProperty);',
+			'		var i = t;',
+			'		//search for the time when the layer last moved',
+			'		while (speedI < threshold && i > 0) {',
+			'			i = i - thisComp.frameDuration / moBlurPrecision;',
+			'			speedI = getPropWorldSpeed(i, thisProperty);',
+			'		}',
+			'		fThroughStart = i;',
+			'	} else {',
+			'		//follow through starts at previous key',
+			'		var fThroughKey = getPrevKey(t);',
+			'		fThroughStart = fThroughKey.time;',
+			'	}',
+			'',
+			'	if (fThroughStart == 0) return fThrough;',
+			'',
+			'	fThroughTime = t - fThroughStart;',
+			'',
+			'	//from velocity',
+			'	if (simulate) fThrough = getPropWorldVelocity(fThroughStart - thisComp.frameDuration, thisProperty ) / 2;',
+			'	else fThrough = velocityAtTime(fThroughStart - thisComp.frameDuration) / 2;',
+			'',
+			'	if (bounce) {',
+			'		var cycleDamp = Math.exp(fThroughTime * damping * .1);',
+			'		var damp = Math.exp(fThroughTime * damping) / (elasticity / 2);',
+			'		var cycleDuration = 1 / (elasticity * 2);',
+			'		//round to whole frames for better animation',
+			'		cycleDuration = Math.round(timeToFrames(cycleDuration));',
+			'		cycleDuration = framesToTime(cycleDuration);',
+			'		var midDuration = cycleDuration / 2;',
+			'		var maxValue = fThrough * midDuration;',
+			'		//check which cycle it is and cycvarime',
+			'		var cycvarime = fThroughTime;',
+			'		// the number of cycles where we "cheat" which are rounded to two frames',
+			'		var numEndCycles = 1;',
+			'		while (cycvarime > cycleDuration) {',
+			'			cycvarime = cycvarime - cycleDuration;',
+			'			cycleDuration = cycleDuration / cycleDamp;',
+			'			//round everything to whole frames for better animation',
+			'			cycleDuration = Math.round(timeToFrames(cycleDuration));',
+			'			//this is where we cheat to continue to bounce on cycles < 2 frames',
+			'			if (cycleDuration < 2) {',
+			'				cycleDuration = 2;',
+			'				numEndCycles++;',
+			'			}',
+			'			cycleDuration = framesToTime(cycleDuration);',
+			'			midDuration = cycleDuration / 2;',
+			'			maxValue = fThrough * midDuration / damp;',
+			'			if (numEndCycles > 100 / damping && maxValue < threshold) return zeroValue;',
+			'		}',
+			'',
+			'		if (cycvarime < midDuration) fThrough = bezierInterpolation(cycvarime, 0, midDuration, 0, maxValue, [0, .1, slowIn, 1]);',
+			'		else fThrough = bezierInterpolation(cycvarime, midDuration, cycleDuration, maxValue, 0, [1 - slowIn, 0, 1, .9]);',
+			'	} else {',
+			'		// damping ratio',
+			'		var damp = Math.exp(fThroughTime * damping);',
+			'		// sinus evolution ',
+			'		var sinus = elasticity * fThroughTime * 2 * Math.PI;',
+			'		//sinus',
+			'		sinus = Math.sin(sinus);',
+			'		// elasticity',
+			'		sinus = .3 / elasticity * sinus;',
+			'		// damping',
+			'		sinus = sinus / damp;',
+			'		if (Math.abs(sinus) < threshold / 100) return 0;',
+			'		// result',
+			'		fThrough = fThrough * sinus;',
+			'',
+			'		if (threshold > 0) {',
+			'			fThrough = fThrough * (1 - propSpeed / threshold);',
+			'		}',
+			'	}',
+			'',
+			'	if (bounce) {',
+			'		var prevValue = valueAtTime(fThroughStart - thisComp.frameDuration);',
+			'		var startValue = valueAtTime(fThroughStart);',
+			'		if (value instanceof Array) {',
+			'			for (var i = 0; i < prevValue.length; i++) {',
+			'				if (prevValue[i] > startValue[i]) fThrough[i] = Math.abs(fThrough[i]);',
+			'				if (prevValue[i] < startValue[i]) fThrough[i] = -Math.abs(fThrough[i]);',
+			'			}',
+			'		} else {',
+			'			if (prevValue > startValue) fThrough = Math.abs(fThrough);',
+			'			if (prevValue < startValue) fThrough = -Math.abs(fThrough);',
+			'		}',
+			'	}',
+			'',
+			'	if (simulate) {',
+			'		if (!isThisPosition) {',
+			'			fThrough = fThrough + getLayerWorldPos(time, thisLayer);',
+			'			fThrough = thisLayer.fromWorld(fThrough) - thisLayer.anchorPoint;',
+			'		} else if (thisLayer.hasParent) {',
+			'			fThrough = fThrough + getLayerWorldPos(time, thisLayer.parent);',
+			'			fThrough = thisLayer.parent.fromWorld(fThrough) - thisLayer.parent.anchorPoint;',
+			'		}',
+			'	}',
+			'',
+			'	return fThrough;',
+			'}',
+			'',
+			'function followThrough() {',
+			'	var propSpeed = length(velocity);',
+			'	//if (simulate) propSpeed = getPropWorldSpeed(time - overlapDuration, thisProperty);',
+			'',
+			'	if (propSpeed < threshold) return followThroughAtTime(time - overlapDuration);',
+			'',
+			'	//need to get back in time get the last follow-through value to fade it',
+			'	var fThrough = zeroValue;',
+			'',
+			'	var t = time;',
+			'	while (t > 0) {',
+			'		t = t - thisComp.frameDuration;',
+			'		if (simulate) propSpeed = getPropWorldSpeed(t - overlapDuration, thisProperty);',
+			'		else propSpeed = length(velocityAtTime(t));',
+			'		if (propSpeed < threshold) {',
+			'			fThrough = followThroughAtTime(t - overlapDuration);',
+			'			break;',
+			'		}',
+			'	}',
+			'',
+			'	return linear(time, t, t + anticipationDuration * 2, fThrough, zeroValue);',
+			'}',
+			'',
+			'function smartSmooth(axis) {',
+			'	var startKey = nearestKey(time);',
+			'	var endKey = startKey;',
+			'	if (time == startKey.time) return 0;',
+			'	if (time < startKey.time && startKey.index == 1) return 0;',
+			'	if (time > startKey.time && startKey.index == numKeys) return 0;',
+			'	if (time < startKey.time) startKey = key(startKey.index - 1);',
+			'	if (time > startKey.time) endKey = key(startKey.index + 1);',
+			'	var sI = .66;',
+			'	var sO = .33;',
+			'	var sIV = 1;',
+			'	var sOV = 0;',
+			'	var sVal = startKey.value;',
+			'	var eVal = endKey.value;',
+			'	if (value instanceof Array) {',
+			'		sVal = sVal[axis];',
+			'		eVal = eVal[axis];',
+			'	}',
+			'	var sTime = startKey.time;',
+			'	var eTime = endKey.time;',
+			'	if (isKeyTop(startKey, axis)) sO = slowOut;',
+			'	else {',
+			'		var prevKey = key(startKey.index - 1);',
+			'		var pVal = prevKey.value;',
+			'		if (value instanceof Array) pVal = pVal[axis];',
+			'		sOV = (sVal - pVal) / (eVal - pVal);',
+			'	}',
+			'	if (isKeyTop(endKey, axis)) {',
+			'		sI = slowIn;',
+			'		if (endKey.index != numKeys) {',
+			'			var nextKey = key(endKey.index + 1);',
+			'			var nVal = nextKey.value;',
+			'			if (value instanceof Array) nVal = nVal[axis];',
+			'			if (Math.abs(nVal - eVal) < 0.01 && doFollowThrough) sI = 1;',
+			'		}',
+			'	} else {',
+			'		var nextKey = key(endKey.index + 1);',
+			'		var nVal = nextKey.value;',
+			'		if (value instanceof Array) nVal = nVal[axis];',
+			'		sIV = (eVal - sVal) / (nVal - sVal);',
+			'	}',
+			'	if (endKey.index == numKeys && doFollowThrough) {',
+			'		sI = 1;',
+			'	}',
+			'',
+			'	var val = value;',
+			'	if (value instanceof Array) val = val[axis];',
+			'	return bezierInterpolation(time, sTime, eTime, sVal, eVal, [sO, sOV, sI, sIV]) - val;',
+			'}',
+			'',
+			'function overlap() {',
+			'	var ol = zeroValue;',
+			'	if (isThisPosition && !hasParent) return zeroValue;',
+			'	ol = getPropWorldValue(time - overlapDuration, thisProperty) - getPropWorldValue(time, thisProperty);',
+			'	var motionRatio = length(zeroValue, ol) / thisLayer.width / 2;',
+			'	if (isThisPosition)',
+			'	{',
+			'	var originalDistance = length(valueAtTime(0));',
+			'	motionRatio = length(zeroValue, ol) / thisComp.width;',
+			'	}',
+			'	//the new world position',
+			'	ol += getPropWorldValue(time, thisProperty);',
+			'	//pull towards the previous anchor point position',
+			'	ol += (getPropWorldValue(time - overlapDuration, thisLayer.anchorPoint) - ol) * motionRatio * flexibility;',
+			'	//the new local position',
+			'	ol = thisLayer.fromWorld(ol);',
+			'	//the local motion vector',
+			'	if (!isThisPosition) ol = ol - value;',
+			'	else 	//add back the prev parent position',
+			'	{',
+			'	ol = linear(flexibility, 0, 100, ol/2, 0);',
+			'	var prevParentWorldPos = getLayerWorldPos(time - overlapDuration, parent);',
+			'	ol += thisLayer.fromWorld(prevParentWorldPos) * motionRatio * flexibility * 5;',
+			'	}',
+			'	return ol;',
+			'}',
+			'',
+			'var okToGo = false;',
+			'if (simulate && fx.enabled) okToGo = true;',
+			'else if (numKeys > 1 && fx.enabled) okToGo = true;',
+			'',
+			'if (okToGo) {',
+			'	var smartSmoothResult = zeroValue;',
+			'	if (doInterpolation)',
+			'	{',
+			'	  if (value instanceof Array) {',
+			'	    if (value.length == 2) smartSmoothResult = [smartSmooth(0), smartSmooth(1)];',
+			'	    else if (value.length == 3) smartSmoothResult = [smartSmooth(0), smartSmooth(1), smartSmooth(2)];',
+			'	    else if (value.length == 4) smartSmoothResult = [smartSmooth(0), smartSmooth(1), smartSmooth(2), smartSmooth(3)];',
+			'	  }',
+			'	  else {',
+			'	    smartSmoothResult = smartSmooth(0);',
+			'	  }',
+			'	}',
+			'',
+			'	if (doAnticipation) result += anticipate();',
+			'	result = result + smartSmoothResult;',
+			'	if (doFollowThrough) result += followThrough();',
+			'	if (doOverlap) result += overlap();',
+			'}',
+			'result;'
+			].join('\n');
+
+		//defaults
+		effect( index['Follow Through_Elasticity_Slider'] ).setValue(10);
+		effect( index['Follow Through_Damping_Slider'] ).setValue(50);
+		effect( index['Follow Through_Elasticity random_Slider'] ).setValue(30);
+		effect( index['Follow Through_Damping random_Slider'] ).setValue(30);
+		effect( index['Spatial Options_Mode_Popup'] ).setValue(2);
+		effect( index['Soft Body (simulation)_Soft-Body Flexibility_Slider'] ).setValue(100);
+
+	}
+	else
+	{
+		for (var k=0, num = keyframes.length; k < num ; k++)
+		{
+			var key = keyframes[k];
+			var easeIn = [];
+			var easeOut = [];
+			//Compute base velocity
+			for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+			{
+				var speedIn = prop.keyInTemporalEase(key)[l].speed;
+				var speedOut = prop.keyOutTemporalEase(key)[l].speed;
+				var speed = 0;
+
+				if ( Math.abs(speedIn) <= Math.abs(speedOut) ) speed = speedIn;
+				else speed = speedOut;
+				if (( speedIn > 0 && speedOut < 0 ) || ( speedIn < 0 && speedOut > 0 )) speed = 0;
+				if (key == prop.numKeys) speed = 0;
+				if (key == 1) speed = 0;
+
+				easeIn.push(new KeyframeEase(speed,33));
+				easeOut.push(new KeyframeEase(speed, 33));
+			}
+			prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+
+			//depending on options, remove ease on first and last keyframes
+			if (key == prop.numKeys && !easeEnd)
+			{
+				prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR);
+				if (prop.isSpatial) prop.setRovingAtKey(key,false);
+			}
+			if (key == 1 && !easeStart)
+			{
+				prop.setInterpolationTypeAtKey(key,KeyframeInterpolationType.LINEAR);
+				if (prop.isSpatial) prop.setRovingAtKey(key,false);
+			}
+		}
+
+		//Adjust velocities
+		for (var k=0, num = keyframes.length; k < num ; k++)
+		{
+			var key = keyframes[k];
+			var easeIn = [];
+			var easeOut = [];
+			if (key < prop.numKeys && key > 1)
+			{
+				for (var l = 0;l<prop.keyInTemporalEase(key).length;l++)
+				{
+
+					var nextSpeed = prop.keyInTemporalEase(key+1)[l].speed;
+					var speed = prop.keyOutTemporalEase(key)[l].speed;
+					var defaultSpeed = ( prop.valueAtTime(prop.keyTime(key+1),true)-prop.valueAtTime(prop.keyTime(key),true) ) / (prop.keyTime(key+1) - prop.keyTime(key));
+
+					var nextAbsSpeed = Math.abs(nextSpeed);
+					var absSpeed = Math.abs(speed);
+
+					var nextDif = nextSpeed - defaultSpeed;
+					var dif = speed - defaultSpeed;
+
+					if (speed != 0)
+					{
+						if (nextAbsSpeed < absSpeed)
+						{
+							var fix = (1-nextAbsSpeed/absSpeed)*absSpeed;
+						}
+						else if (nextAbsSpeed != 0)
+						{
+							var fix = (1-absSpeed/nextAbsSpeed)*absSpeed;
+						}
+
+						if (-nextDif > dif) speed += fix;
+						else speed -= fix;
+
+					}
+					easeIn.push(new KeyframeEase(speed,33));
+					easeOut.push(new KeyframeEase(speed, 33));
+				}
+				prop.setTemporalEaseAtKey(key,easeIn,easeOut);
+			}
+		}
+	}
+	
+	return effect;
+}
+
+/**
+	* Creates a motion trail for the layer
+	* @param {CompItem} [comp] - The comp where to create the trails, can be omitted if you provide a layer
+	* @param {Layer} [layer] - The layer source of the motion. If not provided, will just create an empty motion trail control
+	* @param {ShapeLayer|null} [trailLayer] - An existing shape layer containing the trails
+	* @param {float[]|null} [color=DuColor.randomFloatRGBA()] - A color for the motion trail. If not provided, random
+	* @return {ShapeLayer} The layer containing the motion trail created
+*/
+DuAEF.Duik.Animation.motionTrail = function (comp, layer , trailLayer, color)
+{
+	if (typeof comp === 'undefined' && typeof layer === 'undefined') return;
+	if (typeof layer !== 'undefined') comp = def (comp, layer.containingComp)
+	color = def (color, DuColor.randomFloatRGBA() );
+
+	//create layer
+	if (typeof trailLayer === 'undefined' || trailLayer == null)
+	{
+		trailLayer = comp.layers.addShape();
+		DuAEF.Duik.setDuikMarker(trailLayer,"Motion Trail",DuAEF.Duik.LayerTypes.MOTION_TRAIL);
+		trailLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName('Motion Trails',comp);
+	}
+
+	//Effect
+	var effectName = 'Motion trail';
+	if (typeof layer !== 'undefined') effectName += ' | ' + layer.name
+	var effect = DuAEF.Duik.PseudoEffects.MOTION_TRAIL.apply( trailLayer, effectName );
+	var index = DuAEF.Duik.PseudoEffects.MOTION_TRAIL.index;
+
+	//create shape
+	var trailGroup = trailLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+	trailGroup.name = effect.name;
+	var trailPath = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group");
+	trailPath = trailPath.property("ADBE Vector Shape");
+	trailPath.expression = [ DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'//parameters',
+		'var trailLayer = getEffectLayer( fx, ' + index['Motion source_Layer'] + ' );',
+		'var inFrame = fx(' + index['Start (frames)_Slider'] + ').value;',
+		'var outFrame = fx(' + index['End (frames)_Slider'] + ').value;',
+		'var method = fx(' + index['Sampling_Method_Popup'] + ').value;',
+		'var samples = fx(' + index['Sampling_Samples_Slider'] + ').value;',
+		'var trailStrokeWidth = fx(' + index['Basic Parameters_Width_Slider'] + ').value;',
+		'var useTaper = fx(' + index['Advanced Parameters_Taper_Checkbox'] + ').value;',
+		'var useAutoWidth = fx(' + index['Advanced Parameters_Auto-width_Checkbox'] + ').value;',
+		'var pathOffset = fx(' + index['Basic Parameters_Path offset_Slider'] + ').value;',
+		'var advancedMode = fx(' + index['Advanced Parameters_Advanced parameters_Checkbox'] + ').value;',
+		'var taperEaseStart = fx(' + index['Taper Parameters_Ease Start_Slider'] + ').value;',
+		'var taperSmoothness = fx(' + index['Taper Parameters_Smoothness_Slider'] + ').value;',
+		'var taperEaseEnd = fx(' + index['Taper Parameters_Ease End_Slider'] + ').value;',
+		DuAEF.DuExpression.get(['bezierInterpolation','getEffectLayer','getCompScale']),
+		'function getStrokeWidth( t, l, w, useTaper, useAutoWidth, sTime, eTime ) {',
+		'	if (typeof w === "undefined") w = 2;',
+		'	if (typeof useTaper === "undefined") useTaper = false;',
+		'	if (typeof useAutoWidth === "undefined") useAutoWidth = false;',
+		'	',
+		'	var result = w;',
+		'	',
+		'	if (useTaper) {',
+		'		var easeEnd = [taperSmoothness, 0, 1 - taperEaseEnd, 1];',
+		'		if (taperEaseEnd < 0) easeEnd = [taperSmoothness, 0, 1, 1 + taperEaseEnd];',
+		'		var easeStart = [taperEaseStart, 0, 1-taperSmoothness, 1]',
+		'		if (taperEaseStart < 0) easeStart = [0, -taperEaseStart, 1-taperSmoothness, 1];',
+		'		',
+		'		if (t < time) result = bezierInterpolation(t, sTime, time, 0, w, easeStart);',
+		'		else result = bezierInterpolation(t, time, eTime, w, 0,  easeEnd);',
+		'	}',
+		'	if (useAutoWidth) {',
+		'		var ratio = getCompScale(l, t);',
+		'		result = result * ratio;',
+		'	}',
+		'	return result;',
+		'}',
+		'',
+		'if ( trailLayer != null && fx.enabled ) {',
+		'	',
+		'	//adjust parameters',
+		'	taperEaseStart = taperEaseStart / 100;',
+		'	taperSmoothness = taperSmoothness / 100;',
+		'	taperEaseEnd = taperEaseEnd / 100;',
+		'	',
+		'	//will store the path points and the values for the taper',
+		'    var trailPoints = [];',
+		'	var taperValues = [];',
+		'	',
+		'	//compute time range',
+		'    var currentFrame = timeToFrames( time );',
+		'    if ( inFrame > outFrame ) inFrame = -inFrame;',
+		'    else if ( inFrame == outFrame ) inFrame = -1;',
+		'    var autoSampleLimit = 1 / ( samples * 5) ;',
+		'	var startFrame = currentFrame + inFrame;',
+		'	var endFrame = currentFrame + outFrame;',
+		'	var sTime = framesToTime(startFrame);',
+		'	var eTime = framesToTime(endFrame);',
+		'		',
+		'    for ( var i = endFrame; i >= startFrame; i-- ) {',
+		'        var t = framesToTime( i );',
+		'		var pT = framesToTime( i-1 );',
+		'		var nT = framesToTime( i+1 );',
+		'        var pos = trailLayer.toComp( trailLayer.anchorPoint, t );',
+		'		if (pos.length == 3) pos.pop();',
+		'		var prevPos = trailLayer.toComp( trailLayer.anchorPoint, pT );',
+		'		if (prevPos.length == 3) prevPos.pop();',
+		'		var nextPos = trailLayer.toComp( trailLayer.anchorPoint, nT );',
+		'		if (nextPos.length == 3) nextPos.pop();',
+		'		',
+		'		if (pos == prevPos) continue;',
+		'		',
+		'        var subSamples = 0;',
+		'		',
+		'		//compute samples',
+		'        if ( method == 2 ) {',
+		'			try {',
+		'				var vec = normalize( nextPos - pos );',
+		'				var prevVec =  normalize( pos - prevPos );',
+		'				var step = length( prevVec, vec );',
+		'				var stepRatio = step / autoSampleLimit;',
+		'				if ( stepRatio > 1 ) subSamples = Math.floor( stepRatio );',
+		'				else subSamples = 1;',
+		'			}',
+		'			catch (e) {',
+		'				subSamples = 1;',
+		'			}',
+		'        } else if ( method == 3 ) subSamples = samples;',
+		'		',
+		'		//build path and store taper values',
+		'		if ( method == 1 ) {',
+		'			pos = pos - position;',
+		'			trailPoints.push( pos );',
+		'			if (advancedMode) taperValues.push( getStrokeWidth( t, trailLayer, trailStrokeWidth, useTaper, useAutoWidth, sTime, eTime ) );',
+		'		}',
+		'        else {',
+		'            t = t + thisComp.frameDuration;',
+		'            for ( var j = 0; j < subSamples; j++ ) {',
+		'                t = t - thisComp.frameDuration / subSamples;',
+		'				if (t > eTime) continue;',
+		'                var subPos = trailLayer.toComp( trailLayer.anchorPoint, t )',
+		'				if (subPos.length == 3) subPos.pop();',
+		'                subPos = subPos - position;',
+		'                trailPoints.push( subPos );',
+		'				if (advancedMode) taperValues.push( getStrokeWidth( t, trailLayer, trailStrokeWidth, useTaper, useAutoWidth, sTime, eTime ) );',
+		'            }',
+		'        }',
+		'    }',
+		'	//offset',
+		'	if (trailPoints.length > 1 ) {',
+		'		//compute offset',
+		'		var rightSidePoints = [];',
+		'		var leftSidePoints = [];',
+		'		for (var i = 1, num = trailPoints.length; i < num; i++)',
+		'		{',
+		'			var w = [0,0];',
+		'			var o = [0,0];',
+		'			',
+		'			var vec = normalize( trailPoints[i-1] - trailPoints[i] );',
+		'			var normal = [ -vec[1], vec[0] ];',
+		'			',
+		'			//width & taper',
+		'			if ( advancedMode )',
+		'			{',
+		'				try { w = normal * taperValues[i-1] / 2; }',
+		'				catch (e) { }',
+		'			}',
+		'			',
+		'			//offset',
+		'			try { o = normal * pathOffset; }',
+		'			catch (e) { }',
+		'		',
+		'			if ( advancedMode )',
+		'			{',
+		'				rightSidePoints[i-1] = trailPoints[i-1] + w + o;',
+		'				leftSidePoints[i-1] = trailPoints[i-1] - w + o;',
+		'			}',
+		'			else',
+		'			{',
+		'				trailPoints[i-1] = trailPoints[i-1] + o;',
+		'			}',
+		'		}',
+		'		if ( advancedMode ) trailPoints = rightSidePoints.concat( leftSidePoints.reverse() );',
+		'		else trailPoints.pop();',
+		'	}',
+		'    if (trailPoints.length > 1) createPath( trailPoints, [], [], advancedMode );',
+		'	else value;',
+		'}',
+		'else value;',
+		''
+	].join('\n');
+	var trailStroke = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Stroke");
+	trailStroke('ADBE Vector Stroke Color').expression = [DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'fx(' + index['Basic Parameters_Color_Color'] + ');'
+		].join('\n');
+	trailStroke('ADBE Vector Stroke Opacity').expression = [DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'var trailOpacity = fx(' + index['Basic Parameters_Opacity_Slider'] + ').value;',
+		'var useAdvanced = fx(' + index['Advanced Parameters_Advanced parameters_Checkbox'] + ').value;',
+		'if ( useAdvanced ) 0;',
+		'else trailOpacity;'
+		].join('\n');
+	trailStroke('ADBE Vector Stroke Width').expression = [DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'fx(' + index['Basic Parameters_Width_Slider'] + ');'
+	].join('\n');
+	var trailFill = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Fill");
+	trailFill('ADBE Vector Fill Color').expression = [DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'fx(' + index['Basic Parameters_Color_Color'] + ');'
+		].join('\n');
+	trailFill('ADBE Vector Fill Opacity').expression = [DuAEF.Duik.expressionIds.MOTION_TRAIL,
+		'var fx = effect( "' + effect.name + '" );',
+		'var trailOpacity = fx(' + index['Basic Parameters_Opacity_Slider'] + ').value;',
+		'var useAdvanced = fx(' + index['Advanced Parameters_Advanced parameters_Checkbox'] + ').value;',
+		'if ( useAdvanced ) trailOpacity;',
+		'else 0;'
+	].join('\n');
+
+	//set layer
+	if (typeof layer !== 'undefined') effect( index['Motion source_Layer'] ).setValue(layer.index);
+	//set color
+	effect( index['Basic Parameters_Color_Color'] ).setValue(color);
+
+	return trailLayer;
+}
+
+/**
+	* Adds animation exposure controls
+	* @param {CompItem} comp - The comp where to create the X-Sheet
+	* @param {Property|PropertyInfo} [prop] - The property controlled. If not provided, will add an X-Sheet adjustment layer in the comp.
+	* @param {PropertyGroup|null} [effect] - an X-Sheet effect already created to use as a control for the prop
+	* @return {PropertyGroup} The effect used to control
+*/
+DuAEF.Duik.Animation.xSheet = function (comp,prop,effect)
+{
+	var createLayer = prop == undefined;
+	if (effect == undefined) effect = null;
+	if (!createLayer)
+	{
+		if (!(prop instanceof PropertyInfo)) prop = new PropertyInfo(prop);
+		if (!prop.riggable) return effect;
+
+		var layer = prop.layer;
+		comp = layer.containingComp;
+
+		//add effect
+		if (effect == null) effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,prop.getProperty().name + " X-Sheet");
+		var effectLink = "var fx = " + DuAEF.DuAE.Property.getExpressionLink(effect,true);
+		prop.getProperty().expression = '//Duik.XSheet\n' + effectLink + '\n' +
+					'var mode = fx(7);\n' +
+					'var frameDuration = fx(14).value;\n' +
+					'var xSheet = fx(19);\n' +
+					'var result = value;\n' +
+					'function getValAtKey(prop)\n' +
+					'{\n' +
+					'if (prop.numKeys > 0)\n' +
+					'{\n' +
+					'var k = prop.nearestKey(time);\n' +
+					'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+					'return valueAtTime(k.time);\n' +
+					'}\n' +
+					'else return value;\n' +
+					'}\n' +
+					'if (mode == 1)\n' +
+					'{\n' +
+					'frameDuration = Math.round(frameDuration);\n' +
+					'timef = timeToFrames(time);\n' +
+					'result = valueAtTime(framesToTime( timef - timef%frameDuration ))\n' +
+					'}\n' +
+					'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+					'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+					'else result = getValAtKey(thisComp.marker);\n' +
+					'result;';
+	}
+	else
+	{
+		if (comp == undefined) return effect;
+		var newName = DuAEF.DuAE.Comp.newUniqueLayerName("X-Sheet",comp);
+		var layer = DuAEF.DuAE.Comp.addAdjustmentLayer(comp);
+		layer.name = newName;
+		DuAEF.Duik.setDuikMarker(layer,"X-Sheet",DuAEF.Duik.LayerTypes.X_SHEET);
+
+		//add Effects
+		effect = DuAEF.DuAE.Layer.addPseudoEffect(layer,DuAEF.Duik.PseudoEffects.X_SHEET,DuAEF.Duik.PseudoEffectsMatchNames.X_SHEET,"X-Sheet");
+
+		var timeWarp = layer('ADBE Effect Parade').addProperty('ADBE Timewarp');
+		timeWarp(1).setValue(1);
+		timeWarp(2).setValue(2);
+
+		timeWarp(4).expression = '//Duik.XSheet\n' +
+										'var fx = effect("X-Sheet")\n' +
+										'var mode = fx(7);\n' +
+										'var frameDuration = fx(14).value;\n' +
+										'var xSheet = fx(19);\n' +
+										'var result = timeToFrames(time);\n' +
+										'function getValAtKey(prop)\n' +
+										'{\n' +
+										'if (prop.numKeys > 0)\n' +
+										'{\n' +
+										'var k = prop.nearestKey(time);\n' +
+										'if (k.time > time && k.index > 1) k = prop.key(k.index-1);\n' +
+										'return timeToFrames(k.time);\n' +
+										'}\n' +
+										'else return timeToFrames(time);\n' +
+										'}\n' +
+										'if (mode == 1)\n' +
+										'{\n' +
+										'frameDuration = Math.round(frameDuration);\n' +
+										'timef = timeToFrames(time);\n' +
+										'result = timef - timef%frameDuration;\n' +
+										'}\n' +
+										'else if (mode == 2) result = getValAtKey(xSheet);\n' +
+										'else if (mode == 3) result = getValAtKey(thisLayer.marker);\n' +
+										'else result = getValAtKey(thisComp.marker);\n' +
+										'result;\n';
+	}
+
+	return effect;
+}
+
+/**
+	* Activate the time remapping on the layers, adding some useful controls or expressions
+	* @param {Layer[]|LayerCollection} layers - The layers
+	* @param {DuAEF.DuAE.LoopTypes} [loopInType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopIn
+	* @param {DuAEF.DuAE.LoopTypes} [loopOutType=DuAEF.DuAE.LoopTypes.HOLD] - The type of loopOut
+*/
+DuAEF.Duik.Animation.timeRemap = function (layers, loopInType, loopOutType)
+{
+	if (typeof layers === 'undefined') return;
+	if (typeof loopInType === 'undefined') loopInType = DuAEF.DuAE.LoopTypes.HOLD;
+	if (typeof loopInType === 'undefined') loopOutType = DuAEF.DuAE.LoopTypes.HOLD;
+
+	if (layers.length == 0 ) return;
+	var it = new DuList(layers);
+	while (!it.atEnd)
+	{
+		it.next();
+		var layer = layers[it.current];
+		if (!layer.canSetTimeRemapEnabled) continue;
+
+		var comp = layer.containingComp;
+		var lastValueTime = layer.outPoint - comp.frameDuration;
+
+		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
+
+		if (layer.inPoint < lastValueTime)
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
+			//layer.timeRemap.setValueAtTime(lastValueTime + comp.frameDuration, layer.timeRemap.valueAtTime(layer.inPoint, true));
+			if ( layer.inPoint > layer.timeRemap.keyTime(1))
+			{
+				layer.timeRemap.setValueAtTime(layer.inPoint, layer.timeRemap.valueAtTime(layer.inPoint, true));
+				layer.timeRemap.removeKey(1);
+			}
+		}
+		else
+		{
+			layer.timeRemap.removeKey(2);
+		}
+		
+
+		if (loopInType != DuAEF.DuAE.LoopTypes.NONE) layer.inPoint = 0;
+		if (loopOutType != DuAEF.DuAE.LoopTypes.NONE) layer.outPoint = comp.duration;
+
+		DuAEF.Duik.Automation.loop(layer.timeRemap, undefined, loopInType, loopOutType);
+	}
+}
+
+/**
+	* Snaps the IK position to the FK rotation values
+	* @param {Controller|Layer} controller - The IK Controller
+*/
+DuAEF.Duik.Animation.ik2fk = function (controller)
+{
+	if (controller instanceof Controller) controller = controller.layer;
+	var comp = controller.containingComp;
+
+	var ikType = 2;
+	var pseudoEffect = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+	var ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
+	if (!ikEffect)
+	{
+		pseudoEffect = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+		ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
+		ikType = 3;
+	}
+
+	if (!ikEffect) return;
+
+	//if controller is linked, get data in the parent
+	var goalWorldPosition, goal;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
+	{
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		// Find precomp layer
+		var precompLayer;
+		for (var i = controller.index+1, n = comp.numLayers; i <= n; i++)
+		{
+			var l = comp.layer(i);
+			if (l.source && l.source.id == preComp.id)
+			{
+				precompLayer = l;
+				break;
+			}
+		}
+		if (!precompLayer)
+		{
+			for (var i = 1, n = controller.index; i < n; i++)
+			{
+				var l = comp.layer(i);
+				if (l.source.id == preComp.id)
+				{
+					precompLayer = l;
+					break;
+				}
+			}
+		}
+
+		goal = preIkEffect(preIKPseudo.goalLayer).value;
+		if (goal > 0) goal = preComp.layer(goal);
+		if (precompLayer) goalWorldPosition = DuAEF.DuAE.Layer.getWorldPos(precompLayer, preIkEffect(preIKPseudo.goalWorldPositionPoint).value );
+		else goalWorldPosition = preIkEffect(preIKPseudo.goalWorldPositionPoint).value;
+	}
+	else
+	{
+		goal = ikEffect(pseudoEffect.goalLayer).value;
+		if (goal > 0) goal = comp.layer(goal);
+		goalWorldPosition = ikEffect(pseudoEffect.goalWorldPositionPoint).value;
+	}
+
+
+	//deactivate IK
+	var active = ikEffect(pseudoEffect.ikCheckbox).value;
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
+
+	var parent = controller.parent;
+	controller.parent = null;
+	//position
+	controller.transform.position.setValueAtTime(comp.time,goalWorldPosition);
+	controller.parent = parent;
+
+	//look for a goal and adjust
+	if (goal)
+	{
+		var prevRot = goal.transform.rotation.value;
+		//Activate to adjust goal
+		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
+
+		controller.transform.rotation.setValueAtTime(comp.time,0);
+		//get difference
+		var newRot = prevRot - goal.transform.rotation.value;
+		controller.transform.rotation.setValueAtTime(comp.time,newRot);
+	}
+
+	//check if there is a foot roll
+	var footRollEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.FOOT_ROLL.matchName);
+	if (footRollEffect)
+	{
+		//set it to 0
+		footRollEffect(DuAEF.Duik.PseudoEffects.FOOT_ROLL.footRollAngle).setValueAtTime(comp.time, - footRollEffect(DuAEF.Duik.PseudoEffects.FOOT_ROLL.toesAngle).value);
+	}
+
+	//restore activation
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,active);
+}
+
+/**
+	* Snaps the FK rotation values to the IK position
+	* @param {Controller|Layer} controller - The IK Controller
+*/
+DuAEF.Duik.Animation.fk2ik = function (controller)
+{
+	if (controller instanceof Controller) controller = controller.layer;
+	var comp = controller.containingComp;
+
+	var ikType = 2;
+	var pseudoEffect = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+	var ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
+	if (!ikEffect)
+	{
+		pseudoEffect = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+		ikEffect = controller.property('ADBE Effect Parade').property(pseudoEffect.matchName);
+		ikType = 3;
+	}
+
+	if (!ikEffect) return;
+
+	//activate IK
+	var active = ikEffect(pseudoEffect.ikCheckbox).value;
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,1);
+
+	//get layers if this is a linked controller
+	var layer1, layer2, layer3, goal;
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	var previousPosition, previousRotation;
+	var restoreTransform = false;
+	if (params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP])
+	{
+		var preComp = DuAEF.DuAE.Project.getItemById(params[DuAEF.Duik.MarkerParameters.LINKEDTOCOMP]);
+		if (!preComp) return;
+		if (!(preComp instanceof CompItem)) return;
+		var preCtrl = preComp.layer(params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]);
+		var preIkEffect, preIKPseudo;
+		if (ikType == 2)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.TWOLAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		else if (ikType == 3)
+		{
+			preIKPseudo = DuAEF.Duik.PseudoEffects.THREELAYER_IK;
+			preIkEffect = preCtrl.effect(preIKPseudo.matchName);
+		}
+		if (!preIkEffect) return;
+
+		layer1 = preIkEffect(preIKPseudo.upperLayer).value;
+		layer2 = preIkEffect(preIKPseudo.lowerLayer).value;
+		goal = preIkEffect(preIKPseudo.goalLayer).value;
+		layer1 = preComp.layer(layer1);
+		layer2 = preComp.layer(layer2);
+		if (goal > 0) goal = preComp.layer(goal);
+		if (ikType == 3)
+		{
+			layer3 = preIkEffect(preIKPseudo.middleLayer).value;
+			layer3 = preComp.layer(layer3);
+		}
+
+		// If it was linked through MPs, we need to update the controller position inside the precomp
+		if (params[DuAEF.Duik.MarkerParameters.LINKED_THROUGH_MP] == 'true') {
+			previousPosition = preCtrl.transform.position.value;
+			previousRotation = preCtrl.transform.rotation.value;
+			preCtrl.transform.position.setValue(controller.transform.position.value);
+			preCtrl.transform.rotation.setValue(controller.transform.rotation.value);
+			restoreTransform = true;
+		}
+	}
+	else
+	{
+		layer1 = ikEffect(pseudoEffect.upperLayer).value;
+		layer2 = ikEffect(pseudoEffect.lowerLayer).value;
+		goal = ikEffect(pseudoEffect.goalLayer).value;
+		layer1 = comp.layer(layer1);
+		layer2 = comp.layer(layer2);
+		if (goal > 0) goal = comp.layer(goal);
+		if (ikType == 3)
+		{
+			layer3 = ikEffect(pseudoEffect.middleLayer).value;
+			layer3 = comp.layer(layer3);
+		}
+	}
+
+
+	ikEffect(pseudoEffect.upperAngle).setValueAtTime(comp.time,layer1.transform.rotation.value);
+	if (ikType == 3) ikEffect(pseudoEffect.middleAngle).setValueAtTime(comp.time,layer3.transform.rotation.value);
+	ikEffect(pseudoEffect.lowerAngle).setValueAtTime(comp.time,layer2.transform.rotation.value);
+
+	//look for a goal and adjust
+	if (goal)
+	{
+		var prevRot = goal.transform.rotation.value;
+		//Deactivate to adjust goal
+		ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,0);
+
+		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,0);
+		//get difference
+		var newRot = prevRot - goal.transform.rotation.value;
+		ikEffect(pseudoEffect.goalAngle).setValueAtTime(comp.time,newRot);
+	}
+
+	var footRollEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.FOOT_ROLL.matchName);
+	if (footRollEffect)
+	{
+		//adjust the toes
+		footRollEffect(DuAEF.Duik.PseudoEffects.FOOT_ROLL.toesAngle).setValueAtTime(comp.time, - footRollEffect(DuAEF.Duik.PseudoEffects.FOOT_ROLL.footRollAngle).value);
+	}
+
+	//restore activation
+	ikEffect(pseudoEffect.ikCheckbox).setValueAtTime(comp.time,active);
+
+	//restore precomp values if controlller was extracted through MPs
+	if (restoreTransform)
+	{
+		preCtrl.transform.position.setValue(previousPosition);
+		preCtrl.transform.rotation.setValue(previousRotation);
+	}
+}
+
+/**
+	* Automatically witches between IK and FK
+	* @param {Controller|Layer} controller - The IK Controller
+*/
+DuAEF.Duik.Animation.switchIkFk = function (controller)
+{
+	if (controller instanceof Controller) controller = controller.layer;
+	var comp = controller.containingComp;
+
+	var ikIndex = 1;
+
+	var ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.TWOLAYER_IK.matchName);
+	if (ikEffect)
+	{
+		ikIndex = DuAEF.Duik.PseudoEffects.TWOLAYER_IK.ikCheckbox;
+	}
+	else
+	{
+		ikEffect = controller.property('ADBE Effect Parade').property(DuAEF.Duik.PseudoEffects.THREELAYER_IK.matchName);
+		ikIndex = DuAEF.Duik.PseudoEffects.THREELAYER_IK.ikCheckbox;
+	}
+
+	if (!ikEffect) return;
+
+	var ik = ikEffect(ikIndex).value;
+
+	//snap and switch
+	if (ik == 1)
+	{
+		DuAEF.Duik.Animation.fk2ik(controller);
+		ikEffect(ikIndex).setValueAtTime(comp.time,0);
+	}
+	else
+	{
+		DuAEF.Duik.Animation.ik2fk(controller);
+		ikEffect(ikIndex).setValueAtTime(comp.time,1);
+	}
+}
+
+/**
+	* Extracts the controllers from the precomposition,< br/>
+	* and copies them to the composition, linking all precomposed controllers<br />
+	* to the new ones.<br />
+	* WARNING This method uses the native copy and paste commands of After Effects,<br />
+	* DO NOT enclose it in an undoGroup.<br />
+	* Undo groups will be handled by this method itself.
+	* @param {AVLayer} preComposition - The precomposition layer
+	* @param {boolean} [useMasterProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
+	* instead of expressions to link the controllers. Ignored on previous versions of After Effects.
+	* @param {boolean} [bake=true] - Bakes the appearances of the controllers before extracting them.<br />
+	* Note: this fixes some issues when extracting controllers between compositions of different sizes.
+	* @return {int} Error code:<br >
+	* -3: No controllers found in the precomp<br >
+	* -2: The layer is not a precomposition<br >
+	* -1: Some controllers can not be extracted<br >
+	* 0: Unknown error<br >
+	* 1: OK
+*/
+DuAEF.Duik.Animation.extractControllersFromComp = function(preComposition,useMasterProperties, bake)
+{
+	if (DuAEF.DuAE.App.version.version < 15.1) useMasterProperties = false;
+	if (DuAEF.DuAE.App.version.version < 17.0) useMasterProperties = def( useMasterProperties, false );
+	else useMasterProperties = def( useMasterProperties, true );
+	bake = def(bake, true);
+
+	var comp = preComposition.containingComp;
+
+	//get precomp.
+	var preComp = preComposition.source;
+	if (!preComp) return -2
+	if (!(preComp instanceof CompItem)) return -2;
+
+	//get all controllers from precomposition.
+	var controllers = DuAEF.Duik.Controller.getControllers(preComp);
+	if (controllers.length == 0) return -3;
+
+	//get controllers from current comp, to check if some are already extracted
+	var currentControllers = DuAEF.Duik.Controller.getControllers(comp);
+
+	//check for parenting and list layers
+
+	app.beginSuppressDialogs();
+
+	DuAEF.DuAE.Comp.setUniqueCompName(comp);
+	DuAEF.DuAE.Comp.setUniqueCompName(preComp);
+
+	var itCtrls = new DuList(controllers);
+	var controller;
+	var ctrlLayers = [];
+	var newCtrlLayers = [];
+	var ids = [];
+	itCtrls.do(function(controller)
+	{
+		//check if it's already extracted
+		for (var i = 0, num = currentControllers.length; i < num; i++) {
+			var extracted = currentControllers[i].id == controller.id && currentControllers[i].id != -1;
+			if (extracted) extracted = currentControllers[i].linkedToComp == preComp.id; 
+
+			if ( extracted ) {
+				var newCtrlLayer = currentControllers[i].layer;
+				newCtrlLayer.reparent = false;
+				newCtrlLayers.push( newCtrlLayer );
+				return;
+			}
+		}
+		var layer = controller.layer;
+		//check if the layer has a parent which is not a controller or nothing
+		var ctrlParent = layer.parent;
+		layer.reparent = true;
+		if (!ctrlParent) layer.reparent = false;
+		if (DuAEF.Duik.isLayerType(ctrlParent, DuAEF.Duik.LayerTypes.CONTROLLER)) layer.reparent = false;
+		ctrlLayers.push(layer);
+
+		//make sure all controllers have unique ids
+		if (DuList.indexOf( ids, controller.id) > -1)
+		{
+			var newId = DuAEF.Duik.Controller.assignID(layer);
+			controller.id = newId;
+			ids.push( newId );
+		}
+
+		//bake them
+		if (bake) controller.bakeAppearance();
+	});
+
+	// if this is a new extraction using MPs from an already extracted precomp,
+	// this will be set to true to update the expressions in the MPs
+	var reLink = false;
+
+	if (ctrlLayers.length == 0)
+	{
+		//Let's ask if the user wants to extract them all once again.
+		if (!useMasterProperties) return;
+		var ok = confirm(tr("No new controller was found to extract.\nDo you want to extract all controllers from this pre-composition anyway?", false, "Nothing new!"));
+		if (!ok) return;
+		reLink = true;
+		newCtrlLayers = [];
+		itCtrls.do(function(controller)
+		{
+			var layer = controller.layer;
+			var ctrlParent = layer.parent;
+			layer.reparent = true;
+			if (!ctrlParent) layer.reparent = false;
+			if (DuAEF.Duik.isLayerType(ctrlParent, DuAEF.Duik.LayerTypes.CONTROLLER)) layer.reparent = false;
+			ctrlLayers.push(layer);
+			controller.bakeAppearance();
+		});
+	}
+
+	if (ctrlLayers.length == 0) return;
+
+	//copy controllers
+	//to apply all locators transform values in case controllers are children of locators and temporarily disable their expressions
+	DuAEF.Duik.Rigging.applyLocatorsValues( preComp, true );
+	newCtrlLayers = newCtrlLayers.concat( DuAEF.DuAE.Layer.copyToComp(ctrlLayers, comp) );
+	//enable the locators again
+	DuAEF.Duik.Rigging.disableLocators( preComp, false )
+
+	//get controller objects 
+	var newCtrls = [];
+	for (var i = 0, num = newCtrlLayers.length; i < num; i++) {
+		var newCtrl = new Controller(newCtrlLayers[i]);
+		newCtrls.push( newCtrl );
+	}
+
+	//Add null at position precomp.width/2 precomp.height/2
+	var nullLayer = comp.layers.addNull();
+	nullLayer.transform.position.setValue([preComp.width/2,preComp.height/2]);
+
+	//parent unparented controllers to the null
+	DuAEF.DuAE.Layer.parent(newCtrlLayers, nullLayer);
+	//parent the null to the precomp using parentWithJump
+	nullLayer.setParentWithJump(preComposition);
+	//remove the null
+	nullLayer.remove();
+	//create Master Props or Expressions
+	
+	//link transformations and effects (only)
+	itCtrls.do(function(controller)
+	{
+		var ctrlLayer = controller.layer;
+		//get the new controller 
+		var newCtrlLayer = null;
+		for (var i = 0, num = newCtrls.length; i < num; i++) {
+			if ( newCtrls[i].id == controller.id ) {
+				newCtrlLayer = newCtrls[i].layer;
+				break;
+			}
+		}
+
+		//try by name (older rigs)
+		if (!newCtrlLayer) {
+			for (var i = 0, num = newCtrls.length; i < num; i++) {
+				if ( newCtrls[i].layer.name == controller.layer.name ) {
+					newCtrlLayer = newCtrls[i].layer;
+					break;
+				}
+			}
+		}
+
+		//use locators for all controllers parented to something else than a controller or nothing
+		if (ctrlLayer.reparent) DuAEF.Duik.Rigging.parent(newCtrlLayer, ctrlLayer.parent, useMasterProperties);
+
+		//remove expressions in the data of the child effect 
+		DuAEF.DuAE.Property.removeDataExpressions(newCtrlLayer('ADBE Effect Parade'));
+
+		if (useMasterProperties)
+		{
+			DuAEF.DuAE.Property.addToEGP(ctrlLayer.transform);
+			DuAEF.DuAE.Property.addToEGP(ctrlLayer('ADBE Effect Parade'));
+			// get master properties
+			var mps = DuAEF.DuAE.Property.getProps( preComposition('ADBE Layer Overrides'), PropertyType.PROPERTY );
+			var it = new DuList(mps);
+			//links
+			it.do( function(mp) {
+				//get prop name
+				var nameArray = mp.name.split(' / ');
+				if ( nameArray.length != 2 ) return;
+				var pLink = nameArray[1];
+				var layerName = nameArray[0];				
+				if ( layerName != ctrlLayer.name ) return;
+				var newProp = null;
+				try {
+					newProp = eval('newCtrlLayer' + pLink);
+				}
+				catch (e) { return; }
+				
+				//link
+				if (newProp) {
+					DuAEF.DuAE.Property.pickWhip(mp,newProp,true);
+					//AE 17.0.0 bug workaround: need a keyframe on the master property to be sure it's not ignored.
+					if (DuAEF.DuAE.App.version.version == 17 && DuAEF.DuAE.App.version.patch == 0)
+					{
+						mp.setValueAtTime(0, mp.value);
+					}
+				}
+			});
+		}
+		else
+		{
+			//transform
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer.transform, newCtrlLayer.transform, undefined, preComposition );
+			//effects
+			DuAEF.DuAE.Property.linkProperties( ctrlLayer('ADBE Effect Parade'), newCtrlLayer('ADBE Effect Parade'), undefined, preComposition );
+		}
+		//set params to keep the link
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOCOMP, preComp.id);
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKEDTOLAYER, ctrlLayer.name);
+		DuAEF.Duik.setDuikMarkerParameter(newCtrlLayer, DuAEF.Duik.MarkerParameters.LINKED_THROUGH_MP, useMasterProperties);
+	});
+
+	app.endSuppressDialogs(false);
+
+	return 1;
+}
+
+/**
+	* Un-Extracts the controllers from the precomposition.
+	* @param {AVLayer} preComposition - The precomposition layer
+*/
+DuAEF.Duik.Animation.unExtractControllersFromComp = function( preComposition )
+{
+	var comp = preComposition.containingComp;
+	var preComp = preComposition.source;
+
+	var controllers = DuAEF.Duik.Controller.getControllers(preComp);
+	if (controllers.length == 0) return;
+
+	var extractedControllers = DuAEF.Duik.Controller.getControllers(comp);
+	if (extractedControllers.length == 0) return;
+
+	//a function to check if an expression is indeed a link
+	function isLink(exp) {
+		return DuAEF.Duik.isExpressionId(exp, DuAEF.Duik.expressionIds.LINK);
+	}
+
+	//for each controller
+	var itCtrl = new DuList(extractedControllers);
+	itCtrl.do(function(extractedController)
+	{
+		var controller = null;
+		for (var i = 0, num = controllers.length; i < num; i++) {
+			if ( controllers[i].id == extractedController.id ) {
+				controller = controllers[i];
+				break;
+			}
+		}
+		if ( !controller ) return;
+
+		//check how it was extracted
+		var params = DuAEF.Duik.getDuikMarkerParameters( extractedController.layer );
+		var useMP = false;
+
+		if (params) {
+			useMP = params[DuAEF.Duik.MarkerParameters.LINKED_THROUGH_MP] == 'true';
+		}
+		if (useMP && DuAEF.DuAE.App.version.version >= 16.1) {
+			//remove expressions from master properties
+			var numMPs = preComp.motionGraphicsTemplateControllerCount;
+			for (var i = 1; i <= numMPs; i++)
+			{
+				var mp = preComposition('ADBE Layer Overrides')(i);
+				//get layer name
+				var layerName = mp.name.split(' / ')[0];
+				var nameCheck = extractedController.layer.name;
+				if (params) {
+					if (params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER]) nameCheck = params[DuAEF.Duik.MarkerParameters.LINKEDTOLAYER];
+				}
+				//if the layer name corresponds, remove the expression.
+				if ( layerName == nameCheck ) {
+					mp.expression = '';
+				}
+			}
+		}
+		else if (!useMP)
+		{
+
+			//remove expressions from controller 
+			DuAEF.DuAE.Property.removeExpressions(controller.layer, isLink);
+		}
+
+		//remove the extracted controller
+		extractedController.layer.remove();
+	});
+}
+
+/**
+	* Adds a slider on a precomposition layer, and markers on the layer, with keyframes representing the animation exposure of the layers inside the precomposition
+	* @memberof Duik
+	* @param {LayerItem} precomp - The layer of the precomposition
+*/
+DuAEF.Duik.Animation.getPrecompExposure = function (precomp)
+{
+	//get source comp
+	var comp = precomp.source;
+
+	//if not a precomp, skip
+	if (!(comp instanceof CompItem)) throw "The layer must be a precomposition.";
+
+	//add slider
+	var slider = precomp.Effects.addProperty("ADBE Slider Control");
+	slider.name = "Detected Exposure";
+
+	//detect exposure
+	for (var i = 1 ; i <= comp.numLayers ; i++)
+	{
+		var layer = comp.layer(i);
+		slider(1).setValueAtTime(precomp.startTime + layer.inPoint,layer.inPoint);
+		slider(1).setInterpolationTypeAtKey(slider(1).numKeys,KeyframeInterpolationType.HOLD,KeyframeInterpolationType.HOLD);
+		precomp.marker.setValueAtTime(precomp.startTime + layer.inPoint,new MarkerValue(''));
+	}
+}
+
+
+/**
+	* Animation Blender
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
+DuAEF.Duik.AnimationBlender = {};
+
+/**
+	* Creates a blender controller in the control composition, and sets all the properties of the setup comp up.
+	* @param {CompItem} setupComp - The comp
+	* @param {CompItem} controlComp - The comp where to create the blender controller
+	* @param {boolean} [selectedProperties=false] - true to set only the selected properties up. When false, sets all animated (without expression) properties up.
+	*/
+DuAEF.Duik.AnimationBlender.setup = function(setupComp,controlComp,selectedProperties)
+{
+	if (typeof selectedProperties === 'undefined') selectedProperties = false;
+
+	function getSelectedPropFilter(prop)
+	{
+		//check if there is an expression
+		if (prop.propertyType != PropertyType.PROPERTY) return false;
+		if (!prop.canSetExpression) return false;
+		if (prop.expression != '') return false;
+
+		if (selectedProperties) return prop.selected;
+		return true;
+	}
+
+	var props = DuAEF.DuAE.Comp.getAnimatedProps(getSelectedPropFilter,undefined,undefined,undefined,setupComp);
+
+
+	//create blender
+	var blenderCtrl = DuAEF.Duik.Controller.create(controlComp,DuAEF.Duik.Controller.Types.BLENDER);
+	blenderCtrl.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName("C | Blender | " + setupComp.name, controlComp);
+
+	//Store setupComp id and name into Duik marker of the controller
+	DuAEF.Duik.setDuikMarkerParameter(blenderCtrl.layer,'animationBlenderComp',setupComp.id);
+	DuAEF.Duik.setDuikMarkerParameter(blenderCtrl.layer,'animationBlenderCompName',setupComp.name);
+	//set the duikmarker at negative time to hide it
+	var markerProp = blenderCtrl.layer.property('ADBE Marker');
+	for (var i = 1, num = markerProp.numKeys; i <= num; i++)
+	{
+		var marker = markerProp.keyValue(i);
+		var params = marker.getParameters();
+		if (params.duik)
+		{
+			markerProp.removeKey(i);
+			markerProp.setValueAtTime(-1,marker);
+		}
+	}
+
+	var blenderFx = DuAEF.Duik.PseudoEffects.BLENDER.apply(blenderCtrl.layer);
+
+	//default values
+	blenderFx(DuAEF.Duik.PseudoEffects.BLENDER.loopCheckbox).setValue(0);
+	blenderFx(DuAEF.Duik.PseudoEffects.BLENDER.durationSlider).setValue(0);
+
+	var exp = '//Duik.blender\n' +
+		'var ctrl = comp("' + controlComp.name + '").layer("' + blenderCtrl.layer.name + '");\n' +
+		'var fx = ctrl.effect("' + blenderFx.name + '");\n' +
+		'var loop = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.loopCheckbox + ').value;\n' +
+		'var blending = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.blendingCheckbox + ').value;\n' +
+		'var blendingDuration = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.durationSlider + ').value;\n' +
+		'var blendingEasing = fx(' + DuAEF.Duik.PseudoEffects.BLENDER.interpolationPopup + ').value;\n' +
+		'if (!blending) blendingDuration = 0;\n' +
+		'function getAnim(ind)\n' +
+		'{\n' +
+		'anim = 0;\n' +
+		'var animStartTime = ctrl.marker.key(ind).time;\n' +
+		'var animName = ctrl.marker.key(ind).comment;\n' +
+		'var animMarker = null;\n';
+		if (DuAEF.DuAE.App.version.version >= 14.0) exp += 'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n';
+		else exp += 'try { animMarker = thisComp.layer("Duik | Animation blender").marker.key(animName); } catch(e) {}\n';
+		exp += 'if (animMarker)\n' +
+		'{\n' +
+		'var start = animMarker.time;\n' +
+		'var end = animMarker.time + animMarker.duration;\n' +
+		'var dur = animMarker.duration;\n' +
+		'anim = linear(time, animStartTime , animStartTime + dur, start, end);\n' +
+		'if (loop)\n' +
+		'{\n' +
+		'var loopNumber = Math.ceil((time-animStartTime)/dur);\n' +
+		'if (loopNumber > 1) anim =  linear(time,animStartTime+dur*(loopNumber-1), animStartTime+dur*loopNumber,start,end);\n' +
+		'}\n' +
+		'}\n' +
+		'return valueAtTime(anim);\n' +
+		'}\n' +
+		'result = value;\n' +
+		'if (ctrl.marker.numKeys > 1 && fx.enabled) {\n' +
+		'var currentMarker = ctrl.marker.nearestKey(time).index;\n' +
+		'if (ctrl.marker.key(currentMarker).time > time) currentMarker--;\n' +
+		'if (currentMarker > 0)\n' +
+		'{\n' +
+		'var animA = getAnim(currentMarker);\n' +
+		'result = animA;\n' +
+		'if (blendingDuration != 0)\n' +
+		'{\n' +
+		'var prevMarker = currentMarker -1;\n' +
+		'animB = value;\n' +
+		'if (prevMarker > 0)\n' +
+		'{\n' +
+		'var markerTime = ctrl.marker.key(currentMarker).time;\n' +
+		'if (!loop)\n' +
+		'{\n' +
+		'var prevMarkerTime = ctrl.marker.key(prevMarker).time;\n' +
+		'var prevMarkerName = ctrl.marker.key(prevMarker).comment;\n' +
+		'var animMarker = null;\n' +
+		'try { animMarker = thisComp.marker.key(prevMarkerName); } catch(e) {}\n' +
+		'if (animMarker)\n' +
+		'{\n' +
+		'var prevDuration = animMarker.duration;\n' +
+		'var prevEndTime = animMarker.time + prevDuration;\n' +
+		'var maxBlendingDuration = prevEndTime-markerTime;\n' +
+		'if (maxBlendingDuration < 0) blendingDuration = 0;\n' +
+		'else if (maxBlendingDuration < blendingDuration) blendingDuration = maxBlendingDuration;\n' +
+		'}\n' +
+		'}\n' +
+		'\n' +
+		'if (blendingDuration != 0)\n' +
+		'{\n' +
+		'animB = getAnim(prevMarker);\n' +
+		'if (blendingEasing == 2) result = linear(time,markerTime , markerTime+blendingDuration, animB, animA);\n' +
+		'else result = ease(time,markerTime , markerTime+blendingDuration, animB, animA);\n' +
+		'}\n' +
+		'}\n' +
+		'}\n' +
+		'\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		'currentMarker++;\n' +
+		'markerName = ctrl.marker.key(currentMarker).comment;\n' +
+		'var animMarker = null;\n' +
+		'try { animMarker = thisComp.marker.key(animName); } catch(e) {}\n' +
+		'if (animMarker) result = valueAtTime(animMarker.time);\n' +
+		'}\n' +
+		'}\n' +
+		'result;';
+
+	//set expression
+	new DuList(props).do(function(prop)
+	{
+		prop = prop.getProperty();
+		prop.expression = exp;
+	});
+}
+
+/**
+	* Gets the marker property used to define animations.<br />
+	* This method will create a layer to receive markers on AE < 14.0 <br />
+	* Because there were no scripting method to manage comp markers back then.
+	* @param {CompItem} [comp] - The comp
+	*/
+DuAEF.Duik.AnimationBlender.getAnimMarkers = function (comp)
+{
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return null;
+
+	if (DuAEF.DuAE.App.version.version >= 14.0)
+	{
+		return comp.markerProperty;
+	}
+
+	var markerLayer = comp.layer("Duik | Animation blender");
+	if (!markerLayer)
+	{
+		markerLayer = comp.layers.addNull();
+		markerLayer.name = "Duik | Animation blender";
+	}
+	return markerLayer.property('ADBE Marker');
+}
+
+/**
+ * Gets the blended composition from the (selected) controller
+ * @param {AVLayer} [controller] The blender controller
+ * @return {CompItem|null} The blended composition, null if not found.
+ */
+DuAEF.Duik.AnimationBlender.getBlendedComp = function ( controller )
+{
+	if (typeof controller === 'undefined')
+	{
+		var layers = DuAEF.DuAE.Comp.getSelectedLayers();
+		if (layers.length == 0) return null;
+		controller = layers[0];
+	}
+
+	var params = DuAEF.Duik.getDuikMarkerParameters(controller);
+	if (!params) return null;
+	if (!params.animationBlenderComp) return null;
+
+	var blenderCompId = params.animationBlenderComp;
+	var blenderCompName = params.animationBlenderCompName;
+	var blenderComp = DuAEF.DuAE.Project.getItemById( blenderCompId );
+	if (blenderComp instanceof CompItem && blenderComp.name == blenderCompName) return blenderComp;
+	blenderComp = DuAEF.DuAE.Project.getItemByName( blenderCompName );
+	if (blenderComp instanceof CompItem) 
+	{
+		// Update Id
+		DuAEF.Duik.setDuikMarkerParameter( controller,'animationBlenderComp',blenderComp.id);
+		return blenderComp;
+	}
+	return null;
+}
+
+/**
+	* An onion skin
+	* @typedef {Object} OnionSkin
+	* @property {boolean} activated - Is it activated
+	* @property {int} duration - Duration in frames
+	* @property {int} exposure - Animation exposure
+	* @property {int} outOpacity - out opacity
+	* @property {int} inOpacity - in opacity
+	*/
+
+/**
+	* Cel animation tools
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
+DuAEF.Duik.CelAnimation = {};
+
+/**
+	* Creates a new animation cel on the layer
+	* @param {CompItem} comp - The composition
+	* @param {AVLayer|null} [layer] - The layer where to create the cel
+	*/
+DuAEF.Duik.CelAnimation.createCel = function (comp,layer)
+{
+	if (comp == undefined) return;
+
+	if (layer == undefined || layer == null)
+	{
+		//create solid
+		layer = comp.layers.addSolid([0,0,0], DuAEF.DuAE.Comp.newUniqueLayerName("Cel",comp) , comp.width, comp.height, comp.pixelAspect , comp.duration);
+		DuAEF.Duik.setDuikMarker(layer,"Cel",DuAEF.Duik.LayerTypes.CEL);
+	}
+
+	var first = true;
+	for (var i = 1 ; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		if (layer.effect(i).matchName == 'ADBE Paint')
+		{
+			first = false;
+			break;
+		}
+	}
+
+	var newName = DuAEF.DuAE.Layer.newUniqueEffectName('Celluloid',layer);
+	var paint = layer('ADBE Effect Parade').addProperty('ADBE Paint');
+	paint.name = newName;
+
+	if (first) paint.property('ADBE Paint On Transparent').setValue(true);
+
+}
+
+/**
+	* Activates or deactivates the onion skin on a cel
+	* @param {AVLayer} layer - The layer with the cel
+	* @param {OnionSkin} onionSkin - Onion skin parameters
+	*/
+DuAEF.Duik.CelAnimation.onionSkin = function (layer,onionSkin)
+{
+	if (layer == undefined) return;
+	if (onionSkin == undefined)
+	{
+		onionSkin = new OnionSkin();
+		onionSkin.activated = true;
+	}
+	activate = onionSkin.activated;
+	onionDuration = onionSkin.duration;
+	exposure = onionSkin.exposure;
+	inOpacity = onionSkin.inOpacity;
+	outOpacity = onionSkin.outOpacity;
+
+	var comp = layer.containingComp;
+	for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+	{
+		var paint = layer.effect(i);
+		if (!paint) continue;
+		if (paint.matchName != "ADBE Paint") continue;
+		if (paint.name.indexOf('Celluloid') < 0) continue;
+		for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+		{
+			var stroke = paint.property("ADBE Paint Group")(j);
+			if (stroke.matchName != "ADBE Paint Atom") continue;
+
+			var inPoint = stroke.property("ADBE Paint Duration").value[0];
+			var duration = stroke.property("ADBE Paint Duration").value[1];
+
+			//adjust expo
+			if (stroke.name.indexOf("#Duik") < 0)
+			{
+				duration = exposure*comp.frameDuration;
+				stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				stroke.name = stroke.name + " #Duik";
+			}
+
+			if (activate)
+			{
+				//stroke.property("ADBE Paint Transfer Mode") : blending mode
+				var outPoint = duration + inPoint;
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				//if keyframes (already activated)
+				if (opacity.numKeys > 0)
+				{
+					if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+					{
+						outPoint = opacity.keyTime(2) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+					}
+					else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+					{
+						inPoint = opacity.keyTime(3) - layer.startTime;
+						outPoint = opacity.keyTime(5) - layer.startTime;
+					}
+
+					//remove keys
+					while (opacity.numKeys>0)
+					{
+						opacity.removeKey(1);
+					}
+					opacity.setValue(100);
+					stroke.name = stroke.name.replace(/ #Out/g,"");
+					stroke.name = stroke.name.replace(/ #In/g,"");
+				}
+
+				//set duration
+				if (outOpacity > 0 && inOpacity <= 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+				}
+				else if (outOpacity <= 0 && inOpacity > 0)
+				{
+					duration = outPoint - inPoint + onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+				else
+				{
+					duration = outPoint - inPoint + 2*onionDuration*comp.frameDuration;
+					stroke.property("ADBE Paint Duration").setValue([inPoint-onionDuration*comp.frameDuration,duration]);
+				}
+
+
+				//add keyframes
+				if (outOpacity > 0)
+				{
+				opacity.setValueAtTime(outPoint-comp.frameDuration+layer.startTime,100);
+				opacity.setValueAtTime(outPoint+layer.startTime,outOpacity);
+				opacity.setValueAtTime(outPoint + onionDuration*comp.frameDuration+layer.startTime,0);
+				stroke.name = stroke.name + " #Out";
+				}
+				if (inOpacity > 0)
+				{
+				opacity.setValueAtTime(inPoint+layer.startTime,100);
+				opacity.setValueAtTime(inPoint-onionDuration*comp.frameDuration+layer.startTime,0);
+				opacity.setValueAtTime(inPoint-comp.frameDuration+layer.startTime,inOpacity);
+				stroke.name = stroke.name + " #In";
+				}
+
+			}
+			else
+			{
+				var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+				if (opacity.numKeys > 0)
+				{
+				inPoint = 0;
+				outPoint = 1;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+				{
+				inPoint = stroke.property("ADBE Paint Duration").value[0];
+				outPoint = opacity.keyTime(2);
+				}
+				else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				outPoint = stroke.property("ADBE Paint Duration").value[0] + stroke.property("ADBE Paint Duration").value[1];
+				inPoint = opacity.keyTime(3);
+				}
+				else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+				{
+				inPoint = opacity.keyTime(3);
+				outPoint = opacity.keyTime(5);
+				}
+
+
+				while (opacity.numKeys>0)
+				{
+				opacity.removeKey(1);
+				}
+				opacity.setValue(100);
+				//set duration
+				var o = outPoint-inPoint;
+				var i = inPoint;
+				if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0) o = o-layer.startTime;
+				else if (stroke.name.indexOf("#Out") < 0) o = o + layer.startTime;
+				if (stroke.name.indexOf("#In") >= 0) i = i-layer.startTime;
+
+				stroke.property("ADBE Paint Duration").setValue([i,o]);
+
+				stroke.name = stroke.name.replace(/ #In/g,"");
+				stroke.name = stroke.name.replace(/ #Out/g,"");
+				}
+			}
+		}
+	}
+	//deselect
+	while(layer.selectedProperties.length > 0)
+	{
+		layer.selectedProperties[0].selected = false;
+	}
+}
