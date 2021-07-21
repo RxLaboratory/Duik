@@ -1,4 +1,5 @@
-#include "duik_required/Duik16_header.jsxinc";
+// Brings the license, DuAEF, and the Duik API & DuAEF extension
+#include "inc/core.jsxinc";
 
 var standAlone = false;
 
