@@ -1,22 +1,26 @@
 
 
 /**
- * Bone related tools.
+ * Bone and armatures related tools.
  * @namespace
  */
 Duik.Bone = {};
 
-Duik.Bone.functions = [];
+/**
+ * The list of bone functions
+ */
+Duik.CmdLib['Bone'] = [];
 
-Duik.Bone.functions.push( { name:"Custom Bones", fn:"Duik.Bone.custom()" } );
+Duik.CmdLib['Bone']["Custom_Limb"] = "Duik.Bone.customLimb()";
 /**
  * Creates a custom limb.
  * @param {int} [num=2] - The number of bones in case nothing is selected in the comp. Otherwize, a bone is created for each selected path vertex/puppet pin/layer.
  * @param {string} [name='Limb'] - The name of the limb
+ * @param {DuOCO.Side} [side=DuOCO.Side.NONE] - The side of the limb
+ * @param {DuOCO.Location} [location=DuOCO.Location.NONE] - The location of the limb
  * @param {boolean} [forceLink=false] - Wether link the selected layers/properties to the new armature
- * @param {boolean} [randomColor=false] - Wether pick a random color for the new armature
  */
-Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
+Duik.Bone.customLimb = function ( num, name, characterName, side, location, forceLink )
 {
     // get current comp
     var comp = DuAEProject.getActiveComp();
@@ -24,8 +28,11 @@ Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
 
     num = def( num, 2);
     forceLink = def( forceLink, false);
-    name = def( name, 'Limb');
+    name = def( name, tr('Limb'));
+    if (name == '') name = tr('Limb');
     characterName = def( characterName, '');
+    side = def( side, DuOCO.Side.NONE);
+    location = def( location, DuOCO.Location.NONE);
 
     DuAE.beginUndoGroup("Create custom armature");
     DuAEProject.setProgressMode(true);
@@ -36,16 +43,15 @@ Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
     if( layers.length == 0 )
     {
         var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newLimb();
-        limb.newArmature( num, name );
+        var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
+        limb.newArmature( name, num );
         doc.toComp( comp );
         DuAEProject.setProgressMode(false);
         DuAE.endUndoGroup();
         return;
     }
-/*
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.
-    
+
+    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
     var layerToRemove = null;
     var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
     if (forceLink) linkPath = !linkPath;
@@ -54,7 +60,6 @@ Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
         var l = layers[0];
         if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
     }
-
 
     // For each selected layer
     var it = new DuList( layers );
@@ -71,14 +76,13 @@ Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
                 var path = props[i];
                 // create the OCODoc
                 var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.limbFromPath( name, path );
+                var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
+                limb.armatureFromPath( name, path );
+                // create
+                var boneLayers = doc.tocomp( comp );
+                // link
+                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
             }
-            
-            
-            
-            propsByLayer.push( props );
-            ok = true;
-            return;
         }
 
         //puppet pins
@@ -97,8 +101,5 @@ Duik.Bone.customLimb = function ( num, name, characterName, forceLink )
             return;
         }
     }
-
-
-*/
 
 }
