@@ -37,7 +37,7 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers )
  * @param {CompItem} [comp] The composition to use. If omitted, creates a new composition.
  * @param {float} [duration=60.0] The duration of the new comp, in seconds.
  * @param {frameRate} [float=24.0] The frame rate of the new comp.
- * @returns {CompItem} The composition.
+ * @return {Layer[]} The new layers
  */
 DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
 {
@@ -46,11 +46,13 @@ DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
 
     comp = def( comp, app.project.items.addComp( this.name, this.resolution[0], this.resolution[1], 1.0, duration, frameRate) );
 
+    var layers = [];
     // For each limb
     for(var i = 0, n = this.limbs.length; i < n; i++)
     {
-        this.limbs[i].toComp( this, comp );
+        layers = layers.concat( this.limbs[i].toComp( this, comp ) );
     }
+    return layers;
 }
 
 /**
@@ -86,20 +88,59 @@ DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, armatureId )
     var layers = [];
     for (var i = 0, n = this.armature.length; i < n; i++)
     {
-        layers = layers.concat( this.armature[i].toComp( doc, comp, parentLayer, armatureId ) );
+        layers = layers.concat( this.armature[i].toComp( doc, this, comp, parentLayer, armatureId ) );
     }
     return layers;
 }
 
 /**
+ * Creates a new chain of bones located on the vertices of the path.
+ * @param {string} name The name of the bones (will increment if needed)
+ * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
+ * @returns {DuOCOBone} The root bone of the new chain
+ */
+DuOCOLimb.prototype.armatureFromPath( name, pathProp )
+{
+    pathProp = new DuAEProperty(pathProp);
+    var vertices = pathProp.verticesToComp( );
+
+    var b = null;
+    var root = null;
+    var names = [];
+
+    // Create for each vertex
+    for(var i = 0, n = vertices.length; i < n; i++)
+    {
+        var boneName = DuString.generateUnique(name, names);
+        var bone = new DuOCOBone( boneName );
+        names.push(boneName);
+        bone.x = vertices[0];
+        bone.y = vertices[1];
+        if (b != null)
+        {
+            b.children.push( bone );
+            bone.attached = true;
+        }
+        else
+        {
+            this.armature.push( bone );
+            root = bone;
+        }
+    }
+
+    return root;
+}
+
+/**
  * Creates the limbs and armatures in the comp
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {DuOCODoc} doc The doc containing the bone.
+ * @param {DuOCOLimb} limb The limb containing the bone.
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition to use.
  * @param {Layer} [parentLayer=null] The parent layer of the bone.
  * @param {int} [armatureId] A Unique identifier for this armature. If omitted, a new one will be assigned.
  * @return {Layer[]} The new layers
  */
-DuOCOBone.prototype.toComp = function( doc, comp, parentLayer, armatureId )
+DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     if (!comp) return;
@@ -114,7 +155,24 @@ DuOCOBone.prototype.toComp = function( doc, comp, parentLayer, armatureId )
 
     // Tag
     var tag = DuAETag.set( boneLayer );
+    if (doc.name != '') DuAETag.addGroup( boneLayer, doc.name, tag );
     DuAETag.addGroup( boneLayer, tr( "Bone" ), tag );
+    if (limb.location == DuOCO.Location.FRONT)
+            DuAETag.addGroup( boneLayer, tr( "Front" ), tag );
+    else if (limb.location == DuOCO.Location.BACK)
+            DuAETag.addGroup( boneLayer, tr( "Back" ), tag );
+    else if (limb.location == DuOCO.Location.TAIL)
+            DuAETag.addGroup( boneLayer, tr( "Tail" ), tag );
+    else if (limb.location == DuOCO.Location.MIDDLE)
+            DuAETag.addGroup( boneLayer, tr( "Middle" ), tag );
+    else if (limb.location == DuOCO.Location.ABOVE)
+            DuAETag.addGroup( boneLayer, tr( "Above" ), tag );
+    else if (limb.location == DuOCO.Location.UNDER)
+            DuAETag.addGroup( boneLayer, tr( "Under" ), tag );
+    if (limb.side == DuOCO.Side.LEFT)
+            DuAETag.addGroup( boneLayer, tr( "Left" ), tag );
+    else if (limb.side == DuOCO.Side.RIGHT)
+            DuAETag.addGroup( boneLayer, tr( "Right" ), tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_TYPE, Duik.LayerType.BONE, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ARMATURE_ID, armatureId, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ATTACHED_BONE, this.attached, tag );
@@ -128,7 +186,14 @@ DuOCOBone.prototype.toComp = function( doc, comp, parentLayer, armatureId )
     boneLayer.label = 7;
     boneLayer.guideLayer = true;
     boneLayer.quality = LayerQuality.DRAFT;
-    boneLayer.name = 'B | ' + this.name;
+    var layerName = 'B | ' + doc.name + ' | ' + this.name;
+    if (limb.location != DuOCO.Location.NONE || limb.side != DuOCO.Side.NONE)
+    {
+        layerName += ' | ';
+        if (limb.location != DuOCO.Location.NONE) layerName += limb.location + '.';
+        if (limb.side != DuOCO.Side.NONE) layerName += limb.side;
+    }
+    boneLayer.name = layerName;
 
     // Add the bone pseudo effect
     var effect = Duik.PseudoEffect.BONE.apply( boneLayer );
@@ -369,7 +434,7 @@ DuOCOBone.prototype.toComp = function( doc, comp, parentLayer, armatureId )
     // Child bones
     for(var i = 0, n = this.children.length; i < n; i++)
     {
-        layers = layers.concat( this.children[i].toComp(doc, comp, boneLayer, armatureId) );
+        layers = layers.concat( this.children[i].toComp(doc, limb, comp, boneLayer, armatureId) );
     }
 
     // Child limbs
