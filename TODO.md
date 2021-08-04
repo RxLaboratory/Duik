@@ -7,7 +7,7 @@
 - [x] include the 'bone' pseudo effect as `Duik.PseudoEffect.PIN`
 - [x] Re-design pin shapes, export, include
 - [x] Change bone anchor to a single dot, like pins, but add a plain circle always visible in the link
-- [ ] Add *bake appearance* button on the top line
+- [x] Add *bake appearance* button on the top line
 - [ ] Options for bones:
     - Auto update from selection
     - Selection:

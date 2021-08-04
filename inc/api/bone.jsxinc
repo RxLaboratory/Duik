@@ -51,10 +51,16 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
         return;
     }
 
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
-    var layerToRemove = null;
+    // Links
     var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
     if (forceLink) linkPath = !linkPath;
+    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
+    if (forceLink) linkPuppetPins = !linkPuppetPins;
+    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
+    if (forceLink) linkLayers = !linkLayers;
+
+    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
+    var layerToRemove = null;
     if (layers.length == 1 && !linkPath)
     {
         var l = layers[0];
@@ -83,13 +89,23 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
                 // link
                 if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
             }
+            if (layerToRemove) layerToRemove.remove();
+            return;
         }
 
         //puppet pins
         props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
         if ( props.length > 0 )
         {
-            propsByLayer.push( props );
+            // Create a limb for all selected pins
+            // create the OCODoc
+            var doc = DuOCODoc.fromComp( characterName, comp );
+            var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
+            limb.armatureFromPuppetPins( doc, name, props );
+            // create
+            var boneLayers = doc.toComp( comp );
+            // link
+            if (linkPuppetPins) Duik.Pin.linkPathToLayers( path, boneLayers );
             return;
         }
 
