@@ -57,16 +57,36 @@ DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
 
 /**
  * Converts a doc coordinate in centimeters to pixel coordinates
- * @param {float[]} coord The coordinate to convert
+ * @param {float[]} point The coordinate to convert
  * @returns {int[]} The coordinates in pixels relative to the comp
  */
-DuOCODoc.prototype.toPixels = function( coord )
+DuOCODoc.prototype.toPixels = function( point )
 {
     // First, convert to pixels
-    var cPix = [ coord[0]*this.pixelsPerCm, coord[1]*this.pixelsPerCm ];
+    var x = point[0]*this.pixelsPerCm;
+    var y = point[1]*this.pixelsPerCm;
     // We're relative to the world, add its coordinates
-    cPix = cPix + this.world;
-    return cPix;
+    x += this.world[0];
+    y += this.world[1];
+    return [x, y];
+}
+
+/**
+ * Converts a pixel coordinate in pixels to centimeters doc coordinates
+ * @param {int[]} point The coordinate to convert
+ * @returns {float[]} The coordinates in centimeters relative to the doc
+ */
+DuOCODoc.prototype.fromPixels = function( point )
+{
+    var x = point[0];
+    var y = point[1];
+    // We're relative to the world, remove its coordinates
+    x -= this.world[0];
+    y -= this.world[1];
+    // Convert to cm
+    x /= this.pixelsPerCm;
+    y /= this.pixelsPerCm;
+    return [x, y];
 }
 
 /**
@@ -95,11 +115,12 @@ DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, armatureId )
 
 /**
  * Creates a new chain of bones located on the vertices of the path.
+  * @param {DuOCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
  * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
  * @returns {DuOCOBone} The root bone of the new chain
  */
-DuOCOLimb.prototype.armatureFromPath = function( name, pathProp )
+DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
 {
     pathProp = new DuAEProperty(pathProp);
     var vertices = pathProp.verticesToComp( );
@@ -111,11 +132,13 @@ DuOCOLimb.prototype.armatureFromPath = function( name, pathProp )
     // Create for each vertex
     for(var i = 0, n = vertices.length; i < n; i++)
     {
+        var vertex = vertices[i];
         var boneName = DuString.generateUnique(name, names);
         var bone = new DuOCOBone( boneName );
         names.push(boneName);
-        bone.x = vertices[0];
-        bone.y = vertices[1];
+        var coord = doc.fromPixels( vertex );
+        bone.x = coord[0];
+        bone.y = coord[1];
         if (b != null)
         {
             b.children.push( bone );
@@ -152,6 +175,7 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
 
     // Create the layer for this one
     var boneLayer = comp.layers.addShape();
+    layers.push(boneLayer);
 
     // Tag
     var tag = DuAETag.set( boneLayer );
@@ -442,4 +466,6 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
     {
         layers = layers.concat( this.limbs[i].toComp(doc, comp, boneLayer, armatureId) );
     }
+
+    return layers;
 }
