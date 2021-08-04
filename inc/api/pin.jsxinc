@@ -106,7 +106,7 @@ Duik.Pin.create = function( comp, size, type )
 		else if (type == Duik.Pin.Type.ADVANCED_PIN)
 		{
 			var shape1 = iconContent.addProperty("ADBE Vector Shape - Group");
-			#include "../shapes/advancedPin.jsxinc"
+			#include "../shapes/advencedPin.jsxinc"
 			shape1('ADBE Vector Shape').setValue(advancedPin);
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
 			fill("ADBE Vector Fill Color").expression = 'effect("' + effect.name + '")(1).value';
@@ -270,11 +270,10 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
     if (!pathProp) return pins;
     var prop = pathProp.getProperty();
 
-    var layer = pathProp.layer();
-    var comp = layer.containingComp;
+    var layer = pathProp.layer;
+    var comp = pathProp.comp;
 
-    var pathExpressionLink = pathProp.expressionLink();
-    var vertices = pathProp.verticesToComp;
+    var vertices = pathProp.verticesToComp();
     var inTangents = prop.value.inTangents;
     var outTangents = prop.value.outTangents;
 
@@ -294,11 +293,11 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
         // Add effect
         var effectName = 'P | ' + prop.parentProperty.name + " - " + i;
         var effect = Duik.Pin.createPathVertexControl(layer, effectName);
-        effect( vertexIndex ).setValue([verticesCoordinates[i][0],verticesCoordinates[i][1]]);
-		effect( outTangentIndex ).setValue(pathOutTangents[i]);
-		effect( inTangentIndex ).setValue(pathInTangents[i]);
+        effect( vertexIndex ).setValue([vertices[i][0],vertices[i][1]]);
+		effect( outTangentIndex ).setValue(outTangents[i]);
+		effect( inTangentIndex ).setValue(inTangents[i]);
 
-        pins.push( effect );
+        pins.push( new DuAEProperty(effect) );
 
         if (createPinLayers)
         {
@@ -353,7 +352,7 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
 		'var origInTang = origPath.inTangents();',
 		'var origOutTang = origPath.outTangents();',
 		'var closed = origPath.isClosed();',
-		'var fxName = "B | " + origPath.propertyGroup().name;',
+		'var fxName = "P | " + origPath.propertyGroup().name;',
 		'var numPoints = 0;',
 		DuAEExpression.Library.get(['Matrix','isLayer','getGroupTransformMatrix']),
 		'var matrix = getGroupTransformMatrix( thisProperty ).inverse();',
@@ -378,7 +377,7 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
 		'var origInTang = origPath.inTangents();',
 		'var origOutTang = origPath.outTangents();',
 		'var closed = origPath.isClosed();',
-		'var fxName = "B | " + origPath.propertyGroup().name;',
+		'var fxName = "P | " + origPath.propertyGroup().name;',
 		'var numPoints = 0;',
 		'for (var i = 1, num = thisLayer("Effects").numProperties ; i <= num; i++)',
 		'{',
@@ -421,7 +420,7 @@ Duik.Pin.linkPathToLayers = function ( pathProp, layers )
         // Finished, we don't have any more layer to link!
         if (layers.length == i) return;
 
-        var fx = pins[i];
+        var fx = pins[i].getProperty();
         fx( vertexLayerIndex ).setValue( layers[i].index );
     }
 }
