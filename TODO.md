@@ -8,8 +8,7 @@
 - [x] Re-design pin shapes, export, include
 - [x] Change bone anchor to a single dot, like pins, but add a plain circle always visible in the link
 - [x] Add *bake appearance* button on the top line
-- [ ] Options for bones:
-    - Auto update from selection
+- [ ] Options for bones: WIP
     - Selection:
         - Side
         - Location
@@ -22,7 +21,7 @@
 
 ## DuAEF
 
-- [ ] Add random button to the color selector
+- [x] Add random button to the color selector
 - [ ] when alerting debug info, actually throw error if javascript debugging in Ae is on
 
 ## Notes
