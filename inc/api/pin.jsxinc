@@ -142,6 +142,38 @@ Duik.Pin.create = function( comp, size, type )
 
 
 //low-level undocumented function
+//Creates or gets the existing effect to link a property to a bone.
+Duik.Pin.createPinControl = function ( prop )
+{
+	var propInfo = new DuAEProperty( prop );
+	var prop = propInfo.getProperty();
+
+	var name = 'P | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
+	var layer = propInfo.layer;
+
+	//check if an effect already exists
+	var effect = null;
+
+	for (var i = 1, n = layer('ADBE Effect Parade').numProperties; i <= n ; i++)
+	{
+		var fx = layer('ADBE Effect Parade').property(i);
+		if (fx.matchName == Duik.PseudoEffect.POS_PIN.matchName && fx.name == name)
+		{
+			effect = fx;
+			break;
+		}
+	}
+
+	if (effect == null)
+	{
+		effect = Duik.PseudoEffect.POS_PIN.apply(layer);
+		effect.name = name;
+	}
+
+	return effect;
+}
+
+//low-level undocumented function
 //creates an effect to control a shape vertex and tangents
 Duik.Pin.createPathVertexControl = function( layer, name, fixVertex, fixIn, fixOut)
 {
@@ -423,4 +455,103 @@ Duik.Pin.linkPathToLayers = function ( pathProp, layers )
         var fx = pins[i].getProperty();
         fx( vertexLayerIndex ).setValue( layers[i].index );
     }
+}
+
+/**
+ * Links the puppet pins to the given layers.
+ * @param {Property[]|DuAEProperty[]} pins The path property (either an "ADBE FreePin3 PosPin Atom" or an "ADBE FreePin3 PosPin Position")
+ * @param {Layer[]} layers The layers to link
+ */
+Duik.Pin.linkPuppetPinsToLayers = function ( pins, layers )
+{
+	alert(layers);
+	for (var i = 0, n = pins.length; i < n; i++)
+    {
+		// Finished, we don't have any more layer to link!
+        if (layers.length == i) return;
+
+		var pin = new DuAEProperty( pins[i] );
+        var pinProp = pin.getProperty();
+
+		if ( pinProp.matchName == "ADBE FreePin3 PosPin Atom" )
+        {
+            pinProp = pinProp.property( "ADBE FreePin3 PosPin Position" );
+        }
+
+		Duik.Pin.linkPositionToPin( pinProp, layers[i], false );
+	}
+}
+
+/**
+	* Links a spatial property to a layer
+	* @param {Property|DuAEProperty} prop - The property to link
+	* @param {Layer} boneLayer - The parent layer
+	* @param {bool} [keepOffset=true] - True to not move the parent layer to the position of the property
+	* @return {PropertyGroup} The effect created to link the bone.
+*/
+Duik.Pin.linkPositionToPin = function (prop, pinLayer, keepOffset)
+{
+	var propInfo = new DuAEProperty(prop);
+	prop = propInfo.getProperty();
+	keepOffset = def(keepOffset, true);
+
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
+	{
+		return;
+	}
+
+	if (!propInfo.riggable()) return;
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	//add effect
+	var effect = Duik.Pin.createPinControl( propInfo );
+
+	//fix property
+	prop = propInfo.getProperty();
+
+	var originalPos = DuAELayer.getWorldPos(pinLayer);
+
+	//move the layer to the prop
+	if (!keepOffset) DuAELayer.moveLayerToProperty(pinLayer, prop);
+
+	var layerIndex = Duik.PseudoEffect.POS_PIN.props["Layer"].index;
+	effect( layerIndex ).setValue( pinLayer.index );
+
+	//build expression
+	var posExp = '';
+	if (layer instanceof ShapeLayer)
+	{
+		posExp = [ DuAEExpression.Id.PIN,
+			'var l = null;',
+			'try {l = effect("' + effect.name + '")(' + layerIndex + ')} catch (e) {};',
+			'var result = value;',
+			'if (l != null) {',
+			'result = l.toWorld(l.anchorPoint);'
+		].join('\n');
+
+		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		posExp += '}\nresult;';
+	}
+	else
+	{
+		posExp = [ DuAEExpression.Id.PIN,
+			'var l = null;',
+			'try {l = effect("' + effect.name + '")(' + layerIndex + ')} catch (e) {};',
+			'var result = value;',
+			'if (l != null) {',
+			'result = l.toWorld(l.anchorPoint);'
+		].join('\n');
+
+		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		posExp += 'result = fromWorld(result);\n' +
+			'}\nresult;';
+	}
+
+	prop.expression = posExp;
+
+	return effect;
 }

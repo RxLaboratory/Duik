@@ -101,30 +101,6 @@ DuAEF.Duik.Bone.size = 100;
 */
 DuAEF.Duik.Bone.color = DuColor.Color.RAINBOX_RED;
 
-//low-level undocumented function
-//Creates or gets the existing effect to link a property to a bone.
-DuAEF.Duik.Bone.createBoneLinker = function (layer, name)
-{
-	//check if an effect already exists
-	var effect = null;
-
-	for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
-	{
-		var fx = layer('ADBE Effect Parade').property(i);
-		if (fx.matchName == DuAEF.Duik.PseudoEffects.BONE_LINKER.matchName && fx.name == name)
-		{
-			effect = fx;
-			break;
-		}
-	}
-	if (effect == null)
-	{
-		effect = DuAEF.Duik.PseudoEffects.BONE_LINKER.apply(layer);
-		effect.name = name;
-	}
-
-	return effect;
-}
 
 /**
  * Creates a bone for a vertex or a tangent of a shape, using the corresponding effect set by Duik (DuAEF.Duik.PseudoEffects.SHAPE_LINKER).
@@ -448,87 +424,4 @@ DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
 		bones.push(new Bone(layer));
 	})
 	return bones;
-}
-
-/**
-	* Links a spatial property to a layer
-	* @param {Property|PropertyInfo} prop - The property to link
-	* @param {Layer} boneLayer - The parent layer
-	* @param {bool} [keepOffset=true] - True to not move the parent layer to the position of the property
-	* @return {PropertyGroup} The effect created to link the bone.
-*/
-DuAEF.Duik.Bone.linkPositionToBone = function (prop, boneLayer, keepOffset)
-{
-	if (!Object.isValid(prop)) return;
-	if (typeof keepOffset === 'undefined') keepOffset = true;
-
-	var propInfo;
-	if (prop instanceof PropertyInfo)
-	{
-		propInfo = prop;
-		prop = propInfo.getProperty();
-	}
-	else
-	{
-		propInfo = new PropertyInfo(prop);
-	}
-
-	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
-	{
-		return;
-	}
-
-	var layer = propInfo.layer;
-	var comp = propInfo.comp;
-
-	//add effect
-	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
-	var effect = DuAEF.Duik.Bone.createBoneLinker(layer,effectName);
-
-	//fix property
-	prop = propInfo.getProperty();
-
-	var originalPos = DuAEF.DuAE.Layer.getWorldPos(boneLayer);
-
-	//move the layer to the prop
-	if (!keepOffset) DuAEF.DuAE.Layer.moveLayerToProperty(boneLayer, prop);
-
-
-	effect(DuAEF.Duik.PseudoEffects.BONE_LINKER.boneLayer).setValue(boneLayer.index);
-
-	//build expression
-	var posExp = '';
-	if (layer instanceof ShapeLayer)
-	{
-		posExp = '//Duik.bone\n' +
-			'var l = null;\n' +
-			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-			'var result = value;\n' +
-			'if (l != null) {\n' +
-			'result = l.toWorld(l.anchorPoint);\n';
-
-		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
-
-		posExp += '}\n' +
-			'result;';
-	}
-	else
-	{
-		posExp = '//Duik.bone\n' +
-			'var l = null;\n' +
-			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
-			'var result = value;\n' +
-			'if (l != null) {\n' +
-			'result = l.toWorld(l.anchorPoint);\n';
-
-		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
-
-		posExp += 'result = fromWorld(result);\n' +
-			'}\n' +
-			'result;';
-	}
-
-	if (prop.canSetExpression) prop.expression = posExp;
-
-	return effect;
 }
