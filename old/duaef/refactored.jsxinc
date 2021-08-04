@@ -443,3 +443,186 @@ DuAEF.Duik.Bone.rigShape = function (prop,size,tangents,createBones)
 
 	return bones;
 }
+
+
+/**
+	* Links a spatial property to a layer
+	* @param {Property|PropertyInfo} prop - The property to link
+	* @param {Layer} boneLayer - The parent layer
+	* @param {bool} [keepOffset=true] - True to not move the parent layer to the position of the property
+	* @return {PropertyGroup} The effect created to link the bone.
+*/
+DuAEF.Duik.Bone.linkPositionToBone = function (prop, boneLayer, keepOffset)
+{
+	if (!Object.isValid(prop)) return;
+	if (typeof keepOffset === 'undefined') keepOffset = true;
+
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
+	{
+		return;
+	}
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	//add effect
+	var effectName = 'B | ' + prop.parentProperty.name + ' - ' + prop.propertyIndex;
+	var effect = DuAEF.Duik.Bone.createBoneLinker(layer,effectName);
+
+	//fix property
+	prop = propInfo.getProperty();
+
+	var originalPos = DuAEF.DuAE.Layer.getWorldPos(boneLayer);
+
+	//move the layer to the prop
+	if (!keepOffset) DuAEF.DuAE.Layer.moveLayerToProperty(boneLayer, prop);
+
+
+	effect(DuAEF.Duik.PseudoEffects.BONE_LINKER.boneLayer).setValue(boneLayer.index);
+
+	//build expression
+	var posExp = '';
+	if (layer instanceof ShapeLayer)
+	{
+		posExp = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = l.toWorld(l.anchorPoint);\n';
+
+		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		posExp += '}\n' +
+			'result;';
+	}
+	else
+	{
+		posExp = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = l.toWorld(l.anchorPoint);\n';
+
+		if (keepOffset) posExp += 'result = result - ' + originalPos.toSource() + ';\n';
+
+		posExp += 'result = fromWorld(result);\n' +
+			'}\n' +
+			'result;';
+	}
+
+	if (prop.canSetExpression) prop.expression = posExp;
+
+	return effect;
+}
+
+
+/**
+ * Adds a Structure to the Puppet Pins. Elements will be parented in the order of the Array.
+ * @param {Property[]|PropertyInfo[]} puppetPins - The pins
+ * @param {int} [num] - The number of elements of the structure.
+ * @param {bool} [forceNum=false] - When true, the strucutre will have num elements even if there is less items in the selection (but will respect the selection if it is bigger)
+ * @param {bool} [reverseAutoLink=false] - When true, the preference to force auto linking is reversed (!DuAEF.Duik.Structure.linkPaths)
+ * @return {Structure} The new Structure
+ */
+DuAEF.Duik.Structure.addStructureToPuppetPins = function( puppetPins, num, forceNum, reverseAutoLink, id )
+{
+    if ( typeof id === 'undefined' ) id = new Date().getTime();
+    if ( typeof forceNum === 'undefined' ) forceNum = false;
+    if ( typeof reverseAutoLink === 'undefined' ) reverseAutoLink = false;
+
+    var link = DuAEF.Duik.Structure.linkPins;
+    if ( reverseAutoLink ) link = !DuAEF.Duik.Structure.linkPins;
+
+    var propInfo = new PropertyInfo( puppetPins[ 0 ] );
+    var comp = propInfo.comp;
+
+    var color = DuAEF.Duik.Structure.color;
+    if ( color == DuColor.Color.RANDOM )
+    {
+        color = DuColor.randomFloatRGBA();
+    }
+
+    var numElements = puppetPins.length - 1;
+    if ( typeof num === 'undefined' ) num = puppetPins.length - 1;
+    if ( forceNum && num > numElements ) numElements = num;
+
+    var structure = DuAEF.Duik.Structure.addStructure( numElements, comp, undefined, id );
+
+    //move and link to the pins
+    var count = numElements;
+    if ( puppetPins.length <= numElements ) count = puppetPins.length - 1;
+    for ( var i = 0, num = count; i <= num; i++ )
+    {
+        var element = structure.elements[ i ];
+        element.parent = null;
+
+        //get pin position
+        var pin = puppetPins[ i ];
+
+        var propInfo = new PropertyInfo( pin );
+        pin = propInfo.getProperty();
+        var parentPin;
+
+        if ( pin.matchName == "ADBE FreePin3 PosPin Atom" )
+        {
+            parentPin = pin;
+            pin = pin.property( "ADBE FreePin3 PosPin Position" );
+        }
+        else
+        {
+            parentPin = pin.parentProperty;
+        }
+
+        element.transform.position.setValue( DuAEF.DuAE.Layer.getWorldPos( propInfo.layer, pin.value ) );
+        structure.elements[ i ].moved = true;
+
+        element.name = DuAEF.DuAE.Comp.newUniqueLayerName( "S | " + parentPin.name, comp );
+        if ( i > 0 ) element.parent = structure.elements[ i - 1 ];
+
+        //link
+        if ( link ) DuAEF.Duik.Bone.linkPositionToBone( pin, element, false );
+    }
+
+    structure.moved = true;
+
+    return structure;
+}
+
+
+//low-level undocumented function
+//Creates or gets the existing effect to link a property to a bone.
+DuAEF.Duik.Bone.createBoneLinker = function (layer, name)
+{
+	//check if an effect already exists
+	var effect = null;
+
+	for (var i = 1; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		var fx = layer('ADBE Effect Parade').property(i);
+		if (fx.matchName == DuAEF.Duik.PseudoEffects.BONE_LINKER.matchName && fx.name == name)
+		{
+			effect = fx;
+			break;
+		}
+	}
+	if (effect == null)
+	{
+		effect = DuAEF.Duik.PseudoEffects.BONE_LINKER.apply(layer);
+		effect.name = name;
+	}
+
+	return effect;
+}

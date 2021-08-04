@@ -91,7 +91,7 @@ DuOCODoc.prototype.fromPixels = function( point )
 
 /**
  * Creates the limb and armatures in the comp
- * @param {DuOCODoc} doc The doc containingb the limb.
+ * @param {DuOCODoc} doc The doc containing the limb.
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition to use.
  * @param {Layer} [parentLayer=null] The parent layer of the bone.
  * @param {int} [armatureId] A Unique identifier for this armature. If omitted, a new one will be assigned.
@@ -115,7 +115,7 @@ DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, armatureId )
 
 /**
  * Creates a new chain of bones located on the vertices of the path.
-  * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {DuOCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
  * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
  * @returns {DuOCOBone} The root bone of the new chain
@@ -154,6 +154,55 @@ DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
     }
 
     return root;
+}
+
+/**
+ * Creates a new chain of bones located on the puppet pins.
+ * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {string} name The name of the bones (will increment if needed)
+ * @param {Property[]|DuAEProperty[]} pins The puppet pins
+ * @returns {DuOCOBone} The root bone of the new chain
+ */
+DuOCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
+{
+    var b = null;
+    var root = null;
+    var names = [];
+
+    // Create for each pin
+    for (var i = 0, n = pins.length; i < n; i++)
+    {
+        var boneName = DuString.generateUnique(name, names);
+        var bone = new DuOCOBone( boneName );
+        names.push(boneName);
+
+        var pin = new DuAEProperty( pins[i] );
+        var pinProp = pin.getProperty();
+
+        if ( pinProp.matchName == "ADBE FreePin3 PosPin Atom" )
+        {
+            pinProp = pinProp.property( "ADBE FreePin3 PosPin Position" );
+        }
+
+        var pinPos = DuAELayer.getWorldPos( pin.layer, pinProp.value );
+        if( pin.layer instanceof ShapeLayer ) pinPos = pinProp.value;
+        pinPos = doc.fromPixels( pinPos );
+        bone.x = pinPos[0];
+        bone.y = pinPos[1];
+
+        if (b != null)
+        {
+            bone.attached = true;
+            b.children.push( bone );
+            b = bone;
+        }
+        else
+        {
+            this.armature.push( bone );
+            root = bone;
+            b = bone;
+        }
+    }
 }
 
 /**
