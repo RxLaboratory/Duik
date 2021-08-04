@@ -1,9 +1,9 @@
 # WIP
 
-- [ ] re-build a simple shapeToJsxinc script (ask for the var name)
+- [x] re-build a simple shapeToJsxinc script (ask for the var name)
 - [ ] include the 'shape_linker' pseudo effect as `Duik.PseudoEffect.PATH_PIN`
 - [ ] include the 'bone' pseudo effect as `Duik.PseudoEffect.PIN`
-- [ ] Re-design pin shapes, export, include
+- [x] Re-design pin shapes, export, include
 
 ## Notes
 
