@@ -113,7 +113,36 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
         props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
         if ( props.length > 0 )
         {
-            propsByLayer.push( props );
+            // Get pins from each effect
+            for(var i = 0, n = props.length; i < n; i++)
+            {
+                var pins = [];
+
+                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
+                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
+                {
+                    var mesh = meshGroup( j );
+                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
+                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
+                    {
+                        var pin = pinsGroup.property( k );
+                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
+                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
+                    }
+                }
+
+                if (pins.length == 0) continue;
+
+                // Create a limb for all pins
+                // create the OCODoc
+                var doc = DuOCODoc.fromComp( characterName, comp );
+                var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
+                limb.armatureFromPuppetPins( doc, name, pins );
+                // create
+                var boneLayers = doc.toComp( comp );
+                // link
+                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
+            }
             return;
         }
     });
