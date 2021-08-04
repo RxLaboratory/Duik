@@ -141,13 +141,15 @@ DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
         bone.y = coord[1];
         if (b != null)
         {
-            b.children.push( bone );
             bone.attached = true;
+            b.children.push( bone );
+            b = bone;
         }
         else
         {
             this.armature.push( bone );
             root = bone;
+            b = bone;
         }
     }
 
@@ -308,16 +310,12 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
     var targetGroup = mainGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
     targetGroup.name = 'Target';
     var targetContent = targetGroup.property("ADBE Vectors Group");
-    //1st ellipse
-    var shape = targetContent.addProperty("ADBE Vector Shape - Ellipse");
-    shape("ADBE Vector Ellipse Size").setValue([15,15]);
     //2nd ellipse
-    shape = targetContent.addProperty("ADBE Vector Shape - Ellipse");
-    shape("ADBE Vector Ellipse Size").setValue([1,1]);
-    //stroke
-    var stroke = targetContent.addProperty("ADBE Vector Graphic - Stroke");
-    stroke("ADBE Vector Stroke Color").setValue([ 0.1, 0.1, 0.1, 1.0]);
-    stroke("ADBE Vector Stroke Width").setValue( 2 );
+    var shape = targetContent.addProperty("ADBE Vector Shape - Ellipse");
+    shape("ADBE Vector Ellipse Size").setValue([4,4]);
+    //fill
+    var fill = targetContent.addProperty("ADBE Vector Graphic - Fill");
+    fill("ADBE Vector Fill Color").setValue([ 0, 0, 0, 1.0]);
 
     //Display Group
     var displayGroup = mainGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
@@ -331,6 +329,61 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
     linkGroup.name = 'Link';
     //anchor point
     linkGroup('ADBE Vector Transform Group')('ADBE Vector Anchor').setValue([ 0, 5]);
+    //group scale
+    linkGroup('ADBE Vector Transform Group')('ADBE Vector Scale').expression = [ DuAEExpression.Id.BONE,
+        'if ( active ) {',
+        '    var child = null;',
+        '    var childIndex = -1;',
+        '    var fx = effect( "' + effect.name + '" );',
+        '    try {',
+        '        child = fx( ' + targetIndex + ' );',
+        '        childIndex = child.index',
+        '    } catch ( e ) {}',
+        '    if ( childIndex == thisLayer.index || fx( ' + sizeIndex + ' ) == 0 )[ 0, 0 ];',
+        '    else {',
+        '        var X = 100;',
+        '        var Y = 60;',
+        '',
+        '        function isBone( layer ) {',
+        '            var ok = false;',
+        '            try {',
+        '                layer.content( "Bone" );',
+        '                ok = true;',
+        '            } catch ( e ) {',
+        '                ok = false;',
+        '            }',
+        '            return ok;',
+        '        }',
+        '        if ( !child )',
+        '            if ( index > 1 )',
+        '                if ( thisComp.layer( index - 1 ).hasParent )',
+        '                    if ( thisComp.layer( index - 1 ).parent.index == index ) child = thisComp.layer( index - 1 );',
+        '        if ( !isBone( child ) ) child = null;',
+        '        if ( !child )',
+        '            if ( index < thisComp.numLayers )',
+        '                if ( thisComp.layer( index + 1 ).hasParent )',
+        '                    if ( thisComp.layer( index + 1 ).parent.index == index ) child = thisComp.layer( index + 1 );',
+        '        if ( !isBone( child ) ) child = null;',
+        '        if ( !child ) {',
+        '            for ( var i = thisComp.numLayers; i > 0; i-- ) {',
+        '                if ( thisComp.layer( i ).hasParent )',
+        '                    if ( thisComp.layer( i ).parent.index == thisLayer.index ) {',
+        '                        child = thisComp.layer( i );',
+        '                        if ( !isBone( child ) ) child = null;',
+        '                        if ( child ) break;',
+        '                    }',
+        '            }',
+        '        }',
+        '        if ( child ) {',
+        '            var A = child.toWorld( child.anchorPoint );',
+        '            var B = thisLayer.toWorld( thisLayer.anchorPoint );',
+        '            var dist = length( A, B );',
+        '            Y = dist / 15 * 100;',
+        '        }',
+        '        [ X, Y * 100 / thisLayer( "ADBE Root Vectors Group" )( "Bone" ).transform.scale[ 1 ] ];',
+        '    }',
+        '} else value;'
+	].join('\n');
     var linkContent = linkGroup.property("ADBE Vectors Group");
     //star
     shape = linkContent.addProperty("ADBE Vector Shape - Star");
@@ -391,65 +444,14 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
         '}',
         'else value;'
     ].join('\n');
+    // circle
+    var displayContent = displayGroup.property("ADBE Vectors Group")
+    shape = displayContent.addProperty("ADBE Vector Shape - Ellipse");
+    shape("ADBE Vector Ellipse Size").setValue([20,20]);
     //fill
-    var fill = linkContent.addProperty("ADBE Vector Graphic - Fill");
+    var fill = displayContent.addProperty("ADBE Vector Graphic - Fill");
     fill("ADBE Vector Fill Color").expression = [ DuAEExpression.Id.BONE,
 	    'effect("' + effect.name +'")( ' + colorIndex + ').value;'
-	].join('\n');
-    //group scale
-    linkGroup('ADBE Vector Transform Group')('ADBE Vector Scale').expression = [ DuAEExpression.Id.BONE,
-        'if ( active ) {',
-        '    var child = null;',
-        '    var childIndex = -1;',
-        '    var fx = effect( "' + effect.name + '" );',
-        '    try {',
-        '        child = fx( ' + targetIndex + ' );',
-        '        childIndex = child.index',
-        '    } catch ( e ) {}',
-        '    if ( childIndex == thisLayer.index || fx( ' + sizeIndex + ' ) == 0 )[ 0, 0 ];',
-        '    else {',
-        '        var X = 100;',
-        '        var Y = 60;',
-        '',
-        '        function isBone( layer ) {',
-        '            var ok = false;',
-        '            try {',
-        '                layer.content( "Bone" );',
-        '                ok = true;',
-        '            } catch ( e ) {',
-        '                ok = false;',
-        '            }',
-        '            return ok;',
-        '        }',
-        '        if ( !child )',
-        '            if ( index > 1 )',
-        '                if ( thisComp.layer( index - 1 ).hasParent )',
-        '                    if ( thisComp.layer( index - 1 ).parent.index == index ) child = thisComp.layer( index - 1 );',
-        '        if ( !isBone( child ) ) child = null;',
-        '        if ( !child )',
-        '            if ( index < thisComp.numLayers )',
-        '                if ( thisComp.layer( index + 1 ).hasParent )',
-        '                    if ( thisComp.layer( index + 1 ).parent.index == index ) child = thisComp.layer( index + 1 );',
-        '        if ( !isBone( child ) ) child = null;',
-        '        if ( !child ) {',
-        '            for ( var i = thisComp.numLayers; i > 0; i-- ) {',
-        '                if ( thisComp.layer( i ).hasParent )',
-        '                    if ( thisComp.layer( i ).parent.index == thisLayer.index ) {',
-        '                        child = thisComp.layer( i );',
-        '                        if ( !isBone( child ) ) child = null;',
-        '                        if ( child ) break;',
-        '                    }',
-        '            }',
-        '        }',
-        '        if ( child ) {',
-        '            var A = child.toWorld( child.anchorPoint );',
-        '            var B = thisLayer.toWorld( thisLayer.anchorPoint );',
-        '            var dist = length( A, B );',
-        '            Y = dist / 15 * 100;',
-        '        }',
-        '        [ X, Y * 100 / thisLayer( "ADBE Root Vectors Group" )( "Bone" ).transform.scale[ 1 ] ];',
-        '    }',
-        '} else value;'
 	].join('\n');
 
     // If attached, set the target of the parent
