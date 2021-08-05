@@ -16,6 +16,11 @@
         - Size
         - Opacity
         - Character name
+- [ ] New type of leg: arthropod
+- [ ] Other limbs:
+    - Wing
+    - Worm / snake spine
+    - Fin
 - [ ] Autolink on Ctrl+click (add to helptip) (also from the options panel)
 - [ ] Random color on Alt+Click (add to helptip) (also from the options panel)
 
