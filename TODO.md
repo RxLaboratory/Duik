@@ -8,7 +8,7 @@
 - [x] Re-design pin shapes, export, include
 - [x] Change bone anchor to a single dot, like pins, but add a plain circle always visible in the link
 - [x] Add *bake appearance* button on the top line
-- [ ] Options for bones: WIP
+- [x] Options for bones:
     - Selection:
         - Side
         - Location
@@ -21,8 +21,11 @@
     - Wing
     - Worm / snake spine
     - Fin
+    - Hair
 - [ ] Autolink on Ctrl+click (add to helptip) (also from the options panel)
 - [ ] Random color on Alt+Click (add to helptip) (also from the options panel)
+- [ ] Tools:
+    - Layer manager (rename, character, limb, side, location...)
 
 ## DuAEF
 
