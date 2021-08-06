@@ -16,6 +16,7 @@
         - Size
         - Opacity
         - Character name
+- [ ] Prep translations (same system as Dugr)
 - [ ] New type of leg: arthropod
 - [ ] Other limbs:
     - Wing
