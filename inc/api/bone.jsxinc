@@ -1,5 +1,3 @@
-
-
 /**
  * Bone and armatures related tools.
  * @namespace
@@ -150,50 +148,48 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
 }
 
 /**
- * Checks the side of the layer
- * @param {Layer} [layer] The layer. If omitted, will check the first selected bone of the current comp
- * @returns {DuOCO.Side}
+ * Gets the selected bones in the comp
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @returns {ShapeLayer[]} The bones
  */
-Duik.Bone.side = function( layer )
+Duik.Bone.get = function ( selectedOnly, comp )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
-    if (!layer) return DuOCO.Side.NONE;
-
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.LEFT] ) ) return DuOCO.Side.LEFT;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.RIGHT] ) ) return DuOCO.Side.RIGHT;
-    return DuOCO.Side.NONE;
+    return Duik.Layer.getType( Duik.Layer.Type.BONE, selectedOnly, comp );
 }
 
 /**
- * Checks the location of the layer
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
- * @returns {DuOCO.Location}
+ * Sets the side of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.location = function( layer )
+Duik.Bone.setSide = function( side, layers )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
-    if (!layer) return DuOCO.Location.NONE;
+    layers = def( layers, Duik.Bone.get() );
+    Duik.Layer.setSide( side, layers );
+}
 
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.FRONT] ) ) return DuOCO.Location.FRONT;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.BACK] ) ) return DuOCO.Location.BACK;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.MIDDLE] ) ) return DuOCO.Location.MIDDLE;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.UNDER] ) ) return DuOCO.Location.UNDER;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.ABOVE] ) ) return DuOCO.Location.ABOVE;
-    if ( DuGR.inGroups( layer, [DuScriptUI.String.TAIL] ) ) return DuOCO.Location.TAIL;
-    return DuOCO.Side.NONE;
+/**
+ * Sets the location of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setLocation = function( location, layers )
+{
+    layers = def( layers, Duik.Bone.get() );
+    Duik.Layer.setLocation( location, layers );
 }
 
 /**
  * Checks the color of the bone layer
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
  * @returns {DuColor}
  */
 Duik.Bone.color = function( layer )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
+    layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return new DuColor();
 
-    if ( !Duik.isLayerType(layer, Duik.LayerType.BONE) ) return new DuColor();
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return new DuColor();
 
     var colorIndex = Duik.PseudoEffect.BONE.props['Display options']['Color'].index;
 
@@ -204,16 +200,40 @@ Duik.Bone.color = function( layer )
 }
 
 /**
- * Checks the size of the bone layer
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * Sets the color of the bone layer
+ * @param {DuColor} color The color
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  * @returns {DuColor}
+ */
+Duik.Bone.setColor = function( color, layer )
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    if (layers.length == 0) return;
+
+    for(var i = 0, n = layers.length; i < n; i++)
+    {
+        var layer = layers[i];
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) continue;
+
+        var colorIndex = Duik.PseudoEffect.BONE.props['Display options']['Color'].index;
+        var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
+        if (!effect) continue;
+        effect( colorIndex ).setValue( color.floatRGBA() );
+    }
+}
+
+/**
+ * Checks the size of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
  */
 Duik.Bone.size = function( layer )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
+    layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return 100;
 
-    if ( !Duik.isLayerType(layer, Duik.LayerType.BONE) ) return 100;
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 100;
 
     var sizeIndex = Duik.PseudoEffect.BONE.props['Display options']['Size'].index;
 
@@ -224,16 +244,39 @@ Duik.Bone.size = function( layer )
 }
 
 /**
+ * Sets the size of the bone layer
+ * @param {float} size The size in %.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setSize = function( size, layer )
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    if (layers.length == 0) return;
+
+    for(var i = 0, n = layers.length; i < n; i++)
+    {
+        var layer = layers[i];
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) continue;
+
+        var sizeIndex = Duik.PseudoEffect.BONE.props['Display options']['Size'].index;
+        var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
+        if (!effect) continue;
+        effect( sizeIndex ).setValue( size );
+    }
+}
+
+/**
  * Checks the opacity of the bone layer
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
  * @returns {DuColor}
  */
 Duik.Bone.opacity = function( layer )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
+    layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return 50;
 
-    if ( !Duik.isLayerType(layer, Duik.LayerType.BONE) ) return 50;
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 50;
 
     var opacityIndex = Duik.PseudoEffect.BONE.props['Display options']['Opacity'].index;
 
@@ -244,41 +287,46 @@ Duik.Bone.opacity = function( layer )
 }
 
 /**
- * Checks the character name this layer belongs to
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
- * @returns {DuColor}
+ * Sets the opacity of the bone layer
+ * @param {float} opacity The opacity in %.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.characterName = function( layer )
+Duik.Bone.setOpacity = function( opacity, layer )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
-    if (!layer) return '';
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    if (layers.length == 0) return;
 
-    if ( !Duik.isLayerType(layer, Duik.LayerType.BONE) ) return '';
+    for(var i = 0, n = layers.length; i < n; i++)
+    {
+        var layer = layers[i];
 
-    // Split
-    var name = layer.name.split(' | ');
-    if (name.length <= 1) return '';
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) continue;
 
-    // Must be in the corresponding group
-    if (!DuGR.inGroups(layer, [name[1]]) ) return '';
-    return name[1];
+        var opacityIndex = Duik.PseudoEffect.BONE.props['Display options']['Opacity'].index;
+        var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
+        if (!effect) continue;
+        effect( opacityIndex ).setValue( opacity );
+    }
 }
 
 /**
- * Checks the limb name this layer belongs to
- * @param {Layer} [layer=DuAEProject.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
- * @returns {DuColor}
+ * Sets the character name of the bone layer
+ * @param {string} characterName The character name.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.limbName = function( layer )
+Duik.Bone.setCharacterName = function( characterName, layer )
 {
-    layer = def(layer, DuAEProject.getActiveLayer());
-    if (!layer) return '';
+    layers = def( layers, Duik.Bone.get() );
+    Duik.Layer.setCharacterName( characterName, layers );
+}
 
-    if ( !Duik.isLayerType(layer, Duik.LayerType.BONE) ) return '';
-
-    // Split
-    var name = layer.name.split(' | ');
-    if (name.length <= 2) return '';
-
-    return name[2];
+/**
+ * Sets the limb name of the bone layer
+ * @param {string} limbName The limb name.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setLimbName = function( limbName, layer )
+{
+    layers = def( layers, Duik.Bone.get() );
+    Duik.Layer.setLimbName( limbName, layers );
 }
