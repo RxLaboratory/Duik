@@ -16,8 +16,13 @@
         - Size
         - Opacity
         - Character name
-- [ ] In Dugr and Duik: fix os in checkversion
-- [ ] Prep translations (same system as Dugr)
+- [x] In Dugr and Duik: fix os in checkversion
+- [x] Prep translations (same system as Dugr)
+- [ ] Add limbs
+    - arm
+    - leg
+    - spine
+    - tail
 - [ ] New type of leg: arthropod
 - [ ] Other limbs:
     - Wing
