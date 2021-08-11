@@ -18,17 +18,21 @@
         - Character name
 - [x] In Dugr and Duik: fix os in checkversion
 - [x] Prep translations (same system as Dugr)
+- [ ] New type of leg: arthropod
 - [ ] Add limbs
     - arm
     - leg
     - spine
     - tail
-- [ ] New type of leg: arthropod
 - [ ] Other limbs:
     - Wing
     - Worm / snake spine
     - Fin
     - Hair
+- [ ] bone tools
+    - duplicate
+    - edit mode
+    - test if bake is still needed
 - [ ] Autolink on Ctrl+click (add to helptip) (also from the options panel)
 - [ ] Random color on Alt+Click (add to helptip) (also from the options panel)
 - [ ] Tools:
