@@ -22,10 +22,10 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers )
 
     // Set the default params
 
-    // world in the center, 10% above the bottom of the comp
-    this.world = [comp.width/2, comp.height*0.1];
-    // 70% of the comp height, divided by 185cm
-    this.pixelsPerCm = comp.height*0.7/185;
+    // world in the center, 20% above the bottom of the comp
+    this.world = [comp.width/2, comp.height*0.2];
+    // 50% of the comp height, divided by 185cm
+    this.pixelsPerCm = comp.height*0.5/185;
 
     // TODO Get ground, character, etc
 
@@ -44,7 +44,7 @@ DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
     duration = def(duration, 60);
     frameRate = def(frameRate, 24);
 
-    comp = def( comp, app.project.items.addComp( this.name, this.resolution[0], this.resolution[1], 1.0, duration, frameRate) );
+    if (typeof comp === 'undefined') comp = app.project.items.addComp( this.name, this.resolution[0], this.resolution[1], 1.0, duration, frameRate);
 
     var layers = [];
     // For each limb
@@ -53,40 +53,6 @@ DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
         layers = layers.concat( this.limbs[i].toComp( this, comp ) );
     }
     return layers;
-}
-
-/**
- * Converts a doc coordinate in centimeters to pixel coordinates
- * @param {float[]} point The coordinate to convert
- * @returns {int[]} The coordinates in pixels relative to the comp
- */
-DuOCODoc.prototype.toPixels = function( point )
-{
-    // First, convert to pixels
-    var x = point[0]*this.pixelsPerCm;
-    var y = point[1]*this.pixelsPerCm;
-    // We're relative to the world, add its coordinates
-    x += this.world[0];
-    y += this.world[1];
-    return [x, y];
-}
-
-/**
- * Converts a pixel coordinate in pixels to centimeters doc coordinates
- * @param {int[]} point The coordinate to convert
- * @returns {float[]} The coordinates in centimeters relative to the doc
- */
-DuOCODoc.prototype.fromPixels = function( point )
-{
-    var x = point[0];
-    var y = point[1];
-    // We're relative to the world, remove its coordinates
-    x -= this.world[0];
-    y -= this.world[1];
-    // Convert to cm
-    x /= this.pixelsPerCm;
-    y /= this.pixelsPerCm;
-    return [x, y];
 }
 
 /**
@@ -233,6 +199,9 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
     if (doc.name != '') DuAETag.addGroup( boneLayer, doc.name, tag );
     DuAETag.addGroup( boneLayer, tr( DuScriptUI.String.BONE ), tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_TYPE, Duik.Layer.Type.BONE, tag );
+    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_BONE_TYPE, this.type, tag );
+    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_LIMB_TYPE, limb.type, tag );
+    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_LIMB, limb.limb, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ARMATURE_ID, armatureId, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ATTACHED_BONE, this.attached, tag );
 
@@ -487,6 +456,14 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, armatureId 
 
     // If attached, set the target of the parent
     if (this.attached) parentLayer.effect( Duik.PseudoEffect.BONE.matchName )( targetIndex ).setValue( boneLayer.index );
+
+    // And set the color
+    if ( this.type == DuOCO.Bone.CLAVICLE ) Duik.Bone.setColor( DuColor.Color.RAINBOX_RED, [boneLayer] );
+    else if ( this.type == DuOCO.Bone.HUMERUS ) Duik.Bone.setColor( DuColor.Color.ORANGE, [boneLayer] );
+    else if ( this.type == DuOCO.Bone.RADIUS ) Duik.Bone.setColor( DuColor.Color.YELLOW, [boneLayer] );
+    else if ( this.type == DuOCO.Bone.CARPUS ) Duik.Bone.setColor( DuColor.Color.LIGHT_BLUE, [boneLayer] );
+    else if ( this.type == DuOCO.Bone.FINGER || this.type == DuOCO.Bone.TIP ) Duik.Bone.setColor( DuColor.Color.LIGHT_PURPLE, [boneLayer] );
+    else if ( this.type == DuOCO.Bone.HEEL ) Duik.Bone.setColor( DuColor.Color.GREEN, [boneLayer] );
 
     // Child bones
     for(var i = 0, n = this.children.length; i < n; i++)
