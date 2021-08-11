@@ -14,6 +14,7 @@ Duik.CmdLib['Bone']["Custom_Limb"] = "Duik.Bone.customLimb()";
  * Creates a custom limb.
  * @param {int} [num=2] - The number of bones in case nothing is selected in the comp. Otherwize, a bone is created for each selected path vertex/puppet pin/layer.
  * @param {string} [name='Limb'] - The name of the limb
+ * @param {string} [characterName] The name of the character
  * @param {DuOCO.Side} [side=DuOCO.Side.NONE] - The side of the limb
  * @param {DuOCO.Location} [location=DuOCO.Location.NONE] - The location of the limb
  * @param {boolean} [forceLink=false] - Wether link the selected layers/properties to the new armature
@@ -32,7 +33,7 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
     side = def( side, DuOCO.Side.NONE);
     location = def( location, DuOCO.Location.NONE);
 
-    DuAE.beginUndoGroup("Create custom armature");
+    DuAE.beginUndoGroup("Create custom limb");
     DuAEProject.setProgressMode(true);
 
     var layers = DuAEComp.getSelectedLayers();
@@ -147,6 +148,54 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
 
 }
 
+/**
+ * Creates a new arm.
+ * @param {string} [characterName] The name of the character
+ * @param {DuOCO.LimbType} [type=DuOCO.LimbType.PLANTIGRADE] The type of limb
+ * @param {DuOCO.Side} [side=DuOCO.Side.LEFT] The side
+ * @param {Boolean} [shoulder=false] Whether to create a shoulder
+ * @param {Boolean} [arm=true]  Whether to create an arm / humerus
+ * @param {Boolean} [forearm=true]  Whether to create a forearm
+ * @param {Boolean} [hand=true]  Whether to create a hand
+ * @param {Boolean} [claws=false]  Whether to add claws
+ * @param {boolean} [forceLink=false] - Wether link the selected layers/properties to the new armature
+ */
+Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, hand, claws, forceLink )
+{
+    // get current comp
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    type = def(type, DuOCO.LimbType.PLANTIGRADE);
+    side = def(side, DuOCO.Side.LEFT);
+    forceLink = def( forceLink, false);
+    characterName = def( characterName, '' );
+
+    shoulder = def( shoulder, false );
+    arm = def( arm, true );
+    forearm = def( forearm, true );
+    hand = def( hand, true );
+    claws = def( claws, false );
+
+    DuAE.beginUndoGroup("Create arm");
+    DuAEProject.setProgressMode(true);
+
+    var layers = DuAEComp.getSelectedLayers();
+
+    // If there's no selected layer, just create
+    if( layers.length == 0 )
+    {
+        var doc = DuOCODoc.fromComp( characterName, comp );
+        //TODO Get the spine to update the location
+        //var position = [4 , 145];
+        var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws );  
+        doc.toComp( comp );
+        DuAEProject.setProgressMode(false);
+        DuAE.endUndoGroup();
+        return;
+    }
+}
+
 Duik.CmdLib['Bone']["Select"] = "Duik.Bone.select()";
 /**
  * Selects all the bones in the comp (and deselects any other layer)
@@ -168,7 +217,7 @@ Duik.Bone.toggleVisibility = function( comp )
 }
 
 /**
- * Gets the selected bones in the comp
+ * Gets the bones in the comp
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
  * @returns {ShapeLayer[]} The bones
  */
