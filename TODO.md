@@ -19,10 +19,8 @@
 - [x] In Dugr and Duik: fix os in checkversion
 - [x] Prep translations (same system as Dugr)
 - [x] New type of leg: arthropod
-- [ ] move side & location to limb options
-- [ ] finish arm (create on layers/effects)
+- [x] move side & location to limb options
 - [ ] Add limbs
-    - arm WIP
     - leg
     - spine
     - tail

@@ -128,6 +128,75 @@ DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
 }
 
 /**
+ * Moves the armature of the limb to the vertices of the path.
+ * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
+ */
+DuOCOLimb.prototype.moveArmatureToPath = function( doc, pathProp )
+{
+    if (this.armature.length == 0) return;
+
+    pathProp = new DuAEProperty(pathProp);
+    var vertices = pathProp.verticesToComp( );
+
+    var b = null;
+
+    // For each vertex
+    for(var i = 0, n = vertices.length; i < n; i++)
+    {
+        var vertex = vertices[i];
+
+        if (b == null) b = this.armature[0];
+        else 
+        {
+            if (b.children.length == 0) return;
+            b = b.children[0];
+        }
+
+        var coord = doc.fromPixels( vertex );
+        b.x = coord[0];
+        b.y = coord[1];
+    }
+}
+
+/**
+ * Moves the armature of the limb to the puppet pins.
+ * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {Property[]|DuAEProperty[]} pins The puppet pins
+ */
+DuOCOLimb.prototype.moveArmatureToPuppetPins = function( doc, pins )
+{
+    if (this.armature.length == 0) return;
+
+    var b = null;
+
+    // Create for each pin
+    for (var i = 0, n = pins.length; i < n; i++)
+    {
+        if (b == null) b = this.armature[0];
+        else 
+        {
+            if (b.children.length == 0) return;
+            b = b.children[0];
+        }
+
+        var pin = new DuAEProperty( pins[i] );
+        var pinProp = pin.getProperty();
+
+        if ( pinProp.matchName == "ADBE FreePin3 PosPin Atom" )
+        {
+            pinProp = pinProp.property( "ADBE FreePin3 PosPin Position" );
+        }
+
+        var pinPos = DuAELayer.getWorldPos( pin.layer, pinProp.value );
+        if( pin.layer instanceof ShapeLayer ) pinPos = pinProp.value;
+        pinPos = doc.fromPixels( pinPos );
+        b.x = pinPos[0];
+        b.y = pinPos[1];
+    }
+}
+
+/**
  * Creates a new chain of bones located on the puppet pins.
  * @param {DuOCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
@@ -174,6 +243,130 @@ DuOCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
             b = bone;
         }
     }
+
+    return root;
+}
+
+/**
+ * Moves the armature of the limb to the layers.
+ * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {Layer[]|LayerCollection} layers The layers
+ */
+DuOCOLimb.prototype.moveArmatureToLayers = function( doc, layers )
+{
+    var b = null;
+
+    var it = new DuList(layers);
+
+    // Check if there are layers at the same location
+    // To prevent moving structures if there are mulitple anchor points at the same place
+    var moveLayers = true;
+    var layer;
+    while (layer = it.next()) {
+        var pos = DuAELayer.getWorldPos( layer );
+        pos = new DuList( pos );
+        for (var i = it.current + 1, n = it.length(); i < n; i++)
+        {
+            var layer2 = it.at(i);
+            var pos2 = DuAELayer.getWorldPos( layer2 );     
+            if ( pos.equals( pos2, undefined, 0 ) ) return;
+        }
+    }
+
+    // For each anchor point
+    it.reinitIterator();
+    while (layer = it.next()) {
+
+        if (b == null) b = this.armature[0];
+        else 
+        {
+            if (b.children.length == 0) return;
+            b = b.children[0];
+        }
+        
+        var pos = DuAELayer.getWorldPos( layer );
+        pos = doc.fromPixels(pos);
+
+        b.x = pos[0];
+        b.y = pos[1];
+    };
+}
+
+/**
+ * Creates a new chain of bones located on the layer anchor points.
+ * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {string} name The name of the bones (will increment if needed)
+ * @param {Layer[]|LayerCollection} layers The layers
+ * @returns {DuOCOBone} The root bone of the new chain
+ */
+DuOCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
+{
+    var b = null;
+    var root = null;
+    var names = [];
+
+    var it = new DuList(layers);
+
+    // Check if there are layers at the same location
+    // To prevent moving structures if there are mulitple anchor points at the same place
+    var moveLayers = true;
+    var layer;
+    while (layer = it.next()) {
+        var pos = DuAELayer.getWorldPos( layer );
+        pos = new DuList( pos );
+        for (var i = it.current + 1, n = it.length(); i < n; i++)
+        {
+            var layer2 = it.at(i);
+            var pos2 = DuAELayer.getWorldPos( layer2 );     
+            if ( pos.equals( pos2, undefined, 0 ) )
+            {
+                moveLayers = false;
+                break;
+            }
+        }
+        if ( !moveLayers ) break;
+    }
+
+    // Create for each anchor point
+    var num = it.length();
+    var boneLength = 100.0 / (num-1);
+    var x = -50;
+    it.reinitIterator();
+    while (layer = it.next()) {
+        var boneName = DuString.generateUnique(name, names);
+        var bone = new DuOCOBone( boneName );
+        names.push(boneName);
+        
+        if (moveLayers)
+        {
+            var pos = DuAELayer.getWorldPos( layer );
+            pos = doc.fromPixels(pos);
+
+            bone.x = pos[0];
+            bone.y = pos[1];
+        }
+        else 
+        {
+            bone.x = x;
+            bone.y = 100;
+            x += boneLength;
+        }
+
+        if (b != null)
+        {
+            bone.attached = true;
+            b.children.push( bone );
+            b = bone;
+        }
+        else
+        {
+            this.armature.push( bone );
+            root = bone;
+            b = bone;
+        }
+    };
+
+    return root;
 }
 
 /**
