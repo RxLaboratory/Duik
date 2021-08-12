@@ -21,11 +21,11 @@
 - [x] New type of leg: arthropod
 - [x] move side & location to limb options
 - [ ] Add limbs
-    - tail
     - Wing
     - Worm / snake spine
     - Fin
     - Hair
+- [ ] Check / improve loading performance
 - [ ] bone tools
     - duplicate
     - edit mode
