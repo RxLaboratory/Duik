@@ -21,10 +21,7 @@
 - [x] New type of leg: arthropod
 - [x] move side & location to limb options
 - [ ] Add limbs
-    - leg
-    - spine
     - tail
-- [ ] Other limbs:
     - Wing
     - Worm / snake spine
     - Fin
@@ -37,6 +34,7 @@
 - [ ] Random color on Alt+Click (add to helptip) (also from the options panel)
 - [ ] Tools:
     - Layer manager (rename, character, limb, side, location...)
+- [ ] Note editor
 
 ## DuAEF
 
