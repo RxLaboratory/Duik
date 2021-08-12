@@ -9,6 +9,139 @@ Duik.Bone = {};
  */
 Duik.CmdLib['Bone'] = [];
 
+// Low-level undocumented function
+// Creates a limb on the selection, optionally linking the items
+Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
+{
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+ 
+    // Links
+    var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
+    if (forceLink) linkPath = !linkPath;
+    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
+    if (forceLink) linkPuppetPins = !linkPuppetPins;
+    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
+    if (forceLink) linkLayers = !linkLayers;
+
+    var layers = DuAEComp.getSelectedLayers();
+
+    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
+    var layerToRemove = null;
+    if (layers.length == 1 && !linkPath)
+    {
+        var l = layers[0];
+        if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
+    }
+
+    // If there's no selected layer, just create
+    if( layers.length == 0 )
+    {
+        var doc = DuOCODoc.fromComp( characterName, comp );
+        var limb = limbCreator( doc );
+        doc.toComp( comp );
+        return;
+    }
+
+    // For each selected layer
+    var it = new DuList( layers );
+    var ok = false;
+    it.do( function( layer )
+    {
+        //get paths
+        var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
+
+        if ( props.length > 0 )
+        {
+            // Create a limb for each path
+            for (var i = 0, n = props.length; i < n; i++)
+            {
+                var path = props[i];
+                // create the OCODoc
+                var doc = DuOCODoc.fromComp( characterName, comp );
+                var limb = limbCreator( doc );
+                limb.moveArmatureToPath( doc, path );
+                // create
+                var boneLayers = doc.toComp( comp );
+                // link
+                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
+                ok = true;
+            }
+            if (layerToRemove) layerToRemove.remove();
+            return;
+        }
+
+        //puppet pins
+        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
+        if ( props.length > 0 )
+        {
+            // Create a limb for all selected pins
+            // create the OCODoc
+            var doc = DuOCODoc.fromComp( characterName, comp );
+            var limb = limbCreator( doc );
+            limb.moveArmatureToPuppetPins( doc, props );
+            // create
+            var boneLayers = doc.toComp( comp );
+            // link
+            if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
+            ok = true;
+            return;
+        }
+
+        //puppet effect
+        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
+        if ( props.length > 0 )
+        {
+            // Get pins from each effect
+            for(var i = 0, n = props.length; i < n; i++)
+            {
+                var pins = [];
+
+                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
+                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
+                {
+                    var mesh = meshGroup( j );
+                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
+                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
+                    {
+                        var pin = pinsGroup.property( k );
+                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
+                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
+                    }
+                }
+
+                if (pins.length == 0) continue;
+
+                // Create a limb for all pins
+                // create the OCODoc
+                var doc = DuOCODoc.fromComp( characterName, comp );
+                var limb = limbCreator( doc );
+                limb.moveArmatureToPuppetPins( doc, pins );
+                // create
+                var boneLayers = doc.toComp( comp );
+                // link
+                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
+                ok = true;
+            }
+            return;
+        }
+    });
+
+    //anchor points
+    if(!ok)
+    {
+        // Create a limb for all selected pins
+        // create the OCODoc
+        var doc = DuOCODoc.fromComp( characterName, comp );
+        var limb = limbCreator( doc );
+        limb.moveArmatureToLayers( doc, layers );
+        // create
+        var boneLayers = doc.toComp( comp );
+        // link
+        if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
+    }
+}
+
 Duik.CmdLib['Bone']["Custom_Limb"] = "Duik.Bone.customLimb()";
 /**
  * Creates a custom limb.
@@ -17,7 +150,7 @@ Duik.CmdLib['Bone']["Custom_Limb"] = "Duik.Bone.customLimb()";
  * @param {string} [characterName] The name of the character
  * @param {DuOCO.Side} [side=DuOCO.Side.NONE] - The side of the limb
  * @param {DuOCO.Location} [location=DuOCO.Location.NONE] - The location of the limb
- * @param {boolean} [forceLink=false] - Wether link the selected layers/properties to the new armature
+ * @param {boolean} [forceLink=false] - Wether to link the selected layers/properties to the new armature
  */
 Duik.Bone.customLimb = function ( num, name, characterName, side, location, forceLink )
 {
@@ -36,7 +169,7 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
     DuAE.beginUndoGroup("Create custom limb");
     DuAEProject.setProgressMode(true);
 
-    var layers = DuAEComp.getSelectedLayers();
+    var layers = comp.selectedLayers;
 
     // If there's no selected layer, just create
     if( layers.length == 0 )
@@ -198,137 +331,15 @@ Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, ha
     hand = def( hand, true );
     claws = def( claws, false );
 
-    // Links
-    var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
-    if (forceLink) linkPath = !linkPath;
-    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
-    if (forceLink) linkPuppetPins = !linkPuppetPins;
-    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
-    if (forceLink) linkLayers = !linkLayers;
-
     DuAE.beginUndoGroup("Create arm");
     DuAEProject.setProgressMode(true);
 
-    var layers = DuAEComp.getSelectedLayers();
-
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
-    var layerToRemove = null;
-    if (layers.length == 1 && !linkPath)
+    function limbCreator( doc )
     {
-        var l = layers[0];
-        if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
+        return doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
     }
 
-    // If there's no selected layer, just create
-    if( layers.length == 0 )
-    {
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        //TODO Get the spine to update the location
-        //var position = [4 , 145];
-        var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
-        doc.toComp( comp );
-        DuAEProject.setProgressMode(false);
-        DuAE.endUndoGroup();
-        return;
-    }
-
-    // For each selected layer
-    var it = new DuList( layers );
-    var ok = false;
-    it.do( function( layer )
-    {
-        //get paths
-        var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
-
-        if ( props.length > 0 )
-        {
-            // Create a limb for each path
-            for (var i = 0, n = props.length; i < n; i++)
-            {
-                var path = props[i];
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
-                limb.moveArmatureToPath( doc, path );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
-                ok = true;
-            }
-            if (layerToRemove) layerToRemove.remove();
-            return;
-        }
-
-        //puppet pins
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
-        if ( props.length > 0 )
-        {
-            // Create a limb for all selected pins
-            // create the OCODoc
-            var doc = DuOCODoc.fromComp( characterName, comp );
-            var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
-            limb.moveArmatureToPuppetPins( doc, props );
-            // create
-            var boneLayers = doc.toComp( comp );
-            // link
-            if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
-            ok = true;
-            return;
-        }
-
-        //puppet effect
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
-        if ( props.length > 0 )
-        {
-            // Get pins from each effect
-            for(var i = 0, n = props.length; i < n; i++)
-            {
-                var pins = [];
-
-                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
-                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
-                {
-                    var mesh = meshGroup( j );
-                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
-                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
-                    {
-                        var pin = pinsGroup.property( k );
-                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
-                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
-                    }
-                }
-
-                if (pins.length == 0) continue;
-
-                // Create a limb for all pins
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
-                limb.moveArmatureToPuppetPins( doc, pins );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
-                ok = true;
-            }
-            return;
-        }
-    });
-
-    //anchor points
-    if(!ok)
-    {
-        // Create a limb for all selected pins
-        // create the OCODoc
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
-        limb.moveArmatureToLayers( doc, layers );
-        // create
-        var boneLayers = doc.toComp( comp );
-        // link
-        if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
-    }
+    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup();
@@ -364,137 +375,15 @@ Duik.Bone.leg = function ( characterName, type, side, thigh, calf, foot, claws, 
     foot = def( foot, true );
     claws = def( claws, false );
 
-    // Links
-    var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
-    if (forceLink) linkPath = !linkPath;
-    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
-    if (forceLink) linkPuppetPins = !linkPuppetPins;
-    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
-    if (forceLink) linkLayers = !linkLayers;
-
     DuAE.beginUndoGroup("Create leg");
     DuAEProject.setProgressMode(true);
 
-    var layers = DuAEComp.getSelectedLayers();
-
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
-    var layerToRemove = null;
-    if (layers.length == 1 && !linkPath)
+    function limbCreator( doc )
     {
-        var l = layers[0];
-        if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
+        return doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
     }
 
-    // If there's no selected layer, just create
-    if( layers.length == 0 )
-    {
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        //TODO Get the spine to update the location
-        //var position = [4 , 145];
-        var limb = doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
-        doc.toComp( comp );
-        DuAEProject.setProgressMode(false);
-        DuAE.endUndoGroup();
-        return;
-    }
-
-    // For each selected layer
-    var it = new DuList( layers );
-    var ok = false;
-    it.do( function( layer )
-    {
-        //get paths
-        var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
-
-        if ( props.length > 0 )
-        {
-            // Create a limb for each path
-            for (var i = 0, n = props.length; i < n; i++)
-            {
-                var path = props[i];
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
-                limb.moveArmatureToPath( doc, path );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
-                ok = true;
-            }
-            if (layerToRemove) layerToRemove.remove();
-            return;
-        }
-
-        //puppet pins
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
-        if ( props.length > 0 )
-        {
-            // Create a limb for all selected pins
-            // create the OCODoc
-            var doc = DuOCODoc.fromComp( characterName, comp );
-            var limb = doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
-            limb.moveArmatureToPuppetPins( doc, props );
-            // create
-            var boneLayers = doc.toComp( comp );
-            // link
-            if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
-            ok = true;
-            return;
-        }
-
-        //puppet effect
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
-        if ( props.length > 0 )
-        {
-            // Get pins from each effect
-            for(var i = 0, n = props.length; i < n; i++)
-            {
-                var pins = [];
-
-                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
-                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
-                {
-                    var mesh = meshGroup( j );
-                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
-                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
-                    {
-                        var pin = pinsGroup.property( k );
-                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
-                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
-                    }
-                }
-
-                if (pins.length == 0) continue;
-
-                // Create a limb for all pins
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
-                limb.moveArmatureToPuppetPins( doc, pins );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
-                ok = true;
-            }
-            return;
-        }
-    });
-
-    //anchor points
-    if(!ok)
-    {
-        // Create a limb for all selected pins
-        // create the OCODoc
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
-        limb.moveArmatureToLayers( doc, layers );
-        // create
-        var boneLayers = doc.toComp( comp );
-        // link
-        if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
-    }
+    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup();
@@ -524,135 +413,47 @@ Duik.Bone.spine = function ( characterName, head, neck, spine, hips, forceLink )
     spine = def( spine, 2 );
     hips = def( hips, true );
 
-    // Links
-    var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
-    if (forceLink) linkPath = !linkPath;
-    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
-    if (forceLink) linkPuppetPins = !linkPuppetPins;
-    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
-    if (forceLink) linkLayers = !linkLayers;
-
     DuAE.beginUndoGroup("Create spine");
     DuAEProject.setProgressMode(true);
 
-    var layers = DuAEComp.getSelectedLayers();
-
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
-    var layerToRemove = null;
-    if (layers.length == 1 && !linkPath)
+    function limbCreator( doc )
     {
-        var l = layers[0];
-        if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
+        return doc.newSpine( head, neck, spine, hips );
     }
 
-    // If there's no selected layer, just create
-    if( layers.length == 0 )
+    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup();
+}
+
+Duik.CmdLib['Bone']["Tail"] = "Duik.Bone.tail()";
+/**
+ * Creates a new spine.
+ * @param {string} [characterName] The name of the character
+ * @param {int} [num=3] Number of tail bones
+ * @param {boolean} [forceLink=false] - Wether link the selected layers/properties to the new armature
+ */
+Duik.Bone.tail = function ( characterName, num, forceLink )
+{
+    // get current comp
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    forceLink = def( forceLink, false);
+    characterName = def( characterName, '' );
+
+    num = def( num, 3 );
+
+    DuAE.beginUndoGroup("Create tail");
+    DuAEProject.setProgressMode(true);
+
+    function limbCreator( doc )
     {
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newSpine( head, neck, spine, hips );
-        doc.toComp( comp );
-        DuAEProject.setProgressMode(false);
-        DuAE.endUndoGroup();
-        return;
+        return doc.newTail( num );
     }
 
-    // For each selected layer
-    var it = new DuList( layers );
-    var ok = false;
-    it.do( function( layer )
-    {
-        //get paths
-        var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
-
-        if ( props.length > 0 )
-        {
-            // Create a limb for each path
-            for (var i = 0, n = props.length; i < n; i++)
-            {
-                var path = props[i];
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newSpine( head, neck, spine, hips );
-                limb.moveArmatureToPath( doc, path );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
-                ok = true;
-            }
-            if (layerToRemove) layerToRemove.remove();
-            return;
-        }
-
-        //puppet pins
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
-        if ( props.length > 0 )
-        {
-            // Create a limb for all selected pins
-            // create the OCODoc
-            var doc = DuOCODoc.fromComp( characterName, comp );
-            var limb = doc.newSpine( head, neck, spine, hips );
-            limb.moveArmatureToPuppetPins( doc, props );
-            // create
-            var boneLayers = doc.toComp( comp );
-            // link
-            if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
-            ok = true;
-            return;
-        }
-
-        //puppet effect
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
-        if ( props.length > 0 )
-        {
-            // Get pins from each effect
-            for(var i = 0, n = props.length; i < n; i++)
-            {
-                var pins = [];
-
-                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
-                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
-                {
-                    var mesh = meshGroup( j );
-                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
-                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
-                    {
-                        var pin = pinsGroup.property( k );
-                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
-                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
-                    }
-                }
-
-                if (pins.length == 0) continue;
-
-                // Create a limb for all pins
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newSpine( head, neck, spine, hips );
-                limb.moveArmatureToPuppetPins( doc, pins );
-                // create
-                var boneLayers = doc.toComp( comp );
-                // link
-                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
-                ok = true;
-            }
-            return;
-        }
-    });
-
-    //anchor points
-    if(!ok)
-    {
-        // Create a limb for all selected pins
-        // create the OCODoc
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newSpine( head, neck, spine, hips );
-        limb.moveArmatureToLayers( doc, layers );
-        // create
-        var boneLayers = doc.toComp( comp );
-        // link
-        if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
-    }
+    Duik.Bone.createLimb( comp, limbCreator, forceLink );
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup();
