@@ -633,7 +633,6 @@ Duik.Bone.select = function( comp )
 Duik.CmdLib['Bone']["Show / Hide"] = "Duik.Bone.toggleVisibility()";
 /**
  * Show/hides all the bones
- * @param {Duik.Layer.Type} type The type
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
  */
 Duik.Bone.toggleVisibility = function( comp )
@@ -641,8 +640,140 @@ Duik.Bone.toggleVisibility = function( comp )
     Duik.Layer.toggleVisibility( Duik.Layer.Type.BONE, comp );
 }
 
+Duik.CmdLib['Bone']["Duplicate"] = "Duik.Bone.duplicate()";
+/**
+ * Duplicates the selected bones, updates the hierarchy and display
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @returns {Layer[]} The new bones
+ */
+Duik.Bone.duplicate = function( comp )
+{
+    comp = def( comp, DuAEProject.getActiveComp() );
+    if (!comp) return;
+
+    var layers = Duik.Bone.get( true, comp );
+    if (layers.length == 0) return;
+
+    // Sort bones by limb/armature
+    var armatures = [];
+    for(var i = 0, n = layers.length; i < n; i++)
+    {
+        var layer = layers[i];
+        var id = DuAETag.getValue( layer, DuAETag.Key.DUIK_ARMATURE_ID, DuAETag.Type.INT );
+        if (id == null) id = -1;
+        // Search in armatures
+        var found = false;
+        for(var j = 0, na = armatures.length; j < na; j++)
+        {
+            var aid = armatures[j].id;
+            if (aid == id)
+            {
+                armatures[j].push(layer);
+                found = true;
+                break;
+            }
+        }
+        if (found) continue;
+        // new armature
+        var a = [layer];
+        a.id = id;
+        armatures.push(a);
+    }
+
+    var newArmatures = [];
+    var autorigIds = [];
+
+    DuAE.beginUndoGroup("Duplicate bones");
+    DuAEProject.setProgressMode(true);
+
+    for (var i = 0, n = armatures.length; i < n; i++)
+    {
+        //unselect all layers in the comp
+        DuAEComp.unselectLayers( comp );
+        //select the bones of the armature, then duplicate
+        DuAEComp.selectLayers( armatures[i] );
+        comp.openInViewer();
+        DuAE.duplicate();
+        //get topmost element
+        var topIndex = comp.numLayers;
+        var it = new DuList( armatures[i] );
+        while ( boneLayer = it.next() )
+        {
+            if ( boneLayer.index < topIndex ) topIndex = boneLayer.index;
+            if ( topIndex == 1 ) break;
+        };
+
+        var oldLayers = DuAELayer.sortByIndex( armatures[i] ).reverse();
+        oldLayers = new DuList( oldLayers );
+        var newLayers = DuAELayer.sortByIndex( comp.selectedLayers ).reverse();
+
+        //adjustments
+        function layerInArray ( layer, index )
+        {
+            return layer.index == index;
+        }
+
+        var id = new Date().getTime();
+
+        // Set display link and Id
+        new DuList( newLayers ).do( function( layer )
+        {
+            layer.moveBefore( comp.layer( topIndex ) );
+            //set display link
+            var pE = Duik.PseudoEffect.BONE;
+            var targetIndex = pE.props['Display options']['Target'].index;
+            var effect = layer.effect( pE.matchName );
+            if (effect)
+            {
+                var oldLinkIndex = oldLayers.indexOf( effect( targetIndex ).value, layerInArray );
+                if ( oldLinkIndex >= 0 )
+                {
+                    effect( targetIndex ).setValue( newLayers[ oldLinkIndex ].index );
+                }
+            }
+            
+            //set new id
+            DuAETag.setValue( layer, DuAETag.Key.DUIK_ARMATURE_ID, id );
+        } );
+
+        if (newLayers.length == 0) continue;
+
+        //adjust autorig id
+        var autorigId = DuAETag.getValue( newLayers[0], DuAETag.Key.DUIK_AUTORIG_ID, DuAETag.Type.INT );
+        if (autorigId == null) continue;
+        var newAutorigId = -1;
+
+        for (var j = 0, num = autorigIds.length; j < num; j++)
+        {
+            if (autorigIds[j][0] == autorigId) newAutorigId = autorigIds[j][1];
+        }
+
+        if (newAutorigId == -1)
+        {
+            newAutorigId = new Date().getTime();
+            autorigIds.push([autorigId,newAutorigId]);
+        }
+
+        for (var j = 0, num = oldLayers.length; j < num; j++)
+        {
+            DuAETag.setValue( oldLayers[j], DuAETag.Key.DUIK_AUTORIG_ID, newAutorigId );
+        }
+
+        newArmatures.push(newLayers);
+    }
+
+    // Select new bones
+    for (var i = 0, n = newArmatures.length; i < n; i++)
+        for (var j = 0, nb = newArmatures[i].length; j < nb; j++)
+            newArmatures[i][j].selected = true;
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup();
+}
+
 /**
  * Gets the bones in the comp
+ * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
  * @returns {ShapeLayer[]} The bones
  */
