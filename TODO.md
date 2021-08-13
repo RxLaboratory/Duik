@@ -22,7 +22,6 @@
 - [x] move side & location to limb options
 - [ ] Add limbs
     - Wing (front, side)
-    - Worm / snake spine
     - Fin
     - Hair
 - [ ] bone tools
