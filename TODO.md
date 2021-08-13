@@ -2,37 +2,25 @@
 
 ## Duik
 
-- [x] re-build a simple shapeToJsxinc script (ask for the var name)
-- [x] include the 'shape_linker' pseudo effect as `Duik.PseudoEffect.PATH_PIN`
-- [x] include the 'bone' pseudo effect as `Duik.PseudoEffect.PIN`
-- [x] Re-design pin shapes, export, include
-- [x] Change bone anchor to a single dot, like pins, but add a plain circle always visible in the link
-- [x] Add *bake appearance* button on the top line
-- [x] Options for bones:
-    - Selection:
-        - Side
-        - Location
-        - Color
-        - Size
-        - Opacity
-        - Character name
-- [x] In Dugr and Duik: fix os in checkversion
-- [x] Prep translations (same system as Dugr)
-- [x] New type of leg: arthropod
-- [x] move side & location to limb options
-- [ ] bone tools
+- [ ] constraints (including IK)
+- [ ] controllers
+- [ ] autorig
+- [ ] bone & controller tools
     - test if bake is still needed
-- [ ] Front and side wing
-- [ ] Autolink on Ctrl+click (add to helptip) (also from the options panel)
-- [ ] Random color on Alt+Click (add to helptip) (also from the options panel)
+- [ ] Option to hide tags
+- [ ] Bones Front and side wing
+- [ ] Bones Autolink on Ctrl+click (add to helptip) (also from the options panel)
+- [ ] Bones Random color on Alt+Click (add to helptip) (also from the options panel)
+- [ ] OCO Panel
+- [ ] Animation Panel
+- [ ] Camera panel
 - [ ] Tools:
-    - Layer manager (rename, character, limb, side, location...)
+    - Layer manager (rename, character, limb, side, location, groups...)
 - [ ] Note editor
 
 ## DuAEF
 
 - [x] Add random button to the color selector
-- [ ] when alerting debug info, actually throw error if javascript debugging in Ae is on
 
 ## Notes
 
