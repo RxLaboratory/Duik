@@ -21,7 +21,6 @@
 - [x] New type of leg: arthropod
 - [x] move side & location to limb options
 - [ ] bone tools
-    - edit mode
     - test if bake is still needed
 - [ ] Front and side wing
 - [ ] Autolink on Ctrl+click (add to helptip) (also from the options panel)
