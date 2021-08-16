@@ -2,8 +2,16 @@
 
 ## Duik
 
-- [ ] constraints (including IK)
 - [ ] controllers
+    - fix rename using blocks, side, character etc
+    - Null controllers as shapes
+    - new shapes
+    - select
+    - show
+    - tag
+    - extract
+    - edit panel
+- [ ] constraints (including IK)
 - [ ] autorig
 - [ ] bone & controller tools
     - test if bake is still needed
