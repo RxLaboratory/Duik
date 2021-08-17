@@ -54,10 +54,11 @@ Duik.Layer.setType = function( type, layers )
     for(var i = 0, n = layers.length(); i < n; i++)
     {
         var layer = layers.at(i);
+        var name = Duik.Layer.manage(layer);
 
         DuAETag.setValue( layer, DuAETag.Key.DUIK_TYPE, type );
 
-        Duik.Layer.rename( layer, layer.name, type);
+        Duik.Layer.rename( layer, name, type);
 
         // Remove groups
         DuAETag.removeGroup( layer, DuScriptUI.String.CONTROLLER );
@@ -217,6 +218,8 @@ Duik.Layer.setSide = function( side, layers )
     for(var i = 0, n = layers.length(); i < n; i++)
     {
         var layer = layers.at(i);
+        Duik.Layer.manage(layer);
+
         var currentSide = Duik.Layer.side( layer );
         if (currentSide == side) continue;
         var currentLocation = Duik.Layer.location( layer );
@@ -234,7 +237,7 @@ Duik.Layer.setSide = function( side, layers )
         var name = layer.name.split(' | ');
         if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName );
         else if (name.length == 3) name.push( newSideName );
-        layer.name = name.join(' | ');
+        Duik.Layer.rename(layer, name.join(' | '));
     }
 }
 
@@ -271,6 +274,7 @@ Duik.Layer.setLocation = function( location, layers )
     for(var i = 0, n = layers.length(); i < n; i++)
     {
         var layer = layers.at(i);
+        Duik.Layer.manage(layer);
 
         var currentLocation = Duik.Layer.location( layer );
         if (currentLocation == location) continue;
@@ -304,7 +308,7 @@ Duik.Layer.setLocation = function( location, layers )
         var name = layer.name.split(' | ');
         if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName );
         else if (name.length == 3) name.push( newSideName );
-        layer.name = name.join(' | ');
+        Duik.Layer.rename(layer, name.join(' | '));
     }
 }
 
@@ -342,13 +346,14 @@ Duik.Layer.setCharacterName = function( characterName, layers )
     for(var i = 0, n = layers.length(); i < n; i++)
     {
         var layer = layers.at(i);
+        var name = Duik.Layer.manage(layer);
 
         // Split
-        var name = layer.name.split(' | ');
+        var name = name.split(' | ');
         if (name.length <= 1) continue;
         DuAETag.removeGroup( layer, name[1] );
         name[1] = characterName;
-        layer.name = name.join(' | ');
+        Duik.Layer.rename(layer, name.join(' | '));
         if (characterName != '-' && characterName != '') DuAETag.addGroup( layer, characterName );
     }
 }
@@ -384,12 +389,13 @@ Duik.Layer.setLimbName = function( limbName, layers )
     for(var i = 0, n = layers.length(); i < n; i++)
     {
         var layer = layers.at(i);
+        var name = Duik.Layer.manage(layer);
 
         // Split
-        var name = layer.name.split(' | ');
+        var name = name.split(' | ');
         if (name.length <= 2) continue;
         name[2] = limbName;
-        layer.name = name.join(' | ');
+        Duik.Layer.rename(layer, name.join(' | '));
     }
 }
 
@@ -409,7 +415,6 @@ Duik.Layer.rename = function( layer, name, newPrefix )
         if (newName[0].length <= 3) newName[0] = newPrefix;
         else newName.unshift( 'C' );
         // Keep side
-
         newName = newName.join(' | ');
     }
     // Temporarily rename the layer just in case it already has the same name
@@ -434,7 +439,7 @@ Duik.Layer.setAttributes = function( layer, type, limbName, side, location, char
     location = def(location, DuOCO.Location.NONE);
     characterName = def(characterName, '');
     limbName = def(limbName, layer.name);
-    // Dummy name so it can be managed
+    // Dummy name first
     layer.name = 'Tmp | TempName | TmpLimb';
     Duik.Layer.setType(type, layer);
     Duik.Layer.setSide(side, layer);
@@ -442,4 +447,35 @@ Duik.Layer.setAttributes = function( layer, type, limbName, side, location, char
     Duik.Layer.setCharacterName(characterName, layer);
     Duik.Layer.setLimbName(limbName, layer);
     return layer.name;
+}
+
+/**
+ * Sets default name & attributes to a layer so it can be correctly managed by Duik.
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer} layer The Layer
+ */
+Duik.Layer.manage = function ( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return '';
+
+    var name = layer.name.split(' | ');
+    if (name.length >= 3) return layer.name;
+
+    var type = Duik.Layer.type(layer);
+    var side = Duik.Layer.side(layer);
+    var location = Duik.Layer.location(layer);
+    var limbName = '';
+    var characterName = '';
+    if (name.length == 1)
+    {
+        limbName = name[0];
+    }
+    else 
+    {
+        limbName = name[1];
+        if (name[0].length > 3) characterName = name[0];
+    }
+
+    return Duik.Layer.setAttributes( layer, type, limbName, side, location, characterName );
 }
