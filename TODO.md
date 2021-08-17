@@ -4,9 +4,6 @@
 
 - [ ] controllers
     - new shapes
-    - select
-    - show
-    - tag
     - extract
     - edit panel
 - [ ] constraints (including IK)
@@ -22,12 +19,13 @@
 - [ ] Animation Panel
 - [ ] Camera panel
 - [ ] Tools:
-    - Layer manager (rename, character, limb, side, location, groups...)
+    - copy of the layer manager in duik main panel ?
 - [ ] Note editor
 
-## DuAEF
+## DuAEF & DuESF
 
 - [x] Add random button to the color selector
+- [ ] Shift click for options on buttons with options panel; hide the options button in ui mode > expert; option to hide options button in all modes.
 
 ## Notes
 
