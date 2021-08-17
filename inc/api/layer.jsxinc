@@ -10,6 +10,7 @@ Duik.Layer = {};
  * @enum {string}
  */
 Duik.Layer.Type = {
+    NONE: '',
     BONE: 'B',
     PIN: 'P',
     CONTROLLER: 'C',
@@ -29,11 +30,13 @@ Duik.Layer.isType = function( layer, layerType )
 
 /**
  * Gets the type of the layer
- * @param {Layer} layer The layer
+ * @param {Layer} [layer] The layer. If omitted, will check the first selected bone of the current comp
  * @returns {Duik.Layer.Type} The type
  */
 Duik.Layer.type = function( layer )
 {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return Duik.Layer.Type.NONE;
     return DuAETag.getValue( layer, DuAETag.Key.DUIK_TYPE, DuAETag.Type.STRING );
 }
 
@@ -55,6 +58,11 @@ Duik.Layer.setType = function( type, layers )
         DuAETag.setValue( layer, DuAETag.Key.DUIK_TYPE, type );
 
         Duik.Layer.rename( layer, layer.name, type);
+
+        // Remove groups
+        DuAETag.removeGroup( layer, DuScriptUI.String.CONTROLLER );
+        DuAETag.removeGroup( layer, DuScriptUI.String.BONE );
+        DuAETag.removeGroup( layer, DuScriptUI.String.PIN );
 
         if (type == Duik.Layer.Type.BONE)
         {
@@ -313,6 +321,7 @@ Duik.Layer.characterName = function( layer )
     // Split
     var name = layer.name.split(' | ');
     if (name.length <= 1) return '';
+    if (name[1] == '-') return '';
 
     // Must be in the corresponding group
     if (!DuGR.inGroups(layer, [name[1]]) ) return '';
@@ -340,7 +349,7 @@ Duik.Layer.setCharacterName = function( characterName, layers )
         DuAETag.removeGroup( layer, name[1] );
         name[1] = characterName;
         layer.name = name.join(' | ');
-        if (characterName != '') DuAETag.addGroup( layer, characterName );
+        if (characterName != '-' && characterName != '') DuAETag.addGroup( layer, characterName );
     }
 }
 
@@ -353,8 +362,6 @@ Duik.Layer.limbName = function( layer )
 {
     layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return '';
-
-    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return '';
 
     // Split
     var name = layer.name.split(' | ');
@@ -418,7 +425,7 @@ Duik.Layer.rename = function( layer, name, newPrefix )
  * @param {string} [limbName=layer.name] The name of the limb/layer
  * @param {DuOCO.Side} [side=DuOCO.Side.NONE] The side
  * @param {DuOCO.Location} [location=DuOCO.Location.NONE] The location
- * @param {string} [characterName=""] The name of the character
+ * @param {string} [characterName="-"] The name of the character
  * @returns {string} the new name of the layer.
  */
 Duik.Layer.setAttributes = function( layer, type, limbName, side, location, characterName )
