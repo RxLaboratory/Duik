@@ -3,13 +3,14 @@
 ## Duik
 
 - [ ] controllers
-    - new shapes
-    - extract
     - edit panel
+    - new shapes
 - [ ] constraints (including IK)
 - [ ] autorig
 - [ ] bone & controller tools
     - test if bake is still needed
+- [ ] controllers
+    - extract
 - [ ] Automation panel
 - [ ] Option to hide tags
 - [ ] Bones Front and side wing
