@@ -3,7 +3,6 @@
 ## Duik
 
 - [ ] controllers
-    - fix rename using blocks, side, character etc
     - Null controllers as shapes
     - new shapes
     - select
