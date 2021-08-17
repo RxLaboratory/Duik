@@ -3,7 +3,6 @@
 ## Duik
 
 - [ ] controllers
-    - Null controllers as shapes
     - new shapes
     - select
     - show
