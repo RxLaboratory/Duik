@@ -2,8 +2,6 @@
 
 ## Duik
 
-- [ ] controllers
-    - pseudo effects
 - [ ] constraints (including IK)
 - [ ] autorig
 - [ ] bone & controller tools
