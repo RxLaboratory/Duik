@@ -126,6 +126,18 @@ Duik.Controller.fromLayers = function ( type, parent, single )
 }
 
 /**
+ * Gets the controllers in the comp
+ * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @returns {ShapeLayer[]} The bones
+ */
+Duik.Controller.get = function ( selectedOnly, comp )
+{
+    return Duik.Layer.get( Duik.Layer.Type.CONTROLLER, selectedOnly, comp );
+}
+
+
+/**
 	* Creates a new controller
 	* @param {CompItem} [comp] - The composition
 	* @param {Duik.Controller.Type} [type=Duik.Controller.Type.TRANSFORM] - The type of Controller.
@@ -1407,6 +1419,55 @@ Duik.Controller.create = function (comp, type, layer, parent)
 	return ctrl;
 }
 
+// low-level undocumented method to get a prop from a controller effect
+Duik.Controller.getEffectProp = function ( layer, prop )
+{
+	// Test all pseudo effects
+	var pe = Duik.PseudoEffect.CONTROLLER;
+	var index = -1;
+	var effect = layer.effect(pe.matchName);
+	if (effect) index = pe.props['Icon'][prop].index;
+	if (!effect) 
+	{
+		pe = Duik.PseudoEffect.CONTROLLER_SLIDER;
+		effect = layer.effect(pe.matchName);
+		if (effect) index = pe.props['Handle'][prop].index;
+	}
+	if (!effect) 
+	{
+		pe = Duik.PseudoEffect.CONTROLLER_2DSLIDER;
+		effect = layer.effect(pe.matchName);
+		if (effect) index = pe.props['Handle'][prop].index;
+	}
+	if (!effect) 
+	{
+		pe = Duik.PseudoEffect.CONTROLLER_ANGLE;
+		effect = layer.effect(pe.matchName);
+		if (effect) index = pe.props['Handle'][prop].index;
+	}
+
+	if ( index < 0 ) return null;
+	return effect(index);
+}
+
+/**
+ * Checks the color of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.color = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return new DuColor();
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) return new DuColor();
+
+    var col = Duik.Controller.getEffectProp( layer, 'Color' );
+    if (!col) return new DuColor();
+
+    return new DuColor( col.value );
+}
+
 /**
  * Sets the color of the controller layers
  * @param {DuColor} color The color
@@ -1425,35 +1486,95 @@ Duik.Controller.setColor = function (color, layers)
 
         if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) continue;
 
-        // Test all pseudo effects
-        var pe = Duik.PseudoEffect.CONTROLLER;
-        var colIndex = -1;
-        var effect = layer.effect(pe.matchName);
-        if (effect) colIndex = pe.props['Icon']['Color'].index;
-        if (!effect) 
-        {
-            pe = Duik.PseudoEffect.CONTROLLER_SLIDER;
-            effect = layer.effect(pe.matchName);
-            if (effect) colIndex = pe.props['Handle']['Color'].index;
-        }
-        if (!effect) 
-        {
-            pe = Duik.PseudoEffect.CONTROLLER_2DSLIDER;
-            effect = layer.effect(pe.matchName);
-            if (effect) colIndex = pe.props['Handle']['Color'].index;
-        }
-        if (!effect) 
-        {
-            pe = Duik.PseudoEffect.CONTROLLER_ANGLE;
-            effect = layer.effect(pe.matchName);
-            if (effect) colIndex = pe.props['Handle']['Color'].index;
-        }
-        if ( colIndex < 0 ) continue;
-
-        effect( colIndex ).setValue( color.floatRGBA() );
+        var col = Duik.Controller.getEffectProp( layer, 'Color' );
+		if(!col) continue;
+        col.setValue( color.floatRGBA() );
     }
 }
 
+/**
+ * Checks the size of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.size = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 100;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) return 100;
+
+    var s = Duik.Controller.getEffectProp( layer, 'Size' );
+    if (!s) return 100;
+
+    return s.value;
+}
+
+/**
+ * Sets the size of the controller layers
+ * @param {float} size The size
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @returns {DuColor}
+ */
+Duik.Controller.setSize = function (size, layers)
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for(var i = 0, n = layers.length(); i < n; i++)
+    {
+        var layer = layers.at(i);
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) continue;
+
+        var s = Duik.Controller.getEffectProp( layer, 'Size' );
+		if(!s) continue;
+        s.setValue( size );
+    }
+}
+
+/**
+ * Checks the opacity of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.opacity = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 100;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) return 100;
+
+    var opa = Duik.Controller.getEffectProp( layer, 'Opacity' );
+    if (!opa) return 100;
+
+    return opa.value;
+}
+
+/**
+ * Sets the opacity of the controller layers
+ * @param {float} opacity The size
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @returns {DuColor}
+ */
+Duik.Controller.setOpacity = function (opacity, layers)
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for(var i = 0, n = layers.length(); i < n; i++)
+    {
+        var layer = layers.at(i);
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER) ) continue;
+
+        var opa = Duik.Controller.getEffectProp( layer, 'Opacity' );
+		if(!opa) continue;
+        opa.setValue( opacity );
+    }
+}
 
 Duik.CmdLib['Controller']["Select"] = "Duik.Controller.select()";
 /**
@@ -1482,4 +1603,48 @@ Duik.Controller.toggleVisibility = function( comp )
 Duik.Controller.tag = function( comp )
 {
 	Duik.Layer.setType( Duik.Layer.Type.CONTROLLER );
+}
+
+/**
+ * Sets the character name of the controller layer
+ * @param {string} characterName The character name.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Controller.setCharacterName = function( characterName, layers )
+{
+    layers = def( layers, Duik.Controller.get() );
+    Duik.Layer.setCharacterName( characterName, layers );
+}
+
+/**
+ * Sets the limb name of the controller layer
+ * @param {string} limbName The limb name.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Controller.setLimbName = function( limbName, layers )
+{
+    layers = def( layers, Duik.Controller.get() );
+    Duik.Layer.setLimbName( limbName, layers );
+}
+
+/**
+ * Sets the side of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Controller.setSide = function( side, layers )
+{
+    layers = def( layers, Duik.Controller.get() );
+    Duik.Layer.setSide( side, layers );
+}
+
+/**
+ * Sets the location of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Controller.setLocation = function( location, layers )
+{
+    layers = def( layers, Duik.Controller.get() );
+    Duik.Layer.setLocation( location, layers );
 }
