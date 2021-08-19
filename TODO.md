@@ -11,14 +11,15 @@
     - Parent selector
     - Transform Constraints selector
     - List
-    - Etm
-    - Zero
-    - Lock prop
     - Separate dims
+    - Lock prop
+    - Zero
+    - Etm
 - [ ] autorig
-- [ ] bone & controller tools
-    - test if bake is still needed
+- [ ] bone
+    - bake
 - [ ] controllers
+    - bake
     - extract
 - [ ] Automation panel
 - [ ] Option to hide tags
