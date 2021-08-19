@@ -3,6 +3,18 @@
 ## Duik
 
 - [ ] constraints (including IK)
+    - Autorig
+    - Connector
+    - Shape keys
+    - Add pins
+    - IK Selector
+    - Parent selector
+    - Transform Constraints selector
+    - List
+    - Etm
+    - Zero
+    - Lock prop
+    - Separate dims
 - [ ] autorig
 - [ ] bone & controller tools
     - test if bake is still needed
