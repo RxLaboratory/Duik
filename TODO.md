@@ -3,19 +3,18 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Autorig
-    - Connector
-    - Shape keys
-    - Add pins
-    - IK Selector
-    - Parent selector
-    - Transform Constraints selector
-    - List
     - Separate dims
     - Lock prop
     - Zero
     - Etm
-- [ ] autorig
+    - IK Selector
+    - Parent selector
+    - Transform Constraints selector
+    - Add pins
+    - Connector
+    - Shape keys
+    - Autorig
+- [ ] autorig in bones panel
 - [ ] bone
     - adjust spine etc according to animal with better defaults / illustations
     - fish spine
