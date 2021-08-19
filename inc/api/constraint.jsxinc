@@ -1,0 +1,79 @@
+/**
+ * Constraint tools.
+ * @namespace
+ */
+Duik.Constraint = {};
+
+/**
+ * The list of constraint functions
+ */
+Duik.CmdLib['Constraint'] = [];
+
+Duik.CmdLib['Constraint']["List"] = "Duik.Constraint.list()";
+/**
+ * List
+ */
+Duik.Constraint.list = function ( )
+{
+    var props = DuAEComp.getSelectedProps();
+	if (props.length == 0) return;
+
+	DuAE.beginUndoGroup( DuScriptUI.String.LIST );
+
+	var layers = DuAEComp.unselectLayers();
+	for (var i = 0, n = props.length; i < n ; i++)
+	{
+		Duik.Constraint.createList(props[i]);
+	}
+	DuAEComp.selectLayers(layers);
+
+	DuAE.endUndoGroup();
+}
+
+/**
+	* Adds a list on a property
+	* @param {PropertyInfo|Property|DuAEProperty} prop - The Property
+    * @returns {DuAEProperty} The list effect
+*/
+Duik.Constraint.createList = function (prop)
+{
+	prop = new DuAEProperty(prop);
+    if (!prop.riggable()) return;
+
+	var dim = prop.dimensions();
+
+	var layer = prop.layer;
+
+	var effect = null;
+	var name = prop.getProperty().name + ' List';
+	if (dim == 1) effect = Duik.PseudoEffect.ONED_LIST.apply(layer, name);
+	else if (dim == 2) effect = Duik.PseudoEffect.TWOD_LIST.apply(layer, name);
+	else if (dim == 3) effect = Duik.PseudoEffect.THREED_LIST.apply(layer, name);
+	else return;
+
+	//set animation with expression
+	var anim = prop.animation(false);
+	if (anim)
+    {
+        var newProp = new DuAEProperty(effect(2));
+        newProp.setAnim(anim,0,true,true,false);
+    }
+	prop.removeAnimation();
+
+	prop.getProperty().expression =  [DuAEExpression.Id.LIST,
+        "var fx = effect(\"" + effect.name + "\");",
+        "var v1 = fx(2);",
+        "var w1 = fx(3);",
+        "var v2 = fx(6);",
+        "var w2 = fx(7);",
+        "var v3 = fx(10);",
+        "var w3 = fx(11);",
+        "var v4 = fx(14);",
+        "var w4 = fx(15);",
+        "var v5 = fx(18);",
+        "var w5 = fx(19);",
+        "v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;"
+        ].join('\n');
+
+    return prop;
+}
