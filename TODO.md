@@ -5,6 +5,7 @@
 - [ ] controllers
     - edit panel
     - new shapes
+    - pseudo effects
 - [ ] constraints (including IK)
 - [ ] autorig
 - [ ] bone & controller tools
