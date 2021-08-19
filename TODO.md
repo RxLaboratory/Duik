@@ -17,6 +17,8 @@
     - Etm
 - [ ] autorig
 - [ ] bone
+    - adjust spine etc according to animal with better defaults / illustations
+    - fish spine
     - bake
 - [ ] controllers
     - bake
