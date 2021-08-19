@@ -32,7 +32,7 @@ Duik.Constraint.list = function ( )
 
 /**
 	* Adds a list on a property
-	* @param {PropertyInfo|Property|DuAEProperty} prop - The Property
+	* @param {Property|DuAEProperty} prop - The Property
     * @returns {DuAEProperty} The list effect
 */
 Duik.Constraint.createList = function (prop)
@@ -76,4 +76,196 @@ Duik.Constraint.createList = function (prop)
         ].join('\n');
 
     return prop;
+}
+
+Duik.CmdLib['Constraint']["Separate Dimensions"] = "Duik.Constraint.separateDimensions()";
+/**
+ * Separate Dimensions
+ */
+Duik.Constraint.separateDimensions = function ()
+{
+    var props = DuAEComp.getSelectedProps();
+    if ( props.length == 0 ) return;
+
+    DuAE.beginUndoGroup( DuScriptUI.String.SEPARATE_DIMENSIONS );
+
+    for ( var i = 0, num = props.length; i < num; i++ )
+    {
+        Duik.Constraint.separatePropDimensions( props[ i ] );
+    }
+
+    DuAE.endUndoGroup();
+}
+
+/**
+ * Separates the dimensions of the properties into an effect.<br />
+ * Works with 2D, 3D, and colors
+ * @param {Property|DuAEProperty} prop - The property
+ * @return {DuAEProperty[]} The seperated properties (or the original one if it could not be separated)
+ */
+Duik.Constraint.separatePropDimensions = function ( prop )
+{
+    var propInfo = new DuAEProperty( prop );
+    prop = propInfo.getProperty();
+
+    var layer = propInfo.layer;
+    var dim = propInfo.dimensions();
+
+    if ( dim < 2 || dim > 4 ) return [propInfo];
+
+    if (prop.isSeparationLeader)
+    {
+        prop.dimensionsSeparated = true;
+        var newProps = [];
+        for (var i = 1; i <= dim; i++)
+        {
+            var newProp = prop.parentProperty(prop.propertyIndex + i);
+            newProp = new DuAEProperty(newProp);
+            newProps.push( newProp );
+        }
+        return newProps;
+    }
+
+    if ( dim == 2 )
+    {
+        var pseudo;
+        if ( propInfo.isScale ) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_SCALE;
+        else if ( propInfo.isAngle ) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_ANGLE;
+        else pseudo = Duik.PseudoEffect.TWO_DIMENSIONS;
+
+        var effect = pseudo.apply( layer, propInfo.name + " XY" );
+
+        prop = propInfo.getProperty();
+
+        var xIndex = pseudo.props['X'].index;
+        var yIndex = pseudo.props['Y'].index;
+
+        //copy values
+        if ( prop.numKeys == 0 )
+        {
+            effect( xIndex ).setValue( prop.value[ 0 ] );
+            effect( yIndex ).setValue( prop.value[ 1 ] );
+        }
+        else
+        {
+            for ( var k = prop.numKeys; k > 0; k-- )
+            {
+                var time = prop.keyTime( k );
+                var value = prop.keyValue( k );
+                effect( xIndex ).setValueAtTime( time, value[ 0 ] );
+                effect( yIndex ).setValueAtTime( time, value[ 1 ] );
+                prop.removeKey(k);
+            }
+        }
+
+        //add expression
+        prop.expression = [DuAEExpression.Id.SEPARATE_DIMENSIONS,
+            'var fx = thisLayer.effect("' + effect.name + '");',
+            '[fx(' + xIndex + ').value,fx(' + yIndex + ').value];'
+            ].join('\n');
+
+        //return the new props
+        var xProp = new DuAEProperty(effect( xIndex ));
+        var yProp = new DuAEProperty(effect( yIndex ));
+        return [xProp,yProp];
+    }
+    
+    if ( dim == 3 )
+    {
+        var pseudo;
+        if ( propInfo.isScale ) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_SCALE;
+        else if ( propInfo.isAngle ) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_ANGLE;
+        else pseudo = Duik.PseudoEffect.THREE_DIMENSIONS;
+
+        var effect = pseudo.apply( layer, propInfo.name + " XYZ" );
+
+        prop = propInfo.getProperty();
+
+        var xIndex = pseudo.props['X'].index;
+        var yIndex = pseudo.props['Y'].index;
+        var zIndex = pseudo.props['Z'].index;
+
+        //copy values
+        if ( prop.numKeys == 0 )
+        {
+            effect( xIndex ).setValue( prop.value[ 0 ] );
+            effect( yIndex ).setValue( prop.value[ 1 ] );
+            effect( zIndex ).setValue( prop.value[ 2 ] );
+        }
+        else
+        {
+            for ( var k = prop.numKeys; k > 0; k-- )
+            {
+                var time = prop.keyTime( k );
+                var value = prop.keyValue( k );
+                effect( xIndex ).setValueAtTime( time, value[ 0 ] );
+                effect( yIndex ).setValueAtTime( time, value[ 1 ] );
+                effect( zIndex ).setValueAtTime( time, value[ 2 ] );
+                prop.removeKey(k);
+            }
+        }
+
+        //add expression
+        prop.expression = [DuAEExpression.Id.SEPARATE_DIMENSIONS,
+            'var fx = thisLayer.effect("' + effect.name + '");',
+            '[fx(' + xIndex + ').value,fx(' + yIndex + ').value, fx(' + zIndex + ').value];'
+            ].join('\n');
+
+        //return the new props
+        var xProp = new DuAEProperty(effect( xIndex ));
+        var yProp = new DuAEProperty(effect( yIndex ));
+        var zProp = new DuAEProperty(effect( zIndex ));
+        return [xProp,yProp,zProp];
+    }
+    
+    if ( dim == 4 )
+    {
+        var pseudo = Duik.PseudoEffect.COLOR;
+        var effect = pseudo.apply( layer, propInfo.name + " RGB/HSL" );
+
+        var modeIndex = pseudo.props['Channels'].index;
+        var rIndex = pseudo.props['R / H'].index;
+        var gIndex = pseudo.props['G / S'].index;
+        var bIndex = pseudo.props['B / L'].index;
+
+        effect( modeIndex ).setValue( 2 );
+        prop = propInfo.getProperty();
+
+        //copy values
+        if ( prop.numKeys == 0 )
+        {
+            var color = prop.value;
+            color = new DuColor(color).floatHSL();
+            effect( rIndex ).setValue( color[ 0 ] );
+            effect( gIndex ).setValue( color[ 1 ] );
+            effect( bIndex ).setValue( color[ 2 ] );
+        }
+        else
+        {
+            for ( var k = prop.numKeys; k > 0; k-- )
+            {
+                var time = prop.keyTime( k );
+                var value = prop.keyValue( k );
+                value = new DuColor(value).floatHSL();
+                effect( rIndex ).setValueAtTime( time, value[ 0 ] );
+                effect( gIndex ).setValueAtTime( time, value[ 1 ] );
+                effect( bIndex ).setValueAtTime( time, value[ 2 ] );
+                prop.removeKey(k);
+            }
+        }
+
+        //add expression
+        prop.expression = [DuAEExpression.Id.SEPARATE_DIMENSIONS,
+            'var fx = thisLayer.effect("' + effect.name + '");',
+            'var color = [fx(' + rIndex + ').value,fx(' + gIndex + ').value, fx(' + bIndex + ').value, 1];',
+            'if (fx(' + modeIndex + ').value == 2) hslToRgb(color);',
+            'else color;'
+            ].join('\n');
+
+        //return the new props
+        var xProp = new DuAEProperty(effect( rIndex ));
+        var yProp = new DuAEProperty(effect( gIndex ));
+        var zProp = new DuAEProperty(effect( bIndex ));
+        return [xProp,yProp,zProp];
+    }
 }
