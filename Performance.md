@@ -2,9 +2,15 @@
 
 This should be moved to the performance recommendations of the Duik Doc / a dedicated doc.
 
+## General
+
+It is a good idea to regularly close and re-start After Effects.
+
+Do not double click on a project in your file explorer to open it. Start After Effects, then open your project. This may improve performance, and it's a way to avoid many bugs and issues in After Effects. Yup, really.
+
 ## Anti-aliasing / Draft mode
 
-Activating the *draft* mode (actally deactivating anti-aliasing) on layers improves the performance by 10%.
+Activating the *draft* mode (actally deactivating anti-aliasing) on layers improves the performance by only 10% at most.
 
 ## Solids
 
