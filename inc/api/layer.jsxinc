@@ -10,11 +10,12 @@ Duik.Layer = {};
  * @enum {string}
  */
 Duik.Layer.Type = {
-    NONE: '',
+    NONE: '-',
     BONE: 'B',
     PIN: 'P',
     CONTROLLER: 'C',
-    CONTROLLER_BG: 'CBg'
+    CONTROLLER_BG: 'CBg',
+    ZERO: 'Z'
 }
 
 /**
@@ -85,6 +86,11 @@ Duik.Layer.setType = function( type, layers )
             DuAETag.addGroup( layer, DuScriptUI.String.CONTROLLER );
             layer.guideLayer = true;
             if ( Duik.Controller.draft ) ctrl.quality = LayerQuality.DRAFT;
+        }
+        else if (type == Duik.Layer.Type.ZERO)
+        {
+            DuAETag.addGroup( layer, DuScriptUI.String.DUIK_ZERO );
+            layer.guideLayer = true;
         }
     }
 }
@@ -436,35 +442,61 @@ Duik.Layer.rename = function( layer, name, newPrefix )
 }
 
 /**
+ * Copies the attributes from a layer to another layer.
+ * @param {Layer|Layer[]|LayerCollection|DuList.<Layer>} to The layer to set up
+ * @param {Layer} from The source layer
+ * @param {Duik.Layer.Type} type The type of the layer to set up
+ */
+Duik.Layer.copyAttributes = function( to, from, type )
+{
+    to = new DuList(to);
+    var side = Duik.Layer.side(from);
+    var location = Duik.Layer.location(from);
+    var characterName = Duik.Layer.characterName(from);
+    var limbName = Duik.Layer.limbName(from);
+    type = def(type, Duik.Layer.Type.NONE);
+
+    for(var i = 0, n = to.length(); i < n; i++)
+    {
+        var layer = to.at(i);
+        Duik.Layer.setAttributes( layer, type, limbName, side, location, characterName );
+        Duik.Layer.rename( layer, from.name, type);
+    }
+}
+
+/**
  * Sets all the attributes of the layer at once; use this method to prepare a layer which doesn't have a proper Duik name yet.
- * @param {Layer} layer The layer to set up
+ * @param {Layer|Layer[]|LayerCollection|DuList.<Layer>} layer The layer to set up
  * @param {Duik.Layer.Type} type The type
  * @param {string} [limbName=layer.name] The name of the limb/layer
  * @param {DuOCO.Side} [side=DuOCO.Side.NONE] The side
  * @param {DuOCO.Location} [location=DuOCO.Location.NONE] The location
  * @param {string} [characterName="-"] The name of the character
- * @returns {string} the new name of the layer.
  */
 Duik.Layer.setAttributes = function( layer, type, limbName, side, location, characterName )
 {
+    layer = new DuList(layer);
     side = def(side, DuOCO.Side.NONE);
     location = def(location, DuOCO.Location.NONE);
     characterName = def(characterName, '');
     limbName = def(limbName, layer.name);
-    // Dummy name first
-    layer.name = 'Tmp | TempName | TmpLimb';
-    Duik.Layer.setType(type, layer);
-    Duik.Layer.setSide(side, layer);
-    Duik.Layer.setLocation(location, layer);
-    Duik.Layer.setCharacterName(characterName, layer);
-    Duik.Layer.setLimbName(limbName, layer);
-    return layer.name;
+    for(var i = 0, n = layer.length(); i < n; i++)
+    {
+        var l = layer.at(i);
+        // Dummy name first
+        l.name = '- | - | -';
+        Duik.Layer.setType(type, l);
+        Duik.Layer.setSide(side, l);
+        Duik.Layer.setLocation(location, l);
+        Duik.Layer.setCharacterName(characterName, l);
+        Duik.Layer.setLimbName(limbName, l);
+    }
 }
 
 /**
- * Sets default name & attributes to a layer so it can be correctly managed by Duik.
+ * Sets default name to a layer so it can be correctly managed by Duik.
  * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
- * @param {Layer} layer The Layer
+ * @returns {string} The new name of the layer
  */
 Duik.Layer.manage = function ( layer )
 {
@@ -475,8 +507,6 @@ Duik.Layer.manage = function ( layer )
     if (name.length >= 3) return layer.name;
 
     var type = Duik.Layer.type(layer);
-    var side = Duik.Layer.side(layer);
-    var location = Duik.Layer.location(layer);
     var limbName = '';
     var characterName = '';
     if (name.length == 1)
@@ -488,6 +518,7 @@ Duik.Layer.manage = function ( layer )
         limbName = name[1];
         if (name[0].length > 3) characterName = name[0];
     }
-
-    return Duik.Layer.setAttributes( layer, type, limbName, side, location, characterName );
+    // New name
+    layer.name = type + ' | ' + limbName + ' | ' + characterName;
+    return layer.name;
 }
