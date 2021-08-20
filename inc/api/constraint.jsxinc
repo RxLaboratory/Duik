@@ -400,6 +400,7 @@ Duik.Constraint.resetPRS = function( layers, opacity )
     DuAE.endUndoGroup( DuScriptUI.String.RESET_TRANSFORMATION );
 }
 
+Duik.CmdLib['Constraint']["Align layers"] = "Duik.Constraint.alignLayers()";
 /**
  * Align selected Layers to the last selected one
  * @param {Boolean} [position=true] - Wether to align the position.
@@ -420,7 +421,7 @@ Duik.Constraint.alignLayers = function( position, rotation, scale, opacity )
 
     var target = layers.pop();
 
-    DuAE.beginUndoGroup( DuScriptUI.String.ALIGN_LAYERS );
+    DuAE.beginUndoGroup( DuScriptUI.String.ALIGN_LAYERS, false );
     DuAELayer.align(
         layers,
         target,
@@ -429,5 +430,499 @@ Duik.Constraint.alignLayers = function( position, rotation, scale, opacity )
         scale,
         opacity
     );
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup( DuScriptUI.String.ALIGN_LAYERS );
+}
+
+Duik.CmdLib['Constraint']["Expose Transform"] = "Duik.Constraint.exposeTransform()";
+/**
+ * Expose Transform
+ */
+Duik.Constraint.exposeTransform = function ( comp, layers )
+{
+    if (typeof comp === 'undefined')
+	{
+		if (typeof layer !== 'undefined')
+		{
+			comp = layer.containingComp;
+		}
+		else
+		{
+			comp = DuAEProject.getActiveComp();
+		}
+	}
+	if (!comp) return;
+
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_EXPOSE_TRANSFORM, false);
+    DuAEProject.setProgressMode( true );
+
+    var ctrls = [];
+
+    function createETM( layer )
+    {
+        var ctrl = Duik.Controller.create( comp, Duik.Controller.Type.EXPOSE_TRANSFORM, layer);
+
+        //add pseudo effect
+        var pE = Duik.PseudoEffect.EXPOSE_TRANSFORM;
+        var effect = pE.apply(ctrl);
+
+        // indices
+        var guideIndex = pE.props['Display']['Guides'].index;
+        var refColorIndex = pE.props['Display']['Reference'].index;
+        var targetColorIndex = pE.props['Display']['Target'].index;
+        var angleColorIndex = pE.props['Display']['Angle'].index;
+        var distanceColorIndex = pE.props['Display']['Distance'].index;
+        var pos2DAbsIndex = pE.props['2D Position (Comp projection)']['Absolute'].index;
+        var dist2DIndex = pE.props['2D Position (Comp projection)']['2D Distance'].index;
+        var pos3DAbsIndex = pE.props['3D Position (World)']['Absolute'].index;
+        var pos2DRelIndex = pE.props['2D Position (Comp projection)']['Relative to reference'].index;
+        var pos3DRelIndex = pE.props['3D Position (World)']['Relative to reference'].index;
+        var dist3DIndex = pE.props['3D Position (World)']['3D Distance'].index;
+        var rotRelIndex = pE.props['2D Orientation']['Relative to reference'].index;
+        var rotAbsIndex = pE.props['2D Orientation']['Absolute'].index;
+        var angleIndex = pE.props['Angle (Layer-This-Reference)'].index;
+        var targetIndex = pE.props['Target Layer'].index;
+        var refParentIndex = pE.props['Reference'].index;
+        var refIndex = pE.props['Reference Layer'].index;
+
+        //add guides
+        var guidesGroup = ctrl("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+        guidesGroup.name = 'Guides';
+
+        var refGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        refGroup.name = 'Reference';
+
+        var refOrientationGroup = refGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        refOrientationGroup.name = 'Orientation';
+        refOrientation = refOrientationGroup("ADBE Vectors Group");
+
+        var path = refOrientation.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = [0,0];',
+            '	var B = [ 0 , -thisComp.height/20 ];',
+            '	createPath([A,B],[],[],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+            ].join('\n');
+
+        path = refOrientation.addProperty("ADBE Vector Shape - Ellipse");
+        path("ADBE Vector Ellipse Size").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'var s = thisComp.height/40;',
+            'if (fx(' + guideIndex + ').value) [s,s];',
+            'else [0,0];'
+            ].join('\n');
+
+        var stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + refColorIndex + ').value;';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+
+        refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
+        refOrientationTransform('ADBE Vector Position').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'var P = fx(' + pos2DAbsIndex + ');',
+            'var R = fx(' + pos2DAbsIndex + ') - fx(' + pos2DRelIndex + ');',
+            'fromComp(R);'
+        ].join('\n');
+        refOrientationTransform('ADBE Vector Rotation').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\ncontent("Guides").content("Target").transform.rotation + content("Guides").content("Target").content("Reference Orientation").transform.rotation;'
+
+        var targetGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        targetGroup.name = 'Target';
+
+        var targetOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        targetOrientationGroup.name = 'Orientation';
+        targetOrientation = targetOrientationGroup("ADBE Vectors Group");
+
+        path = targetOrientation.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = [0,0];',
+            '	var B = [ 0 , -thisComp.height/10 ];',
+            '	createPath([A,B],[],[],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+
+        path = targetOrientation.addProperty("ADBE Vector Shape - Ellipse");
+        path("ADBE Vector Ellipse Size").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'var s = thisComp.height/20;',
+            'if (fx(' + guideIndex + ').value) [s,s];',
+            'else [0,0];'
+        ].join('\n');
+
+        stroke = targetOrientation.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + targetColorIndex + ');';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+
+        var refOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        refOrientationGroup.name = 'Reference Orientation';
+        refOrientation = refOrientationGroup("ADBE Vectors Group");
+
+        path = refOrientation.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = [0,0];',
+            '	var B = [ 0 , -thisComp.height/20 ];',
+            '	createPath([A,B],[],[],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+
+        stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + refColorIndex + ');';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        
+        refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
+
+        refOrientationTransform('ADBE Vector Rotation').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            '-fx(' + rotRelIndex + ');'
+        ].join('\n');
+
+        targetTransform = targetGroup('ADBE Vector Transform Group');
+        targetTransform('ADBE Vector Position').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	fromComp(fx(' + pos2DAbsIndex + '));',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+        targetTransform('ADBE Vector Rotation').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'var result = fx(' + rotAbsIndex + ');',
+            'var l = thisLayer;',
+            'result -= l.rotation.value;',
+            'while(l.hasParent)',
+            '{',
+            '	l = l.parent;',
+            '	result -= l.rotation.value;',
+            '}',
+            'result;'
+        ].join('\n');
+
+        var angleGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        angleGroup.name = 'Angle';
+
+        var angleGroup1 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        angle1 = angleGroup1("ADBE Vectors Group");
+
+        path = angle1.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("Expose Transform");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = fromComp(fx(' + pos2DAbsIndex + '));',
+            '	var B = fromComp( fx(' + pos2DAbsIndex + ') - fx(' + pos2DRelIndex + ') );',
+            '	createPath([A,[0,0],B],[],[],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+
+        stroke = angle1.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + angleColorIndex + ');';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+
+        var angleGroup2 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        angle2 = angleGroup2("ADBE Vectors Group");
+
+        path = angle2.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = fromComp(fx(' + pos2DAbsIndex + '));',
+            '	var B = fromComp( fx(' + pos2DAbsIndex + ') - fx(' + pos2DRelIndex + ') );',
+            '	var M = (A+B)/2;',
+            '	var tA = [0,0];',
+            '	var tB = [0,0];',
+            '	var lB = length(B);',
+            '	var lA = length(A);',
+            '	if (lA > lB)',
+            '	{',
+            '		var q = 1;',
+            '		if (lA != 0) q = lB/lA;',
+            '		A = A/3*q;',
+            '		B = B/3;',
+            '		tA = M/6*q;',
+            '		tB = M/6;',
+            '	}',
+            '	else',
+            '	{',
+            '		var q = 1;',
+            '		if (lB != 0) q = lA/lB;',
+            '		A = A/3;',
+            '		B = B/3*q;',
+            '		tA = M/6;',
+            '		tB = M/6*q;',
+            '	}',
+            '	createPath([A,B],[ [0,0], tB ],[ tA, [0,0] ],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+
+        stroke = angle2.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + angleColorIndex + ');';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        
+        var distanceGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        distanceGroup.name = 'Distance';
+        distance = distanceGroup("ADBE Vectors Group");
+
+        path = distance.addProperty("ADBE Vector Shape - Group");
+        path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = effect("' + effect.name + '");',
+            'if (fx(' + guideIndex + ').value)',
+            '{',
+            '	var A = fromComp(fx(' + pos2DAbsIndex + '));',
+            '	var B = fromComp( fx(' + pos2DAbsIndex + ') - fx(' + pos2DRelIndex + ') );',
+            '	createPath([A,B],[],[],false);',
+            '}',
+            'else',
+            '{',
+            '	value;',
+            '}'
+        ].join('\n');
+
+        stroke = distance.addProperty("ADBE Vector Graphic - Stroke");
+        stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + distanceColorIndex + ');';
+        stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
+
+        //Effect expressions
+
+        effect(pos2DAbsIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var l = null;',
+            'try { l = fx(' + targetIndex + '); } catch (e){ }',
+            'if (!l) l = thisLayer;',
+            'var result = l.toComp(l.anchorPoint);',
+            'result;'
+        ].join('\n');
+
+        effect(pos2DRelIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var useParent = fx(' + refParentIndex + ').value;',
+            'var layerPosition = fx(' + pos2DAbsIndex + ');',
+            'var referencePosition = [0,0];',
+            'var rL = null;',
+            'if (useParent)',
+            '{',
+            '   var l = null;',
+            '	try { l = fx(' + targetIndex + '); } catch (e){ }',
+            '   if (!l) l = thisLayer;',
+            '	if (l.hasParent) rL = l.parent;',
+            '	else rL = l;',
+            '}',
+            'else',
+            '{',
+            '	try { rL = fx(' + refIndex + '); } catch (e){ }',
+            '   if (!rL) rL = thisLayer;',
+            '}',
+            'referencePosition = rL.toComp(rL.anchorPoint);',
+            'var result = layerPosition - referencePosition;',
+            'result;'
+        ].join('\n');
+
+        effect(dist2DIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var relativePosition = fx(' + pos2DRelIndex + ');',
+            'var result = length( relativePosition );',
+            'result;'
+        ].join('\n');
+
+        effect(pos3DAbsIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var l = null;',
+            'try { l = fx(' + targetIndex + '); } catch (e){ }',
+            'if (!l) l = thisLayer;',
+            'var result = l.toWorld(l.anchorPoint);',
+            'result;'
+        ].join('\n');
+
+        effect(pos3DRelIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var layerPosition = fx(' + pos3DAbsIndex + ');',
+            'var useParent = fx(' + refParentIndex + ').value;',
+            'var rL = null;',
+            'if (useParent)',
+            '{',
+            '   var l = null;',
+            '	try { l = fx(' + targetIndex + '); } catch (e){ }',
+            '   if (!l) l = thisLayer;',
+            '	if (l.hasParent) rL = l.parent;',
+            '	else rL = l;',
+            '}',
+            'else',
+            '{',
+            '	try { rL = fx(' + refIndex + '); } catch (e){ }',
+            '   if (!rL) rL = thisLayer;',
+            '}',
+            'var referencePosition = rL.toWorld(rL.anchorPoint);',
+            'var result = layerPosition - referencePosition;',
+            'result;'
+        ].join('\n');
+
+        effect(dist3DIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var relativePosition = fx(' + pos3DRelIndex + ');',
+            'var result = length( relativePosition );',
+            'result;'
+        ].join('\n');
+
+        effect(rotAbsIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var l = null;',
+            'try { l = fx(' + targetIndex + ') } catch (e){ }',
+            'if (!l) l = thisLayer;',
+            'var result = l.rotation;',
+            'if (l.position.value.length == 3) result += l.orientation[2];',
+            'while(l.hasParent)',
+            '{',
+            '	l = l.parent;',
+            '	result += l.rotation;',
+            '	if (l.position.value.length == 3) result += l.orientation[2];',
+            '}',
+            'result;'
+        ].join('\n');
+
+        effect(rotRelIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var useParent = fx(' + refParentIndex + ').value;',
+            'var rot = fx(' + rotAbsIndex + ');',
+            'var result = value;',
+            'var rL = null;',
+            'if (useParent)',
+            '{',
+            '   var l = null;',
+            '	try { l = fx(' + targetIndex + '); } catch (e){ }',
+            '   if (!l) l = thisLayer;',
+            '	if (l.hasParent) rL = l.parent;',
+            '	else rL = l;',
+            '}',
+            'else',
+            '{',
+            '	try { rL = fx(' + refIndex + '); } catch (e){ }',
+            '   if (!rL) rL = thisLayer;',
+            '}',
+            'var refRot = rL.rotation.value;',
+            'if (rL.position.value.length == 3) refRot += rL.orientation.value[2];',
+            'while(rL.hasParent)',
+            '{',
+            '	rL = rL.parent;',
+            '	refRot += rL.rotation.value;',
+            '	if (rL.position.value.length == 3) refRot += rL.orientation.value[2];',
+            '}',
+            'result = rot - refRot;',
+            'result;'
+        ].join('\n');
+
+        effect(angleIndex).expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
+            'var fx = thisProperty.propertyGroup();',
+            'var useParent = fx(' + refParentIndex + ').value;',
+            'var O = thisLayer.toComp(thisLayer.anchorPoint);',
+            'var l = null;',
+            'var rL = null;',
+            'try { l = fx(' + targetIndex + '); } catch (e){ }',
+            'if (!l) l = thisLayer;',
+            'if (useParent)',
+            '{',
+            '	if (l.hasParent) rL = l.parent;',
+            '	else rL = l;',
+            '}',
+            'else',
+            '{',
+            '	try { rL = fx(' + refIndex + '); } catch (e){ }',
+            '   if (!rL) rL = thisLayer;',
+            '}',
+            'var A = l.toComp(l.anchorPoint);',
+            'var B = rL.toComp(rL.anchorPoint);',
+            'var OA = O-A;',
+            'var OB = O-B;',
+            'var angleA = Math.atan2(OA[1], OA[0]);',
+            'var angleB = Math.atan2(OB[1], OB[0]);',
+            'var result = angleA + angleB;',
+            'result = radiansToDegrees(angleB-angleA);',
+            'if (result < -180) result += 360;',
+            'result;'
+        ].join('\n');
+
+        //set the layer as target
+        if (typeof layer !== 'undefined')
+        {
+            effect( targetIndex ).setValue(layer.index);
+        }
+
+        //fold
+        ctrl.selected = true;
+        DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS );
+
+        return ctrl;
+    }
+
+    if (layers.length() == 0) ctrls.push( createETM() );
+    else
+    {
+        for (var  i = 0, num = layers.length() ; i < num ; i++)
+        {
+            var ctrl = createETM( layers.at(i) );
+            ctrls.push(ctrl);
+        }
+    }
+
+    DuAEProject.setProgressMode( false );
+    DuAEComp.selectLayers(ctrls);
+
+    DuAE.endUndoGroup( DuScriptUI.String.DUIK_EXPOSE_TRANSFORM );
 }
