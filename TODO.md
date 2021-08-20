@@ -3,7 +3,6 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Lock prop
     - Zero
     - Etm
     - IK Selector

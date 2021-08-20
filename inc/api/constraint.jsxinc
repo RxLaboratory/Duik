@@ -285,3 +285,47 @@ Duik.Constraint.lock = function ()
 
     DuAE.endUndoGroup();
 }
+
+Duik.CmdLib['Constraint']["Zero"] = "Duik.Constraint.zero()";
+/**
+ * Zero-out selected layers
+ */
+Duik.Constraint.zero = function()
+{
+    DuAEProject.setProgressMode(true);
+    DuAEComp.doSelectedLayers( Duik.Constraint.addZero, DuScriptUI.String.ADD_ZERO );
+    DuAEProject.setProgressMode(false);
+}
+
+
+/**
+ * Zero out the layer
+ * @param {Layer} layer The layer
+ * @returns {ShapeLayer} The zero, a shape null
+ */
+Duik.Constraint.addZero = function( layer )
+{
+    //create null object
+    var zero = DuAEComp.addNull( layer.containingComp );
+    var layerparent = layer.parent;
+    layer.parent = null;
+    zero.position.setValue( layer.position.value );
+    zero.rotation.setValue( layer.rotation.value );
+    
+    Duik.Layer.copyAttributes( zero, layer, Duik.Layer.Type.ZERO );
+
+    layer.parent = zero;
+    zero.scale.setValue( layer.scale.value );
+    layer.scale.setValue( [ 100, 100, 100 ] );
+
+    //parent
+    zero.parent = layerparent;
+
+    //lock and hide
+    zero.moveToEnd();
+    zero.shy = true;
+    zero.enabled = false;
+    zero.selected = false;
+    zero.locked = true;
+    return zero;
+}
