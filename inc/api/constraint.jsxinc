@@ -289,43 +289,113 @@ Duik.Constraint.lock = function ()
 Duik.CmdLib['Constraint']["Zero"] = "Duik.Constraint.zero()";
 /**
  * Zero-out selected layers
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ * @returns {ShapeLayer[]} The zeroes
  */
-Duik.Constraint.zero = function()
+Duik.Constraint.zero = function( layers )
 {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.ADD_ZERO, false );
     DuAEProject.setProgressMode(true);
-    DuAEComp.doSelectedLayers( Duik.Constraint.addZero, DuScriptUI.String.ADD_ZERO );
+
+    var zeroes = [];
+
+    layers.do( function(layer)
+    {
+        //create null object
+        var zero = DuAEComp.addNull( layer.containingComp );
+        var layerparent = layer.parent;
+        layer.parent = null;
+        zero.position.setValue( layer.position.value );
+        zero.rotation.setValue( layer.rotation.value );
+        
+        Duik.Layer.copyAttributes( zero, layer, Duik.Layer.Type.ZERO );
+
+        layer.parent = zero;
+        zero.scale.setValue( layer.scale.value );
+        layer.scale.setValue( [ 100, 100, 100 ] );
+
+        //parent
+        zero.parent = layerparent;
+
+        //lock and hide
+        zero.moveToEnd();
+        zero.shy = true;
+        zero.enabled = false;
+        zero.selected = false;
+        zero.locked = true;
+        zeroes.push(zero);
+    } );
+
     DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup( DuScriptUI.String.ADD_ZERO );
+
+    return zeroes;
 }
 
-
+Duik.CmdLib['Constraint']["Reset Transformation"] = "Duik.Constraint.resetPRS()";
+Duik.CmdLib['Constraint']["Reset Transformation and opacity"] = "Duik.Constraint.resetPRS(undefined, true)";
 /**
- * Zero out the layer
- * @param {Layer} layer The layer
- * @returns {ShapeLayer} The zero, a shape null
+ * Resets the transformation of the selected layers to 0.
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ * @param {Boolean} [opacity=false] When true, also resets the opacity to 100%
  */
-Duik.Constraint.addZero = function( layer )
+Duik.Constraint.resetPRS = function( layers, opacity )
 {
-    //create null object
-    var zero = DuAEComp.addNull( layer.containingComp );
-    var layerparent = layer.parent;
-    layer.parent = null;
-    zero.position.setValue( layer.position.value );
-    zero.rotation.setValue( layer.rotation.value );
-    
-    Duik.Layer.copyAttributes( zero, layer, Duik.Layer.Type.ZERO );
+    opacity = def(opacity, false);
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
 
-    layer.parent = zero;
-    zero.scale.setValue( layer.scale.value );
-    layer.scale.setValue( [ 100, 100, 100 ] );
+    DuAE.beginUndoGroup( DuScriptUI.String.RESET_TRANSFORMATION, false );
+    DuAEProject.setProgressMode(true);
 
-    //parent
-    zero.parent = layerparent;
+    layers.do( function(layer)
+    {
+        var comp = layer.containingComp;
+        //is it 3D?
+        var threeD = layer.threeDLayer;
+        //has parent ?
+        var parent = layer.parent !== null;
+        if (threeD)
+        {
+            var positionValue = parent ? [0,0,0] : [comp.width / 2, comp.height / 2, 0];
+            if (layer.transform.position.dimensionsSeparated)
+            {
+                layer.transform.xPosition.setValue(positionValue[0]);
+                layer.transform.yPosition.setValue(positionValue[1]);
+                layer.transform.zPosition.setValue(positionValue[2]);
+            }
+            else 
+            {
+                layer.transform.position.setValue(positionValue);
+            }
+            layer.transform.scale.setValue([100,100,100]);
+            layer.transform.zRotation.setValue(0);
+            layer.transform.xRotation.setValue(0);
+            layer.transform.yRotation.setValue(0);
+            layer.transform.orientation.setValue([0,0,0]);
+        }
+        else
+        {
+            var positionValue = parent ? [0,0] : [comp.width / 2, comp.height / 2];
+            if (layer.transform.position.dimensionsSeparated)
+            {
+                layer.transform.xPosition.setValue(positionValue[0]);
+                layer.transform.yPosition.setValue(positionValue[1]);
+            }
+            else 
+            {
+                layer.transform.position.setValue(positionValue);
+            }
+            layer.transform.scale.setValue([100,100]);
+            layer.transform.rotation.setValue(0);
+        }
 
-    //lock and hide
-    zero.moveToEnd();
-    zero.shy = true;
-    zero.enabled = false;
-    zero.selected = false;
-    zero.locked = true;
-    return zero;
+        if (opacity) layer.transform.opacity.setValue(100);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup( DuScriptUI.String.RESET_TRANSFORMATION );
 }
