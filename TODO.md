@@ -3,7 +3,6 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Separate dims
     - Lock prop
     - Zero
     - Etm
