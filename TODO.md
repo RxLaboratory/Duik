@@ -3,7 +3,7 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Zero
+    - Align layers
     - Etm
     - IK Selector
     - Parent selector
@@ -21,6 +21,11 @@
     - bake
     - extract
 - [ ] Automation panel
+- [ ] Animation panel
+    - [ ] Tools:
+        - reset PRS
+        - IK/FK
+        - Align layers
 - [ ] Option to hide tags
 - [ ] Bones Front and side wing
 - [ ] Bones Autolink on Ctrl+click (add to helptip) (also from the options panel)
