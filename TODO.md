@@ -3,14 +3,12 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Align layers
-    - Etm
+    - Key morph: implement interpolation on key selection
     - IK Selector
     - Parent selector
     - Transform Constraints selector
     - Add pins
     - Connector
-    - Shape keys
     - Autorig
 - [ ] autorig in bones panel
 - [ ] bone

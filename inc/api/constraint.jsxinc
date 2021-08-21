@@ -921,8 +921,223 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         }
     }
 
-    DuAEProject.setProgressMode( false );
     DuAEComp.selectLayers(ctrls);
-
+    DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( DuScriptUI.String.DUIK_EXPOSE_TRANSFORM );
+}
+
+Duik.CmdLib['Constraint']["Morph Keys"] = "Duik.Constraint.morphKeys()";
+/**
+ * Morph Keys
+ */
+Duik.Constraint.morphKeys = function ( props )
+{
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) return;
+
+    // Get layer
+    var layer = new DuAEProperty(props[0]).layer;
+
+    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_KEY_MORPH, false);
+
+    // Add key morph effect
+    var peKM = Duik.PseudoEffect.KEY_MORPH;
+    var peKMK = Duik.PseudoEffect.KEY_MORPH_K;
+    var kmEffect = peKM.apply(layer);
+    var kmEffectName = kmEffect.name;
+    var kmp = peKM.props;
+    var kmkp = peKMK.props;
+
+    // number of keys expression
+    kmEffect(kmp['Number of keys'].index).expression = [DuAEExpression.Id.KEY_MORPH,
+        'var numK = 0;',
+        '',
+        'function checkDuikEffect(fx, duikMatchName) {',
+        '    if (fx.numProperties  < 3) return false;',
+        '    if (!!$.engineName) {',
+        '        if ( fx(2).name != duikMatchName ) return false;',
+        '    }',
+        '    else {',
+        '        try { if (fx(2).name != duikMatchName) return false; }',
+        '        catch (e) { return false; }',
+        '    }',
+        '    return true;',
+        '}',
+        '',
+        'for (var i = 1, n = thisLayer(\'Effects\').numProperties; i <= n; i++) {',
+        '	if (!checkDuikEffect( thisLayer.effect(i), "key morph k")) continue;',
+        '	numK++;',
+        '}',
+        '',
+        'numK;'
+        ].join('\n');
+
+    // Count keyframes & add expression
+    var numKeys = 1;
+    for (var i = 0, n = props.length; i < n; i++)
+    {
+        var p = props[i];
+
+        var pInfo = new DuAEProperty(p);
+        p = pInfo.getProperty();
+
+        if (!pInfo.riggable()) continue;
+        var np = p.numKeys;
+        if (np < 2) continue;
+
+        // count keyframes
+        if (numKeys < 2 )  numKeys = np;
+        else if (np < numKeys) numKeys = np;
+
+        // add expression
+        p.expression = [DuAEExpression.Id.KEY_MORPH,
+            'var cumulative = !effect("' + kmEffectName + '")(' + kmp['Weights'].index + ').value;',
+            '',
+            'var result = zero();',
+            'var weights = [];',
+            'var sumWeights = 0;',
+            'var nKeys = 0;',
+            'var thisIsPath = isPath(thisProperty);',
+            '',
+            '// If path, oVal must be a path',
+            'var oVal;',
+            'if (thisIsPath) oVal = getPath(0);',
+            'else oVal = valueAtTime(0);',
+            '',
+            DuAEExpression.Library.get([
+                'zero',
+                'isPath',
+                'getPath',
+                'addPath',
+                'subPath',
+                'multPath',
+                'multPoints',
+                'addPoints',
+                'subPoints',
+                'checkDuikEffect',
+                'normalizeWeights',
+            ]),
+            '',
+            '// Get weights',
+            'var k = 0;',
+            'for (var i = 1, n = thisLayer("Effects").numProperties; i <= n; i++) {',
+            '	var fx = effect(i);',
+            '	if (!checkDuikEffect( thisLayer.effect(i), "key morph k")) continue;',
+            '	k++;',
+            '	if (k > numKeys) break;',
+            '	var weight = fx(' + kmkp['Weight'].index + ').value / 100;',
+            '	weights.push(weight);',
+            '	sumWeights += weight;',
+            '	if (weight > 0 && !(cumulative && k == 1)) nKeys++;',
+            '}',
+            '',
+            '// Normalize',
+            'if (!cumulative)',
+            '{',
+            '  weights = normalizeWeights(weights, sumWeights);',
+            '  sumWeights = 1;',
+            '}',
+            '',
+            '// Sum',
+            'for (var i = 0, n = weights.length; i < n; i++)',
+            '{',
+            '  if (i > numKeys) break;',
+            '  if (cumulative && i == 0) continue;',
+            '  var w = weights[i];',
+            '  if (w == 0) continue;',
+            '  if( thisIsPath ) {',
+            '    var p = getPath( key(i+1).time );',
+            '    result = addPath(result, p, w);',
+            '    if (cumulative) result = addPath(result, oVal, (1-w));',
+            '  }',
+            '  else {',
+            '    result += key(i+1).value * w;',
+            '    if (cumulative) result += oVal * (1-w);',
+            '  }',
+            '  ',
+            '}',
+            '',
+            '// Weights',
+            'if (nKeys > 0) {',
+            '  if (!cumulative)',
+            '  {',
+            '    if (thisIsPath) result = multPath( result, 1 / sumWeights);',
+            '    else result /= sumWeights;',
+            '  }',
+            '  else if (nKeys > 1)',
+            '  {',
+            '    if (thisIsPath) result = subPath( result, oVal, 1);',
+            '    else result -= oVal;',
+            '  }',
+            '}',
+            ' else {',
+            '	if (thisIsPath) result = getPath(0);',
+            '	else result = valueAtTime(0);',
+            '}',
+            '',
+            'if (thisIsPath) createPath(result.points, result.inTangents, result.outTangents, isClosed());',
+            'else result;'
+            ].join('\n');
+        
+    }
+
+    // Add Key effects
+    for (var i = 0; i < numKeys; i++)
+    {
+        var kmkFX = peKMK.apply(layer);
+
+        // Weight expression
+        kmkFX(kmkp['Weight'].index).expression = [DuAEExpression.Id.KEY_MORPH,
+            'var selection = effect("' + kmEffectName + '")(' + kmp["Key Selection"].index + ');',
+            'var thisIndex = thisProperty.propertyGroup(1)(' + kmkp["Key Index"].index + ').value;',
+            '',
+            DuAEExpression.Library.get([
+                'getNextKey',
+                'getPrevKey'
+            ]),
+            '',
+            'function interpolate()',
+            '{',
+            '  var pK = getPrevKey(time, selection);',
+            '  var nK = getNextKey(time, selection);',
+            '',
+            '  if (!pK && !nK && Math.round(selection.value) == thisIndex) return 100;',
+            '	var nValue = 0;',
+            '	var pValue = 0;',
+            '	if(nK) nValue = Math.round(nK.value);',
+            '	if(pK) pValue = Math.round(pK.value);',
+            '  if (!pK && !nK) return 0;',
+            '  if (!pK && nValue == thisIndex) return 100;',
+            '  if (!pK) return 0;',
+            '  if (!nK && pValue == thisIndex) return 100;',
+            '  if (!nK) return 0;',
+            '  if (pValue != thisIndex && nValue != thisIndex) return 0;',
+            '  if (pValue == nValue) return 100;',
+            '  if (pValue == thisIndex )',
+            '    return linear( time, pK.time, nK.time, 100, 0 );',
+            '  return linear( time, pK.time, nK.time, 0, 100 );',
+            '}',
+            '',
+            'var result = value + interpolate();',
+            '',
+            'result;'
+            ].join('\n');
+
+        kmkFX(kmkp['Key Index'].index).expression = [DuAEExpression.Id.KEY_MORPH,
+            'var numK = 1;',
+            '',
+            DuAEExpression.Library.get([
+                'checkDuikEffect'
+            ]),
+            '',
+            'for (var i = 1, n = thisProperty.propertyGroup(1).propertyIndex; i < n; i++) {',
+            '	if (!checkDuikEffect( thisLayer.effect(i), "key morph k")) continue;',
+            '	numK++;',
+            '}',
+            '',
+            'numK;'
+            ].join('\n');
+    }
+
+    DuAE.endUndoGroup( DuScriptUI.String.DUIK_KEY_MORPH );
 }
