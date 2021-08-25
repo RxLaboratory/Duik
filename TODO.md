@@ -3,7 +3,6 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - Key morph: implement interpolation on key selection
     - IK Selector
     - Parent selector
     - Transform Constraints selector
