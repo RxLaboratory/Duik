@@ -1279,6 +1279,8 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
     //default values
     if ( right ) effect( reverseIndex ).setValue( 1 );
     effect( layerIndex ).setValue( layer.index );
+    effect( ulIndex ).setValue( 180 );
+    effect( llIndex ).setValue( -180 );
 
     //guides
     if ( DuAE.version.version >= 15 && drawGuides )
@@ -1292,7 +1294,6 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
         var lineContent = lineGroup.property( "ADBE Vectors Group" );
         var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
         shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
-            'if (active){',
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1306,8 +1307,7 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
             '       result = [l,[0,0]];',
             '   }',
             '}',
-            'createPath(result,[],[],false);',
-            '} else value;'
+            'createPath(result,[],[],false);'
             ].join('\n');
         var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
         var ctrlEffect = controller.effect( Duik.PseudoEffect.CONTROLLER.matchName );
@@ -1317,6 +1317,209 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
         stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
         stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
         stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+        var limitsGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Limits' );
+        if ( !limitsGroup )
+        {
+            limitsGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+            limitsGroup.name = 'IK Limits';
+        }
+        limitsGroup.transform.position.expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var l = null;',
+            'try{ l = fx(' + layerIndex + '); }catch(e){}',
+            'var result = value;',
+            'if (l != null)',
+            '{',
+            '	var p = l.toWorld(l.anchorPoint);',
+            '	result = fromWorld(p);',
+            '}',
+            'result;'
+            ].join('\n');
+
+        var limitLinesGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
+        limitsGroup.name = 'Limit Lines';
+        limitLinesGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
+            DuAEExpression.Library.get(['getOrientation']),
+            '',
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = value;',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1 != null)',
+            '   {',
+            '       if (layer1.hasParent) result = getOrientation(layer1.parent);',
+            '   }',
+            '}',
+            'result;'
+            ].join('\n');
+
+        var limitLinesContent = limitLinesGroup.property( "ADBE Vectors Group" );
+        var lLimitGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        lLimitGroup.name = 'Lower Limit';
+        lLimitGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'fx(' + llIndex + ').value-180;'
+            ].join('\n');
+
+        var lLimitContent = lLimitGroup.property( "ADBE Vectors Group" );
+        lLimitShape = lLimitContent.addProperty( "ADBE Vector Shape - Group" );
+        lLimitShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1!=null)',
+            '   {',
+            '       var l = layer1.toWorld(layer1.anchorPoint);',
+            '       l = fromWorld(l);',
+            '       l = length(l) * .8;',
+            '       if (!fx(' + reverseIndex + ').value) l = -l;',
+            '       result = [[l,0],[0,0]];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+            ].join('\n');
+        
+        stroke = lLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+
+        var uLimitGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        uLimitGroup.name = 'Upper Limit';
+        uLimitGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'fx(' + ulIndex + ').value-180;'
+            ].join('\n');
+
+        var uLimitContent = uLimitGroup.property( "ADBE Vectors Group" );
+        uLimitShape = uLimitContent.addProperty( "ADBE Vector Shape - Group" );
+        uLimitShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1!=null)',
+            '   {',
+            '       var l = layer1.toWorld(layer1.anchorPoint);',
+            '       l = fromWorld(l);',
+            '       l = length(l) * .8;',
+            '       if (!fx(' + reverseIndex + ').value) l = -l;',
+            '       result = [[l,0],[0,0]];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+            ].join('\n');
+        
+        stroke = uLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+
+        var lSftnssGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        lSftnssGroup.name = 'Lower Softness';
+        lSftnssGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'fx(' + llIndex + ').value-180+fx(' + lsIndex + ').value;'
+            ].join('\n');
+
+        var lSftnssContent = lSftnssGroup.property( "ADBE Vectors Group" );
+        lSftnssShape = lSftnssContent.addProperty( "ADBE Vector Shape - Group" );
+        lSftnssShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1!=null)',
+            '   {',
+            '       var l = layer1.toWorld(layer1.anchorPoint);',
+            '       l = fromWorld(l);',
+            '       l = length(l) * .5;',
+            '       if (!fx(' + reverseIndex + ').value) l = -l;',
+            '       result = [[l,0],[0,0]];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+            ].join('\n');
+        
+        stroke = lSftnssContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+        var uSftnssGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        uSftnssGroup.name = 'Upper Softness';
+        uSftnssGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'fx(' + ulIndex + ').value-180-fx(' + lsIndex + ').value;'
+            ].join('\n');
+
+        var uSftnssContent = uSftnssGroup.property( "ADBE Vectors Group" );
+        uSftnssShape = uSftnssContent.addProperty( "ADBE Vector Shape - Group" );
+        uSftnssShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1!=null)',
+            '   {',
+            '       var l = layer1.toWorld(layer1.anchorPoint);',
+            '       l = fromWorld(l);',
+            '       l = length(l) * .5;',
+            '       if (!fx(' + reverseIndex + ').value) l = -l;',
+            '       result = [[l,0],[0,0]];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+            ].join('\n');
+        
+        stroke = uSftnssContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+        var flGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
+        flGroup.name = 'Flip Line';
+        var flContent = flGroup.property( "ADBE Vectors Group" );
+        flShape = flContent.addProperty( "ADBE Vector Shape - Group" );
+        flShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+            'var fx = effect("' + effect.name + '");',
+            'var layer1 = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+            '{',
+            '   try{ layer1 = fx(' + layerIndex + '); }catch(e){}',
+            '   if (layer1!=null)',
+            '   {',
+            '       var l = layer1.toWorld(layer1.anchorPoint);',
+            '       l = fromWorld(l);',
+            '       l = length(l) * .3;',
+            '       if (!fx(' + reverseIndex + ').value) l = -l;',
+            '       result = [[l,0],[0,0]];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+            ].join('\n');
+        
+        stroke = flContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\n' + DuColor.Color.RAINBOX_RED.floatRGBA().toSource();
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
 
         //close controller details
         controller.selected = true;
