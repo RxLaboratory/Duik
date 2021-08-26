@@ -4,7 +4,6 @@
 
 - [ ] constraints (including IK)
     - IK Selector
-        - three layer
         - 2+1
         - 1+2
         - bézier

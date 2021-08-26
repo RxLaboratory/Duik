@@ -1625,9 +1625,9 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
  * @param {Layer} layer1 - The root layer
  * @param {Layer} layer2 - The end layer
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
- * @param {Layer|Controller|null} [controller] - The layer to use as a controller, can be automatically created.<br />
+ * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
- * @return {Controller} The controller created
+ * @return {Layer} The controller created
  */
 Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
 {
@@ -1895,7 +1895,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
         '}',
         'result;'
     ].join('\n');
-    
+
     effect( sideIndex ).expression = [DuAEExpression.Id.TWO_IK,
         'var result = value;',
         'var fx = effect("' + effect.name + '");',
@@ -2419,6 +2419,786 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
             'if (ctrl != null)',
             '{',
             'result = ctrl.effect("' + effect.name + '")(' + goalPosIndex + ').value;',
+            '}',
+            'result;'
+        ].join('\n');
+    }
+
+    return controller;
+}
+
+/**
+ * Creates a three-layer-ik on the layer
+ * @param {Layer} layer1 - The root layer
+ * @param {Layer} layer2 - The middle layer
+ * @param {Layer} layer3 - The end layer
+ * @param {Layer|null} [goal] - The goal layer, at the end of the IK
+ * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
+ * Must be provided if goal is undefined
+ * @return {Layer} The controller created
+ */
+Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controller )
+{
+    goal = def(goal, null);
+    controller = def(controller, null);
+    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    var comp = layer1.containingComp;
+
+    //Create controller
+    if ( controller == null )
+    {
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+        goal.parent = null;
+        controller.transform.rotation.setValue( goal.transform.rotation.value );
+        goal.parent = layer3;
+    }
+
+    //Check if clockwise and lengths
+
+    //unparent
+    var rootParent = layer1.parent;
+    layer1.parent = null;
+    var middleParent = layer2.parent;
+    layer2.parent = null;
+    var endParent = controller.parent;
+    controller.parent = null;
+
+    var upperLength = DuMath.length( layer1.transform.position.value, layer2.transform.position.value );
+    var lowerLength = DuAELayer.getDistance( layer3, controller );
+    var middleLength = DuAELayer.getDistance( layer3, layer2 );
+    var endPos = controller.transform.position.value - layer1.transform.position.value;
+    var middlePos = layer2.transform.position.value - layer1.transform.position.value;
+    var coef = endPos[ 1 ] / endPos[ 0 ];
+
+    var clockwise = false;
+    if ( middlePos[ 1 ] < middlePos[ 0 ] * coef && endPos[ 0 ] > 0 ) clockwise = true;
+    if ( middlePos[ 1 ] > middlePos[ 0 ] * coef && endPos[ 0 ] < 0 ) clockwise = true;
+
+    //reparent
+    layer1.parent = rootParent;
+    layer2.parent = middleParent;
+    controller.parent = endParent;
+
+    //add effect
+    var name = layer3.name;
+    if ( goal != null ) name = goal.name;
+    var pe = Duik.PseudoEffect.THREE_LAYER_IK;
+    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+
+    // indices
+    var ikIndex = pe.props["IK / FK"].index;
+    var revIndex = pe.props["Reverse"].index;
+
+    var pRotationIndex = pe.props["FK"]["Parent rotation"].index;
+    var uFKIndex = pe.props["FK"]["Upper"].index;
+    var mFKIndex = pe.props["FK"]["Middle"].index;
+    var lFKIndex = pe.props["FK"]["Lower"].index;
+    var endFKIndex = pe.props["FK"]["End"].index;
+
+    var overlapAnimIndex = pe.props["FK Overlap"]["Animation"].index;
+    var resistanceIndex = pe.props["FK Overlap"]["Resistance"].index;
+    var flexibilityIndex = pe.props["FK Overlap"]["Flexibility"].index;
+    var overlapIndex = pe.props["FK Overlap"]["Overlap"].index;
+
+    var stretchIndex = pe.props["Stretch"]["Stretch"].index;
+    var upperStretchIndex = pe.props["Stretch"]["Upper Stretch"].index;
+    var middleStretchIndex = pe.props["Stretch"]["Middle Stretch"].index;
+    var lowerStretchIndex = pe.props["Stretch"]["Lower Stretch"].index;
+    var autoStretchIndex = pe.props["Stretch"]["Auto-Stretch"].index;
+
+    var rLimitIndex = pe.props["Advanced"]["Full rotation limit"].index;
+
+    var uStretchIndex = pe.props["Data"]["Stretch data"]["Upper stretch"].index;
+    var mStretchIndex = pe.props["Data"]["Stretch data"]["Middle stretch"].index;
+    var lStretchIndex = pe.props["Data"]["Stretch data"]["Lower stretch"].index;
+    var scaleIndex = pe.props["Data"]["Stretch data"]["Stretch scale"].index;
+    var goalPosIndex = pe.props["Data"]["Stretch data"]["Goal position"].index;
+    var goalWPosIndex = pe.props["Data"]["Stretch data"]["Goal world position"].index;
+
+    var uLengthIndex = pe.props["Data"]["Lengths"]["Upper length"].index;
+    var mLengthIndex = pe.props["Data"]["Lengths"]["Middle length"].index;
+    var lLengthIndex = pe.props["Data"]["Lengths"]["Lower length"].index;
+    var ikLengthIndex = pe.props["Data"]["Lengths"]["IK length"].index;
+
+    var straightIndex = pe.props["Data"]["Straight"].index;
+
+    var uLayerIndex = pe.props["Data"]["Layers"]["Upper"].index;
+    var mLayerIndex = pe.props["Data"]["Layers"]["Middle"].index;
+    var lLayerIndex = pe.props["Data"]["Layers"]["Lower"].index;
+    var gLayerIndex = pe.props["Data"]["Layers"]["Goal"].index;
+
+    var guidesIndex = pe.props["Display"]["Draw guides"].index;
+
+    // Default values
+    if ( clockwise ) effect( revIndex ).setValue( 1 );
+
+    //set layers
+    effect( uLayerIndex ).setValue( layer1.index );
+    effect( mLayerIndex ).setValue( layer2.index );
+    effect( lLayerIndex ).setValue( layer3.index );
+    if ( goal != undefined ) effect( gLayerIndex ).setValue( goal.index );
+
+    //set lengths
+    effect( uLengthIndex ).setValue( upperLength );
+    effect( mLengthIndex ).setValue( middleLength );
+    effect( lLengthIndex ).setValue( lowerLength );
+
+    //rotation limit
+    effect( rLimitIndex ).setValue( -180 );
+
+    //get some useful coordinates
+    var goalPos = [ 0, 0 ];
+    if ( goal != null )
+    {
+        goalPos = goal.transform.position.value;
+    }
+    else
+    {
+        effect( goalPosIndex ).expression = "thisComp.layer(" + layer3.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
+        goalPos = effect( goalPosIndex ).value;
+        effect( goalPosIndex ).expression = "";
+    }
+    var goalPosProp = new DuAEProperty( effect( goalPosIndex ) );
+    goalPosProp.setValue( goalPos );
+    var rootAp = layer1.transform.anchorPoint.value.toSource();
+    var middleAp = layer2.transform.anchorPoint.value.toSource();
+    var lowerAp = layer3.transform.anchorPoint.value.toSource();
+    var middlePos = layer2.transform.position.value.toSource();
+    var lowerPos = layer3.transform.position.value.toSource();
+
+    //add expressions
+    effect( uStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'var layer2 = null;',
+        'var result = 0;',
+        'try { layer1 = fx(' + uLayerIndex + ');layer2=fx(' + mLayerIndex + ');}catch(e){}',
+        'if (layer1!=null)',
+        '{',
+        '   var newLength = length(layer1.toWorld(layer1.anchorPoint),layer2.toWorld(layer2.anchorPoint));',
+        '   result = newLength - fx(' + uLengthIndex + ').value;',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( mStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer2 = null;',
+        'var layer3 = null;',
+        'var result = 0;',
+        'try { layer3 = fx(' + lLayerIndex + '); layer2=fx(' + mLayerIndex + '); }catch (e) {}',
+        'if (layer3!=null)',
+        '{',
+        '   var newLength = length( layer2.toWorld( layer2.anchorPoint ), layer3.toWorld( layer3.anchorPoint ) );',
+        '   result = newLength - fx(' + mLengthIndex + ').value;',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( lStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer3 = null;',
+        'var result = 0;',
+        'try{ layer3=fx(' + lLayerIndex + '); }catch (e) {}',
+        'if (layer3!=null)',
+        '{',
+        '   var newLength = length( fx(' + goalWPosIndex + ').value , layer3.toWorld(layer3.anchorPoint));',
+        '   result = newLength - fx(' + lLengthIndex + ').value;',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( scaleIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'result = fx(' + uStretchIndex + ').value + fx(' + mStretchIndex + ').value + fx(' + lStretchIndex + ').value;',
+        'var o = fx(' + uLengthIndex + ').value + fx(' + mLengthIndex + ').value + fx(' + lLengthIndex + ').value;',
+        'result += o;',
+        'result = result / o * 100;'
+    ].join('\n');
+
+    effect( goalPosIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var result = value;',
+        'var fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'try { layer1 = fx(' + uLayerIndex + '); } catch (e) {}',
+        'if ( layer1 != null )',
+        '{',
+        '   var stretch = fx(' + stretchIndex + ').value + fx(' + lowerStretchIndex + ');',
+        '   var auto = fx(' + autoStretchIndex + ').value;',
+        '   var IK = fx(' + ikIndex + ').value;',
+        '   function getWorldPos(L){',
+        '       return L.toWorld(L.anchorPoint);',
+        '   }',
+        '   var upperAP = ' + rootAp + ';',
+        '   var middlePos = ' + middlePos + ';',
+        '   var middleAP = ' + middleAp + ';',
+        '   var lowerPos = ' + lowerPos + ';',
+        '   var lowerAP = ' + lowerAp + ';',
+        '   var zeroPos = ' + goalPos.toSource() + ';',
+        '   var dist1 = fx(' + uLengthIndex + ');',
+        '   var dist2 = fx(' + mLengthIndex + ');',
+        '   var dist3 = fx(' + lLengthIndex + ');',
+        '   var IKLength = dist1+dist2+dist3;',
+        '   var IKStretched = IKLength+stretch;',
+        '   var boneStretch = 0;',
+        '   var proportion = dist3/(IKLength);',
+        '   var posC = toWorld(anchorPoint);',
+        '   var posR = getWorldPos(layer1);',
+        '   var distC = length(posC,posR);',
+        '   if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '   else boneStretch += stretch*proportion;',
+        '   var coef = 1;',
+        '   dist3 != 0 ? coef = (dist3+boneStretch)/dist3 : coef = 1;',
+        '   result = (middlePos-upperAP)*coef+upperAP;',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( goalWPosIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer3 = null;',
+        'var result = [0,0];',
+        'try { layer3 = fx(' + lLayerIndex + '); }catch (e) {}',
+        'if ( layer3 != null )',
+        '{',
+        '   result = layer3.toWorld(fx(' + goalPosIndex + ').value);',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( ikLengthIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var result = fx(' + uLengthIndex + ').value + fx(' + mLengthIndex + ').value + fx(' + lLengthIndex + ').value;',
+        'var goalPos = fx(' + goalWPosIndex + ').value;',
+        'var layer1 = null;',
+        'try{ layer1 = fx(' + uLayerIndex + '); } catch(e){}',
+        'if (layer1 != null)',
+        '{',
+        'result = length(layer1.toWorld(layer1.anchorPoint), goalPos);',
+        '}',
+        'result;'
+    ].join('\n');
+
+    effect( straightIndex ).expression = [DuAEExpression.Id.THREE_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'var layer2 = null;',
+        'var layer3 = null;',
+        'var result = false;',
+        'try { layer1 = fx(' + uLayerIndex + '); layer2 = fx(' + mLayerIndex + '); layer3 = fx(' + lLayerIndex + '); } catch (e) {}',
+        'if ( layer1 != null )',
+        '{',
+        '   var a = layer1.toWorld(layer1.anchorPoint);',
+        '   var b = layer2.toWorld(layer2.anchorPoint);',
+        '   var c = layer3.toWorld(layer3.anchorPoint);',
+        '   result = Math.abs(a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1])) < 10 ;',
+        '}',
+        'result;'
+    ].join('\n');
+
+    //add controller visual feedback
+    if ( controller instanceof ShapeLayer )
+    {
+        // Will be null if baked / removed
+        var peCtrl = Duik.PseudoEffect.CONTROLLER;
+        var ctrlEffect = controller.effect( peCtrl.matchName );
+        var iconColorIndex = peCtrl.props["Icon"]["Color"].index;
+        var iconSizeIndex = peCtrl.props["Icon"]["Size"].index;
+        var iconPosIndex = peCtrl.props["Icon"]["Position"].index;
+        var iconOpacityIndex = peCtrl.props["Icon"]["Opacity"].index;
+
+        var ikGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        ikGroup.name = 'IK';
+        var ikContent = ikGroup.property( "ADBE Vectors Group" );
+        var shape = ikContent.addProperty( "ADBE Vector Shape - Group" );
+        var ikShape = new Shape();
+        ikShape.vertices = [
+            [ -8, 16 ],
+            [ 8, 16 ]
+        ];
+        ikShape.inTangents = [
+            [ 0, 0 ],
+            [ 0, 0 ]
+        ];
+        ikShape.outTangents = [
+            [ 0, 0 ],
+            [ 0, 0 ]
+        ];
+        ikShape.closed = false;
+        shape( 'ADBE Vector Shape' ).setValue( ikShape );
+        var stroke = ikContent.addProperty( "ADBE Vector Graphic - Stroke" );
+
+        var ctrlEffect = controller.effect( peCtrl.matchName );
+
+        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Opacity" ).expression = DuAEExpression.Id.THREE_IK + '\nvar fx = effect("' + effect.name + '");\n' +
+            'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value*100; else 0;';
+
+        if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.THREE_IK + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2]';
+        if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
+        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ')';
+
+        if ( DuAE.version.version >= 15 )
+        {
+            var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
+            if ( !lineGroup )
+            {
+                lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+                lineGroup.name = 'IK Line';
+            }
+            var lineContent = lineGroup.property( "ADBE Vectors Group" );
+            var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
+            shape( 'ADBE Vector Shape' ).expression = DuAEExpression.Id.THREE_IK + '\nif (active){\n' +
+                'var fx = effect("' + effect.name + '");\n' +
+                'var layer1 = null;\n' +
+                'var result = [[0,0]];\n' +
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)\n' +
+                '{\n' +
+                'try{layer1 = fx(' + uLayerIndex + ');}catch(e){}\n' +
+                'if (layer1!=null)\n' +
+                '{\n' +
+                'var l = layer1.toWorld(layer1.anchorPoint);\n' +
+                'l = fromWorld(l);\n' +
+                'result = [l,[0,0]];\n' +
+                '}\n' +
+                '}\n' +
+                'createPath(result,[],[],false);\n' +
+                '} else value;';
+            var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
+            if ( !stroke ) stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
+            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
+            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+        }
+    }
+
+    //setup layers
+    var layer1Data = layer1('ADBE Effect Parade').addProperty('ADBE Layer Control');
+    layer1Data.name = DuScriptUI.String.IK;
+    layer1Data( 1 ).setValue( controller.index );
+
+    layer1.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try { controller = effect("' + layer1Data.name + '")(1); }catch (e) {}',
+        'if (controller !=null)',
+        '{',
+        '   var fx = controller.effect("' + effect.name + '");',
+        '   var IKFK = fx(' + ikIndex + ').value;',
+        '   var layer1 = thisLayer;\n' +
+        '   var layer2 = null',
+        '   var layer3 = null;',
+        '   try{ layer2 = fx(' + mLayerIndex + '); layer3 = fx(' + lLayerIndex + '); }  catch (e) {}',
+        '   if (layer1 != null)',
+        '   {',
+        '       function ik()',
+        '       {',
+        '           var endPos = fx(' + goalPosIndex + ').value;',
+        '           var cw = fx(' + revIndex + ').value;',
+        '           var limit = fx(' + rLimitIndex + ').value;',
+        '           function getWorldPos(layer)',
+        '           {',
+        '               return layer.toWorld(layer.anchorPoint);',
+        '           }',
+        '           function sq(result)',
+        '           {',
+        '               return result*result;',
+        '           }',
+        '           function getAngle(p1,p2)',
+        '           {',
+        '               var dist = p2-p1;',
+        '               var angle = Math.atan2(dist[1],dist[0]);',
+        '               return radiansToDegrees(angle);',
+        '           }',
+        '           var uPos = getWorldPos(layer1);',
+        '           var mPos = getWorldPos(layer2);',
+        '           var cPos = getWorldPos(controller);',
+        '           var uLength = fx(' + uLengthIndex + ').value',
+        '           var mLength = fx(' + mLengthIndex + ').value;',
+        '           var lLength = fx(' + lLengthIndex + ').value;',
+        '           var ikLength = length(uPos,cPos);',
+        '           if (ikLength == 0) ikLength = 1;',
+        '           var d1 = sq(mLength) - sq(ikLength) - sq(uLength-lLength);',
+        '           var d2 = sq(ikLength) * (uLength+lLength);',
+        '           var d3 = -sq(ikLength) * uLength * lLength;',
+        '           var d4 = (-d2 - Math.sqrt( sq(d2) - 4*d1*d3 )) / (2*d1);',
+        '           var baseA = Math.acos(clamp(ikLength/(2*d4),-1,1));',
+        '           var upperA = cw ? -baseA : baseA ;',
+        '           upperA = radiansToDegrees(upperA);',
+        '           var uToC =getAngle(uPos,cPos);',
+        '           var uToM =getAngle(uPos,mPos);',
+        '           var ikResult = upperA + uToC - uToM;',
+        '           if (ikResult < limit) ikResult +=360;',
+        '           return ikResult;',
+        '       }',
+        '       function fk()',
+        '       {',
+        '       var FK = fx(' + uFKIndex + ').value;',
+        '       FK += fx(' + overlapIndex + ').value;',
+        '       var follow = fx(' + pRotationIndex + ').value;',
+        '       var p = thisLayer;',
+        '       if (!follow)',
+        '       {',
+        '           while(p.hasParent)',
+        '           {',
+        '               p = p.parent;',
+        '               FK -= p.rotation.value;',
+        '           }',
+        '       }',
+        '       return FK;',
+        '   }',
+        '   IKFK ? result += ik() : result += fk();',
+        '   }',
+        '}',
+        'result;'
+    ].join('\n');
+
+    var layer2Data = layer2('ADBE Effect Parade').addProperty('ADBE Layer Control');
+    layer2Data.name = DuScriptUI.String.IK;
+    layer2Data( 1 ).setValue( controller.index );
+
+    layer2.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try { controller = effect("' + layer2Data.name + '")(1); }catch (e) {}',
+        'if (controller !=null)',
+        '{',
+        '   var fx = controller.effect("' + effect.name + '");',
+        '   var IKFK = fx(' + ikIndex + ').value;',
+        '   var layer1 = null;',
+        '   var layer2 = thisLayer;',
+        '   var layer3 = null;',
+        '   try{ layer1 = fx(' + uLayerIndex + '); layer3 = fx(' + lLayerIndex + '); }  catch (e) {}',
+        '   if (layer1 != null)',
+        '   {',
+        '       function ik()',
+        '       {',
+        '           var endPos = fx(' + goalPosIndex + ').value;',
+        '           cw = fx(' + revIndex + ').value;',
+        '           function getWorldPos(layer)',
+        '           {',
+        '               return layer.toWorld(layer.anchorPoint);',
+        '           }',
+        '           function sq(result)',
+        '           {',
+        '               return result*result;',
+        '           }',
+        '           function getAngle(p1,p2)',
+        '           {',
+        '               var dist = p2-p1;',
+        '               var angle = Math.atan2(dist[1],dist[0]);',
+        '               return radiansToDegrees(angle);',
+        '           }',
+        '           var uPos = getWorldPos(layer1);',
+        '           var mPos = getWorldPos(layer2);',
+        '           var lPos = getWorldPos(layer3);',
+        '           var cPos = getWorldPos(controller);',
+        '           var uLength = fx(' + uLengthIndex + ').value',
+        '           var mLength = fx(' + mLengthIndex + ').value;',
+        '           var lLength = fx(' + lLengthIndex + ').value;',
+        '           var ikLength = length(uPos,cPos);',
+        '           if (ikLength == 0) ikLength = 1;',
+        '           var d1 = sq(mLength) - sq(ikLength) - sq(uLength-lLength);',
+        '           var d2 = sq(ikLength) * (uLength+lLength);',
+        '           var d3 = -sq(ikLength) * uLength * lLength;',
+        '           var d4 = (-d2 - Math.sqrt( sq(d2) - 4*d1*d3 )) / (2*d1);',
+        '           var baseA = Math.acos(clamp(ikLength/(2*d4),-1,1));',
+        '           var d5 = Math.sqrt( sq(ikLength) + sq(lLength) - 2*ikLength*lLength*Math.cos(baseA));',
+        '           var middleA = Math.acos(clamp((sq(d5)-sq(uLength)-sq(mLength)) / (-2*uLength*mLength),-1,1));',
+        '           middleA = cw ? -middleA : middleA ;',
+        '           middleA = radiansToDegrees(middleA);',
+        '           var uToM =getAngle(uPos,mPos);',
+        '           var mToL =getAngle(mPos,lPos);',
+        '           var ikResult = middleA + uToM - mToL +180;',
+        '           return ikResult % 360;',
+        '       }',
+        '       function fk()',
+        '       {',
+        '           var ctrlRot = fx(' + overlapIndex + ');',
+        '           var delay = fx(' + resistanceIndex + ').value;',
+        '           var amp = fx(' + flexibilityIndex + ').value;',
+        '           var manual = fx(' + mFKIndex + ').value;',
+        '           var follow = fx(' + pRotationIndex + ').value;',
+        '           var ftEnabled = fx(' + overlapIndex + ').value;',
+        '           if (!ftEnabled)',
+        '           {',
+        '               amp = 0;',
+        '               delay = 0;',
+        '           }',
+        '           else',
+        '           {',
+        '               delay = delay / 100;',
+        '               amp = amp / 100 ;',
+        '           }',
+        '           var FK = ctrlRot.valueAtTime(time-delay);',
+        '           if (follow && hasParent)',
+        '           {',
+        '               var cP = parent;',
+        '               while(cP.hasParent)',
+        '               {',
+        '                   cP = cP.parent;',
+        '                   if (cP.index = controller.index) follow = false;',
+        '                   FK -= cP.rotation.value - cP.rotation.valueAtTime(time-delay);',
+        '               }',
+        '           }',
+        '           FK = FK - ctrlRot.value ;',
+        '           FK = FK * amp;',
+        '           FK = FK - ctrlRot.velocity*(delay/5);',
+        '           if (follow) FK -= parent.transform.rotation.valueAtTime(0);',
+        '           FK += manual;',
+        '           return FK;',
+        '       }',
+        '       IKFK ? result += ik() : result += fk();',
+        '   }',
+        '}',
+        'result;'
+    ].join('\n');
+
+    layer2.transform.position.expression = [DuAEExpression.Id.THREE_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try { controller = effect("' + layer2Data.name + '")(1); } catch (e){ value };',
+        'if (controller != null)',
+        '{',
+        '   var fx = controller.effect("' + effect.name + '");',
+        '   var layer1 = null;',
+        '   try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+        '   if (layer1 != null)',
+        '   {',
+        '       var stretch = fx(' + stretchIndex + ').value + fx(' + upperStretchIndex + ');',
+        '       var auto = fx(' + autoStretchIndex + ').value;',
+        '       var IK = fx(' + ikIndex + ').value;',
+        '       function getWorldPos(L){',
+        '           return L.toWorld(L.anchorPoint);',
+        '       }',
+        '       var upperAP = ' + rootAp + ';',
+        '       var middlePos = ' + middlePos + ';',
+        '       var middleAP = ' + middleAp + ';',
+        '       var lowerPos = ' + lowerPos + ';',
+        '       var lowerAP = ' + lowerAp + ';',
+        '       var zeroPos = ' + goalPos.toSource() + ';',
+        '       var dist1 = length(upperAP,middlePos);',
+        '       var dist2 = length(middleAP,lowerPos);',
+        '       var dist3 = length(lowerAP,zeroPos);',
+        '       var IKLength = dist1+dist2+dist3;',
+        '       var IKStretched = IKLength+stretch;',
+        '       var boneStretch = 0;',
+        '       var proportion = dist1/(IKLength);',
+        '       var posC = getWorldPos(controller);',
+        '       var posR = getWorldPos(layer1);',
+        '       var distC = length(posC,posR);',
+        '       if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '       else boneStretch += stretch*proportion;',
+        '       coef = 1;',
+        '       dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;',
+        '       result = (middlePos-upperAP)*coef+upperAP;',
+        '   }',
+        '}',
+        'result;'
+    ].join('\n');
+
+
+    var layer3Data = layer3('ADBE Effect Parade').addProperty('ADBE Layer Control');
+    layer3Data.name = DuScriptUI.String.IK;
+    layer3Data( 1 ).setValue( controller.index );
+
+    layer3.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try { controller = effect("' + layer3Data.name + '")(1); }catch (e) {}',
+        'if ( controller != null)',
+        '{',
+        '   var fx = controller.effect("' + effect.name + '");',
+        '   var IKFK = fx(' + ikIndex + ').value;',
+        '   var layer1 = null;',
+        '   var layer2 = null;',
+        '   var layer3 = thisLayer;',
+        '   try{ layer1 = fx(' + uLayerIndex + '); layer2 = fx(' + mLayerIndex + '); }  catch (e) {}',
+        '   if (layer1 != null)',
+        '   {',
+        '       function ik()',
+        '       {',
+        '           var endPos = fx(' + goalPosIndex + ').value;',
+        '           var cw = fx(' + revIndex + ').value;',
+        '           function getWorldPos(layer)',
+        '           {',
+        '               return layer.toWorld(layer.anchorPoint);',
+        '           }',
+        '           function sq(result)',
+        '           {',
+        '               return result*result;',
+        '           }',
+        '           function getAngle(p1,p2)',
+        '           {',
+        '               var dist = p2-p1;',
+        '               var angle = Math.atan2(dist[1],dist[0]);',
+        '               return radiansToDegrees(angle);',
+        '           }',
+        '           var uPos = getWorldPos(layer1);',
+        '           var mPos = getWorldPos(layer2);',
+        '           var lPos = getWorldPos(layer3);',
+        '           var zPos = fx(' + goalWPosIndex + ').value;',
+        '           var cPos = getWorldPos(controller);',
+        '           var uLength = fx(' + uLengthIndex + ').value',
+        '           var mLength = fx(' + mLengthIndex + ').value;',
+        '           var lLength = fx(' + lLengthIndex + ').value;',
+        '           var ikLength = length(uPos,cPos);',
+        '           if (ikLength == 0) ikLength = 1;',
+        '           var d1 = sq(mLength) - sq(ikLength) - sq(uLength-lLength);',
+        '           var d2 = sq(ikLength) * (uLength+lLength);',
+        '           var d3 = -sq(ikLength) * uLength * lLength;',
+        '           var d4 = (-d2 - Math.sqrt( sq(d2) - 4*d1*d3 )) / (2*d1);',
+        '           var baseA = Math.acos(clamp(ikLength/(2*d4),-1,1));',
+        '           var d6 = Math.sqrt( sq(ikLength) + sq(uLength) - 2*ikLength*uLength*Math.cos(baseA));',
+        '           var lowerA = Math.acos(clamp((sq(d6) - sq(lLength) - sq(mLength)) / (-2*lLength*mLength),-1,1));',
+        '           lowerA = cw ? -lowerA : lowerA;',
+        '           lowerA = radiansToDegrees(lowerA);',
+        '           var mToL =getAngle(mPos,lPos);',
+        '           var lToZ =getAngle(lPos,zPos);',
+        '           var ikResult = lowerA + mToL - lToZ +180;',
+        '           return ikResult % 360;',
+        '       }',
+        '       function fk()',
+        '       {',
+        '           var parentRot = parent.transform.rotation;',
+        '           var ctrlRot = fx(' + overlapIndex + ');',
+        '           var delay = fx(' + resistanceIndex + ').value;',
+        '           var amp = fx(' + flexibilityIndex + ').value;',
+        '           var manual = fx(' + lFKIndex + ').value;',
+        '           var follow = fx(' + pRotationIndex + ').value;',
+        '           var ftEnabled = fx(' + overlapIndex + ').value;',
+        '           if (!ftEnabled)',
+        '           {',
+        '               amp = 0;',
+        '               delay = 0;',
+        '           }',
+        '           else',
+        '           {',
+        '               delay = delay / 100;',
+        '               amp = amp / 100 ;',
+        '           }',
+        '           var FK = parentRot.valueAtTime(time-delay);',
+        '           FK = FK * amp;',
+        '           FK = FK + manual - parentRot.valueAtTime(0);',
+        '           return FK;',
+        '       }',
+        '       IKFK ? result += ik() : result += fk();',
+        '   }',
+        '}',
+        'result;'
+    ].join('\n');
+
+    layer3.transform.position.expression = [DuAEExpression.Id.THREE_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try { controller = effect("' + layer3Data.name + '")(1); } catch (e) { };',
+        'if (controller != null)',
+        '{',
+        '   var fx = controller.effect("' + effect.name + '");',
+        '   var layer1 = null;',
+        '   try{ layer1 = fx(' + uLayerIndex + ')}catch(e){}',
+        '   if (layer1 != null)',
+        '   {',
+        '       var stretch = fx(' + stretchIndex + ').value + fx(' + middleStretchIndex + ');',
+        '       var auto = fx(' + autoStretchIndex + ').value;',
+        '       var IK = fx(' + ikIndex + ').value;',
+        '       function getWorldPos(L) {',
+        '           return L.toWorld(L.anchorPoint);',
+        '       }',
+        '       var upperAP = ' + rootAp + ';',
+        '       var middlePos = ' + middlePos + ';',
+        '       var middleAP = ' + middleAp + ';',
+        '       var lowerPos = ' + lowerPos + ';',
+        '       var lowerAP = ' + lowerAp + ';',
+        '       var zeroPos = ' + goalPos.toSource() + ';',
+        '       var dist1 = length(upperAP,middlePos);',
+        '       var dist2 = length(middleAP,lowerPos);',
+        '       var dist3 = length(lowerAP,zeroPos);',
+        '       var IKLength = dist1+dist2+dist3;',
+        '       var IKStretched = IKLength+stretch;',
+        '       var boneStretch = 0;',
+        '       var proportion = dist2/(IKLength);',
+        '       var posC = getWorldPos(controller);',
+        '       var posR = getWorldPos(layer1);',
+        '       var distC = length(posC,posR);',
+        '       if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '       else boneStretch += stretch*proportion;',
+        '       var coef = 1;',
+        '       dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;',
+        '       result = (middlePos-upperAP)*coef+upperAP;',
+        '   }',
+        '}',
+        'result;'
+    ].join('\n');
+
+    if ( goal != null )
+    {
+        var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        goalData.name = DuScriptUI.String.IK;
+        goalData( 1 ).setValue( controller.index );
+
+        var rotExpr = [DuAEExpression.Id.THREE_IK,
+            'var ctrl = null;',
+            'var result = value;',
+            'try { ctrl = effect("' + goalData.name + '")(1); } catch (e){};',
+            'if (ctrl != null)',
+            '{',
+            '   var fx = ctrl.effect("' + effect.name + '");',
+            '   var IKFK = fx(' + ikIndex + ').value;',
+            '   function ik()',
+            '   {',
+            '       var layer = thisLayer;',
+            '       var IK = 0;',
+            '       while (layer.hasParent)',
+            '       {',
+            '           layer = layer.parent;',
+            '           IK = IK - layer.rotation;',
+            '       }',
+            '       return IK;',
+            '   }',
+            '   function fk()',
+            '   {',
+            '       var parentRot = parent.transform.rotation ;',
+            '       var ctrlRot = fx(' + overlapIndex + ');',
+            '       var delay = fx(' + resistanceIndex + ').value;',
+            '       var amp = fx(' + flexibilityIndex + ').value;',
+            '       var ftEnabled = fx(' + overlapIndex + ').value;',
+            '       var manual = fx(' + endFKIndex + ').value;',
+            '       var follow = fx(' + pRotationIndex + ').value;',
+            '       if (!ftEnabled)',
+            '       {',
+            '           amp = 0;',
+            '           delay = 0;',
+            '       }',
+            '       else',
+            '       {',
+            '           delay = delay / 100;',
+            '           amp = amp / 100 ;',
+            '       }',
+            '       var FK = parentRot.valueAtTime(time-delay);',
+            '       FK = FK * amp;',
+            '       FK = FK + manual - parent.transform.rotation.valueAtTime(0);',
+            '       return FK;',
+            '   }',
+            '   IKFK ? result += ik() : result += fk();',
+            '}',
+            'result;'
+        ].join('\n');
+
+        var rotProp = new DuAEProperty( goal.transform.rotation );
+        rotProp.setExpression( rotExpr );
+
+        goal.transform.position.expression = [DuAEExpression.Id.THREE_IK,
+            'var ctrl = null;',
+            'var result = value;',
+            'try { ctrl = effect("' + goalData.name + '")(1); } catch (e){ value };',
+            'if (ctrl != null)',
+            '{',
+            '   result = ctrl.effect("' + effect.name + '")(' + goalPosIndex + ').value;',
             '}',
             'result;'
         ].join('\n');
