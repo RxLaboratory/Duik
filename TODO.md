@@ -4,7 +4,6 @@
 
 - [ ] constraints (including IK)
     - IK Selector
-        - bézier
         - fk
         - ik effect names
         - fix 1-layer limits (ctrl rotation)
