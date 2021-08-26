@@ -4,6 +4,11 @@
 
 - [ ] constraints (including IK)
     - IK Selector
+        - three layer
+        - 2+1
+        - 1+2
+        - bézier
+        - fk
     - Parent selector
     - Transform Constraints selector
     - Add pins

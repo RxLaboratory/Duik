@@ -1338,7 +1338,7 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
             ].join('\n');
 
         var limitLinesGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
-        limitsGroup.name = 'Limit Lines';
+        limitLinesGroup.name = 'Limit Lines';
         limitLinesGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             DuAEExpression.Library.get(['getOrientation']),
             '',
@@ -1615,6 +1615,813 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
 
         rotProp = new DuAEProperty( goal.transform.rotation );
         rotProp.setExpression( expr );
+    }
+
+    return controller;
+}
+
+/**
+ * Creates a two-layer-ik on the layer
+ * @param {Layer} layer1 - The root layer
+ * @param {Layer} layer2 - The end layer
+ * @param {Layer|null} [goal] - The goal layer, at the end of the IK
+ * @param {Layer|Controller|null} [controller] - The layer to use as a controller, can be automatically created.<br />
+ * Must be provided if goal is undefined
+ * @return {Controller} The controller created
+ */
+Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
+{
+    goal = def(goal, null);
+    controller = def(controller, null);
+    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    var comp = layer1.containingComp;
+
+    //Create controller
+    if ( controller == null )
+    {
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+        goal.parent = null;
+        controller.transform.rotation.setValue( goal.transform.rotation.value );
+        goal.parent = layer2;
+    }
+
+    //Check if clockwise and lengths
+
+    //unparent
+    var rootParent = layer1.parent;
+    layer1.parent = null;
+    var middleParent = layer2.parent;
+    layer2.parent = null;
+    var endParent = controller.parent;
+    controller.parent = null;
+
+    var clockwise = false;
+
+    var upperLength = DuMath.length( layer1.transform.position.value, layer2.transform.position.value );
+    var lowerLength = DuMath.length( layer2.transform.position.value, controller.transform.position.value );
+    var endPos = controller.transform.position.value - layer1.transform.position.value;
+    var middlePos = layer2.transform.position.value - layer1.transform.position.value;
+    if ( endPos[ 0 ] == 0 && endPos[ 1 ] > 0 && middlePos[ 0 ] > 0 ) clockwise = true;
+    else if ( endPos[ 0 ] == 0 && endPos[ 1 ] < 0 && middlePos[ 0 ] < 0 ) clockwise = true;
+    else
+    {
+        var coef = endPos[ 1 ] / endPos[ 0 ];
+        if ( middlePos[ 1 ] < middlePos[ 0 ] * coef && endPos[ 0 ] > 0 ) clockwise = true;
+        if ( middlePos[ 1 ] > middlePos[ 0 ] * coef && endPos[ 0 ] < 0 ) clockwise = true;
+    }
+
+    //reparent
+    layer1.parent = rootParent;
+    layer2.parent = middleParent;
+    controller.parent = endParent;
+
+    //add effect
+    var name = layer2.name;
+    if ( goal != null ) name = goal.name;
+    var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+
+    // indices
+    var ikIndex = pe.props["IK / FK"].index;
+    var sideIndex = pe.props["Side"].index;
+
+    var swingIndex = pe.props["Swing"]["Swing"].index;
+    var swingSftnssIndex = pe.props["Swing"]["Softness"].index;
+    var swingLimitIndex = pe.props["Swing"]["Limit angle"].index;
+    var swingRevIndex = pe.props["Swing"]["Reverse"].index;
+
+    var pRotationIndex = pe.props["FK"]["Parent rotation"].index;
+    var uFKIndex = pe.props["FK"]["Upper"].index;
+    var lFKIndex = pe.props["FK"]["Lower"].index;
+    var endFKIndex = pe.props["FK"]["End"].index;
+
+    var overlapAnimIndex = pe.props["FK Overlap"]["Animation"].index;
+    var resistanceIndex = pe.props["FK Overlap"]["Resistance"].index;
+    var flexibilityIndex = pe.props["FK Overlap"]["Flexibility"].index;
+    var overlapIndex = pe.props["FK Overlap"]["Overlap"].index;
+    
+    var stretchIndex = pe.props["Stretch"]["Stretch"].index;
+    var upperStretchIndex = pe.props["Stretch"]["Upper Stretch"].index;
+    var lowerStretchIndex = pe.props["Stretch"]["Lower Stretch"].index;
+    var autoStretchIndex = pe.props["Stretch"]["Auto-Stretch"].index;
+
+    var rLimitIndex = pe.props["Advanced"]["Full rotation limit"].index;
+
+    var uStretchIndex = pe.props["Data"]["Stretch data"]["Upper stretch"].index;
+    var uScaleIndex = pe.props["Data"]["Stretch data"]["Upper scale"].index;
+    var lStretchIndex = pe.props["Data"]["Stretch data"]["Lower stretch"].index;
+    var lScaleIndex = pe.props["Data"]["Stretch data"]["Lower scale"].index;
+    var goalPosIndex = pe.props["Data"]["Stretch data"]["Goal position"].index;
+    var goalWPosIndex = pe.props["Data"]["Stretch data"]["Goal world position"].index;
+
+    var uLengthIndex = pe.props["Data"]["Lengths"]["Upper length"].index;
+    var lLengthIndex = pe.props["Data"]["Lengths"]["Lower length"].index;
+    var ikLengthIndex = pe.props["Data"]["Lengths"]["IK length"].index;
+
+    var straightIndex = pe.props["Data"]["Straight"].index;
+
+    var uLayerIndex = pe.props["Data"]["Layers"]["Upper"].index;
+    var lLayerIndex = pe.props["Data"]["Layers"]["Lower"].index;
+    var gLayerIndex = pe.props["Data"]["Layers"]["Goal"].index;
+
+    var guidesIndex = pe.props["Display"]["Draw guides"].index;
+
+    // Default values
+    if ( clockwise ) effect( sideIndex ).setValue( -100 );
+    else effect( sideIndex ).setValue( 100 );
+
+    //set layers
+    effect( uLayerIndex ).setValue( layer1.index );
+    effect( lLayerIndex ).setValue( layer2.index );
+    if ( goal != null ) effect( gLayerIndex ).setValue( goal.index );
+
+    //set lengths
+    effect( uLengthIndex ).setValue( upperLength );
+    effect( lLengthIndex ).setValue( lowerLength );
+
+    //rotation limit
+    effect( rLimitIndex ).setValue( -180 );
+
+    //inherit parent rotation
+    effect( pRotationIndex ).setValue( 1 );
+
+    //get some useful coordinates
+    var goalPos = [ 0, 0 ];
+    if ( goal != null )
+    {
+        goalPos = goal.transform.position.value;
+    }
+    else
+    {
+        effect( goalPosIndex ).expression = "thisComp.layer(" + layer2.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
+        goalPos = effect( goalPosIndex ).value;
+        effect( goalPosIndex ).expression = "";
+    }
+    var goalPosProp = new DuAEProperty( effect( goalPosIndex ) );
+    goalPosProp.setValue( goalPos );
+
+    var rootAp = layer1.transform.anchorPoint.value.toSource();
+    var middleAp = layer2.transform.anchorPoint.value.toSource();
+    var middlePos = layer2.transform.position.value.toSource();
+
+    //add expressions
+    effect( uStretchIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'var layer2 = null;',
+        'var result = 0;',
+        'try { layer1 = fx(' + uLayerIndex + '); layer2 = fx(' + lLayerIndex + '); } catch (e) {}',
+        'if ( layer1 != null )',
+        '{',
+        '   var newLength = length( layer1.toWorld(layer1.anchorPoint), layer2.toWorld(layer2.anchorPoint) );',
+        '   result = newLength - fx(' + uLengthIndex + ').value;',
+        '}',
+        'result;'
+        ].join('\n');
+
+    effect( uScaleIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var upperLength =  fx(' + uLengthIndex + ').value',
+        'var upperStretch =  fx(' + uStretchIndex + ').value',
+        'var result = 100',
+        'if ( upperLength > 0 ) result = ( upperStretch + upperLength ) / upperLength * 100;',
+        'result;'
+        ].join('\n');
+
+    effect( lStretchIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer2 = null;',
+        'var result = 0;',
+        'try{ layer2 = fx(' + lLayerIndex + '); }catch (e) {}',
+        'if ( layer2 != null)',
+        '{',
+        '   var goalPos = fx(' + goalPosIndex + ').value',
+        '   var lowerLength = fx(' + lLengthIndex + ').value;',
+        '   var newLength = length( layer2.toWorld( goalPos ), layer2.toWorld( layer2.anchorPoint ) );',
+        '   result = newLength - lowerLength;',
+        '}',
+        'result;'
+        ].join('\n');
+
+    effect( lScaleIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var lowerLength =  fx(' + lLengthIndex + ').value',
+        'var lowerStretch =  fx(' + lStretchIndex + ').value',
+        'var result = 100',
+        'if ( lowerLength > 0 ) result = ( lowerStretch + lowerLength ) / lowerLength * 100;',
+        'result;'
+        ].join('\n');
+
+    effect( goalPosIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var result = value;',
+        'var fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'try {',
+        '	layer1 = fx(' + uLayerIndex + ')',
+        '} catch (e) {}',
+        'if (layer1 != null) {',
+        '	var stretch = fx(' + stretchIndex + ') + fx(' + lowerStretchIndex + ');',
+        '	var auto = fx(' + autoStretchIndex + ').value;',
+        '	var IK = fx(' + ikIndex + ').value;',
+        '	var shrinkVal = fx(' + sideIndex + ').value;',
+        '   shrinkVal /= 100;',
+        '	shrinkVal = 1 - Math.abs(shrinkVal);',
+        '',
+        '	function getWorldPos(L) {',
+        '		return L.toWorld(L.anchorPoint);',
+        '	}',
+        '	var dist1 = fx(' + uLengthIndex + ').value;',
+        '	var dist2 = fx(' + lLengthIndex + ').value;',
+        '	var IKLength = dist1 + dist2;',
+        '	var IKStretched = IKLength + stretch;',
+        '	var boneStretch = 0;',
+        '	var proportion = dist2 / (IKLength);',
+        '	var posC = toWorld(anchorPoint);',
+        '	var posR = getWorldPos(layer1);',
+        '	var distC = length(posC, posR);',
+        '	var shrinkMax = IKLength * shrinkVal;',
+        '	var shrink = 0;',
+        '	if (distC < IKStretched && IK) shrink = 1 - distC / IKStretched;',
+        '	boneStretch -= linear(shrink, 0, shrinkMax) * proportion;',
+        '	if (distC > IKStretched && auto && IK) boneStretch += (distC - IKLength) * proportion;',
+        '	else boneStretch += stretch * proportion;',
+        '	var coef = 1;',
+        '	dist2 != 0 ? coef = (dist2 + boneStretch) / dist2 : coef = 1;',
+        '	result = (' + goalPos.toSource() + ' - ' + middleAp + ') * coef + ' + middleAp + ';',
+        '}',
+        'result;'
+        ].join('\n');
+
+    effect( goalWPosIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var layer2 = null;',
+        'var result = [0,0];',
+        'try { layer2 = fx(' + lLayerIndex + ') } catch (e) {}',
+        'if ( layer2 != null)',
+        '{',
+        '   result = layer2.toWorld( fx(' + goalPosIndex + ').value );',
+        '}',
+        'result;'
+        ].join('\n');
+
+    effect( ikLengthIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var fx = effect("' + effect.name + '");',
+        'var upperLength = fx(' + uLengthIndex + ').value;',
+        'var lowerLength = fx(' + lLengthIndex + ').value;',
+        'var result = upperLength + lowerLength;',
+        'var goalWorldPos = fx(' + goalWPosIndex + ').value;',
+        'var layer1 = null;',
+        'try{ layer1 = fx(' + uLayerIndex + '); } catch (e) {}',
+        'if (layer1 != null)',
+        '{',
+        '   result = length( layer1.toWorld(layer1.anchorPoint), goalWorldPos);',
+        '}',
+        'result;'
+        ].join('\n');
+
+    effect( straightIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'fx = effect("' + effect.name + '");',
+        'var layer1 = null;',
+        'var layer2 = null;',
+        'var result = false;',
+        'try { layer1 = fx(' + uLayerIndex + '); layer2  = fx(' + lLayerIndex + ');} catch (e) {}',
+        'if (layer1 != null)',
+        '{',
+        '   var goalPos = fx(' + goalPosIndex + ').value',
+        '   var a = layer1.toWorld( layer1.anchorPoint );',
+        '   var b = layer2.toWorld( layer2.anchorPoint );',
+        '   var c = layer2.toWorld( goalPos );',
+        '   result = Math.abs(a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1])) < 1000;',
+        '}',
+        'result;'
+    ].join('\n');
+    
+    effect( sideIndex ).expression = [DuAEExpression.Id.TWO_IK,
+        'var result = value;',
+        'var fx = effect("' + effect.name + '");',
+        'var auto = fx(' + swingIndex + ').value;',
+        'if (auto)',
+        '{',
+        '	var layer1 = null;',
+        '	try {',
+        '		layer1 = fx(' + uLayerIndex + ')',
+        '	} catch (e) {}',
+        '	if (layer1 != null) {',
+        '		var rev = fx(' + swingRevIndex + ').value;',
+        '       var sftnss = fx(' + swingSftnssIndex + ').value;',
+        '       var angle = fx(' + swingLimitIndex + ').value;',
+        '		var lowerLimit = angle - sftnss;',
+        '		var upperLimit = angle + sftnss;',
+        '		var C = toWorld(anchorPoint);',
+        '		var O = layer1.toWorld(layer1.anchorPoint);',
+        '		var vec = C - O;',
+        '		var angle = Math.atan2(vec[1], vec[0]);',
+        '		angle = radiansToDegrees(angle);',
+        '		angle = linear(angle, lowerLimit, upperLimit, -100, 100);',
+        '		if(rev) angle = -angle;',
+        '		result = angle;',
+        '	}',
+        '}',
+        '',
+        'result;'
+	].join('\n');
+
+    
+    //add controller visual feedback
+    if ( controller instanceof ShapeLayer )
+    {
+        // Will be null if baked / removed
+        var peCtrl = Duik.PseudoEffect.CONTROLLER;
+        var ctrlEffect = controller.effect( peCtrl.matchName );
+        var iconColorIndex = peCtrl.props["Icon"]["Color"].index;
+        var iconSizeIndex = peCtrl.props["Icon"]["Size"].index;
+        var iconPosIndex = peCtrl.props["Icon"]["Position"].index;
+        var iconOpacityIndex = peCtrl.props["Icon"]["Opacity"].index;
+
+        // reusable expressions
+        var colorExp = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
+
+        var ikGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        ikGroup.name = 'IK';
+        var ikContent = ikGroup.property( "ADBE Vectors Group" );
+        var shape = ikContent.addProperty( "ADBE Vector Shape - Group" );
+        var ikShape = new Shape();
+        ikShape.vertices = [
+            [ -8, 16 ],
+            [ 8, 16 ]
+        ];
+        ikShape.inTangents = [
+            [ 0, 0 ],
+            [ 0, 0 ]
+        ];
+        ikShape.outTangents = [
+            [ 0, 0 ],
+            [ 0, 0 ]
+        ];
+        ikShape.closed = false;
+        shape( 'ADBE Vector Shape' ).setValue( ikShape );
+        var stroke = ikContent.addProperty( "ADBE Vector Graphic - Stroke" );
+
+        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Opacity" ).expression = [DuAEExpression.Id.TWO_IK,
+            'var fx = effect("' + effect.name + '");\n' +
+            'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value * 100;',
+            'else 0;'
+            ].join('\n');
+
+        if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.TWO_IK + '\n[ effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ]';
+        if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
+        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ')';
+
+        if ( DuAE.version.version >= 15 )
+        {
+            var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
+            if ( !lineGroup )
+            {
+                lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+                lineGroup.name = 'IK Line';
+            }
+            var lineContent = lineGroup.property( "ADBE Vectors Group" );
+            var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
+            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = [[0,0]];',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value)',
+                '{',
+                '   try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '   if (layer1!=null)',
+                '   {',
+                '       var l = layer1.toWorld(layer1.anchorPoint);',
+                '       l = fromWorld(l);',
+                '       result = [l,[0,0]];',
+                '   }',
+                '}',
+                'createPath(result,[],[],false);'
+            ].join('\n');
+
+            var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
+            if ( !stroke ) stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
+            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
+            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+            var ikSideGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+            ikSideGroup.name = "IK Swing";
+            ikSideContent = ikSideGroup.property( "ADBE Vectors Group" );
+
+            var upperLimitGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            upperLimitGroup.name = "Upper Limit";
+            var upperLimitContent = upperLimitGroup.property( "ADBE Vectors Group" );
+
+            shape = upperLimitContent.addProperty( "ADBE Vector Shape - Group" );
+            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = [[0,0]];',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value)',
+                '{',
+                '	try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '	if ( layer1 != null)',
+                '	{',
+                '		var l = layer1.toWorld( layer1.anchorPoint );',
+                '		l = fromWorld(l);',
+                '		l = length(l) * .5;',
+                '		result = [[l,0],[0,0]];',
+                '	}',
+                '}',
+                'createPath(result,[],[],false);'
+                ].join('\n');
+
+            stroke = upperLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
+            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
+            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+            upperLimitGroup.transform.rotation.expression = DuAEExpression.Id.TWO_IK + '\n-effect("' + effect.name + '")(' + swingSftnssIndex + ').value;';
+            upperLimitGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
+                'else 0;'
+                ].join('\n');
+
+            var lowerLimitGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            lowerLimitGroup.name = "Lower Limit";
+            var lowerLimitContent = lowerLimitGroup.property( "ADBE Vectors Group" );
+
+            shape = lowerLimitContent.addProperty( "ADBE Vector Shape - Group" );
+            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = [[0,0]];',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value)',
+                '{',
+                '	try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '	if ( layer1 != null)',
+                '	{',
+                '		var l = layer1.toWorld( layer1.anchorPoint );',
+                '		l = fromWorld(l);',
+                '		l = length(l) * .5;',
+                '		result = [[l,0],[0,0]];',
+                '	}',
+                '}',
+                'createPath(result,[],[],false);'
+                ].join('\n');
+
+            stroke = lowerLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
+            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
+            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+
+            lowerLimitGroup.transform.rotation.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + effect.name + '")(' + swingSftnssIndex + ').value;';
+            lowerLimitGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
+                'else 0;'
+                ].join('\n');
+
+            var angleGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            angleGroup.name = "Lower Limit";
+            var angleContent = angleGroup.property( "ADBE Vectors Group" );
+
+            shape = angleContent.addProperty( "ADBE Vector Shape - Group" );
+            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = [[0,0]];',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value)',
+                '{',
+                '	try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '	if ( layer1 != null)',
+                '	{',
+                '		var l = layer1.toWorld( layer1.anchorPoint );',
+                '		l = fromWorld(l);',
+                '		l = length(l) * .8;',
+                '		result = [[l,0],[0,0]];',
+                '	}',
+                '}',
+                'createPath(result,[],[],false);'
+                ].join('\n');
+
+            stroke = angleContent.addProperty( "ADBE Vector Graphic - Stroke" );
+            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
+            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+
+            angleGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
+                'else 0;'
+                ].join('\n');
+
+            ikSideGroup.transform.position.expression = [DuAEExpression.Id.TWO_IK,
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = value;',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value)',
+                '{',
+                '	try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '	if ( layer1 != null)',
+                '	{',
+                '		var l = layer1.toWorld( layer1.anchorPoint );',
+                '		result = fromWorld( l );',
+                '	}',
+                '}',
+                'result;'
+                ].join('\n');
+
+            ikSideGroup.transform.rotation.expression = [DuAEExpression.Id.TWO_IK,
+                DuAEExpression.Library.get['getOrientation'],
+                '',
+                'var fx = effect("' + effect.name + '");',
+                'var layer1 = null;',
+                'var result = value;',
+                'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value)',
+                '{',
+                '	try{ layer1 = fx(' + uLayerIndex + '); }catch (e) {}',
+                '	if (layer1 != null)',
+                '	{',
+                '       if ( layer1.hasParent ) result = getOrientation( layer1.parent );',
+                '		result += fx(' + swingLimitIndex + ').value;',
+                '   }',
+                '}',
+                'result;'
+                ].join('\n');
+        }
+
+        //close controller details
+        controller.selected = true;
+        DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true );
+    }
+
+
+    //setup layers
+    var layer1Data = layer1('ADBE Effect Parade').addProperty('ADBE Layer Control');
+    layer1Data.name = DuScriptUI.String.IK;
+    layer1Data( 1 ).setValue( controller.index );
+
+    layer1.transform.rotation.expression = [DuAEExpression.Id.TWO_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try {',
+        '	controller = effect("' + layer1Data.name + '")(1)',
+        '} catch (e) {}',
+        'if (controller != null) {',
+        '	var fx = controller.effect("' + effect.name + '");',
+        '	var IKFK = fx(' + ikIndex + ').value;',
+        '',
+        '	function ik() {',
+        '		var layer1 = thisLayer;',
+        '		var layer2 = null;',
+        '		try {',
+        '			layer2 = fx(' + lLayerIndex + ');',
+        '		} catch (e) {',
+        '			return value;',
+        '		}',
+        '		if (layer2 != null) {',
+        '			var endPos = fx(' + goalPosIndex + ').value;',
+        '			var limit = fx(' + rLimitIndex + ').value;',
+        '			var side = fx(' + sideIndex + ').value;',
+        '			var cw = side < 0;',
+        '',
+        '			function getWorldPos(L) {',
+        '				return L.toWorld(L.anchorPoint);',
+        '			}',
+        '			var A = getWorldPos(layer1);',
+        '			var C = layer2.toWorld(endPos);',
+        '			var B = getWorldPos(layer2);',
+        '			var E = getWorldPos(controller);',
+        '			var a = length(B, C);',
+        '			var b = length(E, A);',
+        '			var c = length(A, B);',
+        '			var x = (b * b + c * c - a * a) / (2 * b);',
+        '			var alpha = Math.acos(clamp(x / c, -1, 1));',
+        '			var D = E - A;',
+        '			var delta = Math.atan2(D[1], D[0]);',
+        '			var r = radiansToDegrees(delta - (cw ? 1 : -1) * alpha);',
+        '			var V = B - A;',
+        '			var adj1 = radiansToDegrees(Math.atan2(V[1], V[0]));',
+        '			var IK = r - adj1 + value;',
+        '			if (IK < limit) IK += 360;',
+        '			return IK;',
+        '		}',
+        '	}',
+        '',
+        '	function fk() {',
+        '		var follow = fx(' + pRotationIndex + ').value;',
+        '		var FK = fx(' + uFKIndex + ').value + fx(' + overlapAnimIndex + ').value;',
+        '		var p = thisLayer;',
+        '		if (!follow) {',
+        '			while (p.hasParent) {',
+        '				p = p.parent;',
+        '				FK -= p.rotation.value;',
+        '			}',
+        '		}',
+        '		return FK;',
+        '	}',
+        '	result = IKFK ? ik() : fk();',
+        '}',
+        'result;'
+    ].join('\n');
+
+    var layer2Data = layer2('ADBE Effect Parade').addProperty('ADBE Layer Control');
+    layer2Data.name = DuScriptUI.String.IK;
+    layer2Data( 1 ).setValue( controller.index );
+
+    layer2.transform.rotation.expression =[DuAEExpression.Id.TWO_IK,
+        'var controller = null;',
+        'var result = value;',
+        'try {',
+        '	controller = effect("' + layer1Data.name + '")(1);',
+        '} catch (e) {}',
+        'if (controller != null) {',
+        '	var fx = controller.effect("' + effect.name + '");',
+        '	var IKFK = fx(' + ikIndex + ').value;',
+        '	var layer1 = null;',
+        '	var layer2 = thisLayer;',
+        '	try {',
+        '		layer1 = fx(' + uLayerIndex + ');',
+        '	} catch (e) {}',
+        '	if (layer1 != null) {',
+        '		function ik() {',
+        '			var endPos = fx(' + goalPosIndex + ').value;',
+        '			var side = fx(' + sideIndex + ').value;',
+        '			var cw = side < 0;',
+        '',
+        '			function getWorldPos(L) {',
+        '				return L.toWorld(L.anchorPoint);',
+        '			}',
+        '			var A = getWorldPos(layer1);',
+        '			var B = getWorldPos(layer2);',
+        '			var C = layer2.toWorld(endPos);',
+        '			var E = getWorldPos(controller);',
+        '			var a = length(B, C);',
+        '			var b = length(E, A);',
+        '			var c = length(A, B);',
+        '			var x = (b * b + c * c - a * a) / (2 * b);',
+        '			var alpha = Math.acos(clamp(x / c, -1, 1));',
+        '			var y = b - x;',
+        '			var gamma = Math.acos(clamp(y / a, -1, 1));',
+        '			var r = (cw ? 1 : -1) * radiansToDegrees(gamma + alpha);',
+        '			var V1 = B - A;',
+        '			var adj1 = radiansToDegrees(Math.atan2(V1[1], V1[0]));',
+        '			var V2 = C - B;',
+        '			var adj2 = radiansToDegrees(Math.atan2(V2[1], V2[0]));',
+        '			var IK = r + adj1 - adj2 + value;',
+        '			return IK % 360;',
+        '		}',
+        '',
+        '		function fk() {',
+        '			var ctrlRot = fx(' + overlapAnimIndex + ');',
+        '			var delay = fx(' + resistanceIndex + ').value;',
+        '			var amp = fx(' + flexibilityIndex + ').value;',
+        '			var follow = fx(' + pRotationIndex + ').value;',
+        '			var ftEnabled = fx(' + overlapIndex + ').value;',
+        '			if (!ftEnabled) {',
+        '				amp = 0;',
+        '				delay = 0;',
+        '			} else {',
+        '				delay = delay / 100;',
+        '				amp = amp / 100;',
+        '			}',
+        '			FK = ctrlRot.valueAtTime(time - delay);',
+        '			if (follow && hasParent) {',
+        '				var cP = layer1;',
+        '				while (cP.hasParent) {',
+        '					cP = cP.parent;',
+        '					FK -= cP.rotation.value - cP.rotation.valueAtTime(time - delay);',
+        '				}',
+        '			}',
+        '			FK = FK - ctrlRot.value;',
+        '			FK = FK * amp;',
+        '			FK = FK - ctrlRot.velocity * (delay / 5);',
+        '			FK += fx(' + lFKIndex + ').value;',
+        '			return FK;',
+        '		}',
+        '		result = IKFK ? ik() : fk();',
+        '	}',
+        '}',
+        'result;'
+    ].join('\n');
+
+    layer2.transform.position.expression = [DuAEExpression.Id.TWO_IK,
+        'var ctrl = null;',
+        'var result = value;',
+        'try { ctrl = effect("' + layer1Data.name + '")(1); } catch (e) {}',
+        'if (ctrl != null) {',
+        '	var fx = ctrl.effect("' + effect.name + '");',
+        '	var layer1 = null;',
+        '	var result = ' + middlePos.toSource() + ';',
+        '	try { layer1 = fx(' + uLayerIndex + '); } catch (e) {}',
+        '	if (layer1 != null) {',
+        '		var stretch = fx(' + stretchIndex + ').value + fx(' + upperStretchIndex + ').value;',
+        '		var auto = fx(' + autoStretchIndex + ').value;',
+        '		var IK = fx(' + ikIndex + ').value;',
+        '		var shrinkVal = fx(' + sideIndex + ').value;',
+        '       shrinkVal /= 100;',
+        '		shrinkVal = 1 - Math.abs(shrinkVal);',
+        '',
+        '		function getWorldPos(L) {',
+        '			return L.toWorld(L.anchorPoint);',
+        '		}',
+        '		var dist1 = fx(' + uLengthIndex + ').value;',
+        '		var dist2 = fx(' + lLengthIndex + ').value;',
+        '		var IKLength = dist1 + dist2;',
+        '		var IKStretched = IKLength + stretch;',
+        '		var boneStretch = 0;',
+        '		var proportion = dist1 / (IKLength);',
+        '		var posC = getWorldPos(ctrl);',
+        '		var posR = getWorldPos(layer1);',
+        '		var distC = length(posC, posR);',
+        '		var shrinkMax = IKLength * shrinkVal;',
+        '		var shrink = 0;',
+        '		if (distC < IKStretched && IK) shrink = 1 - distC / IKStretched;',
+        '		boneStretch -= linear(shrink, 0, shrinkMax) * proportion;',
+        '		if (distC > IKStretched && auto && IK) boneStretch += (distC - IKLength) * proportion;',
+        '		else boneStretch += stretch * proportion;',
+        '		var coef = 1;',
+        '		dist1 != 0 ? coef = (dist1 + boneStretch) / dist1 : coef = 1;',
+        '		result = (' + middlePos + ' -' + rootAp + ') * coef+' + rootAp + ';',
+        '	}',
+        '}',
+        'result;'
+    ].join('\n');
+
+    if ( goal != null )
+    {
+        var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        layer2Data.name = DuScriptUI.String.IK;
+        goalData( 1 ).setValue( controller.index );
+
+        var rotExpr = [DuAEExpression.Id.TWO_IK,
+            'var ctrl = null;',
+            'try {',
+            '    ctrl = effect( "' + goalData.name + '" )( 1 );',
+            '} catch ( e ) {};',
+            'if ( ctrl != null ) {',
+            '    var fx = ctrl.effect( "' + effect.name + '" );',
+            '    var ikfk = fx( ' + ikIndex + ' ).value;',
+            '',
+            '    function ik() {',
+            '        var IK = ctrl.rotation.value;',
+            '        var layer = thisLayer;',
+            '        while ( layer.hasParent ) {',
+            '            layer = layer.parent;',
+            '            IK = IK - layer.rotation;',
+            '        }',
+            '        return IK;',
+            '    }',
+            '',
+            '    function fk() {',
+            '        var FK = value;',
+            '        var parentRot = parent.transform.rotation;',
+            '        var delay = fx( ' + resistanceIndex + ' ).value;',
+            '        var amp = fx( ' + flexibilityIndex + ' ).value;',
+            '        var ftEnabled = fx( ' + overlapIndex + ' ).value;',
+            '',
+            '        delay = delay / 100;',
+            '        amp = amp / 100;',
+            '',
+            '        if (ftEnabled)',
+            '        {',
+            '            FK = parentRot.valueAtTime( time - delay );',
+            '            FK = FK * amp;',
+            '        }',
+            '        ',
+            '        FK = FK + value + fx( ' + endFKIndex + ' );',
+            '',
+            '        if (ftEnabled)',
+            '        {',
+            '            FK = FK - parentRot.valueAtTime( 0 )',
+            '        }',
+            '        ',
+            '        return FK;',
+            '    }',
+            '    ikfk ? ik() : fk();',
+            '} else value;'
+            ].join('\n');
+
+        var rotProp = new DuAEProperty( goal.transform.rotation );
+        rotProp.setExpression( rotExpr );
+
+        goal.transform.position.expression = [DuAEExpression.Id.TWO_IK,
+            'var ctrl = null;',
+            'var result = value;',
+            'try { ctrl = effect("' + goalData.name + '")(1); } catch (e){ value };',
+            'if (ctrl != null)',
+            '{',
+            'result = ctrl.effect("' + effect.name + '")(' + goalPosIndex + ').value;',
+            '}',
+            'result;'
+        ].join('\n');
     }
 
     return controller;
