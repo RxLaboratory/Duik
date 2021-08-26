@@ -3275,3 +3275,275 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
 
     return controller;
 }
+
+/**
+ * Creates a bezier ik on the layers
+ * @param {Layer[]|DuList.<Layer>} layers - The layers, ordered from root to end
+ * @param {Layer|null} [goal] - The goal layer, at the end of the IK
+ * @param {Layer|null} [controller] - The layer to use as controller, can be automatically created.<br />
+ * Must be provided if goal is undefined.
+ * @return {Layer[]} The controllers [curve,end,root]
+ */
+Duik.Constraint.bezierIK = function( layers, goal, controller )
+{
+    goal = def(goal, null);
+    controller = def(controller, null);
+    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+
+    layers = new DuList(layers);
+    var comp = layers.first().containingComp;
+
+    //create controllers
+    if ( controller == null )
+    {
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+        goal.parent = null;
+        controller.transform.rotation.setValue( goal.transform.rotation.value );
+    }
+
+    if ( goal != null ) goal.parent = controller;
+
+    //add effect
+    var name = layers.first().name;
+    var pe = Duik.PseudoEffect.BEZIER_IK;
+    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+
+    //create curve controller
+    var curveController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
+    curveController.transform.scale.expression = '';
+    curveController.name = curveController.name + " - Curve";
+    Duik.Controller.setSize( 50, curveController);
+
+    //create root controller
+    var rootController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, layers.first() );
+    rootController.name = rootController.name + " - Root";
+    Duik.Controller.setSize( 50, rootController);
+
+    //add effect
+    var cPe = Duik.PseudoEffect.BEZIER_IK_CURVE;
+    var curveEffect = cPe.apply( curveController );
+    curveEffect( cPe.props["Controllers"]["Root"].index ).setValue( rootController.index );
+    curveEffect( cPe.props["Controllers"]["Curve"].index ).setValue( curveController.index );
+    curveEffect( cPe.props["Controllers"]["End"].index ).setValue( controller.index );
+
+    //useful positions
+    var endPosition = DuAELayer.getWorldPos( controller );
+    if ( goal != null ) endPosition = DuAELayer.getWorldPos( goal );
+    var rootPosition = DuAELayer.getWorldPos( layers.first() );
+    curveController.transform.position.setValue( ( endPosition + rootPosition ) / 2 );
+    var cOutPosition = ( 2 * endPosition + rootPosition ) / 3;
+    var cInPosition = ( endPosition + 2 * rootPosition ) / 3;
+
+    //add handles
+    var handleInGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    handleInGroup.name = 'Handle In';
+    handleInContent = handleInGroup.property( "ADBE Vectors Group" );
+    var circle = handleInContent.addProperty( "ADBE Vector Shape - Ellipse" );
+    circle( "ADBE Vector Ellipse Size" ).setValue( [ 25, 25 ] );
+    var fill = handleInContent.addProperty( "ADBE Vector Graphic - Fill" );
+
+    var ctrlPe = Duik.PseudoEffect.CONTROLLER;
+
+    var ctrlEffect = curveController.effect( ctrlPe.matchName );
+    var iconColorIndex = ctrlPe.props["Icon"]["Color"].index;
+    var iconSizeIndex = ctrlPe.props["Icon"]["Size"].index;
+
+    if (ctrlEffect) fill( "ADBE Vector Fill Color" ).expression = DuAEExpression.Id.BEZIER_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+    else fill( "ADBE Vector Fill Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
+    if (ctrlEffect) handleInGroup.transform.scale.expression = DuAEExpression.Id.BEZIER_IK + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + '),effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')]';
+
+    handleInGroup.transform.position.expression = [DuAEExpression.Id.BEZIER_IK,
+        'var fx = effect("' + curveEffect.name + '");',
+        'var root = null;',
+        'var curve = thisLayer;',
+        'var result = value;',
+        'try { root = fx(' + cPe.props["Controllers"]["Root"].index + ') ;} catch(e){}',
+        'if (root != null)',
+        '{',
+        '   var rootPos = root.toWorld(root.anchorPoint);',
+        '   rootPos = fromWorld(rootPos);',
+        '   result += rootPos/2;',
+        '}',
+        'result;'
+    ].join('\n');
+    //Auto handle position disabled as it messes up the order of the evaluation of the expressions
+    //DuAEF.DuAE.Property.removeExpression(handleInGroup.transform.position);
+
+    handleInGroup.transform.opacity.expression = DuAEExpression.Id.BEZIER_IK + '\nvar fx = effect("' + curveEffect.name + '");\n' +
+        'fx(' + cPe.props["Show handles"].index + ').value * 100;';
+
+    var handleOutGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    handleOutGroup.name = 'Handle Out';
+    handleOutContent = handleOutGroup.property( "ADBE Vectors Group" );
+    var circle = handleOutContent.addProperty( "ADBE Vector Shape - Ellipse" );
+    circle( "ADBE Vector Ellipse Size" ).setValue( [ 25, 25 ] );
+    var fill = handleOutContent.addProperty( "ADBE Vector Graphic - Fill" );
+    if (ctrlEffect) fill( "ADBE Vector Fill Color" ).expression = DuAEExpression.Id.BEZIER_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+    else fill( "ADBE Vector Fill Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
+    if (ctrlEffect) handleOutGroup.transform.scale.expression = DuAEExpression.Id.BEZIER_IK + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + '),effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')]';
+
+    handleOutGroup.transform.position.expression = [DuAEExpression.Id.BEZIER_IK,
+        'var fx = effect("' + curveEffect.name + '");',
+        'var end = null;',
+        'var curve = thisLayer;',
+        'var result = value;',
+        'try { end = fx(' + cPe.props["Controllers"]["End"].index + '); } catch(e){}',
+        'if (end != null)',
+        '{',
+        '   var endPos = end.toWorld(end.anchorPoint);',
+        '   endPos = fromWorld(endPos);',
+        '   result += endPos/2;',
+        '}',
+        'result;'
+    ].join('\n');
+    //Auto handle position disabled as it mess up the order of the evaluation of the expressions
+    //DuAEF.DuAE.Property.removeExpression(handleOutGroup.transform.position);
+
+    handleOutGroup.transform.opacity.expression = DuAEExpression.Id.BEZIER_IK + '\nvar fx = effect("' + curveEffect.name + '");\n' +
+        'fx(' + cPe.props["Show handles"].index + ').value * 100;';
+
+    //add line
+    if ( DuAE.version.version >= 15 )
+    {
+        var lineGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        lineGroup.name = 'IK Line';
+        var lineContent = lineGroup.property( "ADBE Vectors Group" );
+        var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
+        shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.BEZIER_IK,
+            'var fx = effect("' + curveEffect.name + '");',
+            'var root = null;',
+            'var curve = thisLayer;',
+            'var end = null;',
+            'var result = [[0,0]];',
+            'if (fx(' + cPe.props["Draw guides"].index + ').value)',
+            '{',
+            '   try { root = fx(' + cPe.props["Controllers"]["Root"].index + '); end = fx(' + cPe.props["Controllers"]["End"].index + ') } catch(e){}',
+            '   if (root != null)',
+            '   {',
+            '       var r = root.toWorld(root.anchorPoint);',
+            '       r = fromWorld(r);',
+            '       var e = end.toWorld(end.anchorPoint);',
+            '       e = fromWorld(e);',
+            '       var t1 = content("Handle In").transform.position;',
+            '       var t2 = content("Handle Out").transform.position;',
+            '       result = [r,t1,t2,e];',
+            '   }',
+            '}',
+            'createPath(result,[],[],false);'
+        ].join('\n');
+
+        var stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.BEZIER_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+        else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
+        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+    }
+
+    //setup layers
+    var rootIndex = rootController.index;
+    var endIndex = controller.index;
+    var curveIndex = curveController.index;
+    var totalLength = DuMath.length( rootPosition, cInPosition ) + DuMath.length( cOutPosition, cInPosition ) + DuMath.length( cOutPosition, endPosition );
+
+    //un-parent
+    for ( var i = 1, n = layers.length(); i < n; i++ )
+    {
+        layers.at(i).parent = null;
+    }
+
+    layers.first().parent = rootController;
+
+    var lPe = Duik.PseudoEffect.BEZIER_IK_LAYER
+
+    for ( var i = 1, n = layers.length(); i < n; i++ )
+    {
+        var layer = layers.at(i);
+        //add effect
+        var layerEffect = lPe.apply( layer );
+        layerEffect( lPe.props["Layers"]["Root"].index ).setValue( rootIndex );
+        layerEffect( lPe.props["Layers"]["Curve"].index ).setValue( curveIndex );
+        layerEffect( lPe.props["Layers"]["End"].index ).setValue( endIndex );
+        if ( i < layers.length() - 1 ) layerEffect( lPe.props["Layers"]["Next"].index ).setValue( layers.at( i + 1 ).index );
+        else layerEffect( lPe.props["Layers"]["Next"].index ).setValue( controller.index );
+
+        //expressions
+
+        //position
+        if ( i != 0 )
+        {
+            var index = DuMath.length( endPosition, layer.transform.position.value );
+            index = index / totalLength;
+            var expression = [DuAEExpression.Id.BEZIER_IK,
+                'var end = null;',
+                'var root = null;',
+                'var curve = null;',
+                'var result = value;',
+                'var thisFx = effect("' + layerEffect.name + '");',
+                'try { end = thisFx(' + lPe.props["Layers"]["End"].index + '); curve = thisFx(' + lPe.props["Layers"]["Curve"].index + '); root = thisFx(' + lPe.props["Layers"]["Root"].index + '); }catch (e) {};',
+                'if ( root !=null )',
+                '{',
+                '   var ind = ' + index + ';',
+                '   var fx = end.effect("' + effect.name + '");',
+                '   var offset = thisFx(' + lPe.props["Offset"].index + ')/100;',
+                '   var generalOffset = fx(' + pe.props["Offset"].index + ')/100;',
+                '   var endPosition = end.toComp(end.anchorPoint);',
+                '   var rootPosition = root.toComp(root.anchorPoint);',
+                '   var curvePosition1 = curve.toComp(curve.content("Handle Out").transform.position);',
+                '   var curvePosition2 = curve.toComp(curve.content("Handle In").transform.position);',
+                '   var t = ind + generalOffset + offset;',
+                '   var c = 3*(curvePosition1 - endPosition);',
+                '   var b = 3*(curvePosition2 - curvePosition1) - c;',
+                '   var a = rootPosition - endPosition - c - b;',
+                '   result += ((a*t +b )*t + c)*t + endPosition ;',
+                '   result -= ' + layer.transform.position.value.toSource() + ';',
+                '}',
+                'result;'
+            ].join('\n');
+
+            var posProp = new DuAEProperty( layer.transform.position );
+           posProp.setExpression( expression );
+        }
+
+        //rotation
+        var expr = [DuAEExpression.Id.BEZIER_IK,
+            'var c = null;',
+            'var result = value;',
+            'var thisFx = effect("' + layerEffect.name + '");',
+            'try{ c = thisFx(' + lPe.props["Layers"]["End"].index + ') }catch (e) {}',
+            'if ( c!=null )',
+            '{',
+            '   var n = c;',
+            '   try { n = thisFx(' + lPe.props["Layers"]["Next"].index + '); if (n.index == index) n = c; } catch (e) {}',
+            '   var fx = c.effect("' + effect.name + '");',
+            '   var autoOrient = fx(' + pe.props["Auto orient"].index + ').value;',
+            '   var C = n.toWorld(n.anchorPoint);',
+            '   var O =  thisLayer.toWorld(thisLayer.anchorPoint);',
+            '   var vec = O-C;',
+            '   var angle = Math.atan2(vec[1], vec[0]);',   
+            '   var ik = radiansToDegrees(angle);',
+            '   if (autoOrient==1) result += ik;'
+        ].join('\n');
+
+        if ( i == 0 )
+        {
+            expr += 'var layer = thisLayer;\n' +
+                'while(layer.hasParent)\n' +
+                '{\n' +
+                'layer = layer.parent;\n' +
+                'result -= layer.transform.rotation;\n' +
+                '}\n';
+        }
+        expr += '}\n' +
+            'result;';
+
+        var rotProp = new DuAEProperty( layer.transform.rotation );
+        rotProp.setExpression( expr );
+    }
+
+    curveController.selected = false;
+    controller.moveBefore( curveController );
+
+    return [ curveController, controller, rootController ];
+}
