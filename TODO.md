@@ -4,10 +4,10 @@
 
 - [ ] constraints (including IK)
     - IK Selector
-        - 2+1
-        - 1+2
         - bézier
         - fk
+        - ik effect names
+        - fix 1-layer limits (ctrl rotation)
     - Parent selector
     - Transform Constraints selector
     - Add pins
@@ -15,6 +15,7 @@
     - Autorig
 - [ ] autorig in bones panel
 - [ ] bone
+    - Fix creation location
     - adjust spine etc according to animal with better defaults / illustations
     - fish spine
     - bake
