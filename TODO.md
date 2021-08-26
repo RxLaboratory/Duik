@@ -41,7 +41,7 @@
 ## DuAEF & DuESF
 
 - [x] Add random button to the color selector
-- [ ] Shift click for options on buttons with options panel; hide the options button in ui mode > expert; option to hide options button in all modes.
+- [ ] option to hide options button in all modes.
 
 ## Notes
 

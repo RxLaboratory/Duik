@@ -1173,7 +1173,7 @@ Duik.Constraint.ik = function ( type, forceBezier, layers, controller )
 {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
-    if (layers.length < 1) return [];
+    if (layers.length() < 1) return [];
 
     DuAE.beginUndoGroup( DuScriptUI.String.IK, false);
 
@@ -3290,6 +3290,8 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     controller = def(controller, null);
     if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
 
+    DuAE.beginUndoGroup( DuScriptUI.String.BEZIER_IK, false);
+
     layers = new DuList(layers);
     var comp = layers.first().containingComp;
 
@@ -3441,6 +3443,10 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
         stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
     }
 
+    //close controller details
+    curveController.selected = true;
+    DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true );
+
     //setup layers
     var rootIndex = rootController.index;
     var endIndex = controller.index;
@@ -3545,5 +3551,201 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     curveController.selected = false;
     controller.moveBefore( curveController );
 
+    DuAE.endUndoGroup( DuScriptUI.String.BEZIER_IK);
+
     return [ curveController, controller, rootController ];
+}
+
+Duik.CmdLib['Constraint']["FK"] = "Duik.Constraint.fk()";
+/**
+ * Creates a FK with auto-overlapping and its controller on the layers.
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers, already parented or ordered from root (at index 0) to end
+ * @param {Layer} [controller] - An already existing controller.
+ * @return {Layer} The controller of the FK.
+ */
+Duik.Constraint.fk = function( layers, controller )
+{
+    controller = def(controller, null);
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.FK, false);
+
+    var comp = layers.first().containingComp;
+
+    //check if there is a controller in the selection
+    if ( controller == null )
+    {
+        for ( var i = 0, num = layers.length(); i < num; i++ )
+        {
+            var l = layers.at(i);
+            if ( Duik.Layer.isType( l, Duik.Layer.Type.CONTROLLER ) )
+            {
+                controller = l;
+                layers.remove( i );
+                break;
+            }
+        }
+    }
+
+    //sort layers and parent them
+    var layers = DuAELayer.sortByParent( layers );
+    layers = new DuList(layers);
+    //reset rotation and scale if structures
+    layers.do( Duik.Bone.resetTransform );
+    DuAELayer.parentChain( layers );
+
+    //Create controller
+    if ( controller == null )
+    {
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.ROTATION, layers.first() );
+    }
+
+    var pe = Duik.PseudoEffect.FK;
+
+    var name = layers.first().name;
+    var fkEffect = pe.apply( controller );
+    fkEffect( pe.props["Limits"]["Lower"].index ).setValue( -180 );
+    fkEffect( pe.props["Flexibility"].index ).setValue( 100 );
+    fkEffect( pe.props["Resistance"].index ).setValue( 10 );
+    var fkEffectName = fkEffect.name;
+
+    //rig layers
+    layers.do( function( layer )
+    {
+        //add Data
+        var layerData = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        layerData.name = DuScriptUI.String.FK;
+        layerData( 1 ).setValue( controller.index );
+
+        //add FK control
+        var fkControl = controller( 'ADBE Effect Parade' ).addProperty( 'ADBE Angle Control' );
+        fkControl.name = layer.name;
+
+        //add expression
+        if ( layers.current == 0 )
+        {
+            layer.transform.rotation.expression = [DuAEExpression.Id.FK,
+                'var controller = null;',
+                'var result = value;',
+                'try { controller = effect("' + layerData.name + '")(1); } catch (e) {}',
+                'if ( controller !=null )',
+                '{',
+                '   var fx = controller.effect("' + fkEffectName + '");',
+                '   result += controller.transform.rotation.value + fx(' + pe.props["Curve"].index + ').value;',
+                '   var follow = fx(' + pe.props["Parent rotation"].index + ').value;',
+                '   var p = thisLayer;',
+                '   if (!follow)',
+                '   {',
+                '       while(p.hasParent)',
+                '       {',
+                '           p = p.parent;',
+                '           result -= p.rotation.value;',
+                '       }',
+                '   }',
+                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
+                '   {',
+                '       var fk = controller("Effects")(i);',
+                '       if (fk.name == thisLayer.name)',
+                '       {',
+                '           result+=fk(1).value;',
+                '           break;',
+                '       }',
+                '   }',
+                '}',
+                'result;'
+            ].join('\n');
+        }
+        else if ( layers.current == 1 )
+        {
+            layer.transform.rotation.expression = [DuAEExpression.Id.FK,
+                'var controller = null;',
+                'var result = value;',
+                'try { controller=effect("' + layerData.name + '")(1); } catch (e) {}',
+                'if (controller !=null && hasParent)',
+                '{',
+                '   var fx = controller.effect("' + fkEffectName + '");',
+                '   var ctrlRot = controller.transform.rotation;',
+                '   var delay = fx(' + pe.props["Resistance"].index + ').value;',
+                '   var amp = fx(' + pe.props["Flexibility"].index + ').value;',
+                '   var uLimit = fx(' + pe.props["Limits"]["Upper"].index + ').value;',
+                '   var lLimit = fx(' + pe.props["Limits"]["Lower"].index + ').value;',
+                '   var manual = fx(' + pe.props["Curve"].index + ').value;',
+                '   var follow = fx(' + pe.props["Parent rotation"].index + ').value;',
+                '   delay = delay / 100;',
+                '   amp = amp / 100 ;',
+                '   result = ctrlRot.valueAtTime(time-delay) + fx(3).valueAtTime(time-delay);',
+                '   if (follow && hasParent)',
+                '   {',
+                '       var cP = parent;',
+                '       while(cP.hasParent)',
+                '       {',
+                '           cP = cP.parent;',
+                '           if (cP.index = controller.index) follow = false;',
+                '           result -= cP.rotation.value - cP.rotation.valueAtTime(time-delay);',
+                '       }',
+                '   }',
+                '   result = result - ctrlRot.value ;',
+                '   result = result * amp;',
+                '   result = result - ctrlRot.velocity*(delay/5);',
+                '   if (result > uLimit) result = uLimit;',
+                '   if (result < lLimit) result = lLimit;',
+                '   result = result + value + manual;',
+                '   if (follow) result -= parent.transform.rotation.valueAtTime(0);',
+                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
+                '   {',
+                '       var fk = controller("Effects")(i);',
+                '       if (fk.name == thisLayer.name)',
+                '       {',
+                '           result+=fk(1).value;',
+                '           break;',
+                '       }',
+                '   }',
+                '}',
+                'result;'
+            ].join('\n');
+        }
+        else
+        {
+            layer.transform.rotation.expression = [DuAEExpression.Id.FK,
+                'var controller = null;',
+                'var result = value;',
+                'try { controller=effect("' + layerData.name + '")(1); }catch (e) {}',
+                'if (controller !=null && hasParent)',
+                '{',
+                '   var fx = controller.effect("' + fkEffectName + '");',
+                '   var ctrlRot = controller.transform.rotation;',
+                '   var parentRot = parent.transform.rotation ;',
+                '   var delay = fx(' + pe.props["Resistance"].index + ').value;',
+                '   var amp = fx(' + pe.props["Flexibility"].index + ').value;',
+                '   var uLimit = fx(' + pe.props["Limits"]["Upper"].index + ').value;',
+                '   var lLimit = fx(' + pe.props["Limits"]["Lower"].index + ').value;',
+                '   var manual = fx(' + pe.props["Curve"].index + ').value;',
+                '   delay = delay / 100;',
+                '   amp = amp / 100 ;',
+                '   result = parentRot.valueAtTime(time-delay);',
+                '   result = result * amp;',
+                '   if (result > uLimit) result = uLimit;',
+                '   if (result < lLimit) result = lLimit;',
+                '   result = result + value + manual - parent.transform.rotation.valueAtTime(0);',
+                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
+                '   {',
+                '       var fk = controller("Effects")(i);',
+                '       if (fk.name == thisLayer.name)',
+                '       {',
+                '           result+=fk(1).value;',
+                '           break;',
+                '       }',
+                '   }',
+                '}',
+                'result;'
+            ].join('\n');
+        }
+    } );
+
+    controller.selected = true;
+
+    DuAE.endUndoGroup( DuScriptUI.String.FK);
+
+    return controller;
 }
