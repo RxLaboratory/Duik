@@ -3754,9 +3754,131 @@ Duik.Constraint.autoParent = function( orphansOnly, layers )
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.AUTP_PARENT, false);
+    DuAE.beginUndoGroup( DuScriptUI.String.AUTO_PARENT, false);
 
     DuAELayer.parent( layers, undefined, orphansOnly );
 
-    DuAE.endUndoGroup( DuScriptUI.String.AUTP_PARENT );
+    DuAE.endUndoGroup( DuScriptUI.String.AUTO_PARENT );
+}
+
+Duik.CmdLib['Constraint']["Parent"] = "Duik.Constraint.parent()";
+/**
+ * Parent Constraint
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers
+ */
+Duik.Constraint.parent = function ( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.PARENT_CONSTRAINT, false);
+
+    var pe = Duik.PseudoEffect.PARENT;
+    var p = pe.props;
+
+    layers.do(function(layer)
+    {
+        var effect = pe.apply(layer);
+
+        var posExpr = [DuAEExpression.Id.PARENT_CONSTRAINT,
+            DuAEExpression.Library.get(['translatePointWithLayer','checkDuikEffect']),
+            'var result = thisLayer.position.valueAtTime( 0 );',
+            'var mbPrecision = 1;',
+            'var step = framesToTime(1);',
+            'var cT = 0;',
+            'while ( cT < time ) {',
+            '    cT += step;',
+            '    var roundedFrame = Math.round( timeToFrames(cT) );',
+            '    var roundedTime = roundedFrame * thisComp.frameDuration;',
+            '    if (cT - roundedTime < 0.0001) cT = roundedTime;',
+            '',
+            '	for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
+            '		var fx = effect( i );',
+            '		if ( !checkDuikEffect(fx, "DUIK parentConstraint") ) continue;',
+            '		if ( !fx(' + p['Inheritance']['Position'].index + ').value ) continue;',
+            '		var parentLayer = null;',
+            '		try {',
+            '			parentLayer = fx(' + p['Layer'].index + ');',
+            '		} catch ( e ) {',
+            '			continue;',
+            '		}',
+            '',
+            '		mbPrecision = fx(' + p['Motion Blur Precision'].index + ').value;',
+            '		step = framesToTime(1)/mbPrecision;',
+            '',
+            '        if ( !parentLayer ) continue;',
+            '        if ( parentLayer.index == index ) continue;',
+            '        var weight = fx(' + p['Weight'].index + ').valueAtTime( cT ) / 100;',
+            '        if ( weight == 0 ) continue;',
+            '        result += translatePointWithLayer( parentLayer, result, cT - step, cT ) * weight;',
+            '    }',
+            '    result += valueAtTime( cT ) - valueAtTime( cT - step );',
+            '}',
+            'result;'
+        ].join('\n');
+
+        if (layer.position.dimensionsSeparated)
+        {
+            layer.transform.xPosition.expression = posExpr + '\nresult[0];';
+
+            layer.transform.yPosition.expression = posExpr + '\nresult[1];';
+            if (layer.threeDLayer) layer.transform.zPosition.expression = posExpr + '\nresult[2];';
+        }
+        else
+        {
+            layer.position.expression = posExpr;
+        }
+
+        var rotExpression = [DuAEExpression.Id.PARENT_CONSTRAINT,
+            DuAEExpression.Library.get(['getOrientationAtTime','checkDuikEffect']),
+            'var result = value;',
+            'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
+            '    var fx = effect( i );',
+            '    if ( !checkDuikEffect(fx, "DUIK parentConstraint") ) continue;',
+            '    if ( !fx(' + p['Inheritance']['Rotation'].index + ').value ) continue;',
+            '    var l = null;',
+            '    try {',
+            '        l = fx(' + p['Layer'].index + ');',
+            '    } catch ( e ) {',
+            '        continue;',
+            '    }',
+            '    if ( !l ) continue;',
+            '    if ( l.index == index ) continue;',
+            '    if ( fx(' + p['Weight'].index + ').numKeys < 2 ) {',
+            '        var w = fx(' + p['Weight'].index + ').value / 100;',
+            '        if ( w == 0 ) continue;',
+            '        var P = getOrientationAtTime( l, time );',
+            '        var oP = getOrientationAtTime( l, 0 );',
+            '        result += ( P - oP ) * w;',
+            '    } else {',
+            '        var cT = time ;',
+            '        var step = framesToTime(1) / fx(' + p['Motion Blur Precision'].index + ').value;',
+            '        while (cT > 0) {',
+            '            var prevT = cT - step;',
+            '            var w = fx(' + p['Weight'].index + ').valueAtTime( cT ) / 100;',
+            '            var P = getOrientationAtTime( l, cT );',
+            '            var oP = getOrientationAtTime( l, prevT );',
+            '            result += ( P - oP ) * w;',
+            '            cT = cT - step;',
+            '        }',
+            '    }',
+            '}',
+            'result;'
+        ].join('\n');
+
+        layer.rotation.expression = rotExpression
+
+        if (layer.parent != null)
+        {
+            var comp = layer.containingComp;
+            var time = comp.time;
+            comp.time = 0;
+            var parent = layer.parent;
+            layer.parent = null;
+            effect( p['Layer'].index ).setValue(parent.index);
+            comp.time = time;
+        }
+    });
+
+    DuAE.endUndoGroup( DuScriptUI.String.PARENT_CONSTRAINT );
 }
