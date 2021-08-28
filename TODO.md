@@ -4,7 +4,6 @@
 
 - [ ] layer manager: add zero & locator
 - [ ] constraints
-    - Transform Constraints selector
     - Add pins
     - Connector
     - Autorig

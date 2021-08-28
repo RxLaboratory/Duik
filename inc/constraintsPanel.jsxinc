@@ -390,9 +390,96 @@ function buildConstraintsUI( )
             undefined,
             false
         );
+        pathConstraintButton.onClick = function ()
+        {
+            var pathConstraintValidButton;
+            var pathConstraintLabel;
+
+            var pathProp = null;
+            // Get path prop
+            function pickPath() {
+                pathProp = null;
+                pathConstraintValidButton.enabled = false;
+                pathConstraintLabel.text = DuScriptUI.String.PICK_PATH;
+                var props = DuAEComp.getSelectedProps( PropertyValueType.SHAPE );
+                if ( props.length == 0 ) return false;
+
+                pathProp = props.pop();
+                var parentProp = pathProp.getProperty().parentProperty;
+                pathConstraintLabel.text = pathProp.layer.index + " - " + pathProp.layer.name + " # " + parentProp.name;
+                pathConstraintValidButton.enabled = true;
+            }
+
+            // build panel
+            if (!pathConstraintGroup.built)
+            {
+                pathConstraintGroup.built = true;
+
+                var pathGroup = DuScriptUI.group(pathConstraintGroup, 'row');
+
+                pathConstraintLabel = DuScriptUI.staticText(pathGroup, DuScriptUI.String.PICK_PATH );
+                pathConstraintLabel.alignment = ['fill', 'center'];
+
+                var pickPathButton = DuScriptUI.button(
+                    pathGroup,
+                    '',
+                    DuScriptUI.Icon.EYE_DROPPER_BIG,
+                    DuScriptUI.String.PICK_PATH
+                );
+                pickPathButton.alignment = ['right', 'center'];
+                pickPathButton.onClick = pickPath;
+
+                var pathConstraintValidGroup = DuScriptUI.group(pathConstraintGroup, 'row');
+
+                var pathConstraintCancelButton = DuScriptUI.button(
+                    pathConstraintValidGroup,
+                    DuScriptUI.String.BACK_PREVIOUS,
+                    DuScriptUI.Icon.BACK,
+                    DuScriptUI.String.CLOSE_SETTINGS,
+                    false,
+                    'row',
+                    'center'
+                );
+                pathConstraintValidGroup.onClick = function () {
+                    pathConstraintGroup.visible = false;
+                    constraintsGroup.visible = true;
+                }
+
+                pathConstraintValidButton = DuScriptUI.button(
+                    pathConstraintValidGroup,
+                    DuScriptUI.String.PATH_CONSTRAINT,
+                    DuScriptUI.Icon.CHECK,
+                    DuScriptUI.String.PATH_CONSTRAINT_TIP,
+                    false,
+                    'row',
+                    'center'
+                );
+                pathConstraintValidButton.enabled = false;
+                pathConstraintValidButton.onClick = function ()
+                {
+                    Duik.Constraint.path( pathProp );
+                    pathConstraintGroup.visible = false;
+                    constraintsGroup.visible = true;
+                }
+
+                DuScriptUI.showUI( pathConstraintGroup );
+            }
+
+            // we can create
+            if (Duik.Constraint.path()) return;
+
+            // ask for the path
+            constraintsGroup.visible = false;
+            pathConstraintGroup.visible = true;
+            pickPath();
+        }
     }
 
     var parentAcrossCompGroup = DuScriptUI.group( mainGroup, 'column');
     parentAcrossCompGroup.visible = false;
     parentAcrossCompGroup.built = false;
+
+    var pathConstraintGroup = DuScriptUI.group( mainGroup, 'column');
+    pathConstraintGroup.visible = false;
+    pathConstraintGroup.built = false;
 }
