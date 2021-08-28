@@ -4096,3 +4096,132 @@ Duik.Constraint.extractLocator = function( locator, preCompLayer, useEssentialPr
     }
     return loc;
 }
+
+/**
+ * Parent the layers across compositions to the chosen layer
+ * @param {Layer} parent The parent layer
+ * @param {Boolean} [useEssentialProperties=true] - true to extract using master properties instead of expressions (ignored in Ae < 15.1, false by default if 15.1 <= Ae < 17 and true by default in Ae >= 17)
+ * @param {Layer[]|DuList.<Layer>} [children] - The child layers
+ */
+Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, children )
+{
+    children = def(children, DuAEComp.getSelectedLayers());
+    children = new DuList(children);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.PARENT_ACROSS_COMP, false);
+
+    var parentComp = parent.containingComp;
+
+    //create the parent locator
+    var locator = Duik.Constraint.createLocator( parent );
+    //the children locators
+    var childLocators = [];
+
+    new DuList( children ).do( function( child )
+    {
+        var childComp = child.containingComp;
+
+        //check if there already is a child locator
+        var childLocator = null;
+        for ( var i = 0, num = childLocators.length; i < num; i++ )
+        {
+            if ( childLocators[ i ].containingComp.id == childComp.id )
+            {
+                childLocator = childLocators[ i ];
+                break;
+            }
+        }
+
+        //if precomp
+        var precomps = DuAEComp.getPrecomps( childComp );
+        var precompList = new DuList(precomps);
+
+        if ( precompList.indexOf( parentComp ) >= 0 )
+        {
+            //select the first precomp layer
+            var precompLayer;
+            for ( var i = 1, num = childComp.numLayers; i <= num; i++ )
+            {
+                var l = childComp.layer( i );
+                if ( l.source )
+                {
+                    if ( l.source.id == parentComp.id )
+                    {
+                        precompLayer = l;
+                        break;
+                    }
+                }
+            }
+
+            //create the child Locator
+            if ( !childLocator )
+            {
+                //create a locator and extract it
+                var childLocator = Duik.Constraint.extractLocator( locator, precompLayer, useEssentialProperties );
+                childLocator.selected = false;
+                childLocator.enabled = false;
+                childLocator.shy = true;
+                childLocator.locked = true;
+                childLocators.push( childLocator );
+            }
+            var locked = child.locked;
+            child.locked = false;
+            child.parent = childLocator;
+            child.locked = locked;
+            child.selected = true;
+
+            return;
+        }
+
+        //if parent comp
+        var parentComps = DuAEComp.getParentComps( childComp );
+        var parentCompList = new DuList(parentComps);
+        if ( parentCompList.indexOf( parentComp ) >= 0 )
+        {
+            //select the first precomp layer
+            var precompLayer;
+            for ( var i = 1, num = parentComp.numLayers; i <= num; i++ )
+            {
+                var l = parentComp.layer( i );
+                if ( l.source == childComp )
+                {
+                    precompLayer = l;
+                    break;
+                }
+            }
+
+            locator.parent = precompLayer;
+
+            //create the child Locator
+            if ( !childLocator )
+            {
+                //create a null in the comp
+                var childLocator = DuAEComp.addNull(childComp);
+                Duik.Layer.copyAttributes( childLocator, locator, Duik.Layer.Type.LOCATOR );
+                var ctr = new DuAEProperty( childLocator.transform );
+                ctr.linkProperties( locator.transform, undefined, precompLayer );
+                //lock and hide
+                childLocator.selected = false;
+                childLocator.enabled = false;
+                childLocator.shy = true;
+                childLocator.locked = true;
+                childLocators.push( childLocator );
+            }
+
+            child.parent = childLocator;
+            child.selected = true;
+
+            return;
+        }
+
+    });
+
+    //lock and hide
+    locator.selected = false;
+    locator.enabled = false;
+    locator.locked = true;
+    locator.shy = true;
+    parent.selected = true;
+
+    DuAE.endUndoGroup( DuScriptUI.String.PARENT_ACROSS_COMP);
+}
