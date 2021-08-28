@@ -24,7 +24,7 @@ Duik.Pin.Type = {
 	* @param {Duik.Pin.Type} [type=Duik.Pin.Type.PIN] - The type
 	* @return {ShapeLayer} The pin
 */
-Duik.Pin.create = function( comp, size, type )
+Duik.Pin.create = function( comp, type )
 {
 	comp = def(comp, DuAEProject.getActiveComp());
 	if (!comp) return;
@@ -33,8 +33,8 @@ Duik.Pin.create = function( comp, size, type )
 	//create
 	var pinLayer = comp.layers.addShape();
     var tag = DuAETag.set( pinLayer );
-    DuAETag.addGroup( boneLayer, tr( "Pin" ), tag );
-    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_TYPE, Duik.Layer.Type.PIN, tag );
+    DuAETag.addGroup( pinLayer, tr( "Pin" ), tag );
+    DuAETag.setValue( pinLayer, DuAETag.Key.DUIK_TYPE, Duik.Layer.Type.PIN, tag );
 	//add effect
     var effect = Duik.PseudoEffect.PIN.apply( pinLayer );
 
@@ -79,7 +79,7 @@ Duik.Pin.create = function( comp, size, type )
 			var pathStroke = iconContent.addProperty("ADBE Vector Graphic - Stroke");
 			pathStroke.property("Color").expression = 'effect("' + effect.name + '")(1)-[0.2,0.2,0.2,0]';
 			pathStroke.property("Stroke Width").setValue(2);
-			pathStroke.property('Stroke Width').expression = '2 * effect("Bone")(2).value/100';
+			pathStroke.property('Stroke Width').expression = '2 * effect("' + effect.name + '")(2).value/100';
 			var fill = iconContent.addProperty("ADBE Vector Graphic - Fill");
 			fill("ADBE Vector Fill Color").expression = 'effect("' + effect.name + '")(1)-[0.2,0.2,0.2,0]';
 
@@ -136,8 +136,269 @@ Duik.Pin.create = function( comp, size, type )
 
 	//bone = new Bone(pinLayer);
 	//bone.setSize();
-	//bone.setColor();
+	effect(1).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.floatRGBA() );
 	return pinLayer;
+}
+
+/**
+ * Links the property to a pin. This will automatically detect the type of the property to create the corresponding pins.
+ * @param {Property|DuAEProperty} prop - The property
+ * @param {Boolean} [tangents=true] - True to create pins for the tangents if prop is a Shape
+ * @return {ShapeLayer[]} The pins created.
+ */
+Duik.Pin.add = function ( prop, tangents )
+{
+	var pins = [];
+
+	tangents = def(tangents, true);
+
+	if (!Object.isValid(prop)) return pins;
+
+	var propInfo = new DuAEProperty(prop);
+	var prop = propInfo.getProperty();
+
+	//Check the type of the property to create the bone 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Position') return pins; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Rotation') return pins; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Scale') return pins; 
+
+	//Puppet Pin
+	if (prop.matchName == 'ADBE FreePin3 PosPin Atom') if (DuAEPuppet.riggable(prop) )
+	{
+		var pin = Duik.Pin.addPuppetPin( prop );
+		if (pin != null) pins.push(pin);
+		return pins;
+	}
+
+	//Shape
+	if (prop.propertyValueType == PropertyValueType.SHAPE)
+	{
+		if ( DuAE.version.version < 15) return pins;
+		return Duik.Pin.rigPath( prop, tangents, true);
+	}
+
+	//If not multi-dimensionnal, ignore
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
+	{
+		return pins;
+	}
+
+	//Shape controller Effect
+	var parentProp = prop.parentProperty;
+	if (parentProp.matchName == Duik.PseudoEffect.PATH_PIN.matchName)
+	{
+		var pin = Duik.Pin.addShapePin(prop);
+		pins.push(pin);
+		return pins;
+	}
+
+	//Any other multi-dimensionnal property 
+	var pin = Duik.Pin.addPositionPin(prop);
+	pins.push(pin);
+	return pins;
+}
+
+/**
+	* Links the spatial child properties to pins
+	* @param {PropertyGroup|DuAEProperty} prop - The property
+	* @param {Boolean} [tangents=true] - True to create pins for the tangents if prop is a Shape
+	* @return {ShapeLayer[]} The pins created.
+*/
+Duik.Pin.addPins = function ( prop, tangents )
+{
+	var propInfo = new DuAEProperty(prop);
+	var prop = propInfo.getProperty();
+
+	var bones = [];
+
+	if (prop.matchName == 'ADBE FreePin3 PosPin Atom') return Duik.Pin.addPuppetPin(prop);
+	if (prop.matchName == 'ADBE FreePin3 PosPin Position') return pins; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Rotation') return pins; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Scale') return pins; 
+
+	if (prop.propertyType == PropertyType.PROPERTY)
+	{
+		pins.push(Duik.Pin.add(prop,tangents));
+	}
+	else
+	{
+		for (var i = 1, num = prop.numProperties; i <= num; i++)
+		{
+			if (Object.isValid(prop))
+			{
+				
+				var p = prop.property(i);
+				pins = pins.concat(Duik.Pin.addPins(prop,tangents));
+			}
+			prop = propInfo.getProperty();
+		}
+	}
+	
+	return pins;
+}
+
+/**
+ * Adds a pin on a puppet pin
+ * @param {PropertyGroup} prop - The puppet pin
+ * @return {ShapeLayer} The new pin.
+*/
+Duik.Pin.addPuppetPin = function ( puppetPinProp )
+{
+	var propInfo = new DuAEProperty( puppetPinProp );
+	var prop = propInfo.getProperty();
+	if ( !prop ) return null;
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	//check pin type
+	var type = Duik.Pin.Type.PIN;
+	if ( prop.position )
+	{
+		if (!prop.position.canSetExpression) type = Duik.Pin.Type.BEND_PIN;
+		else if (prop.property('ADBE FreePin3 PosPin Rotation')) { if (prop.property('ADBE FreePin3 PosPin Rotation').canSetExpression) type = Duik.Pin.Type.ADVANCED_PIN; }
+	}
+
+	//create pin
+	var pin = Duik.Pin.create( comp,  type);
+	pin.moveBefore(layer);
+	//rename pin
+	Duik.Layer.copyAttributes( pin, layer, Duik.Layer.Type.PIN );
+	var limbName = Duik.Layer.limbName( layer );
+	if (prop.parentProperty != undefined)  limbName += " - " + prop.name;
+	if (limbName.length > 80 && prop.parentProperty != undefined) limbName = prop.name;
+	Duik.Layer.setLimbName( limbName, pin );
+
+	//link properties 
+	var effect = Duik.Pin.linkPositionToPin(prop.position, pin, false);
+	//fix prop
+	prop = propInfo.getProperty();
+
+	if (type == Duik.Pin.Type.ADVANCED_PIN || type == Duik.Pin.Type.BEND_PIN)
+	{
+		if (type == Duik.Pin.Type.BEND_PIN && !effect)
+		{
+			effect = Duik.Pin.createPinControl( prop.rotation );
+			//fix prop
+			prop = propInfo.getProperty();
+			var layerIndex = Duik.PseudoEffect.POS_PIN.props["Layer"].index;
+			effect( layerIndex ).setValue( pin.index );
+		}
+		
+		prop.property('ADBE FreePin3 PosPin Rotation').expression = DuAEExpression.Id.PIN + '\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = result + l.transform.rotation.value;\n' +
+			'while(l.hasParent)\n' +
+			'{\n' +
+			'l = l.parent;\n' +
+			'result = result + l.transform.rotation.value;\n' +
+			'}\n' +
+			'}\n' +
+			'result;';
+		prop.property('ADBE FreePin3 PosPin Scale').expression = DuAEExpression.Id.PIN + '\n' +
+			'var l = null;\n' +
+			'function getAverageScale(layer)\n' +
+			'{\n' +
+			'var s = layer.transform.scale.value;\n' +
+			'return (s[0]+s[1])/200;\n' +
+			'}\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = result * getAverageScale(l);\n' +
+			'while(l.hasParent)\n' +
+			'{\n' +
+			'l = l.parent;\n' +
+			'result = result * getAverageScale(l);\n' +
+			'}\n' +
+			'}\n' +
+			'result;';
+	}
+
+	return pin;
+}
+
+Duik.Pin.addShapePin = function ( prop )
+{
+	var propInfo = new DuAEProperty( puppetPinProp );
+	var prop = propInfo.getProperty();
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	var parentProp = prop.parentProperty;
+
+	//create bone
+	var pin;
+	var pe = Duik.PseudoEffect.PATH_PIN;
+	var p = pe.props;
+
+	if (prop.propertyIndex == p["Tangents"]["In Tangent"].index || prop.propertyIndex == p["Tangents"]["Out Tangent"].index)
+	{
+		pin = Duik.Pin.create(comp, Duik.Pin.Type.TANGENT);
+	}
+	else
+	{
+		pin = Duik.Pin.create(comp, Duik.Pin.Type.VERTEX);
+	}
+
+	//position
+	if (layer instanceof ShapeLayer) pin.transform.position.setValue( prop.valueAtTime(0, false) );
+	else pin.transform.position.setValue( DuAELayer.getWorldPos( layer, prop.valueAtTime(0, false) ) );
+
+	Duik.Layer.copyAttributes( pin, layer, Duik.Layer.Type.PIN );
+	var limbName = Duik.Layer.limbName( layer );
+	limbName += ' - ' + parentProp.name;
+
+	if (prop.propertyIndex == p["Vertex"].index)
+	{
+		parentProp( p["Control Layers"]["Vertex"].index ).setValue( pin.index );
+		Duik.Pin.createPathVertexControl(layer, parentProp.name, true);
+		Duik.Layer.setLimbName( limbName, pin );
+	}
+	else if (prop.propertyIndex == p["Tangents"]["In Tangent"].index)
+	{
+		parentProp( p["Control Layers"]["In Tangent"].index ).setValue( pin.index );
+		Duik.Pin.createPathVertexControl(layer, parentProp.name, false, true);
+		Duik.Layer.setLimbName( limbName + '_In', pin );
+	}
+	else if (prop.propertyIndex == p["Tangents"]["Out Tangent"].index)
+	{
+		parentProp( p["Control Layers"]["Out Tangent"].index ).setValue( pin.index );
+		Duik.Pin.createPathVertexControl(layer, parentProp.name, false, false, true);
+		Duik.Layer.setLimbName( limbName + '_Out', pin );
+	}
+
+	return pin;
+}
+
+Duik.Pin.addPositionPin = function ( prop )
+{
+	var propInfo = new DuAEProperty( prop );
+	var prop = propInfo.getProperty();
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	var parentProp = prop.parentProperty;
+
+	//create pin
+	var pin = Duik.Pin.create(comp, Duik.Pin.Type.STANDARD);
+	pin.moveBefore(layer);
+	//rename pin
+	Duik.Layer.copyAttributes( pin, layer, Duik.Layer.Type.PIN );
+	var limbName = Duik.Layer.limbName( layer );
+	if (prop.parentProperty != undefined)  limbName += " - " + prop.parentProperty.name;
+	if (limbName.length > 80 && prop.parentProperty != undefined) limbName = prop.parentProperty.name;
+	Duik.Layer.setLimbName( limbName, pin );
+
+	//link the property to the bone 
+	Duik.Pin.linkPositionToPin(prop, pin, false);
+
+	return pin;
 }
 
 //low-level undocumented function
@@ -341,8 +602,8 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
                 pinLayer.name = pinName;
             }
             
-            effect( vertexLayerIndex ).setValue(pinLayer.layer.index);
-			pinLayer.layer.position.setValue(vertices[i]);
+            effect( vertexLayerIndex ).setValue(pinLayer.index);
+			pinLayer.position.setValue(vertices[i]);
 
 			if (tangents)
 			{
@@ -363,8 +624,8 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
 				if (pinLayerIn === null)
 				{
 					var pinLayerIn = Duik.Pin.create(comp, Duik.Pin.Type.TANGENT);
-					pinLayerIn.layer.parent = pinLayer;
-					pinLayerIn.layer.name = pinNameIn;
+					pinLayerIn.parent = pinLayer;
+					pinLayerIn.name = pinNameIn;
 					pinLayer.moveBefore(pinLayerIn);
 					pinLayerIn.position.setValue(inTangents[i]);
 				}

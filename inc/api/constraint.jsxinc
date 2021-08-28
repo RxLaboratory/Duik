@@ -4394,3 +4394,74 @@ Duik.Constraint.path = function ( path, layers )
     DuAE.endUndoGroup( DuScriptUI.String.PATH_CONSTRAINT );
     return true;
 }
+
+Duik.CmdLib['Constraint']["Pin"] = "Duik.Constraint.pin()";
+Duik.CmdLib['Constraint']["Pin without tangent"] = "Duik.Constraint.pin( false )";
+/**
+ * Add pins on the properties
+ * @param {Boolean} [tangents=true] Set to false to ignore Bézier path tangents
+ * @param {PropertyBase[]} [props] The properties to pin
+ * @returns {ShapeLayer[]} The pins
+ */
+Duik.Constraint.pin = function ( tangents, props )
+{
+    tangents = def( tangents, true );
+
+    var props = DuAEComp.getSelectedProps();
+
+    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_PINS, false);
+
+    //just create a single bone without any prop
+    if (props.length == 0)
+    {
+        var pin = Duik.Pin.create();
+        pin.selected = true;
+
+        DuAE.endUndoGroup( DuScriptUI.String.DUIK_PINS );
+        return [pin];
+    }
+
+    DuAEProject.setProgressMode( true );
+
+    var pins = [];
+    props = new DuList(props);
+    props.do( function( prop )
+    {
+        pins = pins.concat( Duik.Pin.add( prop, tangents ) );
+    } );
+
+    //if nothing was created
+    if ( pins.length == 0 )
+    {
+        var layers = DuAEComp.getSelectedLayers();
+        layers = new DuList( layers );
+
+        //Try to find puppet pins
+        layers.do( function( layer )
+        {
+            var pins = DuAELayer.getPuppetPins( layer );
+            pins = new DuList( pins );
+            pins.do( function( pin )
+            {
+                pins.push( Duik.Pin.add( pin, tangents ) );
+            } );
+        } );
+
+        //Try any spatial property
+        if ( pins.length == 0 )
+        {
+            props.do( function( prop )
+            {
+                pins = pins.concat( Duik.Pin.addPins( prop, tangents ) );
+            } );
+        }
+
+    }
+
+    DuAEComp.selectLayers( pins );
+
+    DuAEProject.setProgressMode( false );
+    DuAE.endUndoGroup( DuScriptUI.String.DUIK_PINS );
+
+    return pins;
+}
