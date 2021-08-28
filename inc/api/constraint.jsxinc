@@ -1259,8 +1259,8 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
     var right = ( ctrlPos[ 0 ] - layerPos[ 0 ] ) < 0;
 
     //Add Effect
-    var name = layer.name;
-    if ( goal != null ) name = goal.name;
+    var name = Duik.Layer.limbName(layer);
+    if ( goal != null ) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.ONE_LAYER_IK
     var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
 
@@ -1676,8 +1676,8 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
     controller.parent = endParent;
 
     //add effect
-    var name = layer2.name;
-    if ( goal != null ) name = goal.name;
+    var name = Duik.Layer.limbName(layer2);
+    if ( goal != null ) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.TWO_LAYER_IK;
     var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
 
@@ -2486,8 +2486,8 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     controller.parent = endParent;
 
     //add effect
-    var name = layer3.name;
-    if ( goal != null ) name = goal.name;
+    var name = Duik.Layer.limbName(layer3);
+    if ( goal != null ) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.THREE_LAYER_IK;
     var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
 
@@ -3306,7 +3306,7 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     if ( goal != null ) goal.parent = controller;
 
     //add effect
-    var name = layers.first().name;
+    var name = Duik.Layer.limbName( layers.first() );
     var pe = Duik.PseudoEffect.BEZIER_IK;
     var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
 
@@ -3603,7 +3603,7 @@ Duik.Constraint.fk = function( layers, controller )
 
     var pe = Duik.PseudoEffect.FK;
 
-    var name = layers.first().name;
+    var name = Duik.Layer.limbName( layers.first() );
     var fkEffect = pe.apply( controller );
     fkEffect( pe.props["Limits"]["Lower"].index ).setValue( -180 );
     fkEffect( pe.props["Flexibility"].index ).setValue( 100 );
@@ -3620,7 +3620,7 @@ Duik.Constraint.fk = function( layers, controller )
 
         //add FK control
         var fkControl = controller( 'ADBE Effect Parade' ).addProperty( 'ADBE Angle Control' );
-        fkControl.name = layer.name;
+        fkControl.name = DuScriptUI.String.FK + ' | ' + Duik.Layer.limbName( layer );
 
         //add expression
         if ( layers.current == 0 )
@@ -3643,15 +3643,8 @@ Duik.Constraint.fk = function( layers, controller )
                 '           result -= p.rotation.value;',
                 '       }',
                 '   }',
-                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
-                '   {',
-                '       var fk = controller("Effects")(i);',
-                '       if (fk.name == thisLayer.name)',
-                '       {',
-                '           result+=fk(1).value;',
-                '           break;',
-                '       }',
-                '   }',
+                '   var fk = controller.effect("' + fkControl.name + '")(1).value;',
+                '   result += fk;',
                 '}',
                 'result;'
             ].join('\n');
@@ -3692,15 +3685,8 @@ Duik.Constraint.fk = function( layers, controller )
                 '   if (result < lLimit) result = lLimit;',
                 '   result = result + value + manual;',
                 '   if (follow) result -= parent.transform.rotation.valueAtTime(0);',
-                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
-                '   {',
-                '       var fk = controller("Effects")(i);',
-                '       if (fk.name == thisLayer.name)',
-                '       {',
-                '           result+=fk(1).value;',
-                '           break;',
-                '       }',
-                '   }',
+                '   var fk = controller.effect("' + fkControl.name + '")(1).value;',
+                '   result += fk;',
                 '}',
                 'result;'
             ].join('\n');
@@ -3728,15 +3714,8 @@ Duik.Constraint.fk = function( layers, controller )
                 '   if (result > uLimit) result = uLimit;',
                 '   if (result < lLimit) result = lLimit;',
                 '   result = result + value + manual - parent.transform.rotation.valueAtTime(0);',
-                '   for (var i = 1 ; i <= controller("Effects").numProperties ; i++)',
-                '   {',
-                '       var fk = controller("Effects")(i);',
-                '       if (fk.name == thisLayer.name)',
-                '       {',
-                '           result+=fk(1).value;',
-                '           break;',
-                '       }',
-                '   }',
+                '   var fk = controller.effect("' + fkControl.name + '")(1).value;',
+                '   result += fk;',
                 '}',
                 'result;'
             ].join('\n');
