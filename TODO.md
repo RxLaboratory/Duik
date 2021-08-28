@@ -4,8 +4,6 @@
 
 - [ ] constraints (including IK)
     - IK Selector
-        - fk
-        - ik effect names
         - fix 1-layer limits (ctrl rotation)
     - Parent selector
     - Transform Constraints selector
