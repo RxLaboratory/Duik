@@ -3,8 +3,6 @@
 ## Duik
 
 - [ ] constraints (including IK)
-    - IK Selector
-        - fix 1-layer limits (ctrl rotation)
     - Parent selector
     - Transform Constraints selector
     - Add pins
