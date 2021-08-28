@@ -4001,3 +4001,98 @@ Duik.Constraint.createLocator = function ( layerOrComp )
 
     return loc;
 }
+
+Duik.CmdLib['Constraint']["Extract Locators"] = "Duik.Constraint.extractLocators()";
+/**
+ * Extract Locators
+ * @param {Boolean} [useEssentialProperties] - Wether to use essential properties instead of expressions to extract the controllers. True by default if Ae >= 17.0
+ * @param {Layer[]|DuList.<Layer>} [precompLayers] - The layers
+ */
+Duik.Constraint.extractLocators = function ( useEssentialProperties, precompLayers )
+{
+    precompLayers = def(precompLayers, DuAEComp.getSelectedLayers());
+    precompLayers = new DuList(precompLayers);
+    if ( precompLayers.length() == 0 ) return;
+
+    DuAE.beginUndoGroup( DuScriptUI.String.EXTRACT_LOCATORS, false);
+
+    precompLayers.do(function( precompLayer )
+    {
+        var preComp = precompLayer.source;
+        if ( !preComp instanceof CompItem ) return;
+
+        //get locators in precomp
+        var preCompLocs = Duik.Layer.get( Duik.Layer.Type.LOCATOR, false, preComp );
+
+        var it = new DuList( preCompLocs );
+        it.do( function( preCompLoc )
+        {
+            Duik.Constraint.extractLocator( preCompLoc, precompLayer, useEssentialProperties );
+        } );
+    });
+
+    DuAE.endUndoGroup( DuScriptUI.String.EXTRACT_LOCATORS);
+}
+
+/**
+ * Extracts one locator from a precomposition
+ * @param {ShapeLayer} locator - The locator to extract
+ * @param {AVLayer} preCompLayer - The precomposition layer
+ * @param {Boolean} [useEssentialProperties=true] - true to extract using master properties instead of expressions (ignored in Ae < 15.1, false by default if 15.1 <= Ae < 17 and true by default in Ae >= 17)
+ * @return {ShapeLayer} The extracted locator
+ */
+Duik.Constraint.extractLocator = function( locator, preCompLayer, useEssentialProperties )
+{
+    if (DuAE.version.version < 15.1) useEssentialProperties = false;
+	if (DuAE.version.version < 17.0) useEssentialProperties = def( useEssentialProperties, false );
+	else useEssentialProperties = def( useEssentialProperties, true );
+
+    var comp = preCompLayer.containingComp;
+    //comp names
+    DuAEComp.setUniqueCompName( comp );
+    DuAEComp.setUniqueCompName( locator.containingComp );
+
+    //apply locator values to workaround all kind of bugs
+    locator.transform.anchorPoint.setValue( locator.transform.anchorPoint.valueAtTime(0, false));
+    locator.transform.position.setValue( locator.transform.position.valueAtTime(0, false));
+    locator.transform.scale.setValue( locator.transform.scale.valueAtTime(0, false));
+    locator.transform.rotation.setValue( locator.transform.rotation.valueAtTime(0, false));
+    locator.transform.opacity.setValue( locator.transform.opacity.valueAtTime(0, false));
+    
+    //create a null in the comp
+    var loc = DuAEComp.addNull(comp);
+    Duik.Layer.setAttributes( loc, Duik.Layer.Type.LOCATOR, DuScriptUI.String.LOCATOR );
+    loc.parent = preCompLayer;
+
+    var trProp = new DuAEProperty( locator.transform );
+
+    if (useEssentialProperties) {
+        trProp.addToEGP();
+        // get essential properties
+        var mps = DuAEProperty.getProps( preCompLayer('ADBE Layer Overrides'), PropertyType.PROPERTY );
+        var it = new DuList(mps);
+        //links
+        it.do( function(mp) {
+            var newProp = null;
+
+            //get prop name
+            var nameArray = mp.name.split(' / ');
+            if ( nameArray.length != 2 ) return;
+            var pLink = nameArray[1];
+            var layerName = nameArray[0];
+            if ( layerName != locator.name ) return;
+        
+            try { newProp = eval('loc' + pLink); }
+            catch (e) { return; }
+
+            //link
+            if (newProp) {
+                var p = new DuAEProperty( newProp );
+                p.pickWhip( mp, true );
+            }
+        });
+    } else {
+        trProp.linkProperties( locator.transform );
+    }
+    return loc;
+}
