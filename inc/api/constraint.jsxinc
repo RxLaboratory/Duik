@@ -4225,3 +4225,91 @@ Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, ch
 
     DuAE.endUndoGroup( DuScriptUI.String.PARENT_ACROSS_COMP);
 }
+
+Duik.CmdLib['Constraint']["Position"] = "Duik.Constraint.position()";
+/**
+ * Adds a position constraint to the layers
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers
+ */
+Duik.Constraint.position = function ( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.POSITION_CONSTRAINT, false);
+
+    var pe = Duik.PseudoEffect.POSITION;
+
+    layers.do(function( layer )
+    {
+        var effect = pe.apply(layer);
+        var p = pe.props;
+        effect( p['Weight'].index ).setValue( 0 );
+
+        layer.position.expression = [DuAEExpression.Id.POSITION_CONSTRAINT,
+            DuAEExpression.Library.get(['checkDuikEffect']),
+            'var result = value;',
+            'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
+            '    var fx = effect( i );',
+            '    if ( !checkDuikEffect(fx, "DUIK positionConstraint") ) continue;',
+            '    var l = null;',
+            '    try {',
+            '        l = fx( ' + p['Constraint to'].index + ' );',
+            '    } catch ( e ) {}',
+            '    if ( l ) {',
+            '        var cp = l.toWorld( l.anchorPoint );',
+            '        if ( thisLayer.hasParent ) cp = thisLayer.parent.fromWorld( cp );',
+            '        cp0 = l.toWorld( l.anchorPoint, 0 );',
+            '        if ( thisLayer.hasParent ) cp0 = thisLayer.parent.fromWorld( cp0 );',
+            '        cp -= cp0;',
+            '        result += cp * ( fx( ' + p['Weight'].index + ' ).value / 100 );',
+            '    }',
+            '}',
+            'result;',
+            ''
+            ].join('\n');
+
+    });
+
+    DuAE.endUndoGroup( DuScriptUI.String.POSITION_CONSTRAINT);
+}
+
+Duik.CmdLib['Constraint']["Orientation"] = "Duik.Constraint.orientation()";
+/**
+ * Adds an orientation constraint to the layers
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers
+ */
+Duik.Constraint.orientation = function ( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.ORIENTATION_CONSTRAINT, false);
+
+    var pe = Duik.PseudoEffect.ORIENTATION;
+
+    layers.do(function( layer )
+    {
+        var effect = pe.apply(layer);
+        var p = pe.props;
+
+        layer.rotation.expression = [DuAEExpression.Id.ORIENTATION_CONSTRAINT,
+        DuAEExpression.Library.get(['sign','getOrientation','dishineritRotation','checkDuikEffect']),
+        'var result = dishineritRotation( thisLayer );',
+        'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
+        '    var fx = effect( i );',
+        '    if ( !checkDuikEffect(fx, "DUIK orientationConstraint") ) continue;',
+        '    var l = null;',
+        '    try {',
+        '        l = fx(' + p['Constraint to'].index + ');',
+        '    } catch ( e ) {}',
+        '    if ( l ) result += getOrientation( l ) * ( fx(' + p['Weight'].index + ').value / 100 );',
+        '}',
+        'result;',
+        ''
+        ].join('\n');
+
+    });
+
+    DuAE.endUndoGroup( DuScriptUI.String.ORIENTATION_CONSTRAINT);
+}
