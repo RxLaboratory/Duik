@@ -2,11 +2,9 @@
 
 ## Duik
 
-- [ ] layer manager: add zero & locator
 - [ ] constraints
-    - Add pins
-    - Connector
     - Autorig
+    - Connector
 - [ ] autorig in bones panel
 - [ ] bone
     - Fix creation location
