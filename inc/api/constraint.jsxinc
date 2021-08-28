@@ -1248,7 +1248,7 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
     //Create controller
     if ( controller == null )
     {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
     }
     if ( !( controller instanceof ShapeLayer ) ) drawGuides = false;
 
@@ -1336,6 +1336,7 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
             '}',
             'result;'
             ].join('\n');
+        limitsGroup.transform.rotation.expression = DuAEExpression.Id.ONE_IK + '\n-rotation;';
 
         var limitLinesGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
         limitLinesGroup.name = 'Limit Lines';
@@ -1565,7 +1566,9 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
         '		angle = angle * weight;',
         '		result += angle;',
         '	}',
-        '	',
+        '',
+        '   if (result > 180) result -= 360;',
+        '   else if (result < -180) result += 360;',
         '	uLimit = uLimit - lmtSftnss;',
         '	lLimit = lLimit + lmtSftnss;',
         '	if (result > uLimit)',
@@ -3246,6 +3249,9 @@ Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, control
 Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, controller )
 {
     var comp = layer1.containingComp;
+    goal = def(goal, null);
+    controller = def(controller, null);
+    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
     // Null for the IK
     var n = DuAEComp.addNull(comp, 20);
     if (typeof goal !== 'undefined') Duik.Layer.copyAttributes( n, goal, Duik.Layer.Type.IK );
@@ -3257,7 +3263,12 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
     // Create a 2-layer IK
     Duik.Constraint.twoLayerIK( layer1, layer2, undefined, n );
     // Create a 1-layer IK
-    controller = Duik.Constraint.oneLayerIK( layer3, goal, controller );
+    //Create controller
+    if ( controller == null )
+    {
+        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+    }
+    Duik.Constraint.oneLayerIK( layer3, goal, controller );
     // Move the 2-layer effect to the controller
     var pe = Duik.PseudoEffect.TWO_LAYER_IK;
     var newEffect = pe.apply(controller);
