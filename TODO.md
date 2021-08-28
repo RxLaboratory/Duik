@@ -2,6 +2,7 @@
 
 ## Duik
 
+- [ ] layer manager: add zero & locator
 - [ ] constraints (including IK)
     - Parent selector
     - Transform Constraints selector
