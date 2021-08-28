@@ -4313,3 +4313,84 @@ Duik.Constraint.orientation = function ( layers )
 
     DuAE.endUndoGroup( DuScriptUI.String.ORIENTATION_CONSTRAINT);
 }
+
+Duik.CmdLib['Constraint']["Constraint"] = "Duik.Constraint.constraint()";
+/**
+ * Description
+ * @param {PropertyBase|DuAEProperty} [path] - The path, taken from the layer selection if omitted
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers
+ * @returns {Boolean} true if a constraint could be created
+ */
+Duik.Constraint.path = function ( path, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+
+    if ( typeof path === 'undefined' && layers.length() < 2) return false; 
+
+    if ( typeof path === 'undefined' ) 
+    {
+        var pathLayer = layers.pop();
+        var pathProps = DuAELayer.getSelectedProps( pathLayer, PropertyValueType.SHAPE )
+        if (pathProps.length == 0) return false;
+        path = pathProps.pop();
+    }
+
+    DuAE.beginUndoGroup( DuScriptUI.String.PATH_CONSTRAINT, false);
+
+    var pe = Duik.PseudoEffect.PATH;
+
+    layers.do(function( layer )
+    {
+        path = new DuAEProperty( path );
+        path = path.pathProperty();
+        if (!path) return;
+
+        var effect = pe.apply( layer );
+        var p = pe.props;
+
+        var l = path.layer;
+        var pathExpr = path.expressionLink( true );
+
+        var expr = [ DuAEExpression.Id.PATH_CONSTRAINT,
+            'var fx = effect("' + effect.name + '");',
+            'var l = thisComp.layer("' + l.name + '");',
+            'var p = ' + pathExpr + ';',
+            'var percent = fx(' + p['Percent along path'].index + ').value % 100 / 100;',
+            'if (percent == 0) percent = 0.0001;',
+            'var pathOffset = fx(' + p['Path Offset'].index  + ').value;',
+            '// path value',
+            'var result = l.toWorld( p.pointOnPath(percent, time ) +  p.normalOnPath(percent, time) * pathOffset );',
+            'if (hasParent) result = parent.fromWorld(result);',
+            '//layer position',
+            'result += value;'
+        ].join('\n');
+
+        var posProp = new DuAEProperty( layer.position );
+        posProp.setExpression( expr );
+
+        expr = [ DuAEExpression.Id.PATH_CONSTRAINT,
+            'var fx = effect("' + effect.name + '");\n' +
+            'var autoOrient = fx(' + p['Orientation'].index + ').value;\n' +
+            'var result = value;\n' +
+            'if (autoOrient)\n' +
+            '{',
+            'var l = thisComp.layer("' + l.name + '");',
+            'var p = ' + pathExpr + ';\n' +
+            'var percent = fx(' + p['Percent along path'].index + ').value % 100 / 100;\n' +
+            'var C = p.tangentOnPath(percent, time);',
+            'var angle = Math.atan2(C[1], C[0]);',
+            'angle = radiansToDegrees(angle);',
+            'angle += l.rotation.value;',
+            'result += angle;',
+            '}',
+            'result;'
+        ].join('\n');
+        
+        var rotProp = new DuAEProperty( layer.rotation );
+        rotProp.setExpression( expr );
+    });
+
+    DuAE.endUndoGroup( DuScriptUI.String.PATH_CONSTRAINT );
+    return true;
+}
