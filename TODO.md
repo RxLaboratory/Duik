@@ -3,8 +3,7 @@
 ## Duik
 
 - [ ] layer manager: add zero & locator
-- [ ] constraints (including IK)
-    - Parent selector
+- [ ] constraints
     - Transform Constraints selector
     - Add pins
     - Connector
