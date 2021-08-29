@@ -4,8 +4,9 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - arms
     - legs
+    - add pincer controller
+    - arms
     - wings
     - fins
     - hairs
