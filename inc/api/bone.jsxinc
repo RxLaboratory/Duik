@@ -827,6 +827,55 @@ Duik.Bone.unlink = function( comp )
 }
 
 /**
+ * Bakes the appearance of the selected bones to improve performance by removing appearance-only expressions and effects.
+ * @param {Layer[]|DuList.<Layer>|Layer} [layers] - The layers to bake
+ */
+Duik.Bone.bake = function ( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_BONES, false);
+
+    var pe = Duik.PseudoEffect.BONE;
+
+    layers.do(function(layer)
+    {
+        // Nothing to do if this is not a shape
+        if( !layer instanceof ShapeLayer) return;
+        // or a bone
+        if ( !Duik.Layer.isType( layer, Duik.Layer.Type.BONE ) ) return;
+
+        function isBoneExpression( exp )
+        {
+            return exp.indexOf( DuAEExpression.Id.BONE ) == 0;
+        }
+        
+        // remove expressions
+        var mainGroup = layer("ADBE Root Vectors Group").property('Bone');
+        if (mainGroup)
+        {
+            var groupInfo = new DuAEProperty( mainGroup );
+            groupInfo.removeExpression( isBoneExpression );
+        }
+
+        var displayGroup = layer("ADBE Root Vectors Group").property('Display');
+        if (displayGroup)
+        {
+            var groupInfo = new DuAEProperty( displayGroup );
+            displayGroup.removeExpression( isBoneExpression );
+        }
+
+        // remove effect
+        var effect = layer.effect(pe.matchName);
+        if (effect) effect.remove();
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_BONES);
+}
+
+/**
  * Gets the bones in the comp
  * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
