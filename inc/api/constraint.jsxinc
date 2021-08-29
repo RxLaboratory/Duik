@@ -3321,15 +3321,19 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     var pe = Duik.PseudoEffect.BEZIER_IK;
     var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
 
+    var limbName = Duik.Layer.limbName( layers.first() );
+
     //create curve controller
     var curveController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
     curveController.transform.scale.expression = '';
-    curveController.name = curveController.name + " - Curve";
+    curveController.name = curveController.name + "_Curve";
+    Duik.Layer.setLimbName( limbName + '_Curve', curveController );
     Duik.Controller.setSize( 50, curveController);
 
     //create root controller
     var rootController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, layers.first() );
-    rootController.name = rootController.name + " - Root";
+    rootController.name = rootController.name + "_Root";
+    Duik.Layer.setLimbName( limbName + '_Root', rootController );
     Duik.Controller.setSize( 50, rootController);
 
     //add effect
@@ -3465,7 +3469,7 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     var totalLength = DuMath.length( rootPosition, cInPosition ) + DuMath.length( cOutPosition, cInPosition ) + DuMath.length( cOutPosition, endPosition );
 
     //un-parent
-    for ( var i = 1, n = layers.length(); i < n; i++ )
+    for ( var i = 0, n = layers.length(); i < n; i++ )
     {
         layers.at(i).parent = null;
     }
@@ -3474,7 +3478,7 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
 
     var lPe = Duik.PseudoEffect.BEZIER_IK_LAYER
 
-    for ( var i = 1, n = layers.length(); i < n; i++ )
+    for ( var i = 0, n = layers.length(); i < n; i++ )
     {
         var layer = layers.at(i);
         //add effect
@@ -4465,4 +4469,62 @@ Duik.Constraint.pin = function ( tangents, props )
     DuAE.endUndoGroup( DuScriptUI.String.DUIK_PINS );
 
     return pins;
+}
+
+/**
+ * A very simple FK control
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers, already parented or ordered from root (at index 0) to end
+ * @param {Layer} [controller] - An already existing controller.
+ * @return {Layer} The controller of the FK.
+ */
+Duik.Constraint.simpleFK = function( layers, controller )
+{
+    controller = def(controller, null);
+    layers = def(layers, DuAEComp.unselectLayers());
+    layers = new DuList(layers);
+    layers = DuAELayer.sortByParent( layers );
+    var numLayers = layers.length;
+
+    // create controller
+    if ( controller == null )
+    {
+        var l = layers[0];
+        controller = Duik.Controller.create(l.containingComp, Duik.Controller.Type.ROTATION, l );
+    }
+
+    //add checkbox and data
+    var effect = controller.effect.addProperty( "ADBE Checkbox Control" );
+    effect.name = layers[ 0 ].name + " Follow";
+    var effectName = effect.name;
+
+    for ( var i = 0; i < numLayers; i++ )
+    {
+        var goalData = layers[ i ].effect.addProperty( "ADBE Layer Control" );
+        goalData.name = "FK Controller";
+        var dataName = goalData.name;
+        goalData( 1 ).setValue( controller.index );
+
+        var exp = DuAEExpression.Id.SIMPLE_FK + "\n" +
+            "var ctrl = null;\n" +
+            "var result = value;\n" +
+            "try { ctrl = effect(\"" + dataName + "\")(1); } catch (e){};\n" +
+            "if (ctrl != null)\n" +
+            "{\n" +
+            "var goal = ctrl.effect(\"" + effectName + "\")(1).value;\n" +
+            "result += ctrl.rotation.value/" + ( numLayers / ( i + 1 ) ) + ";\n" +
+            "if (!goal)\n" +
+            "{\n" +
+            "var layer = thisLayer;\n" +
+            "while (layer.hasParent)\n" +
+            "{\n" +
+            "layer = layer.parent;\n" +
+            "result = result - layer.rotation/" + ( numLayers / ( i + 1 ) ) + ";\n" +
+            "}\n" +
+            "}\n" +
+            "}\n" +
+            "result;";
+
+        var rotProp = new DuAEProperty( layers[i].transform.rotation );
+        rotProp.setExpression( exp );
+    }
 }
