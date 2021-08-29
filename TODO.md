@@ -2,10 +2,10 @@
 
 ## Duik
 
-- [ ] constraints
-    - Autorig
-    - Connector
+- [ ] Pins edit menu
+- [ ] autorig
 - [ ] autorig in bones panel
+- [ ] connector
 - [ ] bone
     - Fix creation location
     - adjust spine etc according to animal with better defaults / illustations
