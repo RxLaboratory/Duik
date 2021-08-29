@@ -4,13 +4,19 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-- [ ] autorig in bones panel
+    - arms
+    - legs
+    - tails
+    - wings
+    - fins
+    - hairs
+    - snake
+    - custom
 - [ ] connector
 - [ ] bone
     - Fix creation location
     - adjust spine etc according to animal with better defaults / illustations
     - fish spine
-    - bake
 - [ ] controllers
     - bake
     - extract

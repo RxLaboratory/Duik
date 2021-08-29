@@ -78,9 +78,10 @@ DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, limbId )
     limbId = def(limbId, new Date().getTime() );
 
     var layers = [];
+    var boneIndex = 0;
     for (var i = 0, n = this.armature.length; i < n; i++)
     {
-        layers = layers.concat( this.armature[i].toComp( doc, this, comp, parentLayer, limbId ) );
+        layers = layers.concat( this.armature[i].toComp( doc, this, comp, parentLayer, limbId, boneIndex ) );
     }
     return layers;
 }
@@ -377,15 +378,17 @@ DuOCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition to use.
  * @param {Layer} [parentLayer=null] The parent layer of the bone.
  * @param {int} [limbId] A Unique identifier for this armature. If omitted, a new one will be assigned.
+ * @param {int} [boneIndex = 0] The index of the bone in the chain.
  * @return {Layer[]} The new layers
  */
-DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId )
+DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, boneIndex )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     if (!comp) return;
 
     parentLayer = def(parentLayer, null);
     limbId = def(limbId, new Date().getTime() );
+    boneIndex = def(boneIndex, 0);
 
     var layers = [];
 
@@ -399,8 +402,9 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId )
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_BONE_TYPE, this.type, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_LIMB_TYPE, limb.type, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_LIMB, limb.limb, tag );
-    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ARMATURE_ID, limbId, tag );
+    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_LIMB_ID, limbId, tag );
     DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_ATTACHED_BONE, this.attached, tag );
+    DuAETag.setValue( boneLayer, DuAETag.Key.DUIK_BONE_INDEX, boneIndex, tag );
 
     // Parent & position
     boneLayer.transform.position.setValue( doc.toPixels( [this.x, this.y] ) );
@@ -687,13 +691,15 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId )
     // Child bones
     for(var i = 0, n = this.children.length; i < n; i++)
     {
-        layers = layers.concat( this.children[i].toComp(doc, limb, comp, boneLayer, limbId) );
+        boneIndex++;
+        layers = layers.concat( this.children[i].toComp(doc, limb, comp, boneLayer, limbId, boneIndex) );
     }
 
     // Child limbs
     for(var i = 0, n = this.limbs.length; i < n; i++)
     {
-        layers = layers.concat( this.limbs[i].toComp(doc, comp, boneLayer, limbId) );
+        boneIndex++;
+        layers = layers.concat( this.limbs[i].toComp(doc, comp, boneLayer, limbId, boneIndex) );
     }
 
     return layers;
