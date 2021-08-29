@@ -4,9 +4,11 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - legs
-    - add pincer controller
-    - arms
+    - new controller shapes: wing, pincer, fin
+    - finish arm:
+        - ungulate footrool (reverse IK) (with and without hoof)
+        - ungulate rig with hoof (same as without, controller on the hand, like the leg)
+        - arthropod
     - wings
     - fins
     - hairs
