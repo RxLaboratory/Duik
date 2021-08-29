@@ -1234,23 +1234,24 @@ Duik.Constraint.ik = function ( type, forceBezier, layers, controller )
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|Controller|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.oneLayerIK = function (layer, goal, controller )
+Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
 {
     goal = def(goal, null);
     controller = def(controller, null);
     if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
     var comp = layer.containingComp;
 
-    var drawGuides = true;
+    showGuides = def( showGuides, 1 );
+    if (!showGuides) showGuides = 0;
 
     //Create controller
     if ( controller == null )
     {
         controller = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
     }
-    if ( !( controller instanceof ShapeLayer ) ) drawGuides = false;
 
     //is right ?
     var ctrlPos = DuAELayer.getWorldPos( controller );
@@ -1281,9 +1282,10 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
     effect( layerIndex ).setValue( layer.index );
     effect( ulIndex ).setValue( 180 );
     effect( llIndex ).setValue( -180 );
+    effect( guidesIndex ).setValue( showGuides );
 
     //guides
-    if ( DuAE.version.version >= 15 && drawGuides )
+    if ( DuAE.version.version >= 15 && controller instanceof ShapeLayer )
     {
         var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
         if ( !lineGroup )
@@ -1592,7 +1594,7 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
 
     if ( goal != null )
     {
-        var goalData = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
         goalData.name = DuScriptUI.String.IK;
         goalData( 1 ).setValue( controller.index );
         expr = [DuAEExpression.Id.ONE_IK,
@@ -1630,14 +1632,18 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller )
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
+Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGuides )
 {
     goal = def(goal, null);
     controller = def(controller, null);
     if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
     var comp = layer1.containingComp;
+
+    showGuides = def( showGuides, 1 );
+    if (!showGuides) showGuides = 0;
 
     //Create controller
     if ( controller == null )
@@ -1730,6 +1736,8 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
     var guidesIndex = pe.props["Display"]["Draw guides"].index;
 
     // Default values
+    effect( guidesIndex ).setValue( showGuides );
+
     if ( clockwise ) effect( sideIndex ).setValue( -100 );
     else effect( sideIndex ).setValue( 100 );
 
@@ -2444,14 +2452,18 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller )
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controller )
+Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controller, showGuides )
 {
     goal = def(goal, null);
     controller = def(controller, null);
     if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
     var comp = layer1.containingComp;
+
+    showGuides = def( showGuides, 1 );
+    if (!showGuides) showGuides = 0;
 
     //Create controller
     if ( controller == null )
@@ -2539,6 +2551,8 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     var guidesIndex = pe.props["Display"]["Draw guides"].index;
 
     // Default values
+    effect( guidesIndex ).setValue( showGuides );
+
     if ( clockwise ) effect( revIndex ).setValue( 1 );
 
     //set layers
@@ -3224,12 +3238,13 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, controller )
+Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, controller, showGuides )
 {
-    controller = Duik.Constraint.twoLayerIK( layer2, layer3, goal, controller );
-    Duik.Constraint.oneLayerIK( layer1, goal, controller );
+    controller = Duik.Constraint.twoLayerIK( layer2, layer3, goal, controller, showGuides );
+    Duik.Constraint.oneLayerIK( layer1, goal, controller, showGuides );
     var pe = Duik.PseudoEffect.ONE_LAYER_IK;
     controller.effect( pe.matchName )( pe.props["Weight"].index ).setValue( 50 );
     controller.effect( pe.matchName )( pe.props["Limits"]["Softness"].index ).setValue( 160 );
@@ -3244,9 +3259,10 @@ Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, control
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as a controller, can be automatically created.<br />
  * Must be provided if goal is undefined
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, controller )
+Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, controller, showGuides )
 {
     var comp = layer1.containingComp;
     goal = def(goal, null);
@@ -3261,14 +3277,14 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
     n.transform.position.setValue( layer3.transform.position.value );
     layer3.parent = layer2;
     // Create a 2-layer IK
-    Duik.Constraint.twoLayerIK( layer1, layer2, undefined, n );
+    Duik.Constraint.twoLayerIK( layer1, layer2, undefined, n, showGuides );
     // Create a 1-layer IK
     //Create controller
     if ( controller == null )
     {
         controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
     }
-    Duik.Constraint.oneLayerIK( layer3, goal, controller );
+    Duik.Constraint.oneLayerIK( layer3, goal, controller, showGuides );
     // Move the 2-layer effect to the controller
     var pe = Duik.PseudoEffect.TWO_LAYER_IK;
     var newEffect = pe.apply(controller);
@@ -3293,13 +3309,17 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as controller, can be automatically created.<br />
  * Must be provided if goal is undefined.
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer[]} The controllers [curve,end,root]
  */
-Duik.Constraint.bezierIK = function( layers, goal, controller )
+Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
 {
     goal = def(goal, null);
     controller = def(controller, null);
     if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+
+    showGuides = def( showGuides, 1 );
+    if (!showGuides) showGuides = 0;
 
     DuAE.beginUndoGroup( DuScriptUI.String.BEZIER_IK, false);
 
@@ -3342,6 +3362,7 @@ Duik.Constraint.bezierIK = function( layers, goal, controller )
     curveEffect( cPe.props["Controllers"]["Root"].index ).setValue( rootController.index );
     curveEffect( cPe.props["Controllers"]["Curve"].index ).setValue( curveController.index );
     curveEffect( cPe.props["Controllers"]["End"].index ).setValue( controller.index );
+    curveEffect( cPe.props["Draw guides"].index ).setValue( showGuides );
 
     //useful positions
     var endPosition = DuAELayer.getWorldPos( controller );
