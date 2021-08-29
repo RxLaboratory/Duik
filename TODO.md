@@ -4,7 +4,6 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - tails
     - arms
     - legs
     - wings
