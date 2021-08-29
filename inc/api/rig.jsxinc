@@ -111,9 +111,17 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     });
 
     // Let's rig!
-    for (var i = 0, n = spines.length; i < n; i++) Duik.Rig.spine( spines[i], customControllers );
-    /*for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailIK, customControllers );
-    for (var i = 0, n = arms.length; i < n; i++) Duik.Rig.arm( arms[i], customControllers );
+
+    // Result
+    var riggedSpines = [];
+
+    for (var i = 0, n = spines.length; i < n; i++) riggedSpines.push( Duik.Rig.spine( spines[i], customControllers ) ); 
+
+    var parentSpine;
+    if( riggedSpines.length > 0) parentSpine = riggedSpines[0];
+
+    for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailIK, parentSpine, customControllers );
+    /*for (var i = 0, n = arms.length; i < n; i++) Duik.Rig.arm( arms[i], customControllers );
     for (var i = 0, n = legs.length; i < n; i++) Duik.Rig.leg( legs[i], customControllers );
     for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], customControllers );
     for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
@@ -132,14 +140,19 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
  * Rigs a spine.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
- * @returns {Layer[]} The controllers of the spine [body, hips, shoulder, head]
+ * @returns {Object} An object with two Arrays: bones and controllers.
  */
 Duik.Rig.spine = function( layers, customControllers )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
-    if( layers.isEmpty() ) return [];
-    if( layers.length() == 1 ) return [];
+
+    var riggedSpine = {};
+    riggedSpine.bones = [];
+    riggedSpine.controllers = [];
+
+    if( layers.isEmpty() ) return riggedSpine;
+    if( layers.length() == 1 ) return riggedSpine;
 
     customControllers = new DuList(customControllers);
 
@@ -186,6 +199,12 @@ Duik.Rig.spine = function( layers, customControllers )
     spine.sort( sortBones );
     neck.sort( sortBones );
 
+    if (hips) riggedSpine.bones.push( hips );
+    riggedSpine.bones = riggedSpine.bones.concat( spine );
+    riggedSpine.bones = riggedSpine.bones.concat( neck );
+    if (head) riggedSpine.bones.push( head );
+    if (tip) riggedSpine.bones.push( tip );
+
     //find the root
 	var spineRoot = null;
 	if (hips) spineRoot = hips;
@@ -203,7 +222,7 @@ Duik.Rig.spine = function( layers, customControllers )
 	else if (tip) spineTorso = tip;
 
     // Nothing to do
-    if (spineRoot == null) return [];
+    if (spineRoot == null) return riggedSpine;
 
     // Let's rig!
 
@@ -380,10 +399,116 @@ Duik.Rig.spine = function( layers, customControllers )
         }
     }
 
-    var ctrls = [];
-    if ( bodyCtrl ) ctrls.push(bodyCtrl);
-    if ( hipsCtrl ) ctrls.push(hipsCtrl);
-    if ( shoulderCtrl ) ctrls.push(shoulderCtrl);
-    if ( headCtrl ) ctrls.push(headCtrl);
-    return ctrls;
+    if ( bodyCtrl ) riggedSpine.controllers.push(bodyCtrl);
+    if ( hipsCtrl ) riggedSpine.controllers.push(hipsCtrl);
+    if ( shoulderCtrl ) riggedSpine.controllers.push(shoulderCtrl);
+    if ( headCtrl ) riggedSpine.controllers.push(headCtrl);
+    return riggedSpine;
+}
+
+/**
+ * Rigs a tail.
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
+ * @param {Boolean} [tailIK=false] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
+ * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
+ * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
+ * @returns {Layer[]} The controllers of the tail
+ */
+Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return [];
+
+    tailIK = def(tailIK, false);
+
+    if (typeof parentSpine === 'undefined')
+    {
+        parentSpine = {};
+        parentSpine.bones = [];
+        parentSpine.controllers = [];
+    }
+
+    customControllers = new DuList(customControllers);
+
+    var comp = layers.first().containingComp;
+
+    // expected
+    var tail = [];
+    var tip = null;
+
+    layers.do(function( layer )
+    {
+        var tag = DuAETag.get( layer );
+        var bone = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING, tag );
+        var boneIndex = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_INDEX, DuAETag.Type.INT, tag );
+
+        if ( bone == DuOCO.Bone.TIP ) tip = layer;
+        else
+        {
+            var b = layer;
+            b.i = boneIndex;
+            tail.push(b);
+        }
+    } );
+
+    // Sort
+    // a sorter for spine and neck
+	function sortBones(a,b)
+	{
+		return a.i - b.i;
+	}
+
+    tail.sort(sortBones);
+
+    //unparent
+    for (var i=1, num = tail.length ; i < num ; i++ ) tail[i].parent = null;
+
+    if (!tip && tail.length > 1) tip = tail.pop();
+    else if (tail.length == 1)
+    {
+        var tailCtrl = Duik.Controller.create(comp, Duik.Controller.Type.TAIL, tail[0] );
+        tail[0].parent = tailCtrl;
+        if (parentSpine.bones.length > 0) tailCtrl.parent = parentSpine.bones[0];
+        return;
+    }
+
+    //ik
+    if (tailIK)
+    {
+        //controllers
+        var tailCtrl = Duik.Controller.getCreate( tip, Duik.Controller.Type.TAIL, customControllers);
+
+        if (tail.length > 1)
+        {
+            var ctrls = Duik.Constraint.bezierIK( tail, tip, tailCtrl);
+            //parent
+            if (parentSpine.controllers.length > 0)
+            {
+                ctrls[0].parent = parentSpine.controllers[0];
+                ctrls[1].parent = parentSpine.controllers[0];
+            }
+            if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+        }
+        else
+        {
+            Duik.Constraint.oneLayerIK( tail[0], tip, tailCtrl);
+            //parent
+            if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
+            if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+        }
+        return;
+    }
+
+    //fk
+
+    //controllers
+    var tailCtrl = Duik.Controller.getCreate( tail[0], Duik.Controller.Type.TAIL, customControllers);
+    tail.push(tip);
+
+    var tailRoot = tail[0];
+    Duik.Constraint.fk( tail.reverse(), tailCtrl);
+    //parent
+    if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
+    if (parentSpine.bones.length > 0) tailRoot.parent = parentSpine.bones[0];
 }

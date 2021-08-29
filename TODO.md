@@ -4,14 +4,15 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
+    - tails
     - arms
     - legs
-    - tails
     - wings
     - fins
     - hairs
     - snake
     - custom
+    - options ( tail, longchains )
 - [ ] connector
 - [ ] bone
     - Fix creation location
