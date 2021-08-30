@@ -5,8 +5,6 @@
 - [ ] Pins edit menu
 - [ ] autorig
     - finish arm:
-        - ungulate footrool (reverse IK) (with and without hoof)
-        - ungulate rig with hoof (same as without, controller on the hand, like the leg)
         - arthropod
     - wings
     - fins

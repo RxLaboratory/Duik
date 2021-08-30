@@ -1,4 +1,4 @@
-/**
+﻿/**
  * (Auto)Rigging tools.
  * @namespace
  */
@@ -892,6 +892,52 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
 }
 
 /**
+ * Rigs a shoulder (an FK and an auto-position effect)
+ * @param {Layer} shoulder The shoulder bone
+ * @param {Layer} ctrl The controller
+ */
+Duik.Rig.shoulder = function( shoulder, ctrl )
+{
+    var rotVal = shoulder.transform.rotation.value;
+
+    Duik.Constraint.oneLayerIK(shoulder, undefined, ctrl, false);
+    // Rename effect
+    var pe = Duik.PseudoEffect.ONE_LAYER_IK;
+    var shoulderIK = DuAELayer.lastEffect( ctrl, pe.matchName );
+    DuAEProperty.rename( shoulderIK, DuScriptUI.String.IK + ' | ' + DuScriptUI.String.SHOULDER);
+    // Adjust values
+    shoulderIK( pe.props["Weight"].index ).setValue(20);
+    shoulderIK( pe.props["Advanced"]["Parent rotation"].index ).setValue(1);
+    shoulderIK( pe.props["FK"].index ).setValue( -shoulder.transform.rotation.value + rotVal*2);
+
+    // Rig position
+    var pe = Duik.PseudoEffect.SHOULDER;
+    var shoulderCtrl = pe.apply(ctrl);
+    // 10 % auto by default
+    shoulderCtrl( pe.props["Auto"].index ).setValue(10);
+
+    // Deactivate the arm parent rotation inheritance
+    var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
+    var ikEffect = DuAELayer.lastEffect( ctrl, pe2.matchName );
+    if(ikEffect) ikEffect( pe2.props["FK"]["Parent rotation"].index).setValue(0);
+
+    // Set position expression
+    shoulder.transform.position.expression = DuAEExpression.Id.AUTORIG_SHOULDER + '\n' +
+        'var c = thisComp.layer("' + ctrl.name + '");\n' +
+        'var fx =  c.effect("' + shoulderCtrl.name + '");\n' +
+        'var a = fx(14).value;\n' +
+        'if (thisLayer.hasParent) a = thisLayer.parent.fromWorld(a) - thisLayer.parent.fromWorld([0,0]);\n' +
+        'var result = value + a;\n' +
+        'var cp = c.toWorld(c.anchorPoint);\n' +
+        'if (thisLayer.hasParent) cp = thisLayer.parent.fromWorld(cp);\n' +
+        'cp0 = c.toWorld(c.anchorPoint,0);\n' +
+        'if (thisLayer.hasParent) cp0 = thisLayer.parent.fromWorld(cp0);\n' +
+        'cp -= cp0;\n' +
+        'result += cp*(fx(9).value/100);\n' +
+        'result;';
+}
+
+/**
  * Rigs an arm/front leg.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
@@ -952,10 +998,101 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
     if (tip) tip.parent = null;
     if (palm) palm.parent = null;
 
+    //reset transformations
+    if (humerus) Duik.Bone.resetTransform(humerus);
+    if (shoulder) Duik.Bone.resetTransform(shoulder);
+    if (radius) Duik.Bone.resetTransform(radius);
+    if (hand) Duik.Bone.resetTransform(hand);
+    if (claws) Duik.Bone.resetTransform(claws);
+    if (tip) Duik.Bone.resetTransform(tip);
+    if (palm) Duik.Bone.resetTransform(palm);
+
+    //adjust/fix what we got! We're very friendly...
+    // No shoulder without both humerus and radius
+    if ( shoulder && (!humerus || !radius) )
+    {
+        if (humerus)
+        {
+            radius = humerus;
+            shoulder = humerus;
+            shoulder = null;
+        }
+        else if (radius)
+        {
+            radius = humerus;
+            humerus = shoulder;
+            shoulder = null;
+        }
+        else
+        {
+            humerus = shoulder;
+            humerus = null;
+        }
+    }
+    // Ungulate adjustments
+    if (type == DuOCO.LimbType.UNGULATE || type == DuOCO.LimbType.ARTHROPOD)
+    {
+        // We need claws (hoof)
+        if (!claws)
+        {
+            if (tip)
+            {
+                claws = tip;
+                tip = null;
+            }
+            else if (hand)
+            {
+                claws = hand;
+                hand = null;
+            }
+            else if (radius)
+            {
+                claws = radius;
+                radius = null;
+            }
+            else if (humerus)
+            {
+                claws = humerus;
+                humerus = null;
+            }
+            else if (shoulder)
+            {
+                claws = shoulder;
+                shoulder = null;
+            }
+        }
+        // No hand without both humerus and radius
+        if ( hand && (!humerus || !radius) )
+        {
+            if ( humerus )
+            {
+                radius = hand;
+                hand = null;
+            }
+            else if ( radius )
+            {
+                humerus = radius;
+                radius = hand;
+                hand = null;
+            }
+            else
+            {
+                humerus = hand;
+                hand = null;
+            }
+        }
+        // No radius without humerus
+        if ( radius && !humerus )
+        {
+            humerus = radius;
+            radius = null;
+        }
+    }
+
     //add nulls and controllers for the footRoll
     var clawsNull, handNull;
     //the foot roll needs all parts
-    if ( (claws || tip) && hand && ((radius && humerus) || (radius && shoulder) || (humerus && shoulder)) && type != DuOCO.LimbType.UNGULATE && type != DuOCO.LimbType.HOMINOID)
+    if ( (claws || tip) && hand && ((radius && humerus) || (radius && shoulder) || (humerus && shoulder)) && type != DuOCO.LimbType.UNGULATE && type != DuOCO.LimbType.ARTHROPOD && type != DuOCO.LimbType.HOMINOID)
     {
         if (!claws)
         {
@@ -989,40 +1126,44 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         Duik.Layer.copyAttributes( handNull, hand, Duik.Layer.Type.IK );
     }
 
-
     //Controller for the arm
     var ctrlType = Duik.Controller.Type.HAND;
     if (handNull && type == DuOCO.LimbType.PLANTIGRADE) ctrlType = Duik.Controller.Type.FOOT;
     else if (type == DuOCO.LimbType.DIGITIGRADE) ctrlType = Duik.Controller.Type.CLAWS;
     else if (type == DuOCO.LimbType.UNGULATE) ctrlType = Duik.Controller.Type.HOOF;
     else if (type == DuOCO.LimbType.ARTHROPOD) ctrlType = Duik.Controller.Type.PINCER;
+
     var ctrl = null;
+    if (type == DuOCO.LimbType.UNGULATE || type == DuOCO.LimbType.ARTHROPOD) ctrl = Duik.Controller.getCreate(claws, ctrlType, customControllers);
+    else 
+    {
+        if (hand && ((humerus || radius || shoulder) || (!claws && !tip))) {
+            ctrl = Duik.Controller.getCreate(hand, ctrlType, customControllers);
+        }
+        else if (claws && ((humerus || radius || shoulder) || !tip)) {
+            ctrl = Duik.Controller.getCreate(claws, ctrlType, customControllers);
+        }
+        else if (tip) {
+            ctrl = Duik.Controller.getCreate(tip, ctrlType, customControllers);
+        }
+        else if (palm) {
+            ctrl = Duik.Controller.getCreate(palm, ctrlType, customControllers);
+        }
+        else if (radius) {
+            ctrl = Duik.Controller.getCreate(radius, ctrlType, customControllers);
+        }
+        else if (humerus) {
+            ctrl = Duik.Controller.getCreate(humerus, ctrlType, customControllers);
+        }
+        else if (shoulder) {
+            ctrl = Duik.Controller.getCreate(shoulder, ctrlType, customControllers);
+        }
+    }
 
-    if (hand && ((humerus || radius || shoulder) || (!claws && !tip)) && type != DuOCO.LimbType.UNGULATE) {
-        ctrl = Duik.Controller.getCreate(hand, ctrlType, customControllers);
-    }
-    else if (claws && ((humerus || radius || shoulder) || !tip)) {
-        ctrl = Duik.Controller.getCreate(claws, ctrlType, customControllers);
-    }
-    else if (hand && type == DuOCO.LimbType.UNGULATE) {
-        ctrl = Duik.Controller.getCreate(hand, ctrlType, customControllers);
-    }
-    else if (tip) {
-        ctrl = Duik.Controller.getCreate(tip, ctrlType, customControllers);
-    }
-    else if (palm) {
-        ctrl = Duik.Controller.getCreate(palm, ctrlType, customControllers);
-    }
-    else if (radius) {
-        ctrl = Duik.Controller.getCreate(radius, ctrlType, customControllers);
-    }
-    else if (humerus) {
-        ctrl = Duik.Controller.getCreate(humerus, ctrlType, customControllers);
-    }
-    else if (shoulder) {
-        ctrl = Duik.Controller.getCreate(shoulder, ctrlType, customControllers);
-    }
-
+    // Rename controller
+    if(type == DuOCO.LimbType.HOMINOID) Duik.Layer.setLimbName( DuScriptUI.String.ARM, ctrl);
+    else Duik.Layer.setLimbName( DuScriptUI.String.FRONT_LEG, ctrl);
+    
     // Find the torso for parenting (the closest bone before the shoulder)
     var spineTorso = null;
     if (parentSpine.bones.length > 0)
@@ -1134,124 +1275,44 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         else if(type == DuOCO.LimbType.DIGITIGRADE) tip.parent = ctrl;
     }
 
-    //IKs
-    if (handNull)
+    // Rig!
+    if (type == DuOCO.LimbType.UNGULATE || type == DuOCO.LimbType.ARTHROPOD)
+    {
+        if (humerus && radius && hand)
+        {
+            Duik.Constraint.twoOneLayerIK(humerus, radius, hand, claws, ctrl, false);
+            // Rename effects
+            var footIK = DuAELayer.lastEffect( ctrl, Duik.PseudoEffect.ONE_LAYER_IK.matchName );
+            DuAEProperty.rename( footIK, DuScriptUI.String.IK + ' | ' + DuScriptUI.String.FOOT);
+            var legIK = DuAELayer.lastEffect( ctrl, Duik.PseudoEffect.TWO_LAYER_IK.matchName );
+            DuAEProperty.rename( legIK, DuScriptUI.String.IK + ' | ' + DuScriptUI.String.LEG);
+            var hoofAngle = DuAELayer.lastEffect( ctrl, 'ADBE Angle Control' );
+            DuAEProperty.rename( hoofAngle, DuScriptUI.String.HOOF);
+        }
+        else if (femur && tibia)
+        {
+            Duik.Constraint.twoLayerIK(femur, tibia, toes, ctrl, false);
+            // Rename effects
+            var legIK = DuAELayer.lastEffect( ctrl, Duik.PseudoEffect.TWO_LAYER_IK.matchName );
+            DuAEProperty.rename( legIK, DuScriptUI.String.IK + ' | ' + DuScriptUI.String.LEG);
+        }
+        else if (femur)
+        {
+            Duik.Constraint.oneLayerIK(femur, toes, ctrl, false);
+            // Rename effects
+            var legIK = DuAELayer.lastEffect( ctrl, Duik.PseudoEffect.ONE_LAYER_IK.matchName );
+            DuAEProperty.rename( legIK, DuScriptUI.String.IK + ' | ' + DuScriptUI.String.LEG);
+        }
+    }
+    else if (handNull)
     {
         //claws
         Duik.Constraint.oneLayerIK( claws, undefined, tip, false);
         //arm
         if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,hand,handNull, false);
-        else if (humerus && shoulder) Duik.Constraint.twoLayerIK(shoulder,humerus,hand,handNull, false);
-        else if (radius && shoulder) Duik.Constraint.twoLayerIK(shoulder,radius,hand,handNull, false);
         //hand
         Duik.Constraint.oneLayerIK(hand, undefined, clawsNull, false);
-    }
-    else
-    {
-        if (claws && type == DuOCO.LimbType.UNGULATE)
-        {
-            if (hand && radius)
-            {
-                Duik.Constraint.twoLayerIK(radius,hand,claws,ctrl, false);
-                if (humerus)
-                {
-                    Duik.Constraint.oneLayerIK(humerus,undefined,ctrl, false);
-                    if (!shoulder)
-                    {
-                        var pe = Duik.PseudoEffect.ONE_LAYER_IK;
-                        ctrl.effect( pe.matchName )( pe.props["Weight"].index ).setValue(40);
-                        ctrl.effect( pe.matchName )( pe.props["Limits"]["Softness"].index ).setValue(180);
-                        ctrl.effect( pe.matchName )( pe.props["FK"].index ).setValue(-humerus.transform.rotation.value);
-                    }
-                }
-                else if (shoulder)
-                {
-                    var pe = Duik.PseudoEffect.ONE_LAYER_IK;
-                    Duik.Constraint.oneLayerIK(shoulder,undefined,ctrl, false);
-                    ctrl.effect( pe.matchName )( pe.props["Weight"].index ).setValue(40);
-                    ctrl.effect( pe.matchName )( pe.props["Limits"]["Softness"].index ).setValue(180);
-                    ctrl.effect( pe.matchName )( pe.props["FK"].index ).setValue(-shoulder.transform.rotation.value);
-                }
-            }
-            else if (hand && humerus)
-            {
-                Duik.Constraint.twoLayerIK(humerus,hand,claws,ctrl, false);
-                if (shoulder)
-                {
-                    var pe = Duik.PseudoEffect.ONE_LAYER_IK;
-                    Duik.Constraint.oneLayerIK(shoulder,undefined,ctrl, false);
-                    ctrl.effect( pe.matchName )( pe.props["Weight"].index ).setValue(40);
-                    ctrl.effect( pe.matchName )( pe.props["Limits"]["Softness"].index ).setValue(180);
-                }
-            }
-            else if (hand && shoulder) Duik.Constraint.twoLayerIK(shoulder,hand,claws,ctrl, false);
-            else if (radius && humerus)	Duik.Constraint.twoLayerIK(humerus,radius,claws,ctrl, false);
-            else if (radius && shoulder) Duik.Constraint.twoLayerIK(shoulder,radius,claws,ctrl, false);
-            else if (humerus && shoulder) Duik.Constraint.twoLayerIK(shoulder,humerus,claws,ctrl, false);
-        }
-        else if (hand)
-        {
-            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,hand,ctrl, false);
-            else if (humerus && shoulder) Duik.Constraint.twoLayerIK(shoulder,humerus,hand,ctrl, false);
-            else if (radius && shoulder) Duik.Constraint.twoLayerIK(shoulder,radius,hand,ctrl, false);
-            else if (shoulder) Duik.Constraint.oneLayerIK(shoulder,hand,ctrl, false);
-            else if (humerus) Duik.Constraint.oneLayerIK(humerus,hand,ctrl, false);
-            else if (radius) Duik.Constraint.oneLayerIK(radius,hand,ctrl, false);
-            else if (claws) Duik.Constraint.oneLayerIK(hand,claws,ctrl, false);
-            else if (tip) Duik.Constraint.oneLayerIK(hand,tip,ctrl, false);
-        }
-        else if (claws)
-        {
-            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,claws,ctrl, false);
-            if (humerus && shoulder) Duik.Constraint.twoLayerIK(shoulder,humerus,claws,ctrl, false);
-            if (shoulder && radius) Duik.Constraint.twoLayerIK(shoulder,radius,claws,ctrl, false);
-            else if (shoulder) Duik.Constraint.oneLayerIK(shoulder,claws,ctrl, false);
-            else if (humerus) Duik.Constraint.oneLayerIK(humerus,claws,ctrl, false);
-            else if (radius) Duik.Constraint.oneLayerIK(radius,claws,ctrl, false);
-            else if (tip) Duik.Constraint.oneLayerIK(claws,tip,ctrl, false);
-        }
-        else if (tip)
-        {
-            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,tip,ctrl, false);
-            else if (shoulder && humerus) Duik.Constraint.twoLayerIK(shoulder,humerus,tip,ctrl, false);
-            else if (shoulder && radius) Duik.Constraint.twoLayerIK(shoulder,radius,tip,ctrl, false);
-            else if (shoulder) Duik.Constraint.oneLayerIK(shoulder,tip,ctrl, false);
-            else if (humerus) Duik.Constraint.oneLayerIK(humerus,tip,ctrl, false);
-            else if (radius) Duik.Constraint.oneLayerIK(radius,tip,ctrl, false);
-        }
-        else if (palm)
-        {
-            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,palm,ctrl, false);
-            if (shoulder && humerus) Duik.Constraint.twoLayerIK(shoulder,humerus,palm,ctrl, false);
-            if (shoulder && radius) Duik.Constraint.twoLayerIK(shoulder,radius,palm,ctrl, false);
-            else if (shoulder) Duik.Constraint.oneLayerIK(shoulder,palm,ctrl, false);
-            else if (humerus) Duik.Constraint.oneLayerIK(humerus,palm,ctrl, false);
-            else if (radius) Duik.Constraint.oneLayerIK(radius,palm,ctrl, false);
-        }
-        else if (humerus && radius) Duik.Constraint.oneLayerIK(humerus,radius,ctrl, false);
-        else if (shoulder && humerus) Duik.Constraint.oneLayerIK(shoulder,humerus,ctrl, false);
-        else if (shoulder && radius) Duik.Constraint.oneLayerIK(shoulder,radius,ctrl, false);
-    }
 
-    //shoulder rotation
-    if (shoulder && humerus && radius)
-    {
-        var rotVal = shoulder.transform.rotation.value;
-        Duik.Constraint.oneLayerIK(shoulder,undefined,ctrl, false);
-        var pe = Duik.PseudoEffect.ONE_LAYER_IK;
-        var ikShoulderEffect = ctrl.effect( pe.matchName );
-        if ( type == DuOCO.LimbType.UNGULATE && claws ) ikShoulderEffect = ctrl.effect(4);
-        var oldName = ikShoulderEffect.name;
-        ikShoulderEffect.name = shoulder.name + " rotation";
-        app.project.autoFixExpressions(oldName,ikShoulderEffect.name);
-        ikShoulderEffect( pe.props["Weight"].index ).setValue(20);
-        ikShoulderEffect( pe.props["FK"].index ).setValue( - shoulder.transform.rotation.value + rotVal*2);
-        ikShoulderEffect( pe.props["Advanced"]["Parent rotation"].index ).setValue(1);
-    }
-
-    //Controls
-    if (handNull)
-    {
         var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
         var pe1 = Duik.PseudoEffect.ONE_LAYER_IK;
 
@@ -1336,31 +1397,45 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         handNull.shy = true;
         handNull.locked = true;
     }
+    else
+    {
+        if (hand)
+        {
+            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,hand,ctrl, false);
+            else if (humerus) Duik.Constraint.oneLayerIK(humerus,hand,ctrl, false);
+            else if (radius) Duik.Constraint.oneLayerIK(radius,hand,ctrl, false);
+            else if (claws) Duik.Constraint.oneLayerIK(hand,claws,ctrl, false);
+            else if (tip) Duik.Constraint.oneLayerIK(hand,tip,ctrl, false);
+        }
+        else if (claws)
+        {
+            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,claws,ctrl, false);
+            else if (humerus) Duik.Constraint.oneLayerIK(humerus,claws,ctrl, false);
+            else if (radius) Duik.Constraint.oneLayerIK(radius,claws,ctrl, false);
+            else if (tip) Duik.Constraint.oneLayerIK(claws,tip,ctrl, false);
+        }
+        else if (tip)
+        {
+            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,tip,ctrl, false);
+            else if (humerus) Duik.Constraint.oneLayerIK(humerus,tip,ctrl, false);
+            else if (radius) Duik.Constraint.oneLayerIK(radius,tip,ctrl, false);
+        }
+        else if (palm)
+        {
+            if (humerus && radius) Duik.Constraint.twoLayerIK(humerus,radius,palm,ctrl, false);
+            else if (humerus) Duik.Constraint.oneLayerIK(humerus,palm,ctrl, false);
+            else if (radius) Duik.Constraint.oneLayerIK(radius,palm,ctrl, false);
+        }
+        else if (humerus && radius) Duik.Constraint.oneLayerIK(humerus,radius,ctrl, false);
+    }
 
-    if (shoulder)
+    // Rig shoulder
+    if (shoulder) Duik.Rig.shoulder(shoulder, ctrl);
+    // If hominoid, no auto-position
+    if (type == DuOCO.LimbType.HOMINOID)
     {
         var pe = Duik.PseudoEffect.SHOULDER;
-        var shoulderCtrl = pe.apply(ctrl);
-
-        if (type != DuOCO.LimbType.PLANTIGRADE) shoulderCtrl(9).setValue(10);
-
-        //arm parent rotation
-        var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
-        var ikEffect = ctrl.effect(pe2.matchName);
-        ikEffect( pe2.props["FK"]["Parent rotation"].index).setValue(0);
-
-        shoulder.transform.position.expression = DuAEExpression.Id.AUTORIG_SHOULDER + '\n' +
-            'var c = thisComp.layer("' + ctrl.name + '");\n' +
-            'var fx =  c.effect("' + shoulderCtrl.name + '");\n' +
-            'var a = fx(14).value;\n' +
-            'if (thisLayer.hasParent) a = thisLayer.parent.fromWorld(a) - thisLayer.parent.fromWorld([0,0]);\n' +
-            'var result = value + a;\n' +
-            'var cp = c.toWorld(c.anchorPoint);\n' +
-            'if (thisLayer.hasParent) cp = thisLayer.parent.fromWorld(cp);\n' +
-            'cp0 = c.toWorld(c.anchorPoint,0);\n' +
-            'if (thisLayer.hasParent) cp0 = thisLayer.parent.fromWorld(cp0);\n' +
-            'cp -= cp0;\n' +
-            'result += cp*(fx(9).value/100);\n' +
-            'result;';
+        var shoulderCtrl = DuAELayer.lastEffect( ctrl, pe.matchName );
+        shoulderCtrl( pe.props["Auto"].index ).setValue(0);
     }
 }
