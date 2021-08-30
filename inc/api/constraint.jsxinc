@@ -3275,11 +3275,12 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
     // Move it to the third layer
     layer3.parent = null;
     n.transform.position.setValue( layer3.transform.position.value );
+    n.moveBefore( layer3 );
     layer3.parent = layer2;
     // Create a 2-layer IK
     Duik.Constraint.twoLayerIK( layer1, layer2, undefined, n, showGuides );
     // Create a 1-layer IK
-    //Create controller
+    // Create controller
     if ( controller == null )
     {
         controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
@@ -3292,7 +3293,36 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
     if (oldEffect) 
     {
         var oldEffectProp = new DuAEProperty(oldEffect);
+        // Set side
+        var sideIndex = pe.props["Side"].index;
+        newEffect( sideIndex ).setValue ( oldEffect(sideIndex).value );
         oldEffectProp.linkProperties(newEffect, true);
+    }
+    // fix goal
+    if (goal)
+    {
+        var goalAngleEffect = controller('ADBE Effect Parade').addProperty('ADBE Angle Control');
+        goalAngleEffect.name = DuScriptUI.String.TIP_ANGLE;
+        var ikEffect = controller.effect( Duik.PseudoEffect.ONE_LAYER_IK.matchName) ;
+        var layerEffect = DuAELayer.lastEffect( goal, 'ADBE Layer Control' );
+
+        var rotProp = new DuAEProperty( goal.transform.rotation );
+        rotProp.setExpression( [DuAEExpression.Id.TWO_ONE_IK,
+            'var ctrl = null;',
+            'var result = value;',
+            'try { ctrl = effect("' + layerEffect.name + '")(1); } catch (e){ value };',
+            'if (ctrl != null)',
+            '{',
+            '   var goal = ctrl.effect("' + ikEffect.name + '")(1).value;',
+            '   if (goal)',
+            '   {',
+            '       result -= ctrl.rotation.value;',
+            '       result += ctrl.effect("' + goalAngleEffect.name + '")(1).value;',
+            '   }',
+            '}',
+            'result;'
+            ].join('\n')
+        );
     }
     //parent
     n.parent = controller;
