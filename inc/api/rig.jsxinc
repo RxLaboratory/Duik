@@ -42,6 +42,9 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     DuAE.beginUndoGroup( DuScriptUI.String.AUTORIG, false );
     DuAEProject.setProgressMode( true );
 
+    // Start by baking (improves perf and keeps envelops)
+    //if (bakeBones) Duik.Bone.bake(layers);
+
     // What we expect
 	var arms = [];
 	var legs = [];
@@ -123,9 +126,6 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
     for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], customControllers );
     for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailIK, longChainMode, customControllers );*/
-
-    // Bake
-    if (bakeBones) Duik.Bone.bake(layers);
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( DuScriptUI.String.AUTORIG );
@@ -1183,11 +1183,11 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         var x = shoulderPos[0] - rootPos[0];
         var y = shoulderPos[1] - rootPos[1];
         var axis = 1;
-        var sign = Math.sign( y );
+        var sign = DuMath.sign( y );
         if ( Math.abs( x ) > Math.abs( y ) )
         {
             axis = 0;
-            sign = Math.sign( x );
+            sign = DuMath.sign( x );
         }
 
         for (var i = 0, n = parentSpine.bones.length; i < n; i++)
@@ -1195,7 +1195,7 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
             var b = parentSpine.bones[i];
             var bPos = DuAELayer.getWorldPos( b );
             var l = shoulderPos[axis] + bPos[axis];
-            var s = Math.sign(l);
+            var s = DuMath.sign(l);
             // too far, we're ready
             if (s != sign ) break;
             spineTorso = b;
@@ -1430,12 +1430,15 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
     }
 
     // Rig shoulder
-    if (shoulder) Duik.Rig.shoulder(shoulder, ctrl);
-    // If hominoid, no auto-position
-    if (type == DuOCO.LimbType.HOMINOID)
+    if (shoulder)
     {
-        var pe = Duik.PseudoEffect.SHOULDER;
-        var shoulderCtrl = DuAELayer.lastEffect( ctrl, pe.matchName );
-        shoulderCtrl( pe.props["Auto"].index ).setValue(0);
+        Duik.Rig.shoulder(shoulder, ctrl);
+        // If hominoid, no auto-position
+        if (type == DuOCO.LimbType.HOMINOID)
+        {
+            var pe = Duik.PseudoEffect.SHOULDER;
+            var shoulderCtrl = DuAELayer.lastEffect( ctrl, pe.matchName );
+            shoulderCtrl( pe.props["Auto"].index ).setValue(0);
+        }
     }
 }

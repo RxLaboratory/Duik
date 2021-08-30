@@ -4,8 +4,6 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - finish arm:
-        - arthropod
     - wings
     - fins
     - hairs
