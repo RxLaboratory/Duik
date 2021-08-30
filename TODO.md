@@ -16,7 +16,6 @@
     - options ( tail, longchains )
 - [ ] connector
 - [ ] bone
-    - Fix creation location
     - adjust spine etc according to animal with better defaults / illustations
     - fish spine
 - [ ] controllers
