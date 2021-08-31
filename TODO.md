@@ -4,14 +4,13 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - fix bake bones with envelops
-    - link bone anchors opacity to opacity display
-    - wings
     - fins
+    - wings
     - hairs
+    - morganimator's spine rig
     - snake
     - custom
-    - options ( tail, longchains )
+    - options ( tail, longchains, bake/bakeenvelops/nobake )
 - [ ] connector
 - [ ] bone
     - adjust spine etc according to animal with better defaults / illustations

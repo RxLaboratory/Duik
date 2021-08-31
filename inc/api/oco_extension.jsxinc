@@ -414,22 +414,24 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     // Add the bone pseudo effect
     var pe = Duik.PseudoEffect.BONE;
     var effect = pe.apply( boneLayer );
+    effect.name = DuScriptUI.String.BONE;
     var effectInfo = new DuAEProperty(effect);
-    var envelopEffect = boneLayer('ADBE Effect Parade').addProperty('ADBE Checkbox Control');
-    envelopEffect.name = DuScriptUI.String.BONE_SHOW_ENVELOP;
+    var peE = Duik.PseudoEffect.BONE_ENVELOP;
+    var envelopEffect = peE.apply( boneLayer );
+    envelopEffect.name = DuScriptUI.String.BONE_ENVELOP;
     effect = effectInfo.getProperty();
     // The indices
-    var sizeIndex = pe.props['Display options']['Size'].index;
-    var targetIndex = pe.props['Display options']['Target'].index;
-    var colorIndex = pe.props['Display options']['Color'].index;
-    var opacityIndex = pe.props['Display options']['Opacity'].index;
+    var sizeIndex = pe.props['Size'].index;
+    var targetIndex = pe.props['Target'].index;
+    var colorIndex = pe.props['Color'].index;
+    var opacityIndex = pe.props['Opacity'].index;
 
-    var eSizeIndex = pe.props['Envelop']['Size'].index;
-    var eFillColorIndex = pe.props['Envelop']['Fill']['Color'].index;
-    var eFillOpacityIndex = pe.props['Envelop']['Fill']['Opacity'].index;
-    var eStrokeColorIndex = pe.props['Envelop']['Stroke']['Color'].index;
-    var eStrokeOpacityIndex = pe.props['Envelop']['Stroke']['Opacity'].index;
-    var eStrokeSizeIndex = pe.props['Envelop']['Stroke']['Size'].index;
+    var eSizeIndex = peE.props['Size'].index;
+    var eFillColorIndex = peE.props['Fill']['Color'].index;
+    var eFillOpacityIndex = peE.props['Fill']['Opacity'].index;
+    var eStrokeColorIndex = peE.props['Stroke']['Color'].index;
+    var eStrokeOpacityIndex = peE.props['Stroke']['Opacity'].index;
+    var eStrokeSizeIndex = peE.props['Stroke']['Size'].index;
 
     // The auto-size
     effect( sizeIndex ).expression = [ DuAEExpression.Id.BONE,
@@ -439,7 +441,8 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         ].join('\n');
 
     // The envelop size
-    effect( eSizeIndex ).setValue( comp.width * .025 );
+    envelopEffect( eSizeIndex ).setValue( comp.width * .025 );
+    envelopEffect.enabled = false;
 
     // The content of the shape layer
     // Bone group
@@ -447,18 +450,15 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     mainGroup.name = 'Bone';
     //look-at
     mainGroup('ADBE Vector Transform Group')('ADBE Vector Rotation').expression = [ DuAEExpression.Id.BONE,
-        'if ( active ) {',
         '    var child = null;',
         '    var childIndex = -1;',
-        '    var fx = effect("' + effect.name + '");',
+        '   var result = value;',
         '    try {',
+        '       var fx = effect("' + effect.name + '");',
         '        child = fx( ' + targetIndex + ' );',
-        '        childIndex = child.index || fx( ' + sizeIndex + ' ).value == 0',
+        '        childIndex = child.index;',
         '    } catch ( e ) {}',
-        '    if ( childIndex == thisLayer.index ) value;',
-        '    else {',
-        '        var R = 45;',
-        '',
+        '    if ( childIndex != thisLayer.index ) {',
         '        function isBone( layer ) {',
         '            var ok = false;',
         '            try {',
@@ -504,14 +504,19 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '                var ik = radiansToDegrees( angle );',
         '                result += ( ik - 90 - rotation )',
         '            }',
-        '        result;',
-        '    }',
-        '} else value;'
+        '       }',
+        'result;'
 	].join('\n');
 
     //Target Group
     var targetGroup = mainGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
     targetGroup.name = 'Target';
+    targetGroup.transform.opacity.expression = [ DuAEExpression.Id.BONE,
+            'var fx = effect("' + effect.name + '");',
+            'var result = 0;',
+            'if (fx.active) result = 100;',
+            'result;'
+        ].join('\n');
     var targetContent = targetGroup.property("ADBE Vectors Group");
     //2nd ellipse
     var shape = targetContent.addProperty("ADBE Vector Shape - Ellipse");
@@ -525,7 +530,10 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     displayGroup.name = 'Display';
     //display opacity
     displayGroup.transform.opacity.expression = [ DuAEExpression.Id.BONE,
-            'effect("' + effect.name + '")(' + opacityIndex + ');'
+            'var fx = effect("' + effect.name + '");',
+            'var result = 0;',
+            'if (fx.active) result = fx(' + opacityIndex + ').value;',
+            'result;'
         ].join('\n');
     displayGroup.transform.scale.expression = [ DuAEExpression.Id.BONE,
         'var s = effect("' + effect.name + '")(' + sizeIndex + ');',
@@ -538,16 +546,15 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     linkGroup('ADBE Vector Transform Group')('ADBE Vector Anchor').setValue([ 0, 5]);
     //group scale
     linkGroup('ADBE Vector Transform Group')('ADBE Vector Scale').expression = [ DuAEExpression.Id.BONE,
-        'if ( active ) {',
         '    var child = null;',
         '    var childIndex = -1;',
+        '    var result = [ 0, 0 ];',
         '    var fx = effect( "' + effect.name + '" );',
         '    try {',
-        '        child = fx( ' + targetIndex + ' );',
-        '        childIndex = child.index',
+        '       child = fx( ' + targetIndex + ' );',
+        '       childIndex = child.index',
         '    } catch ( e ) {}',
-        '    if ( childIndex == thisLayer.index || fx( ' + sizeIndex + ' ) == 0 )[ 0, 0 ];',
-        '    else {',
+        '    if ( childIndex != thisLayer.index || fx.active ) {',
         '        var X = 100;',
         '        var Y = 60;',
         '',
@@ -587,9 +594,9 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '            var dist = length( A, B );',
         '            Y = dist / 15 * 100;',
         '        }',
-        '        [ X, Y * 100 / thisLayer( "ADBE Root Vectors Group" )( "Bone" ).transform.scale[ 1 ] ];',
+        '        result = [ X, Y * 100 / thisLayer( "ADBE Root Vectors Group" )( "Bone" ).transform.scale[ 1 ] ];',
         '    }',
-        '} else value;'
+        'result;'
 	].join('\n');
     var linkContent = linkGroup.property("ADBE Vectors Group");
     //star
@@ -599,16 +606,15 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     shape("ADBE Vector Star Outer Roundess").setValue( 100 );
     shape("ADBE Vector Star Type").setValue( 2 );
     shape("ADBE Vector Star Outer Roundess").expression = [ DuAEExpression.Id.BONE,
-        'if ( active ) {',
         '    var child = null;',
         '    var childIndex = -1;',
+        '    var result = value;',
         '    var fx = effect( "' + effect.name + '" );',
         '    try {',
         '        child = fx( ' + targetIndex + ' );',
         '        childIndex = child.index',
         '    } catch ( e ) {}',
-        '    if ( childIndex == thisLayer.index || fx( ' + sizeIndex + ' ) == 0 ) value;',
-        '    else {',
+        '    if ( childIndex != thisLayer.index || fx.active ) {',
         '        function isBone( layer ) {',
         '            var ok = false;',
         '            try {',
@@ -645,11 +651,10 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '            var dist = length( A, B );',
         '            if ( dist < 20 ) dist = 20;',
         '            var s = thisLayer( "ADBE Root Vectors Group" )( "Bone" ).transform.scale[ 0 ];',
-        '            value / ( dist / 30 ) * s / 80;',
-        '        } else value;',
+        '            result = value / ( dist / 30 ) * s / 80;',
+        '        } else result = value;',
         '    }',
-        '}',
-        'else value;'
+        'result;'
     ].join('\n');
     // circle
     var displayContent = displayGroup.property("ADBE Vectors Group")
@@ -669,47 +674,40 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     // display evenvelop checkbox
     var envelopGroup = mainGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
     envelopGroup.name = 'Envelop';
-    envelopGroup.transform.opacity.expression = [ DuAEExpression.Id.BONE,
-        'effect("' + envelopEffect.name + '")(1).value*100;'
+    envelopGroup.transform.opacity.expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'if (effect("' + envelopEffect.name + '").active) 100;',
+        'else 0;'
     ].join('\n');
 
     var rootGroup = envelopGroup('ADBE Vectors Group').addProperty('ADBE Vector Group');
     rootGroup.name = "root";
-    var rootCircle = rootGroup.content.addProperty("ADBE Vector Shape - Ellipse");
-    rootCircle.name = "root";
-    rootCircle.size.expression = [ DuAEExpression.Id.BONE,
+    rootGroup.transform.scale.expression = [ DuAEExpression.Id.BONE_ENVELOP,
         'var s = 0;',
-        'if (hasParent) s = effect("' + effect.name +'")(' + eSizeIndex + ');',
+        'if (hasParent) s = effect("' + envelopEffect.name +'")(' + eSizeIndex + ');',
         '[s, s];'
         ].join('\n');
+    var rootCircle = rootGroup.content.addProperty("ADBE Vector Shape - Ellipse");
+    rootCircle.name = "root";
     var rootMask = rootGroup.content.addProperty("ADBE Vector Shape - Rect");
     rootMask.name = "root_mask";
-    rootMask.size.expression = [ DuAEExpression.Id.BONE,
-        'var s = effect("' + effect.name +'")(' + eSizeIndex + ');',
-        '[s, s];'
-    ].join('\n');
-    rootMask.position.expression = [ DuAEExpression.Id.BONE,
-        'var s = effect("' + effect.name +'")(' + eSizeIndex + ');',
-        '[0, -s/2]'
-	].join('\n');
+    rootMask.position.setValue([0,-50]);
     var rootMerge = rootGroup.content.addProperty('ADBE Vector Filter - Merge');
     rootMerge('ADBE Vector Merge Type').setValue( 3 );
 
     var endGroup = envelopGroup('ADBE Vectors Group').addProperty('ADBE Vector Group');
     endGroup.name = "end";
-    var endCircle = endGroup.content.addProperty("ADBE Vector Shape - Ellipse");
-    endCircle.name = "end";
-    endCircle.size.expression = [ DuAEExpression.Id.BONE,
+    endGroup.transform.scale.expression = [ DuAEExpression.Id.BONE_ENVELOP,
         'var child = null;',
         'var childIndex = -1;',
-        'var fx = effect("' + effect.name + '");',
+        'var fx = effect("' + envelopEffect.name + '");',
         'var s = fx(' + eSizeIndex + ');',
         'var result = [s,s];',
         'try {',
-        '    child = fx( ' + targetIndex + ' );',
-        '    childIndex = child.index || fx( ' + sizeIndex + ' ).value == 0',
+        '    var bfx = effect(' + effect.name + ');',
+        '    child = bfx( ' + targetIndex + ' );',
+        '    childIndex = child.index;',
         '} catch ( e ) {}',
-        'if ( childIndex != thisLayer.index ) {',
+        'if ( childIndex != thisLayer.index && fx.active ) {',
         '	function isBone( layer ) {',
         '		var ok = false;',
         '		try {',
@@ -742,24 +740,24 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '	}',
         '	if ( child )',
         '	if ( child.index != index ) {',
-        '		try { result = child.content("Bone").content("Envelop").content("root").content("root").size }',
+        '		try { result = child.content("Bone").content("Envelop").content("root").transform.scale }',
         '		catch (e) {}',
         '	}',
         '}',
         'result;',
         ''
     ].join('\n');
-    endCircle.position.expression = [DuAEExpression.Id.BONE,
+    endGroup.transform.position.expression = [DuAEExpression.Id.BONE_ENVELOP,
         'var child = null;',
         'var childIndex = -1;',
-        'var fx = effect("' + effect.name + '");',
-        '    try {',
-        '        child = fx( ' + targetIndex + ' );',
-        '        childIndex = child.index || fx( ' + sizeIndex + ' ).value == 0',
-        '    } catch ( e ) {}',
-        'if ( childIndex != thisLayer.index ){',
-        '	var R = 45;',
-        '',
+        'var fx = effect("' + envelopEffect.name + '");',
+        'var result = [0,0];',
+        'try {',
+        '    var bfx = effect(' + effect.name + ');',
+        '    child = bfx( ' + targetIndex + ' );',
+        '    childIndex = child.index;',
+        '} catch ( e ) {}',
+        'if ( childIndex != thisLayer.index && fx.active ) {',
         '	function isBone( layer ) {',
         '		var ok = false;',
         '		try {',
@@ -795,37 +793,29 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '}',
         'result;'
 	].join('\n');
+    var endCircle = endGroup.content.addProperty("ADBE Vector Shape - Ellipse");
+    endCircle.name = "end";
     var endMask = endGroup.content.addProperty("ADBE Vector Shape - Rect");
-    endMask.name = "root_mask";
-    endMask.size.expression = [ DuAEExpression.Id.BONE,
-        'var result = value;',
-        'try { result = thisProperty.propertyGroup(2)("end").size.value; }',
-        'catch (e) { }',
-        'result;'
-	].join('\n');
-    endMask.position.expression = [ DuAEExpression.Id.BONE,
-        'var s = thisProperty.propertyGroup(1).size[0] / 2;',
-        'var p = 0;',
-        'try { p = thisProperty.propertyGroup(2)("end").position.value[1]; }',
-        'catch (e) {}',
-        '[0, p+s];'
-	].join('\n');
+    endMask.name = "end_mask";
+    endMask.position.setValue( [0, 50] );
     var endMerge = endGroup.content.addProperty('ADBE Vector Filter - Merge');
     endMerge('ADBE Vector Merge Type').setValue( 3 );
 
     var shape = envelopGroup.content.addProperty('ADBE Vector Shape - Group');
     shape.name = "shape";
-    shape('ADBE Vector Shape').expression = [ DuAEExpression.Id.BONE,
+    shape('ADBE Vector Shape').expression = [ DuAEExpression.Id.BONE_ENVELOP,
         'var endPos = [0,0];',
         'var endSize = 0;',
+        'var fx = effect("' + envelopEffect.name +'")',
+        'if (fx.active) {',
         'try {',
-        '	end_t = thisProperty.propertyGroup(2)("end").content("end");',
+        '	end_t = thisProperty.propertyGroup(2)("end").transform;',
         '	endPos = end_t.position.value;',
-        '	endSize = end_t.size.value[0];',
+        '	endSize = end_t.scale.value[0];',
         '	endSize /= 2;',
         '}',
         'catch (e) {}',
-        'var rootSize = effect("' + effect.name +'")(' + eSizeIndex + ').value / 2;',
+        'var rootSize = fx(' + eSizeIndex + ').value / 2;',
         'var vertices = [',
         '	[endPos[0], endPos[1] - endSize/2],',
         '	[endSize, endPos[1]],',
@@ -850,28 +840,29 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
         '	[0,-rootSize],',
         '	[0,0]',
         '];',
-        'createPath(vertices, inT, outT,true);'
+        'createPath(vertices, inT, outT,true);',
+        '} else { value; }'
 	].join('\n');
     var shapeMerge = envelopGroup.content.addProperty('ADBE Vector Filter - Merge');
     shapeMerge('ADBE Vector Merge Type').setValue( 2 );
 
     var stroke = envelopGroup.content.addProperty("ADBE Vector Graphic - Stroke");
-    stroke('ADBE Vector Stroke Color').expression = [ DuAEExpression.Id.BONE,
-        'effect("' + effect.name +'")(' + eStrokeColorIndex + ').value;'
+    stroke('ADBE Vector Stroke Color').expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'effect("' + envelopEffect.name +'")(' + eStrokeColorIndex + ').value;'
     ].join('\n');
-    stroke('ADBE Vector Stroke Width').expression = [ DuAEExpression.Id.BONE,
-        'effect("' + effect.name +'")(' + eStrokeSizeIndex + ').value;'
+    stroke('ADBE Vector Stroke Width').expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'effect("' + envelopEffect.name +'")(' + eStrokeSizeIndex + ').value;'
     ].join('\n');
-    stroke('ADBE Vector Stroke Opacity').expression = [ DuAEExpression.Id.BONE,
-        'effect("' + effect.name +'")(' + eStrokeOpacityIndex + ').value;'
+    stroke('ADBE Vector Stroke Opacity').expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'effect("' + envelopEffect.name +'")(' + eStrokeOpacityIndex + ').value;'
     ].join('\n');
 
     fill = envelopGroup.content.addProperty("ADBE Vector Graphic - Fill");
-    fill('ADBE Vector Fill Color').expression = [ DuAEExpression.Id.BONE,
-        'effect("' + effect.name +'")(' + eFillColorIndex + ').value;'
+    fill('ADBE Vector Fill Color').expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'effect("' + envelopEffect.name +'")(' + eFillColorIndex + ').value;'
     ].join('\n');
-    fill('ADBE Vector Fill Opacity').expression = [ DuAEExpression.Id.BONE,
-        'effect("' + effect.name +'")(' + eFillOpacityIndex + ').value;'
+    fill('ADBE Vector Fill Opacity').expression = [ DuAEExpression.Id.BONE_ENVELOP,
+        'effect("' + envelopEffect.name +'")(' + eFillOpacityIndex + ').value;'
     ].join('\n');
         
     // If attached, set the target of the parent
