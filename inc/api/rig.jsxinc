@@ -57,6 +57,7 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
 	var tails = [];
     var wings = [];
     var snakeSpines = [];
+    var fishSpines = [];
     var fins = [];
     var hairs = [];
 	var customArmatures = [];
@@ -104,6 +105,7 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
             else if ( limb == DuOCO.Limb.WING ) addToLimb( layer, wings, armatureId );
             else if ( limb == DuOCO.Limb.HAIR ) addToLimb( layer, hairs, armatureId );
             else if ( limb == DuOCO.Limb.SNAKE_SPINE ) addToLimb( layer, snakeSpines, armatureId );
+            else if ( limb == DuOCO.Limb.FISH_SPINE ) addToLimb( layer, fishSpines, armatureId );
             else if ( limb == DuOCO.Limb.FIN ) addToLimb( layer, fins, armatureId );
             else if ( limb == DuOCO.Limb.CUSTOM ) addToLimb( layer, customArmatures, armatureId );
         }
@@ -124,6 +126,7 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     DuScriptUI.progressBar.addMax( fins.length );
     DuScriptUI.progressBar.addMax( hairs.length );
     DuScriptUI.progressBar.addMax( snakeSpines.length );
+    DuScriptUI.progressBar.addMax( fishSpines.length );
     DuScriptUI.progressBar.addMax( customArmatures.length );
 
     // Result
@@ -136,7 +139,14 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailIK, parentSpine, customControllers );
     for (var i = 0, n = legs.length; i < n; i++) Duik.Rig.leg( legs[i], parentSpine, customControllers );
     for (var i = 0, n = arms.length; i < n; i++) Duik.Rig.arm( arms[i], parentSpine, customControllers );
-    for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], parentSpine, customControllers );
+
+    var fishRiggedSpines = [];
+    for (var i = 0, n = fishSpines.length; i < n; i++) fishRiggedSpines.push( Duik.Rig.fishSpines( fishSpines[i], tailIK, parentSpine, customControllers ) );
+    var fishParentSpine;
+    if( fishRiggedSpines.length > 0) fishParentSpine = fishRiggedSpines[0];
+    else if( riggedSpines.length > 0) fishParentSpine = riggedSpines[0];
+
+    for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], fishParentSpine, customControllers );
     /*for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], customControllers );
     for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
     for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
@@ -1697,4 +1707,186 @@ Duik.Rig.fin = function( layers, parentSpine, customControllers )
     // Link rotation
     var fkRot = new DuAEProperty( fkNull.transform.rotation );
     fkRot.pickWhip( ctrl.transform.rotation );
+}
+
+Duik.Rig.fishSpines = function( layers, fishIK, customControllers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return [];
+    fishIK = def(fishIK, false);
+
+    var fs = {};
+    fs.bones = [];
+    fs.controllers = [];
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.FISH_SPINE);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
+
+    customControllers = new DuList(customControllers);
+
+    var comp = layers.first().containingComp;
+
+    // expected
+    var head = null;
+    var spine = [];
+    var tip = null;
+    var headTip = null;
+
+    // get'em all
+    layers.do(function(layer) {
+        var tag = DuAETag.get( layer );
+        var bone = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING, tag );
+        var boneIndex = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_INDEX, DuAETag.Type.INT, tag );
+
+        if (bone == DuOCO.Bone.SKULL) head = layer;
+        else if (bone == DuOCO.Bone.SKULL_TIP) headTip = layer;
+        else if (bone == DuOCO.Bone.TIP) tip = layer;
+        else
+        {
+            var b = layer;
+            b.i = boneIndex;
+            spine.push(b);
+        }
+    });
+
+    // Sort
+    // a sorter for spine and neck
+	function sortBones(a,b)
+	{
+		return a.i - b.i;
+	}
+
+    spine.sort(sortBones);
+
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
+    //unparent & reset transform
+    for (var i=0, num = spine.length ; i < num ; i++ )
+    {
+        var s = spine[i];
+        s.parent = null;
+        Duik.Bone.resetTransform(s);
+    }
+    if (head)
+    {
+        head.parent = null;
+        Duik.Bone.resetTransform(head);
+    }
+    if (tip)
+    {
+        tip.parent = null;
+        Duik.Bone.resetTransform(tip);
+    }
+    if (headTip)
+    {
+        headTip.parent = null;
+        Duik.Bone.resetTransform(headTip);
+    }
+
+    // adjust/fix what we got! We're very friendly...
+    // we need a head
+    if(!head)
+    {
+        if (spine.length > 0)
+        {
+            head = DuAEComp.addNull( comp, 20, spine[0] );
+            Duik.Layer.copyAttributes( head, spine[0], duik.Layer.Type.NULL );
+            Duik.Layer.setLimbName( DuScriptUI.String.HEAD, head );
+        }
+        else return fs;
+    }
+    // spine
+    if(spine.length == 0 && tip)
+    {
+        spine = [tip];
+        tip = null;
+    }
+     
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
+    if (spine.length == 0)
+    {
+        var ctrl = Duik.Controller.getCreate(head, Duik.Controller.Type.HEAD, customControllers );
+        head.parent = ctrl;
+        if(headTip) headTip.parent = head;
+        return fs;
+    }
+
+    var bodyCtrl = Duik.Controller.getCreate(spine[0], Duik.Controller.Type.HIPS, customControllers );
+    var headCtrl = Duik.Controller.getCreate(head, Duik.Controller.Type.HEAD, customControllers );
+
+    DuScriptUI.progressBar.msg('Parenting...');
+
+    headCtrl.parent = bodyCtrl;
+
+    head.parent = spine[0];
+    if (headTip) headTip.parent = head;
+
+    spine[0].parent = bodyCtrl;
+    for (var i = 1, n = spine.length; i < n; i++)
+    {
+        spine[i].parent = spine[i-1];
+    }
+    if( tip ) tip.parent = spine[spine.length-1];
+
+    DuScriptUI.progressBar.msg('Rigging...');
+
+    // Head FK
+    Duik.Constraint.simpleFK( head, headCtrl );
+
+    // Single layer tail
+    if (spine.length == 1)
+    {
+        spine[0].parent = bodyCtrl;
+        fs.bones = spine;
+        fs.controllers = bodyCtrl;
+        return fs;
+    }
+
+    // Tail IK
+    if (fishIK)
+    {
+        // we need a tip
+        if (!tip) tip = spine.pop();
+
+        var tailCtrl = Duik.Controller.getCreate( tip, Duik.Controller.Type.TAIL, customControllers);
+
+        if (spine.length > 1)
+        {
+            var ctrls = Duik.Constraint.bezierIK( spine, tip, tailCtrl, false);
+            //parent
+            ctrls[0].parent = bodyCtrl;
+            ctrls[1].parent = bodyCtrl;
+            spine[0].parent = bodyCtrl;
+            fs.controllers = ctrls;
+        }
+        else
+        {
+            Duik.Constraint.oneLayerIK( spine[0], tip, tailCtrl, false);
+            //parent
+            tailCtrl.parent = bodyCtrl;
+            spine[0].parent = bodyCtrl;
+        }
+        fs.bones = spine;
+        fs.controllers.push(tailCtrl);
+        return fs;
+    }
+
+    // Tail FK
+    spine.push(tip);
+
+    var reversedSpine = [];
+    for (var i = spine.length -1; i >= 0; i--) reversedSpine.push(spine[i] );
+
+    Duik.Constraint.fk( reversedSpine, bodyCtrl );
+    //parent
+    spine[0].parent = bodyCtrl;
+    // disable parent rotation inheritance
+    var pe = Duik.PseudoEffect.FK;
+    bodyCtrl.effect( pe.matchName )( pe.props["Parent rotation"].index).setValue(0);
+
+    fs.bones = spine;
+    fs.controllers.push(bodyCtrl);
+    return fs;
 }
