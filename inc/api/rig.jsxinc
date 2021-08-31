@@ -136,10 +136,10 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailIK, parentSpine, customControllers );
     for (var i = 0, n = legs.length; i < n; i++) Duik.Rig.leg( legs[i], parentSpine, customControllers );
     for (var i = 0, n = arms.length; i < n; i++) Duik.Rig.arm( arms[i], parentSpine, customControllers );
+    for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], parentSpine, customControllers );
     /*for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], customControllers );
     for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
     for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
-    for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], customControllers );
     for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailIK, longChainMode, customControllers );*/
 
     DuAEProject.setProgressMode( false );
@@ -239,7 +239,7 @@ Duik.Rig.spine = function( layers, customControllers )
 
     // Let's rig!
 
-    DuScriptUI.progressBar.msg('Creating controllers..).');
+    DuScriptUI.progressBar.msg('Creating controllers...');
 
     // unparent everything, just to be sure
     var spineRootParent = spineRoot.parent;
@@ -304,7 +304,7 @@ Duik.Rig.spine = function( layers, customControllers )
             {
                 var pe = Duik.PseudoEffect.BONE;
                 var effect = spine[0].effect( pe.matchName );
-                if (effect) effect( pe.props['Display options']['Target'].index ).setValue(0);
+                if (effect) effect( pe.props['Target'].index ).setValue(0);
             }
         }
         else spine[0].parent = hips;
@@ -978,6 +978,46 @@ Duik.Rig.shoulder = function( shoulder, ctrl )
 }
 
 /**
+ * Returns the bone from the spine bones the closest to the location, where child bones at that location can be attached 
+ * @param {float[]} location The location where to attach bones, in comp coordinates
+ * @param {Layer[]} spineBones The bones of the spine, sorted from root (hips) to tip
+ * @returns {Layer|null} The corresponding spine bone or null if the list of spine bones is empty
+ */
+Duik.Rig.getSpineAttach = function ( location, spineBones)
+{
+    spineAttach = null;
+
+    if (spineBones.length == 0) return spineAttach;
+
+    // The bone needs to be the one just before, no matter the orientation: check the distance between hips & shoulder
+    // on the furthest axis
+    var rootPos = DuAELayer.getWorldPos( spineBones[0] );
+    var x = location[0] - rootPos[0];
+    var y = location[1] - rootPos[1];
+    var axis = 1;
+    var sign = DuMath.sign( y );
+    if ( Math.abs( x ) > Math.abs( y ) )
+    {
+        axis = 0;
+        sign = DuMath.sign( x );
+    }
+
+    for (var i = 0, n = spineBones.length; i < n; i++)
+    {
+        var b = spineBones[i];
+        var bPos = DuAELayer.getWorldPos( b );
+        var l = location[axis] - bPos[axis];
+        var s = DuMath.sign(l);
+        // too far, we're ready
+        if (s != sign ) return spineAttach;
+        spineAttach = b;
+    }
+
+    return spineAttach;
+
+}
+
+/**
  * Rigs an arm/front leg.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
@@ -1212,42 +1252,16 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers )
     DuScriptUI.progressBar.msg('Parenting...');
     
     // Find the torso for parenting (the closest bone before the shoulder)
-    var spineTorso = null;
-    if (parentSpine.bones.length > 0)
-    {
-        var shoulderPos;
-        if (shoulder) shoulderPos = DuAELayer.getWorldPos(shoulder);
-        else if (humerus) shoulderPos = DuAELayer.getWorldPos(humerus);
-        else if (radius) shoulderPos = DuAELayer.getWorldPos(radius);
-        else if (hand) shoulderPos = DuAELayer.getWorldPos(hand);
-        else if (claws) shoulderPos = DuAELayer.getWorldPos(claws);
-        else if (tip) shoulderPos = DuAELayer.getWorldPos(tip);
-        else if (palm) shoulderPos = DuAELayer.getWorldPos(palm);
+    var shoulderPos;
+    if (shoulder) shoulderPos = DuAELayer.getWorldPos(shoulder);
+    else if (humerus) shoulderPos = DuAELayer.getWorldPos(humerus);
+    else if (radius) shoulderPos = DuAELayer.getWorldPos(radius);
+    else if (hand) shoulderPos = DuAELayer.getWorldPos(hand);
+    else if (claws) shoulderPos = DuAELayer.getWorldPos(claws);
+    else if (tip) shoulderPos = DuAELayer.getWorldPos(tip);
+    else if (palm) shoulderPos = DuAELayer.getWorldPos(palm);
 
-        // The bone needs to be the one just before, no matter the orientation: check the distance between hips & shoulder
-        // on the furthest axis
-        var rootPos = DuAELayer.getWorldPos( parentSpine.bones[0] );
-        var x = shoulderPos[0] - rootPos[0];
-        var y = shoulderPos[1] - rootPos[1];
-        var axis = 1;
-        var sign = DuMath.sign( y );
-        if ( Math.abs( x ) > Math.abs( y ) )
-        {
-            axis = 0;
-            sign = DuMath.sign( x );
-        }
-
-        for (var i = 0, n = parentSpine.bones.length; i < n; i++)
-        {
-            var b = parentSpine.bones[i];
-            var bPos = DuAELayer.getWorldPos( b );
-            var l = shoulderPos[axis] - bPos[axis];
-            var s = DuMath.sign(l);
-            // too far, we're ready
-            if (s != sign ) break;
-            spineTorso = b;
-        }
-    }
+    var spineTorso = Duik.Rig.getSpineAttach(shoulderPos, parentSpine.bones);
 
     //parenting
     if (claws)
@@ -1490,4 +1504,197 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers )
             shoulderCtrl( pe.props["Auto"].index ).setValue(0);
         }
     }
+}
+
+/**
+ * Rigs a fin.
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
+ * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
+ * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
+ * @returns {Layer[]} The controllers of the tail
+ */
+Duik.Rig.fin = function( layers, parentSpine, customControllers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return [];
+
+    if (typeof parentSpine === 'undefined')
+    {
+        parentSpine = {};
+        parentSpine.bones = [];
+        parentSpine.controllers = [];
+    }
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.FIN);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
+
+    customControllers = new DuList(customControllers);
+
+    var comp = layers.first().containingComp;
+
+    // expected
+    var arm = null;
+    var fins = [];
+
+    var side = DuOCO.Side.NONE;
+    var type = DuOCO.LimbType.CUSTOM;
+
+    // get'em all
+    layers.do(function(layer) {
+        var tag = DuAETag.get( layer );
+        var bone = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING, tag );
+
+        if (bone == DuOCO.Bone.FIN) arm = layer;
+        else if (bone == DuOCO.Bone.FIN_FISHBONE) fins.push( layer );
+
+        if ( side == DuOCO.Side.NONE ) side = Duik.Layer.side(layer);
+        if ( type == DuOCO.LimbType.CUSTOM ) type = DuAETag.getValue( layer, DuAETag.Key.DUIK_LIMB_TYPE, DuAETag.Type.STRING, tag );
+    });
+
+    var nfins = fins.length;
+
+    // unparent & reset transform
+    if (arm)
+    {
+        arm.parent = null;
+        Duik.Bone.resetTransform(arm);
+    }
+    for (var i = 0; i < nfins; i++)
+    {
+        var f = fins[i];
+        f.parent = null;
+        Duik.Bone.resetTransform(f);
+    }
+
+    // adjust/fix what we got! We're very friendly...
+    // we need an arm
+    if (!arm)
+    {
+        if (fins.length == 1) arm = fins.pop();
+        else if (fins.length > 0)
+        {
+            // Create a null at the average position
+            var pos = [0,0];
+            for(var i = 0; i<nfins; i++)
+            {
+                // they've been unparented, just take the position
+                pos += fins[i].transform.position;
+            }
+            pos /= nfins;
+            arm = DuAEComp.addNull(comp, 20);
+            arm.transform.position.setValue( pos );
+            Duik.Layer.copyAttributes( arm, fins[0], Duik.Layer.Type.NULL );
+            Duik.Layer.setLimbName( DuScriptUI.String.FIN, arm );
+        }
+    }
+
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
+    var fkNull = DuAEComp.addNull(comp, 20, arm);
+    Duik.Layer.copyAttributes( fkNull, arm, Duik.Layer.Type.NULL );
+    var ctrl = Duik.Controller.getCreate(arm, Duik.Controller.Type.FIN, customControllers);
+
+    DuScriptUI.progressBar.msg('Parenting...');
+
+    // We also need to get the max distance between a fin and the arm
+    var maxFinDistance = 0;
+    for(var i = 0; i<nfins; i++)
+    {
+        var f = fins[i];
+        f.parent = arm;
+        var d = DuMath.length( [0,0], f.transform.position.value );
+        if (d > maxFinDistance) maxFinDistance = d;
+    }
+
+    // arm's been unparented, just use the position
+    var spineAttach = Duik.Rig.getSpineAttach( arm.transform.position.value, parentSpine.bones);
+    arm.parent = spineAttach;
+    ctrl.parent = spineAttach;
+    fkNull.parent = spineAttach;
+
+    // Rig!
+    DuScriptUI.progressBar.msg('Rigging...');
+
+    // Add control
+    var pe = Duik.PseudoEffect.FIN;
+    var ctrlEffect = pe.apply( ctrl );
+    var ctrlInfo = new DuAEProperty( ctrlEffect );
+    ctrlEffect.name = DuScriptUI.String.FIN;
+
+    // FK Control for each fin
+    var peFK = Duik.PseudoEffect.FK;
+
+    for(var i = 0; i<nfins; i++)
+    {
+        var f = fins[i];
+        Duik.Constraint.fk( [arm, f], fkNull );
+
+        // Remove arm ctrl duplicate
+        if (i != 0)
+        {
+            var armEffect = DuAELayer.lastEffect( fkNull, 'ADBE Angle Control', 1);
+            if (armEffect) armEffect.remove();
+        }
+
+        // Copy fishbone control
+        var boneEffect = DuAELayer.lastEffect( fkNull, 'ADBE Angle Control');
+        if (boneEffect)
+        {
+            var boneCtrl = ctrl('ADBE Effect Parade').addProperty('ADBE Angle Control');
+            boneCtrl.name = boneEffect.name;
+            // link
+            boneEffect(1).expression = [ DuAEExpression.Id.AUTORIG_FIN,
+                'thisComp.layer("' + ctrl.name + '").effect("' + boneCtrl.name + '")(1).value;'
+            ].join('\n');
+
+            // fix invalid object (another AE workaround)
+            ctrlEffect = ctrlInfo.getProperty();
+        }
+
+        // Link Resistance
+        var fkEffect = DuAELayer.lastEffect( fkNull, peFK.matchName );
+        fkEffect( peFK.props["Resistance"].index ).expression = [ DuAEExpression.Id.AUTORIG_FIN,
+            'var fx = thisComp.layer("' + ctrl.name + '").effect("' + ctrlEffect.name + '");',
+            'var result = fx(' + pe.props["Overlap"]["Resistance"].index + ').value;',
+            'var rdm = fx(' + pe.props["Overlap"]["Randomness"].index + ').value;',
+            'seedRandom(0, true);',
+            DuAEExpression.Library.get(['addNoise']),
+            'result = addNoise( result, rdm );',
+            'result;'
+        ].join('\n');
+
+        // need the layer position for the ratio
+        var lpos = f.transform.position.value;
+
+        // Link Curve
+        fkEffect( peFK.props["Curve"].index ).expression = [ DuAEExpression.Id.AUTORIG_FIN,
+            'var fx = thisComp.layer("' + ctrl.name + '").effect("' + ctrlEffect.name + '");',
+            'var curve = fx(' + pe.props["Curve"].index + ').value;',
+            'var maxDistance = ' + maxFinDistance + ';',
+            'var layerPos = ' + lpos.toSource() + ';',
+            'var d = length( [0,0], layerPos);',
+            'linear(d, 0, maxDistance, curve*.2, curve);'
+        ].join('\n');
+
+        // Link Flexibility
+        fkEffect( peFK.props["Flexibility"].index ).expression = [ DuAEExpression.Id.AUTORIG_FIN,
+            'var fx = thisComp.layer("' + ctrl.name + '").effect("' + ctrlEffect.name + '");',
+            'var flexMax = fx(' + pe.props["Overlap"]["Max. flexibility"].index + ').value;',
+            'var flexMin = fx(' + pe.props["Overlap"]["Min. flexibility"].index + ').value;',
+            'var rdm = fx(' + pe.props["Overlap"]["Randomness"].index + ').value;',
+            'var maxDistance = ' + maxFinDistance + ';',
+            'var layerPos = ' + lpos.toSource() + ';',
+            'var d = length( [0,0], layerPos);',
+            'seedRandom(0, true);',
+            DuAEExpression.Library.get(['addNoise']),
+            'var result = linear(d, 0, maxDistance, flexMin, flexMax);',
+            'result = addNoise( result, rdm );',
+            'result;'
+        ].join('\n');
+    }
+
+    // Link rotation
+    var fkRot = new DuAEProperty( fkNull.transform.rotation );
+    fkRot.pickWhip( ctrl.transform.rotation );
 }

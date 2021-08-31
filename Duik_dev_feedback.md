@@ -3,7 +3,12 @@
     - no dark mode, missing a lot of modern stuff (auto completion, beautify, etc)
     - need to code in vscode
     - having to code in vscode and debug in ESTK is not great...
-- Errors not thrown correctly, very often error is shown when restarting the panel, the line number may be wrong, the error may not be the right one... But Sometimes it works.
+- Errors not thrown correctly, very often error is shown only when restarting the panel, the line number may be wrong, the error may not be the right one, the source file is not available... But Sometimes it works.
+- When script fails, as throwing errors is buggy it has to be restarted *twice*. If you don't restart it, the error will be thrown when running *any* script, so errors can sometimes be thrown from scripts not actually throwing any error.
+- Sometimes the debugger just disconnects and you have to restart After Effects and the debugger to get it working again.
+- Lines are often wrong when errors are thrown from the expression editor (and sometimes, the line number is even higher than the actual number of lines of the expression!)
+- The expression editor is not meant to be used with long expressions (i.e. more than 10 lines): it keeps getting back to the first line as soon as it loses focus.
+- It is a pain to view more than two lines in the expression editor when working on the last layer of the comp: the editor just won't expand easily...
 - Other scripts polluting the global namespace.
 - No security options per-script, just global settings.
 - No threads.
@@ -18,11 +23,14 @@
     - No unique ids, no unique names, no unique index : no way to reliably reference any prop
     - No way to store custom data in project files, except by using workarounds (XMP, comments, markers...)
     - Layouting scriptUI before calling show() is unusually slow (even slower than usual) -> UI build must be delayed after the first user interaction. The Window.layout() method is actually so slow (even when there are no changes/for hidden controls) that each small part of the UI must be built only if needed. And then resizing the window is very slow.
-- Crashes very often (can even crash because of a typo in a script. Losing work in a project file because of a typo is... frustrating, to say the least).
+- Crashes very often.
+    - For more than 2 years, there's been a bug where a typo in an effect matchname would crash AE. Yup, a simple typo in a script may lead to a crash. Losing work in a project file because of a typo is... frustrating, to say the least.
+- For 8 years, there's been a bug where windows created by a script can't be closed.
 - The crash report does not always work or is buggy (crash is sent when trying to insert new line in a comment!)
 - App preferences are very long to open but we often need to activate/deactivate the debugger (cf above)
 - Loading ScriptUI (the Window.layout() method) is very slow, it's a pain when reloading changes in the script
 - Have to work with the beta to make sure everything will work, because there's only 6 months between releases and we have to make sure the script won't break just a couple of months after its release. And because the API lacks many things, it's good to have the few new stuff to work and improve scripts instead of sticking with a previous version. But the beta may (often) have serious issues; for example I've been struggling with memory leaks and performance issues.
+- The UI lags so much scripts could be 10 times faster.
 
 Won't talk about the fact Ae uses a very old version of JS missing a lot of useful stuff and the fact that perfomance is so bad for scripts as there should be soon UXP with modern JS available. But we've been struggling with extendscript and scriptUI for two decades, it's more than about time.
 
