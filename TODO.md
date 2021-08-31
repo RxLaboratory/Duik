@@ -4,6 +4,7 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
+    - fish spine
     - wings
     - hairs
     - morganimator's spine rig
@@ -14,7 +15,7 @@
 - [ ] bone
     - select tool: alt to select limb
     - adjust spine etc according to animal with better defaults / illustations
-    - fish spine
+    - forcelink on alt click
 - [ ] controllers
     - bake
     - extract
