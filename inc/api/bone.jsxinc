@@ -389,7 +389,7 @@ Duik.CmdLib['Bone']["Leg"] = "Duik.Bone.leg()";
 /**
  * Creates a new arm.
  * @param {string} [characterName] The name of the character
- * @param {DuOCO.LimbType} [type=DuOCO.LimbType.PLANTIGRADE] The type of limb
+ * @param {DuOCO.LimbType} [type=DuOCO.LimbType.HOMINOID] The type of limb
  * @param {DuOCO.Side} [side=DuOCO.Side.LEFT] The side
  * @param {Boolean} [thigh=true]  Whether to create a thigh
  * @param {Boolean} [calf=true]  Whether to create a calf
@@ -773,7 +773,7 @@ Duik.Bone.duplicate = function( comp )
             }
             
             //set new id
-            DuAETag.setValue( layer, DuAETag.Key.DUIK_ARMATURE_ID, id );
+            DuAETag.setValue( layer, DuAETag.Key.DUIK_LIMB_ID, id );
         } );
 
         if (newLayers.length == 0) continue;
@@ -850,8 +850,11 @@ Duik.Bone.bake = function ( layers )
 
     var pe = Duik.PseudoEffect.BONE;
 
+    DuScriptUI.progressBar.addMax( layers.length() );
+
     layers.do(function(layer)
     {
+        DuScriptUI.progressBar.hit(1, 'Baking bone: %1');
         // Nothing to do if this is not a shape
         if( !layer instanceof ShapeLayer) return;
         // or a bone
@@ -870,16 +873,13 @@ Duik.Bone.bake = function ( layers )
             groupInfo.removeExpression( isBoneExpression );
         }
 
-        var displayGroup = layer("ADBE Root Vectors Group").property('Display');
-        if (displayGroup)
-        {
-            var groupInfo = new DuAEProperty( displayGroup );
-            displayGroup.removeExpression( isBoneExpression );
-        }
-
         // remove effect
         var effect = layer.effect(pe.matchName);
         if (effect) effect.remove();
+
+        // remove the envelop checkbox
+        effect = layer.effect( 'ADBE Checkbox Control' );
+        if(effect) if (effect.name.indexOf( DuScriptUI.String.BONE_SHOW_ENVELOP) == 0) effect.remove();
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.BAKE_BONES);
