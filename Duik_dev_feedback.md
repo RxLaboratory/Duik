@@ -22,6 +22,7 @@
 - The crash report does not always work or is buggy (crash is sent when trying to insert new line in a comment!)
 - App preferences are very long to open but we often need to activate/deactivate the debugger (cf above)
 - Loading ScriptUI (the Window.layout() method) is very slow, it's a pain when reloading changes in the script
+- Have to work with the beta to make sure everything will work, because there's only 6 months between releases and we have to make sure the script won't break just a couple of months after its release. And because the API lacks many things, it's good to have the few new stuff to work and improve scripts instead of sticking with a previous version. But the beta may (often) have serious issues; for example I've been struggling with memory leaks and performance issues.
 
 Won't talk about the fact Ae uses a very old version of JS missing a lot of useful stuff and the fact that perfomance is so bad for scripts as there should be soon UXP with modern JS available. But we've been struggling with extendscript and scriptUI for two decades, it's more than about time.
 
