@@ -4,6 +4,8 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
+    - fix bake bones with envelops
+    - link bone anchors opacity to opacity display
     - wings
     - fins
     - hairs

@@ -43,7 +43,12 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     DuAEProject.setProgressMode( true );
 
     // Start by baking (improves perf and keeps envelops)
-    //if (bakeBones) Duik.Bone.bake(layers);
+    if (bakeBones) Duik.Bone.bake(layers);
+
+    // Progress
+    DuScriptUI.progressBar.reset(1);
+    DuScriptUI.progressBar.stg(DuScriptUI.String.AUTORIG);
+    DuScriptUI.progressBar.msg('Sorting selected bones.');
 
     // What we expect
 	var arms = [];
@@ -111,6 +116,16 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
 
     // Let's rig!
 
+    DuScriptUI.progressBar.addMax( arms.length );
+    DuScriptUI.progressBar.addMax( legs.length );
+    DuScriptUI.progressBar.addMax( spines.length );
+    DuScriptUI.progressBar.addMax( tails.length );
+    DuScriptUI.progressBar.addMax( wings.length );
+    DuScriptUI.progressBar.addMax( fins.length );
+    DuScriptUI.progressBar.addMax( hairs.length );
+    DuScriptUI.progressBar.addMax( snakeSpines.length );
+    DuScriptUI.progressBar.addMax( customArmatures.length );
+
     // Result
     var riggedSpines = [];
 
@@ -148,6 +163,9 @@ Duik.Rig.spine = function( layers, customControllers )
 
     if( layers.isEmpty() ) return riggedSpine;
     if( layers.length() == 1 ) return riggedSpine;
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.SPINE);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
 
     customControllers = new DuList(customControllers);
 
@@ -221,6 +239,8 @@ Duik.Rig.spine = function( layers, customControllers )
 
     // Let's rig!
 
+    DuScriptUI.progressBar.msg('Creating controllers..).');
+
     // unparent everything, just to be sure
     var spineRootParent = spineRoot.parent;
     spineRoot.parent = null;
@@ -265,6 +285,8 @@ Duik.Rig.spine = function( layers, customControllers )
         headCtrl = Duik.Controller.getCreate(head, Duik.Controller.Type.HEAD, customControllers);
         Duik.Layer.setLimbName( DuScriptUI.String.HEAD, headCtrl );
     }
+
+    DuScriptUI.progressBar.msg('Parenting bones...');
 
     // Parenting
     // parent bones
@@ -332,6 +354,8 @@ Duik.Rig.spine = function( layers, customControllers )
         if (shoulderCtrl) headCtrl.parent = shoulderCtrl;
         else if (bodyCtrl) headCtrl.parent = bodyCtrl;
     }
+
+    DuScriptUI.progressBar.msg('Rigging...');
 
     //spine IK
     var goal;
@@ -419,6 +443,9 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
 
     tailIK = def(tailIK, false);
 
+    DuScriptUI.progressBar.stg(DuScriptUI.String.TAIL);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
+
     if (typeof parentSpine === 'undefined')
     {
         parentSpine = {};
@@ -458,6 +485,8 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
 
     tail.sort(sortBones);
 
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
     //unparent
     for (var i=1, num = tail.length ; i < num ; i++ ) tail[i].parent = null;
 
@@ -469,6 +498,8 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
         if (parentSpine.bones.length > 0) tailCtrl.parent = parentSpine.bones[0];
         return;
     }
+
+    DuScriptUI.progressBar.msg('Rigging...');
 
     //ik
     if (tailIK)
@@ -517,7 +548,7 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
  * @returns {Layer[]} The controllers of the tail
  */
-Duik.Rig.leg = function ( layers, parentSpine, customControllers)
+Duik.Rig.leg = function ( layers, parentSpine, customControllers )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
@@ -529,6 +560,9 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
         parentSpine.bones = [];
         parentSpine.controllers = [];
     }
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.LEG);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
 
     customControllers = new DuList(customControllers);
 
@@ -631,6 +665,8 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
         }
     }
 
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
     //add nulls and controllers for the footRoll
     var toesNull, footNull;
     //the foot roll needs all parts
@@ -656,7 +692,7 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
             tip.transform.position.setValue([toesNull.transform.position.value[0] + footSize/2,toesNull.transform.position.value[1]]);
         }
 
-        if (!heel && type == DuOCO.LimbType.PLANTIGRADE)
+        if (!heel && (type == DuOCO.LimbType.PLANTIGRADE || type == DuOCO.LimbType.HOMINOID) )
         {
             heel = DuAEComp.addNull(comp, 20, toes);
             Duik.Layer.copyAttributes( heel, foot, Duik.Layer.Type.NULL );
@@ -688,6 +724,8 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
 
     // Rename controller
     Duik.Layer.setLimbName( DuScriptUI.String.LEG, ctrl);
+
+    DuScriptUI.progressBar.msg('Parenting...');
     
     //parenting
     var spineRoot = null;
@@ -746,11 +784,13 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
     {
         footNull.parent = toesNull;
         toesNull.parent = tip;
-        if (type == DuOCO.LimbType.PLANTIGRADE) heel.parent = ctrl;
+        if (type == DuOCO.LimbType.PLANTIGRADE || type == DuOCO.LimbType.HOMINOID) heel.parent = ctrl;
         else if (type == DuOCO.LimbType.DIGITIGRADE) tip.parent = ctrl;
     }
 
     // Rig!
+    DuScriptUI.progressBar.msg('Rigging...');
+
     if (type == DuOCO.LimbType.UNGULATE)
     {
         if (femur && tibia && foot)
@@ -812,7 +852,7 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers)
         endWPos.pickWhip( ikEffect( pe2.props["Data"]["Stretch data"]["Goal world position"].index ));
 
         //tiptoe, heel and footroll
-        if (type == DuOCO.LimbType.PLANTIGRADE)
+        if (type == DuOCO.LimbType.PLANTIGRADE || type == DuOCO.LimbType.HOMINOID)
         {
             //detect right or left, depending on the toes position
             var right = false;
@@ -944,7 +984,7 @@ Duik.Rig.shoulder = function( shoulder, ctrl )
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
  * @returns {Layer[]} The controllers of the tail
  */
-Duik.Rig.arm = function ( layers, parentSpine, customControllers)
+Duik.Rig.arm = function ( layers, parentSpine, customControllers )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
@@ -956,6 +996,9 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         parentSpine.bones = [];
         parentSpine.controllers = [];
     }
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.ARM);
+    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
 
     customControllers = new DuList(customControllers);
 
@@ -1089,6 +1132,8 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
         }
     }
 
+    DuScriptUI.progressBar.msg('Creating controllers...');
+
     //add nulls and controllers for the footRoll
     var clawsNull, handNull;
     //the foot roll needs all parts
@@ -1163,6 +1208,8 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
     // Rename controller
     if(type == DuOCO.LimbType.HOMINOID) Duik.Layer.setLimbName( DuScriptUI.String.ARM, ctrl);
     else Duik.Layer.setLimbName( DuScriptUI.String.FRONT_LEG, ctrl);
+
+    DuScriptUI.progressBar.msg('Parenting...');
     
     // Find the torso for parenting (the closest bone before the shoulder)
     var spineTorso = null;
@@ -1276,6 +1323,8 @@ Duik.Rig.arm = function ( layers, parentSpine, customControllers)
     }
 
     // Rig!
+    DuScriptUI.progressBar.msg('Rigging...');
+
     if (type == DuOCO.LimbType.UNGULATE || type == DuOCO.LimbType.ARTHROPOD)
     {
         if (humerus && radius && hand)
