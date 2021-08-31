@@ -4,7 +4,6 @@
 
 - [ ] Pins edit menu
 - [ ] autorig
-    - fins
     - wings
     - hairs
     - morganimator's spine rig
@@ -13,6 +12,7 @@
     - options ( tail, longchains, bake/bakeenvelops/nobake )
 - [ ] connector
 - [ ] bone
+    - select tool: alt to select limb
     - adjust spine etc according to animal with better defaults / illustations
     - fish spine
 - [ ] controllers
