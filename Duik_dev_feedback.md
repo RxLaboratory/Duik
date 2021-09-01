@@ -5,12 +5,13 @@
     - having to code in vscode and debug in ESTK is not great...
 - Errors not thrown correctly, very often error is shown only when restarting the panel, the line number may be wrong, the error may not be the right one, the source file is not available... But Sometimes it works.
 - When script fails, as throwing errors is buggy it has to be restarted *twice*. If you don't restart it, the error will be thrown when running *any* script, so errors can sometimes be thrown from scripts not actually throwing any error.
-- Sometimes the debugger just disconnects and you have to restart After Effects and the debugger to get it working again.
-- Lines are often wrong when errors are thrown from the expression editor (and sometimes, the line number is even higher than the actual number of lines of the expression!)
-- The expression editor is not meant to be used with long expressions (i.e. more than 10 lines): it keeps getting back to the first line as soon as it loses focus.
-- It is a pain to view more than two lines in the expression editor when working on the last layer of the comp: the editor just won't expand easily...
-- Other scripts polluting the global namespace.
-- No security options per-script, just global settings.
+- Sometimes the debugger just disconnects and you have to restart After Effects to get it working again.
+- Line numbers are often wrong in errors thrown from the expression editor (and sometimes, the line number is even higher than the actual number of lines of the expression!)
+- The expression editor is not meant to be used with long expressions (i.e. more than 10 lines): it keeps getting back to the first line as soon as it loses focus. You can't both write the expression and check anything else in Ae.
+- There's no shared scope between expressions, expressions can't share variables or functions (This is not how expressions work in After Effects, but other software which have the equivalent of expressions don't have this limitation)
+- It is a pain to view more than two lines in the expression editor when working on the last layer of the comp: the editor just won't expand easily because it is limited by the size of the comp panel...
+- Other scripts may be polluting the global namespace.
+- No security options per-script, just a global settings. Trust everyone or trust no one.
 - No threads.
 - No signals/events/hooks.
 - No real UI integration (scripts are "sandboxed" inside their panels, or popup windows), no access to menus or contextual menus, toolbar, etc.
