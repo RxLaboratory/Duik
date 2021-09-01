@@ -2,9 +2,11 @@
 
 ## Duik
 
+- [ ] Expert mode
+    - Icons in rows
+    - Multibutton without text and in row
 - [ ] Pins edit menu
 - [ ] autorig
-    - fish spine
     - wings
     - hairs
     - morganimator's spine rig
