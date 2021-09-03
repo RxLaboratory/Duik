@@ -2,9 +2,7 @@
 
 ## Duik
 
-- [ ] Expert mode
-    - Icons in rows
-    - Multibutton without text and in row
+- [ ] Constraints tab: add edit mode button in the toolbar
 - [ ] Pins edit menu
 - [ ] autorig
     - wings
