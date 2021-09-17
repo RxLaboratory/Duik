@@ -152,7 +152,6 @@ Duik.Controller.get = function ( selectedOnly, comp )
     return Duik.Layer.get( Duik.Layer.Type.CONTROLLER, selectedOnly, comp );
 }
 
-
 /**
 	* Creates a new controller
 	* @param {CompItem} [comp] - The composition
@@ -1482,6 +1481,63 @@ Duik.Controller.getEffectProp = function ( layer, prop )
 
 	if ( index < 0 ) return null;
 	return effect(index);
+}
+
+Duik.CmdLib['Controller']["Bake"] = "Duik.Controller.bake()";
+/**
+ * Bakes the appearance of the selected controllers to improve performance by removing appearance-only expressions and effects.
+ * @param {Layer[]|DuList.<Layer>|Layer} [layers] - The layers to bake; will use selected layers from the current comp if omitted.
+ */
+Duik.Controller.bake = function ( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_CONTROLLERS, false);
+
+    var pe = Duik.PseudoEffect.CONTROLLER;
+
+    DuScriptUI.progressBar.addMax( layers.length() );
+
+    layers.do(function(layer)
+    {
+        DuScriptUI.progressBar.hit(1, 'Baking controller: %1');
+        // Nothing to do if this is not a shape
+        if( !layer instanceof ShapeLayer) return;
+        // or a controller
+        if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) return;
+
+        function isCtrlExpression( exp )
+        {
+            return exp.indexOf( DuAEExpression.Id.CONTROLLER ) == 0;
+        }
+        
+        // remove expressions
+        var group = layer("ADBE Root Vectors Group");
+        if (group)
+        {
+			var groupInfo = new DuAEProperty( group );
+			groupInfo.removeExpression( isCtrlExpression );
+        }
+
+		/*group = layer("ADBE Root Vectors Group").property('Icon');
+		if (group)
+        {
+			var groupInfo = new DuAEProperty( group.transform );
+			groupInfo.removeExpression( isCtrlExpression );
+
+			fillProp = group.content('ADBE Vector Graphic - Fill');
+			groupInfo = new DuAEProperty( fillProp );
+			groupInfo.removeExpression( isCtrlExpression );
+        }//*/
+
+        // remove effect
+        var effect = layer.effect(pe.matchName);
+        if (effect) effect.remove();
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_CONTROLLERS);
 }
 
 /**
