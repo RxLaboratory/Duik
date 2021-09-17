@@ -2,6 +2,8 @@
 
 ## Duik
 
+- [ ] controllers
+    - extract
 - [ ] autorig
     - wings
     - hairs
@@ -14,9 +16,6 @@
     - select tool: alt to select limb
     - adjust spine etc according to animal with better defaults / illustations
     - forcelink on alt click
-- [ ] controllers
-    - bake
-    - extract
 - [ ] Automation panel
 - [ ] Animation panel
     - [ ] Tools:
@@ -28,7 +27,6 @@
 - [ ] Bones Autolink on Ctrl+click (add to helptip) (also from the options panel)
 - [ ] Bones Random color on Alt+Click (add to helptip) (also from the options panel)
 - [ ] OCO Panel
-- [ ] Animation Panel
 - [ ] Camera panel
 - [ ] Tools:
     - copy of the layer manager in duik main panel ?
