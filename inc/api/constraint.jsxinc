@@ -4153,6 +4153,72 @@ Duik.Constraint.extractLocator = function( locator, preCompLayer, useEssentialPr
 }
 
 /**
+ * Sets the current values of the locators. This fixes some bugs when unparenting layers parented to the locators.
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @param {boolean} [disable=true] - Wether to disable the expressions after having applied the values
+ */
+Duik.Constraint.applyLocatorValues = function ( layers, disable )
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    disable = def(disable, true);
+
+    for(var i = 0, n = layers.length(); i < n; i++)
+    {
+        var layer = layers.at(i);
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR) ) continue;
+
+        var l = locator.locked;
+        locator.locked = false;
+        var p = new DuAEProperty( locator.transform.anchorPoint );
+        p.setValue( locator.transform.anchorPoint.valueAtTime(0, false), 0 );
+        var p = new DuAEProperty( locator.transform.position );
+        p.setValue( locator.transform.position.valueAtTime(0, false), 0 );
+        var p = new DuAEProperty( locator.transform.scale );
+        p.setValue( locator.transform.scale.valueAtTime(0, false), 0 );
+        var p = new DuAEProperty( locator.transform.rotation );
+        p.setValue( locator.transform.rotation.valueAtTime(0, false), 0 );
+        var p = new DuAEProperty( locator.transform.opacity );
+        p.setValue( locator.transform.opacity.valueAtTime(0, false), 0 );
+        if (disable) Duik.Constraint.disableLocator( locator );
+        locator.locked = l;
+    }
+}
+
+/**
+ * Disables the locator. Disable the transform expressions
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @param {boolean} [disable=true]
+ */
+Duik.Constraint.disableLocator = function( layers, disable )
+{
+    layers = def(layer, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    disable = def(disable, true);
+
+        for(var i = 0, n = layers.length(); i < n; i++)
+    {
+        var layer = layers.at(i);
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR) ) continue;
+
+        var l = locator.locked;
+        locator.locked = false;
+        locator.transform.anchorPoint.expressionEnabled = !disable;
+        locator.transform.position.expressionEnabled = !disable;
+        locator.transform.scale.expressionEnabled = !disable;
+        locator.transform.rotation.expressionEnabled = !disable;
+        locator.transform.opacity.expressionEnabled = !disable;
+        locator.locked = l;
+    }
+}
+
+/**
  * Parent the layers across compositions to the chosen layer
  * @param {Layer} parent The parent layer
  * @param {Boolean} [useEssentialProperties=true] - true to extract using master properties instead of expressions (ignored in Ae < 15.1, false by default if 15.1 <= Ae < 17 and true by default in Ae >= 17)

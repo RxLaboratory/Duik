@@ -1540,6 +1540,249 @@ Duik.Controller.bake = function ( layers )
     DuAE.endUndoGroup(DuScriptUI.String.BAKE_CONTROLLERS);
 }
 
+Duik.CmdLib['Controller']["Extract"] = "Duik.Controller.extract()";
+/**
+	* Extracts the controllers from the precomposition,< br/>
+	* and copies them to the composition, linking all precomposed controllers<br />
+	* to the new ones.<br />
+	* WARNING This method uses the native copy and paste commands of After Effects,<br />
+	* DO NOT enclose it in an undoGroup.<br />
+	* Undo groups will be handled by this method itself.
+	* @param {AVLayer} preComposition - The precomposition layer
+	* @param {boolean} [useEssentialProperties=true] - Only in Ae v15.1 (CC2018) and up, true to use Master Properties<br />
+	* instead of expressions to link the controllers. Ignored on previous versions of After Effects.
+	* @param {boolean} [bake=true] - Bakes the appearances of the controllers before extracting them.<br />
+	* Note: this fixes some issues when extracting controllers between compositions of different sizes.
+	* @return {int} Error code:<br >
+	* -3: No controllers found in the precomp<br >
+	* -2: The layer is not a precomposition<br >
+	* -1: Some controllers can not be extracted<br >
+	* 0: Unknown error<br >
+	* 1: OK
+*/
+Duik.Controller.extract = function( preComposition, useEssentialProperties, bake )
+{
+	if (DuAE.version.version < 15.1) useEssentialProperties = false;
+	if (DuAE.version.version < 17.0) useEssentialProperties = def( useEssentialProperties, false );
+	useEssentialProperties = def( useEssentialProperties, true );
+	bake = def(bake, true);
+
+	preComposition = def(preComposition, DuAEComp.getActiveLayer());
+
+	var comp = preComposition.containingComp;
+
+	//get precomp.
+	var preComp = preComposition.source;
+	if (!preComp) return -2;
+	if (!(preComp instanceof CompItem)) return -2;
+
+	//get all controllers from precomposition.
+	var controllers = Duik.Controller.get(false, preComp);
+	if (controllers.length == 0) return -3;
+
+	//get controllers from current comp, to check if some are already extracted
+	var currentControllers = Duik.Controller.get(false, comp);
+
+	DuAE.beginUndoGroup(DuScriptUI.String.EXTRACT_CONTROLLERS, false);
+	DuAEProject.setProgressMode(true);
+
+	app.beginSuppressDialogs();
+
+	DuAEComp.setUniqueCompName( comp );
+	DuAEComp.setUniqueCompName( preComp );
+
+	var controller;
+	var ctrlLayers = [];
+	var newCtrls = [];
+	var ids = new DuList();
+	var ctrlList = new DuList(controllers);
+
+	// Prepare extraction: list already extracted controllers,
+	// Check parents, make sure all controllers have unique ids,
+	// Bake them
+	ctrlList.do(function (controller)
+	{
+		//check if it's already extracted
+		for (var i = 0, num = currentControllers.length; i < num; i++) {
+			var currentCtrl = currentControllers[i];
+			var currentId = Duik.Controller.id( currentCtrl );
+			var ctrlId = Duik.Controller.id( controller );
+			var extracted = currentId == ctrlId && currentId != -1;
+			if (extracted) extracted = Duik.Controller.controlledComp( currentCtrl ) == preComp.id; 
+
+			if ( extracted ) {
+				currentCtrl.reparent = false;
+				newCtrls.push( currentCtrl );
+				return;
+			}
+
+			//check if the layer has a parent which is not a controller or nothing
+			var ctrlParent = controller.parent;
+			controller.reparent = true;
+			if ( !ctrlParent ) controller.reparent = false;
+			if ( Duik.Layer.isType( ctrlParent, Duik.Layer.Type.CONTROLLER) ) controller.reparent = false;
+			ctrlLayers.push( controller );
+
+			//make sure all controllers have unique ids
+			if ( ids.indexOf( ctrlId ) > -1 )
+			{
+				var newId = Duik.Controller.setId( controller );
+				ids.push( newId );
+			}
+
+			//bake them
+			if (bake) Duik.Controller.bake( controller );
+		}
+	});
+
+	// if this is a new extraction using MPs from an already extracted precomp,
+	// this will be set to true to update the expressions in the MPs
+	var reLink = false;
+
+	// No new controller found to extract
+	if (ctrlLayers.length == 0)
+	{
+		//Let's ask if the user wants to extract them all once again.
+		if (!useEssentialProperties) return;
+		var ok = confirm( DuScriptUI.String.CONFIRM_CONTROLLER_EXTRACTION, false, DuScriptUI.String.NOTHING_NEW );
+		if (!ok) return;
+		reLink = true;
+		newCtrls = [];
+		ctrlList.do(function(controller)
+		{
+			var ctrlParent = controller.parent;
+			controller.reparent = true;
+			if (!ctrlParent) controller.reparent = false;
+			if ( Duik.Layer.isType( ctrlParent, Duik.Layer.Type.CONTROLLER ) ) controller.reparent = false;
+			ctrlLayers.push(controller);
+			if (bake) Duik.Controller.bake( controller );
+		});
+	}
+
+	// Still nothing
+	if (ctrlLayers.length == 0)
+	{
+		app.endSuppressDialogs(false);
+		return;
+	}
+
+	//copy controllers
+	//to apply all locators transform values in case controllers are children of locators and temporarily disable their expressions
+	Duik.Constraint.applyLocatorValues( preComp.layers, true );
+	newCtrls = newCtrls.concat( DuAELayer.copyToComp( ctrlLayers, comp ) );
+	//enable the locators again
+	Duik.Constraint.disableLocator( preComp.layers, false );
+
+	//Add null at position precomp.width/2 precomp.height/2
+	var nullLayer = DuAEComp.addNull( comp );
+	nullLayer.transform.position.setValue([preComp.width/2,preComp.height/2]);
+
+	//parent unparented controllers to the null
+	DuAELayer.parent(newCtrls, nullLayer);
+	//parent the null to the precomp using parentWithJump
+	nullLayer.setParentWithJump(preComposition);
+	//remove the null
+	nullLayer.remove();
+
+	//create Master Props or Expressions
+	//link transformations and effects (only)
+	ctrlList.do(function (controller)
+	{
+		//get the new controller 
+		var newController = null;
+		for (var i = 0, num = newCtrls.length; i < num; i++) {
+			var newCtrl = newCtrls[i];
+			var newId = Duik.Controller.id( newCtrl );
+			var currentId = Duik.Controller.id( controller );
+			if ( newId == currentId ) {
+				newController = newCtrl;
+				break;
+			}
+		}
+
+		//use locators for all controllers parented to something else than a controller or nothing
+		if (controller.reparent) Duik.Constraint.parentAcrossComp(newController, controller.parent, useEssentialProperties);
+
+		//remove expressions in the data of the child effect
+		var p = new DuAEProperty( newController('ADBE Effect Parade') );
+		p.removeDataExpressions( );
+
+		if (useEssentialProperties)
+		{
+			p = new DuAEProperty( controller.transform );
+			p.addToEGP( );
+			p = new DuAEProperty( controller('ADBE Effect Parade') );
+			p.addToEGP(controller('ADBE Effect Parade'));
+
+			// get essential properties
+			var mps = DuAEProperty.getProps( preComposition('ADBE Layer Overrides'), PropertyType.PROPERTY );
+			var mpList = new DuList(mps);
+			//links
+			mpList.do( function(mp) {
+				// We need to get the source of the mp,
+				// before 22.0 we had to use the name, after that the API has the info
+				var newProp = null;
+				if (DuAE.version.version < 22.0)
+				{
+					//get prop name
+					var nameArray = mp.name.split(' / ');
+					if ( nameArray.length != 2 ) return;
+					var pLink = nameArray[1];
+					var layerName = nameArray[0];				
+					if ( layerName != controller.name ) return;
+					try {
+						newProp = eval('newController' + pLink);
+					}
+					catch (e) { return; }
+				}
+				else 
+				{
+					sourceProp = new DuAEProperty( mp.essentialPropertySource );
+					pLink = sourceProp.expressionLink( false, false );
+					alert(pLink);
+					try {
+						newProp = eval('newController.' + pLink);
+					}
+					catch (e) { return; }
+				}
+				
+				
+				//link
+				if (newProp)
+				{
+					p = new DuAEProperty( mp );
+					p.pickWhip( newProp, true );
+					//AE 17.0.0 bug workaround: need a keyframe on the master property to be sure it's not ignored.
+					if (DuAE.version.version == 17 && DuAE.version.patch == 0)
+					{
+						mp.setValueAtTime(0, mp.value);
+					}
+				}
+			});
+		}
+		else
+		{
+			//transform
+			p = new DuAEProperty( controller.transform );
+			p.linkProperties( newController.transform, undefined, preComposition );
+			//effects
+			p = new DuAEProperty( controller('ADBE Effect Parade') );
+			p.linkProperties( newController('ADBE Effect Parade'), undefined, preComposition );
+		}
+
+		//set params to keep the link
+		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_COMP, preComp.id );
+		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_LAYER, controller.name );
+		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_USING_MP, useEssentialProperties );
+	});
+
+	app.endSuppressDialogs(false);
+	DuAEProject.setProgressMode(false);
+	DuAE.endUndoGroup(DuScriptUI.String.EXTRACT_CONTROLLERS);
+	
+	return 1;
+}
+
 /**
  * Checks the color of the controller layer
  * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
@@ -1761,4 +2004,38 @@ Duik.Controller.setLocation = function( location, layers )
 {
     layers = def( layers, Duik.Controller.get() );
     Duik.Layer.setLocation( location, layers );
+}
+
+/**
+ * Gets the unique ID of the controller layer.
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {int}
+ */
+Duik.Controller.id = function( layer )
+{
+	layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return -1;
+    return DuAETag.getValue( layer, DuAETag.Key.DUIK_CONTROLLER_ID, DuAETag.Type.INT );
+}
+
+/**
+ * Gets the îd of the comp controlled by this extracted controller layer.
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {int}
+ */
+Duik.Controller.controlledComp = function( layer )
+{
+	layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return -1;
+    return DuAETag.getValue( layer, DuAETag.Key.DUIK_CONTROLLED_COMP, DuAETag.Type.INT );
+}
+
+// low-level undocumented method to set a new ID to a controller and returns the id
+Duik.Controller.setId = function ( layer )
+{
+	//wait just a bit to be sure we won't have two identical ids
+	$.sleep(10);
+	var newId = new Date().getTime();
+	DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLER_ID, newId );
+	return newId
 }
