@@ -2,7 +2,6 @@
 
 ## Duik
 
-- [ ] Constraints tab: add edit mode button in the toolbar
 - [ ] Pins edit menu
 - [ ] autorig
     - wings
