@@ -4,6 +4,10 @@
 
 - [ ] controllers
     - extract
+        - Always asks to extract: nothing found
+        - Error near the end new DuAEProperty(undefined)
+        - Add options
+        - Test with expressions
 - [ ] autorig
     - wings
     - hairs
