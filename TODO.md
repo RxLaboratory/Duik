@@ -2,7 +2,6 @@
 
 ## Duik
 
-- [ ] Pins edit menu
 - [ ] autorig
     - wings
     - hairs
