@@ -1,0 +1,132 @@
+/**
+ * The animator's toolkit.
+ * @namespace
+ */
+Duik.Animation = {};
+
+/**
+ * Sets up a non-linear animation comp.
+ * @param {CompItem} [comp] The composition to set up. The active composition if omitted.
+ * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all animated properties if false.
+ * @param {Boolean} [transformProps=true] If true, filters only properties in the transform group of the layers. Ignored if selectedProps is true.
+ * @param {Boolean} [effectProps=false] If true, filters only properties in effects. Ignored if selectedProps is true.
+ * @param {Boolean} [controllersOnly=true] If true, sets up only properties found on Duik controller layers. Ignored if selectedProps is true.
+ * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
+ */
+Duik.Animation.setupNLA = function ( comp, selectedProps, transformProps, effectProps, controllersOnly, props )
+{
+    comp = def( comp, DuAEProject.getActiveComp() );
+
+    if (typeof props === 'undefined')
+    {
+        selectedProps = def( selectedProps, true );
+        transformProps = def( transformProps, true );
+        effectProps = def( effectProps, false );
+        controllersOnly = def( controllersOnly, true );
+
+        // List properties according to the filters
+
+        if (selectedProps)
+        {
+            props = DuAEComp.getSelectedProps();
+        }
+        else 
+        {
+            // Get the layers
+            var layers = [];
+            props = [];
+            if (controllersOnly) layers = Duik.Controller.get( false, comp );
+            else layers = comp.layers;
+            layers = new DuList(layers);
+            layers.do( function(layer)
+            {
+                if ( transformProps ) props.push( layer.transform );
+                if ( effectProps ) props.push( layer.property('ADBE Effects Parade'));
+            });
+        }
+    }
+
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.NLA, false);
+
+    var compName = comp.name;
+
+    // Create folderitem NLA::compName
+    var parentFolder = comp.parentFolder;
+    var nlaFolder = app.project.items.addFolder( DuScriptUI.String.NLA_SHORT + '::' + compName );
+    nlaFolder.parentFolder = parentFolder;
+    comp.parentFolder = nlaFolder;
+
+    // Duplicate comp twice
+    // One will be NLA.Render::compName
+    oComp = comp.duplicate();
+    oComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::' + compName;
+    // Other NLA.Clip::compName
+    clipComp = comp.duplicate();
+    clipComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::' + compName;
+    // and keep NLA.Original::compName
+    comp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::' + compName;
+    // Create NLA.Edit::compName
+    editComp = nlaFolder.items.addComp(
+        DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::' + compName,
+        comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+
+    // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
+    clipPrecomp = editComp.layers.add( clipComp );
+    clipPrecomp.enabled = false;
+    clipPrecomp.guideLayer = false;
+
+    // Add NLA.Rnder
+    editComp.layers.add( comp );
+
+    // Setup properties in NLA.Render
+
+    var exp = [ DuAEExpression.Id.NLA,
+        'var editComp = comp("' + editComp.name + '");',
+        '',
+        'var result = 0;',
+        'var weights = 0;',
+        '',
+        DuAEExpression.Library.get(['getSameProp']),
+        '',
+        'for (var i = 1, n = editComp.numLayers; i <= n; i++)',
+        '{',
+        '	var l = editComp.layer(i);',
+        '	if (l.name == thisComp.name) continue;',
+        '	if (time >= l.inPoint && time < l.outPoint)',
+        '	{',
+        '	  var precomp = l.source;',
+        '	  var c = precomp.layer(thisLayer.name);',
+        '	  var weight = l.opacity.value/100;',
+        '	  weights += weight;',
+        '     var t = time;',
+        '     try { t = l.timeRemap.value; }',
+	    '     catch(e) { t = time - l.startTime; }',
+        '	  result += getSameProp(c).valueAtTime(t)*weight;',
+        '	}',
+        '}',
+        '',
+        'if (weights < 1) ',
+        '{',
+        '  result += value*(1-weights);',
+        '  weights = 1;',
+        '}',
+        '',
+        'if (weights != 0) result = result/weights;',
+        'else result = value;',
+        'result;'
+	].join('\n');
+
+    props.do( function(prop)
+    {
+        prop.setExpression(exp);
+    });
+
+    // Open edit comp
+    editComp.openInViewer();
+
+    DuAE.endUndoGroup(DuScriptUI.String.NLA);
+
+}
