@@ -2,6 +2,9 @@
 
 ## Duik
 
+= [ ] constraints panel tools
+    - measure distance
+    - get prop info
 - [ ] autorig
     - wings
     - hairs
@@ -17,9 +20,7 @@
 - [ ] Automation panel
 - [ ] Animation panel
     - [ ] Tools:
-        - reset PRS
         - IK/FK
-        - Align layers
 - [ ] Option to hide tags
 - [ ] Bones Front and side wing
 - [ ] Bones Autolink on Ctrl+click (add to helptip) (also from the options panel)
