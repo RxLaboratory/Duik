@@ -4,6 +4,7 @@
     - need to code in vscode
     - having to code in vscode and debug in ESTK is not great...
 - Errors not thrown correctly, very often error is shown only when restarting the panel, the line number may be wrong, the error may not be the right one, the source file is not available... But Sometimes it works.
+- Try catch still throws errors sometimes...
 - When script fails, as throwing errors is buggy it has to be restarted *twice*. If you don't restart it, the error will be thrown when running *any* script, so errors can sometimes be thrown from scripts not actually throwing any error.
 - Sometimes the debugger just disconnects and you have to restart After Effects to get it working again.
 - Line numbers are often wrong in errors thrown from the expression editor (and sometimes, the line number is even higher than the actual number of lines of the expression!)
