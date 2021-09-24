@@ -2,15 +2,6 @@
 
 ## Duik
 
-- [ ] NLA
-    - Options (types of props, use selection, etc)
-    - Reimplement the looper and add it to the clip comps
-- [ ] controllers
-    - extract
-        - Always asks to extract: nothing found
-        - Error near the end new DuAEProperty(undefined)
-        - Add options
-        - Test with expressions
 - [ ] autorig
     - wings
     - hairs

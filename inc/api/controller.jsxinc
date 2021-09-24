@@ -1602,11 +1602,13 @@ Duik.Controller.extract = function( preComposition, useEssentialProperties, bake
 	// Bake them
 	ctrlList.do(function (controller)
 	{
+		var ctrlId = Duik.Controller.id( controller );
+
 		//check if it's already extracted
-		for (var i = 0, num = currentControllers.length; i < num; i++) {
+		for (var i = 0, num = currentControllers.length; i < num; i++)
+		{
 			var currentCtrl = currentControllers[i];
 			var currentId = Duik.Controller.id( currentCtrl );
-			var ctrlId = Duik.Controller.id( controller );
 			var extracted = currentId == ctrlId && currentId != -1;
 			if (extracted) extracted = Duik.Controller.controlledComp( currentCtrl ) == preComp.id; 
 
@@ -1615,24 +1617,23 @@ Duik.Controller.extract = function( preComposition, useEssentialProperties, bake
 				newCtrls.push( currentCtrl );
 				return;
 			}
-
-			//check if the layer has a parent which is not a controller or nothing
-			var ctrlParent = controller.parent;
-			controller.reparent = true;
-			if ( !ctrlParent ) controller.reparent = false;
-			if ( Duik.Layer.isType( ctrlParent, Duik.Layer.Type.CONTROLLER) ) controller.reparent = false;
-			ctrlLayers.push( controller );
-
-			//make sure all controllers have unique ids
-			if ( ids.indexOf( ctrlId ) > -1 )
-			{
-				var newId = Duik.Controller.setId( controller );
-				ids.push( newId );
-			}
-
-			//bake them
-			if (bake) Duik.Controller.bake( controller );
 		}
+		//check if the layer has a parent which is not a controller or nothing
+		var ctrlParent = controller.parent;
+		controller.reparent = true;
+		if ( !ctrlParent ) controller.reparent = false;
+		if ( Duik.Layer.isType( ctrlParent, Duik.Layer.Type.CONTROLLER) ) controller.reparent = false;
+		ctrlLayers.push( controller );
+
+		//make sure all controllers have unique ids
+		if ( ids.indexOf( ctrlId ) > -1 )
+		{
+			var newId = Duik.Controller.setId( controller );
+			ids.push( newId );
+		}
+
+		//bake them
+		if (bake) Duik.Controller.bake( controller );
 	});
 
 	// if this is a new extraction using MPs from an already extracted precomp,
@@ -1645,7 +1646,13 @@ Duik.Controller.extract = function( preComposition, useEssentialProperties, bake
 		//Let's ask if the user wants to extract them all once again.
 		if (!useEssentialProperties) return;
 		var ok = confirm( DuScriptUI.String.CONFIRM_CONTROLLER_EXTRACTION, false, DuScriptUI.String.NOTHING_NEW );
-		if (!ok) return;
+		if (!ok) 
+		{
+			app.endSuppressDialogs(false);
+			DuAEProject.setProgressMode(false);
+			DuAE.endUndoGroup(DuScriptUI.String.EXTRACT_CONTROLLERS);
+			return;
+		}
 		reLink = true;
 		newCtrls = [];
 		ctrlList.do(function(controller)
@@ -1663,6 +1670,8 @@ Duik.Controller.extract = function( preComposition, useEssentialProperties, bake
 	if (ctrlLayers.length == 0)
 	{
 		app.endSuppressDialogs(false);
+		DuAEProject.setProgressMode(false);
+		DuAE.endUndoGroup(DuScriptUI.String.EXTRACT_CONTROLLERS);
 		return;
 	}
 
@@ -1771,9 +1780,9 @@ Duik.Controller.extract = function( preComposition, useEssentialProperties, bake
 		}
 
 		//set params to keep the link
-		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_COMP, preComp.id );
-		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_LAYER, controller.name );
-		DuAETag.setValue( layer, DuAETag.Key.DUIK_CONTROLLED_USING_MP, useEssentialProperties );
+		DuAETag.setValue( newController, DuAETag.Key.DUIK_CONTROLLED_COMP, preComp.id );
+		DuAETag.setValue( newController, DuAETag.Key.DUIK_CONTROLLED_LAYER, controller.name );
+		DuAETag.setValue( newController, DuAETag.Key.DUIK_CONTROLLED_USING_MP, useEssentialProperties );
 	});
 
 	app.endSuppressDialogs(false);
