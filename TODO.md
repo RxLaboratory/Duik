@@ -2,7 +2,13 @@
 
 ## Duik
 
-= [ ] constraints panel tools
+- [ ] NLA:
+    - if nothing selected, on all bones and ctrls PR
+- [ ] layer rename:
+    - autofixexpressions
+    - "null" if no type selected
+    - layer manager: apply all button
+- [ ] constraints panel tools
     - measure distance
     - get prop info
 - [ ] autorig
