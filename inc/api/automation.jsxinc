@@ -5,15 +5,21 @@
 Duik.Automation = {};
 
 /**
+ * The list of automation functions
+ */
+Duik.CmdLib['Automation'] = [];
+
+Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
+/**
  * Sets up a non-linear animation comp.
  * @param {CompItem} [comp] The composition to set up. The active composition if omitted.
- * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all animated properties if false.
+ * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all properties (according to the other options) if false.
  * @param {Boolean} [transformProps=true] If true, filters only properties in the transform group of the layers. Ignored if selectedProps is true.
  * @param {Boolean} [effectProps=false] If true, filters only properties in effects. Ignored if selectedProps is true.
- * @param {Boolean} [controllersOnly=true] If true, sets up only properties found on Duik controller layers. Ignored if selectedProps is true.
+ * @param {Boolean} [layerTypes=[Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]] The types of layer to setup; if empty, will setup all layers.
  * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
  */
-Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effectProps, controllersOnly, props )
+Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effectProps, layerTypes, props )
 {
     comp = def( comp, DuAEProject.getActiveComp() );
 
@@ -22,26 +28,42 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
         selectedProps = def( selectedProps, true );
         transformProps = def( transformProps, true );
         effectProps = def( effectProps, false );
-        controllersOnly = def( controllersOnly, true );
+        layerTypes = def( layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER] );
 
         // List properties according to the filters
 
         if (selectedProps)
         {
             props = DuAEComp.getSelectedProps();
+            if (props.length == 0) selectedProps = false;
         }
-        else 
+
+        if (!selectedProps)
         {
             // Get the layers
             var layers = [];
             props = [];
-            if (controllersOnly) layers = Duik.Controller.get( false, comp );
+            if (layerTypes.length > 0)
+            {
+                for (var i = 1, n = comp.numLayers; i <= n; i++)
+                {
+                    var l = comp.layer(i);
+                    for (var j = 0, nt = layerTypes.length; j < nt; j++)
+                    {
+                        if (Duik.Layer.isType(l, layerTypes[j]))
+                        {
+                            layers.push(l);
+                            break;
+                        }
+                    }
+                }
+            }
             else layers = comp.layers;
             layers = new DuList(layers);
             layers.do( function(layer)
             {
-                if ( transformProps ) props.push( layer.transform );
-                if ( effectProps ) props.push( layer.property('ADBE Effects Parade'));
+                if ( transformProps ) props.push( new DuAEProperty( layer.transform ) );
+                if ( effectProps ) props.push( new DuAEProperty( layer.property('ADBE Effects Parade') ) );
             });
         }
     }
@@ -78,7 +100,7 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
     clipPrecomp.enabled = false;
     clipPrecomp.guideLayer = false;
 
-    // Add NLA.Rnder
+    // Add NLA.Render
     editComp.layers.add( comp );
 
     // Setup properties in NLA.Render
@@ -123,6 +145,58 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
 
     DuAE.endUndoGroup(DuScriptUI.String.NLA);
 
+}
+
+Duik.CmdLib['Automation']["NLA Clip"] = "Duik.Automation.addNLAClip()";
+/**
+ * Creates a clip and adds it to the NLA
+ * @param {CompItem} [nlaComp] A comp belonging to an NLA, the active comp if omitted.
+ * @returns {int} Success code: 1 if the clip could be created, 0 if the original comp is not found, -1 if the NLA is invalid/not found
+ */
+Duik.Automation.addNLAClip = function ( nlaComp )
+{
+    nlaComp = def( nlaComp, DuAEProject.getActiveComp() );
+    if (!nlaComp) return -1;
+
+    var nlaFolder = nlaComp.parentFolder;
+    if (nlaFolder.name.indexOf('NLA::') != 0) return -1;
+    
+    var nlaName = nlaFolder.name.replace('NLA::', '');
+
+    // Get the original comp
+    var originalComp = null;
+    var editComp = null;
+    for (var i = 1, n = nlaFolder.numItems; i <= n; i++)
+    {
+        var c = nlaFolder.item(i);
+        if (c.name.indexOf('NLA.Original::') == 0)
+        {
+            originalComp = c;
+        }
+        if (c.name.indexOf('NLA.Edit::') == 0)
+        {
+            editComp = c;
+        }
+    }
+
+    if (!originalComp) return 0;
+
+    // Duplicate
+    var newClip = originalComp.duplicate();
+
+    // Rename
+    newClip.name = originalComp.name.replace('NLA.Original', 'NLA.Clip') + '-newClip';
+
+    // Add to edit
+    if (editComp)
+    {
+        editComp.layers.add( newClip );
+    }
+
+    // Open clip
+    newClip.openInViewer();
+
+    return 1;
 }
 
 /**
