@@ -2,8 +2,6 @@
 
 ## Duik
 
-- [ ] NLA:
-    - if nothing selected, on all bones and ctrls PR
 - [ ] layer rename:
     - autofixexpressions
     - "null" if no type selected
