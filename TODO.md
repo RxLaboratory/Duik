@@ -2,10 +2,7 @@
 
 ## Duik
 
-- [ ] layer rename:
-    - autofixexpressions
-    - "null" if no type selected
-    - layer manager: apply all button
+
 - [ ] constraints panel tools
     - measure distance
     - get prop info
@@ -34,6 +31,8 @@
 - [ ] Tools:
     - copy of the layer manager in duik main panel ?
 - [ ] Note editor
+- [ ] layer rename:
+    - autofixexpressions, test again
 
 ## DuAEF & DuESF
 

@@ -64,6 +64,170 @@
     etmButton.alignment = ['center','top'];
     etmButton.onClick = Duik.Constraint.exposeTransform;
 
+    var measureButton = DuScriptUI.button(
+        toolsGroup,
+        '',
+        w12_measure,
+        DuScriptUI.String.MEASURE_DISTANCE_TIP
+    );
+    measureButton.alignment = ['center','top'];
+    measureButton.onClick = function () {
+        // Build panel
+        if (!measureGroup.built)
+        {
+            measureGroup.built = true;
+            measureText = DuScriptUI.staticText( measureGroup, '', undefined, false);
+
+            var measureCancelButton = DuScriptUI.button(
+                measureGroup,
+                DuScriptUI.String.BACK_PREVIOUS,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            measureCancelButton.onClick = function () {
+                measureGroup.visible = false;
+                constraintsGroup.visible = true;
+            }
+
+            DuScriptUI.showUI( measureGroup );
+        }
+            
+        var dist = DuAELayer.getDistance();
+        dist = Math.round( dist );
+        if (dist < 0) measureText.setText( DuScriptUI.String.MEASURE_HELP );
+        else measureText.setText( DuScriptUI.String.MEASURE_RESULT.replace("{#}", dist) );
+
+        parentAcrossCompGroup.visible = false;
+        pathConstraintGroup.visible = false;
+        constraintsGroup.visible = false;
+        propInfoGroup.visible = false;
+        measureGroup.visible = true;
+    }
+
+    var propInfoButton = DuScriptUI.button(
+        toolsGroup,
+        '',
+        DuScriptUI.Icon.HELP,
+        DuScriptUI.String.PROP_INFO_TIP
+    );
+    propInfoButton.onClick = function() {
+        function update() {
+            var props = DuAEComp.getSelectedProps();
+            if (props.length == 0) return;
+            var prop = props[props.length-1];
+            propInfoGroup.prop = prop;
+            propInfoGroup.propInfoIndex.text = prop.index;
+            propInfoGroup.name.text = prop.name;
+            propInfoGroup.matchName.text = prop.matchName;
+            propInfoGroup.dimensions.text = prop.dimensions();
+            propInfoGroup.link.text = prop.expressionLink(prop, true, true);
+            var preExpression = propInfoGroup.preExp.value;
+		    var fastMode = !propInfoGroup.precision.value;
+
+            //Min and max val per axis
+            var minVal = "";
+            var maxVal = "";
+            if (prop.dimensions() == 1)
+            {
+                var range = prop.range(0, preExpression, fastMode);
+                minVal = Math.round(range[0]*100)/100;
+                maxVal = Math.round(range[1]*100)/100;
+            }
+            else
+            {
+                for (var i = 0; i < prop.dimensions() ; i++)
+                {
+                    var range = prop.range(i, preExpression);
+                    if (i == 0)
+                    {
+                        minVal += "[ ";
+                        maxVal += "[ ";
+                    }
+
+                    minVal += Math.round(range[0]*100)/100;
+                    maxVal += Math.round(range[1]*100)/100;
+
+                    if (i == prop.dimensions() - 1)
+                    {
+                        minVal += " ]";
+                        maxVal += " ]";
+                    }
+                    else
+                    {
+                        minVal += " , ";
+                        maxVal += " , ";
+                    }
+                }
+            }
+            propInfoGroup.minVal.text = minVal;
+            propInfoGroup.maxVal.text = maxVal;
+            var maxSpeed = Math.round( prop.maxVelocity( preExpression, fastMode )*100)/100;
+            propInfoGroup.velocity.text = maxSpeed;
+            if (maxSpeed == 0) propInfoGroup.averageVelocity.text = 0;
+            else propInfoGroup.averageVelocity.text = Math.round( prop.averageSpeed(preExpression, fastMode)*100)/100;
+        }
+
+        // Build panel
+        if (!propInfoGroup.built)
+        {
+            var propInfoForm = DuScriptUI.form( propInfoGroup );
+            propInfoGroup.propInfoIndex = propInfoForm.addField("Index","statictext","0","The index of the property")[1];
+            propInfoGroup.name = propInfoForm.addField("Name","edittext","","The name of the property")[1];
+            propInfoGroup.matchName = propInfoForm.addField("Match Name","edittext","","The matchName of the property")[1];
+            propInfoGroup.dimensions = propInfoForm.addField("Num Dimensions","statictext","0","The number of dimensions of the property")[1];
+            propInfoGroup.link = propInfoForm.addField("Expression link","edittext","","The expression link to the property (from the layer)")[1];
+            propInfoGroup.minVal = propInfoForm.addField("Minimum value","edittext","","The minimum value during the animation.")[1];
+            propInfoGroup.maxVal = propInfoForm.addField("Maximum value","edittext","","The maximum value during the animation.")[1];
+            propInfoGroup.velocity = propInfoForm.addField("Maximum velocity","edittext","","The maximum velocity during the animation.")[1];
+            propInfoGroup.averageVelocity = propInfoForm.addField("Average velocity","edittext","","The average velocity during the animation.")[1];
+            propInfoGroup.preExp = propInfoForm.addField("Pre-expression val.","checkbox","","Display pre-expression values.")[1];
+            propInfoGroup.precision = propInfoForm.addField("Hi-precision","checkbox","","Samples the values and velocity with a higher precision.\nWarning: this can be quite slong if the composition is very long.")[1];
+
+            var validButtonsGroup = DuScriptUI.group( propInfoGroup );
+
+            var propInfoCancelButton = DuScriptUI.button(
+                validButtonsGroup,
+                DuScriptUI.String.BACK_PREVIOUS,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            propInfoCancelButton.onClick = function () {
+                propInfoGroup.visible = false;
+                constraintsGroup.visible = true;
+            }
+            
+            var validButton = DuScriptUI.button(
+                validButtonsGroup,
+                DuScriptUI.String.PROP_INFO,
+                DuScriptUI.Icon.CHECK,
+                DuScriptUI.String.PROP_INFO_TIP,
+                false,
+                'row',
+                'center'
+            )
+            validButton.onClick = update;
+
+            propInfoGroup.built = true;
+
+            DuScriptUI.showUI( propInfoGroup );
+        }
+
+		//values
+        update( );
+
+        parentAcrossCompGroup.visible = false;
+        pathConstraintGroup.visible = false;
+        constraintsGroup.visible = false;
+        propInfoGroup.visible = true;
+        measureGroup.visible = false;
+    }
+
     var mainGroup = DuScriptUI.group(this, 'stacked');
     mainGroup.margins = 3;
     mainGroup.alignment = ['fill', 'fill'];
@@ -385,9 +549,6 @@
         );
         parentAcrossCompButton.onClick = function()
         {
-            constraintsGroup.visible = false;
-            parentAcrossCompGroup.visible = true;
-
             // build panel
             if (!parentAcrossCompGroup.built)
             {
@@ -519,6 +680,9 @@
 
                 DuScriptUI.showUI( parentAcrossCompGroup );
             }
+
+            constraintsGroup.visible = false;
+            parentAcrossCompGroup.visible = true;
         }
     }   
 
@@ -554,9 +718,6 @@
         );
         pathConstraintButton.onClick = function ()
         {
-            var pathConstraintValidButton;
-            var pathConstraintLabel;
-
             var pathProp = null;
             // Get path prop
             function pickPath() {
@@ -597,12 +758,12 @@
                     pathConstraintValidGroup,
                     DuScriptUI.String.BACK_PREVIOUS,
                     DuScriptUI.Icon.BACK,
-                    DuScriptUI.String.CLOSE_SETTINGS,
+                    DuScriptUI.String.CANCEL,
                     false,
                     'row',
                     'center'
                 );
-                pathConstraintValidGroup.onClick = function () {
+                pathConstraintCancelButton.onClick = function () {
                     pathConstraintGroup.visible = false;
                     constraintsGroup.visible = true;
                 }
@@ -641,7 +802,18 @@
     parentAcrossCompGroup.visible = false;
     parentAcrossCompGroup.built = false;
 
+    var pathConstraintValidButton;
+    var pathConstraintLabel;
     var pathConstraintGroup = DuScriptUI.group( mainGroup, 'column');
     pathConstraintGroup.visible = false;
     pathConstraintGroup.built = false;
+
+    var measureText;
+    var measureGroup = DuScriptUI.group( mainGroup, 'column' );
+    measureGroup.visible = false;
+    measureGroup.built = false;
+
+    var propInfoGroup = DuScriptUI.group( mainGroup, 'column' );
+    propInfoGroup.visible = false;
+    propInfoGroup.built = false;
 }
