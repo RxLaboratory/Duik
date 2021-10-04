@@ -1,0 +1,90 @@
+/**
+ * The animator's toolkit.
+ * @namespace
+ */
+Duik.Animation = {};
+
+/**
+ * The list of animation functions
+ */
+Duik.CmdLib['Animation'] = [];
+
+Duik.CmdLib['Animation']["Select Keyframes"] = "Duik.Animation.selectKeyframes()";
+/**
+ * Selects the keyframes in the comp
+ * @param {CompItem} [comp=DuAEProject.getActiveComp] The composition
+ * @param {Boolean} [selectedLayers=false] Set to true to get the keyframes only on the selected layers instead of all the layers.
+ * @param {Boolean} [controllersOnly=true] Set to false to get the keyframes from all types of layers instead of just the controllers.
+ * @param {float[]} [range] The time range to select the keyframes, [in, out]. If omitted, will use the work area of the composition.
+ * @param {string[]} [propertyMatchNames=[]] The list of matchnames to select only keyframes of a specific type. If empty, will select all types of keyframes.
+ */
+Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly, range, propertyMatchNames )
+{
+    comp = def(comp, DuAEProject.getActiveComp() );
+    if(!comp) return;
+    selectedLayers = def( selectedLayers, false );
+    controllersOnly = def( controllersOnly, true );
+    range = def( range, [comp.workAreaStart, comp.workAreaStart + comp.workAreaDuration ] );
+    propertyMatchNames = def( propertyMatchNames, [
+        'ADBE Position',
+        'ADBE Vector Position',
+        'ADBE Position_0',
+        'ADBE Position_1',
+        'ADBE Position_2',
+        'ADBE Rotate Z',
+        'ADBE Rotate Y',
+        'ADBE Rotate X',
+        'ADBE Orientation',
+        'ADBE Vector Rotation',
+        'ADBE Scale',
+        'ADBE Vector Scale',
+        'ADBE Opacity',
+        'ADBE Vector Group Opacity',
+        'ADBE Mask Parade',
+        'ADBE Effect Parade'
+    ]);
+    propertyMatchNames = new DuList(propertyMatchNames);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SELECT_KEYFRAMES, false);
+    DuAEProject.setProgressMode(true);
+
+    //get layers
+    var layers = [];
+    if ( !selectedLayers )
+    {
+        if ( !controllersOnly ) layers = comp.layers;
+        else layers = Duik.Controller.get( false, comp );
+    }
+    else
+    {
+        if ( !controllersOnly ) layers = comp.selectedLayers;
+        else layers = Duik.Controller.get( true, comp );
+    }
+
+    if (layers.length == 0) return;
+
+    //unselect all previously selected keyframes
+	DuAEComp.unselectProperties();
+
+    // A filter to get properties
+    function filterProps( prop )
+    {
+        if ( propertyMatchNames.length() == 0) return true;
+        return propertyMatchNames.indexOf( prop.matchName ) >= 0;
+    }
+
+    //get all properties
+    layers = new DuList(layers);
+    layers.do(function (layer)
+    {
+        var props = DuAEProperty.getProps(layer,filterProps);
+        props = new DuList(props);
+        props.do(function(prop)
+        {
+            prop.selectKeys( range[0], range[1]);
+        });
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.SELECT_KEYFRAMES);
+}
