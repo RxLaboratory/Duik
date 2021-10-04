@@ -44,11 +44,19 @@ function buildAnimationPanelUI( tab )
 
         selectMethodSelector.setCurrentIndex(1);
 
+        selectMethodSelector.onChange = function() {
+            outEdit.enabled = selectMethodSelector.index == 1;
+        };
+
         var currentTimeButton = DuScriptUI.checkBox(
             selectButton.optionsPanel,
             DuScriptUI.String.CURRENT_TIME
         );
         currentTimeButton.setChecked( true );
+
+        currentTimeButton.onClick = function() {
+            rangeGroup.visible = !currentTimeButton.checked;
+        };
 
         var rangeGroup = DuScriptUI.group( selectButton.optionsPanel, 'row' );
         
@@ -74,12 +82,29 @@ function buildAnimationPanelUI( tab )
         );
         outEdit.alignment = ['fill', 'fill'];
 
+        rangeGroup.visible = false;
+
         var pickRangeButton = DuScriptUI.button(
             rangeGroup,
             '',
             DuScriptUI.Icon.EYE_DROPPER
         );
         pickRangeButton.alignment = ['right', 'center'];
+
+        pickRangeButton.onClick = function() {
+            var comp = DuAEProject.getActiveComp();
+            if (!comp) return;
+
+            if (selectMethodSelector.index == 0)
+            {
+                inEdit.setText(timeToCurrentFormat(comp.time+comp.displayStartTime,1/comp.frameDuration));
+            }
+            else
+            {
+                inEdit.setText(timeToCurrentFormat(comp.workAreaStart+comp.displayStartTime,1/comp.frameDuration));
+                outEdit.setText(timeToCurrentFormat(comp.workAreaStart + comp.workAreaDuration+comp.displayStartTime,1/comp.frameDuration));
+            }
+        }
 
         var layerSelectionSelector = DuScriptUI.selector(
             selectButton.optionsPanel
@@ -89,7 +114,6 @@ function buildAnimationPanelUI( tab )
             DuScriptUI.String.SELECTED_LAYERS,
             w16_selected_layers
         );
-
         layerSelectionSelector.addButton(
             DuScriptUI.String.ALL_LAYERS,
             w16_layers
@@ -101,12 +125,11 @@ function buildAnimationPanelUI( tab )
             selectButton.optionsPanel
         );
 
-        var controllersButton = layerTypeSelector.addButton(
+        layerTypeSelector.addButton(
             DuScriptUI.String.CONTROLLERS,
             w16_controller
         );
-
-        var allLayerTypesButton = layerTypeSelector.addButton(
+        layerTypeSelector.addButton(
             DuScriptUI.String.ALL_LAYERS,
             w16_layers
         );
@@ -177,7 +200,82 @@ function buildAnimationPanelUI( tab )
         );
         allPropsButton.alignment = ['center','top'];
 
+        allPropsButton.onClick = function() {
+            var checked = allPropsButton.checked;
+            posButton.setChecked(checked);
+            rotButton.setChecked(checked);
+            scaButton.setChecked(checked);
+            opaButton.setChecked(checked);
+            masksButton.setChecked(checked);
+            fxButton.setChecked(checked);
+        };
+
+        selectButton.onClick = function ()
+        {
+            var comp = DuAEProject.getActiveComp();
+            if (!comp) return;
+            // Get range
+            var inTime = comp.time;
+		    var outTime = comp.time;
+            if (currentTimeButton.checked)
+            {
+                if (selectMethodSelector.index == 1)
+                {
+                    inTime = comp.workAreaStart;
+                    outTime = comp.workAreaStart + comp.workAreaDuration;
+                }
+            }
+            else
+            {
+                inTime = currentFormatToTime(inEdit.text,1/comp.frameDuration)-comp.displayStartTime;
+                if (selectMethodSelector.index == 1) outTime = currentFormatToTime(outEdit.text,1/comp.frameDuration)-comp.displayStartTime;
+                else outTime = inTime;
+            }
+
+            // Get property types
+            var props = [];
+            if (!allPropsButton.checked)
+            {
+                if (posButton.checked) {
+                    props.push( 'ADBE Position' );
+                    props.push( 'ADBE Vector Position' );
+                    props.push( 'ADBE Position_0' );
+                    props.push( 'ADBE Position_1' );
+                    props.push( 'ADBE Position_2' );
+                }
+                if (rotButton.checked) {
+                    props.push( 'ADBE Rotate Z' );
+                    props.push( 'ADBE Rotate Y' );
+                    props.push( 'ADBE Rotate X' );
+                    props.push( 'ADBE Orientation' );
+                    props.push( 'ADBE Vector Rotation' );
+                }
+                if (scaButton.checked) {
+                    props.push( 'ADBE Scale' );
+                    props.push( 'ADBE Vector Scale' );
+                }
+                if (opaButton.checked) {
+                    props.push( 'ADBE Opacity' );
+                    props.push( 'ADBE Vector Group Opacity' );
+                }
+                if (masksButton.checked) {
+                    props.push( 'ADBE Mask Parade' );
+                }
+                if (fxButton.checked) {
+                    props.push( 'ADBE Effect Parade' );
+                }
+            }
+
+            Duik.Animation.selectKeyframes(
+                comp,
+                layerSelectionSelector.index == 0,
+                layerTypeSelector.index == 0,
+                [inTime, outTime],
+                props );
+        };
     }
+
+    
 
     var zeroButton = DuScriptUI.button(
         toolsGroup,
