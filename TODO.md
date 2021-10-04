@@ -2,10 +2,12 @@
 
 ## Duik
 
-
-- [ ] constraints panel tools
-    - measure distance
-    - get prop info
+- [ ] Rookie mode: grids with names for tools
+    - [ ] rigging/bones
+    - [ ] rigging/constraints
+    - [ ] rigging/controllers
+    - [ ] automation
+    - [x] animation
 - [ ] autorig
     - wings
     - hairs
