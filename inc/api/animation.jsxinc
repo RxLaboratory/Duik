@@ -4,6 +4,10 @@
  */
 Duik.Animation = {};
 
+// low-level undocumented list
+// The animations which have been copied by Duik.Animation.copy()
+Duik.Animation.copied = [];
+
 /**
  * The list of animation functions
  */
@@ -87,4 +91,112 @@ Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.SELECT_KEYFRAMES);
+}
+
+Duik.CmdLib['Animation']["Copy"] = "Duik.Animation.copy()";
+/**
+ * Copies the currently selected keyframes, which can then be pasted with {@link Duik.Animation.paste}.
+ * @param {CompItem} [comp=DuAEProject.getActiveComp] The composition
+ * @returns {DuAELayerAnimation[]} The list of animations which have been copied.
+ */
+Duik.Animation.copy = function( comp )
+{
+    comp = def(comp, DuAEProject.getActiveComp() );
+    if(!comp) return;
+
+    var layers = comp.selectedLayers;
+    if (layers.length == 0) return;
+
+    copiedAnim = [];
+
+    for (var i = 0 ; i < layers.length ; i++)
+    {
+        copiedAnim.push(DuAELayer.getAnim( layers[i],true ));
+    }
+    //get the first keyframe time to offset when pasting
+    copiedAnim.firstKeyFrameTime = DuAELayer.firstKeyFrameTime(layers, true);
+
+    Duik.Animation.copied = copiedAnim;
+
+    return copiedAnim;
+}
+
+Duik.CmdLib['Animation']["Paste"] = "Duik.Animation.paste()";
+Duik.CmdLib['Animation']["Paste Reversed"] = "Duik.Animation.paste( false, false, true )";
+Duik.CmdLib['Animation']["Paste Offset"] = "Duik.Animation.paste( false, true )";
+Duik.CmdLib['Animation']["Paste Replace"] = "Duik.Animation.paste( true )";
+/**
+ * Pastes the animation previously copied by {@link Duik.Animation.copy} to the selected properties.
+ * @param {boolean} replace - Whether to completely erase and replace the current animation
+ * @param {boolean} offset - Whether to offset the animation from the current value
+ * @param {boolean} reverse - Whether to reverse the animation
+ */
+Duik.Animation.paste = function ( comp, replace, offset, reverse )
+{
+    comp = def( comp, DuAEProject.getActiveComp() );
+    if (!comp) return;
+
+    var layers = DuAEComp.getSelectedLayers();
+    if (layers.length == 0) layers = comp.layers;
+    if (layers.length == 0) return;
+
+    //options
+    var time = comp.time - Duik.Animation.copied.firstKeyFrameTime;
+    replace = def( replace, false );
+    offset = def( offset, false );
+    reverse = def( reverse, false );
+
+    DuAE.beginUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES, false);
+    DuAEProject.setProgressMode(true);
+
+    var remaining = DuAELayer.setAnims(layers, Duik.Animation.copied, time, undefined, undefined, undefined, replace, undefined, offset, reverse);
+
+    if (remaining.length > 0)
+    {
+        var ui_pasteLayerPicker = DuScriptUI.layerPickerDialog("Missing layers");
+
+        for (var i = 0, num = remaining.length; i < num; i++)
+        {
+            ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
+            //try to preselect by name
+            var ok = false;
+            for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
+            {
+                var l = comp.layer(j);
+                if (l.name == remaining[i]._name)
+                {
+                    ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
+                    ok = true;
+                    break;
+                }
+            }
+            if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
+        }
+
+        ui_pasteLayerPicker.onAccept = function () {
+            DuAE.beginUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES, false);
+            DuAEProject.setProgressMode(true);
+            DuAELayer.setAllAnims(
+                ui_pasteLayerPicker.getLayers(),
+                Duik.Animation.copied,
+                time,
+                undefined,
+                undefined,
+                undefined,
+                replace,
+                undefined,
+                offset,
+                false
+            );
+            DuAEProject.setProgressMode(false);
+            DuAE.endUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES);
+        };
+
+        DuAEProject.setProgressMode(false);
+        DuScriptUI.showUI(ui_pasteLayerPicker);
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES);
+
 }
