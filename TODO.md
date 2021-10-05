@@ -3,6 +3,12 @@
 ## Duik
 
 - [ ] Finish animation library
+    - reselect cat on refresh
+    - list animations on cat change
+    - edit animation name
+    - generate and load thumbnail
+    - remove animation
+    - apply and apply settings
 - [ ] Select keyframes bug: error when controllers only and no controller in comp
 - [ ] NLA: alt click to add seleted props to the nla
 - [ ] Interpolations!
