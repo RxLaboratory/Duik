@@ -3,6 +3,8 @@
 ## Duik
 
 - [ ] Finish animation library
+- [ ] Select keyframes bug: error when controllers only and no controller in comp
+- [ ] NLA: alt click to add seleted props to the nla
 - [ ] Interpolations!
     - [ ] Bezier
     - [ ] Linear
