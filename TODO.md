@@ -2,14 +2,6 @@
 
 ## Duik
 
-
-- [ ] NLA check layer name
-- [ ] Rookie mode: grids with names for tools
-    - [x] rigging/bones
-    - [ ] rigging/constraints
-    - [ ] rigging/controllers
-    - [ ] automation
-    - [x] animation
 - [ ] Finish animation library
 - [ ] Interpolations!
     - [ ] Bezier
