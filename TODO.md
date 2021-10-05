@@ -2,12 +2,40 @@
 
 ## Duik
 
+
+- [ ] NLA check layer name
 - [ ] Rookie mode: grids with names for tools
-    - [ ] rigging/bones
+    - [x] rigging/bones
     - [ ] rigging/constraints
     - [ ] rigging/controllers
     - [ ] automation
     - [x] animation
+- [ ] Finish animation library
+- [ ] Interpolations!
+    - [ ] Bezier
+    - [ ] Linear
+    - [ ] log
+    - [ ] logistic
+    - [ ] Gaussian
+    - [ ] and inverse
+
+```js
+function logInterpolation(t, tMin, tMax, vMin, vMax, rate)
+{
+	// Offset t to be in the range 1-Max
+	tMax = ( tMax - tMin ) * rate + 1;
+	t = ( t - tMin ) * rate + 1;
+	if (t <= 1) return vMin;
+	// Compute the max
+	var m = Math.log(tMax);
+	// Compute current value
+	var v = Math.log(t);
+	return linear(v, 0, m, vMin, vMax);
+}
+```
+
+- [ ] Interpolation option to the NLA
+- [ ] New Kleaner
 - [ ] autorig
     - wings
     - hairs
