@@ -2,23 +2,6 @@
 
 ## Duik
 
-- [ ] Finish animation library
-    - reselect cat on refresh
-    - list animations on cat change
-    - edit animation name
-    - generate and load thumbnail
-    - remove animation
-    - apply and apply settings
-- [ ] Select keyframes bug: error when controllers only and no controller in comp
-- [ ] NLA: alt click to add seleted props to the nla
-- [ ] Interpolations!
-    - [ ] Bezier
-    - [ ] Linear
-    - [ ] log
-    - [ ] logistic
-    - [ ] Gaussian
-    - [ ] and inverse
-
 ```js
 function logInterpolation(t, tMin, tMax, vMin, vMax, rate)
 {
@@ -33,36 +16,6 @@ function logInterpolation(t, tMin, tMax, vMin, vMax, rate)
 	return linear(v, 0, m, vMin, vMax);
 }
 ```
-
-- [ ] Interpolation option to the NLA
-- [ ] New Kleaner
-- [ ] autorig
-    - wings
-    - hairs
-    - morganimator's spine rig
-    - snake
-    - custom
-    - options ( tail, longchains, bake/bakeenvelops/nobake )
-- [ ] connector
-- [ ] bone
-    - select tool: alt to select limb
-    - adjust spine etc according to animal with better defaults / illustations
-    - forcelink on alt click
-- [ ] Automation panel
-- [ ] Animation panel
-    - [ ] Tools:
-        - IK/FK
-- [ ] Option to hide tags
-- [ ] Bones Front and side wing
-- [ ] Bones Autolink on Ctrl+click (add to helptip) (also from the options panel)
-- [ ] Bones Random color on Alt+Click (add to helptip) (also from the options panel)
-- [ ] OCO Panel
-- [ ] Camera panel
-- [ ] Tools:
-    - copy of the layer manager in duik main panel ?
-- [ ] Note editor
-- [ ] layer rename:
-    - autofixexpressions, test again
 
 ## DuAEF & DuESF
 
