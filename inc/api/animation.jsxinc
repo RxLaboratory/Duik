@@ -122,81 +122,18 @@ Duik.Animation.copy = function( comp )
 }
 
 Duik.CmdLib['Animation']["Paste"] = "Duik.Animation.paste()";
-Duik.CmdLib['Animation']["Paste Reversed"] = "Duik.Animation.paste( false, false, true )";
-Duik.CmdLib['Animation']["Paste Offset"] = "Duik.Animation.paste( false, true )";
-Duik.CmdLib['Animation']["Paste Replace"] = "Duik.Animation.paste( true )";
+Duik.CmdLib['Animation']["Paste Reversed"] = "Duik.Animation.paste( undefined, false, false, true )";
+Duik.CmdLib['Animation']["Paste Offset"] = "Duik.Animation.paste( undefined, false, true )";
+Duik.CmdLib['Animation']["Paste Replace"] = "Duik.Animation.paste( undefined, true )";
 /**
  * Pastes the animation previously copied by {@link Duik.Animation.copy} to the selected properties.
- * @param {boolean} replace - Whether to completely erase and replace the current animation
- * @param {boolean} offset - Whether to offset the animation from the current value
- * @param {boolean} reverse - Whether to reverse the animation
+ * @param {CompItem} [comp] The composition.
+ * @param {Boolean} [replace=false] - Whether to completely erase and replace the current animation
+ * @param {Boolean} [offset=false] - Whether to offset the animation from the current value
+ * @param {Boolean} [reverse=false] - Whether to reverse the animation
+ * @param {string[]} [matchNames=[]] A filter to apply only on specific property types
  */
-Duik.Animation.paste = function ( comp, replace, offset, reverse )
+Duik.Animation.paste = function( comp, replace, offset, reverse )
 {
-    comp = def( comp, DuAEProject.getActiveComp() );
-    if (!comp) return;
-
-    var layers = DuAEComp.getSelectedLayers();
-    if (layers.length == 0) layers = comp.layers;
-    if (layers.length == 0) return;
-
-    //options
-    var time = comp.time - Duik.Animation.copied.firstKeyFrameTime;
-    replace = def( replace, false );
-    offset = def( offset, false );
-    reverse = def( reverse, false );
-
-    DuAE.beginUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES, false);
-    DuAEProject.setProgressMode(true);
-
-    var remaining = DuAELayer.setAnims(layers, Duik.Animation.copied, time, undefined, undefined, undefined, replace, undefined, offset, reverse);
-
-    if (remaining.length > 0)
-    {
-        var ui_pasteLayerPicker = DuScriptUI.layerPickerDialog("Missing layers");
-
-        for (var i = 0, num = remaining.length; i < num; i++)
-        {
-            ui_pasteLayerPicker.addSelector(remaining[i]._index + ' | ' + remaining[i]._name);
-            //try to preselect by name
-            var ok = false;
-            for (var j = 1, numLayers = comp.numLayers; j <= numLayers; j++)
-            {
-                var l = comp.layer(j);
-                if (l.name == remaining[i]._name)
-                {
-                    ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(j);
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok && remaining[i]._index > 0 && remaining[i]._index <= comp.numLayers) ui_pasteLayerPicker.layerPicker.selectors[i].setCurrentIndex(remaining[i]._index);
-        }
-
-        ui_pasteLayerPicker.onAccept = function () {
-            DuAE.beginUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES, false);
-            DuAEProject.setProgressMode(true);
-            DuAELayer.setAllAnims(
-                ui_pasteLayerPicker.getLayers(),
-                Duik.Animation.copied,
-                time,
-                undefined,
-                undefined,
-                undefined,
-                replace,
-                undefined,
-                offset,
-                false
-            );
-            DuAEProject.setProgressMode(false);
-            DuAE.endUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES);
-        };
-
-        DuAEProject.setProgressMode(false);
-        DuScriptUI.showUI(ui_pasteLayerPicker);
-    }
-
-    DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup(DuScriptUI.String.PASTE_KEYFRAMES);
-
+    DuIO.Animation.paste( comp, Duik.Animation.copied, replace, offset, reverse );
 }
