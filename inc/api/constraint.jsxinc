@@ -1696,6 +1696,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
 
     // indices
     var ikIndex = pe.props["IK / FK"].index;
+    var weightIndex = pe.props["Weight"].index;
     var sideIndex = pe.props["Side"].index;
 
     var swingIndex = pe.props["Swing"]["Swing"].index;
@@ -1717,8 +1718,6 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
     var upperStretchIndex = pe.props["Stretch"]["Upper Stretch"].index;
     var lowerStretchIndex = pe.props["Stretch"]["Lower Stretch"].index;
     var autoStretchIndex = pe.props["Stretch"]["Auto-Stretch"].index;
-
-    var rLimitIndex = pe.props["Advanced"]["Full rotation limit"].index;
 
     var uStretchIndex = pe.props["Data"]["Stretch data"]["Upper stretch"].index;
     var uScaleIndex = pe.props["Data"]["Stretch data"]["Upper scale"].index;
@@ -1753,9 +1752,6 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
     //set lengths
     effect( uLengthIndex ).setValue( upperLength );
     effect( lLengthIndex ).setValue( lowerLength );
-
-    //rotation limit
-    effect( rLimitIndex ).setValue( -180 );
 
     //inherit parent rotation
     effect( pRotationIndex ).setValue( 1 );
@@ -1838,6 +1834,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '	var stretch = fx(' + stretchIndex + ') + fx(' + lowerStretchIndex + ');',
         '	var auto = fx(' + autoStretchIndex + ').value;',
         '	var IK = fx(' + ikIndex + ').value;',
+        '   IK *= fx(' + weightIndex + ').value/100;',
         '	var shrinkVal = fx(' + sideIndex + ').value;',
         '   shrinkVal /= 100;',
         '	shrinkVal = 1 - Math.abs(shrinkVal);',
@@ -1856,9 +1853,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '	var distC = length(posC, posR);',
         '	var shrinkMax = IKLength * shrinkVal;',
         '	var shrink = 0;',
-        '	if (distC < IKStretched && IK) shrink = 1 - distC / IKStretched;',
+        '	if (distC < IKStretched) shrink = (1 - distC / IKStretched)*IK;',
         '	boneStretch -= linear(shrink, 0, shrinkMax) * proportion;',
-        '	if (distC > IKStretched && auto && IK) boneStretch += (distC - IKLength) * proportion;',
+        '	if (distC > IKStretched && auto) boneStretch += ((distC - IKLength) * proportion)*IK;',
         '	else boneStretch += stretch * proportion;',
         '	var coef = 1;',
         '	dist2 != 0 ? coef = (dist2 + boneStretch) / dist2 : coef = 1;',
@@ -1984,13 +1981,13 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
         stroke( "ADBE Vector Stroke Opacity" ).expression = [DuAEExpression.Id.TWO_IK,
             'var fx = effect("' + effect.name + '");\n' +
-            'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value * 100;',
+            'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value;',
             'else 0;'
             ].join('\n');
 
         if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.TWO_IK + '\n[ effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ]';
         if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
-        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ')';
+        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ') * effect("' + effect.name + '")(' + weightIndex + ').value/100;';
 
         if ( DuAE.version.version >= 15 )
         {
@@ -2000,6 +1997,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
                 lineGroup.name = 'IK Line';
             }
+            lineGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + effect.name + '")(' + weightIndex + ').value;';
             var lineContent = lineGroup.property( "ADBE Vectors Group" );
             var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
             shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
@@ -2198,6 +2196,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         'if (controller != null) {',
         '	var fx = controller.effect("' + effect.name + '");',
         '	var IKFK = fx(' + ikIndex + ').value;',
+        '   IKFK *= fx(' + weightIndex + ').value/100;',
         '',
         '	function ik() {',
         '		var layer1 = thisLayer;',
@@ -2209,7 +2208,6 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '		}',
         '		if (layer2 != null) {',
         '			var endPos = fx(' + goalPosIndex + ').value;',
-        '			var limit = fx(' + rLimitIndex + ').value;',
         '			var side = fx(' + sideIndex + ').value;',
         '			var cw = side < 0;',
         '',
@@ -2231,8 +2229,10 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '			var V = B - A;',
         '			var adj1 = radiansToDegrees(Math.atan2(V[1], V[0]));',
         '			var IK = r - adj1 + value;',
-        '			if (IK < limit) IK += 360;',
-        '			return IK;',
+        '           IK = IK % 360;',
+		'           if (IK > 180) return IK - 360;',
+		'           if (IK < -180) return IK + 360;',
+		'           return IK;',
         '		}',
         '	}',
         '',
@@ -2248,7 +2248,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '		}',
         '		return FK;',
         '	}',
-        '	result = IKFK ? ik() : fk();',
+        '	result = ik()*IKFK + fk()*(1-IKFK);',
         '}',
         'result;'
     ].join('\n');
@@ -2266,6 +2266,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         'if (controller != null) {',
         '	var fx = controller.effect("' + effect.name + '");',
         '	var IKFK = fx(' + ikIndex + ').value;',
+        '   IKFK *= fx(' + weightIndex + ').value/100;',
         '	var layer1 = null;',
         '	var layer2 = thisLayer;',
         '	try {',
@@ -2297,7 +2298,10 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '			var V2 = C - B;',
         '			var adj2 = radiansToDegrees(Math.atan2(V2[1], V2[0]));',
         '			var IK = r + adj1 - adj2 + value;',
-        '			return IK % 360;',
+        '           IK = IK % 360;',
+		'           if (IK > 180) return IK - 360;',
+		'           if (IK < -180) return IK + 360;',
+		'           return IK;',
         '		}',
         '',
         '		function fk() {',
@@ -2327,7 +2331,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '			FK += fx(' + lFKIndex + ').value;',
         '			return FK;',
         '		}',
-        '		result = IKFK ? ik() : fk();',
+        '		result = ik()*IKFK + fk()*(1-IKFK);',
         '	}',
         '}',
         'result;'
@@ -2346,6 +2350,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '		var stretch = fx(' + stretchIndex + ').value + fx(' + upperStretchIndex + ').value;',
         '		var auto = fx(' + autoStretchIndex + ').value;',
         '		var IK = fx(' + ikIndex + ').value;',
+        '       IK *= fx(' + weightIndex + ').value/100;',
         '		var shrinkVal = fx(' + sideIndex + ').value;',
         '       shrinkVal /= 100;',
         '		shrinkVal = 1 - Math.abs(shrinkVal);',
@@ -2364,9 +2369,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '		var distC = length(posC, posR);',
         '		var shrinkMax = IKLength * shrinkVal;',
         '		var shrink = 0;',
-        '		if (distC < IKStretched && IK) shrink = 1 - distC / IKStretched;',
+        '		if (distC < IKStretched) shrink = (1 - distC / IKStretched)*IK;',
         '		boneStretch -= linear(shrink, 0, shrinkMax) * proportion;',
-        '		if (distC > IKStretched && auto && IK) boneStretch += (distC - IKLength) * proportion;',
+        '		if (distC > IKStretched && auto) boneStretch += ((distC - IKLength) * proportion)*IK;',
         '		else boneStretch += stretch * proportion;',
         '		var coef = 1;',
         '		dist1 != 0 ? coef = (dist1 + boneStretch) / dist1 : coef = 1;',
@@ -2387,9 +2392,11 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
             'try {',
             '    ctrl = effect( "' + goalData.name + '" )( 1 );',
             '} catch ( e ) {};',
+            'var result = value;',
             'if ( ctrl != null ) {',
             '    var fx = ctrl.effect( "' + effect.name + '" );',
             '    var ikfk = fx( ' + ikIndex + ' ).value;',
+            '    ikfk *= fx(2).value/100;',
             '',
             '    function ik() {',
             '        var IK = ctrl.rotation.value;',
@@ -2426,8 +2433,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
             '        ',
             '        return FK;',
             '    }',
-            '    ikfk ? ik() : fk();',
-            '} else value;'
+            '    result = ik()*ikfk + fk()*(1-ikfk);',
+            '}',
+            'result;'
             ].join('\n');
 
         var rotProp = new DuAEProperty( goal.transform.rotation );
@@ -2512,6 +2520,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
 
     // indices
     var ikIndex = pe.props["IK / FK"].index;
+    var weightIndex = pe.props["Weight"].index;
     var revIndex = pe.props["Reverse"].index;
 
     var pRotationIndex = pe.props["FK"]["Parent rotation"].index;
@@ -2530,8 +2539,6 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     var middleStretchIndex = pe.props["Stretch"]["Middle Stretch"].index;
     var lowerStretchIndex = pe.props["Stretch"]["Lower Stretch"].index;
     var autoStretchIndex = pe.props["Stretch"]["Auto-Stretch"].index;
-
-    var rLimitIndex = pe.props["Advanced"]["Full rotation limit"].index;
 
     var uStretchIndex = pe.props["Data"]["Stretch data"]["Upper stretch"].index;
     var mStretchIndex = pe.props["Data"]["Stretch data"]["Middle stretch"].index;
@@ -2569,9 +2576,6 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     effect( uLengthIndex ).setValue( upperLength );
     effect( mLengthIndex ).setValue( middleLength );
     effect( lLengthIndex ).setValue( lowerLength );
-
-    //rotation limit
-    effect( rLimitIndex ).setValue( -180 );
 
     //get some useful coordinates
     var goalPos = [ 0, 0 ];
@@ -2653,6 +2657,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '   var stretch = fx(' + stretchIndex + ').value + fx(' + lowerStretchIndex + ');',
         '   var auto = fx(' + autoStretchIndex + ').value;',
         '   var IK = fx(' + ikIndex + ').value;',
+        '   IK *= fx(' + weightIndex + ').value/100;',
         '   function getWorldPos(L){',
         '       return L.toWorld(L.anchorPoint);',
         '   }',
@@ -2672,7 +2677,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '   var posC = toWorld(anchorPoint);',
         '   var posR = getWorldPos(layer1);',
         '   var distC = length(posC,posR);',
-        '   if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '   if (distC > IKStretched && auto) boneStretch += ((distC-IKLength)*proportion)*IK;',
         '   else boneStretch += stretch*proportion;',
         '   var coef = 1;',
         '   dist3 != 0 ? coef = (dist3+boneStretch)/dist3 : coef = 1;',
@@ -2765,7 +2770,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
 
         if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.THREE_IK + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2]';
         if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
-        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ')';
+        if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ') * effect("' + effect.name + '")(' + weightIndex + ').value/100;';
 
         if ( DuAE.version.version >= 15 )
         {
@@ -2775,6 +2780,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
                 lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
                 lineGroup.name = 'IK Line';
             }
+            lineGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + effect.name + '")(' + weightIndex + ').value;';
             var lineContent = lineGroup.property( "ADBE Vectors Group" );
             var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
             shape( 'ADBE Vector Shape' ).expression = DuAEExpression.Id.THREE_IK + '\nif (active){\n' +
@@ -2816,6 +2822,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '{',
         '   var fx = controller.effect("' + effect.name + '");',
         '   var IKFK = fx(' + ikIndex + ').value;',
+        '   IKFK *= fx(' + weightIndex + ').value/100;',
         '   var layer1 = thisLayer;\n' +
         '   var layer2 = null',
         '   var layer3 = null;',
@@ -2826,7 +2833,6 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       {',
         '           var endPos = fx(' + goalPosIndex + ').value;',
         '           var cw = fx(' + revIndex + ').value;',
-        '           var limit = fx(' + rLimitIndex + ').value;',
         '           function getWorldPos(layer)',
         '           {',
         '               return layer.toWorld(layer.anchorPoint);',
@@ -2859,8 +2865,10 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var uToC =getAngle(uPos,cPos);',
         '           var uToM =getAngle(uPos,mPos);',
         '           var ikResult = upperA + uToC - uToM;',
-        '           if (ikResult < limit) ikResult +=360;',
-        '           return ikResult;',
+        '           ikResult = ikResult % 360;',
+		'           if (ikResult > 180) return ikResult - 360;',
+		'           if (ikResult < -180) return ikResult + 360;',
+		'           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -2878,7 +2886,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       }',
         '       return FK;',
         '   }',
-        '   IKFK ? result += ik() : result += fk();',
+        '   result += ik()*IKFK + fk()*(1-IKFK);',
         '   }',
         '}',
         'result;'
@@ -2896,6 +2904,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '{',
         '   var fx = controller.effect("' + effect.name + '");',
         '   var IKFK = fx(' + ikIndex + ').value;',
+        '   IKFK *= fx(' + weightIndex + ').value/100;',
         '   var layer1 = null;',
         '   var layer2 = thisLayer;',
         '   var layer3 = null;',
@@ -2941,7 +2950,10 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var uToM =getAngle(uPos,mPos);',
         '           var mToL =getAngle(mPos,lPos);',
         '           var ikResult = middleA + uToM - mToL +180;',
-        '           return ikResult % 360;',
+        '           ikResult = ikResult % 360;',
+		'           if (ikResult > 180) return ikResult - 360;',
+		'           if (ikResult < -180) return ikResult + 360;',
+		'           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -2979,7 +2991,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           FK += manual;',
         '           return FK;',
         '       }',
-        '       IKFK ? result += ik() : result += fk();',
+        '       result += ik()*IKFK + fk()*(1-IKFK);',
         '   }',
         '}',
         'result;'
@@ -2999,6 +3011,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       var stretch = fx(' + stretchIndex + ').value + fx(' + upperStretchIndex + ');',
         '       var auto = fx(' + autoStretchIndex + ').value;',
         '       var IK = fx(' + ikIndex + ').value;',
+        '       IK *= fx(' + weightIndex + ').value/100;',
         '       function getWorldPos(L){',
         '           return L.toWorld(L.anchorPoint);',
         '       }',
@@ -3018,7 +3031,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       var posC = getWorldPos(controller);',
         '       var posR = getWorldPos(layer1);',
         '       var distC = length(posC,posR);',
-        '       if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '       if (distC > IKStretched && auto) boneStretch += ((distC-IKLength)*proportion)*IK;',
         '       else boneStretch += stretch*proportion;',
         '       coef = 1;',
         '       dist1 != 0 ? coef = (dist1+boneStretch)/dist1 : coef = 1;',
@@ -3041,6 +3054,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '{',
         '   var fx = controller.effect("' + effect.name + '");',
         '   var IKFK = fx(' + ikIndex + ').value;',
+        '   IKFK *= fx(' + weightIndex + ').value/100;',
         '   var layer1 = null;',
         '   var layer2 = null;',
         '   var layer3 = thisLayer;',
@@ -3087,7 +3101,10 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var mToL =getAngle(mPos,lPos);',
         '           var lToZ =getAngle(lPos,zPos);',
         '           var ikResult = lowerA + mToL - lToZ +180;',
-        '           return ikResult % 360;',
+        '           ikResult = ikResult % 360;',
+		'           if (ikResult > 180) return ikResult - 360;',
+		'           if (ikResult < -180) return ikResult + 360;',
+		'           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -3113,7 +3130,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           FK = FK + manual - parentRot.valueAtTime(0);',
         '           return FK;',
         '       }',
-        '       IKFK ? result += ik() : result += fk();',
+        '       result += ik()*IKFK + fk()*(1-IKFK);',
         '   }',
         '}',
         'result;'
@@ -3133,6 +3150,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       var stretch = fx(' + stretchIndex + ').value + fx(' + middleStretchIndex + ');',
         '       var auto = fx(' + autoStretchIndex + ').value;',
         '       var IK = fx(' + ikIndex + ').value;',
+        '       IK *= fx(' + weightIndex + ').value/100;',
         '       function getWorldPos(L) {',
         '           return L.toWorld(L.anchorPoint);',
         '       }',
@@ -3152,7 +3170,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '       var posC = getWorldPos(controller);',
         '       var posR = getWorldPos(layer1);',
         '       var distC = length(posC,posR);',
-        '       if (distC > IKStretched && auto && IK) boneStretch += (distC-IKLength)*proportion;',
+        '       if (distC > IKStretched && auto) boneStretch += ((distC-IKLength)*proportion)*IK;',
         '       else boneStretch += stretch*proportion;',
         '       var coef = 1;',
         '       dist2 != 0 ? coef = (dist2+boneStretch)/dist2 : coef = 1;',
