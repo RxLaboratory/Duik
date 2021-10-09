@@ -23,7 +23,7 @@ Duik’s comprehensiveness and ease of use have made it a script used in numerou
 - User forum: [forum.rainboxlab.org](http://forum.rainboxlab.org)   
 - Developers and users chat: [chat.rainboxlab.org](http://chat.rainboxlab.org)
    
-## Developpers
+## Developers
 
 - Duik provides a useful API to easily include its features into your own scripts (provided you use a license compatible with the GNU-GPL v3). It is documented here: [duik-api.rainboxlab.org](http://duik-api.rainboxlab.org).
 - It is part of ***DuAEF***, the Duduf After Effects Framework. The source code and releases of this framework is available [in this github repository](https://github.com/Rainbox-dev/DuAEF), and it is documented here: [duaef-reference.rainboxlab.org](http://duaef-reference.rainboxlab.org).
