@@ -210,79 +210,15 @@ Duik.Automation.addNLAClip = function ( nlaComp )
  */
 Duik.Automation.looper = function ( props, effect )
 {
-    props = def(props, DuAEComp.getSelectedProps() );
-    props = new DuList(props);
-    if (props.length() == 0) return null;
+    effect = Duik.Animation.interpolator( props, effect );
 
-    var p = props.at(0);
-    p = new DuAEProperty(p);
-    var ctrlLayer = p.layer;
+    var i = Duik.PseudoEffect.INTERPOLATOR.props;
 
-    DuAE.beginUndoGroup(DuScriptUI.String.LOOPER, false);
-    
-    // Add the effect
-    if (!effect)
-    {
-        effect = Duik.PseudoEffect.LOOPER.apply( ctrlLayer );
-    }
-
-    // Indices
-    var i = Duik.PseudoEffect.LOOPER.props;
-
-    // The expression
-    var exp = [ DuAEExpression.Id.LOOPER,
-            'var fx = thisComp.layer("' + ctrlLayer.name + '").effect("' + effect.name + '")',
-            'var isIn = fx(' + i['In']['In'].index + ');',
-            'var isOut = fx(' + i['Out']['Out'].index + ');',
-            'var inType = fx(' + i['In']['Type'].index + ').value;',
-            'var outType = fx(' + i['Out']['Type'].index + ').value;',
-            'var outNumKeyframes = fx(' + i['Out']['Number of keyframes'].index + ').value;',
-            'var inNumKeyframes = fx(' + i['In']['Number of keyframes'].index + ').value;',
-            'var result = value;',
-            '',
-            DuAEExpression.Library.get([
-                'lastActiveTime',
-                'nextActiveTime',
-                'continueOut',
-                'continueIn',
-                'cycleOut',
-                'cycleIn',
-                'pingPongOut',
-                'pingPongIn'
-            ]),
-            '',
-            'if (numKeys > 1)',
-            '{',
-            '	var outTime = lastActiveTime( isOut, time );',
-            '	var inTime = nextActiveTime( isIn, time );',
-            '	',
-            '	if (time < key(1).time)',
-            '	{',
-            '		if (inType == 1) result = cycleIn( inTime, inNumKeyframes );',
-            '		else if (inType == 2) result = cycleIn( inTime, inNumKeyframes, true );',
-            '		else if (inType == 3) result = pingPongIn( inTime, inNumKeyframes );',
-            '		else if (inType == 4) result = continueIn( inTime );',
-            '	}',
-            '	else if ( outTime > key(numKeys).time )',
-            '	{	',
-            '		if (outType == 1) result = cycleOut( outTime, outNumKeyframes );',
-            '		else if (outType == 2) result = cycleOut( outTime, outNumKeyframes, true );',
-            '		else if (outType == 3) result = pingPongOut( outTime, outNumKeyframes );',
-            '		else if (outType == 4) result = continueOut( outTime );',
-            '	}',
-            '}',
-            '',
-            'result;'
-            ].join('\n');
-
-    // Add expressions
-    props.do(function (prop)
-    {
-        prop = new DuAEProperty(prop);
-        prop.setExpression( exp, false );
-    });
-
-    DuAE.endUndoGroup(DuScriptUI.String.LOOPER);
+    // Set interpolation to none
+    effect( i['Type'].index ).setValue(1);
+    // Set cycles
+    effect( i['Extrapolation and loop']['In']['Type'].index ).setValue( 4 );
+    effect( i['Extrapolation and loop']['Out']['Type'].index ).setValue( 4 );
 
     return effect;
 }
