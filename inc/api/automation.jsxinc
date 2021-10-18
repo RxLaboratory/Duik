@@ -202,6 +202,7 @@ Duik.Automation.addNLAClip = function ( nlaComp )
     return 1;
 }
 
+Duik.CmdLib['Automation']["Looper"] = "Duik.Automation.looper()";
 /**
  * Adds a loop expression and pseudo effect with more options than the loopOut and loopIn expressions.
  * @param {PropertyBase[]|DuList.<PropertyBase>|PropertyBase} [props] The properties to loop. The selected properties in the active comp if omitted.
@@ -221,4 +222,56 @@ Duik.Automation.looper = function ( props, effect )
     effect( i['Extrapolation and loop']['Out']['Type'].index ).setValue( 4 );
 
     return effect;
+}
+
+Duik.Automation.copiedExpression = '';
+Duik.CmdLib['Automation']["Copy Expression"] = "Duik.Automation.copyExpression()"
+/**
+ * Copies the expression from the property, which can be pasted in multiple properties with {@link Duik.Automation.pasteExpression}.
+ * @param {Property|DuAEProperty} [prop] The property, the selected/active property if omitted.
+ * @returns {string} The expression.
+ */
+Duik.Automation.copyExpression = function( prop )
+{
+    if (typeof prop === 'undefined')
+    {
+        var props = DuAEComp.getSelectedProps();
+        if (props.length == 0) return Duik.Automation.copiedExpression;
+        prop = props.pop();
+    }
+
+    prop = new DuAEProperty(prop);
+    if (prop.riggable())
+    {
+        prop = prop.getProperty();
+        Duik.Automation.copiedExpression = prop.expression;
+    }
+
+    return Duik.Automation.copiedExpression;
+}
+
+Duik.CmdLib['Automation']["Paste Expression"] = "Duik.Automation.pasteExpression()"
+/**
+ * Pastes the expression previously copied with {@link Duik.Automation.copyExpression}.
+ * @param {Property[]|DuAEProperty[]} [props] The properties where to paste the expression, the selecte properties if omitted.
+ * @param {string} [expression] A specific expression to paste.
+ */
+Duik.Automation.pasteExpression = function( props, expression )
+{
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) return;
+    expression = def (expression , Duik.Automation.copiedExpression);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.PASTE_EXPRESSION, false);
+
+    var i = new DuList(props);
+    i.do(function(prop)
+    {
+        if (prop.riggable())
+        {
+            prop.setExpression(expression, false);
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.PASTE_EXPRESSION);
 }
