@@ -42,6 +42,7 @@ Duik.Camera.frame = function( comp )
     DuAE.endUndoGroup( DuScriptUI.String.FRAMING_GUIDES );
 }
 
+Duik.CmdLib['Camera']["Scale Z-link"] = "Duik.Camera.scaleZLink()";
 /**
  * Adds an inverse constraint of the scale to the depth (Z position) of the 3D layers, so that their visual size doesn't change with their depth.<br />
  * Works as a toggle: first run activates the effect, next run removes it from the selected layers.
@@ -122,4 +123,335 @@ Duik.Camera.scaleZLink = function( layers )
     DuAE.endUndoGroup( DuScriptUI.String.SCALE_Z_LINK );
 
     return 1;
+}
+
+Duik.CmdLib['Camera']["Camera rig"] = "Duik.Camera.rig()";
+/**
+ * Rigs a camera to make it easier to animate
+ * @param {CameraLayer} [camera] The camera to rig. If omitted, will try to find it in selected layers or the active comp.
+ * @return {ShapeLayer[]} An array of controllers: [target, cam, main], which may be empty if no camera was found or if it was a one-node camera.
+ */
+Duik.Camera.rig = function( camera )
+{
+    camera = def(camera, DuAEComp.camera());
+    if (!camera) return [];
+
+    // Check if it's a two-node camera
+    try
+    {
+        camera.pointOfInterest.expression = '';
+    }
+    catch(e)
+    {
+        return [];
+    }
+
+    DuAE.beginUndoGroup(DuScriptUI.String.CAMERA_RIG, false);
+
+    camera.locked = false;
+
+    var comp = camera.containingComp;
+
+    //create target
+	var targetCtrl = Duik.Controller.create(comp, Duik.Controller.Type.POSITION );
+    Duik.Controller.setCharacterName( DuScriptUI.String.CAMERA, targetCtrl );
+    Duik.Controller.setLimbName( DuScriptUI.String.TARGET, targetCtrl );
+	targetCtrl.threeDLayer = true;
+	targetCtrl.position.setValue(camera.transform.pointOfInterest.value);
+
+    //create cam
+	var camCtrl = Duik.Controller.create(comp, Duik.Controller.Type.POSITION );
+	Duik.Controller.setCharacterName( DuScriptUI.String.CAMERA, camCtrl );
+    Duik.Controller.setLimbName( DuScriptUI.String.CAM, camCtrl );
+	camCtrl.threeDLayer = true;
+	camCtrl.position.setValue(camera.transform.position.value);
+
+    //create main
+	var mainCtrl = Duik.Controller.create(comp, Duik.Controller.Type.CAMERA);
+	Duik.Controller.setCharacterName( DuScriptUI.String.CAMERA, mainCtrl );
+    Duik.Controller.setLimbName( camera.name, mainCtrl );
+	mainCtrl.threeDLayer = true;
+	mainCtrl.position.setValue(camera.transform.position.value);
+
+    camCtrl.parent = mainCtrl;
+	targetCtrl.parent = mainCtrl;
+
+    //expressions
+	camera.position.expression = DuAEExpression.Id.CAMERA_RIG + '\nthisComp.layer("' + camCtrl.name + '").toWorld(thisComp.layer("' + camCtrl.name + '").transform.anchorPoint.value);';
+	camera.pointOfInterest.expression =  DuAEExpression.Id.CAMERA_RIG + '\nthisComp.layer("' + targetCtrl.name + '").toWorld(thisComp.layer("' + targetCtrl.name + '").transform.anchorPoint.value);';
+	camera.orientation.expression =  DuAEExpression.Id.CAMERA_RIG + '\nthisComp.layer("' + camCtrl.name + '").transform.orientation.value;';
+	camera.xRotation.expression =  DuAEExpression.Id.CAMERA_RIG + '\nthisComp.layer("' + camCtrl.name + '").transform.xRotation.value';
+	camera.yRotation.expression =  DuAEExpression.Id.CAMERA_RIG + '\nthisComp.layer("' + camCtrl.name + '").transform.yRotation.value';
+	if (DuAE.version.version >= 16) camera.rotation.expression =  DuAEExpression.Id.CAMERA_RIG + '\n' + 'value + thisComp.layer("' + camCtrl.name + '").transform.zRotation.value';
+	else camera.rotation.expression =  DuAEExpression.Id.CAMERA_RIG + '\n' + 'value + thisComp.layer("' + camCtrl.name + '").transform.rotation.value';
+
+	//lock camera
+	camera.locked = true;
+    
+    DuAE.endUndoGroup(DuScriptUI.String.CAMERA_RIG);
+
+	return [targetCtrl,camCtrl,mainCtrl];
+}
+
+Duik.CmdLib['Camera']["2D Camera"] = "Duik.Camera.twoDCamera()";
+/**
+ * Creates a 2D Multiplane Camera
+ * @param {Layer[]|Layer|DuList.<Layer>} [layers] Some layers to parent to the new camera.
+ * @return {ShapeLayer[]} The camera layer and its levels (camera is the first layer in the Array).
+ */
+Duik.Camera.twoDCamera = function( layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers() );
+    layers = new DuList(layers);
+
+    var numLayers = 3;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TWO_D_CAMERA, false);
+
+    // Get comp and sort layers
+    var comp;
+    if (layers.isEmpty()) comp = DuAEProject.getActiveComp();
+    else
+    {
+        layers = DuAELayer.sortByIndex( layers );
+        numLayers = layers.length;
+        comp = layers[0].containingComp;
+    }
+
+    // Create camera control
+    var camCtrl = Duik.Controller.create( comp, Duik.Controller.Type.CAMERA );
+    Duik.Controller.setCharacterName( DuScriptUI.String.TWO_D_CAMERA, camCtrl );
+    Duik.Controller.setLimbName( DuScriptUI.String.CAMERA, camCtrl );
+    var camZero = Duik.Constraint.zero( camCtrl )[0];
+
+    // Add effect
+    var pe = Duik.PseudoEffect.TWO_D_CAMERA;
+    var effect = pe.apply( camCtrl );
+
+    // Rig camera
+    // Tilt
+	camZero.transform.rotation.expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+	    'thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Tilt"].index + ');'
+        ].join('\n');
+	//zoom & truck in/out
+	camZero.transform.scale.expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+        'var zoom = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Zoom"].index + ');',
+        'var truck = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' +  pe.props["Truck In/Out"].index + ');',
+        'value + [zoom,zoom] + [truck,truck];'
+        ].join('\n');
+	//pan
+	camZero.transform.position.expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+        'var x = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Horizontal Pan"].index + ');',
+        'var y = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Vertical Pan"].index + ');',
+        '[x,y] + [thisComp.width/2,thisComp.height/2];'
+        ].join('\n');
+    //behaviors
+    effect( pe.props["Horizontal Pan"].index ).expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+		'var fx = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")',
+		'gFreq = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Frequency"].index + ').value;',
+		'gAmp = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Amplitude"].index + ').value;',
+		'sFreq = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Frequency"].index + ').value;',
+		'sAmp = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Amplitude"].index + ').value;',
+		'type = fx(' + pe.props["Advanced Behaviour"]["Type"].index + ').value;',
+		'seed = fx(' + pe.props["Advanced Behaviour"]["Advanced"]["Random Seed"].index + ').value;',
+		'seedRandom(seed);',
+		'complexity = 1;',
+		'gAmp = gAmp * thisComp.width / 100;',
+		'sAmp = sAmp * thisComp.width / 1000;',
+		'if (type == 2)',
+		'{',
+		'   gAmp = gAmp/2;',
+		'   gFreq = gFreq*2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 3)',
+		'{',
+		'   gAmp = gAmp*3/4;',
+		'   sAmp = sAmp/2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 4)',
+		'{',
+		'   gAmp = 0;',
+		'   sAmp = sAmp/4;',
+		'}',
+		'else if (type == 5)',
+		'{',
+		'   gAmp = gAmp/3;',
+		'   sAmp = sAmp/4;',
+		'}',
+		'else',
+		'{',
+		'   gAmp = 0;',
+		'   sAmp = 0;',
+		'}',
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);',
+		'sw = wiggle(sFreq,sAmp, complexity , 0.7);',
+		'result = sw + gw - valueAtTime(0);',
+		'result;',
+        ].join('\n');
+
+	effect( pe.props["Vertical Pan"].index ).expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+		'var fx = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")',
+		'gFreq = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Frequency"].index + ').value;',
+		'gAmp = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Amplitude"].index + ').value;',
+		'sFreq = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Frequency"].index + ').value;',
+		'sAmp = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Amplitude"].index + ').value;',
+		'type = fx(' + pe.props["Advanced Behaviour"]["Type"].index + ').value;',
+		'seed = fx(' + pe.props["Advanced Behaviour"]["Advanced"]["Random Seed"].index + ').value;',
+		'seedRandom(seed+1);',
+		'complexity = 1;',
+		'gAmp = gAmp * thisComp.width / 100;',
+		'sAmp = sAmp * thisComp.width / 1000;',
+		'if (type == 2)',
+		'{',
+		'   gAmp = gAmp/2;',
+		'   gFreq = gFreq*2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 3)',
+		'{',
+		'   gAmp = gAmp*3/4;',
+		'   sAmp = sAmp/2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 4)',
+		'{',
+		'   gAmp = 0;',
+		'   sAmp = sAmp/2;',
+		'}',
+		'else if (type == 5)',
+		'{',
+		'   gAmp = gAmp/3;',
+		'   sAmp = sAmp/4;',
+		'}',
+		'else',
+		'{',
+		'   gAmp = 0;',
+		'   sAmp = 0;',
+		'}',
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);',
+		'sw = wiggle(sFreq,sAmp, complexity, 0.7);',
+		'result = sw + gw - valueAtTime(0);',
+		'result;',
+        ].join('\n');
+
+	effect( pe.props["Tilt"].index ).expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+		'var fx = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")',
+		'gFreq = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Frequency"].index + ').value;',
+		'gAmp = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Amplitude"].index + ').value;',
+		'sFreq = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Frequency"].index + ').value;',
+		'sAmp = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Amplitude"].index + ').value;',
+		'type = fx(' + pe.props["Advanced Behaviour"]["Type"].index + ').value;',
+		'seed = fx(' + pe.props["Advanced Behaviour"]["Advanced"]["Random Seed"].index + ').value;',
+		'seedRandom(seed+2);',
+		'complexity = 1;',
+		'if (type == 2)',
+		'{',
+		'   gAmp = gAmp/5;',
+		'   sAmp = sAmp/5;',
+		'   gFreq = gFreq*2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 3)',
+		'{',
+		'   gAmp = gAmp/15;',
+		'   sAmp = sAmp/15;',
+		'   complexity = 2;',
+		'}',
+		'else',
+		'{',
+		'   gAmp = 0;',
+		'   sAmp = 0;',
+		'}',
+		'loop = 0;',
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);',
+		'sw = wiggle(sFreq,sAmp, complexity , 0.7);',
+		'result = sw + gw - valueAtTime(0);',
+		'result;',
+        ].join('\n');
+
+	camCtrl.transform.position.expression = [ DuAEExpression.Id.TWO_D_CAMERA,
+		'var fx = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")\n' +
+		'gFreq = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Frequency"].index + ').value;',
+		'gAmp = fx(' + pe.props["Advanced Behaviour"]["General Motion"]["Amplitude"].index + ').value;',
+		'sFreq = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Frequency"].index + ').value;',
+		'sAmp = fx(' + pe.props["Advanced Behaviour"]["Shake"]["Amplitude"].index + ').value;',
+		'type = fx(' + pe.props["Advanced Behaviour"]["Type"].index + ').value;',
+		'seed = fx(' + pe.props["Advanced Behaviour"]["Advanced"]["Random Seed"].index + ').value;',
+		'seedRandom(seed+3);',
+		'complexity = 1;',
+		'gAmp = gAmp * thisComp.width / 100;',
+		'sAmp = sAmp * thisComp.width / 1000;',
+		'if (type == 2)',
+		'{',
+		'   gAmp = gAmp/2;',
+		'   gFreq = gFreq*2;',
+		'   complexity = 3;',
+		'}',
+		'else if (type == 3)',
+		'{',
+		'   gAmp = gAmp/4;',
+		'   complexity = 2;',
+		'}',
+		'else gAmp = 0;',
+		'gw = wiggle(gFreq,gAmp, complexity , 0.5);',
+		'sw = wiggle(sFreq,sAmp, complexity , 0.5);',
+		'if (type == 4) sw = [sw[0]/2,sw[1]];',
+		'result = sw + gw - value;',
+		'result;',
+        ].join('\n');
+
+    // Create levels
+    for (var i = 1; i < numLayers; i++)
+    {
+        var ctrl = DuAEComp.addNull( comp );
+
+        var name = 'Level ' + DuNumber.toString(i, 2);
+        if (layers.length > 0)
+        {
+            var l = layers[layers.length-i];
+            name = name + ' ~ ' + l.name;
+            l.parent = ctrl;
+        }
+
+        Duik.Controller.tag( ctrl );
+        Duik.Controller.setCharacterName( DuScriptUI.String.TWO_D_CAMERA, ctrl );
+        Duik.Controller.setLimbName( name, ctrl );
+        ctrl.shy = true;
+        ctrl.moveAfter(camCtrl);
+
+        // Add slider and default value
+        var slider = ctrl.Effects.addProperty('ADBE Slider Control');
+        slider.name = DuScriptUI.String.CAMERA_INFLUENCE;
+        if (i < numLayers / 2) slider(1).setValue( 100 + 20*(i-1) );
+        else slider(1).setValue(  100 / ( numLayers / 2 ) * (i- numLayers / 2) );
+
+        //truck
+        ctrl.transform.anchorPoint.expression = DuAEExpression.Id.TWO_D_CAMERA + '\nvar camPosition = thisComp.layer("' + camCtrl.name + '").transform.position.value;\nvalueAtTime(0) - camPosition * effect("Camera influence")(1) / 100';
+
+        //tilt
+        ctrl.transform.rotation.expression = DuAEExpression.Id.TWO_D_CAMERA + '\n' +
+            'thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Tilt"].index + ');';
+
+        //zoom & truck in/out
+        ctrl.transform.scale.expression = DuAEExpression.Id.TWO_D_CAMERA + '\n' +
+            'var zoom = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Zoom"].index + ');\n' +
+            'var truck = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Truck In/Out"].index + ');\n' +
+            'var infl = effect("' + slider.name + '")(1);\n' +
+            'value + [zoom,zoom] + [truck,truck]*infl/100;';
+
+        //pan
+        ctrl.transform.position.expression = DuAEExpression.Id.TWO_D_CAMERA + '\n' +
+            'var x = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Horizontal Pan"].index + ');\n' +
+            'var y = thisComp.layer("' + camCtrl.name + '").effect("' + effect.name + '")(' + pe.props["Vertical Pan"].index + ');\n' +
+            '[x,y] + [thisComp.width/2,thisComp.height/2];';
+    }
+
+    DuAEComp.unselectLayers();
+    camCtrl.selected = true;
+
+    DuAE.endUndoGroup(DuScriptUI.String.TWO_D_CAMERA);
+
+    // TODO Return
 }
