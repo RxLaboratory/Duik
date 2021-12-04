@@ -1,0 +1,125 @@
+/**
+ * Camera toolkit
+ * @namespace
+ */
+Duik.Camera = {}
+
+/**
+ * Some Camera presets
+ * @enum {File}
+ * @readonly
+ */
+Duik.Camera.Presets =
+{
+    FRAME: duframe.toFile()
+}
+
+/**
+ * The list of camera functions
+ */
+Duik.CmdLib['Camera'] = [];
+
+Duik.CmdLib['Camera']["Framing guides"] = "Duik.Camera.frame()";
+/**
+ * Adds framing guides to the composition
+ * @param {CompItem} [comp] The composition. The active composition if omitted.
+ * @return {ShapeLayer} The frame layer
+ */
+Duik.Camera.frame = function( comp )
+{
+    comp = def(comp, DuAEProject.getActiveComp());
+    if (!comp) return null;
+
+    DuAE.beginUndoGroup( DuScriptUI.String.FRAMING_GUIDES, false );
+
+    //a shape layer
+	var frame = comp.layers.addShape();
+	frame.name = "Frame";
+	DuAELayer.applyPreset(frame, Duik.Camera.Presets.FRAME);
+
+	frame.guideLayer = true;
+
+    DuAE.endUndoGroup( DuScriptUI.String.FRAMING_GUIDES );
+}
+
+/**
+ * Adds an inverse constraint of the scale to the depth (Z position) of the 3D layers, so that their visual size doesn't change with their depth.<br />
+ * Works as a toggle: first run activates the effect, next run removes it from the selected layers.
+ * @param {Layer[]|Layer|DuList.<Layer>} [layers] The layers to constrain. The selected layers if omitted.$
+ * @return {int} Error code. 1: OK; 0: No camera in the comp, -1: No (selected) layers.
+ */
+Duik.Camera.scaleZLink = function( layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return -1;
+
+    // Get the camera (in the layers if possible)
+    var camera = DuAEComp.camera( layers );
+    if (!camera) return 0;
+
+    // Go!
+    DuAE.beginUndoGroup( DuScriptUI.String.SCALE_Z_LINK, false );
+
+    // If the camera is locked, unlock it temporarilly
+    var camLocked = camera.locked;
+    camera.locked = false;
+
+    layers.do( function(layer )
+    {
+        var currentDistance = DuAELayer.getDistance(layer,camera);
+        if (currentDistance == 0) currentDistance = 1;
+        var currentScale = layer.transform.scale.value;
+		var alreadyLinked = false;
+
+        var expr = layer.transform.scale.expression;
+        if (expr.indexOf( DuAEExpression.Id.SCALE_Z_LINK ) === 0) alreadyLinked = true;
+
+        if(alreadyLinked)
+		{
+			var scale = layer.transform.scale.value;
+			layer.transform.scale.expression = '';
+
+			var prop = layer.Effects.property('Scale Z-Link');
+			if (prop != null) prop.remove();
+			layer.transform.scale.setValue(scale);
+
+			DuAETag.removeGroup(layer, 'SZL');
+		}
+		else
+		{
+			if (!layer.threeDLayer) layer.threeDLayer = true;
+			if (!layer.threeDLayer) return;
+			if (!layer.Effects) return;
+
+			var effect = layer.Effects.addProperty("ADBE Slider Control");
+			effect.name = 'Scale Z-Link';
+
+			effect(1).setValue(currentScale[0]);
+
+			layer.transform.scale.expression = [ DuAEExpression.Id.SCALE_Z_LINK,
+				'var sca = effect("' + effect.name + '")(1);',
+				'var C = thisComp.layer("' + camera.name + '").position;',
+				'var O = thisLayer.toWorld(thisLayer.anchorPoint);',
+				'var oDist = ' + currentDistance + ';',
+                'var result = value;',
+				'if (sca != 0) {',
+				'   var factor = oDist / sca;',
+				'   var dist = length(C,O);',
+				'   result = dist/factor;',
+				'   result = [result,result,result];',
+				'} else result = [0,0,0];',
+                'result;'
+            ].join('\n');
+
+            DuAETag.addGroup( layer, 'SZL' );
+		}
+    });
+
+
+    camera.locked = camLocked;
+
+    DuAE.endUndoGroup( DuScriptUI.String.SCALE_Z_LINK );
+
+    return 1;
+}
