@@ -1,13 +1,5 @@
 # TODO
 
-## Duik WIP
-
-- [ ] 2D Cam return
-- [ ] 2D Cam fix influences, add 1 level, and tests
-- [ ] Add behaviours to camera rig.
-- [ ] 2D Cam : the cam control should not be one of the levels.
-- [ ] 2D Cam & Camera Rig: include interpolator
-
 ## DuAEF & DuESF
 
 - [x] Add random button to the color selector
