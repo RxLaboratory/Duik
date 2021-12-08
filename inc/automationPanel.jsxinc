@@ -1,5 +1,12 @@
 function buildAutomationPanelUI( tab )
 {
+    // Useful methods
+    function hideAllGroups()
+    {
+        automationGroup.visible = false;
+        expressionToolsGroup.visible = false;
+    }
+
     // A Spacer
     var spacer = tab.add('group');
     spacer.margins = 0;
@@ -33,7 +40,102 @@ function buildAutomationPanelUI( tab )
     );
     removeExpButton.onClick = Duik.Automation.removeExpressions;
     removeExpButton.onAltClick = function() { Duik.Automation.removeExpressions(false); };
+    
+    var expressionToolsButton = toolsGroup.addButton(
+        DuScriptUI.String.EXPRESSION_TOOLS,
+        w12_expression,
+        DuScriptUI.String.EXPRESSION_TOOLS_TIP
+    );
+    expressionToolsButton.onClick = function()
+    {
+        if (!expressionToolsGroup.built)
+        {
+            var layerSelector = DuScriptUI.selectionModeSelector( expressionToolsGroup );
+            layerSelector.setCurrentIndex(2);
 
+            DuScriptUI.staticText(
+                expressionToolsGroup,
+                DuScriptUI.String.THISCOMP
+            );
+
+            var compGroup = DuScriptUI.group( expressionToolsGroup );
+
+            var removeThisCompButton = DuScriptUI.button(
+                compGroup,
+                DuScriptUI.String.REMOVE,
+                DuScriptUI.Icon.CLOSE,
+                DuScriptUI.String.REMOVE_THISCOMP_TIP
+            );
+            removeThisCompButton.onClick = function()
+            {
+                Duik.Constraint.removeThisCompInExpressions( layerSelector.index );
+            }
+
+            var useThisCompButton = DuScriptUI.button(
+                compGroup,
+                DuScriptUI.String.USE,
+                DuScriptUI.Icon.CHECK,
+                DuScriptUI.String.USE_THISCOMP_TIP
+            );
+            useThisCompButton.onClick = function()
+            {
+                Duik.Constraint.removeCompInExpressions( layerSelector.index );
+            }
+                
+            DuScriptUI.staticText(
+                expressionToolsGroup,
+                DuScriptUI.String.THISLAYER
+            );
+
+            var layerGroup = DuScriptUI.group( expressionToolsGroup );
+
+            var removeThisLayerButton = DuScriptUI.button(
+                layerGroup,
+                DuScriptUI.String.REMOVE,
+                DuScriptUI.Icon.CLOSE,
+                DuScriptUI.String.REMOVE_THISLAYER_TIP
+            );
+            removeThisLayerButton.onClick = function()
+            {
+                Duik.Constraint.removeThisLayerInExpressions( layerSelector.index );
+            }
+
+
+            var useThisLayerButton = DuScriptUI.button(
+                layerGroup,
+                DuScriptUI.String.USE,
+                DuScriptUI.Icon.CHECK,
+                DuScriptUI.String.USE_THISLAYER_TIP
+            );
+            useThisLayerButton.onClick = function()
+            {
+                Duik.Constraint.removeLayerInExpressions( layerSelector.index );
+            }
+
+            var validButtonsGroup = DuScriptUI.group( expressionToolsGroup );
+
+            var cancelButton = DuScriptUI.button(
+                validButtonsGroup,
+                DuScriptUI.String.BACK_PREVIOUS,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            cancelButton.onClick = function () {
+                expressionToolsGroup.visible = false;
+                automationGroup.visible = true;
+            }
+
+            expressionToolsGroup.built = true;
+
+            DuScriptUI.showUI( expressionToolsGroup );
+        }
+
+        hideAllGroups();
+        expressionToolsGroup.visible = true;
+    }
 
     var copyExpButton = toolsGroup.addButton(
         DuScriptUI.String.COPY_EXPRESSION,
@@ -49,14 +151,21 @@ function buildAutomationPanelUI( tab )
     );
     pasteExpButton.onClick = Duik.Automation.pasteExpression;
 
+    var mainGroup = DuScriptUI.group(this, 'stacked');
+    mainGroup.margins = 3;
+    mainGroup.alignment = ['fill', 'fill'];
+
+    var automationGroup = DuScriptUI.group(mainGroup, 'column');
+    if (uiMode >= 2) automationGroup.spacing = 3;
+
     // A Spacer
-    var spacer = tab.add('group');
+    var spacer = automationGroup.add('group');
     spacer.margins = 0;
     spacer.spacing = 0;
     spacer.size = [-1,3];
 
     var nlaButton = DuScriptUI.button(
-        tab,
+        automationGroup,
         DuScriptUI.String.NLA,
         w16_nla,
         DuScriptUI.String.NLA_TIP,
@@ -80,10 +189,14 @@ function buildAutomationPanelUI( tab )
     }
 
     var looperButton = DuScriptUI.button(
-        tab,
+        automationGroup,
         DuScriptUI.String.LOOPER,
         w16_looper,
         DuScriptUI.String.LOOPER_TIP
     );
     looperButton.onClick = Duik.Automation.looper;
+
+    var expressionToolsGroup = DuScriptUI.group( mainGroup, 'column' );
+    expressionToolsGroup.visible = false;
+    expressionToolsGroup.built = false;
 }
