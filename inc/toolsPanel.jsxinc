@@ -14,23 +14,68 @@ function buildToolsPanelUI( tab )
         "Text tools (rename, search and replace...)"
     );
 
-    var layerTab = toolsTabPanel.addTab(
-        "Layers",
-        w16_expression,
-        "Layer manager"
-    );
-
-    var expressionsTab = toolsTabPanel.addTab(
-        "Expressions",
-        w16_expression,
-        "Expression tools"
-    );
-
     var devTab = toolsTabPanel.addTab(
         "Scripting",
         w16_expression,
         "Scripting tools"
     );
+
+    devTab.build = function()
+    {
+        var mainGroup = DuScriptUI.group(this, 'stacked');
+        mainGroup.margins = 3;
+        mainGroup.alignment = ['fill', 'fill'];
+
+        var devGroup = DuScriptUI.group(mainGroup, 'column');
+        if (uiMode >= 2) automationGroup.spacing = 3;
+
+        var scriptifyButton = DuScriptUI.button(
+            devGroup,
+            DuScriptUI.String.SCRIPTIFY_EXPRESSION,
+            w16_scriptify_expression,
+            DuScriptUI.String.SCRIPTIFY_EXPRESSION_TIP
+        );
+        scriptifyButton.onClick = function()
+        {
+            if (!scriptifyGroup.built)
+            {
+                scriptifyGroup.edit = scriptifyGroup.add("edittext", undefined, "", {multiline:true});
+                scriptifyGroup.edit.alignment = ['fill','fill'];
+
+                var validButtonsGroup = DuScriptUI.group( scriptifyGroup );
+                validButtonsGroup.alignment = ['fill', 'bottom'];
+
+                var cancelButton = DuScriptUI.button(
+                    validButtonsGroup,
+                    DuScriptUI.String.BACK_PREVIOUS,
+                    DuScriptUI.Icon.BACK,
+                    DuScriptUI.String.CLOSE,
+                    false,
+                    'row',
+                    'center'
+                );
+                cancelButton.onClick = function () {
+                    scriptifyGroup.visible = false;
+                    devGroup.visible = true;
+                };
+
+                scriptifyGroup.built = true;
+                DuScriptUI.showUI( scriptifyGroup );
+            }
+
+            var props = DuAEComp.getSelectedProps();
+            if (props.length == 0) return;
+            prop = props.pop();
+            scriptifyGroup.edit.text = DuAEExpression.scriptifyExpression(prop, prop.name + "Exp");
+
+            scriptifyGroup.visible = true;
+            devGroup.visible = false;
+        }
+
+        var scriptifyGroup = DuScriptUI.group( mainGroup, 'column' );
+        scriptifyGroup.visible = false;
+        scriptifyGroup.built = false;
+    };
 
     toolsTabPanel.buttonsGroup.alignment = ['center', 'top'];
 
