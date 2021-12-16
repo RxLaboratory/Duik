@@ -1,0 +1,113 @@
+function buildNotePanelUI( container )
+{
+    var noteFile;
+
+    // UTILS
+    function loadFile()
+    {
+        if (typeof( DuESF.scriptSettings.data.noteFile ) !== 'undefined') noteFile = new File(DuESF.scriptSettings.data.noteFile);
+        else
+        {
+            var path = Folder.myDocuments.absoluteURI + "/Duik_notes.txt";
+            noteFile = new File(path);
+            DuESF.scriptSettings.data.noteFile = path;
+            DuESF.scriptSettings.save();
+        }
+        if (noteFile.open('r'))
+        {
+            noteEdit.text = noteFile.read();
+            noteFile.close();
+        }
+    }
+
+    function save()
+    {
+		noteFile.open('w')
+		{
+			noteFile.write(noteEdit.text);
+			noteFile.close();
+		}
+    }
+
+    var notePanel;
+    if (!container) notePanel = DuScriptUI.mainPanel( null, "Notes", ['fill','fill'] );
+    else notePanel = container;
+
+    var noteEdit = notePanel.content.add('edittext', undefined, '', {multiline: true});
+    noteEdit.helpTip = DuScriptUI.String.NEW_LINE_TIP;
+    noteEdit.alignment = ['fill','fill'];
+
+    var noteBottomGroup = DuScriptUI.group( notePanel.content, 'row');
+    noteBottomGroup.alignment = ['fill','bottom'];
+    
+    var fileButton = DuScriptUI.button(
+        noteBottomGroup,
+        tr(DuScriptUI.String.OPEN) + '...',
+        w16_file,
+        DuScriptUI.String.NOTE_FILE_TIP,
+        false,
+        undefined,
+        undefined,
+        false // Don't localize (already localized)
+    );
+    fileButton.alignment = ['left', 'bottom'];
+    fileButton.onClick = function()
+	{
+		//Ask
+		var file = File.openDialog("Select the file to open.","Text Files:*.txt,All files:*.*");
+		if (file != null)
+		{
+			noteFile = file;
+			DuESF.scriptSettings.data.noteFile = noteFile.absoluteURI;
+			DuESF.scriptSettings.save();
+            loadFile();
+		}
+	};
+
+    var saveAsButton = DuScriptUI.button(
+        noteBottomGroup,
+        tr(DuScriptUI.String.SAVE_AS) + '...',
+        w16_file,
+        DuScriptUI.String.NOTE_FILE_TIP,
+        false,
+        undefined,
+        undefined,
+        false // Don't localize (already localized)
+    );
+    saveAsButton.alignment = ['left', 'bottom'];
+    saveAsButton.onClick = function()
+	{
+		//Ask
+		var file = noteFile.saveDlg("Select the file to save.","Text Files:*.txt,All files:*.*");
+		if (file != null)
+		{
+			noteFile = file;
+			DuESF.scriptSettings.data.noteFile = noteFile.absoluteURI;
+			DuESF.scriptSettings.save();
+            save();
+		}
+	};
+
+    if (!container)
+    {
+        var closeButton = DuScriptUI.button(
+            noteBottomGroup,
+            '',
+            DuScriptUI.Icon.CLOSE,
+            DuScriptUI.String.CLOSE
+            );
+        closeButton.alignment = ['right', 'bottom'];
+        closeButton.onClick = function() {
+            notePanel.hide();
+        }
+    }
+
+    //get back the saved text
+	loadFile();
+
+    //when text edited
+	noteEdit.onChange = save;
+    
+
+    return notePanel;
+}
