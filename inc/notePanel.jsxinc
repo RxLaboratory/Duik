@@ -3,6 +3,33 @@ function buildNotePanelUI( container )
     var noteFile;
 
     // UTILS
+    function reload()
+    {
+        var type = 0;
+        if (typeof(DuESF.scriptSettings.data.noteType) !== 'undefined') type = DuESF.scriptSettings.data.noteType;
+
+        fileGroup.visible = false;
+        labelGroup.visible = false;
+
+        if( type == 2 )
+        {
+            fileGroup.visible = true;
+            loadFile();
+        }
+        else if (type == 1)
+        {
+            labelGroup.visible = true;
+            loadComposition();
+        }
+        else
+        {
+            labelGroup.visible = true;
+            loadProject();
+        }
+
+        return type;
+    }
+
     function loadFile()
     {
         if (typeof( DuESF.scriptSettings.data.noteFile ) !== 'undefined') noteFile = new File(DuESF.scriptSettings.data.noteFile);
@@ -20,28 +47,102 @@ function buildNotePanelUI( container )
         }
     }
 
+    function loadComposition()
+    {
+        noteEdit.text = "No active composition.";
+        var comp = DuAEProject.getActiveComp();
+        if (!comp) return;
+        noteEdit.text = comp.comment;
+        label.setText(comp.name);
+    }
+
+    function loadProject()
+    {
+        noteEdit.text = "project";
+        label.setText( DuAEProject.name() );
+    }
+
     function save()
     {
-		noteFile.open('w')
+        var type = 0;
+        if (typeof(DuESF.scriptSettings.data.noteType) !== 'undefined') type = DuESF.scriptSettings.data.noteType;
+		
+        if (type == 2 && noteFile.open('w') )
 		{
 			noteFile.write(noteEdit.text);
 			noteFile.close();
 		}
+        else if (type == 1)
+        {
+            var comp = DuAEProject.getActiveComp();
+            if (!comp) return;
+            comp.comment = noteEdit.text;
+        }
+        else 
+        {
+
+        }
     }
 
     var notePanel;
-    if (!container) notePanel = DuScriptUI.mainPanel( null, "Notes", ['fill','fill'] );
+    if (!container) notePanel = DuScriptUI.popUp( "Notes", ['fill','fill'] );
     else notePanel = container;
+    notePanel.reload = reload;
+
+    var topGroup = DuScriptUI.group( notePanel.content, 'row' );
+
+    var noteSelector = DuScriptUI.selector( topGroup );
+    noteSelector.addButton(
+        DuScriptUI.String.PROJECT,
+        w16_project,
+        DuScriptUI.String.NOTE_FOR_PROJECT
+    );
+    noteSelector.addButton(
+        DuScriptUI.String.COMPOSITION,
+        w16_composition,
+        DuScriptUI.String.NOTE_FOR_COMPOSITION
+    );
+    noteSelector.addButton(
+        DuScriptUI.String.NOTE_FILE,
+        w16_file,
+        DuScriptUI.String.NOTE_FILE_TIP
+    );
+    noteSelector.onChange = function()
+    {
+        DuESF.scriptSettings.data.noteType = noteSelector.index;
+        DuESF.scriptSettings.save();
+        reload();
+    }
+
+    var refreshButton = DuScriptUI.button(
+        topGroup,
+        '',
+        DuScriptUI.Icon.UPDATE,
+        DuScriptUI.String.RELOAD_NOTE_TIP
+    );
+    refreshButton.alignment = ['right', 'center'];
+    refreshButton.onClick = reload;
 
     var noteEdit = notePanel.content.add('edittext', undefined, '', {multiline: true});
     noteEdit.helpTip = DuScriptUI.String.NEW_LINE_TIP;
     noteEdit.alignment = ['fill','fill'];
+    noteEdit.minimumSize = [200, 300];
 
     var noteBottomGroup = DuScriptUI.group( notePanel.content, 'row');
     noteBottomGroup.alignment = ['fill','bottom'];
+
+    var typeGroup = DuScriptUI.group( noteBottomGroup, 'stacked' );
+    typeGroup.alignment = ['fill', 'fill'];
+
+    var labelGroup = DuScriptUI.group( typeGroup, 'row' );
+
+    var label = DuScriptUI.staticText( labelGroup, '' );
+    label.alignment = ['fill', 'fill'];
+
+    var fileGroup =  DuScriptUI.group( typeGroup, 'row' );
     
     var fileButton = DuScriptUI.button(
-        noteBottomGroup,
+        fileGroup,
         tr(DuScriptUI.String.OPEN) + '...',
         w16_file,
         DuScriptUI.String.NOTE_FILE_TIP,
@@ -65,7 +166,7 @@ function buildNotePanelUI( container )
 	};
 
     var saveAsButton = DuScriptUI.button(
-        noteBottomGroup,
+        fileGroup,
         tr(DuScriptUI.String.SAVE_AS) + '...',
         w16_file,
         DuScriptUI.String.NOTE_FILE_TIP,
@@ -88,26 +189,12 @@ function buildNotePanelUI( container )
 		}
 	};
 
-    if (!container)
-    {
-        var closeButton = DuScriptUI.button(
-            noteBottomGroup,
-            '',
-            DuScriptUI.Icon.CLOSE,
-            DuScriptUI.String.CLOSE
-            );
-        closeButton.alignment = ['right', 'bottom'];
-        closeButton.onClick = function() {
-            notePanel.hide();
-        }
-    }
-
     //get back the saved text
-	loadFile();
+	noteSelector.setCurrentIndex( reload() );
 
     //when text edited
 	noteEdit.onChange = save;
     
-
+    notePanel.built = true;
     return notePanel;
 }
