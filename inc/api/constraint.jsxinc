@@ -349,6 +349,90 @@ Duik.Constraint.zero = function( layers )
     return zeroes;
 }
 
+Duik.CmdLib['Constraint']["Move Anchor Point Top"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP)";
+Duik.CmdLib['Constraint']["Move Anchor Point Top Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP_RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM_RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM_LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Top Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP_LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Center"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.CENTER)";
+/**
+ * Repositions the anchor points of the layers
+ * @param {DuMath.Location} location The new location of the anchor points relative to the layer bounds.
+ * @param {float} [margin=0.0] A margin, in pixels.
+ * @param {Boolean} [includeMasks=false] Use masks to compute the bounds.
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Constraint.moveAnchorPoint = function( location, m, includeMasks, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+
+    m = def(m, 0);
+    includeMasks = def( includeMasks, false);
+
+    DuAE.beginUndoGroup( DuScriptUI.String.MOVE_ANCHOR_POINTS, false );
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        // Get the current values
+        var apProp = layer.transform.anchorPoint;
+        var layerBounds = DuAELayer.sourceRect(layer, undefined, true, includeMasks);
+
+        var t = layerBounds[0];
+        var l = layerBounds[1];
+        var w = layerBounds[2];
+        var h = layerBounds[3];
+
+        var ap = apProp.value;
+        var x = ap[0];
+        var y = ap[1];
+
+        // Update
+        if (location == DuMath.Location.TOP)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w/2,t-m] );
+        }
+        else if (location == DuMath.Location.TOP_RIGHT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w+m,t-m] );
+        }
+        else if (location == DuMath.Location.RIGHT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w+m,t+h/2] );
+        }
+        else if (location == DuMath.Location.BOTTOM_RIGHT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w+m,t+h+m] );
+        }
+        else if (location == DuMath.Location.BOTTOM)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w/2,t+h+m] );
+        }
+        else if (location == DuMath.Location.BOTTOM_LEFT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l-m,t+h+m] );
+        }
+        else if (location == DuMath.Location.LEFT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l-m,t+h/2] );
+        }
+        else if (location == DuMath.Location.TOP_LEFT)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l-m,t-m] );
+        }
+        else if (location == DuMath.Location.CENTER)
+        {
+            DuAELayer.repositionAnchorPoint( layer, [l+w/2,t+h/2] );
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup( DuScriptUI.String.MOVE_ANCHOR_POINTS );
+}
+
 Duik.CmdLib['Constraint']["Reset Transformation"] = "Duik.Constraint.resetPRS()";
 Duik.CmdLib['Constraint']["Reset Transformation and opacity"] = "Duik.Constraint.resetPRS(undefined, true)";
 /**
