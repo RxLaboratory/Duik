@@ -19,51 +19,41 @@ Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
  * @param {Boolean} [layerTypes=[Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]] The types of layer to setup; if empty, will setup all layers.
  * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
  */
-Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effectProps, layerTypes, props )
-{
-    comp = def( comp, DuAEProject.getActiveComp() );
+Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectProps, layerTypes, props) {
+    comp = def(comp, DuAEProject.getActiveComp());
 
-    if (typeof props === 'undefined')
-    {
-        selectedProps = def( selectedProps, true );
-        transformProps = def( transformProps, true );
-        effectProps = def( effectProps, false );
-        layerTypes = def( layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER] );
+    if (typeof props === 'undefined') {
+        selectedProps = def(selectedProps, true);
+        transformProps = def(transformProps, true);
+        effectProps = def(effectProps, false);
+        layerTypes = def(layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]);
 
         // List properties according to the filters
 
-        if (selectedProps)
-        {
+        if (selectedProps) {
             props = DuAEComp.getSelectedProps();
             if (props.length == 0) selectedProps = false;
         }
 
-        if (!selectedProps)
-        {
+        if (!selectedProps) {
             // Get the layers
             var layers = [];
             props = [];
-            if (layerTypes.length > 0)
-            {
-                for (var i = 1, n = comp.numLayers; i <= n; i++)
-                {
+            if (layerTypes.length > 0) {
+                for (var i = 1, n = comp.numLayers; i <= n; i++) {
                     var l = comp.layer(i);
-                    for (var j = 0, nt = layerTypes.length; j < nt; j++)
-                    {
-                        if (Duik.Layer.isType(l, layerTypes[j]))
-                        {
+                    for (var j = 0, nt = layerTypes.length; j < nt; j++) {
+                        if (Duik.Layer.isType(l, layerTypes[j])) {
                             layers.push(l);
                             break;
                         }
                     }
                 }
-            }
-            else layers = comp.layers;
+            } else layers = comp.layers;
             layers = new DuList(layers);
-            layers.do( function(layer)
-            {
-                if ( transformProps ) props.push( new DuAEProperty( layer.transform ) );
-                if ( effectProps ) props.push( new DuAEProperty( layer.property('ADBE Effects Parade') ) );
+            layers.do(function(layer) {
+                if (transformProps) props.push(new DuAEProperty(layer.transform));
+                if (effectProps) props.push(new DuAEProperty(layer.property('ADBE Effects Parade')));
             });
         }
     }
@@ -77,7 +67,7 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
 
     // Create folderitem NLA::compName
     var parentFolder = comp.parentFolder;
-    var nlaFolder = app.project.items.addFolder( DuScriptUI.String.NLA_SHORT + '::' + compName );
+    var nlaFolder = app.project.items.addFolder(DuScriptUI.String.NLA_SHORT + '::' + compName);
     nlaFolder.parentFolder = parentFolder;
     comp.parentFolder = nlaFolder;
 
@@ -96,22 +86,22 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
         comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
 
     // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
-    clipPrecomp = editComp.layers.add( clipComp );
+    clipPrecomp = editComp.layers.add(clipComp);
     clipPrecomp.enabled = false;
     clipPrecomp.guideLayer = false;
 
     // Add NLA.Render
-    editComp.layers.add( comp );
+    editComp.layers.add(comp);
 
     // Setup properties in NLA.Render
 
-    var exp = [ DuAEExpression.Id.NLA,
+    var exp = [DuAEExpression.Id.NLA,
         'var editComp = comp("' + editComp.name + '");',
         '',
         'var result = value;',
         'var weights = 0;',
         '',
-        DuAEExpression.Library.get(['getSameProp','isZero']),
+        DuAEExpression.Library.get(['getSameProp', 'isZero']),
         '',
         'for (var i = 1, n = editComp.numLayers; i <= n; i++)',
         '{',
@@ -134,10 +124,9 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
         '	}',
         '}',
         'result;'
-	].join('\n');
+    ].join('\n');
 
-    props.do( function(prop)
-    {
+    props.do(function(prop) {
         prop.setExpression(exp);
     });
 
@@ -154,28 +143,24 @@ Duik.CmdLib['Automation']["NLA Clip"] = "Duik.Automation.addNLAClip()";
  * @param {CompItem} [nlaComp] A comp belonging to an NLA, the active comp if omitted.
  * @returns {int} Success code: 1 if the clip could be created, 0 if the original comp is not found, -1 if the NLA is invalid/not found
  */
-Duik.Automation.addNLAClip = function ( nlaComp )
-{
-    nlaComp = def( nlaComp, DuAEProject.getActiveComp() );
+Duik.Automation.addNLAClip = function(nlaComp) {
+    nlaComp = def(nlaComp, DuAEProject.getActiveComp());
     if (!nlaComp) return -1;
 
     var nlaFolder = nlaComp.parentFolder;
     if (nlaFolder.name.indexOf('NLA::') != 0) return -1;
-    
+
     var nlaName = nlaFolder.name.replace('NLA::', '');
 
     // Get the original comp
     var originalComp = null;
     var editComp = null;
-    for (var i = 1, n = nlaFolder.numItems; i <= n; i++)
-    {
+    for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
         var c = nlaFolder.item(i);
-        if (c.name.indexOf('NLA.Original::') == 0)
-        {
+        if (c.name.indexOf('NLA.Original::') == 0) {
             originalComp = c;
         }
-        if (c.name.indexOf('NLA.Edit::') == 0)
-        {
+        if (c.name.indexOf('NLA.Edit::') == 0) {
             editComp = c;
         }
     }
@@ -189,11 +174,10 @@ Duik.Automation.addNLAClip = function ( nlaComp )
     newClip.name = originalComp.name.replace('NLA.Original', 'NLA.Clip') + '-newClip';
 
     // Add to edit
-    if (editComp)
-    {
-        var clipLayer = editComp.layers.add( newClip );
+    if (editComp) {
+        var clipLayer = editComp.layers.add(newClip);
         clipLayer.enabled = false;
-        if (editComp.numLayers >= 2) clipLayer.moveAfter( editComp.layer(2) );
+        if (editComp.numLayers >= 2) clipLayer.moveAfter(editComp.layer(2));
     }
 
     // Open clip
@@ -209,20 +193,19 @@ Duik.CmdLib['Automation']["Looper"] = "Duik.Automation.looper()";
  * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
  * @returns {PropertyGroup} The pseudo-effect
  */
-Duik.Automation.looper = function ( props, effect )
-{
-    effect = Duik.Animation.interpolator( props, effect );
+Duik.Automation.looper = function(props, effect) {
+    effect = Duik.Animation.interpolator(props, effect);
 
     var i = Duik.PseudoEffect.INTERPOLATOR.props;
 
     // Set interpolation to none
-    effect( i['Type'].index ).setValue(1);
+    effect(i['Type'].index).setValue(1);
     // Set cycles
-    effect( i['In Extrapolation and loop']['Type'].index ).setValue( 4 );
-    effect( i['Out Extrapolation and loop']['Type'].index ).setValue( 4 );
+    effect(i['In Extrapolation and loop']['Type'].index).setValue(4);
+    effect(i['Out Extrapolation and loop']['Type'].index).setValue(4);
     // Activate
-    effect( i['In Extrapolation and loop']['Before keys'].index ).setValue( 1 );
-    effect( i['Out Extrapolation and loop']['After keys'].index ).setValue( 1 );
+    effect(i['In Extrapolation and loop']['Before keys'].index).setValue(1);
+    effect(i['Out Extrapolation and loop']['After keys'].index).setValue(1);
 
     return effect;
 }
@@ -234,18 +217,15 @@ Duik.CmdLib['Automation']["Copy Expression"] = "Duik.Automation.copyExpression()
  * @param {Property|DuAEProperty} [prop] The property, the selected/active property if omitted.
  * @returns {string} The expression.
  */
-Duik.Automation.copyExpression = function( prop )
-{
-    if (typeof prop === 'undefined')
-    {
+Duik.Automation.copyExpression = function(prop) {
+    if (typeof prop === 'undefined') {
         var props = DuAEComp.getSelectedProps();
         if (props.length == 0) return Duik.Automation.copiedExpression;
         prop = props.pop();
     }
 
     prop = new DuAEProperty(prop);
-    if (prop.riggable())
-    {
+    if (prop.riggable()) {
         prop = prop.getProperty();
         Duik.Automation.copiedExpression = prop.expression;
     }
@@ -259,19 +239,16 @@ Duik.CmdLib['Automation']["Paste Expression"] = "Duik.Automation.pasteExpression
  * @param {Property[]|DuAEProperty[]} [props] The properties where to paste the expression, the selecte properties if omitted.
  * @param {string} [expression] A specific expression to paste.
  */
-Duik.Automation.pasteExpression = function( props, expression )
-{
+Duik.Automation.pasteExpression = function(props, expression) {
     props = def(props, DuAEComp.getSelectedProps());
     if (props.length == 0) return;
-    expression = def (expression , Duik.Automation.copiedExpression);
+    expression = def(expression, Duik.Automation.copiedExpression);
 
     DuAE.beginUndoGroup(DuScriptUI.String.PASTE_EXPRESSION, false);
 
     var i = new DuList(props);
-    i.do(function(prop)
-    {
-        if (prop.riggable())
-        {
+    i.do(function(prop) {
+        if (prop.riggable()) {
             prop.setExpression(expression, false);
         }
     });
@@ -285,20 +262,69 @@ Duik.CmdLib['Automation']["Remove Expressions"] = "Duik.Automation.removeExpress
  * @param {Boolean} [keepPostExpressionValue=true]  Set to false to just remove the expressions and get back the pre expression value.
  * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
  */
-Duik.Automation.removeExpressions = function( keepPostExpressionValue, props )
-{
-    keepPostExpressionValue = def (keepPostExpressionValue, true);
+Duik.Automation.removeExpressions = function(keepPostExpressionValue, props) {
+    keepPostExpressionValue = def(keepPostExpressionValue, true);
     props = def(props, DuAEComp.getSelectedProps());
     if (props.length == 0) props = DuAEComp.getSelectedLayers();
 
     DuAE.beginUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS, false);
 
-    for (var i = 0, num = props.length; i < num; i++)
-    {
-        var p = new DuAEProperty( props[i] );
-        p.removeExpressions( undefined, keepPostExpressionValue);
+    for (var i = 0, num = props.length; i < num; i++) {
+        var p = new DuAEProperty(props[i]);
+        p.removeExpressions(undefined, keepPostExpressionValue);
     }
 
     DuAE.endUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS);
 
+}
+
+Duik.CmdLib['Automation']["Bake Expressions"] = "Duik.Automation.bakeExpressions()"
+/**
+ * Bakes the expressions to keyframes
+ * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.SELECTED_PROPERTIES] The expressions to bake
+ */
+Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
+    // Defaults
+    mode = def(mode, DuAEExpression.BakeAlgorithm.SMART);
+    frameStep = def(frameStep, 1);
+    selectionMode = def(selectionMode, DuAE.SelectionMode.SELECTED_PROPERTIES);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS, false);
+    DuAEProject.setProgressMode(true, false); // For some reason the progress bar keeps poping up...
+
+    //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
+
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions( mode, frameStep );
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS)
+    {
+        var comps = DuAEProject.getSelectedComps();
+        for (var i = 0, n = comps.length; i < n; i++)
+        {
+            DuAEComp.bakeExpressions(mode, frameStep, comp);
+        }
+    }
+    else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions( mode, frameStep );
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS)
+    {
+        var layers = DuAEComp.getSelectedLayers();
+        for (var i = 0, n = layers.length; i < n; i++)
+        {
+            var p = new DuAEProperty(layers[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    }
+    else
+    {
+        var props = DuAEComp.getSelectedProps();
+        for (var i = 0, n = props.length; i < n; i++)
+        {
+            var p = new DuAEProperty(props[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS);
 }
