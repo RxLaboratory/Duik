@@ -5,6 +5,88 @@
 Duik.Automation = {};
 
 /**
+ * The types of the comps in an NLA
+ * @enum {int}
+ * @readonly
+ */
+Duik.Automation.NLACompType = {
+    NONE: 0,
+    ORIGINAL: 1,
+    RENDER: 2,
+    CLIP: 3,
+    EDIT: 4
+}
+
+/**
+ * The prefixes for the NLA comp & folder names.<br />
+ * These may be localized, don't use the actual strings!
+ * @enum {string}
+ * @readonly
+ */
+Duik.Automation.NLAPrefixes = {
+    FOLDER: DuScriptUI.String.NLA_SHORT + '::',
+    ORIGINAL: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::',
+    RENDER: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::',
+    CLIP: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::',
+    EDIT: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::'
+}
+
+/**
+ * Checks if the given comp is part of an NLA
+ * @return {Duik.Automation.NLACompType} The type of the comp; Duik.Automation.NLACompType.NONE if it's not part of an NLA.
+ */
+Duik.Automation.NLAType = function(comp) {
+    // It must be in an NLA folder
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return Duik.Automation.NLACompType.NONE;
+
+    var name = comp.name;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) return Duik.Automation.NLACompType.ORIGINAL;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) return Duik.Automation.NLACompType.RENDER;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.CLIP) == 0) return Duik.Automation.NLACompType.CLIP;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) return Duik.Automation.NLACompType.EDIT;
+    return Duik.Automation.NLACompType.NONE;
+}
+
+/**
+ * Gets the folder containing the NLA Compositions like the given comp.
+ * @param {CompItem} comp The comp
+ * @return {FolderItem|null} The folder or null if the comp is not part of an NLA
+ */
+Duik.Automation.getNLAFolder = function(comp) {
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return null;
+    return nlaFolder;
+}
+
+/**
+ * Gets the render, original and edit comps for this NLA
+ * @param {FolderItem} nlaFolder The NLA Folder
+ * @return {CompItem[]} The compositions in this order: [Original, Edit, Render]. Note that if one is not found, null is returned.
+ */
+Duik.Automation.getNLAComps = function(nlaFolder) {
+    var originalComp = null;
+    var editComp = null;
+    var renderComp = null;
+    for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
+        var c = nlaFolder.item(i);
+        if (!c instanceof CompItem) continue;
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) {
+            originalComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) {
+            editComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) {
+            renderComp = c;
+        }
+        // Got'em all
+        if (originalComp && editComp && renderComp) break;
+    }
+    return [originalComp, editComp, renderComp];
+}
+
+/**
  * The list of automation functions
  */
 Duik.CmdLib['Automation'] = [];
@@ -65,33 +147,62 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
 
     var compName = comp.name;
 
-    // Create folderitem NLA::compName
-    var parentFolder = comp.parentFolder;
-    var nlaFolder = app.project.items.addFolder(DuScriptUI.String.NLA_SHORT + '::' + compName);
-    nlaFolder.parentFolder = parentFolder;
-    comp.parentFolder = nlaFolder;
+    var editComp;
 
-    // Duplicate comp twice
-    // One will be NLA.Render::compName
-    oComp = comp.duplicate();
-    oComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::' + compName;
-    // Other NLA.Clip::compName
-    clipComp = comp.duplicate();
-    clipComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::' + compName;
-    // and keep NLA.Original::compName
-    comp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::' + compName;
-    // Create NLA.Edit::compName
-    editComp = nlaFolder.items.addComp(
-        DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::' + compName,
-        comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+    // Check if it's already an NLA; in this case don't create, just add the properties.
+    var create = true;
+    if (Duik.Automation.NLAType(comp) != Duik.Automation.NLACompType.NONE) {
+        var nlaFolder = Duik.Automation.getNLAFolder(comp);
+        if (nlaFolder)
+        {
+            create = false;
+            var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+            var renderComp = nlaComps[2];
+            editComp = nlaComps[1];
+            // Find the same properties in the render comp
+            if(renderComp) {
+                var renderProps = [];
+                props.do(function(prop) {
+                    renderProp = prop.findInComp(renderComp);
+                    if (renderProp) renderProps.push(renderProp);
+                });
+                // Replace props with the ones from the render comp
+                props = new DuList(renderProps);
+            }
+        }
+    }
 
-    // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
-    clipPrecomp = editComp.layers.add(clipComp);
-    clipPrecomp.enabled = false;
-    clipPrecomp.guideLayer = false;
+    if (create) {
+        // Create folderitem NLA::compName
+        var parentFolder = comp.parentFolder;
+        var nlaFolder = app.project.items.addFolder(Duik.Automation.NLAPrefixes.FOLDER + compName);
+        nlaFolder.parentFolder = parentFolder;
+        comp.parentFolder = nlaFolder;
+        var renderComp = comp;
 
-    // Add NLA.Render
-    editComp.layers.add(comp);
+        // Duplicate comp twice
+        // One will be NLA.Render::compName
+        var oComp = renderComp.duplicate();
+        oComp.name = Duik.Automation.NLAPrefixes.ORIGINAL + compName;
+        // Other NLA.Clip::compName
+        var clipComp = renderComp.duplicate();
+        clipComp.name = Duik.Automation.NLAPrefixes.CLIP + compName;
+        // and keep NLA.Original::compName
+        renderComp.name = Duik.Automation.NLAPrefixes.RENDER + compName;
+        // Create NLA.Edit::compName
+        var editComp = nlaFolder.items.addComp(
+            Duik.Automation.NLAPrefixes.EDIT + compName,
+            renderComp.width, renderComp.height, renderComp.pixelAspect, renderComp.duration, renderComp.frameRate
+        );
+
+        // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
+        var clipPrecomp = editComp.layers.add(clipComp);
+        clipPrecomp.enabled = false;
+        clipPrecomp.guideLayer = false;
+
+        // Add NLA.Render
+        editComp.layers.add(comp);
+    }
 
     // Setup properties in NLA.Render
 
@@ -147,23 +258,15 @@ Duik.Automation.addNLAClip = function(nlaComp) {
     nlaComp = def(nlaComp, DuAEProject.getActiveComp());
     if (!nlaComp) return -1;
 
-    var nlaFolder = nlaComp.parentFolder;
-    if (nlaFolder.name.indexOf('NLA::') != 0) return -1;
+    var nlaFolder = Duik.Automation.getNLAFolder(nlaComp);
+    if (!nlaFolder) return -1;
 
     var nlaName = nlaFolder.name.replace('NLA::', '');
 
     // Get the original comp
-    var originalComp = null;
-    var editComp = null;
-    for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
-        var c = nlaFolder.item(i);
-        if (c.name.indexOf('NLA.Original::') == 0) {
-            originalComp = c;
-        }
-        if (c.name.indexOf('NLA.Edit::') == 0) {
-            editComp = c;
-        }
-    }
+    var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+    var originalComp = nlaComps[0];
+    var editComp = nlaComps[1];
 
     if (!originalComp) return 0;
 
@@ -296,30 +399,22 @@ Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
 
     //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
 
-    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions( mode, frameStep );
-    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS)
-    {
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
         var comps = DuAEProject.getSelectedComps();
-        for (var i = 0, n = comps.length; i < n; i++)
-        {
+        for (var i = 0, n = comps.length; i < n; i++) {
             DuAEComp.bakeExpressions(mode, frameStep, comp);
         }
-    }
-    else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions( mode, frameStep );
-    else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS)
-    {
+    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS) {
         var layers = DuAEComp.getSelectedLayers();
-        for (var i = 0, n = layers.length; i < n; i++)
-        {
+        for (var i = 0, n = layers.length; i < n; i++) {
             var p = new DuAEProperty(layers[i]);
             p.bakeExpressions(mode, frameStep);
         }
-    }
-    else
-    {
+    } else {
         var props = DuAEComp.getSelectedProps();
-        for (var i = 0, n = props.length; i < n; i++)
-        {
+        for (var i = 0, n = props.length; i < n; i++) {
             var p = new DuAEProperty(props[i]);
             p.bakeExpressions(mode, frameStep);
         }
