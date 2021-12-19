@@ -144,12 +144,15 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
     if (props.length() == 0) return;
 
     DuAE.beginUndoGroup(DuScriptUI.String.NLA, false);
+    DuAEProject.setProgressMode(true);
+    DuScriptUI.progressBar.setMax( props.length() + 6);
 
     var compName = comp.name;
 
     var editComp;
 
     // Check if it's already an NLA; in this case don't create, just add the properties.
+    DuScriptUI.progressBar.hit(1, "Checking if we're updating an existing NLA...");
     var create = true;
     if (Duik.Automation.NLAType(comp) != Duik.Automation.NLACompType.NONE) {
         var nlaFolder = Duik.Automation.getNLAFolder(comp);
@@ -161,19 +164,24 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
             editComp = nlaComps[1];
             // Find the same properties in the render comp
             if(renderComp) {
+                DuScriptUI.progressBar.addMax(props.length());
+                DuScriptUI.progressBar.hit(2, "Preparing properties to be added...");
                 var renderProps = [];
                 props.do(function(prop) {
+                    DuScriptUI.progressBar.hit();
                     renderProp = prop.findInComp(renderComp);
                     if (renderProp) renderProps.push(renderProp);
                 });
                 // Replace props with the ones from the render comp
                 props = new DuList(renderProps);
+                DuScriptUI.progressBar.hit(6+props.length(), "Adding expressions...");
             }
         }
     }
 
     if (create) {
         // Create folderitem NLA::compName
+        DuScriptUI.progressBar.hit(2, "Creating NLA Folder...");
         var parentFolder = comp.parentFolder;
         var nlaFolder = app.project.items.addFolder(Duik.Automation.NLAPrefixes.FOLDER + compName);
         nlaFolder.parentFolder = parentFolder;
@@ -182,14 +190,18 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
 
         // Duplicate comp twice
         // One will be NLA.Render::compName
+        DuScriptUI.progressBar.hit(2, "Saving original composition...");
         var oComp = renderComp.duplicate();
         oComp.name = Duik.Automation.NLAPrefixes.ORIGINAL + compName;
         // Other NLA.Clip::compName
+        DuScriptUI.progressBar.hit(3, "Creating the first clip...");
         var clipComp = renderComp.duplicate();
         clipComp.name = Duik.Automation.NLAPrefixes.CLIP + compName;
         // and keep NLA.Original::compName
+        DuScriptUI.progressBar.hit(4, "Creating the render composition...");
         renderComp.name = Duik.Automation.NLAPrefixes.RENDER + compName;
         // Create NLA.Edit::compName
+        DuScriptUI.progressBar.hit(5, "Creating the edit composition...");
         var editComp = nlaFolder.items.addComp(
             Duik.Automation.NLAPrefixes.EDIT + compName,
             renderComp.width, renderComp.height, renderComp.pixelAspect, renderComp.duration, renderComp.frameRate
@@ -202,6 +214,8 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
 
         // Add NLA.Render
         editComp.layers.add(comp);
+
+        DuScriptUI.progressBar.hit(6, "Adding expressions...");
     }
 
     // Setup properties in NLA.Render
@@ -218,7 +232,7 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
         '{',
         '	var l = editComp.layer(i);',
         '	if (l.name == thisComp.name) continue;',
-        '   if (l.name.indexOf(\'NLA.Clip::\') != 0) continue;',
+        '   if (l.name.indexOf("' + Duik.Automation.NLAPrefixes.CLIP + '") != 0) continue;',
         '	if (time >= l.inPoint && time < l.outPoint)',
         '	{',
         '	    var precomp = l.source;',
@@ -238,12 +252,15 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
     ].join('\n');
 
     props.do(function(prop) {
+        DuScriptUI.progressBar.hit();
         prop.setExpression(exp);
     });
 
     // Open edit comp
+    DuScriptUI.progressBar.hit(undefined, "Ready!");
     editComp.openInViewer();
 
+    DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.NLA);
 
 }
