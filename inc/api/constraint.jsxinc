@@ -4780,7 +4780,7 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         'result = valueAtTime(t);\n' +
         '}\n' +
         'result;';
-    
+
     // Set to the props
     var masterComp = masterLayer.containingComp;
     var comp = 'thisComp.';
@@ -4793,12 +4793,12 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         else comp = 'thisComp.';
 
         prop.setExpression(
-            DuAEExpression.Id.CONNECTOR + '\n' + 
-            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' + 
+            DuAEExpression.Id.CONNECTOR + '\n' +
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
             exp,
             false
         );
-        if ( prop.matchName == "ADBE Opacity" ) prop.layer.enabled = true;
+        if (prop.matchName == "ADBE Opacity") prop.layer.enabled = true;
     });
 
     return effect;
@@ -4810,7 +4810,7 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
  * @param {DuAEProperty|Property} dropdown The dropdown menu property.
  * @param {Layer[]|DuList.<Layer>} [layers] The layers to control. The selected layers by default.
  */
-Duik.Constraint.linkLayersToDropdown = function (dropdown, layers) {
+Duik.Constraint.linkLayersToDropdown = function(dropdown, layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
 
     dropdown = new DuAEProperty(dropdown);
@@ -4832,8 +4832,8 @@ Duik.Constraint.linkLayersToDropdown = function (dropdown, layers) {
 
         var id = layers.current + 1;
 
-        layer.transform.opacity.expression = [ DuAEExpression.Id.CONNECTOR,
-            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' + 
+        layer.transform.opacity.expression = [DuAEExpression.Id.CONNECTOR,
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
             'var fx = ctrlLayer.effect("' + effect.name + '");',
             'var result = 0;',
             'if (fx(1).value == ' + id + ') result = value;',
@@ -4844,4 +4844,96 @@ Duik.Constraint.linkLayersToDropdown = function (dropdown, layers) {
     });
 
     if (updateDropdown) dropdown.setPropertyParameters(layerNames);
+}
+
+/**
+ * Prepares a visual audio controller to connect to properties
+ * @param {AVLayer} [audioLayer] The layer with the audio to setup. The selected layer by default.
+ * @return {DuAEProperty} The value to use with the connector
+ */
+Duik.Constraint.setupAudioController = function(audioLayer) {
+    audioLayer = def(audioLayer, DuAEComp.getActiveLayer());
+    if (!audioLayer) return;
+    if (!audioLayer.hasAudio) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.AUDIO_CONNECTOR, false);
+
+    // Duplicate the layer
+    audioLayer.duplicate();
+    // Precompose
+    var comp = audioLayer.containingComp;
+    var index = audioLayer.index;
+    var acCompName = DuAEProject.newUniqueCompName('AC.' + DuScriptUI.String.SETTINGS + '::' + audioLayer.name);
+    var acComp = comp.layers.precompose([index], acCompName);
+    // Lock and hide the precomp
+    var acCompLayer = comp.layer(index);
+    acCompLayer.moveToEnd();
+    acCompLayer.enabled = false;
+    acCompLayer.audioEnabled = false;
+    acCompLayer.guideLayer = true;
+    acCompLayer.shy = true;
+
+    // Setup the controllers
+    audioLayer = acComp.layer(1);
+
+    // Add the spectrum layer
+    var spectrumLayer = acComp.layers.addShape();
+    Duik.Layer.setAttributes(spectrumLayer, Duik.Layer.Type.AUDIO, DuScriptUI.String.AUDIO_SPECTRUM, undefined, undefined, DuScriptUI.String.AUDIO_EFFECTOR );
+    var solidGroup = spectrumLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    solidGroup.name = 'Solid';
+    var solidContent = solidGroup.property("ADBE Vectors Group");
+    var solid = solidContent.addProperty("ADBE Vector Shape - Rect");
+    solid('ADBE Vector Rect Size').expression = '[thisComp.width, thisComp.height*3];';
+    var fill = solidContent.addProperty("ADBE Vector Graphic - Fill");
+    fill("ADBE Vector Fill Color").setValue([0,0,0,1]);
+
+    // Add an Ear layer
+    var earLayer = Duik.Controller.create(acComp, Duik.Controller.Type.EAR);
+    earLayer.transform.position.setValue([acComp.width / 4, acComp.height / 2]);
+
+    // Add the settings layer
+    var settingsLayer = Duik.Controller.create(acComp, Duik.Controller.Type.AUDIO);
+    Duik.Layer.setCharacterName(DuScriptUI.String.AUDIO_EFFECTOR, settingsLayer);
+    // Add effect
+    var pe = Duik.PseudoEffect.AUDIO_CONNECTOR;
+    var ampId = pe.props['Amplitude'].index;
+    var minId = pe.props['Minimum frequency (Hz)'].index;
+    var maxId = pe.props['Maximum frequency (Hz)'].index;
+    var easeId = pe.props['Ease'].index;
+    var timeEaseId = pe.props['Time settings']['Ease (seconds)'].index;
+    var offsetId = pe.props['Time settings']['Offset (seconds)'].index;
+    var settingsEffect = pe.apply(settingsLayer);
+
+    // Setup the spectrum
+    var spectrumEffect = spectrumLayer.property('ADBE Effect Parade').addProperty('ADBE AudSpect');
+    spectrumEffect(1).setValue(4); // Audio Layer
+    spectrumEffect(2).expression = '[0,thisComp.height]'; // start point
+    spectrumEffect(3).expression = '[thisComp.width,thisComp.height]'; // end point
+    spectrumEffect(6).expression = 'thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + minId + ')'; // start freq
+    spectrumEffect(7).expression = 'thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + maxId + ')'; // end freq
+    spectrumEffect(9).expression = 'thisComp.height * thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + ampId + ') / 100;'; // max height
+    spectrumEffect(10).expression = '1000*( thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + timeEaseId + ') + thisComp.frameDuration);'; // audio duration
+    spectrumEffect(11).expression = '1000*thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + offsetId + ');'; // audio offset
+    spectrumEffect(12).expression = 'thisComp.width/thisProperty.propertyGroup()(8)+10;'; // thickness
+    spectrumEffect(13).setValue(0); // softness
+    spectrumEffect(14).setValue([1,1,1,1]); // inside color
+    spectrumEffect(15).expression = 'thisProperty.propertyGroup()(14);'; // outside color
+    spectrumEffect(23).setValue(1); // composite on original
+    var blurEffect = spectrumLayer.property('ADBE Effect Parade').addProperty('ADBE Motion Blur');
+    blurEffect(2).expression = 'thisComp.height*thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + easeId + ')/100'; // blur length
+    spectrumLayer.locked = true;
+
+    // Setup the ear
+    var earEffect = earLayer.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+    earEffect.name = DuScriptUI.String.AUDIO_EFFECTOR;
+    earEffect(1).expression = [ DuAEExpression.Id.AUDIO_EFFECTOR,
+        'var spectrumLayer = thisComp.layer("' + spectrumLayer.name + '");',
+        'var smpl = spectrumLayer.sampleImage(thisLayer.position);',
+        'smpl[0]*100;'
+    ].join('\n');
+
+    DuAE.endUndoGroup(DuScriptUI.String.AUDIO_CONNECTOR);
+
+    // OK!
+    return new DuAEProperty( earEffect(1) );
 }
