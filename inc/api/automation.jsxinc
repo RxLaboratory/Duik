@@ -663,3 +663,102 @@ Duik.Automation.effector = function(comp) {
 
     return ctrlLayer;
 }
+
+/**
+ * Creates a map (texture) effector to control the selected properties.
+ * @param {AVLayer} mapLayer The layer to use as a texture/map.
+ * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.effectorMap = function( mapLayer, props ) {
+
+    // Create effect
+    var pe = Duik.PseudoEffect.EFFECTOR_MAP;
+    var channelId = pe.props['Channel'].index;
+    var minId = pe.props['Minimum'].index;
+    var maxId = pe.props['Maximum'].index;
+    var reverseId = pe.props['Reverse'].index;
+
+    var effect = pe.apply(mapLayer);
+
+
+    // Setup properties
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    // Setup properties
+    var ctrlLink;
+    var exp = [DuAEExpression.Id.EFFECTOR_MAP,
+		'var fx = null;',
+		'var ctrl = null;',
+		'var result = value;',
+		'',
+		'try',
+		'{',
+		'    ctrl = effect("{#}")(1);',
+		'    fx = ctrl.effect( "' + effect.name + '" );',
+		'}',
+		'catch ( e )',
+		'{}',
+		'',
+		'// Get layer world position',
+		'function p ( l )',
+		'{',
+		'    return l.toWorld( l.anchorPoint )',
+		'}',
+		'',
+		'function effector ()',
+		'{',
+		'    var min = fx( ' + minId + ' ).value;',
+		'    var max = fx( ' + maxId + ' ).value;',
+		'    var reverse = fx( ' + reverseId + ' ).value;',
+		'    var channel = fx( ' + channelId + ' ).value;',
+		'',
+		'    min = min / 100;',
+		'    max = max / 100;',
+		'',
+		'    var distance = effectorDistance( channel );',
+		'    return effectorValue( distance, min, max, reverse );',
+		'',
+		'}',
+		'',
+		'function effectorDistance ( channel )',
+		'{',
+		'    var distance = 0;',
+		'',
+		'    var worldPos = p( thisLayer );',
+		'',
+		'    if ( typeof channel === "undefined" ) channel = 5;',
+		'    var colorPoint = ctrl.fromWorld( worldPos );',
+		'    var color = ctrl.sampleImage( colorPoint );',
+		'    if ( channel <= 3 ) distance = color[ channel-1 ];',
+		'	else if (channel <= 6)',
+		'	{',
+		'		color = rgbToHsl(color);',
+		'		distance = color[ channel - 4 ];',
+		'	}',
+		'    else distance = color[ 3 ];',
+		'',
+		'    return distance;',
+		'}',
+		'',
+		'function effectorValue ( distance, min, max, reverse )',
+		'{',
+		'    var t = 0;',
+		'    var beginTime = key( 1 ).time;',
+		'    var endTime = key( numKeys ).time;',
+		'',
+		'    if ( !reverse ) t = linear( distance, min, max, beginTime, endTime );',
+		'    else t = linear( distance, min, max, endTime, beginTime );',
+		'',
+		'    return valueAtTime( t );',
+		'}',
+		'',
+		'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+		''
+	].join('\n');
+    props.do(function(prop) {
+        var layer = prop.layer;
+        var linkEffect = DuAELayer.getCreateLayerEffect(layer, mapLayer, DuScriptUI.String.EFFECTOR_MAP);
+        prop.setExpression( DuString.args(exp, linkEffect.name), false);
+    });
+}
