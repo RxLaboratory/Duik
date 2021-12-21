@@ -279,6 +279,11 @@
                 var layer = DuAEComp.getActiveLayer();
                 if (!layer) return;
 
+                // Disable prop selection by default
+                propList.removeAll();
+                propListLabel.enabled = false;
+                propList.enabled = false;
+
                 // If there's a selected property, let's use it
                 var prop = DuAELayer.getActiveProperty(layer);
                 if (prop) {
@@ -294,42 +299,67 @@
 
                 // Is it a slider?
                 var pe = Duik.PseudoEffect.CONTROLLER_SLIDER;
-                var effect = layer.effect( pe.matchName );
+                var effect = layer.effect(pe.matchName);
                 if (effect) {
                     // Title
                     propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_SLIDER;
                     // Default values
                     minEdit.setText('-100');
                     maxEdit.setText('100');
-                    var p = new DuAEProperty( effect(pe.props['Value'].index) );
+                    var p = new DuAEProperty(effect(pe.props['Value'].index));
                     connectorLoadMasterProperty(p, 'prop');
                     return;
                 }
 
                 // Is it a 2D Slider?
                 pe = Duik.PseudoEffect.CONTROLLER_2DSLIDER;
-                effect = layer.effect( pe.matchName );
+                effect = layer.effect(pe.matchName);
                 if (effect) {
                     // Title
                     propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_2DSLIDER;
                     // Default values
                     minEdit.setText('-100');
                     maxEdit.setText('100');
-                    var p = new DuAEProperty( effect(pe.props['2D Value'].index) );
+                    var p = new DuAEProperty(effect(pe.props['2D Value'].index));
                     connectorLoadMasterProperty(p, 'prop');
                     return;
                 }
 
                 // Is it an angle?
                 pe = Duik.PseudoEffect.CONTROLLER_ANGLE;
-                effect = layer.effect( pe.matchName );
+                effect = layer.effect(pe.matchName);
                 if (effect) {
                     // Title
                     propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_ANGLE;
                     // Default values
                     minEdit.setText('0');
                     maxEdit.setText('360');
-                    var p = new DuAEProperty( effect(pe.props['Angle'].index) );
+                    var p = new DuAEProperty(effect(pe.props['Angle'].index));
+                    connectorLoadMasterProperty(p, 'prop');
+                    return;
+                }
+
+                // Is it an expose transform?
+                pe = Duik.PseudoEffect.EXPOSE_TRANSFORM;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.EXPOSE_TRANSFORM;
+                    // Set the prop list
+                    propList.removeAll();
+                    propList.add( 'item', "Absolute position (2D)" );
+                    propList.add( 'item', "Relative position (2D)" );
+                    propList.add( 'item', "Distance (2D)" );
+                    propList.add( 'item', "Absolute position (3D)" );
+                    propList.add( 'item', "Relative position (3D)" );
+                    propList.add( 'item', "Distance (3D)" );
+                    propList.add( 'item', "Absolute orientation" );
+                    propList.add( 'item', "Relative orientation" );
+                    propList.add( 'item', "Angle" );
+                    propList.selection = 2;
+                    propListLabel.enabled = true;
+                    propList.enabled = true;
+                    var p = new DuAEProperty(effect(pe.props['2D Position (Comp projection)']['2D Distance'].index));
                     connectorLoadMasterProperty(p, 'prop');
                     return;
                 }
@@ -358,6 +388,7 @@
                         axisList.add('item', 'Y');
                         axisList.selection = 0;
                         axisLabel.text = DuScriptUI.String.AXIS;
+                        axisLabel.enabled = true;
                     } else if (dim == 3) {
                         axisList.removeAll();
                         axisList.enabled = true;
@@ -366,6 +397,7 @@
                         axisList.add('item', 'Z');
                         axisList.selection = 0;
                         axisLabel.text = DuScriptUI.String.AXIS;
+                        axisLabel.enabled = true;
                     } else if (dim == 4) {
                         axisList.removeAll();
                         axisList.enabled = true;
@@ -378,6 +410,7 @@
                         axisList.add('item', "Value");
                         axisList.selection = 4;
                         axisLabel.text = DuScriptUI.String.CHANNEL;
+                        axisLabel.enabled = true;
                         minEdit.setText('0');
                         if (app.project.bitsPerChannel == 8) maxEdit.setText('255');
                         else if (app.project.bitsPerChannel == 16) maxEdit.setText('65536');
@@ -393,17 +426,28 @@
                         maxEdit.setSuffix("%");
                     }
 
-                    // Disable prop
-                    propListLabel.enabled = false;
-                    propList.removeAll();
-                    propList.enabled = false;
-
                     // Update range
                     axisList.onChange();
+
+                    createGroup.visible = false;
+                    settingsGroup.visible = true;
+                    return;
                 }
 
-                createGroup.visible = false;
-                settingsGroup.visible = true;
+                if (type == 'layerList') {
+                    // Check if it's a dropdown
+                    if (prop.isDropdown()) {
+                        connector.master = prop;
+                        // Show the dropdown panel
+                        createGroup.visible = false;
+                        dropdownGroup.visible = true;
+                    }
+                    else
+                    {
+                        connectorLoadMasterProperty(prop, 'prop');
+                    }
+                    return;
+                }
             }
 
             var connectorStack = DuScriptUI.group(connectorGroup, 'stacked');
@@ -491,6 +535,24 @@
                 false,
                 'column'
             );
+            etmButton.onClick = function() {
+                DuAE.beginUndoGroup(DuScriptUI.String.EXPOSE_TRANSFORM);
+
+                // Create a single expose transform
+                var layer = DuAEComp.getActiveLayer();
+                var ctrls;
+                if (layer) { // for the layer
+                    ctrls = Duik.Constraint.exposeTransform(undefined, [layer]);
+                }
+                else { // just one in the comp
+                    ctrls = Duik.Constraint.exposeTransform( DuAEProject.getActiveComp() );
+                }
+                if (ctrls.length == 0) return;
+
+                connectorPick();
+
+                DuAE.endUndoGroup();
+            };
 
             var layerListButton = DuScriptUI.button(
                 createLine2,
@@ -499,7 +561,28 @@
                 DuScriptUI.String.CONNECTOR_LAYER_LIST_TIP,
                 false,
                 'column'
-            )
+            );
+            layerListButton.onClick = function () {
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR);
+
+                // Check if there's a layer selected
+                var layer = DuAEComp.getActiveLayer();
+                if (!layer) {
+                    alert(DuScriptUI.String.SELECT_LAYER_ALERT);
+                    return;
+                }
+
+                // Create a dropdown
+                var p = layer.property('ADBE Effect Parade').addProperty('ADBE Dropdown Control');
+                p.name = DuScriptUI.String.LAYER_LIST;
+                p = new DuAEProperty(p.property(1));
+                connectorLoadMasterProperty(p, 'layerList');
+
+                DuAE.endUndoGroup();
+            };
+            if (!DuAE.version.atLeast('17.0.1')) {
+                layerListButton.enabled = false;
+            }
 
             var effectorButton = DuScriptUI.button(
                 createLine3,
@@ -624,43 +707,42 @@
             var connectGroup = DuScriptUI.group(connectorStack, 'column');
             connectGroup.visible = false;
 
-            var connectLabel = connectGroup.add('statictext', undefined, DuScriptUI.String.CONNECTOR_CONNECT_HELP, {multiline: true});
+            var connectLabel = connectGroup.add('statictext', undefined, DuScriptUI.String.CONNECTOR_CONNECT_HELP, {
+                multiline: true
+            });
 
             var connectButtonsGroup = DuScriptUI.group(connectGroup, 'row');
 
             var connectToOpacitiesButton = DuScriptUI.button(
                 connectButtonsGroup,
                 DuScriptUI.String.CONNECT_OPACITIES,
-                w16_opacity,
+                w16_layers,
                 DuScriptUI.String.CONNECT_OPACITIES_TIP,
                 false,
                 'column'
             );
-            connectToOpacitiesButton.onClick = function () {
+            connectToOpacitiesButton.onClick = function() {
                 // Get layer selection
                 var layers = DuAEComp.getSelectedLayers();
                 if (layers.length == 0) return;
 
                 // Prepare settings
-                var min = parseFloat( minEdit.text );
-                var max = parseFloat( maxEdit.text );
-                var type = typeList.selection.index+1;
+                var min = parseFloat(minEdit.text);
+                var max = parseFloat(maxEdit.text);
+                var type = typeList.selection.index + 1;
                 var axis = DuAE.Axis.X;
                 var dim = connector.master.dimensions();
-                if ( dim == 2 || dim == 3 )
-                {
-                    if ( axisList.selection.index == 1 ) axis = DuAE.Axis.Y;
-                    else if ( axisList.selection.index == 2 ) axis = DuAE.Axis.Z;
-                }
-                else if ( dim == 4 )
-                {
-                    if ( axisList.selection.index == 0 ) axis = DuAE.Axis.RED;
-                    else if ( axisList.selection.index == 1 ) axis = DuAE.Axis.GREEN;
-                    else if ( axisList.selection.index == 2 ) axis = DuAE.Axis.BLUE;
-                    else if ( axisList.selection.index == 3 ) axis = DuAE.Axis.ALPHA;
-                    else if ( axisList.selection.index == 4 ) axis = DuAE.Axis.HUE;
-                    else if ( axisList.selection.index == 5 ) axis = DuAE.Axis.SATURATION;
-                    else if ( axisList.selection.index == 6 ) axis = DuAE.Axis.VALUE;
+                if (dim == 2 || dim == 3) {
+                    if (axisList.selection.index == 1) axis = DuAE.Axis.Y;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.Z;
+                } else if (dim == 4) {
+                    if (axisList.selection.index == 0) axis = DuAE.Axis.RED;
+                    else if (axisList.selection.index == 1) axis = DuAE.Axis.GREEN;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.BLUE;
+                    else if (axisList.selection.index == 3) axis = DuAE.Axis.ALPHA;
+                    else if (axisList.selection.index == 4) axis = DuAE.Axis.HUE;
+                    else if (axisList.selection.index == 5) axis = DuAE.Axis.SATURATION;
+                    else if (axisList.selection.index == 6) axis = DuAE.Axis.VALUE;
                 }
 
                 DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR)
@@ -668,12 +750,11 @@
                 DuAELayer.sequence(layers);
                 // List layer opacities
                 var props = [];
-                for (var i = 0, n = layers.length; i < n; i++)
-                {
-                    var o = new DuAEProperty( layers[i].transform.opacity  );
-                    props.push( o );
+                for (var i = 0, n = layers.length; i < n; i++) {
+                    var o = new DuAEProperty(layers[i].transform.opacity);
+                    props.push(o);
                 }
-                Duik.Constraint.connector( props, connector.master, min, max, axis, type );
+                Duik.Constraint.connector(props, connector.master, min, max, axis, type);
 
                 DuAE.endUndoGroup();
             };
@@ -686,38 +767,70 @@
                 false,
                 'column'
             );
-            connectToPropsButton.onClick = function () {
+            connectToPropsButton.onClick = function() {
                 var props = DuAEComp.getSelectedProps();
-                if ( props.length == 0 ) return;
+                if (props.length == 0) return;
 
                 // Prepare settings
-                var min = parseFloat( minEdit.text );
-                var max = parseFloat( maxEdit.text );
-                var type = typeList.selection.index+1;
+                var min = parseFloat(minEdit.text);
+                var max = parseFloat(maxEdit.text);
+                var type = typeList.selection.index + 1;
                 var axis = DuAE.Axis.X;
                 var dim = connector.master.dimensions();
-                if ( dim == 2 || dim == 3 )
-                {
-                    if ( axisList.selection.index == 1 ) axis = DuAE.Axis.Y;
-                    else if ( axisList.selection.index == 2 ) axis = DuAE.Axis.Z;
-                }
-                else if ( dim == 4 )
-                {
-                    if ( axisList.selection.index == 0 ) axis = DuAE.Axis.RED;
-                    else if ( axisList.selection.index == 1 ) axis = DuAE.Axis.GREEN;
-                    else if ( axisList.selection.index == 2 ) axis = DuAE.Axis.BLUE;
-                    else if ( axisList.selection.index == 3 ) axis = DuAE.Axis.ALPHA;
-                    else if ( axisList.selection.index == 4 ) axis = DuAE.Axis.HUE;
-                    else if ( axisList.selection.index == 5 ) axis = DuAE.Axis.SATURATION;
-                    else if ( axisList.selection.index == 6 ) axis = DuAE.Axis.VALUE;
+                if (dim == 2 || dim == 3) {
+                    if (axisList.selection.index == 1) axis = DuAE.Axis.Y;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.Z;
+                } else if (dim == 4) {
+                    if (axisList.selection.index == 0) axis = DuAE.Axis.RED;
+                    else if (axisList.selection.index == 1) axis = DuAE.Axis.GREEN;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.BLUE;
+                    else if (axisList.selection.index == 3) axis = DuAE.Axis.ALPHA;
+                    else if (axisList.selection.index == 4) axis = DuAE.Axis.HUE;
+                    else if (axisList.selection.index == 5) axis = DuAE.Axis.SATURATION;
+                    else if (axisList.selection.index == 6) axis = DuAE.Axis.VALUE;
                 }
 
                 DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR)
 
-                Duik.Constraint.connector( props, connector.master, min, max, axis, type );
+                Duik.Constraint.connector(props, connector.master, min, max, axis, type);
 
                 DuAE.endUndoGroup();
-            }
+            };
+
+            var dropdownGroup = DuScriptUI.group(connectorStack, 'column');
+            dropdownGroup.visible = false;
+
+            var dropdownTitleLabel = dropdownGroup.add('statictext', undefined, DuScriptUI.String.CONNECTOR_DROPDOWN_HELP, {
+                multiline: true
+            });
+
+            var dropdownConnectButton = DuScriptUI.button(
+                dropdownGroup,
+                DuScriptUI.String.CONNECT_OPACITIES,
+                w16_layers,
+                DuScriptUI.String.CONNECT_OPACITIES_TIP,
+                false,
+                'column'
+            );
+            dropdownConnectButton.onClick = function() {
+                // Get layer selection
+                var layers = DuAEComp.getSelectedLayers();
+                if (layers.length == 0) return;
+
+                // Prepare settings
+                var min = 1;
+                var max = layers.length;
+                var type = 1;
+                var axis = DuAE.Axis.X;
+                
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR);
+
+                Duik.Constraint.linkLayersToDropdown(connector.master, layers);
+
+                DuAE.endUndoGroup();
+
+                cancelButton.onClick();
+            };
 
             var validButtonsGroup = DuScriptUI.group(connectorGroup);
 
@@ -734,6 +847,7 @@
                 createGroup.visible = true;
                 settingsGroup.visible = false;
                 connectGroup.visible = false;
+                dropdownGroup.visible = false;
 
                 connectorGroup.visible = false;
                 constraintsGroup.visible = true;

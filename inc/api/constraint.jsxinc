@@ -477,6 +477,9 @@ Duik.Constraint.alignLayers = function(position, rotation, scale, opacity) {
 Duik.CmdLib['Constraint']["Expose Transform"] = "Duik.Constraint.exposeTransform()";
 /**
  * Expose Transform
+ * @param {CompItem} [comp] The composition where to create the expose transform controller. The active composition by default.
+ * @param {Layer[]} [layers] The layer with the transformation to expose. The selected layers by default. Can be an empty list too, in this case the Expose Transform controller is not set to measure any layer.
+ * @return {ShapeLayer[]} The list of the new Expose Transform controllers. One per given layer.
  */
 Duik.Constraint.exposeTransform = function(comp, layers) {
     if (typeof comp === 'undefined') {
@@ -956,6 +959,8 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
     DuAEComp.selectLayers(ctrls);
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.EXPOSE_TRANSFORM);
+
+    return ctrls;
 }
 
 Duik.CmdLib['Constraint']["Morph Keys"] = "Duik.Constraint.morphKeys()";
@@ -4797,4 +4802,46 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
     });
 
     return effect;
+}
+
+/**
+ * Connects a dropdown menu effect to a list of layers, using their opacities.<br />
+ * Note: On After Effects < 17.0.1, the list is not updated to reflect the list of layers.
+ * @param {DuAEProperty|Property} dropdown The dropdown menu property.
+ * @param {Layer[]|DuList.<Layer>} [layers] The layers to control. The selected layers by default.
+ */
+Duik.Constraint.linkLayersToDropdown = function (dropdown, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+
+    dropdown = new DuAEProperty(dropdown);
+    var effect = dropdown.parentProperty();
+
+    var masterComp = dropdown.comp;
+    var masterLayer = dropdown.layer;
+
+    var updateDropdown = DuAE.version.atLeast('17.0.1');
+
+    layers = new DuList(layers);
+    var layerNames = [];
+    layers.do(function(layer) {
+        // check if the current comp is the same than the comp containing the masterProperty
+        var childComp = layer.containingComp;
+        var comp;
+        if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
+        else comp = 'thisComp.';
+
+        var id = layers.current + 1;
+
+        layer.transform.opacity.expression = [ DuAEExpression.Id.CONNECTOR,
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' + 
+            'var fx = ctrlLayer.effect("' + effect.name + '");',
+            'var result = 0;',
+            'if (fx(1).value == ' + id + ') result = value;',
+            'result;'
+        ].join('\n');
+
+        if (updateDropdown) layerNames.push(layer.name);
+    });
+
+    if (updateDropdown) dropdown.setPropertyParameters(layerNames);
 }
