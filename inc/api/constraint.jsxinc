@@ -4804,6 +4804,68 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
     return effect;
 }
 
+Duik.CmdLib['Constraint']["Connector"] = "Duik.Constraint.quickConnector()";
+/**
+ * Connects the properties together to a % slider
+ * @param {Property[]|DuAEProperty[]} [props] - The properties to connect. The selected properties by default.
+ */
+Duik.Constraint.quickConnector = function(props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) return;
+    props = new DuList(props);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR, false);
+
+    // Create the slider
+    var ctrlLayer = props.first().layer;
+    var comp = props.first().comp;
+    var effect = Duik.PseudoEffect.QUICK_CONNECTOR.apply(ctrlLayer);
+
+    var exp = [ DuAEExpression.Id.CONNECTOR,
+        'var ctrlLayer = thisComp.layer("' + ctrlLayer.name + '");',
+        'var ctrlEffect = ctrlLayer.effect("' + effect.name + '");',
+        'var ctrlValue = ctrlEffect(1);',
+        'var ctrlMin = 0;',
+        'var ctrlMax = 100;',
+        'var result = value;',
+        'if (numKeys >= 2 && ctrlEffect.enabled)',
+        '{',
+        'ctrlValue = ctrlValue.value;',
+        'var t = 0;',
+        'var beginTime = key(1).time;',
+        'var endTime = key(numKeys).time;',
+        'if (ctrlMin > ctrlMax)',
+        '{',
+        't = linear(ctrlValue, ctrlMin, ctrlMax, endTime, beginTime);',
+        '}',
+        'else',
+        '{',
+        't = linear(ctrlValue, ctrlMin, ctrlMax, beginTime, endTime);',
+        '}',
+        'result = valueAtTime(t);',
+        '}',
+        'result;'
+    ].join('\n');
+
+    var firstTime = comp.duration;
+    var lastTime = 0;
+
+    props.do(function(prop) {
+        // Set the expression
+        prop.setExpression(exp, false);
+        // Get first/last time
+        var f = prop.firstKeyTime();
+        if (f != null) if (f < firstTime) firstTime = f;
+        var l = prop.lastKeyTime();
+        if (l != null) if (l > lastTime) lastTime = l;
+    });
+
+    // Set default keyframes
+    effect(1).setValuesAtTimes([firstTime, lastTime], [0,100]);
+
+    DuAE.endUndoGroup(DuScriptUI.String.CONNECTOR);
+}
+
 /**
  * Connects a dropdown menu effect to a list of layers, using their opacities.<br />
  * Note: On After Effects < 17.0.1, the list is not updated to reflect the list of layers.
