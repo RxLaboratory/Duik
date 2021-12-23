@@ -271,6 +271,7 @@
             // Connector variables
             var connector = {};
             connector.master = null;
+            connector.type = 'prop';
 
             // Picks the selected property / layer / control...
             function connectorPick() {
@@ -344,7 +345,6 @@
                 pe = Duik.PseudoEffect.EXPOSE_TRANSFORM;
                 effect = layer.effect(pe.matchName);
                 if (effect) {
-                    // Title
                     propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.EXPOSE_TRANSFORM;
                     // Set the prop list
                     propList.removeAll();
@@ -361,13 +361,34 @@
                     propListLabel.enabled = true;
                     propList.enabled = true;
                     var p = new DuAEProperty(effect(pe.props['2D Position (Comp projection)']['2D Distance'].index));
-                    connectorLoadMasterProperty(p, 'prop');
+                    connectorLoadMasterProperty(p, 'etm');
+                    return;
+                }
+
+                // Is it an IK?
+                pe = Duik.PseudoEffect.TWO_LAYER_IK;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.IK;
+                    // Set the prop list
+                    propList.removeAll();
+                    propList.add( 'item', "IK Length" );
+                    propList.add( 'item', "Upper Stretch" );
+                    propList.add( 'item', "Lower Stretch" );
+                    propList.selection = 0;
+                    propListLabel.enabled = true;
+                    propList.enabled = true;
+                    var p = new DuAEProperty(effect(pe.props['Data']['Lengths']['IK length'].index));
+                    connectorLoadMasterProperty(p, 'ik');
                     return;
                 }
             };
 
             function connectorLoadMasterProperty(prop, type) {
-                if (type == 'prop') {
+                connector.type = type;
+
+                if (type == 'prop' || type == 'ik' || type == 'etm') {
                     connector.master = prop;
 
                     // Prepare UI according to the number of dimensions
@@ -428,7 +449,7 @@
                     }
 
                     // Update range
-                    axisList.onChange();
+                    connectorUpdateRange();
 
                     createGroup.visible = false;
                     settingsGroup.visible = true;
@@ -468,6 +489,30 @@
                     connectGroup.visible = true;
                     return;
                 }
+            }
+
+            function connectorUpdateRange() {
+                if (!connector.master) return;
+
+                var axis = 0;
+
+                if (axisList.selection) axis = axisList.selection.index;
+   
+                var preExpression = true;
+                if (connector.master.numKeys() < 2) preExpression = false;
+                var range = connector.master.range(axis, preExpression, true);
+
+                if (range.length != 2) return;
+
+                var min = Math.floor(range[0]);
+                var max = Math.floor(range[1]);
+
+                if (min < parseFloat(minEdit.text)) minEdit.setText(min);
+                if (max > parseFloat(maxEdit.text)) maxEdit.setText(max);
+
+                if (min == max) return;
+                minEdit.setText(Math.floor(min));
+                maxEdit.setText(Math.floor(max));
             }
 
             var connectorStack = DuScriptUI.group(connectorGroup, 'stacked');
@@ -702,24 +747,7 @@
             minLabel.minimumSize.height = minLabel.maximumSize.height = minEdit.edit.preferredSize[1];
             maxLabel.minimumSize.height = maxLabel.maximumSize.height = maxEdit.edit.preferredSize[1];
 
-            axisList.onChange = function() {
-                if (!connector.master) return;
-
-                var axis = 0;
-                if (axisList.selection) axis = axisList.selection.index;
-                var preExpression = true;
-                if (connector.master.numKeys() < 2) preExpression = false;
-                var range = connector.master.range(axis, preExpression, true);
-
-                if (range.length != 2) return;
-
-                if (range[0] < parseFloat(minEdit.text)) minEdit.setText(Math.floor(range[0]));
-                if (range[1] > parseFloat(maxEdit.text)) maxEdit.setText(Math.floor(range[1]));
-
-                if (range[0] == range[1]) return;
-                minEdit.setText(Math.floor(range[0]));
-                maxEdit.setText(Math.floor(range[1]));
-            };
+            axisList.onChange = connectorUpdateRange;
 
             typeList.onChange = function() {
                 if (!connector.master) return;
@@ -737,6 +765,34 @@
                     var velocity = connector.master.maxVelocity();
                     minEdit.setText('0');
                     maxEdit.setText(Math.floor(velocity * 100) / 100);
+                }
+            };
+
+            propList.onChange = function() {
+                // Get the property
+                if (connector.type == 'ik') {
+                    var ikEffect = connector.master.parentProperty();
+                    var id = propList.selection.index;
+                    var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+                    if (id == 0)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Lengths']['IK length'].index), 'ik');
+                    else if (id == 1)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Stretch data']['Upper stretch'].index), 'ik');
+                    else if (id == 2)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Stretch data']['Lower stretch'].index), 'ik');
+                }
+                else if (connector.type == 'etm') {
+                    var etmEffect = connector.master.parentProperty();
+                    var id = propList.selection.index;
+                    var p = Duik.PseudoEffect.EXPOSE_TRANSFORM.props;
+                    var pid = 0;
+                    if (id == 0) pid = p['2D Position (Comp projection)']['Absolute'].index;
+                    else if (id == 1) pid = p['2D Position (Comp projection)']['Relative to reference'].index;
+                    else if (id == 2) pid = p['2D Position (Comp projection)']['2D Distance'].index;
+                    else if (id == 3) pid = p['3D Position (World)']['Absolute'].index;
+                    else if (id == 4) pid = p['3D Position (World)']['Relative to reference'].index;
+                    else if (id == 5) pid = p['3D Position (World)']['3D Distance'].index;
+                    else if (id == 6) pid = p['2D Orientation']['Absolute'].index;
+                    else if (id == 7) pid = p['2D Orientation']['Relative to reference'].index;
+                    else if (id == 7) pid = p['Angle (Layer-This-Reference'].index;
+                    connectorLoadMasterProperty(etmEffect.prop(pid), 'etm');
                 }
             };
 
