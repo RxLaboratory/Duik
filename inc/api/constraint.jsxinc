@@ -23,56 +23,52 @@ Duik.CmdLib['Constraint']["List"] = "Duik.Constraint.list()";
 /**
  * List
  */
-Duik.Constraint.list = function ( )
-{
+Duik.Constraint.list = function() {
     var props = DuAEComp.getSelectedProps();
-	if (props.length == 0) return;
+    if (props.length == 0) return;
 
-	DuAE.beginUndoGroup( DuScriptUI.String.LIST );
+    DuAE.beginUndoGroup(DuScriptUI.String.LIST);
 
-	var layers = DuAEComp.unselectLayers();
-	for (var i = 0, n = props.length; i < n ; i++)
-	{
-		Duik.Constraint.createList(props[i]);
-	}
-	DuAEComp.selectLayers(layers);
+    var layers = DuAEComp.unselectLayers();
+    for (var i = 0, n = props.length; i < n; i++) {
+        Duik.Constraint.createList(props[i]);
+    }
+    DuAEComp.selectLayers(layers);
 
-	DuAE.endUndoGroup();
+    DuAE.endUndoGroup();
 }
 
 /**
-	* Adds a list on a property
-	* @param {Property|DuAEProperty} prop - The Property
-    * @returns {DuAEProperty} The list effect
-*/
-Duik.Constraint.createList = function (prop)
-{
-	prop = new DuAEProperty(prop);
+ * Adds a list on a property
+ * @param {Property|DuAEProperty} prop - The Property
+ * @returns {DuAEProperty} The list effect
+ */
+Duik.Constraint.createList = function(prop) {
+    prop = new DuAEProperty(prop);
     if (!prop.riggable()) return;
 
     DuAE.beginUndoGroup(DuScriptUI.String.CONSTRAINT_LIST, false);
 
-	var dim = prop.dimensions();
+    var dim = prop.dimensions();
 
-	var layer = prop.layer;
+    var layer = prop.layer;
 
-	var effect = null;
-	var name = prop.getProperty().name + ' List';
-	if (dim == 1) effect = Duik.PseudoEffect.ONED_LIST.apply(layer, name);
-	else if (dim == 2) effect = Duik.PseudoEffect.TWOD_LIST.apply(layer, name);
-	else if (dim == 3) effect = Duik.PseudoEffect.THREED_LIST.apply(layer, name);
-	else return;
+    var effect = null;
+    var name = prop.getProperty().name + ' List';
+    if (dim == 1) effect = Duik.PseudoEffect.ONED_LIST.apply(layer, name);
+    else if (dim == 2) effect = Duik.PseudoEffect.TWOD_LIST.apply(layer, name);
+    else if (dim == 3) effect = Duik.PseudoEffect.THREED_LIST.apply(layer, name);
+    else return;
 
-	//set animation with expression
-	var anim = prop.animation(false);
-	if (anim)
-    {
+    //set animation with expression
+    var anim = prop.animation(false);
+    if (anim) {
         var newProp = new DuAEProperty(effect(2));
-        newProp.setAnim(anim,0,true,true,false);
+        newProp.setAnim(anim, 0, true, true, false);
     }
-	prop.removeAnimation();
+    prop.removeAnimation();
 
-	prop.getProperty().expression =  [DuAEExpression.Id.LIST,
+    prop.getProperty().expression = [DuAEExpression.Id.LIST,
         "var fx = effect(\"" + effect.name + "\");",
         "var v1 = fx(2);",
         "var w1 = fx(3);",
@@ -85,7 +81,7 @@ Duik.Constraint.createList = function (prop)
         "var v5 = fx(18);",
         "var w5 = fx(19);",
         "v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;"
-        ].join('\n');
+    ].join('\n');
 
     DuAE.endUndoGroup(DuScriptUI.String.CONSTRAINT_LIST);
 
@@ -96,16 +92,14 @@ Duik.CmdLib['Constraint']["Separate Dimensions"] = "Duik.Constraint.separateDime
 /**
  * Separate Dimensions
  */
-Duik.Constraint.separateDimensions = function ()
-{
+Duik.Constraint.separateDimensions = function() {
     var props = DuAEComp.getSelectedProps();
-    if ( props.length == 0 ) return;
+    if (props.length == 0) return;
 
-    DuAE.beginUndoGroup( DuScriptUI.String.SEPARATE_DIMENSIONS );
+    DuAE.beginUndoGroup(DuScriptUI.String.SEPARATE_DIMENSIONS);
 
-    for ( var i = 0, num = props.length; i < num; i++ )
-    {
-        Duik.Constraint.separatePropDimensions( props[ i ] );
+    for (var i = 0, num = props.length; i < num; i++) {
+        Duik.Constraint.separatePropDimensions(props[i]);
     }
 
     DuAE.endUndoGroup();
@@ -117,37 +111,33 @@ Duik.Constraint.separateDimensions = function ()
  * @param {Property|DuAEProperty} prop - The property
  * @return {DuAEProperty[]} The seperated properties (or the original one if it could not be separated)
  */
-Duik.Constraint.separatePropDimensions = function ( prop )
-{
-    var propInfo = new DuAEProperty( prop );
+Duik.Constraint.separatePropDimensions = function(prop) {
+    var propInfo = new DuAEProperty(prop);
     prop = propInfo.getProperty();
 
     var layer = propInfo.layer;
     var dim = propInfo.dimensions();
 
-    if ( dim < 2 || dim > 4 ) return [propInfo];
+    if (dim < 2 || dim > 4) return [propInfo];
 
-    if (prop.isSeparationLeader)
-    {
+    if (prop.isSeparationLeader) {
         prop.dimensionsSeparated = true;
         var newProps = [];
-        for (var i = 1; i <= dim; i++)
-        {
+        for (var i = 1; i <= dim; i++) {
             var newProp = prop.parentProperty(prop.propertyIndex + i);
             newProp = new DuAEProperty(newProp);
-            newProps.push( newProp );
+            newProps.push(newProp);
         }
         return newProps;
     }
 
-    if ( dim == 2 )
-    {
+    if (dim == 2) {
         var pseudo;
-        if ( propInfo.isScale ) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_SCALE;
-        else if ( propInfo.isAngle ) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_ANGLE;
+        if (propInfo.isScale) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_SCALE;
+        else if (propInfo.isAngle()) pseudo = Duik.PseudoEffect.TWO_DIMENSIONS_ANGLE;
         else pseudo = Duik.PseudoEffect.TWO_DIMENSIONS;
 
-        var effect = pseudo.apply( layer, propInfo.name + " XY" );
+        var effect = pseudo.apply(layer, propInfo.name + " XY");
 
         prop = propInfo.getProperty();
 
@@ -155,19 +145,15 @@ Duik.Constraint.separatePropDimensions = function ( prop )
         var yIndex = pseudo.props['Y'].index;
 
         //copy values
-        if ( prop.numKeys == 0 )
-        {
-            effect( xIndex ).setValue( prop.value[ 0 ] );
-            effect( yIndex ).setValue( prop.value[ 1 ] );
-        }
-        else
-        {
-            for ( var k = prop.numKeys; k > 0; k-- )
-            {
-                var time = prop.keyTime( k );
-                var value = prop.keyValue( k );
-                effect( xIndex ).setValueAtTime( time, value[ 0 ] );
-                effect( yIndex ).setValueAtTime( time, value[ 1 ] );
+        if (prop.numKeys == 0) {
+            effect(xIndex).setValue(prop.value[0]);
+            effect(yIndex).setValue(prop.value[1]);
+        } else {
+            for (var k = prop.numKeys; k > 0; k--) {
+                var time = prop.keyTime(k);
+                var value = prop.keyValue(k);
+                effect(xIndex).setValueAtTime(time, value[0]);
+                effect(yIndex).setValueAtTime(time, value[1]);
                 prop.removeKey(k);
             }
         }
@@ -176,22 +162,21 @@ Duik.Constraint.separatePropDimensions = function ( prop )
         prop.expression = [DuAEExpression.Id.SEPARATE_DIMENSIONS,
             'var fx = thisLayer.effect("' + effect.name + '");',
             '[fx(' + xIndex + ').value,fx(' + yIndex + ').value];'
-            ].join('\n');
+        ].join('\n');
 
         //return the new props
-        var xProp = new DuAEProperty(effect( xIndex ));
-        var yProp = new DuAEProperty(effect( yIndex ));
-        return [xProp,yProp];
+        var xProp = new DuAEProperty(effect(xIndex));
+        var yProp = new DuAEProperty(effect(yIndex));
+        return [xProp, yProp];
     }
-    
-    if ( dim == 3 )
-    {
+
+    if (dim == 3) {
         var pseudo;
-        if ( propInfo.isScale ) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_SCALE;
-        else if ( propInfo.isAngle ) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_ANGLE;
+        if (propInfo.isScale) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_SCALE;
+        else if (propInfo.isAngle()) pseudo = Duik.PseudoEffect.THREE_DIMENSIONS_ANGLE;
         else pseudo = Duik.PseudoEffect.THREE_DIMENSIONS;
 
-        var effect = pseudo.apply( layer, propInfo.name + " XYZ" );
+        var effect = pseudo.apply(layer, propInfo.name + " XYZ");
 
         prop = propInfo.getProperty();
 
@@ -200,21 +185,17 @@ Duik.Constraint.separatePropDimensions = function ( prop )
         var zIndex = pseudo.props['Z'].index;
 
         //copy values
-        if ( prop.numKeys == 0 )
-        {
-            effect( xIndex ).setValue( prop.value[ 0 ] );
-            effect( yIndex ).setValue( prop.value[ 1 ] );
-            effect( zIndex ).setValue( prop.value[ 2 ] );
-        }
-        else
-        {
-            for ( var k = prop.numKeys; k > 0; k-- )
-            {
-                var time = prop.keyTime( k );
-                var value = prop.keyValue( k );
-                effect( xIndex ).setValueAtTime( time, value[ 0 ] );
-                effect( yIndex ).setValueAtTime( time, value[ 1 ] );
-                effect( zIndex ).setValueAtTime( time, value[ 2 ] );
+        if (prop.numKeys == 0) {
+            effect(xIndex).setValue(prop.value[0]);
+            effect(yIndex).setValue(prop.value[1]);
+            effect(zIndex).setValue(prop.value[2]);
+        } else {
+            for (var k = prop.numKeys; k > 0; k--) {
+                var time = prop.keyTime(k);
+                var value = prop.keyValue(k);
+                effect(xIndex).setValueAtTime(time, value[0]);
+                effect(yIndex).setValueAtTime(time, value[1]);
+                effect(zIndex).setValueAtTime(time, value[2]);
                 prop.removeKey(k);
             }
         }
@@ -223,47 +204,42 @@ Duik.Constraint.separatePropDimensions = function ( prop )
         prop.expression = [DuAEExpression.Id.SEPARATE_DIMENSIONS,
             'var fx = thisLayer.effect("' + effect.name + '");',
             '[fx(' + xIndex + ').value,fx(' + yIndex + ').value, fx(' + zIndex + ').value];'
-            ].join('\n');
+        ].join('\n');
 
         //return the new props
-        var xProp = new DuAEProperty(effect( xIndex ));
-        var yProp = new DuAEProperty(effect( yIndex ));
-        var zProp = new DuAEProperty(effect( zIndex ));
-        return [xProp,yProp,zProp];
+        var xProp = new DuAEProperty(effect(xIndex));
+        var yProp = new DuAEProperty(effect(yIndex));
+        var zProp = new DuAEProperty(effect(zIndex));
+        return [xProp, yProp, zProp];
     }
-    
-    if ( dim == 4 )
-    {
+
+    if (dim == 4) {
         var pseudo = Duik.PseudoEffect.COLOR;
-        var effect = pseudo.apply( layer, propInfo.name + " RGB/HSL" );
+        var effect = pseudo.apply(layer, propInfo.name + " RGB/HSL");
 
         var modeIndex = pseudo.props['Channels'].index;
         var rIndex = pseudo.props['R / H'].index;
         var gIndex = pseudo.props['G / S'].index;
         var bIndex = pseudo.props['B / L'].index;
 
-        effect( modeIndex ).setValue( 2 );
+        effect(modeIndex).setValue(2);
         prop = propInfo.getProperty();
 
         //copy values
-        if ( prop.numKeys == 0 )
-        {
+        if (prop.numKeys == 0) {
             var color = prop.value;
             color = new DuColor(color).floatHSL();
-            effect( rIndex ).setValue( color[ 0 ] );
-            effect( gIndex ).setValue( color[ 1 ] );
-            effect( bIndex ).setValue( color[ 2 ] );
-        }
-        else
-        {
-            for ( var k = prop.numKeys; k > 0; k-- )
-            {
-                var time = prop.keyTime( k );
-                var value = prop.keyValue( k );
+            effect(rIndex).setValue(color[0]);
+            effect(gIndex).setValue(color[1]);
+            effect(bIndex).setValue(color[2]);
+        } else {
+            for (var k = prop.numKeys; k > 0; k--) {
+                var time = prop.keyTime(k);
+                var value = prop.keyValue(k);
                 value = new DuColor(value).floatHSL();
-                effect( rIndex ).setValueAtTime( time, value[ 0 ] );
-                effect( gIndex ).setValueAtTime( time, value[ 1 ] );
-                effect( bIndex ).setValueAtTime( time, value[ 2 ] );
+                effect(rIndex).setValueAtTime(time, value[0]);
+                effect(gIndex).setValueAtTime(time, value[1]);
+                effect(bIndex).setValueAtTime(time, value[2]);
                 prop.removeKey(k);
             }
         }
@@ -274,13 +250,13 @@ Duik.Constraint.separatePropDimensions = function ( prop )
             'var color = [fx(' + rIndex + ').value,fx(' + gIndex + ').value, fx(' + bIndex + ').value, 1];',
             'if (fx(' + modeIndex + ').value == 2) hslToRgb(color);',
             'else color;'
-            ].join('\n');
+        ].join('\n');
 
         //return the new props
-        var xProp = new DuAEProperty(effect( rIndex ));
-        var yProp = new DuAEProperty(effect( gIndex ));
-        var zProp = new DuAEProperty(effect( bIndex ));
-        return [xProp,yProp,zProp];
+        var xProp = new DuAEProperty(effect(rIndex));
+        var yProp = new DuAEProperty(effect(gIndex));
+        var zProp = new DuAEProperty(effect(bIndex));
+        return [xProp, yProp, zProp];
     }
 }
 
@@ -288,14 +264,13 @@ Duik.CmdLib['Constraint']["Lock"] = "Duik.Constraint.lock()";
 /**
  * Lock propery values
  */
-Duik.Constraint.lock = function ()
-{
+Duik.Constraint.lock = function() {
     var props = DuAEComp.getSelectedProps();
-    if ( props.length == 0 ) return;
+    if (props.length == 0) return;
 
-    DuAE.beginUndoGroup( DuScriptUI.String.LOCK_PROPERTIES );
+    DuAE.beginUndoGroup(DuScriptUI.String.LOCK_PROPERTIES);
 
-    DuAEProperty.lock( props );
+    DuAEProperty.lock(props);
 
     DuAE.endUndoGroup();
 }
@@ -306,30 +281,28 @@ Duik.CmdLib['Constraint']["Zero"] = "Duik.Constraint.zero()";
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  * @returns {ShapeLayer[]} The zeroes
  */
-Duik.Constraint.zero = function( layers )
-{
+Duik.Constraint.zero = function(layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.ADD_ZERO, false );
+    DuAE.beginUndoGroup(DuScriptUI.String.ADD_ZERO, false);
     DuAEProject.setProgressMode(true);
 
     var zeroes = [];
 
-    layers.do( function(layer)
-    {
+    layers.do(function(layer) {
         //create null object
-        var zero = DuAEComp.addNull( layer.containingComp );
+        var zero = DuAEComp.addNull(layer.containingComp);
         var layerparent = layer.parent;
         layer.parent = null;
-        zero.position.setValue( layer.position.value );
-        zero.rotation.setValue( layer.rotation.value );
-        
-        Duik.Layer.copyAttributes( zero, layer, Duik.Layer.Type.ZERO );
+        zero.position.setValue(layer.position.value);
+        zero.rotation.setValue(layer.rotation.value);
+
+        Duik.Layer.copyAttributes(zero, layer, Duik.Layer.Type.ZERO);
 
         layer.parent = zero;
-        zero.scale.setValue( layer.scale.value );
-        layer.scale.setValue( [ 100, 100, 100 ] );
+        zero.scale.setValue(layer.scale.value);
+        layer.scale.setValue([100, 100, 100]);
 
         //parent
         zero.parent = layerparent;
@@ -341,12 +314,78 @@ Duik.Constraint.zero = function( layers )
         zero.selected = false;
         zero.locked = true;
         zeroes.push(zero);
-    } );
+    });
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup( DuScriptUI.String.ADD_ZERO );
+    DuAE.endUndoGroup(DuScriptUI.String.ADD_ZERO);
 
     return zeroes;
+}
+
+Duik.CmdLib['Constraint']["Move Anchor Point Top"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP)";
+Duik.CmdLib['Constraint']["Move Anchor Point Top Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP_RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom Right"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM_RIGHT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM)";
+Duik.CmdLib['Constraint']["Move Anchor Point Bottom Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.BOTTOM_LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Top Left"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.TOP_LEFT)";
+Duik.CmdLib['Constraint']["Move Anchor Point Center"] = "Duik.Constraint.moveAnchorPoint(DuMath.Location.CENTER)";
+/**
+ * Repositions the anchor points of the layers
+ * @param {DuMath.Location} location The new location of the anchor points relative to the layer bounds.
+ * @param {float} [margin=0.0] A margin, in pixels.
+ * @param {Boolean} [includeMasks=false] Use masks to compute the bounds.
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Constraint.moveAnchorPoint = function(location, m, includeMasks, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+
+    m = def(m, 0);
+    includeMasks = def(includeMasks, false);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.MOVE_ANCHOR_POINTS, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        // Get the current values
+        var apProp = layer.transform.anchorPoint;
+        var layerBounds = DuAELayer.sourceRect(layer, undefined, true, includeMasks);
+
+        var t = layerBounds[0];
+        var l = layerBounds[1];
+        var w = layerBounds[2];
+        var h = layerBounds[3];
+
+        var ap = apProp.value;
+        var x = ap[0];
+        var y = ap[1];
+
+        // Update
+        if (location == DuMath.Location.TOP) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w / 2, t - m]);
+        } else if (location == DuMath.Location.TOP_RIGHT) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w + m, t - m]);
+        } else if (location == DuMath.Location.RIGHT) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w + m, t + h / 2]);
+        } else if (location == DuMath.Location.BOTTOM_RIGHT) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w + m, t + h + m]);
+        } else if (location == DuMath.Location.BOTTOM) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w / 2, t + h + m]);
+        } else if (location == DuMath.Location.BOTTOM_LEFT) {
+            DuAELayer.repositionAnchorPoint(layer, [l - m, t + h + m]);
+        } else if (location == DuMath.Location.LEFT) {
+            DuAELayer.repositionAnchorPoint(layer, [l - m, t + h / 2]);
+        } else if (location == DuMath.Location.TOP_LEFT) {
+            DuAELayer.repositionAnchorPoint(layer, [l - m, t - m]);
+        } else if (location == DuMath.Location.CENTER) {
+            DuAELayer.repositionAnchorPoint(layer, [l + w / 2, t + h / 2]);
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.MOVE_ANCHOR_POINTS);
 }
 
 Duik.CmdLib['Constraint']["Reset Transformation"] = "Duik.Constraint.resetPRS()";
@@ -356,54 +395,43 @@ Duik.CmdLib['Constraint']["Reset Transformation and opacity"] = "Duik.Constraint
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  * @param {Boolean} [opacity=false] When true, also resets the opacity to 100%
  */
-Duik.Constraint.resetPRS = function( layers, opacity )
-{
+Duik.Constraint.resetPRS = function(layers, opacity) {
     opacity = def(opacity, false);
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.RESET_TRANSFORMATION, false );
+    DuAE.beginUndoGroup(DuScriptUI.String.RESET_TRANSFORMATION, false);
     DuAEProject.setProgressMode(true);
 
-    layers.do( function(layer)
-    {
+    layers.do(function(layer) {
         var comp = layer.containingComp;
         //is it 3D?
         var threeD = layer.threeDLayer;
         //has parent ?
         var parent = layer.parent !== null;
-        if (threeD)
-        {
-            var positionValue = parent ? [0,0,0] : [comp.width / 2, comp.height / 2, 0];
-            if (layer.transform.position.dimensionsSeparated)
-            {
+        if (threeD) {
+            var positionValue = parent ? [0, 0, 0] : [comp.width / 2, comp.height / 2, 0];
+            if (layer.transform.position.dimensionsSeparated) {
                 layer.transform.xPosition.setValue(positionValue[0]);
                 layer.transform.yPosition.setValue(positionValue[1]);
                 layer.transform.zPosition.setValue(positionValue[2]);
-            }
-            else 
-            {
+            } else {
                 layer.transform.position.setValue(positionValue);
             }
-            layer.transform.scale.setValue([100,100,100]);
+            layer.transform.scale.setValue([100, 100, 100]);
             layer.transform.zRotation.setValue(0);
             layer.transform.xRotation.setValue(0);
             layer.transform.yRotation.setValue(0);
-            layer.transform.orientation.setValue([0,0,0]);
-        }
-        else
-        {
-            var positionValue = parent ? [0,0] : [comp.width / 2, comp.height / 2];
-            if (layer.transform.position.dimensionsSeparated)
-            {
+            layer.transform.orientation.setValue([0, 0, 0]);
+        } else {
+            var positionValue = parent ? [0, 0] : [comp.width / 2, comp.height / 2];
+            if (layer.transform.position.dimensionsSeparated) {
                 layer.transform.xPosition.setValue(positionValue[0]);
                 layer.transform.yPosition.setValue(positionValue[1]);
-            }
-            else 
-            {
+            } else {
                 layer.transform.position.setValue(positionValue);
             }
-            layer.transform.scale.setValue([100,100]);
+            layer.transform.scale.setValue([100, 100]);
             layer.transform.rotation.setValue(0);
         }
 
@@ -411,7 +439,7 @@ Duik.Constraint.resetPRS = function( layers, opacity )
     });
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup( DuScriptUI.String.RESET_TRANSFORMATION );
+    DuAE.endUndoGroup(DuScriptUI.String.RESET_TRANSFORMATION);
 }
 
 Duik.CmdLib['Constraint']["Align layers"] = "Duik.Constraint.alignLayers()";
@@ -422,12 +450,11 @@ Duik.CmdLib['Constraint']["Align layers"] = "Duik.Constraint.alignLayers()";
  * @param {Boolean} [scale=true] - whether to align the scale.
  * @param {Boolean} [opacity=true] - whether to align the opacity.
  */
-Duik.Constraint.alignLayers = function( position, rotation, scale, opacity )
-{
-    position = def (position, true);
-    rotation = def (rotation, true);
-    scale = def (scale, true);
-    opacity = def (opacity, false);
+Duik.Constraint.alignLayers = function(position, rotation, scale, opacity) {
+    position = def(position, true);
+    rotation = def(rotation, true);
+    scale = def(scale, true);
+    opacity = def(opacity, false);
 
 
     var layers = DuAEComp.getSelectedLayers();
@@ -435,7 +462,7 @@ Duik.Constraint.alignLayers = function( position, rotation, scale, opacity )
 
     var target = layers.pop();
 
-    DuAE.beginUndoGroup( DuScriptUI.String.ALIGN_LAYERS, false );
+    DuAE.beginUndoGroup(DuScriptUI.String.ALIGN_LAYERS, false);
     DuAELayer.align(
         layers,
         target,
@@ -444,39 +471,36 @@ Duik.Constraint.alignLayers = function( position, rotation, scale, opacity )
         scale,
         opacity
     );
-    DuAE.endUndoGroup( DuScriptUI.String.ALIGN_LAYERS );
+    DuAE.endUndoGroup(DuScriptUI.String.ALIGN_LAYERS);
 }
 
 Duik.CmdLib['Constraint']["Expose Transform"] = "Duik.Constraint.exposeTransform()";
 /**
  * Expose Transform
+ * @param {CompItem} [comp] The composition where to create the expose transform controller. The active composition by default.
+ * @param {Layer[]} [layers] The layer with the transformation to expose. The selected layers by default. Can be an empty list too, in this case the Expose Transform controller is not set to measure any layer.
+ * @return {ShapeLayer[]} The list of the new Expose Transform controllers. One per given layer.
  */
-Duik.Constraint.exposeTransform = function ( comp, layers )
-{
-    if (typeof comp === 'undefined')
-	{
-		if (typeof layer !== 'undefined')
-		{
-			comp = layer.containingComp;
-		}
-		else
-		{
-			comp = DuAEProject.getActiveComp();
-		}
-	}
-	if (!comp) return;
+Duik.Constraint.exposeTransform = function(comp, layers) {
+    if (typeof comp === 'undefined') {
+        if (typeof layer !== 'undefined') {
+            comp = layer.containingComp;
+        } else {
+            comp = DuAEProject.getActiveComp();
+        }
+    }
+    if (!comp) return;
 
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_EXPOSE_TRANSFORM, false);
-    DuAEProject.setProgressMode( true );
+    DuAE.beginUndoGroup(DuScriptUI.String.EXPOSE_TRANSFORM, false);
+    DuAEProject.setProgressMode(true);
 
     var ctrls = [];
 
-    function createETM( layer )
-    {
-        var ctrl = Duik.Controller.create( comp, Duik.Controller.Type.EXPOSE_TRANSFORM, layer);
+    function createETM(layer) {
+        var ctrl = Duik.Controller.create(comp, Duik.Controller.Type.EXPOSE_TRANSFORM, layer);
 
         //add pseudo effect
         var pE = Duik.PseudoEffect.EXPOSE_TRANSFORM;
@@ -525,7 +549,7 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
             '{',
             '	value;',
             '}'
-            ].join('\n');
+        ].join('\n');
 
         path = refOrientation.addProperty("ADBE Vector Shape - Ellipse");
         path("ADBE Vector Ellipse Size").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -533,14 +557,14 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
             'var s = thisComp.height/40;',
             'if (fx(' + guideIndex + ').value) [s,s];',
             'else [0,0];'
-            ].join('\n');
+        ].join('\n');
 
         var stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + refColorIndex + ').value;';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
         refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
@@ -585,9 +609,9 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         stroke = targetOrientation.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + targetColorIndex + ');';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
         var refOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
@@ -612,11 +636,11 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         stroke = refOrientation.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + refColorIndex + ');';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        
+
         refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
 
         refOrientationTransform('ADBE Vector Rotation').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -673,9 +697,9 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         stroke = angle1.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + angleColorIndex + ');';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
         var angleGroup2 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
@@ -722,11 +746,11 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         stroke = angle2.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + angleColorIndex + ');';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        
+
         var distanceGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
         distanceGroup.name = 'Distance';
         distance = distanceGroup("ADBE Vectors Group");
@@ -749,9 +773,9 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         stroke = distance.addProperty("ADBE Vector Graphic - Stroke");
         stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\neffect("Expose Transform")(' + distanceColorIndex + ');';
         stroke("ADBE Vector Stroke Width").expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Dash 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/100;';
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Gap 1" );
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
         //Effect expressions
@@ -913,46 +937,44 @@ Duik.Constraint.exposeTransform = function ( comp, layers )
         ].join('\n');
 
         //set the layer as target
-        if (typeof layer !== 'undefined')
-        {
-            effect( targetIndex ).setValue(layer.index);
+        if (typeof layer !== 'undefined') {
+            effect(targetIndex).setValue(layer.index);
         }
 
         //fold
         ctrl.selected = true;
-        DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS );
+        DuAE.executeCommand(DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS);
 
         return ctrl;
     }
 
-    if (layers.length() == 0) ctrls.push( createETM() );
-    else
-    {
-        for (var  i = 0, num = layers.length() ; i < num ; i++)
-        {
-            var ctrl = createETM( layers.at(i) );
+    if (layers.length() == 0) ctrls.push(createETM());
+    else {
+        for (var i = 0, num = layers.length(); i < num; i++) {
+            var ctrl = createETM(layers.at(i));
             ctrls.push(ctrl);
         }
     }
 
     DuAEComp.selectLayers(ctrls);
-    DuAEProject.setProgressMode( false );
-    DuAE.endUndoGroup( DuScriptUI.String.DUIK_EXPOSE_TRANSFORM );
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.EXPOSE_TRANSFORM);
+
+    return ctrls;
 }
 
 Duik.CmdLib['Constraint']["Morph Keys"] = "Duik.Constraint.morphKeys()";
 /**
  * Morph Keys
  */
-Duik.Constraint.morphKeys = function ( props )
-{
+Duik.Constraint.morphKeys = function(props) {
     props = def(props, DuAEComp.getSelectedProps());
     if (props.length == 0) return;
 
     // Get layer
     var layer = new DuAEProperty(props[0]).layer;
 
-    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_KEY_MORPH, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.DUIK_KEY_MORPH, false);
 
     // Add key morph effect
     var peKM = Duik.PseudoEffect.KEY_MORPH;
@@ -984,12 +1006,11 @@ Duik.Constraint.morphKeys = function ( props )
         '}',
         '',
         'numK;'
-        ].join('\n');
+    ].join('\n');
 
     // Count keyframes & add expression
     var numKeys = 1;
-    for (var i = 0, n = props.length; i < n; i++)
-    {
+    for (var i = 0, n = props.length; i < n; i++) {
         var p = props[i];
 
         var pInfo = new DuAEProperty(p);
@@ -1000,7 +1021,7 @@ Duik.Constraint.morphKeys = function ( props )
         if (np < 2) continue;
 
         // count keyframes
-        if (numKeys < 2 )  numKeys = np;
+        if (numKeys < 2) numKeys = np;
         else if (np < numKeys) numKeys = np;
 
         // add expression
@@ -1092,13 +1113,12 @@ Duik.Constraint.morphKeys = function ( props )
             '',
             'if (thisIsPath) createPath(result.points, result.inTangents, result.outTangents, isClosed());',
             'else result;'
-            ].join('\n');
-        
+        ].join('\n');
+
     }
 
     // Add Key effects
-    for (var i = 0; i < numKeys; i++)
-    {
+    for (var i = 0; i < numKeys; i++) {
         var kmkFX = peKMK.apply(layer);
 
         // Weight expression
@@ -1140,7 +1160,7 @@ Duik.Constraint.morphKeys = function ( props )
             'var result = value + interpolate();',
             '',
             'result;'
-            ].join('\n');
+        ].join('\n');
 
         kmkFX(kmkp['Key Index'].index).expression = [DuAEExpression.Id.KEY_MORPH,
             'var numK = 1;',
@@ -1155,10 +1175,10 @@ Duik.Constraint.morphKeys = function ( props )
             '}',
             '',
             'numK;'
-            ].join('\n');
+        ].join('\n');
     }
 
-    DuAE.endUndoGroup( DuScriptUI.String.DUIK_KEY_MORPH );
+    DuAE.endUndoGroup(DuScriptUI.String.DUIK_KEY_MORPH);
 }
 
 Duik.CmdLib['Constraint']["IK"] = "Duik.Constraint.ik()";
@@ -1174,61 +1194,56 @@ Duik.CmdLib['Constraint']["Bézier IK"] = "Duik.Constraint.ik(undefined, true)";
  * @param {Layer} [controller] - An already existing controller.
  * @return {Layer[]} The controller(s) of the IK.
  */
-Duik.Constraint.ik = function ( type, forceBezier, layers, controller )
-{
+Duik.Constraint.ik = function(type, forceBezier, layers, controller) {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
     if (layers.length() < 1) return [];
 
-    DuAE.beginUndoGroup( DuScriptUI.String.IK, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.IK, false);
 
     type = def(type, Duik.Constraint.IKType.ONE_TWO)
     forceBezier = def(forceBezier, false);
     controller = def(controller, null);
 
     //check if there is a controller in the selection
-    if ( controller == null )
-    {
-        if ( layers.length < 2 ) return [];
-        for ( var i = 0, n = layers.length(); i < n; i++ )
-        {
-            var l = layers.at( i );
-            if ( Duik.Layer.isType( l, Duik.Layer.Type.CONTROLLER ) )
-            {
+    if (controller == null) {
+        if (layers.length < 2) return [];
+        for (var i = 0, n = layers.length(); i < n; i++) {
+            var l = layers.at(i);
+            if (Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER)) {
                 controller = l;
-                layers.remove( i );
+                layers.remove(i);
                 break;
             }
         }
     }
     //sort layers and parent them
-    layers = DuAELayer.sortByParent( layers );
+    layers = DuAELayer.sortByParent(layers);
     //reset rotation and scale if structures
-    layers = new DuList( layers );
-    layers.do( Duik.Bone.resetTransform );
+    layers = new DuList(layers);
+    layers.do(Duik.Bone.resetTransform);
     //parent
-    DuAELayer.parentChain( layers );
+    DuAELayer.parentChain(layers);
 
     //check if the last one is a goal
     var withGoal = true;
-    if ( controller != null )
-    {
+    if (controller != null) {
         var l = layers.last();
         //check position
-        var distance = DuAELayer.getDistance( controller, l );
-        if ( distance > 10 ) withGoal = false;
+        var distance = DuAELayer.getDistance(controller, l);
+        if (distance > 10) withGoal = false;
     }
     var goal = null;
-    if ( withGoal ) goal = layers.pop();
+    if (withGoal) goal = layers.pop();
 
-    if ( layers.length() == 1 && !forceBezier ) controller = [ Duik.Constraint.oneLayerIK( layers.at(0), goal, controller ) ];
-    else if ( layers.length() == 2 && !forceBezier ) controller = [ Duik.Constraint.twoLayerIK( layers.at(0), layers.at(1), goal, controller ) ];
-    else if ( layers.length() == 3 && !forceBezier && type ==  Duik.Constraint.IKType.ONE_TWO ) controller = [ Duik.Constraint.oneTwoLayerIK( layers.at(0), layers.at(1), layers.at(2), goal, controller ) ];
-    else if ( layers.length() == 3 && !forceBezier && type ==  Duik.Constraint.IKType.TWO_ONE ) controller = [ Duik.Constraint.twoOneLayerIK( layers.at(0), layers.at(1), layers.at(2), goal, controller ) ];
-    else if ( layers.length() == 3 && !forceBezier && type ==  Duik.Constraint.IKType.THREE ) controller = [ Duik.Constraint.threeLayerIK( layers.at(0), layers.at(1), layers.at(2), goal, controller ) ];
-    else controller = Duik.Constraint.bezierIK( layers, goal, controller );
+    if (layers.length() == 1 && !forceBezier) controller = [Duik.Constraint.oneLayerIK(layers.at(0), goal, controller)];
+    else if (layers.length() == 2 && !forceBezier) controller = [Duik.Constraint.twoLayerIK(layers.at(0), layers.at(1), goal, controller)];
+    else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.ONE_TWO) controller = [Duik.Constraint.oneTwoLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
+    else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.TWO_ONE) controller = [Duik.Constraint.twoOneLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
+    else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.THREE) controller = [Duik.Constraint.threeLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
+    else controller = Duik.Constraint.bezierIK(layers, goal, controller);
 
-    DuAE.endUndoGroup( DuScriptUI.String.IK );
+    DuAE.endUndoGroup(DuScriptUI.String.IK);
 
     return controller;
 }
@@ -1242,33 +1257,31 @@ Duik.Constraint.ik = function ( type, forceBezier, layers, controller )
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
-{
+Duik.Constraint.oneLayerIK = function(layer, goal, controller, showGuides) {
     goal = def(goal, null);
     controller = def(controller, null);
-    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
     var comp = layer.containingComp;
 
-    showGuides = def( showGuides, 1 );
+    showGuides = def(showGuides, 1);
     if (!showGuides) showGuides = 0;
 
     //Create controller
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.POSITION, goal);
     }
 
     //is right ?
-    var ctrlPos = DuAELayer.getWorldPos( controller );
-    var layerPos = DuAELayer.getWorldPos( layer );
+    var ctrlPos = DuAELayer.getWorldPos(controller);
+    var layerPos = DuAELayer.getWorldPos(layer);
 
-    var right = ( ctrlPos[ 0 ] - layerPos[ 0 ] ) < 0;
+    var right = (ctrlPos[0] - layerPos[0]) < 0;
 
     //Add Effect
     var name = Duik.Layer.limbName(layer);
-    if ( goal != null ) name = Duik.Layer.limbName(goal);
+    if (goal != null) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.ONE_LAYER_IK
-    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+    var effect = pe.apply(controller, DuScriptUI.String.IK + ' | ' + name);
 
     //indices
     var reverseIndex = pe.props["Advanced"]["Full rotation limit"].index;
@@ -1281,26 +1294,24 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
     var ulIndex = pe.props["Limits"]["Upper limit"].index;
     var llIndex = pe.props["Limits"]["Lower limit"].index;
     var lsIndex = pe.props["Limits"]["Softness"].index;
-    
+
     //default values
-    if ( right ) effect( reverseIndex ).setValue( 1 );
-    effect( layerIndex ).setValue( layer.index );
-    effect( ulIndex ).setValue( 180 );
-    effect( llIndex ).setValue( -180 );
-    effect( guidesIndex ).setValue( showGuides );
+    if (right) effect(reverseIndex).setValue(1);
+    effect(layerIndex).setValue(layer.index);
+    effect(ulIndex).setValue(180);
+    effect(llIndex).setValue(-180);
+    effect(guidesIndex).setValue(showGuides);
 
     //guides
-    if ( DuAE.version.version >= 15 && controller instanceof ShapeLayer )
-    {
-        var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
-        if ( !lineGroup )
-        {
-            lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    if (DuAE.version.version >= 15 && controller instanceof ShapeLayer) {
+        var lineGroup = controller("ADBE Root Vectors Group").property('IK Line');
+        if (!lineGroup) {
+            lineGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
             lineGroup.name = 'IK Line';
         }
-        var lineContent = lineGroup.property( "ADBE Vectors Group" );
-        var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
-        shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var lineContent = lineGroup.property("ADBE Vectors Group");
+        var shape = lineContent.addProperty("ADBE Vector Shape - Group");
+        shape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1315,20 +1326,19 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
-        var ctrlEffect = controller.effect( Duik.PseudoEffect.CONTROLLER.matchName );
-        if ( !stroke ) stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+        ].join('\n');
+        var stroke = lineContent.property("ADBE Vector Graphic - Stroke");
+        var ctrlEffect = controller.effect(Duik.PseudoEffect.CONTROLLER.matchName);
+        if (!stroke) stroke = lineContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+        stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
 
-        var limitsGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Limits' );
-        if ( !limitsGroup )
-        {
-            limitsGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        var limitsGroup = controller("ADBE Root Vectors Group").property('IK Limits');
+        if (!limitsGroup) {
+            limitsGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
             limitsGroup.name = 'IK Limits';
         }
         limitsGroup.transform.position.expression = [DuAEExpression.Id.ONE_IK,
@@ -1342,10 +1352,10 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '	result = fromWorld(p);',
             '}',
             'result;'
-            ].join('\n');
+        ].join('\n');
         limitsGroup.transform.rotation.expression = DuAEExpression.Id.ONE_IK + '\n-rotation;';
 
-        var limitLinesGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
+        var limitLinesGroup = limitsGroup.property("ADBE Vectors Group").addProperty("ADBE Vector Group");
         limitLinesGroup.name = 'Limit Lines';
         limitLinesGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             DuAEExpression.Library.get(['getOrientation']),
@@ -1362,19 +1372,19 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'result;'
-            ].join('\n');
+        ].join('\n');
 
-        var limitLinesContent = limitLinesGroup.property( "ADBE Vectors Group" );
-        var lLimitGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        var limitLinesContent = limitLinesGroup.property("ADBE Vectors Group");
+        var lLimitGroup = limitLinesContent.addProperty("ADBE Vector Group");
         lLimitGroup.name = 'Lower Limit';
         lLimitGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'fx(' + llIndex + ').value-180;'
-            ].join('\n');
+        ].join('\n');
 
-        var lLimitContent = lLimitGroup.property( "ADBE Vectors Group" );
-        lLimitShape = lLimitContent.addProperty( "ADBE Vector Shape - Group" );
-        lLimitShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var lLimitContent = lLimitGroup.property("ADBE Vectors Group");
+        lLimitShape = lLimitContent.addProperty("ADBE Vector Shape - Group");
+        lLimitShape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1391,23 +1401,23 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        
-        stroke = lLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        ].join('\n');
 
-        var uLimitGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        stroke = lLimitContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+        var uLimitGroup = limitLinesContent.addProperty("ADBE Vector Group");
         uLimitGroup.name = 'Upper Limit';
         uLimitGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'fx(' + ulIndex + ').value-180;'
-            ].join('\n');
+        ].join('\n');
 
-        var uLimitContent = uLimitGroup.property( "ADBE Vectors Group" );
-        uLimitShape = uLimitContent.addProperty( "ADBE Vector Shape - Group" );
-        uLimitShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var uLimitContent = uLimitGroup.property("ADBE Vectors Group");
+        uLimitShape = uLimitContent.addProperty("ADBE Vector Shape - Group");
+        uLimitShape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1424,23 +1434,23 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        
-        stroke = uLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        ].join('\n');
 
-        var lSftnssGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        stroke = uLimitContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+
+        var lSftnssGroup = limitLinesContent.addProperty("ADBE Vector Group");
         lSftnssGroup.name = 'Lower Softness';
         lSftnssGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'fx(' + llIndex + ').value-180+fx(' + lsIndex + ').value;'
-            ].join('\n');
+        ].join('\n');
 
-        var lSftnssContent = lSftnssGroup.property( "ADBE Vectors Group" );
-        lSftnssShape = lSftnssContent.addProperty( "ADBE Vector Shape - Group" );
-        lSftnssShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var lSftnssContent = lSftnssGroup.property("ADBE Vectors Group");
+        lSftnssShape = lSftnssContent.addProperty("ADBE Vector Shape - Group");
+        lSftnssShape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1457,25 +1467,25 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        
-        stroke = lSftnssContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+        ].join('\n');
 
-        var uSftnssGroup = limitLinesContent.addProperty( "ADBE Vector Group" );
+        stroke = lSftnssContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+        stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
+
+        var uSftnssGroup = limitLinesContent.addProperty("ADBE Vector Group");
         uSftnssGroup.name = 'Upper Softness';
         uSftnssGroup.transform.rotation.expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'fx(' + ulIndex + ').value-180-fx(' + lsIndex + ').value;'
-            ].join('\n');
+        ].join('\n');
 
-        var uSftnssContent = uSftnssGroup.property( "ADBE Vectors Group" );
-        uSftnssShape = uSftnssContent.addProperty( "ADBE Vector Shape - Group" );
-        uSftnssShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var uSftnssContent = uSftnssGroup.property("ADBE Vectors Group");
+        uSftnssShape = uSftnssContent.addProperty("ADBE Vector Shape - Group");
+        uSftnssShape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1492,20 +1502,20 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        
-        stroke = uSftnssContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+        ].join('\n');
 
-        var flGroup = limitsGroup.property( "ADBE Vectors Group" ).addProperty( "ADBE Vector Group" );
+        stroke = uSftnssContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + Duik.PseudoEffect.CONTROLLER.props['Icon']['Color'].index + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+        stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
+
+        var flGroup = limitsGroup.property("ADBE Vectors Group").addProperty("ADBE Vector Group");
         flGroup.name = 'Flip Line';
-        var flContent = flGroup.property( "ADBE Vectors Group" );
-        flShape = flContent.addProperty( "ADBE Vector Shape - Group" );
-        flShape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.ONE_IK,
+        var flContent = flGroup.property("ADBE Vectors Group");
+        flShape = flContent.addProperty("ADBE Vector Shape - Group");
+        flShape('ADBE Vector Shape').expression = [DuAEExpression.Id.ONE_IK,
             'var fx = effect("' + effect.name + '");',
             'var layer1 = null;',
             'var result = [[0,0]];',
@@ -1522,22 +1532,22 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '   }',
             '}',
             'createPath(result,[],[],false);'
-            ].join('\n');
-        
-        stroke = flContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if ( ctrlEffect ) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\n' + DuColor.Color.RAINBOX_RED.floatRGBA().toSource();
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+        ].join('\n');
+
+        stroke = flContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\n' + DuColor.Color.RAINBOX_RED.floatRGBA().toSource();
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
         //close controller details
         controller.selected = true;
-        DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true );
+        DuAE.executeCommand(DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true);
     }
 
     //Add Data
     var layerData = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layerData.name = DuScriptUI.String.IK;
-    layerData( 1 ).setValue( controller.index );
+    layerData(1).setValue(controller.index);
     //Expression
     var expr = [DuAEExpression.Id.ONE_IK,
         'var ctrl = null;',
@@ -1592,23 +1602,22 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
         '	result += value;',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    var rotProp = new DuAEProperty( layer.transform.rotation );
-    rotProp.setExpression( expr );
+    var rotProp = new DuAEProperty(layer.transform.rotation);
+    rotProp.setExpression(expr);
 
-    if ( goal != null )
-    {
+    if (goal != null) {
         var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
         goalData.name = DuScriptUI.String.IK;
-        goalData( 1 ).setValue( controller.index );
+        goalData(1).setValue(controller.index);
         expr = [DuAEExpression.Id.ONE_IK,
             'var ctrl = null;',
             'var result = value;',
             'try { ctrl = effect("' + goalData.name + '")(1); } catch (e){ value };',
             'if (ctrl != null)',
             '{',
-            'var goal = ctrl.effect("' + effect.name + '")(' + ikIndex +').value;',
+            'var goal = ctrl.effect("' + effect.name + '")(' + ikIndex + ').value;',
             'result += ctrl.rotation.value;',
             'if (goal)',
             '{',
@@ -1621,10 +1630,10 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
             '}',
             '}',
             'result;'
-            ].join('\n');
+        ].join('\n');
 
-        rotProp = new DuAEProperty( goal.transform.rotation );
-        rotProp.setExpression( expr );
+        rotProp = new DuAEProperty(goal.transform.rotation);
+        rotProp.setExpression(expr);
     }
 
     return controller;
@@ -1640,22 +1649,20 @@ Duik.Constraint.oneLayerIK = function (layer, goal, controller, showGuides )
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGuides )
-{
+Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuides) {
     goal = def(goal, null);
     controller = def(controller, null);
-    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
     var comp = layer1.containingComp;
 
-    showGuides = def( showGuides, 1 );
+    showGuides = def(showGuides, 1);
     if (!showGuides) showGuides = 0;
 
     //Create controller
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, goal);
         goal.parent = null;
-        controller.transform.rotation.setValue( goal.transform.rotation.value );
+        controller.transform.rotation.setValue(goal.transform.rotation.value);
         goal.parent = layer2;
     }
 
@@ -1671,17 +1678,16 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
 
     var clockwise = false;
 
-    var upperLength = DuMath.length( layer1.transform.position.value, layer2.transform.position.value );
-    var lowerLength = DuMath.length( layer2.transform.position.value, controller.transform.position.value );
+    var upperLength = DuMath.length(layer1.transform.position.value, layer2.transform.position.value);
+    var lowerLength = DuMath.length(layer2.transform.position.value, controller.transform.position.value);
     var endPos = controller.transform.position.value - layer1.transform.position.value;
     var middlePos = layer2.transform.position.value - layer1.transform.position.value;
-    if ( endPos[ 0 ] == 0 && endPos[ 1 ] > 0 && middlePos[ 0 ] > 0 ) clockwise = true;
-    else if ( endPos[ 0 ] == 0 && endPos[ 1 ] < 0 && middlePos[ 0 ] < 0 ) clockwise = true;
-    else
-    {
-        var coef = endPos[ 1 ] / endPos[ 0 ];
-        if ( middlePos[ 1 ] < middlePos[ 0 ] * coef && endPos[ 0 ] > 0 ) clockwise = true;
-        if ( middlePos[ 1 ] > middlePos[ 0 ] * coef && endPos[ 0 ] < 0 ) clockwise = true;
+    if (endPos[0] == 0 && endPos[1] > 0 && middlePos[0] > 0) clockwise = true;
+    else if (endPos[0] == 0 && endPos[1] < 0 && middlePos[0] < 0) clockwise = true;
+    else {
+        var coef = endPos[1] / endPos[0];
+        if (middlePos[1] < middlePos[0] * coef && endPos[0] > 0) clockwise = true;
+        if (middlePos[1] > middlePos[0] * coef && endPos[0] < 0) clockwise = true;
     }
 
     //reparent
@@ -1691,9 +1697,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
 
     //add effect
     var name = Duik.Layer.limbName(layer2);
-    if ( goal != null ) name = Duik.Layer.limbName(goal);
+    if (goal != null) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.TWO_LAYER_IK;
-    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+    var effect = pe.apply(controller, DuScriptUI.String.IK + ' | ' + name);
 
     // indices
     var ikIndex = pe.props["IK / FK"].index;
@@ -1714,7 +1720,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
     var resistanceIndex = pe.props["FK Overlap"]["Resistance"].index;
     var flexibilityIndex = pe.props["FK Overlap"]["Flexibility"].index;
     var overlapIndex = pe.props["FK Overlap"]["Overlap"].index;
-    
+
     var stretchIndex = pe.props["Stretch"]["Stretch"].index;
     var upperStretchIndex = pe.props["Stretch"]["Upper Stretch"].index;
     var lowerStretchIndex = pe.props["Stretch"]["Lower Stretch"].index;
@@ -1740,45 +1746,42 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
     var guidesIndex = pe.props["Display"]["Draw guides"].index;
 
     // Default values
-    effect( guidesIndex ).setValue( showGuides );
-    effect( swingSftnssIndex ).setValue( 10 );
+    effect(guidesIndex).setValue(showGuides);
+    effect(swingSftnssIndex).setValue(10);
 
-    if ( clockwise ) effect( sideIndex ).setValue( -100 );
-    else effect( sideIndex ).setValue( 100 );
+    if (clockwise) effect(sideIndex).setValue(-100);
+    else effect(sideIndex).setValue(100);
 
     //set layers
-    effect( uLayerIndex ).setValue( layer1.index );
-    effect( lLayerIndex ).setValue( layer2.index );
-    if ( goal != null ) effect( gLayerIndex ).setValue( goal.index );
+    effect(uLayerIndex).setValue(layer1.index);
+    effect(lLayerIndex).setValue(layer2.index);
+    if (goal != null) effect(gLayerIndex).setValue(goal.index);
 
     //set lengths
-    effect( uLengthIndex ).setValue( upperLength );
-    effect( lLengthIndex ).setValue( lowerLength );
+    effect(uLengthIndex).setValue(upperLength);
+    effect(lLengthIndex).setValue(lowerLength);
 
     //inherit parent rotation
-    effect( pRotationIndex ).setValue( 1 );
+    effect(pRotationIndex).setValue(1);
 
     //get some useful coordinates
-    var goalPos = [ 0, 0 ];
-    if ( goal != null )
-    {
+    var goalPos = [0, 0];
+    if (goal != null) {
         goalPos = goal.transform.position.value;
+    } else {
+        effect(goalPosIndex).expression = "thisComp.layer(" + layer2.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
+        goalPos = effect(goalPosIndex).value;
+        effect(goalPosIndex).expression = "";
     }
-    else
-    {
-        effect( goalPosIndex ).expression = "thisComp.layer(" + layer2.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
-        goalPos = effect( goalPosIndex ).value;
-        effect( goalPosIndex ).expression = "";
-    }
-    var goalPosProp = new DuAEProperty( effect( goalPosIndex ) );
-    goalPosProp.setValue( goalPos );
+    var goalPosProp = new DuAEProperty(effect(goalPosIndex));
+    goalPosProp.setValue(goalPos);
 
     var rootAp = layer1.transform.anchorPoint.value.toSource();
     var middleAp = layer2.transform.anchorPoint.value.toSource();
     var middlePos = layer2.transform.position.value.toSource();
 
     //add expressions
-    effect( uStretchIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(uStretchIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer1 = null;',
         'var layer2 = null;',
@@ -1790,18 +1793,18 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '   result = newLength - fx(' + uLengthIndex + ').value;',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( uScaleIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(uScaleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var upperLength =  fx(' + uLengthIndex + ').value',
         'var upperStretch =  fx(' + uStretchIndex + ').value',
         'var result = 100',
         'if ( upperLength > 0 ) result = ( upperStretch + upperLength ) / upperLength * 100;',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( lStretchIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(lStretchIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer2 = null;',
         'var result = 0;',
@@ -1814,18 +1817,18 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '   result = newLength - lowerLength;',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( lScaleIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(lScaleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var lowerLength =  fx(' + lLengthIndex + ').value',
         'var lowerStretch =  fx(' + lStretchIndex + ').value',
         'var result = 100',
         'if ( lowerLength > 0 ) result = ( lowerStretch + lowerLength ) / lowerLength * 100;',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( goalPosIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(goalPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var result = value;',
         'var fx = effect("' + effect.name + '");',
         'var layer1 = null;',
@@ -1864,9 +1867,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '	result = (' + goalPos.toSource() + ' - ' + middleAp + ') * coef + ' + middleAp + ';',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( goalWPosIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(goalWPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer2 = null;',
         'var result = [0,0];',
@@ -1876,9 +1879,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '   result = layer2.toWorld( fx(' + goalPosIndex + ').value );',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( ikLengthIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(ikLengthIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = effect("' + effect.name + '");',
         'var upperLength = fx(' + uLengthIndex + ').value;',
         'var lowerLength = fx(' + lLengthIndex + ').value;',
@@ -1891,9 +1894,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '   result = length( layer1.toWorld(layer1.anchorPoint), goalWorldPos);',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    effect( straightIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(straightIndex).expression = [DuAEExpression.Id.TWO_IK,
         'fx = effect("' + effect.name + '");',
         'var layer1 = null;',
         'var layer2 = null;',
@@ -1910,7 +1913,7 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         'result;'
     ].join('\n');
 
-    effect( sideIndex ).expression = [DuAEExpression.Id.TWO_IK,
+    effect(sideIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var result = value;',
         'var fx = effect("' + effect.name + '");',
         'var auto = fx(' + swingIndex + ').value;',
@@ -1938,15 +1941,14 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '}',
         '',
         'result;'
-	].join('\n');
+    ].join('\n');
 
-    
+
     //add controller visual feedback
-    if ( controller instanceof ShapeLayer )
-    {
+    if (controller instanceof ShapeLayer) {
         // Will be null if baked / removed
         var peCtrl = Duik.PseudoEffect.CONTROLLER;
-        var ctrlEffect = controller.effect( peCtrl.matchName );
+        var ctrlEffect = controller.effect(peCtrl.matchName);
         var iconColorIndex = peCtrl.props["Icon"]["Color"].index;
         var iconSizeIndex = peCtrl.props["Icon"]["Size"].index;
         var iconPosIndex = peCtrl.props["Icon"]["Position"].index;
@@ -1956,53 +1958,51 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         var colorExp = '';
         if (ctrlEffect) colorExp = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
 
-        var ikGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        var ikGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
         ikGroup.name = 'IK';
-        var ikContent = ikGroup.property( "ADBE Vectors Group" );
-        var shape = ikContent.addProperty( "ADBE Vector Shape - Group" );
+        var ikContent = ikGroup.property("ADBE Vectors Group");
+        var shape = ikContent.addProperty("ADBE Vector Shape - Group");
         var ikShape = new Shape();
         ikShape.vertices = [
-            [ -8, 16 ],
-            [ 8, 16 ]
+            [-8, 16],
+            [8, 16]
         ];
         ikShape.inTangents = [
-            [ 0, 0 ],
-            [ 0, 0 ]
+            [0, 0],
+            [0, 0]
         ];
         ikShape.outTangents = [
-            [ 0, 0 ],
-            [ 0, 0 ]
+            [0, 0],
+            [0, 0]
         ];
         ikShape.closed = false;
-        shape( 'ADBE Vector Shape' ).setValue( ikShape );
-        var stroke = ikContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        shape('ADBE Vector Shape').setValue(ikShape);
+        var stroke = ikContent.addProperty("ADBE Vector Graphic - Stroke");
 
-        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
-        else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Opacity" ).expression = [DuAEExpression.Id.TWO_IK,
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = colorExp;
+        else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Opacity").expression = [DuAEExpression.Id.TWO_IK,
             'var fx = effect("' + effect.name + '");\n' +
             'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value;',
             'else 0;'
-            ].join('\n');
+        ].join('\n');
 
         if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.TWO_IK + '\n[ effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ') * 2 ]';
         if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
         if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ') * effect("' + effect.name + '")(' + weightIndex + ').value/100;';
 
-        if ( DuAE.version.version >= 15 )
-        {
-            var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
-            if ( !lineGroup )
-            {
-                lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        if (DuAE.version.version >= 15) {
+            var lineGroup = controller("ADBE Root Vectors Group").property('IK Line');
+            if (!lineGroup) {
+                lineGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
                 lineGroup.name = 'IK Line';
             }
             lineGroup.transform.opacity.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + effect.name + '")(' + weightIndex + ').value;';
-            var lineContent = lineGroup.property( "ADBE Vectors Group" );
-            var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
-            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+            var lineContent = lineGroup.property("ADBE Vectors Group");
+            var shape = lineContent.addProperty("ADBE Vector Shape - Group");
+            shape('ADBE Vector Shape').expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'var layer1 = null;',
                 'var result = [[0,0]];',
@@ -2019,25 +2019,25 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 'createPath(result,[],[],false);'
             ].join('\n');
 
-            var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
-            if ( !stroke ) stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
-            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
-            else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+            var stroke = lineContent.property("ADBE Vector Graphic - Stroke");
+            if (!stroke) stroke = lineContent.addProperty("ADBE Vector Graphic - Stroke");
+            if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = colorExp;
+            else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+            stroke("ADBE Vector Stroke Width").setValue(2);
+            stroke("ADBE Vector Stroke Line Cap").setValue(2);
+            stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+            stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
 
-            var ikSideGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+            var ikSideGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
             ikSideGroup.name = "IK Swing";
-            ikSideContent = ikSideGroup.property( "ADBE Vectors Group" );
+            ikSideContent = ikSideGroup.property("ADBE Vectors Group");
 
-            var upperLimitGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            var upperLimitGroup = ikSideContent.addProperty("ADBE Vector Group");
             upperLimitGroup.name = "Upper Limit";
-            var upperLimitContent = upperLimitGroup.property( "ADBE Vectors Group" );
+            var upperLimitContent = upperLimitGroup.property("ADBE Vectors Group");
 
-            shape = upperLimitContent.addProperty( "ADBE Vector Shape - Group" );
-            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+            shape = upperLimitContent.addProperty("ADBE Vector Shape - Group");
+            shape('ADBE Vector Shape').expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'var layer1 = null;',
                 'var result = [[0,0]];',
@@ -2053,29 +2053,29 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 '	}',
                 '}',
                 'createPath(result,[],[],false);'
-                ].join('\n');
+            ].join('\n');
 
-            stroke = upperLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
-            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
-            else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+            stroke = upperLimitContent.addProperty("ADBE Vector Graphic - Stroke");
+            if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = colorExp;
+            else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+            stroke("ADBE Vector Stroke Width").setValue(2);
+            stroke("ADBE Vector Stroke Line Cap").setValue(2);
+            stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+            stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
 
             upperLimitGroup.transform.rotation.expression = DuAEExpression.Id.TWO_IK + '\n-effect("' + effect.name + '")(' + swingSftnssIndex + ').value;';
             upperLimitGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
                 'else 0;'
-                ].join('\n');
+            ].join('\n');
 
-            var lowerLimitGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            var lowerLimitGroup = ikSideContent.addProperty("ADBE Vector Group");
             lowerLimitGroup.name = "Lower Limit";
-            var lowerLimitContent = lowerLimitGroup.property( "ADBE Vectors Group" );
+            var lowerLimitContent = lowerLimitGroup.property("ADBE Vectors Group");
 
-            shape = lowerLimitContent.addProperty( "ADBE Vector Shape - Group" );
-            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+            shape = lowerLimitContent.addProperty("ADBE Vector Shape - Group");
+            shape('ADBE Vector Shape').expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'var layer1 = null;',
                 'var result = [[0,0]];',
@@ -2091,29 +2091,29 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 '	}',
                 '}',
                 'createPath(result,[],[],false);'
-                ].join('\n');
+            ].join('\n');
 
-            stroke = lowerLimitContent.addProperty( "ADBE Vector Graphic - Stroke" );
-            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
-            else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+            stroke = lowerLimitContent.addProperty("ADBE Vector Graphic - Stroke");
+            if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = colorExp;
+            else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+            stroke("ADBE Vector Stroke Width").setValue(2);
+            stroke("ADBE Vector Stroke Line Cap").setValue(2);
+            stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+            stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
 
             lowerLimitGroup.transform.rotation.expression = DuAEExpression.Id.TWO_IK + '\neffect("' + effect.name + '")(' + swingSftnssIndex + ').value;';
             lowerLimitGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
                 'else 0;'
-                ].join('\n');
+            ].join('\n');
 
-            var angleGroup = ikSideContent.addProperty( "ADBE Vector Group" );
+            var angleGroup = ikSideContent.addProperty("ADBE Vector Group");
             angleGroup.name = "Lower Limit";
-            var angleContent = angleGroup.property( "ADBE Vectors Group" );
+            var angleContent = angleGroup.property("ADBE Vectors Group");
 
-            shape = angleContent.addProperty( "ADBE Vector Shape - Group" );
-            shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.TWO_IK,
+            shape = angleContent.addProperty("ADBE Vector Shape - Group");
+            shape('ADBE Vector Shape').expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'var layer1 = null;',
                 'var result = [[0,0]];',
@@ -2129,19 +2129,19 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 '	}',
                 '}',
                 'createPath(result,[],[],false);'
-                ].join('\n');
+            ].join('\n');
 
-            stroke = angleContent.addProperty( "ADBE Vector Graphic - Stroke" );
-            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = colorExp;
-            else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
+            stroke = angleContent.addProperty("ADBE Vector Graphic - Stroke");
+            if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = colorExp;
+            else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+            stroke("ADBE Vector Stroke Width").setValue(2);
+            stroke("ADBE Vector Stroke Line Cap").setValue(2);
 
             angleGroup.transform.opacity.expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
                 'if (fx(' + ikIndex + ').value && fx(' + guidesIndex + ').value && fx(' + swingIndex + ').value) 100;',
                 'else 0;'
-                ].join('\n');
+            ].join('\n');
 
             ikSideGroup.transform.position.expression = [DuAEExpression.Id.TWO_IK,
                 'var fx = effect("' + effect.name + '");',
@@ -2176,19 +2176,19 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
                 '   }',
                 '}',
                 'result;'
-                ].join('\n');
+            ].join('\n');
         }
 
         //close controller details
         controller.selected = true;
-        DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true );
+        DuAE.executeCommand(DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true);
     }
 
 
     //setup layers
     var layer1Data = layer1('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layer1Data.name = DuScriptUI.String.IK;
-    layer1Data( 1 ).setValue( controller.index );
+    layer1Data(1).setValue(controller.index);
 
     layer1.transform.rotation.expression = [DuAEExpression.Id.TWO_IK,
         'var controller = null;',
@@ -2233,9 +2233,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '			var adj1 = radiansToDegrees(Math.atan2(V[1], V[0]));',
         '			var IK = r - adj1 + value;',
         '           IK = IK % 360;',
-		'           if (IK > 180) return IK - 360;',
-		'           if (IK < -180) return IK + 360;',
-		'           return IK;',
+        '           if (IK > 180) return IK - 360;',
+        '           if (IK < -180) return IK + 360;',
+        '           return IK;',
         '		}',
         '	}',
         '',
@@ -2258,9 +2258,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
 
     var layer2Data = layer2('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layer2Data.name = DuScriptUI.String.IK;
-    layer2Data( 1 ).setValue( controller.index );
+    layer2Data(1).setValue(controller.index);
 
-    layer2.transform.rotation.expression =[DuAEExpression.Id.TWO_IK,
+    layer2.transform.rotation.expression = [DuAEExpression.Id.TWO_IK,
         'var controller = null;',
         'var result = value;',
         'try {',
@@ -2302,9 +2302,9 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         '			var adj2 = radiansToDegrees(Math.atan2(V2[1], V2[0]));',
         '			var IK = r + adj1 - adj2 + value;',
         '           IK = IK % 360;',
-		'           if (IK > 180) return IK - 360;',
-		'           if (IK < -180) return IK + 360;',
-		'           return IK;',
+        '           if (IK > 180) return IK - 360;',
+        '           if (IK < -180) return IK + 360;',
+        '           return IK;',
         '		}',
         '',
         '		function fk() {',
@@ -2384,11 +2384,10 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
         'result;'
     ].join('\n');
 
-    if ( goal != null )
-    {
+    if (goal != null) {
         var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
         layer2Data.name = DuScriptUI.String.IK;
-        goalData( 1 ).setValue( controller.index );
+        goalData(1).setValue(controller.index);
 
         var rotExpr = [DuAEExpression.Id.TWO_IK,
             'var ctrl = null;',
@@ -2439,10 +2438,10 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
             '    result = ik()*ikfk + fk()*(1-ikfk);',
             '}',
             'result;'
-            ].join('\n');
+        ].join('\n');
 
-        var rotProp = new DuAEProperty( goal.transform.rotation );
-        rotProp.setExpression( rotExpr );
+        var rotProp = new DuAEProperty(goal.transform.rotation);
+        rotProp.setExpression(rotExpr);
 
         goal.transform.position.expression = [DuAEExpression.Id.TWO_IK,
             'var ctrl = null;',
@@ -2470,22 +2469,20 @@ Duik.Constraint.twoLayerIK = function( layer1, layer2, goal, controller, showGui
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controller, showGuides )
-{
+Duik.Constraint.threeLayerIK = function(layer1, layer2, layer3, goal, controller, showGuides) {
     goal = def(goal, null);
     controller = def(controller, null);
-    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
     var comp = layer1.containingComp;
 
-    showGuides = def( showGuides, 1 );
+    showGuides = def(showGuides, 1);
     if (!showGuides) showGuides = 0;
 
     //Create controller
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, goal);
         goal.parent = null;
-        controller.transform.rotation.setValue( goal.transform.rotation.value );
+        controller.transform.rotation.setValue(goal.transform.rotation.value);
         goal.parent = layer3;
     }
 
@@ -2499,16 +2496,16 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     var endParent = controller.parent;
     controller.parent = null;
 
-    var upperLength = DuMath.length( layer1.transform.position.value, layer2.transform.position.value );
-    var lowerLength = DuAELayer.getDistance( layer3, controller );
-    var middleLength = DuAELayer.getDistance( layer3, layer2 );
+    var upperLength = DuMath.length(layer1.transform.position.value, layer2.transform.position.value);
+    var lowerLength = DuAELayer.getDistance(layer3, controller);
+    var middleLength = DuAELayer.getDistance(layer3, layer2);
     var endPos = controller.transform.position.value - layer1.transform.position.value;
     var middlePos = layer2.transform.position.value - layer1.transform.position.value;
-    var coef = endPos[ 1 ] / endPos[ 0 ];
+    var coef = endPos[1] / endPos[0];
 
     var clockwise = false;
-    if ( middlePos[ 1 ] < middlePos[ 0 ] * coef && endPos[ 0 ] > 0 ) clockwise = true;
-    if ( middlePos[ 1 ] > middlePos[ 0 ] * coef && endPos[ 0 ] < 0 ) clockwise = true;
+    if (middlePos[1] < middlePos[0] * coef && endPos[0] > 0) clockwise = true;
+    if (middlePos[1] > middlePos[0] * coef && endPos[0] < 0) clockwise = true;
 
     //reparent
     layer1.parent = rootParent;
@@ -2517,9 +2514,9 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
 
     //add effect
     var name = Duik.Layer.limbName(layer3);
-    if ( goal != null ) name = Duik.Layer.limbName(goal);
+    if (goal != null) name = Duik.Layer.limbName(goal);
     var pe = Duik.PseudoEffect.THREE_LAYER_IK;
-    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+    var effect = pe.apply(controller, DuScriptUI.String.IK + ' | ' + name);
 
     // indices
     var ikIndex = pe.props["IK / FK"].index;
@@ -2565,35 +2562,32 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     var guidesIndex = pe.props["Display"]["Draw guides"].index;
 
     // Default values
-    effect( guidesIndex ).setValue( showGuides );
+    effect(guidesIndex).setValue(showGuides);
 
-    if ( clockwise ) effect( revIndex ).setValue( 1 );
+    if (clockwise) effect(revIndex).setValue(1);
 
     //set layers
-    effect( uLayerIndex ).setValue( layer1.index );
-    effect( mLayerIndex ).setValue( layer2.index );
-    effect( lLayerIndex ).setValue( layer3.index );
-    if ( goal != undefined ) effect( gLayerIndex ).setValue( goal.index );
+    effect(uLayerIndex).setValue(layer1.index);
+    effect(mLayerIndex).setValue(layer2.index);
+    effect(lLayerIndex).setValue(layer3.index);
+    if (goal != undefined) effect(gLayerIndex).setValue(goal.index);
 
     //set lengths
-    effect( uLengthIndex ).setValue( upperLength );
-    effect( mLengthIndex ).setValue( middleLength );
-    effect( lLengthIndex ).setValue( lowerLength );
+    effect(uLengthIndex).setValue(upperLength);
+    effect(mLengthIndex).setValue(middleLength);
+    effect(lLengthIndex).setValue(lowerLength);
 
     //get some useful coordinates
-    var goalPos = [ 0, 0 ];
-    if ( goal != null )
-    {
+    var goalPos = [0, 0];
+    if (goal != null) {
         goalPos = goal.transform.position.value;
+    } else {
+        effect(goalPosIndex).expression = "thisComp.layer(" + layer3.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
+        goalPos = effect(goalPosIndex).value;
+        effect(goalPosIndex).expression = "";
     }
-    else
-    {
-        effect( goalPosIndex ).expression = "thisComp.layer(" + layer3.index + ").fromWorld( thisComp.layer(" + controller.index + ").position)";
-        goalPos = effect( goalPosIndex ).value;
-        effect( goalPosIndex ).expression = "";
-    }
-    var goalPosProp = new DuAEProperty( effect( goalPosIndex ) );
-    goalPosProp.setValue( goalPos );
+    var goalPosProp = new DuAEProperty(effect(goalPosIndex));
+    goalPosProp.setValue(goalPos);
     var rootAp = layer1.transform.anchorPoint.value.toSource();
     var middleAp = layer2.transform.anchorPoint.value.toSource();
     var lowerAp = layer3.transform.anchorPoint.value.toSource();
@@ -2601,7 +2595,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     var lowerPos = layer3.transform.position.value.toSource();
 
     //add expressions
-    effect( uStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(uStretchIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer1 = null;',
         'var layer2 = null;',
@@ -2615,7 +2609,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( mStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(mStretchIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer2 = null;',
         'var layer3 = null;',
@@ -2629,7 +2623,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( lStretchIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(lStretchIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer3 = null;',
         'var result = 0;',
@@ -2642,7 +2636,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( scaleIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(scaleIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'result = fx(' + uStretchIndex + ').value + fx(' + mStretchIndex + ').value + fx(' + lStretchIndex + ').value;',
         'var o = fx(' + uLengthIndex + ').value + fx(' + mLengthIndex + ').value + fx(' + lLengthIndex + ').value;',
@@ -2650,7 +2644,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result = result / o * 100;'
     ].join('\n');
 
-    effect( goalPosIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(goalPosIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var result = value;',
         'var fx = effect("' + effect.name + '");',
         'var layer1 = null;',
@@ -2689,7 +2683,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( goalWPosIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(goalWPosIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer3 = null;',
         'var result = [0,0];',
@@ -2701,7 +2695,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( ikLengthIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(ikLengthIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var result = fx(' + uLengthIndex + ').value + fx(' + mLengthIndex + ').value + fx(' + lLengthIndex + ').value;',
         'var goalPos = fx(' + goalWPosIndex + ').value;',
@@ -2714,7 +2708,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    effect( straightIndex ).expression = [DuAEExpression.Id.THREE_IK,
+    effect(straightIndex).expression = [DuAEExpression.Id.THREE_IK,
         'var fx = effect("' + effect.name + '");',
         'var layer1 = null;',
         'var layer2 = null;',
@@ -2732,61 +2726,58 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
     ].join('\n');
 
     //add controller visual feedback
-    if ( controller instanceof ShapeLayer )
-    {
+    if (controller instanceof ShapeLayer) {
         // Will be null if baked / removed
         var peCtrl = Duik.PseudoEffect.CONTROLLER;
-        var ctrlEffect = controller.effect( peCtrl.matchName );
+        var ctrlEffect = controller.effect(peCtrl.matchName);
         var iconColorIndex = peCtrl.props["Icon"]["Color"].index;
         var iconSizeIndex = peCtrl.props["Icon"]["Size"].index;
         var iconPosIndex = peCtrl.props["Icon"]["Position"].index;
         var iconOpacityIndex = peCtrl.props["Icon"]["Opacity"].index;
 
-        var ikGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        var ikGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
         ikGroup.name = 'IK';
-        var ikContent = ikGroup.property( "ADBE Vectors Group" );
-        var shape = ikContent.addProperty( "ADBE Vector Shape - Group" );
+        var ikContent = ikGroup.property("ADBE Vectors Group");
+        var shape = ikContent.addProperty("ADBE Vector Shape - Group");
         var ikShape = new Shape();
         ikShape.vertices = [
-            [ -8, 16 ],
-            [ 8, 16 ]
+            [-8, 16],
+            [8, 16]
         ];
         ikShape.inTangents = [
-            [ 0, 0 ],
-            [ 0, 0 ]
+            [0, 0],
+            [0, 0]
         ];
         ikShape.outTangents = [
-            [ 0, 0 ],
-            [ 0, 0 ]
+            [0, 0],
+            [0, 0]
         ];
         ikShape.closed = false;
-        shape( 'ADBE Vector Shape' ).setValue( ikShape );
-        var stroke = ikContent.addProperty( "ADBE Vector Graphic - Stroke" );
+        shape('ADBE Vector Shape').setValue(ikShape);
+        var stroke = ikContent.addProperty("ADBE Vector Graphic - Stroke");
 
-        var ctrlEffect = controller.effect( peCtrl.matchName );
+        var ctrlEffect = controller.effect(peCtrl.matchName);
 
-        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Opacity" ).expression = DuAEExpression.Id.THREE_IK + '\nvar fx = effect("' + effect.name + '");\n' +
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Opacity").expression = DuAEExpression.Id.THREE_IK + '\nvar fx = effect("' + effect.name + '");\n' +
             'if (fx(' + guidesIndex + ').value) fx(' + straightIndex + ').value*100; else 0;';
 
         if (ctrlEffect) ikGroup.transform.scale.expression = DuAEExpression.Id.THREE_IK + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2,effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')*2]';
         if (ctrlEffect) ikGroup.transform.position.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconPosIndex + ')';
         if (ctrlEffect) ikGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconOpacityIndex + ') * effect("' + effect.name + '")(' + weightIndex + ').value/100;';
 
-        if ( DuAE.version.version >= 15 )
-        {
-            var lineGroup = controller( "ADBE Root Vectors Group" ).property( 'IK Line' );
-            if ( !lineGroup )
-            {
-                lineGroup = controller( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+        if (DuAE.version.version >= 15) {
+            var lineGroup = controller("ADBE Root Vectors Group").property('IK Line');
+            if (!lineGroup) {
+                lineGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
                 lineGroup.name = 'IK Line';
             }
             lineGroup.transform.opacity.expression = DuAEExpression.Id.THREE_IK + '\neffect("' + effect.name + '")(' + weightIndex + ').value;';
-            var lineContent = lineGroup.property( "ADBE Vectors Group" );
-            var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
-            shape( 'ADBE Vector Shape' ).expression = DuAEExpression.Id.THREE_IK + '\nif (active){\n' +
+            var lineContent = lineGroup.property("ADBE Vectors Group");
+            var shape = lineContent.addProperty("ADBE Vector Shape - Group");
+            shape('ADBE Vector Shape').expression = DuAEExpression.Id.THREE_IK + '\nif (active){\n' +
                 'var fx = effect("' + effect.name + '");\n' +
                 'var layer1 = null;\n' +
                 'var result = [[0,0]];\n' +
@@ -2802,20 +2793,20 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
                 '}\n' +
                 'createPath(result,[],[],false);\n' +
                 '} else value;';
-            var stroke = lineContent.property( "ADBE Vector Graphic - Stroke" );
-            if ( !stroke ) stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
-            if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
-            stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-            stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-            stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+            var stroke = lineContent.property("ADBE Vector Graphic - Stroke");
+            if (!stroke) stroke = lineContent.addProperty("ADBE Vector Graphic - Stroke");
+            if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.THREE_IK + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
+            stroke("ADBE Vector Stroke Width").setValue(2);
+            stroke("ADBE Vector Stroke Line Cap").setValue(2);
+            stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+            stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
         }
     }
 
     //setup layers
     var layer1Data = layer1('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layer1Data.name = DuScriptUI.String.IK;
-    layer1Data( 1 ).setValue( controller.index );
+    layer1Data(1).setValue(controller.index);
 
     layer1.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
         'var controller = null;',
@@ -2869,9 +2860,9 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var uToM =getAngle(uPos,mPos);',
         '           var ikResult = upperA + uToC - uToM;',
         '           ikResult = ikResult % 360;',
-		'           if (ikResult > 180) return ikResult - 360;',
-		'           if (ikResult < -180) return ikResult + 360;',
-		'           return ikResult;',
+        '           if (ikResult > 180) return ikResult - 360;',
+        '           if (ikResult < -180) return ikResult + 360;',
+        '           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -2897,7 +2888,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
 
     var layer2Data = layer2('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layer2Data.name = DuScriptUI.String.IK;
-    layer2Data( 1 ).setValue( controller.index );
+    layer2Data(1).setValue(controller.index);
 
     layer2.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
         'var controller = null;',
@@ -2954,9 +2945,9 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var mToL =getAngle(mPos,lPos);',
         '           var ikResult = middleA + uToM - mToL +180;',
         '           ikResult = ikResult % 360;',
-		'           if (ikResult > 180) return ikResult - 360;',
-		'           if (ikResult < -180) return ikResult + 360;',
-		'           return ikResult;',
+        '           if (ikResult > 180) return ikResult - 360;',
+        '           if (ikResult < -180) return ikResult + 360;',
+        '           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -3047,7 +3038,7 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
 
     var layer3Data = layer3('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layer3Data.name = DuScriptUI.String.IK;
-    layer3Data( 1 ).setValue( controller.index );
+    layer3Data(1).setValue(controller.index);
 
     layer3.transform.rotation.expression = [DuAEExpression.Id.THREE_IK,
         'var controller = null;',
@@ -3105,9 +3096,9 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         '           var lToZ =getAngle(lPos,zPos);',
         '           var ikResult = lowerA + mToL - lToZ +180;',
         '           ikResult = ikResult % 360;',
-		'           if (ikResult > 180) return ikResult - 360;',
-		'           if (ikResult < -180) return ikResult + 360;',
-		'           return ikResult;',
+        '           if (ikResult > 180) return ikResult - 360;',
+        '           if (ikResult < -180) return ikResult + 360;',
+        '           return ikResult;',
         '       }',
         '       function fk()',
         '       {',
@@ -3183,11 +3174,10 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
         'result;'
     ].join('\n');
 
-    if ( goal != null )
-    {
+    if (goal != null) {
         var goalData = goal('ADBE Effect Parade').addProperty('ADBE Layer Control');
         goalData.name = DuScriptUI.String.IK;
-        goalData( 1 ).setValue( controller.index );
+        goalData(1).setValue(controller.index);
 
         var rotExpr = [DuAEExpression.Id.THREE_IK,
             'var ctrl = null;',
@@ -3237,8 +3227,8 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
             'result;'
         ].join('\n');
 
-        var rotProp = new DuAEProperty( goal.transform.rotation );
-        rotProp.setExpression( rotExpr );
+        var rotProp = new DuAEProperty(goal.transform.rotation);
+        rotProp.setExpression(rotExpr);
 
         goal.transform.position.expression = [DuAEExpression.Id.THREE_IK,
             'var ctrl = null;',
@@ -3266,13 +3256,12 @@ Duik.Constraint.threeLayerIK = function( layer1, layer2, layer3, goal, controlle
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, controller, showGuides )
-{
-    controller = Duik.Constraint.twoLayerIK( layer2, layer3, goal, controller, showGuides );
-    Duik.Constraint.oneLayerIK( layer1, goal, controller, showGuides );
+Duik.Constraint.oneTwoLayerIK = function(layer1, layer2, layer3, goal, controller, showGuides) {
+    controller = Duik.Constraint.twoLayerIK(layer2, layer3, goal, controller, showGuides);
+    Duik.Constraint.oneLayerIK(layer1, goal, controller, showGuides);
     var pe = Duik.PseudoEffect.ONE_LAYER_IK;
-    controller.effect( pe.matchName )( pe.props["Weight"].index ).setValue( 50 );
-    controller.effect( pe.matchName )( pe.props["Limits"]["Softness"].index ).setValue( 160 );
+    controller.effect(pe.matchName)(pe.props["Weight"].index).setValue(50);
+    controller.effect(pe.matchName)(pe.props["Limits"]["Softness"].index).setValue(160);
     return controller;
 }
 
@@ -3287,52 +3276,48 @@ Duik.Constraint.oneTwoLayerIK = function ( layer1, layer2, layer3, goal, control
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer} The controller created
  */
-Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, controller, showGuides )
-{
+Duik.Constraint.twoOneLayerIK = function(layer1, layer2, layer3, goal, controller, showGuides) {
     var comp = layer1.containingComp;
     goal = def(goal, null);
     controller = def(controller, null);
-    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
     // Null for the IK
     var n = DuAEComp.addNull(comp, 20);
-    if (typeof goal !== 'undefined') Duik.Layer.copyAttributes( n, goal, Duik.Layer.Type.IK );
-    else Duik.Layer.copyAttributes( n, layer3, Duik.Layer.Type.IK );
+    if (typeof goal !== 'undefined') Duik.Layer.copyAttributes(n, goal, Duik.Layer.Type.IK);
+    else Duik.Layer.copyAttributes(n, layer3, Duik.Layer.Type.IK);
     // Move it to the third layer
     layer3.parent = null;
-    n.transform.position.setValue( layer3.transform.position.value );
-    n.moveBefore( layer3 );
+    n.transform.position.setValue(layer3.transform.position.value);
+    n.moveBefore(layer3);
     layer3.parent = layer2;
     // Create a 2-layer IK
-    Duik.Constraint.twoLayerIK( layer1, layer2, undefined, n, showGuides );
+    Duik.Constraint.twoLayerIK(layer1, layer2, undefined, n, showGuides);
     // Create a 1-layer IK
     // Create controller
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, goal);
     }
-    Duik.Constraint.oneLayerIK( layer3, goal, controller, showGuides );
+    Duik.Constraint.oneLayerIK(layer3, goal, controller, showGuides);
     // Move the 2-layer effect to the controller
     var pe = Duik.PseudoEffect.TWO_LAYER_IK;
     var newEffect = pe.apply(controller);
     var oldEffect = n.effect(pe.matchName);
-    if (oldEffect) 
-    {
+    if (oldEffect) {
         var oldEffectProp = new DuAEProperty(oldEffect);
         // Set side
         var sideIndex = pe.props["Side"].index;
-        newEffect( sideIndex ).setValue ( oldEffect(sideIndex).value );
+        newEffect(sideIndex).setValue(oldEffect(sideIndex).value);
         oldEffectProp.linkProperties(newEffect, true);
     }
     // fix goal
-    if (goal)
-    {
+    if (goal) {
         var goalAngleEffect = controller('ADBE Effect Parade').addProperty('ADBE Angle Control');
         goalAngleEffect.name = DuScriptUI.String.TIP_ANGLE;
-        var ikEffect = controller.effect( Duik.PseudoEffect.ONE_LAYER_IK.matchName) ;
-        var layerEffect = DuAELayer.lastEffect( goal, 'ADBE Layer Control' );
+        var ikEffect = controller.effect(Duik.PseudoEffect.ONE_LAYER_IK.matchName);
+        var layerEffect = DuAELayer.lastEffect(goal, 'ADBE Layer Control');
 
-        var rotProp = new DuAEProperty( goal.transform.rotation );
-        rotProp.setExpression( [DuAEExpression.Id.TWO_ONE_IK,
+        var rotProp = new DuAEProperty(goal.transform.rotation);
+        rotProp.setExpression([DuAEExpression.Id.TWO_ONE_IK,
             'var ctrl = null;',
             'var result = value;',
             'try { ctrl = effect("' + layerEffect.name + '")(1); } catch (e){ value };',
@@ -3346,8 +3331,7 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
             '   }',
             '}',
             'result;'
-            ].join('\n')
-        );
+        ].join('\n'));
     }
     //parent
     n.parent = controller;
@@ -3367,82 +3351,80 @@ Duik.Constraint.twoOneLayerIK = function ( layer1, layer2, layer3, goal, control
  * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
  * @return {Layer[]} The controllers [curve,end,root]
  */
-Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
-{
+Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     goal = def(goal, null);
     controller = def(controller, null);
-    if ( controller == null && goal == null ) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
 
-    showGuides = def( showGuides, 1 );
+    showGuides = def(showGuides, 1);
     if (!showGuides) showGuides = 0;
 
-    DuAE.beginUndoGroup( DuScriptUI.String.BEZIER_IK, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.BEZIER_IK, false);
 
     layers = new DuList(layers);
     var comp = layers.first().containingComp;
 
     //create controllers
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.TRANSFORM, goal );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, goal);
         goal.parent = null;
-        controller.transform.rotation.setValue( goal.transform.rotation.value );
+        controller.transform.rotation.setValue(goal.transform.rotation.value);
     }
 
-    if ( goal != null ) goal.parent = controller;
+    if (goal != null) goal.parent = controller;
 
     //add effect
-    var name = Duik.Layer.limbName( layers.first() );
+    var name = Duik.Layer.limbName(layers.first());
     var pe = Duik.PseudoEffect.BEZIER_IK;
-    var effect = pe.apply( controller, DuScriptUI.String.IK + ' | ' + name );
+    var effect = pe.apply(controller, DuScriptUI.String.IK + ' | ' + name);
 
-    var limbName = Duik.Layer.limbName( layers.first() );
+    var limbName = Duik.Layer.limbName(layers.first());
 
     //create curve controller
-    var curveController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, goal );
+    var curveController = Duik.Controller.create(comp, Duik.Controller.Type.POSITION, goal);
     curveController.transform.scale.expression = '';
     curveController.name = curveController.name + "_Curve";
-    Duik.Layer.setLimbName( limbName + '_Curve', curveController );
-    Duik.Controller.setSize( 50, curveController);
+    Duik.Layer.setLimbName(limbName + '_Curve', curveController);
+    Duik.Controller.setSize(50, curveController);
 
     //create root controller
-    var rootController = Duik.Controller.create( comp,  Duik.Controller.Type.POSITION, layers.first() );
+    var rootController = Duik.Controller.create(comp, Duik.Controller.Type.POSITION, layers.first());
     rootController.name = rootController.name + "_Root";
-    Duik.Layer.setLimbName( limbName + '_Root', rootController );
-    Duik.Controller.setSize( 50, rootController);
+    Duik.Layer.setLimbName(limbName + '_Root', rootController);
+    Duik.Controller.setSize(50, rootController);
 
     //add effect
     var cPe = Duik.PseudoEffect.BEZIER_IK_CURVE;
-    var curveEffect = cPe.apply( curveController );
-    curveEffect( cPe.props["Controllers"]["Root"].index ).setValue( rootController.index );
-    curveEffect( cPe.props["Controllers"]["Curve"].index ).setValue( curveController.index );
-    curveEffect( cPe.props["Controllers"]["End"].index ).setValue( controller.index );
-    curveEffect( cPe.props["Draw guides"].index ).setValue( showGuides );
+    var curveEffect = cPe.apply(curveController);
+    curveEffect(cPe.props["Controllers"]["Root"].index).setValue(rootController.index);
+    curveEffect(cPe.props["Controllers"]["Curve"].index).setValue(curveController.index);
+    curveEffect(cPe.props["Controllers"]["End"].index).setValue(controller.index);
+    curveEffect(cPe.props["Draw guides"].index).setValue(showGuides);
 
     //useful positions
-    var endPosition = DuAELayer.getWorldPos( controller );
-    if ( goal != null ) endPosition = DuAELayer.getWorldPos( goal );
-    var rootPosition = DuAELayer.getWorldPos( layers.first() );
-    curveController.transform.position.setValue( ( endPosition + rootPosition ) / 2 );
-    var cOutPosition = ( 2 * endPosition + rootPosition ) / 3;
-    var cInPosition = ( endPosition + 2 * rootPosition ) / 3;
+    var endPosition = DuAELayer.getWorldPos(controller);
+    if (goal != null) endPosition = DuAELayer.getWorldPos(goal);
+    var rootPosition = DuAELayer.getWorldPos(layers.first());
+    curveController.transform.position.setValue((endPosition + rootPosition) / 2);
+    var cOutPosition = (2 * endPosition + rootPosition) / 3;
+    var cInPosition = (endPosition + 2 * rootPosition) / 3;
 
     //add handles
-    var handleInGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    var handleInGroup = curveController("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
     handleInGroup.name = 'Handle In';
-    handleInContent = handleInGroup.property( "ADBE Vectors Group" );
-    var circle = handleInContent.addProperty( "ADBE Vector Shape - Ellipse" );
-    circle( "ADBE Vector Ellipse Size" ).setValue( [ 25, 25 ] );
-    var fill = handleInContent.addProperty( "ADBE Vector Graphic - Fill" );
+    handleInContent = handleInGroup.property("ADBE Vectors Group");
+    var circle = handleInContent.addProperty("ADBE Vector Shape - Ellipse");
+    circle("ADBE Vector Ellipse Size").setValue([25, 25]);
+    var fill = handleInContent.addProperty("ADBE Vector Graphic - Fill");
 
     var ctrlPe = Duik.PseudoEffect.CONTROLLER;
 
-    var ctrlEffect = curveController.effect( ctrlPe.matchName );
+    var ctrlEffect = curveController.effect(ctrlPe.matchName);
     var iconColorIndex = ctrlPe.props["Icon"]["Color"].index;
     var iconSizeIndex = ctrlPe.props["Icon"]["Size"].index;
 
-    if (ctrlEffect) fill( "ADBE Vector Fill Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
-    else fill( "ADBE Vector Fill Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
+    if (ctrlEffect) fill("ADBE Vector Fill Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+    else fill("ADBE Vector Fill Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
     if (ctrlEffect) handleInGroup.transform.scale.expression = DuAEExpression.Id.CONTROLLER + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + '),effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')]';
 
     handleInGroup.transform.position.expression = [DuAEExpression.Id.BEZIER_IK,
@@ -3465,14 +3447,14 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
     handleInGroup.transform.opacity.expression = DuAEExpression.Id.BEZIER_IK + '\nvar fx = effect("' + curveEffect.name + '");\n' +
         'fx(' + cPe.props["Show handles"].index + ').value * 100;';
 
-    var handleOutGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    var handleOutGroup = curveController("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
     handleOutGroup.name = 'Handle Out';
-    handleOutContent = handleOutGroup.property( "ADBE Vectors Group" );
-    var circle = handleOutContent.addProperty( "ADBE Vector Shape - Ellipse" );
-    circle( "ADBE Vector Ellipse Size" ).setValue( [ 25, 25 ] );
-    var fill = handleOutContent.addProperty( "ADBE Vector Graphic - Fill" );
-    if (ctrlEffect) fill( "ADBE Vector Fill Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
-    else fill( "ADBE Vector Fill Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
+    handleOutContent = handleOutGroup.property("ADBE Vectors Group");
+    var circle = handleOutContent.addProperty("ADBE Vector Shape - Ellipse");
+    circle("ADBE Vector Ellipse Size").setValue([25, 25]);
+    var fill = handleOutContent.addProperty("ADBE Vector Graphic - Fill");
+    if (ctrlEffect) fill("ADBE Vector Fill Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+    else fill("ADBE Vector Fill Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
     if (ctrlEffect) handleOutGroup.transform.scale.expression = DuAEExpression.Id.CONTROLLER + '\n[effect("' + ctrlEffect.name + '")(' + iconSizeIndex + '),effect("' + ctrlEffect.name + '")(' + iconSizeIndex + ')]';
 
     handleOutGroup.transform.position.expression = [DuAEExpression.Id.BEZIER_IK,
@@ -3496,13 +3478,12 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
         'fx(' + cPe.props["Show handles"].index + ').value * 100;';
 
     //add line
-    if ( DuAE.version.version >= 15 )
-    {
-        var lineGroup = curveController( "ADBE Root Vectors Group" ).addProperty( "ADBE Vector Group" );
+    if (DuAE.version.version >= 15) {
+        var lineGroup = curveController("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
         lineGroup.name = 'IK Line';
-        var lineContent = lineGroup.property( "ADBE Vectors Group" );
-        var shape = lineContent.addProperty( "ADBE Vector Shape - Group" );
-        shape( 'ADBE Vector Shape' ).expression = [DuAEExpression.Id.BEZIER_IK,
+        var lineContent = lineGroup.property("ADBE Vectors Group");
+        var shape = lineContent.addProperty("ADBE Vector Shape - Group");
+        shape('ADBE Vector Shape').expression = [DuAEExpression.Id.BEZIER_IK,
             'var fx = effect("' + curveEffect.name + '");',
             'var root = null;',
             'var curve = thisLayer;',
@@ -3525,28 +3506,27 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
             'createPath(result,[],[],false);'
         ].join('\n');
 
-        var stroke = lineContent.addProperty( "ADBE Vector Graphic - Stroke" );
-        if (ctrlEffect) stroke( "ADBE Vector Stroke Color" ).expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
-        else stroke( "ADBE Vector Stroke Color" ).setValue( DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA() );
-        stroke( "ADBE Vector Stroke Width" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Line Cap" ).setValue( 2 );
-        stroke( "ADBE Vector Stroke Dashes" ).addProperty( "ADBE Vector Stroke Dash 1" );
-        stroke( "ADBE Vector Stroke Dashes" )( "ADBE Vector Stroke Dash 1" ).setValue( 5 );
+        var stroke = lineContent.addProperty("ADBE Vector Graphic - Stroke");
+        if (ctrlEffect) stroke("ADBE Vector Stroke Color").expression = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]\n';
+        else stroke("ADBE Vector Stroke Color").setValue(DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150).floatRGBA());
+        stroke("ADBE Vector Stroke Width").setValue(2);
+        stroke("ADBE Vector Stroke Line Cap").setValue(2);
+        stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Dash 1");
+        stroke("ADBE Vector Stroke Dashes")("ADBE Vector Stroke Dash 1").setValue(5);
     }
 
     //close controller details
     curveController.selected = true;
-    DuAE.executeCommand( DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true );
+    DuAE.executeCommand(DuAE.MenuCommandID.REVEAL_EXPRESSION_ERRORS, true);
 
     //setup layers
     var rootIndex = rootController.index;
     var endIndex = controller.index;
     var curveIndex = curveController.index;
-    var totalLength = DuMath.length( rootPosition, cInPosition ) + DuMath.length( cOutPosition, cInPosition ) + DuMath.length( cOutPosition, endPosition );
+    var totalLength = DuMath.length(rootPosition, cInPosition) + DuMath.length(cOutPosition, cInPosition) + DuMath.length(cOutPosition, endPosition);
 
     //un-parent
-    for ( var i = 0, n = layers.length(); i < n; i++ )
-    {
+    for (var i = 0, n = layers.length(); i < n; i++) {
         layers.at(i).parent = null;
     }
 
@@ -3554,23 +3534,21 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
 
     var lPe = Duik.PseudoEffect.BEZIER_IK_LAYER
 
-    for ( var i = 0, n = layers.length(); i < n; i++ )
-    {
+    for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
         //add effect
-        var layerEffect = lPe.apply( layer );
-        layerEffect( lPe.props["Layers"]["Root"].index ).setValue( rootIndex );
-        layerEffect( lPe.props["Layers"]["Curve"].index ).setValue( curveIndex );
-        layerEffect( lPe.props["Layers"]["End"].index ).setValue( endIndex );
-        if ( i < layers.length() - 1 ) layerEffect( lPe.props["Layers"]["Next"].index ).setValue( layers.at( i + 1 ).index );
-        else layerEffect( lPe.props["Layers"]["Next"].index ).setValue( controller.index );
+        var layerEffect = lPe.apply(layer);
+        layerEffect(lPe.props["Layers"]["Root"].index).setValue(rootIndex);
+        layerEffect(lPe.props["Layers"]["Curve"].index).setValue(curveIndex);
+        layerEffect(lPe.props["Layers"]["End"].index).setValue(endIndex);
+        if (i < layers.length() - 1) layerEffect(lPe.props["Layers"]["Next"].index).setValue(layers.at(i + 1).index);
+        else layerEffect(lPe.props["Layers"]["Next"].index).setValue(controller.index);
 
         //expressions
 
         //position
-        if ( i != 0 )
-        {
-            var index = DuMath.length( endPosition, layer.transform.position.value );
+        if (i != 0) {
+            var index = DuMath.length(endPosition, layer.transform.position.value);
             index = index / totalLength;
             var expression = [DuAEExpression.Id.BEZIER_IK,
                 'var end = null;',
@@ -3599,8 +3577,8 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
                 'result;'
             ].join('\n');
 
-            var posProp = new DuAEProperty( layer.transform.position );
-           posProp.setExpression( expression );
+            var posProp = new DuAEProperty(layer.transform.position);
+            posProp.setExpression(expression);
         }
 
         //rotation
@@ -3618,13 +3596,12 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
             '   var C = n.toWorld(n.anchorPoint);',
             '   var O =  thisLayer.toWorld(thisLayer.anchorPoint);',
             '   var vec = O-C;',
-            '   var angle = Math.atan2(vec[1], vec[0]);',   
+            '   var angle = Math.atan2(vec[1], vec[0]);',
             '   var ik = radiansToDegrees(angle);',
             '   if (autoOrient==1) result += ik;'
         ].join('\n');
 
-        if ( i == 0 )
-        {
+        if (i == 0) {
             expr += 'var layer = thisLayer;\n' +
                 'while(layer.hasParent)\n' +
                 '{\n' +
@@ -3635,16 +3612,16 @@ Duik.Constraint.bezierIK = function( layers, goal, controller, showGuides )
         expr += '}\n' +
             'result;';
 
-        var rotProp = new DuAEProperty( layer.transform.rotation );
-        rotProp.setExpression( expr );
+        var rotProp = new DuAEProperty(layer.transform.rotation);
+        rotProp.setExpression(expr);
     }
 
     curveController.selected = false;
-    controller.moveBefore( curveController );
+    controller.moveBefore(curveController);
 
-    DuAE.endUndoGroup( DuScriptUI.String.BEZIER_IK);
+    DuAE.endUndoGroup(DuScriptUI.String.BEZIER_IK);
 
-    return [ curveController, controller, rootController ];
+    return [curveController, controller, rootController];
 }
 
 Duik.CmdLib['Constraint']["FK"] = "Duik.Constraint.fk()";
@@ -3654,68 +3631,61 @@ Duik.CmdLib['Constraint']["FK"] = "Duik.Constraint.fk()";
  * @param {Layer} [controller] - An already existing controller.
  * @return {Layer} The controller of the FK.
  */
-Duik.Constraint.fk = function( layers, controller )
-{
+Duik.Constraint.fk = function(layers, controller) {
     controller = def(controller, null);
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.FK, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.FK, false);
 
     var comp = layers.first().containingComp;
 
     //check if there is a controller in the selection
-    if ( controller == null )
-    {
-        for ( var i = 0, num = layers.length(); i < num; i++ )
-        {
+    if (controller == null) {
+        for (var i = 0, num = layers.length(); i < num; i++) {
             var l = layers.at(i);
-            if ( Duik.Layer.isType( l, Duik.Layer.Type.CONTROLLER ) )
-            {
+            if (Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER)) {
                 controller = l;
-                layers.remove( i );
+                layers.remove(i);
                 break;
             }
         }
     }
 
     //sort layers and parent them
-    var layers = DuAELayer.sortByParent( layers );
+    var layers = DuAELayer.sortByParent(layers);
     layers = new DuList(layers);
     //reset rotation and scale if structures
-    layers.do( Duik.Bone.resetTransform );
-    DuAELayer.parentChain( layers );
+    layers.do(Duik.Bone.resetTransform);
+    DuAELayer.parentChain(layers);
 
     //Create controller
-    if ( controller == null )
-    {
-        controller = Duik.Controller.create( comp,  Duik.Controller.Type.ROTATION, layers.first() );
+    if (controller == null) {
+        controller = Duik.Controller.create(comp, Duik.Controller.Type.ROTATION, layers.first());
     }
 
     var pe = Duik.PseudoEffect.FK;
 
-    var name = Duik.Layer.limbName( layers.first() );
-    var fkEffect = pe.apply( controller );
-    fkEffect( pe.props["Limits"]["Lower"].index ).setValue( -180 );
-    fkEffect( pe.props["Flexibility"].index ).setValue( 100 );
-    fkEffect( pe.props["Resistance"].index ).setValue( 10 );
+    var name = Duik.Layer.limbName(layers.first());
+    var fkEffect = pe.apply(controller);
+    fkEffect(pe.props["Limits"]["Lower"].index).setValue(-180);
+    fkEffect(pe.props["Flexibility"].index).setValue(100);
+    fkEffect(pe.props["Resistance"].index).setValue(10);
     var fkEffectName = fkEffect.name;
 
     //rig layers
-    layers.do( function( layer )
-    {
+    layers.do(function(layer) {
         //add Data
         var layerData = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
         layerData.name = DuScriptUI.String.FK;
-        layerData( 1 ).setValue( controller.index );
+        layerData(1).setValue(controller.index);
 
         //add FK control
-        var fkControl = controller( 'ADBE Effect Parade' ).addProperty( 'ADBE Angle Control' );
-        fkControl.name = DuScriptUI.String.FK + ' | ' + Duik.Layer.limbName( layer );
+        var fkControl = controller('ADBE Effect Parade').addProperty('ADBE Angle Control');
+        fkControl.name = DuScriptUI.String.FK + ' | ' + Duik.Layer.limbName(layer);
 
         //add expression
-        if ( layers.current == 0 )
-        {
+        if (layers.current == 0) {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
@@ -3739,9 +3709,7 @@ Duik.Constraint.fk = function( layers, controller )
                 '}',
                 'result;'
             ].join('\n');
-        }
-        else if ( layers.current == 1 )
-        {
+        } else if (layers.current == 1) {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
@@ -3781,9 +3749,7 @@ Duik.Constraint.fk = function( layers, controller )
                 '}',
                 'result;'
             ].join('\n');
-        }
-        else
-        {
+        } else {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
@@ -3811,11 +3777,11 @@ Duik.Constraint.fk = function( layers, controller )
                 'result;'
             ].join('\n');
         }
-    } );
+    });
 
     controller.selected = true;
 
-    DuAE.endUndoGroup( DuScriptUI.String.FK);
+    DuAE.endUndoGroup(DuScriptUI.String.FK);
 
     return controller;
 }
@@ -3827,18 +3793,17 @@ Duik.CmdLib['Constraint']["Auto Parent Orphans"] = "Duik.Constraint.autoParent( 
  * @param {Boolean} [orphansOnly=false] - When true, parent only the orphans to the last selected layers
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  */
-Duik.Constraint.autoParent = function( orphansOnly, layers )
-{
+Duik.Constraint.autoParent = function(orphansOnly, layers) {
     orphansOnly = def(orphansOnly, false);
 
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.AUTO_PARENT, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.AUTO_PARENT, false);
 
-    DuAELayer.parent( layers, undefined, orphansOnly );
+    DuAELayer.parent(layers, undefined, orphansOnly);
 
-    DuAE.endUndoGroup( DuScriptUI.String.AUTO_PARENT );
+    DuAE.endUndoGroup(DuScriptUI.String.AUTO_PARENT);
 }
 
 Duik.CmdLib['Constraint']["Parent"] = "Duik.Constraint.parent()";
@@ -3846,22 +3811,20 @@ Duik.CmdLib['Constraint']["Parent"] = "Duik.Constraint.parent()";
  * Parent Constraint
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  */
-Duik.Constraint.parent = function ( layers )
-{
+Duik.Constraint.parent = function(layers) {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.PARENT_CONSTRAINT, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.PARENT_CONSTRAINT, false);
 
     var pe = Duik.PseudoEffect.PARENT;
     var p = pe.props;
 
-    layers.do(function(layer)
-    {
+    layers.do(function(layer) {
         var effect = pe.apply(layer);
 
         var posExpr = [DuAEExpression.Id.PARENT_CONSTRAINT,
-            DuAEExpression.Library.get(['translatePointWithLayer','checkDuikEffect']),
+            DuAEExpression.Library.get(['translatePointWithLayer', 'checkDuikEffect']),
             'var result = thisLayer.position.valueAtTime( 0 );',
             'var mbPrecision = 1;',
             'var step = framesToTime(1);',
@@ -3897,20 +3860,17 @@ Duik.Constraint.parent = function ( layers )
             'result;'
         ].join('\n');
 
-        if (layer.position.dimensionsSeparated)
-        {
+        if (layer.position.dimensionsSeparated) {
             layer.transform.xPosition.expression = posExpr + '\nresult[0];';
 
             layer.transform.yPosition.expression = posExpr + '\nresult[1];';
             if (layer.threeDLayer) layer.transform.zPosition.expression = posExpr + '\nresult[2];';
-        }
-        else
-        {
+        } else {
             layer.position.expression = posExpr;
         }
 
         var rotExpression = [DuAEExpression.Id.PARENT_CONSTRAINT,
-            DuAEExpression.Library.get(['getOrientationAtTime','checkDuikEffect']),
+            DuAEExpression.Library.get(['getOrientationAtTime', 'checkDuikEffect']),
             'var result = value;',
             'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
             '    var fx = effect( i );',
@@ -3948,19 +3908,18 @@ Duik.Constraint.parent = function ( layers )
 
         layer.rotation.expression = rotExpression
 
-        if (layer.parent != null)
-        {
+        if (layer.parent != null) {
             var comp = layer.containingComp;
             var time = comp.time;
             comp.time = 0;
             var parent = layer.parent;
             layer.parent = null;
-            effect( p['Layer'].index ).setValue(parent.index);
+            effect(p['Layer'].index).setValue(parent.index);
             comp.time = time;
         }
     });
 
-    DuAE.endUndoGroup( DuScriptUI.String.PARENT_CONSTRAINT );
+    DuAE.endUndoGroup(DuScriptUI.String.PARENT_CONSTRAINT);
 }
 
 Duik.CmdLib['Constraint']["Locator"] = "Duik.Constraint.locator()";
@@ -3968,17 +3927,16 @@ Duik.CmdLib['Constraint']["Locator"] = "Duik.Constraint.locator()";
  * Add Locator
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  */
-Duik.Constraint.locator = function( layers )
-{
+Duik.Constraint.locator = function(layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.LOCATOR, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.LOCATOR, false);
 
-    if (layers.length() > 0) layers.do( Duik.Constraint.createLocator );
+    if (layers.length() > 0) layers.do(Duik.Constraint.createLocator);
     else Duik.Constraint.createLocator();
 
-    DuAE.endUndoGroup( DuScriptUI.String.LOCATOR);
+    DuAE.endUndoGroup(DuScriptUI.String.LOCATOR);
 }
 
 /**
@@ -3986,34 +3944,32 @@ Duik.Constraint.locator = function( layers )
  * @param {Layer|CompItem} [layerOrComp] The layer or the containing comp
  * @returns {ShapeLayer} The locator
  */
-Duik.Constraint.createLocator = function ( layerOrComp )
-{
+Duik.Constraint.createLocator = function(layerOrComp) {
     var layer = null;
     var comp = null;
-    if ( typeof layerOrComp === 'undefined' ) comp = DuAEProject.getActiveComp();
-    else if ( layerOrComp instanceof CompItem ) comp = layerOrComp;
-    else
-    {
+    if (typeof layerOrComp === 'undefined') comp = DuAEProject.getActiveComp();
+    else if (layerOrComp instanceof CompItem) comp = layerOrComp;
+    else {
         layer = layerOrComp;
         comp = layer.containingComp;
     }
-    if ( !comp ) return;
+    if (!comp) return;
 
     //create null object
     var loc = DuAEComp.addNull(comp, 50);
     loc.moveToEnd();
     var name = 'LOC';
-    if ( layer ) Duik.Layer.copyAttributes( loc, layer, Duik.Layer.Type.LOCATOR );
-    else Duik.Layer.setAttributes( loc, Duik.Layer.Type.LOCATOR, DuScriptUI.String.LOCATOR );
+    if (layer) Duik.Layer.copyAttributes(loc, layer, Duik.Layer.Type.LOCATOR);
+    else Duik.Layer.setAttributes(loc, Duik.Layer.Type.LOCATOR, DuScriptUI.String.LOCATOR);
 
     //add layer control
-    var layerfx = loc.property( 'ADBE Effect Parade' ).addProperty( 'ADBE Layer Control' );
+    var layerfx = loc.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
     layerfx.name = DuScriptUI.String.LOCATOR;
-    if ( layer ) layerfx( 1 ).setValue( layer.index );
+    if (layer) layerfx(1).setValue(layer.index);
 
     //add expressions
-    loc.transform.rotation.expression = [ DuAEExpression.Id.LOCATOR,
-        DuAEExpression.Library.get(['sign','dishineritRotation','getOrientation']),
+    loc.transform.rotation.expression = [DuAEExpression.Id.LOCATOR,
+        DuAEExpression.Library.get(['sign', 'dishineritRotation', 'getOrientation']),
         'var result = 0;',
         'var l = null;',
         'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }',
@@ -4025,9 +3981,9 @@ Duik.Constraint.createLocator = function ( layerOrComp )
         '    result += dishineritRotation( thisLayer ) - value;',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    loc.transform.position.expression = [ DuAEExpression.Id.LOCATOR,
+    loc.transform.position.expression = [DuAEExpression.Id.LOCATOR,
         'var result = [thisComp.width/2,thisComp.height/2];',
         'var l = null;',
         'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }',
@@ -4040,9 +3996,9 @@ Duik.Constraint.createLocator = function ( layerOrComp )
         '   result = parent.fromWorld(result);',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    loc.transform.anchorPoint.expression = [ DuAEExpression.Id.LOCATOR,
+    loc.transform.anchorPoint.expression = [DuAEExpression.Id.LOCATOR,
         'var result = value;',
         'var l = null;',
         'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }',
@@ -4051,12 +4007,12 @@ Duik.Constraint.createLocator = function ( layerOrComp )
         '   result =l.anchorPoint.value;',
         '}',
         'result;'
-        ].join('\n');
+    ].join('\n');
 
-    loc.transform.scale.expression = [ DuAEExpression.Id.LOCATOR,
+    loc.transform.scale.expression = [DuAEExpression.Id.LOCATOR,
         'var l = null;',
         'try{ l = effect("' + layerfx.name + '")(1) } catch(e) { }',
-        DuAEExpression.Library.get(['getScale','dishineritScale']),
+        DuAEExpression.Library.get(['getScale', 'dishineritScale']),
         '',
         'var threeD = value.length == 3;',
         'var result = dishineritScale( thisLayer ) - value;',
@@ -4089,30 +4045,27 @@ Duik.CmdLib['Constraint']["Extract Locators"] = "Duik.Constraint.extractLocators
  * @param {Boolean} [useEssentialProperties] - whether to use essential properties instead of expressions to extract the controllers. True by default if Ae >= 17.0
  * @param {Layer[]|DuList.<Layer>} [precompLayers] - The layers
  */
-Duik.Constraint.extractLocators = function ( useEssentialProperties, precompLayers )
-{
+Duik.Constraint.extractLocators = function(useEssentialProperties, precompLayers) {
     precompLayers = def(precompLayers, DuAEComp.getSelectedLayers());
     precompLayers = new DuList(precompLayers);
-    if ( precompLayers.length() == 0 ) return;
+    if (precompLayers.length() == 0) return;
 
-    DuAE.beginUndoGroup( DuScriptUI.String.EXTRACT_LOCATORS, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.EXTRACT_LOCATORS, false);
 
-    precompLayers.do(function( precompLayer )
-    {
+    precompLayers.do(function(precompLayer) {
         var preComp = precompLayer.source;
-        if ( !preComp instanceof CompItem ) return;
+        if (!preComp instanceof CompItem) return;
 
         //get locators in precomp
-        var preCompLocs = Duik.Layer.get( Duik.Layer.Type.LOCATOR, false, preComp );
+        var preCompLocs = Duik.Layer.get(Duik.Layer.Type.LOCATOR, false, preComp);
 
-        var it = new DuList( preCompLocs );
-        it.do( function( preCompLoc )
-        {
-            Duik.Constraint.extractLocator( preCompLoc, precompLayer, useEssentialProperties );
-        } );
+        var it = new DuList(preCompLocs);
+        it.do(function(preCompLoc) {
+            Duik.Constraint.extractLocator(preCompLoc, precompLayer, useEssentialProperties);
+        });
     });
 
-    DuAE.endUndoGroup( DuScriptUI.String.EXTRACT_LOCATORS);
+    DuAE.endUndoGroup(DuScriptUI.String.EXTRACT_LOCATORS);
 }
 
 /**
@@ -4122,59 +4075,61 @@ Duik.Constraint.extractLocators = function ( useEssentialProperties, precompLaye
  * @param {Boolean} [useEssentialProperties=true] - true to extract using master properties instead of expressions (ignored in Ae < 15.1, false by default if 15.1 <= Ae < 17 and true by default in Ae >= 17)
  * @return {ShapeLayer} The extracted locator
  */
-Duik.Constraint.extractLocator = function( locator, preCompLayer, useEssentialProperties )
-{
+Duik.Constraint.extractLocator = function(locator, preCompLayer, useEssentialProperties) {
     if (DuAE.version.version < 15.1) useEssentialProperties = false;
-	if (DuAE.version.version < 17.0) useEssentialProperties = def( useEssentialProperties, false );
-	else useEssentialProperties = def( useEssentialProperties, true );
+    if (DuAE.version.version < 17.0) useEssentialProperties = def(useEssentialProperties, false);
+    else useEssentialProperties = def(useEssentialProperties, true);
 
     var comp = preCompLayer.containingComp;
     //comp names
-    DuAEComp.setUniqueCompName( comp );
-    DuAEComp.setUniqueCompName( locator.containingComp );
+    DuAEComp.setUniqueCompName(comp);
+    DuAEComp.setUniqueCompName(locator.containingComp);
 
     //apply locator values to workaround all kind of bugs
-    locator.transform.anchorPoint.setValue( locator.transform.anchorPoint.valueAtTime(0, false));
-    locator.transform.position.setValue( locator.transform.position.valueAtTime(0, false));
-    locator.transform.scale.setValue( locator.transform.scale.valueAtTime(0, false));
-    locator.transform.rotation.setValue( locator.transform.rotation.valueAtTime(0, false));
-    locator.transform.opacity.setValue( locator.transform.opacity.valueAtTime(0, false));
-    
+    locator.transform.anchorPoint.setValue(locator.transform.anchorPoint.valueAtTime(0, false));
+    locator.transform.position.setValue(locator.transform.position.valueAtTime(0, false));
+    locator.transform.scale.setValue(locator.transform.scale.valueAtTime(0, false));
+    locator.transform.rotation.setValue(locator.transform.rotation.valueAtTime(0, false));
+    locator.transform.opacity.setValue(locator.transform.opacity.valueAtTime(0, false));
+
     //create a null in the comp
     var loc = DuAEComp.addNull(comp);
     loc.moveToEnd();
-    Duik.Layer.setAttributes( loc, Duik.Layer.Type.LOCATOR, DuScriptUI.String.LOCATOR );
+    Duik.Layer.setAttributes(loc, Duik.Layer.Type.LOCATOR, DuScriptUI.String.LOCATOR);
     loc.parent = preCompLayer;
 
-    var trProp = new DuAEProperty( locator.transform );
+    var trProp = new DuAEProperty(locator.transform);
 
     if (useEssentialProperties) {
         trProp.addToEGP();
         // get essential properties
-        var mps = DuAEProperty.getProps( preCompLayer('ADBE Layer Overrides'), PropertyType.PROPERTY );
+        var mps = DuAEProperty.getProps(preCompLayer('ADBE Layer Overrides'), PropertyType.PROPERTY);
         var it = new DuList(mps);
         //links
-        it.do( function(mp) {
+        it.do(function(mp) {
             var newProp = null;
 
             //get prop name
             var nameArray = mp.name.split(' / ');
-            if ( nameArray.length != 2 ) return;
+            if (nameArray.length != 2) return;
             var pLink = nameArray[1];
             var layerName = nameArray[0];
-            if ( layerName != locator.name ) return;
-        
-            try { newProp = eval('loc' + pLink); }
-            catch (e) { return; }
+            if (layerName != locator.name) return;
+
+            try {
+                newProp = eval('loc' + pLink);
+            } catch (e) {
+                return;
+            }
 
             //link
             if (newProp) {
-                var p = new DuAEProperty( newProp );
-                p.pickWhip( mp, true );
+                var p = new DuAEProperty(newProp);
+                p.pickWhip(mp, true);
             }
         });
     } else {
-        trProp.linkProperties( locator.transform );
+        trProp.linkProperties(locator.transform);
     }
     return loc;
 }
@@ -4184,33 +4139,31 @@ Duik.Constraint.extractLocator = function( locator, preCompLayer, useEssentialPr
  * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
  * @param {boolean} [disable=true] - whether to disable the expressions after having applied the values
  */
-Duik.Constraint.applyLocatorValues = function ( layers, disable )
-{
+Duik.Constraint.applyLocatorValues = function(layers, disable) {
     layers = def(layer, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
     if (layers.length() == 0) return;
 
     disable = def(disable, true);
 
-    for(var i = 0, n = layers.length(); i < n; i++)
-    {
+    for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
 
-        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR) ) continue;
+        if (!Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR)) continue;
 
         var l = locator.locked;
         locator.locked = false;
-        var p = new DuAEProperty( locator.transform.anchorPoint );
-        p.setValue( locator.transform.anchorPoint.valueAtTime(0, false), 0 );
-        var p = new DuAEProperty( locator.transform.position );
-        p.setValue( locator.transform.position.valueAtTime(0, false), 0 );
-        var p = new DuAEProperty( locator.transform.scale );
-        p.setValue( locator.transform.scale.valueAtTime(0, false), 0 );
-        var p = new DuAEProperty( locator.transform.rotation );
-        p.setValue( locator.transform.rotation.valueAtTime(0, false), 0 );
-        var p = new DuAEProperty( locator.transform.opacity );
-        p.setValue( locator.transform.opacity.valueAtTime(0, false), 0 );
-        if (disable) Duik.Constraint.disableLocator( locator );
+        var p = new DuAEProperty(locator.transform.anchorPoint);
+        p.setValue(locator.transform.anchorPoint.valueAtTime(0, false), 0);
+        var p = new DuAEProperty(locator.transform.position);
+        p.setValue(locator.transform.position.valueAtTime(0, false), 0);
+        var p = new DuAEProperty(locator.transform.scale);
+        p.setValue(locator.transform.scale.valueAtTime(0, false), 0);
+        var p = new DuAEProperty(locator.transform.rotation);
+        p.setValue(locator.transform.rotation.valueAtTime(0, false), 0);
+        var p = new DuAEProperty(locator.transform.opacity);
+        p.setValue(locator.transform.opacity.valueAtTime(0, false), 0);
+        if (disable) Duik.Constraint.disableLocator(locator);
         locator.locked = l;
     }
 }
@@ -4220,19 +4173,17 @@ Duik.Constraint.applyLocatorValues = function ( layers, disable )
  * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
  * @param {boolean} [disable=true]
  */
-Duik.Constraint.disableLocator = function( layers, disable )
-{
+Duik.Constraint.disableLocator = function(layers, disable) {
     layers = def(layer, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
     if (layers.length() == 0) return;
 
     disable = def(disable, true);
 
-        for(var i = 0, n = layers.length(); i < n; i++)
-    {
+    for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
 
-        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR) ) continue;
+        if (!Duik.Layer.isType(layer, Duik.Layer.Type.LOCATOR)) continue;
 
         var l = locator.locked;
         locator.locked = false;
@@ -4251,50 +4202,42 @@ Duik.Constraint.disableLocator = function( layers, disable )
  * @param {Boolean} [useEssentialProperties=true] - true to extract using master properties instead of expressions (ignored in Ae < 15.1, false by default if 15.1 <= Ae < 17 and true by default in Ae >= 17)
  * @param {Layer[]|DuList.<Layer>} [children] - The child layers
  */
-Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, children )
-{
+Duik.Constraint.parentAcrossComp = function(parent, useEssentialProperties, children) {
     children = def(children, DuAEComp.getSelectedLayers());
     children = new DuList(children);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.PARENT_ACROSS_COMP, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.PARENT_ACROSS_COMP, false);
 
     var parentComp = parent.containingComp;
 
     //create the parent locator
-    var locator = Duik.Constraint.createLocator( parent );
+    var locator = Duik.Constraint.createLocator(parent);
     //the children locators
     var childLocators = [];
 
-    new DuList( children ).do( function( child )
-    {
+    new DuList(children).do(function(child) {
         var childComp = child.containingComp;
 
         //check if there already is a child locator
         var childLocator = null;
-        for ( var i = 0, num = childLocators.length; i < num; i++ )
-        {
-            if ( childLocators[ i ].containingComp.id == childComp.id )
-            {
-                childLocator = childLocators[ i ];
+        for (var i = 0, num = childLocators.length; i < num; i++) {
+            if (childLocators[i].containingComp.id == childComp.id) {
+                childLocator = childLocators[i];
                 break;
             }
         }
 
         //if precomp
-        var precomps = DuAEComp.getPrecomps( childComp );
+        var precomps = DuAEComp.getPrecomps(childComp);
         var precompList = new DuList(precomps);
 
-        if ( precompList.indexOf( parentComp ) >= 0 )
-        {
+        if (precompList.indexOf(parentComp) >= 0) {
             //select the first precomp layer
             var precompLayer;
-            for ( var i = 1, num = childComp.numLayers; i <= num; i++ )
-            {
-                var l = childComp.layer( i );
-                if ( l.source )
-                {
-                    if ( l.source.id == parentComp.id )
-                    {
+            for (var i = 1, num = childComp.numLayers; i <= num; i++) {
+                var l = childComp.layer(i);
+                if (l.source) {
+                    if (l.source.id == parentComp.id) {
                         precompLayer = l;
                         break;
                     }
@@ -4302,15 +4245,14 @@ Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, ch
             }
 
             //create the child Locator
-            if ( !childLocator )
-            {
+            if (!childLocator) {
                 //create a locator and extract it
-                var childLocator = Duik.Constraint.extractLocator( locator, precompLayer, useEssentialProperties );
+                var childLocator = Duik.Constraint.extractLocator(locator, precompLayer, useEssentialProperties);
                 childLocator.selected = false;
                 childLocator.enabled = false;
                 childLocator.shy = true;
                 childLocator.locked = true;
-                childLocators.push( childLocator );
+                childLocators.push(childLocator);
             }
             var locked = child.locked;
             child.locked = false;
@@ -4322,17 +4264,14 @@ Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, ch
         }
 
         //if parent comp
-        var parentComps = DuAEComp.getParentComps( childComp );
+        var parentComps = DuAEComp.getParentComps(childComp);
         var parentCompList = new DuList(parentComps);
-        if ( parentCompList.indexOf( parentComp ) >= 0 )
-        {
+        if (parentCompList.indexOf(parentComp) >= 0) {
             //select the first precomp layer
             var precompLayer;
-            for ( var i = 1, num = parentComp.numLayers; i <= num; i++ )
-            {
-                var l = parentComp.layer( i );
-                if ( l.source == childComp )
-                {
+            for (var i = 1, num = parentComp.numLayers; i <= num; i++) {
+                var l = parentComp.layer(i);
+                if (l.source == childComp) {
                     precompLayer = l;
                     break;
                 }
@@ -4341,20 +4280,19 @@ Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, ch
             locator.parent = precompLayer;
 
             //create the child Locator
-            if ( !childLocator )
-            {
+            if (!childLocator) {
                 //create a null in the comp
                 var childLocator = DuAEComp.addNull(childComp);
                 childLocator.moveToEnd();
-                Duik.Layer.copyAttributes( childLocator, locator, Duik.Layer.Type.LOCATOR );
-                var ctr = new DuAEProperty( childLocator.transform );
-                ctr.linkProperties( locator.transform, undefined, precompLayer );
+                Duik.Layer.copyAttributes(childLocator, locator, Duik.Layer.Type.LOCATOR);
+                var ctr = new DuAEProperty(childLocator.transform);
+                ctr.linkProperties(locator.transform, undefined, precompLayer);
                 //lock and hide
                 childLocator.selected = false;
                 childLocator.enabled = false;
                 childLocator.shy = true;
                 childLocator.locked = true;
-                childLocators.push( childLocator );
+                childLocators.push(childLocator);
             }
 
             child.parent = childLocator;
@@ -4372,7 +4310,7 @@ Duik.Constraint.parentAcrossComp = function ( parent, useEssentialProperties, ch
     locator.shy = true;
     parent.selected = true;
 
-    DuAE.endUndoGroup( DuScriptUI.String.PARENT_ACROSS_COMP);
+    DuAE.endUndoGroup(DuScriptUI.String.PARENT_ACROSS_COMP);
 }
 
 Duik.CmdLib['Constraint']["Position"] = "Duik.Constraint.position()";
@@ -4380,20 +4318,18 @@ Duik.CmdLib['Constraint']["Position"] = "Duik.Constraint.position()";
  * Adds a position constraint to the layers
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  */
-Duik.Constraint.position = function ( layers )
-{
+Duik.Constraint.position = function(layers) {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.POSITION_CONSTRAINT, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.POSITION_CONSTRAINT, false);
 
     var pe = Duik.PseudoEffect.POSITION;
 
-    layers.do(function( layer )
-    {
+    layers.do(function(layer) {
         var effect = pe.apply(layer);
         var p = pe.props;
-        effect( p['Weight'].index ).setValue( 0 );
+        effect(p['Weight'].index).setValue(0);
 
         layer.position.expression = [DuAEExpression.Id.POSITION_CONSTRAINT,
             DuAEExpression.Library.get(['checkDuikEffect']),
@@ -4416,11 +4352,11 @@ Duik.Constraint.position = function ( layers )
             '}',
             'result;',
             ''
-            ].join('\n');
+        ].join('\n');
 
     });
 
-    DuAE.endUndoGroup( DuScriptUI.String.POSITION_CONSTRAINT);
+    DuAE.endUndoGroup(DuScriptUI.String.POSITION_CONSTRAINT);
 }
 
 Duik.CmdLib['Constraint']["Orientation"] = "Duik.Constraint.orientation()";
@@ -4428,39 +4364,37 @@ Duik.CmdLib['Constraint']["Orientation"] = "Duik.Constraint.orientation()";
  * Adds an orientation constraint to the layers
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  */
-Duik.Constraint.orientation = function ( layers )
-{
+Duik.Constraint.orientation = function(layers) {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
 
-    DuAE.beginUndoGroup( DuScriptUI.String.ORIENTATION_CONSTRAINT, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.ORIENTATION_CONSTRAINT, false);
 
     var pe = Duik.PseudoEffect.ORIENTATION;
 
-    layers.do(function( layer )
-    {
+    layers.do(function(layer) {
         var effect = pe.apply(layer);
         var p = pe.props;
 
         layer.rotation.expression = [DuAEExpression.Id.ORIENTATION_CONSTRAINT,
-        DuAEExpression.Library.get(['sign','getOrientation','dishineritRotation','checkDuikEffect']),
-        'var result = dishineritRotation( thisLayer );',
-        'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
-        '    var fx = effect( i );',
-        '    if ( !checkDuikEffect(fx, "DUIK orientationConstraint") ) continue;',
-        '    var l = null;',
-        '    try {',
-        '        l = fx(' + p['Constraint to'].index + ');',
-        '    } catch ( e ) {}',
-        '    if ( l ) result += getOrientation( l ) * ( fx(' + p['Weight'].index + ').value / 100 );',
-        '}',
-        'result;',
-        ''
+            DuAEExpression.Library.get(['sign', 'getOrientation', 'dishineritRotation', 'checkDuikEffect']),
+            'var result = dishineritRotation( thisLayer );',
+            'for ( var i = 1; i <= thisLayer( "Effects" ).numProperties; i++ ) {',
+            '    var fx = effect( i );',
+            '    if ( !checkDuikEffect(fx, "DUIK orientationConstraint") ) continue;',
+            '    var l = null;',
+            '    try {',
+            '        l = fx(' + p['Constraint to'].index + ');',
+            '    } catch ( e ) {}',
+            '    if ( l ) result += getOrientation( l ) * ( fx(' + p['Weight'].index + ').value / 100 );',
+            '}',
+            'result;',
+            ''
         ].join('\n');
 
     });
 
-    DuAE.endUndoGroup( DuScriptUI.String.ORIENTATION_CONSTRAINT);
+    DuAE.endUndoGroup(DuScriptUI.String.ORIENTATION_CONSTRAINT);
 }
 
 Duik.CmdLib['Constraint']["Constraint"] = "Duik.Constraint.constraint()";
@@ -4470,44 +4404,41 @@ Duik.CmdLib['Constraint']["Constraint"] = "Duik.Constraint.constraint()";
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers
  * @returns {Boolean} true if a constraint could be created
  */
-Duik.Constraint.path = function ( path, layers )
-{
+Duik.Constraint.path = function(path, layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
 
-    if ( typeof path === 'undefined' && layers.length() < 2) return false; 
+    if (typeof path === 'undefined' && layers.length() < 2) return false;
 
-    if ( typeof path === 'undefined' ) 
-    {
+    if (typeof path === 'undefined') {
         var pathLayer = layers.pop();
-        var pathProps = DuAELayer.getSelectedProps( pathLayer, PropertyValueType.SHAPE )
+        var pathProps = DuAELayer.getSelectedProps(pathLayer, PropertyValueType.SHAPE)
         if (pathProps.length == 0) return false;
         path = pathProps.pop();
     }
 
-    DuAE.beginUndoGroup( DuScriptUI.String.PATH_CONSTRAINT, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.PATH_CONSTRAINT, false);
 
     var pe = Duik.PseudoEffect.PATH;
 
-    layers.do(function( layer )
-    {
-        path = new DuAEProperty( path );
+    layers.do(function(layer) {
+        path = new DuAEProperty(path);
         path = path.pathProperty();
         if (!path) return;
 
-        var effect = pe.apply( layer );
+        var effect = pe.apply(layer);
         var p = pe.props;
 
         var l = path.layer;
-        var pathExpr = path.expressionLink( true );
+        var pathExpr = path.expressionLink(true);
 
-        var expr = [ DuAEExpression.Id.PATH_CONSTRAINT,
+        var expr = [DuAEExpression.Id.PATH_CONSTRAINT,
             'var fx = effect("' + effect.name + '");',
             'var l = thisComp.layer("' + l.name + '");',
             'var p = ' + pathExpr + ';',
             'var percent = fx(' + p['Percent along path'].index + ').value % 100 / 100;',
             'if (percent == 0) percent = 0.0001;',
-            'var pathOffset = fx(' + p['Path Offset'].index  + ').value;',
+            'var pathOffset = fx(' + p['Path Offset'].index + ').value;',
             '// path value',
             'var result = l.toWorld( p.pointOnPath(percent, time ) +  p.normalOnPath(percent, time) * pathOffset );',
             'if (hasParent) result = parent.fromWorld(result);',
@@ -4515,10 +4446,10 @@ Duik.Constraint.path = function ( path, layers )
             'result += value;'
         ].join('\n');
 
-        var posProp = new DuAEProperty( layer.position );
-        posProp.setExpression( expr );
+        var posProp = new DuAEProperty(layer.position);
+        posProp.setExpression(expr);
 
-        expr = [ DuAEExpression.Id.PATH_CONSTRAINT,
+        expr = [DuAEExpression.Id.PATH_CONSTRAINT,
             'var fx = effect("' + effect.name + '");\n' +
             'var autoOrient = fx(' + p['Orientation'].index + ').value;\n' +
             'var result = value;\n' +
@@ -4535,12 +4466,12 @@ Duik.Constraint.path = function ( path, layers )
             '}',
             'result;'
         ].join('\n');
-        
-        var rotProp = new DuAEProperty( layer.rotation );
-        rotProp.setExpression( expr );
+
+        var rotProp = new DuAEProperty(layer.rotation);
+        rotProp.setExpression(expr);
     });
 
-    DuAE.endUndoGroup( DuScriptUI.String.PATH_CONSTRAINT );
+    DuAE.endUndoGroup(DuScriptUI.String.PATH_CONSTRAINT);
     return true;
 }
 
@@ -4552,66 +4483,58 @@ Duik.CmdLib['Constraint']["Pin without tangent"] = "Duik.Constraint.pin( false )
  * @param {PropertyBase[]} [props] The properties to pin
  * @returns {ShapeLayer[]} The pins
  */
-Duik.Constraint.pin = function ( tangents, props )
-{
-    tangents = def( tangents, true );
+Duik.Constraint.pin = function(tangents, props) {
+    tangents = def(tangents, true);
 
     var props = DuAEComp.getSelectedProps();
 
-    DuAE.beginUndoGroup( DuScriptUI.String.DUIK_PINS, false);
+    DuAE.beginUndoGroup(DuScriptUI.String.DUIK_PINS, false);
 
     //just create a single bone without any prop
-    if (props.length == 0)
-    {
+    if (props.length == 0) {
         var pin = Duik.Pin.create();
         if (!pin) return;
         pin.selected = true;
 
-        DuAE.endUndoGroup( DuScriptUI.String.DUIK_PINS );
+        DuAE.endUndoGroup(DuScriptUI.String.DUIK_PINS);
         return [pin];
     }
 
-    DuAEProject.setProgressMode( true );
+    DuAEProject.setProgressMode(true);
 
     var pins = [];
     props = new DuList(props);
-    props.do( function( prop )
-    {
-        pins = pins.concat( Duik.Pin.add( prop, tangents ) );
-    } );
+    props.do(function(prop) {
+        pins = pins.concat(Duik.Pin.add(prop, tangents));
+    });
 
     //if nothing was created
-    if ( pins.length == 0 )
-    {
+    if (pins.length == 0) {
         var layers = DuAEComp.getSelectedLayers();
-        layers = new DuList( layers );
+        layers = new DuList(layers);
 
         //Try to find puppet pins
-        layers.do( function( layer )
-        {
-            var ps = DuAELayer.getPuppetPins( layer );
-            ps = new DuList( ps );
-            ps.do( function( pin )
-            {
-                pins.push( Duik.Pin.add( pin, tangents ) );
-            } );
+        layers.do(function(layer) {
+            var ps = DuAELayer.getPuppetPins(layer);
+            ps = new DuList(ps);
+            ps.do(function(pin) {
+                pins.push(Duik.Pin.add(pin, tangents));
+            });
 
-        } );
+        });
     }
 
     //Try any spatial property
-    if ( pins.length == 0 )
-    {
-        props.do( function( prop )
-        {
-            pins = pins.concat( Duik.Pin.addPins( prop, tangents ) );
-        } );
+    if (pins.length == 0) {
+        props.do(function(prop) {
+            pins = pins.concat(Duik.Pin.addPins(prop, tangents));
+        });
     }
 
-    DuAEComp.selectLayers( pins );
+    DuAEComp.selectLayers(pins);
 
-    DuAEProject.setProgressMode( false );
-    DuAE.endUndoGroup( DuScriptUI.String.DUIK_PINS );
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.DUIK_PINS);
 
     return pins;
 }
@@ -4622,32 +4545,29 @@ Duik.Constraint.pin = function ( tangents, props )
  * @param {Layer} [controller] - An already existing controller.
  * @return {Layer} The controller of the FK.
  */
-Duik.Constraint.simpleFK = function( layers, controller )
-{
+Duik.Constraint.simpleFK = function(layers, controller) {
     controller = def(controller, null);
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
-    layers = DuAELayer.sortByParent( layers );
+    layers = DuAELayer.sortByParent(layers);
     var numLayers = layers.length;
 
     // create controller
-    if ( controller == null )
-    {
+    if (controller == null) {
         var l = layers[0];
-        controller = Duik.Controller.create(l.containingComp, Duik.Controller.Type.ROTATION, l );
+        controller = Duik.Controller.create(l.containingComp, Duik.Controller.Type.ROTATION, l);
     }
 
     //add checkbox and data
-    var effect = controller.effect.addProperty( "ADBE Checkbox Control" );
-    effect.name = layers[ 0 ].name + " Follow";
+    var effect = controller.effect.addProperty("ADBE Checkbox Control");
+    effect.name = layers[0].name + " Follow";
     var effectName = effect.name;
 
-    for ( var i = 0; i < numLayers; i++ )
-    {
-        var goalData = layers[ i ].effect.addProperty( "ADBE Layer Control" );
+    for (var i = 0; i < numLayers; i++) {
+        var goalData = layers[i].effect.addProperty("ADBE Layer Control");
         goalData.name = "FK Controller";
         var dataName = goalData.name;
-        goalData( 1 ).setValue( controller.index );
+        goalData(1).setValue(controller.index);
 
         var exp = DuAEExpression.Id.SIMPLE_FK + "\n" +
             "var ctrl = null;\n" +
@@ -4656,21 +4576,21 @@ Duik.Constraint.simpleFK = function( layers, controller )
             "if (ctrl != null)\n" +
             "{\n" +
             "var goal = ctrl.effect(\"" + effectName + "\")(1).value;\n" +
-            "result += ctrl.rotation.value/" + ( numLayers / ( i + 1 ) ) + ";\n" +
+            "result += ctrl.rotation.value/" + (numLayers / (i + 1)) + ";\n" +
             "if (!goal)\n" +
             "{\n" +
             "var layer = thisLayer;\n" +
             "while (layer.hasParent)\n" +
             "{\n" +
             "layer = layer.parent;\n" +
-            "result = result - layer.rotation/" + ( numLayers / ( i + 1 ) ) + ";\n" +
+            "result = result - layer.rotation/" + (numLayers / (i + 1)) + ";\n" +
             "}\n" +
             "}\n" +
             "}\n" +
             "result;";
 
-        var rotProp = new DuAEProperty( layers[i].transform.rotation );
-        rotProp.setExpression( exp );
+        var rotProp = new DuAEProperty(layers[i].transform.rotation);
+        rotProp.setExpression(exp);
     }
 }
 
@@ -4679,12 +4599,11 @@ Duik.CmdLib['Constraint']["Remove thisComp"] = "Duik.Constraint.removeThisCompIn
  * Replace all <code>thisComp</code> occurences by <code>comp("name")</code>.
  * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.ACTIVE_COMPOSITION] The items where to modify the expressions.
  */
-Duik.Constraint.removeThisCompInExpressions = function( selectionMode )
-{
-    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION );
-    DuAE.beginUndoGroup( DuScriptUI.String.REMOVE_THISCOMP );
+Duik.Constraint.removeThisCompInExpressions = function(selectionMode) {
+    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION);
+    DuAE.beginUndoGroup(DuScriptUI.String.REMOVE_THISCOMP);
 
-    DuAEComp.removeThisCompInExpressions( selectionMode );
+    DuAEComp.removeThisCompInExpressions(selectionMode);
 
     DuAE.endUndoGroup();
 }
@@ -4694,12 +4613,11 @@ Duik.CmdLib['Constraint']["Use thisComp"] = "Duik.Constraint.removeCompInExpress
  * Replace all <code>comp("name")</code> occurences by <code>thisComp</code>.
  * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.ACTIVE_COMPOSITION] The items where to modify the expressions.
  */
-Duik.Constraint.removeCompInExpressions = function( selectionMode )
-{
-    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION );
-    DuAE.beginUndoGroup( DuScriptUI.String.USE_THISCOMP );
+Duik.Constraint.removeCompInExpressions = function(selectionMode) {
+    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION);
+    DuAE.beginUndoGroup(DuScriptUI.String.USE_THISCOMP);
 
-    DuAEComp.removeCompInExpressions( selectionMode );
+    DuAEComp.removeCompInExpressions(selectionMode);
 
     DuAE.endUndoGroup();
 }
@@ -4709,12 +4627,11 @@ Duik.CmdLib['Constraint']["Remove thisLayer"] = "Duik.Constraint.removeThisLayer
  * Replace all <code>thisLayer</code> occurences by <code>layer("name")</code>.
  * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.ACTIVE_COMPOSITION] The items where to modify the expressions.
  */
-Duik.Constraint.removeThisLayerInExpressions = function( selectionMode )
-{
-    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION );
-    DuAE.beginUndoGroup( DuScriptUI.String.REMOVE_THISCOMP );
+Duik.Constraint.removeThisLayerInExpressions = function(selectionMode) {
+    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION);
+    DuAE.beginUndoGroup(DuScriptUI.String.REMOVE_THISCOMP);
 
-    DuAEComp.removeThisLayerInExpressions( selectionMode );
+    DuAEComp.removeThisLayerInExpressions(selectionMode);
 
     DuAE.endUndoGroup();
 }
@@ -4724,12 +4641,361 @@ Duik.CmdLib['Constraint']["Use thisComp"] = "Duik.Constraint.removeLayerInExpres
  * Replace all <code>layer("name")</code> occurences by <code>thisLayer</code>.
  * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.ACTIVE_COMPOSITION] The items where to modify the expressions.
  */
-Duik.Constraint.removeLayerInExpressions = function( selectionMode )
-{
-    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION );
-    DuAE.beginUndoGroup( DuScriptUI.String.USE_THISCOMP );
+Duik.Constraint.removeLayerInExpressions = function(selectionMode) {
+    selectionMode = def(selectionMode, DuAE.SelectionMode.ACTIVE_COMPOSITION);
+    DuAE.beginUndoGroup(DuScriptUI.String.USE_THISCOMP);
 
-    DuAEComp.removeLayerInExpressions( selectionMode );
+    DuAEComp.removeLayerInExpressions(selectionMode);
 
     DuAE.endUndoGroup();
+}
+
+/**
+ * Connects the properties to a master property.
+ * @param {DuAEProperty[]|DuList.<DuAEProperty>} props - The child properties
+ * @param {Property|DuAEProperty} masterProp - The parent property
+ * @param {float} [min=0] - The minimum value
+ * @param {float} [max=100] - The maximum value
+ * @param {DuAE.Axis} [axis=DuAE.Axis.X] - The axis or channel to connect
+ * @param {DuAE.Type} [type=DuAE.Type.VALUE] - The type
+ * @return {PropertyGroup} The controlling effect created
+ */
+Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
+    min = def(min, 0);
+    max = def(max, 100);
+    axis = def(axis, DuAE.Axis.X);
+    type = def(type, DuAE.Type.VALUE);
+
+    masterProp = new DuAEProperty(masterProp);
+
+    // Adjust values
+    if (isNaN(min)) min = 0;
+    if (isNaN(max)) min = 100;
+
+    var dim = masterProp.dimensions();
+    if (dim == 4) {
+        var bpc = app.project.bitsPerChannel;
+        if (bpc == 8) {
+            min /= 255;
+            max /= 255;
+        } else if (bpc == 16) {
+            min /= 32768;
+            max /= 32768;
+        } else if (bpc == 32) {
+            if (min < 0) min = 0;
+            else if (min > 1) min = 1;
+            if (max < 0) max = 0;
+            else if (max > 1) max = 1;
+        }
+    }
+
+    // Get layer
+    var masterLayer = masterProp.layer;
+
+    // Try to find an already existing effect
+    var effect = null;
+    var pe = Duik.PseudoEffect.ONED_CONNECTOR;
+    if (dim == 2) pe = Duik.PseudoEffect.TWOD_CONNECTOR;
+    else if (dim == 3) pe = Duik.PseudoEffect.THREED_CONNECTOR;
+    else if (dim == 4) pe = Duik.PseudoEffect.COLOR_CONNECTOR;
+
+    var modeId = pe.props['Connection mode'].index;
+    var minId = pe.props['Minimum'].index
+    var maxId = pe.props['Maximum'].index;
+    var axisId = 4;
+    if (dim > 1 && dim < 4) axisId = pe.props['Axis'].index;
+    else if (dim == 4) axisId = pe.props['Channel'].index;
+
+    var connectorEffects = DuAEProperty.getProps(masterLayer.property('ADBE Effect Parade'), pe.matchName, true);
+
+    // Check if there is one with the same settings
+    for (var i = 0, num = connectorEffects.length; i < num; i++) {
+        var e = effects[i];
+        if (e.prop(minId).value != min) continue;
+        if (e.prop(maxId).value != max) continue;
+        if (e.prop(modeId).value != type) continue;
+        if (dim > 1 && dim < 4) {
+            if (e.prop(axisId).value != axis) continue;
+        } else if (dim == 4) {
+            if (e.prop(axisId).value != axis - 3) continue;
+        }
+        //if all tests passed, this is the one!
+        effect = e;
+        break;
+    }
+
+    // If not found, create and set values
+    if (!effect) {
+        effect = pe.apply(masterLayer, DuScriptUI.String.DUIK_CONNECTOR + ' ' + masterProp.name);
+        effect(minId).setValue(min);
+        effect(maxId).setValue(max);
+        effect(modeId).setValue(type);
+        if (dim == 4) effect(axisId).setValue(axis - 3);
+        else if (dim > 1) effect(axisId).setValue(axis);
+    }
+
+    // Prepare the expression
+    var exp = [
+        'var ctrlValue = ctrlLayer' + masterProp.expressionLink(false, false) + ';',
+        'var ctrlEffect = ctrlLayer.effect("' + effect.name + '");',
+        'var ctrlMin = ctrlEffect(' + minId + ').value;',
+        'var ctrlMax = ctrlEffect(' + maxId + ').value;',
+        'var result = value;',
+        'if (numKeys >= 2 && ctrlEffect.enabled)',
+        '{',
+        'var useVelocity = ctrlEffect(1).value == 2;',
+        'if (useVelocity) ctrlValue = ctrlValue.velocity;',
+        'else ctrlValue = ctrlValue.value;'
+    ].join('\n');
+
+    if (masterProp.isAngle()) {
+        exp += 'if (!useVelocity) ctrlValue = ctrlValue % 360;\n';
+    } else if (dim == 2 || dim == 3) {
+        exp += 'var axis = ctrlEffect(' + axisId + ').value-1;\nctrlValue = ctrlValue[axis];\n'
+    } else if (dim == 4) {
+        exp += 'var axis = ctrlEffect(' + axisId + ').value;\n' +
+            'if (axis == 1) ctrlValue = ctrlValue[0];\n' +
+            'else if (axis == 2) ctrlValue = ctrlValue[1];\n' +
+            'else if (axis == 3) ctrlValue = ctrlValue[2];\n' +
+            'else if (axis == 4) ctrlValue = ctrlValue[3];\n' +
+            'else \n' +
+            '{\n' +
+            'ctrlValue = rgbToHsl(ctrlValue);\n' +
+            'if (axis == 5) ctrlValue = ctrlValue[0];\n' +
+            'else if (axis == 6) ctrlValue = ctrlValue[1];\n' +
+            'else if (axis == 7) ctrlValue = ctrlValue[2];\n' +
+            '}';
+    }
+    exp += 'var t = 0;\n' +
+        'var beginTime = key(1).time;\n' +
+        'var endTime = key(numKeys).time;\n' +
+        'if (ctrlMin > ctrlMax)\n' +
+        '{\n' +
+        't = linear(ctrlValue, ctrlMin, ctrlMax, endTime, beginTime);\n' +
+        '}\n' +
+        'else\n' +
+        '{\n' +
+        't = linear(ctrlValue, ctrlMin, ctrlMax, beginTime, endTime);\n' +
+        '}\n' +
+        'result = valueAtTime(t);\n' +
+        '}\n' +
+        'result;';
+
+    // Set to the props
+    var masterComp = masterLayer.containingComp;
+    var comp = 'thisComp.';
+    props = new DuList(props);
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        // check if the current comp is the same than the comp containing the masterProperty
+        var childComp = prop.comp;
+        if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
+        else comp = 'thisComp.';
+
+        prop.setExpression(
+            DuAEExpression.Id.CONNECTOR + '\n' +
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
+            exp,
+            false
+        );
+        if (prop.matchName == "ADBE Opacity") prop.layer.enabled = true;
+    });
+
+    return effect;
+}
+
+Duik.CmdLib['Constraint']["Connector"] = "Duik.Constraint.quickConnector()";
+/**
+ * Connects the properties together to a % slider
+ * @param {Property[]|DuAEProperty[]} [props] - The properties to connect. The selected properties by default.
+ */
+Duik.Constraint.quickConnector = function(props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) return;
+    props = new DuList(props);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR, false);
+
+    // Create the slider
+    var ctrlLayer = props.first().layer;
+    var comp = props.first().comp;
+    var effect = Duik.PseudoEffect.QUICK_CONNECTOR.apply(ctrlLayer);
+
+    var exp = [ DuAEExpression.Id.CONNECTOR,
+        'var ctrlLayer = thisComp.layer("' + ctrlLayer.name + '");',
+        'var ctrlEffect = ctrlLayer.effect("' + effect.name + '");',
+        'var ctrlValue = ctrlEffect(1);',
+        'var ctrlMin = 0;',
+        'var ctrlMax = 100;',
+        'var result = value;',
+        'if (numKeys >= 2 && ctrlEffect.enabled)',
+        '{',
+        'ctrlValue = ctrlValue.value;',
+        'var t = 0;',
+        'var beginTime = key(1).time;',
+        'var endTime = key(numKeys).time;',
+        'if (ctrlMin > ctrlMax)',
+        '{',
+        't = linear(ctrlValue, ctrlMin, ctrlMax, endTime, beginTime);',
+        '}',
+        'else',
+        '{',
+        't = linear(ctrlValue, ctrlMin, ctrlMax, beginTime, endTime);',
+        '}',
+        'result = valueAtTime(t);',
+        '}',
+        'result;'
+    ].join('\n');
+
+    var firstTime = comp.duration;
+    var lastTime = 0;
+
+    props.do(function(prop) {
+        // Set the expression
+        prop.setExpression(exp, false);
+        // Get first/last time
+        var f = prop.firstKeyTime();
+        if (f != null) if (f < firstTime) firstTime = f;
+        var l = prop.lastKeyTime();
+        if (l != null) if (l > lastTime) lastTime = l;
+    });
+
+    // Set default keyframes
+    effect(1).setValuesAtTimes([firstTime, lastTime], [0,100]);
+
+    DuAE.endUndoGroup(DuScriptUI.String.CONNECTOR);
+}
+
+/**
+ * Connects a dropdown menu effect to a list of layers, using their opacities.<br />
+ * Note: On After Effects < 17.0.1, the list is not updated to reflect the list of layers.
+ * @param {DuAEProperty|Property} dropdown The dropdown menu property.
+ * @param {Layer[]|DuList.<Layer>} [layers] The layers to control. The selected layers by default.
+ */
+Duik.Constraint.linkLayersToDropdown = function(dropdown, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+
+    dropdown = new DuAEProperty(dropdown);
+    var effect = dropdown.parentProperty();
+
+    var masterComp = dropdown.comp;
+    var masterLayer = dropdown.layer;
+
+    var updateDropdown = DuAE.version.atLeast('17.0.1');
+
+    layers = new DuList(layers);
+    var layerNames = [];
+    layers.do(function(layer) {
+        // check if the current comp is the same than the comp containing the masterProperty
+        var childComp = layer.containingComp;
+        var comp;
+        if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
+        else comp = 'thisComp.';
+
+        var id = layers.current + 1;
+
+        layer.transform.opacity.expression = [DuAEExpression.Id.CONNECTOR,
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
+            'var fx = ctrlLayer.effect("' + effect.name + '");',
+            'var result = 0;',
+            'if (fx(1).value == ' + id + ') result = value;',
+            'result;'
+        ].join('\n');
+
+        if (updateDropdown) layerNames.push(layer.name);
+    });
+
+    if (updateDropdown) dropdown.setPropertyParameters(layerNames);
+}
+
+/**
+ * Prepares a visual audio controller to connect to properties
+ * @param {AVLayer} [audioLayer] The layer with the audio to setup. The selected layer by default.
+ * @return {DuAEProperty} The value to use with the connector
+ */
+Duik.Constraint.setupAudioController = function(audioLayer) {
+    audioLayer = def(audioLayer, DuAEComp.getActiveLayer());
+    if (!audioLayer) return;
+    if (!audioLayer.hasAudio) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.AUDIO_CONNECTOR, false);
+
+    // Duplicate the layer
+    audioLayer.duplicate();
+    // Precompose
+    var comp = audioLayer.containingComp;
+    var index = audioLayer.index;
+    var acCompName = DuAEProject.newUniqueCompName('AC.' + DuScriptUI.String.SETTINGS + '::' + audioLayer.name);
+    var acComp = comp.layers.precompose([index], acCompName);
+    // Lock and hide the precomp
+    var acCompLayer = comp.layer(index);
+    acCompLayer.moveToEnd();
+    acCompLayer.enabled = false;
+    acCompLayer.audioEnabled = false;
+    acCompLayer.guideLayer = true;
+    acCompLayer.shy = true;
+
+    // Setup the controllers
+    audioLayer = acComp.layer(1);
+
+    // Add the spectrum layer
+    var spectrumLayer = acComp.layers.addShape();
+    Duik.Layer.setAttributes(spectrumLayer, Duik.Layer.Type.AUDIO, DuScriptUI.String.AUDIO_SPECTRUM, undefined, undefined, DuScriptUI.String.AUDIO_EFFECTOR );
+    var solidGroup = spectrumLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    solidGroup.name = 'Solid';
+    var solidContent = solidGroup.property("ADBE Vectors Group");
+    var solid = solidContent.addProperty("ADBE Vector Shape - Rect");
+    solid('ADBE Vector Rect Size').expression = '[thisComp.width, thisComp.height*3];';
+    var fill = solidContent.addProperty("ADBE Vector Graphic - Fill");
+    fill("ADBE Vector Fill Color").setValue([0,0,0,1]);
+
+    // Add an Ear layer
+    var earLayer = Duik.Controller.create(acComp, Duik.Controller.Type.EAR);
+    earLayer.transform.position.setValue([acComp.width / 4, acComp.height / 2]);
+
+    // Add the settings layer
+    var settingsLayer = Duik.Controller.create(acComp, Duik.Controller.Type.AUDIO);
+    Duik.Layer.setCharacterName(DuScriptUI.String.AUDIO_EFFECTOR, settingsLayer);
+    // Add effect
+    var pe = Duik.PseudoEffect.AUDIO_CONNECTOR;
+    var ampId = pe.props['Amplitude'].index;
+    var minId = pe.props['Minimum frequency (Hz)'].index;
+    var maxId = pe.props['Maximum frequency (Hz)'].index;
+    var easeId = pe.props['Ease'].index;
+    var timeEaseId = pe.props['Time settings']['Ease (seconds)'].index;
+    var offsetId = pe.props['Time settings']['Offset (seconds)'].index;
+    var settingsEffect = pe.apply(settingsLayer);
+
+    // Setup the spectrum
+    var spectrumEffect = spectrumLayer.property('ADBE Effect Parade').addProperty('ADBE AudSpect');
+    spectrumEffect(1).setValue(4); // Audio Layer
+    spectrumEffect(2).expression = '[0,thisComp.height]'; // start point
+    spectrumEffect(3).expression = '[thisComp.width,thisComp.height]'; // end point
+    spectrumEffect(6).expression = 'thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + minId + ')'; // start freq
+    spectrumEffect(7).expression = 'thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + maxId + ')'; // end freq
+    spectrumEffect(9).expression = 'thisComp.height * thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + ampId + ') / 100;'; // max height
+    spectrumEffect(10).expression = '1000*( thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + timeEaseId + ') + thisComp.frameDuration);'; // audio duration
+    spectrumEffect(11).expression = '1000*thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + offsetId + ');'; // audio offset
+    spectrumEffect(12).expression = 'thisComp.width/thisProperty.propertyGroup()(8)+10;'; // thickness
+    spectrumEffect(13).setValue(0); // softness
+    spectrumEffect(14).setValue([1,1,1,1]); // inside color
+    spectrumEffect(15).expression = 'thisProperty.propertyGroup()(14);'; // outside color
+    spectrumEffect(23).setValue(1); // composite on original
+    var blurEffect = spectrumLayer.property('ADBE Effect Parade').addProperty('ADBE Motion Blur');
+    blurEffect(2).expression = 'thisComp.height*thisComp.layer("' + settingsLayer.name + '").effect("' + settingsEffect.name + '")(' + easeId + ')/100'; // blur length
+    spectrumLayer.locked = true;
+
+    // Setup the ear
+    var earEffect = earLayer.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+    earEffect.name = DuScriptUI.String.AUDIO_EFFECTOR;
+    earEffect(1).expression = [ DuAEExpression.Id.AUDIO_EFFECTOR,
+        'var spectrumLayer = thisComp.layer("' + spectrumLayer.name + '");',
+        'var smpl = spectrumLayer.sampleImage(thisLayer.position);',
+        'smpl[0]*100;'
+    ].join('\n');
+
+    DuAE.endUndoGroup(DuScriptUI.String.AUDIO_CONNECTOR);
+
+    // OK!
+    return new DuAEProperty( earEffect(1) );
 }

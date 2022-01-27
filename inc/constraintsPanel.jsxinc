@@ -1,27 +1,28 @@
-﻿function buildConstraintsUI( )
-{
+﻿function buildConstraintsUI() {
 
     // Useful methods
-    function hideAllGroups()
-    {
+    function hideAllGroups() {
         parentAcrossCompGroup.visible = false;
         pathConstraintGroup.visible = false;
         constraintsGroup.visible = false;
         propInfoGroup.visible = false;
         measureGroup.visible = false;
+        moveAnchorPointGroup.visible = false;
+        connectorGroup.visible = false;
+        effectorMapGroup.visible = false;
     }
 
     // A Spacer
     var spacer = this.add('group');
     spacer.margins = 0;
     spacer.spacing = 0;
-    spacer.size = [-1,3];
-    
+    spacer.size = [-1, 3];
+
     // A title
-    DuScriptUI.staticText( this, DuScriptUI.String.LINKS_CONSTRAINTS ).alignment = ['center', 'top'];
+    DuScriptUI.staticText(this, DuScriptUI.String.LINKS_CONSTRAINTS).alignment = ['center', 'top'];
 
     // tools
-    var toolsGroup = DuScriptUI.toolBar( this );
+    var toolsGroup = DuScriptUI.toolBar(this);
 
     var listButton = toolsGroup.addButton(
         DuScriptUI.String.CONSTRAINT_LIST,
@@ -58,9 +59,27 @@
     );
     zeroButton.onClick = Duik.Constraint.zero;
     zeroButton.onAltClick = Duik.Constraint.resetPRS;
-    zeroButton.onCtrlAltClick = function () { Duik.Constraint.resetPRS(undefined, true); };
+    zeroButton.onCtrlAltClick = function() {
+        Duik.Constraint.resetPRS(undefined, true);
+    };
 
-    createAlignButton( toolsGroup );
+    var moveAnchorPointButton = createMoveAnchorPointButton(toolsGroup, mainGroup, hideAllGroups);
+    moveAnchorPointButton.onClick = function() {
+
+        if (!moveAnchorPointGroup.built) {
+            var cancelButton = buildMoveAnchorPointGroup(moveAnchorPointGroup);
+
+            cancelButton.onClick = function() {
+                hideAllGroups();
+                constraintsGroup.visible = true;
+            }
+        }
+
+        hideAllGroups();
+        moveAnchorPointGroup.visible = true;
+    };
+
+    createAlignButton(toolsGroup);
 
     var etmButton = toolsGroup.addButton(
         DuScriptUI.String.EXPOSE_TRANSFORM,
@@ -74,12 +93,11 @@
         w12_measure,
         DuScriptUI.String.MEASURE_DISTANCE_TIP
     );
-    measureButton.onClick = function () {
+    measureButton.onClick = function() {
         // Build panel
-        if (!measureGroup.built)
-        {
+        if (!measureGroup.built) {
             measureGroup.built = true;
-            measureText = DuScriptUI.staticText( measureGroup, '', undefined, false);
+            measureText = DuScriptUI.staticText(measureGroup, '', undefined, false);
 
             var measureCancelButton = DuScriptUI.button(
                 measureGroup,
@@ -90,18 +108,18 @@
                 'row',
                 'center'
             );
-            measureCancelButton.onClick = function () {
+            measureCancelButton.onClick = function() {
                 measureGroup.visible = false;
                 constraintsGroup.visible = true;
             }
 
-            DuScriptUI.showUI( measureGroup );
+            DuScriptUI.showUI(measureGroup);
         }
-            
+
         var dist = DuAELayer.getDistance();
-        dist = Math.round( dist );
-        if (dist < 0) measureText.setText( DuScriptUI.String.MEASURE_HELP );
-        else measureText.setText( DuScriptUI.String.MEASURE_RESULT.replace("{#}", dist) );
+        dist = Math.round(dist);
+        if (dist < 0) measureText.setText(DuScriptUI.String.MEASURE_HELP);
+        else measureText.setText(DuScriptUI.String.MEASURE_RESULT.replace("{#}", dist));
 
         hideAllGroups()
         measureGroup.visible = true;
@@ -116,7 +134,7 @@
         function update() {
             var props = DuAEComp.getSelectedProps();
             if (props.length == 0) return;
-            var prop = props[props.length-1];
+            var prop = props[props.length - 1];
             propInfoGroup.prop = prop;
             propInfoGroup.propInfoIndex.text = prop.index;
             propInfoGroup.name.text = prop.name;
@@ -124,38 +142,30 @@
             propInfoGroup.dimensions.text = prop.dimensions();
             propInfoGroup.link.text = prop.expressionLink(prop, true, true);
             var preExpression = propInfoGroup.preExp.value;
-		    var fastMode = !propInfoGroup.precision.value;
+            var fastMode = !propInfoGroup.precision.value;
 
             //Min and max val per axis
             var minVal = "";
             var maxVal = "";
-            if (prop.dimensions() == 1)
-            {
+            if (prop.dimensions() == 1) {
                 var range = prop.range(0, preExpression, fastMode);
-                minVal = Math.round(range[0]*100)/100;
-                maxVal = Math.round(range[1]*100)/100;
-            }
-            else
-            {
-                for (var i = 0; i < prop.dimensions() ; i++)
-                {
+                minVal = Math.round(range[0] * 100) / 100;
+                maxVal = Math.round(range[1] * 100) / 100;
+            } else {
+                for (var i = 0; i < prop.dimensions(); i++) {
                     var range = prop.range(i, preExpression);
-                    if (i == 0)
-                    {
+                    if (i == 0) {
                         minVal += "[ ";
                         maxVal += "[ ";
                     }
 
-                    minVal += Math.round(range[0]*100)/100;
-                    maxVal += Math.round(range[1]*100)/100;
+                    minVal += Math.round(range[0] * 100) / 100;
+                    maxVal += Math.round(range[1] * 100) / 100;
 
-                    if (i == prop.dimensions() - 1)
-                    {
+                    if (i == prop.dimensions() - 1) {
                         minVal += " ]";
                         maxVal += " ]";
-                    }
-                    else
-                    {
+                    } else {
                         minVal += " , ";
                         maxVal += " , ";
                     }
@@ -163,29 +173,28 @@
             }
             propInfoGroup.minVal.text = minVal;
             propInfoGroup.maxVal.text = maxVal;
-            var maxSpeed = Math.round( prop.maxVelocity( preExpression, fastMode )*100)/100;
+            var maxSpeed = Math.round(prop.maxVelocity(preExpression, fastMode) * 100) / 100;
             propInfoGroup.velocity.text = maxSpeed;
             if (maxSpeed == 0) propInfoGroup.averageVelocity.text = 0;
-            else propInfoGroup.averageVelocity.text = Math.round( prop.averageSpeed(preExpression, fastMode)*100)/100;
+            else propInfoGroup.averageVelocity.text = Math.round(prop.averageSpeed(preExpression, fastMode) * 100) / 100;
         }
 
         // Build panel
-        if (!propInfoGroup.built)
-        {
-            var propInfoForm = DuScriptUI.form( propInfoGroup );
-            propInfoGroup.propInfoIndex = propInfoForm.addField("Index","statictext","0","The index of the property")[1];
-            propInfoGroup.name = propInfoForm.addField("Name","edittext","","The name of the property")[1];
-            propInfoGroup.matchName = propInfoForm.addField("Match Name","edittext","","The matchName of the property")[1];
-            propInfoGroup.dimensions = propInfoForm.addField("Num Dimensions","statictext","0","The number of dimensions of the property")[1];
-            propInfoGroup.link = propInfoForm.addField("Expression link","edittext","","The expression link to the property (from the layer)")[1];
-            propInfoGroup.minVal = propInfoForm.addField("Minimum value","edittext","","The minimum value during the animation.")[1];
-            propInfoGroup.maxVal = propInfoForm.addField("Maximum value","edittext","","The maximum value during the animation.")[1];
-            propInfoGroup.velocity = propInfoForm.addField("Maximum velocity","edittext","","The maximum velocity during the animation.")[1];
-            propInfoGroup.averageVelocity = propInfoForm.addField("Average velocity","edittext","","The average velocity during the animation.")[1];
-            propInfoGroup.preExp = propInfoForm.addField("Pre-expression val.","checkbox","","Display pre-expression values.")[1];
-            propInfoGroup.precision = propInfoForm.addField("Hi-precision","checkbox","","Samples the values and velocity with a higher precision.\nWarning: this can be quite slong if the composition is very long.")[1];
+        if (!propInfoGroup.built) {
+            var propInfoForm = DuScriptUI.form(propInfoGroup);
+            propInfoGroup.propInfoIndex = propInfoForm.addField("Index", "statictext", "0", "The index of the property")[1];
+            propInfoGroup.name = propInfoForm.addField("Name", "edittext", "", "The name of the property")[1];
+            propInfoGroup.matchName = propInfoForm.addField("Match Name", "edittext", "", "The matchName of the property")[1];
+            propInfoGroup.dimensions = propInfoForm.addField("Num Dimensions", "statictext", "0", "The number of dimensions of the property")[1];
+            propInfoGroup.link = propInfoForm.addField("Expression link", "edittext", "", "The expression link to the property (from the layer)")[1];
+            propInfoGroup.minVal = propInfoForm.addField("Minimum value", "edittext", "", "The minimum value during the animation.")[1];
+            propInfoGroup.maxVal = propInfoForm.addField("Maximum value", "edittext", "", "The maximum value during the animation.")[1];
+            propInfoGroup.velocity = propInfoForm.addField("Maximum velocity", "edittext", "", "The maximum velocity during the animation.")[1];
+            propInfoGroup.averageVelocity = propInfoForm.addField("Average velocity", "edittext", "", "The average velocity during the animation.")[1];
+            propInfoGroup.preExp = propInfoForm.addField("Pre-expression val.", "checkbox", "", "Display pre-expression values.")[1];
+            propInfoGroup.precision = propInfoForm.addField("Hi-precision", "checkbox", "", "Samples the values and velocity with a higher precision.\nWarning: this can be quite slong if the composition is very long.")[1];
 
-            var validButtonsGroup = DuScriptUI.group( propInfoGroup );
+            var validButtonsGroup = DuScriptUI.group(propInfoGroup);
 
             var propInfoCancelButton = DuScriptUI.button(
                 validButtonsGroup,
@@ -196,11 +205,11 @@
                 'row',
                 'center'
             );
-            propInfoCancelButton.onClick = function () {
+            propInfoCancelButton.onClick = function() {
                 propInfoGroup.visible = false;
                 constraintsGroup.visible = true;
             }
-            
+
             var validButton = DuScriptUI.button(
                 validButtonsGroup,
                 DuScriptUI.String.PROPERTY_INFO,
@@ -214,11 +223,11 @@
 
             propInfoGroup.built = true;
 
-            DuScriptUI.showUI( propInfoGroup );
+            DuScriptUI.showUI(propInfoGroup);
         }
 
-		//values
-        update( );
+        //values
+        update();
 
         hideAllGroups()
         propInfoGroup.visible = true;
@@ -231,7 +240,7 @@
     var constraintsGroup = DuScriptUI.group(mainGroup, 'column');
     if (uiMode >= 2) constraintsGroup.spacing = 3;
 
-    var line1 = DuScriptUI.group( constraintsGroup , uiMode >= 2 ? 'row' : 'column');
+    var line1 = DuScriptUI.group(constraintsGroup, uiMode >= 2 ? 'row' : 'column');
 
     var autorigButton = DuScriptUI.button(
         line1,
@@ -242,13 +251,721 @@
     );
     autorigButton.onClick = Duik.Rig.auto;
 
-    /*var connectorButton = DuScriptUI.button(
+    var connectorButton = DuScriptUI.button(
         line1,
         DuScriptUI.String.DUIK_CONNECTOR,
         w16_connector,
         DuScriptUI.String.CONNECTOR_TIP,
-        true
-    );*/
+        true, // options
+        undefined, // orientation
+        undefined, // alignment
+        undefined, // localize
+        false, // ignoreUIMode
+        true, // optionsWithoutButton
+        undefined, // optionsButtonText
+        true // optionsWithoutPanel
+    );
+    connectorButton.onClick = Duik.Constraint.quickConnector;
+    connectorButton.onOptions = function() {
+        if (!connectorGroup.built) {
+            // Utils
+            // Connector variables
+            var connector = {};
+            connector.master = null;
+            connector.type = 'prop';
+
+            // Picks the selected property / layer / control...
+            function connectorPick() {
+                connector.master = null;
+
+                // First, get the selected layer
+                var layer = DuAEComp.getActiveLayer();
+                if (!layer) return;
+
+                // Disable prop selection by default
+                propList.removeAll();
+                propListLabel.enabled = false;
+                propList.enabled = false;
+
+                // If there's a selected property, let's use it
+                var prop = DuAELayer.getActiveProperty(layer);
+                if (prop) {
+                    if (prop.isProperty()) {
+                        // Title
+                        propLabel.text = prop.layer.index + ' - ' + prop.layer.name + ' # ' + prop.name;
+                        connectorLoadMasterProperty(prop, 'prop');
+                        return;
+                    }
+                }
+
+                // If it's just a layer, check if there's something we know how to connect
+
+                // Is it a slider?
+                var pe = Duik.PseudoEffect.CONTROLLER_SLIDER;
+                var effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_SLIDER;
+                    // Default values
+                    minEdit.setText('-100');
+                    maxEdit.setText('100');
+                    var p = new DuAEProperty(effect(pe.props['Value'].index));
+                    connectorLoadMasterProperty(p, 'prop');
+                    return;
+                }
+
+                // Is it a 2D Slider?
+                pe = Duik.PseudoEffect.CONTROLLER_2DSLIDER;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_2DSLIDER;
+                    // Default values
+                    minEdit.setText('-100');
+                    maxEdit.setText('100');
+                    var p = new DuAEProperty(effect(pe.props['2D Value'].index));
+                    connectorLoadMasterProperty(p, 'prop');
+                    return;
+                }
+
+                // Is it an angle?
+                pe = Duik.PseudoEffect.CONTROLLER_ANGLE;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.CTRL_ANGLE;
+                    // Default values
+                    minEdit.setText('0');
+                    maxEdit.setText('360');
+                    var p = new DuAEProperty(effect(pe.props['Angle'].index));
+                    connectorLoadMasterProperty(p, 'prop');
+                    return;
+                }
+
+                // Is it an expose transform?
+                pe = Duik.PseudoEffect.EXPOSE_TRANSFORM;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.EXPOSE_TRANSFORM;
+                    // Set the prop list
+                    propList.removeAll();
+                    propList.add( 'item', "Absolute position (2D)" );
+                    propList.add( 'item', "Relative position (2D)" );
+                    propList.add( 'item', "Distance (2D)" );
+                    propList.add( 'item', "Absolute position (3D)" );
+                    propList.add( 'item', "Relative position (3D)" );
+                    propList.add( 'item', "Distance (3D)" );
+                    propList.add( 'item', "Absolute orientation" );
+                    propList.add( 'item', "Relative orientation" );
+                    propList.add( 'item', "Angle" );
+                    propList.selection = 2;
+                    propListLabel.enabled = true;
+                    propList.enabled = true;
+                    var p = new DuAEProperty(effect(pe.props['2D Position (Comp projection)']['2D Distance'].index));
+                    connectorLoadMasterProperty(p, 'etm');
+                    return;
+                }
+
+                // Is it an IK?
+                pe = Duik.PseudoEffect.TWO_LAYER_IK;
+                effect = layer.effect(pe.matchName);
+                if (effect) {
+                    // Title
+                    propLabel.text = layer.index + ' - ' + layer.name + ' # ' + DuScriptUI.String.IK;
+                    // Set the prop list
+                    propList.removeAll();
+                    propList.add( 'item', "IK Length" );
+                    propList.add( 'item', "Upper Stretch" );
+                    propList.add( 'item', "Lower Stretch" );
+                    propList.selection = 0;
+                    propListLabel.enabled = true;
+                    propList.enabled = true;
+                    var p = new DuAEProperty(effect(pe.props['Data']['Lengths']['IK length'].index));
+                    connectorLoadMasterProperty(p, 'ik');
+                    return;
+                }
+            };
+
+            function connectorLoadMasterProperty(prop, type) {
+                connector.type = type;
+
+                if (type == 'prop' || type == 'ik' || type == 'etm') {
+                    connector.master = prop;
+
+                    // Prepare UI according to the number of dimensions
+                    var dim = prop.dimensions();
+
+                    if (dim == 0) {
+                        alert("This property cannot be used as a master property with the connector.");
+                        return;
+                    } else if (dim == 1) {
+                        axisList.removeAll();
+                        axisList.enabled = false;
+                        axisLabel.enabled = false;
+                        axisLabel.text = DuScriptUI.String.AXIS;
+                        typeList.selection = 0;
+                    } else if (dim == 2) {
+                        axisList.removeAll();
+                        axisList.enabled = true;
+                        axisList.add('item', 'X');
+                        axisList.add('item', 'Y');
+                        axisList.selection = 0;
+                        axisLabel.text = DuScriptUI.String.AXIS;
+                        axisLabel.enabled = true;
+                    } else if (dim == 3) {
+                        axisList.removeAll();
+                        axisList.enabled = true;
+                        axisList.add('item', 'X');
+                        axisList.add('item', 'Y');
+                        axisList.add('item', 'Z');
+                        axisList.selection = 0;
+                        axisLabel.text = DuScriptUI.String.AXIS;
+                        axisLabel.enabled = true;
+                    } else if (dim == 4) {
+                        axisList.removeAll();
+                        axisList.enabled = true;
+                        axisList.add('item', "Red");
+                        axisList.add('item', "Green");
+                        axisList.add('item', "Blue");
+                        axisList.add('item', "Alpha");
+                        axisList.add('item', "Hue");
+                        axisList.add('item', "Saturation");
+                        axisList.add('item', "Value");
+                        axisList.selection = 4;
+                        axisLabel.text = DuScriptUI.String.CHANNEL;
+                        axisLabel.enabled = true;
+                        minEdit.setText('0');
+                        if (app.project.bitsPerChannel == 8) maxEdit.setText('255');
+                        else if (app.project.bitsPerChannel == 16) maxEdit.setText('65536');
+                        else if (app.project.bitsPerChannel == 32) maxEdit.setText('1.0');
+                    }
+
+                    minEdit.setSuffix(prop.unit());
+                    maxEdit.setSuffix(prop.unit());
+
+                    //use a percent if this is a 2D Slider
+                    if (prop.matchName.indexOf(Duik.PseudoEffect.CONTROLLER_2DSLIDER.matchName) == 0) {
+                        minEdit.setSuffix("%");
+                        maxEdit.setSuffix("%");
+                    }
+
+                    // Update range
+                    connectorUpdateRange();
+
+                    createGroup.visible = false;
+                    settingsGroup.visible = true;
+                    return;
+                }
+
+                if (type == 'layerList') {
+                    // Check if it's a dropdown
+                    if (prop.isDropdown()) {
+                        connector.master = prop;
+                        // Show the dropdown panel
+                        createGroup.visible = false;
+                        dropdownGroup.visible = true;
+                    }
+                    else
+                    {
+                        connectorLoadMasterProperty(prop, 'prop');
+                    }
+                    return;
+                }
+
+                if (type == 'audio') {
+                    connector.master = prop;
+                    axisList.removeAll();
+                    axisList.enabled = false;
+                    axisLabel.enabled = false;
+                    axisLabel.text = DuScriptUI.String.AXIS;
+                    typeList.selection = 0;
+
+                    minEdit.setSuffix('%');
+                    maxEdit.setSuffix('%');
+
+                    minEdit.setText('0');
+                    maxEdit.setText('100');
+
+                    createGroup.visible = false;
+                    connectGroup.visible = true;
+                    return;
+                }
+            }
+
+            function connectorUpdateRange() {
+                if (!connector.master) return;
+
+                var axis = 0;
+
+                if (axisList.selection) axis = axisList.selection.index;
+   
+                var preExpression = true;
+                if (connector.master.numKeys() < 2) preExpression = false;
+                var range = connector.master.range(axis, preExpression, true);
+
+                if (range.length != 2) return;
+
+                var min = Math.floor(range[0]);
+                var max = Math.floor(range[1]);
+
+                if (min < parseFloat(minEdit.text)) minEdit.setText(min);
+                if (max > parseFloat(maxEdit.text)) maxEdit.setText(max);
+
+                if (min == max) return;
+                minEdit.setText(Math.floor(min));
+                maxEdit.setText(Math.floor(max));
+            }
+
+            var connectorStack = DuScriptUI.group(connectorGroup, 'stacked');
+
+            var createGroup = DuScriptUI.group(connectorStack, 'column');
+            createGroup.margins = 3;
+
+            var createLabel = DuScriptUI.staticText(
+                createGroup,
+                DuScriptUI.String.CONNECTOR_SELECT_MASTER
+            );
+            createLabel.alignment = ['center', 'top'];
+
+            var createGrid = DuScriptUI.group(createGroup, 'row');
+            createGrid.alignment = ['fill', 'top'];
+            var createLine1 = DuScriptUI.group(createGrid, 'column');
+            createLine1.alignment = ['fill', 'fill'];
+            var createLine2 = DuScriptUI.group(createGrid, 'column');
+            createLine2.alignment = ['fill', 'fill'];
+            var createLine3 = DuScriptUI.group(createGrid, 'column');
+            createLine3.alignment = ['fill', 'fill'];
+
+            var sliderButton = DuScriptUI.button(
+                createLine1,
+                DuScriptUI.String.CTRL_SLIDER,
+                w16_slider,
+                DuScriptUI.String.CTRL_SLIDER_TIP,
+                false,
+                'column'
+            );
+            sliderButton.onClick = function() {
+                DuAE.beginUndoGroup(DuScriptUI.String.CONTROLLER);
+
+                // Create a slider
+                var ctrl = Duik.Controller.create(undefined, Duik.Controller.Type.SLIDER);
+                if (!ctrl) return;
+
+                connectorPick();
+                DuAE.endUndoGroup();
+            };
+
+            var slider2DButton = DuScriptUI.button(
+                createLine2,
+                DuScriptUI.String.CTRL_2DSLIDER,
+                w16_2d_slider,
+                DuScriptUI.String.CTRL_2D_SLIDER_TIP,
+                false,
+                'column'
+            );
+            slider2DButton.onClick = function() {
+                DuAE.beginUndoGroup(DuScriptUI.String.CONTROLLER);
+
+                // Create a slider
+                var ctrl = Duik.Controller.create(undefined, Duik.Controller.Type.DOUBLE_SLIDER);
+                if (!ctrl) return;
+
+                connectorPick();
+                DuAE.endUndoGroup();
+            };
+
+            var angleButton = DuScriptUI.button(
+                createLine3,
+                DuScriptUI.String.CTRL_ANGLE,
+                w16_angle,
+                DuScriptUI.String.CTRL_ANGLE_TIP,
+                false,
+                'column'
+            );
+            angleButton.onClick = function() {
+                DuAE.beginUndoGroup(DuScriptUI.String.CONTROLLER);
+
+                // Create an angle
+                var ctrl = Duik.Controller.create(undefined, Duik.Controller.Type.ANGLE);
+                if (!ctrl) return;
+
+                connectorPick();
+                DuAE.endUndoGroup();
+            };
+
+            var etmButton = DuScriptUI.button(
+                createLine1,
+                DuScriptUI.String.EXPOSE_TRANSFORM,
+                w16_expose_transform,
+                DuScriptUI.String.EXPOSE_TRANSFORM_TIP,
+                false,
+                'column'
+            );
+            etmButton.onClick = function() {
+                DuAE.beginUndoGroup(DuScriptUI.String.EXPOSE_TRANSFORM);
+
+                // Create a single expose transform
+                var layer = DuAEComp.getActiveLayer();
+                var ctrls;
+                if (layer) { // for the layer
+                    ctrls = Duik.Constraint.exposeTransform(undefined, [layer]);
+                }
+                else { // just one in the comp
+                    ctrls = Duik.Constraint.exposeTransform( DuAEProject.getActiveComp() );
+                }
+                if (ctrls.length == 0) return;
+
+                connectorPick();
+
+                DuAE.endUndoGroup();
+            };
+
+            var layerListButton = DuScriptUI.button(
+                createLine2,
+                DuScriptUI.String.LAYER_LIST,
+                w16_layers,
+                DuScriptUI.String.CONNECTOR_LAYER_LIST_TIP,
+                false,
+                'column'
+            );
+            layerListButton.onClick = function () {
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR);
+
+                // Check if there's a layer selected
+                var layer = DuAEComp.getActiveLayer();
+                if (!layer) {
+                    alert(DuScriptUI.String.SELECT_LAYER_ALERT);
+                    return;
+                }
+
+                // Create a dropdown
+                var p = layer.property('ADBE Effect Parade').addProperty('ADBE Dropdown Control');
+                p.name = DuScriptUI.String.LAYER_LIST;
+                p = new DuAEProperty(p.property(1));
+                connectorLoadMasterProperty(p, 'layerList');
+
+                DuAE.endUndoGroup();
+            };
+            if (!DuAE.version.atLeast('17.0.1')) {
+                layerListButton.enabled = false;
+            }
+
+            var effectorButton = DuScriptUI.button(
+                createLine3,
+                DuScriptUI.String.EFFECTOR,
+                w16_effector,
+                DuScriptUI.String.EFFECTOR_TIP,
+                false,
+                'column'
+            );
+            effectorButton.onClick = Duik.Automation.effector;
+            
+            var mapButton = DuScriptUI.button(
+                createLine1,
+                DuScriptUI.String.PICK_TEXTURE,
+                w16_pick_texture,
+                DuScriptUI.String.TEXTURE_EFFECTOR_TIP,
+                false,
+                'column'
+            );
+            mapButton.onClick = function () {
+                if (!effectorMapGroup.built) {
+                    var cancelButton = buildEffectorMapGroup(effectorMapGroup);
+                    cancelButton.onClick = function() {
+                        hideAllGroups();
+                        constraintsGroup.visible = true;
+                    }
+                }
+
+                // Set the layer
+                effectorMapGroup.layerSelector.refresh();
+                var layer = DuAEComp.getActiveLayer();
+                if (layer) effectorMapGroup.layerSelector.setCurrentIndex(layer.index);
+
+                hideAllGroups();
+                effectorMapGroup.visible = true;
+            };
+
+            var audioButton = DuScriptUI.button(
+                createLine2,
+                DuScriptUI.String.PICK_AUDIO,
+                w16_pick_audio,
+                DuScriptUI.String.AUDIO_EFFECTOR_TIP,
+                false,
+                'column'
+            );
+            audioButton.onClick = function () {
+                var prop = Duik.Constraint.setupAudioController();
+                if (!prop) return;
+                // Disable prop selection by default
+                propList.removeAll();
+                propListLabel.enabled = false;
+                propList.enabled = false;
+
+                // Title
+                propLabel.text = DuScriptUI.String.AUDIO_EFFECTOR;
+                connectorLoadMasterProperty(prop, 'audio');
+            };
+
+            var propButton = DuScriptUI.button(
+                createLine3,
+                DuScriptUI.String.PICK_EXISTING,
+                w16_pick_prop,
+                DuScriptUI.String.PICK_EXISTING_TIP,
+                false,
+                'column'
+            );
+            propButton.onClick = connectorPick;
+
+            var settingsGroup = DuScriptUI.group(connectorStack, 'column');
+            settingsGroup.margins = 3;
+            settingsGroup.visible = false;
+
+            var settingsTitleGroup = DuScriptUI.group(settingsGroup, 'column');
+            settingsTitleGroup.alignment = ['center', 'top'];
+            var settingsTitleLabel = DuScriptUI.staticText(settingsTitleGroup, DuScriptUI.String.CONNECTING + ':', undefined, false);
+            settingsTitleLabel.enabled = false;
+
+            var propLabel = settingsTitleGroup.add('statictext', undefined, "");
+            propLabel.characters = 20;
+            propLabel.justify = 'center';
+
+            var settingsForm = DuScriptUI.form(settingsGroup);
+
+            var propListLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.PROPERTY);
+            var axisLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.AXIS);
+            var typeLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.TYPE);
+            var minLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.MINIMUM);
+            var maxLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.MAXIMUM);
+            var propList = settingsForm.buttons.add('dropdownlist', undefined, ['                      ']);
+            var axisList = settingsForm.buttons.add('dropdownlist', undefined, ['                      ']);
+            var typeList = settingsForm.buttons.add('dropdownlist', undefined, ["Value", "Velocity"]);
+            var minEdit = DuScriptUI.editText(settingsForm.buttons, '0');
+            var maxEdit = DuScriptUI.editText(settingsForm.buttons, '10000');
+            propListLabel.minimumSize.height = propListLabel.maximumSize.height = propList.preferredSize[1];
+            axisLabel.minimumSize.height = axisLabel.maximumSize.height = axisList.preferredSize[1];
+            typeLabel.minimumSize.height = typeLabel.maximumSize.height = typeList.preferredSize[1];
+            minLabel.minimumSize.height = minLabel.maximumSize.height = minEdit.edit.preferredSize[1];
+            maxLabel.minimumSize.height = maxLabel.maximumSize.height = maxEdit.edit.preferredSize[1];
+
+            axisList.onChange = connectorUpdateRange;
+
+            typeList.onChange = function() {
+                if (!connector.master) return;
+                if (typeList.selection.index == 0) {
+                    if (connector.master.dimensions() > 1) {
+                        axisList.enabled = true;
+                        axisLabel.enabled = true;
+                    }
+                    axisList.onChange();
+                    return;
+                }
+                if (typeList.selection.index == 1) {
+                    axisList.enabled = false;
+                    axisLabel.enabled = false;
+                    var velocity = connector.master.maxVelocity();
+                    minEdit.setText('0');
+                    maxEdit.setText(Math.floor(velocity * 100) / 100);
+                }
+            };
+
+            propList.onChange = function() {
+                // Get the property
+                if (connector.type == 'ik') {
+                    var ikEffect = connector.master.parentProperty();
+                    var id = propList.selection.index;
+                    var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+                    if (id == 0)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Lengths']['IK length'].index), 'ik');
+                    else if (id == 1)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Stretch data']['Upper stretch'].index), 'ik');
+                    else if (id == 2)  connectorLoadMasterProperty(ikEffect.prop(pe.props['Data']['Stretch data']['Lower stretch'].index), 'ik');
+                }
+                else if (connector.type == 'etm') {
+                    var etmEffect = connector.master.parentProperty();
+                    var id = propList.selection.index;
+                    var p = Duik.PseudoEffect.EXPOSE_TRANSFORM.props;
+                    var pid = 0;
+                    if (id == 0) pid = p['2D Position (Comp projection)']['Absolute'].index;
+                    else if (id == 1) pid = p['2D Position (Comp projection)']['Relative to reference'].index;
+                    else if (id == 2) pid = p['2D Position (Comp projection)']['2D Distance'].index;
+                    else if (id == 3) pid = p['3D Position (World)']['Absolute'].index;
+                    else if (id == 4) pid = p['3D Position (World)']['Relative to reference'].index;
+                    else if (id == 5) pid = p['3D Position (World)']['3D Distance'].index;
+                    else if (id == 6) pid = p['2D Orientation']['Absolute'].index;
+                    else if (id == 7) pid = p['2D Orientation']['Relative to reference'].index;
+                    else if (id == 7) pid = p['Angle (Layer-This-Reference'].index;
+                    connectorLoadMasterProperty(etmEffect.prop(pid), 'etm');
+                }
+            };
+
+            var settingsNextButton = DuScriptUI.button(
+                settingsGroup,
+                DuScriptUI.String.NEXT,
+                DuScriptUI.Icon.NEXT,
+                DuScriptUI.String.NEXT,
+                false,
+                'row',
+                'center'
+            );
+            settingsNextButton.onClick = function() {
+                settingsGroup.visible = false;
+                connectGroup.visible = true;
+            };
+
+            var connectGroup = DuScriptUI.group(connectorStack, 'column');
+            connectGroup.visible = false;
+
+            var connectLabel = connectGroup.add('statictext', undefined, DuScriptUI.String.CONNECTOR_CONNECT_HELP, {
+                multiline: true
+            });
+
+            var connectButtonsGroup = DuScriptUI.group(connectGroup, 'row');
+
+            var connectToOpacitiesButton = DuScriptUI.button(
+                connectButtonsGroup,
+                DuScriptUI.String.CONNECT_OPACITIES,
+                w16_layers,
+                DuScriptUI.String.CONNECT_OPACITIES_TIP,
+                false,
+                'column'
+            );
+            connectToOpacitiesButton.onClick = function() {
+                // Get layer selection
+                var layers = DuAEComp.getSelectedLayers();
+                if (layers.length == 0) return;
+
+                // Prepare settings
+                var min = parseFloat(minEdit.text);
+                var max = parseFloat(maxEdit.text);
+                var type = typeList.selection.index + 1;
+                var axis = DuAE.Axis.X;
+                var dim = connector.master.dimensions();
+                if (dim == 2 || dim == 3) {
+                    if (axisList.selection.index == 1) axis = DuAE.Axis.Y;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.Z;
+                } else if (dim == 4) {
+                    if (axisList.selection.index == 0) axis = DuAE.Axis.RED;
+                    else if (axisList.selection.index == 1) axis = DuAE.Axis.GREEN;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.BLUE;
+                    else if (axisList.selection.index == 3) axis = DuAE.Axis.ALPHA;
+                    else if (axisList.selection.index == 4) axis = DuAE.Axis.HUE;
+                    else if (axisList.selection.index == 5) axis = DuAE.Axis.SATURATION;
+                    else if (axisList.selection.index == 6) axis = DuAE.Axis.VALUE;
+                }
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR)
+
+                DuAELayer.sequence(layers);
+                // List layer opacities
+                var props = [];
+                for (var i = 0, n = layers.length; i < n; i++) {
+                    var o = new DuAEProperty(layers[i].transform.opacity);
+                    props.push(o);
+                }
+                Duik.Constraint.connector(props, connector.master, min, max, axis, type);
+
+                DuAE.endUndoGroup();
+            };
+
+            var connectToPropsButton = DuScriptUI.button(
+                connectButtonsGroup,
+                DuScriptUI.String.CONNECT_PROPERTIES,
+                w16_props,
+                DuScriptUI.String.CONNECT_PROPERTIES_TIP,
+                false,
+                'column'
+            );
+            connectToPropsButton.onClick = function() {
+                var props = DuAEComp.getSelectedProps();
+                if (props.length == 0) return;
+
+                // Prepare settings
+                var min = parseFloat(minEdit.text);
+                var max = parseFloat(maxEdit.text);
+                var type = typeList.selection.index + 1;
+                var axis = DuAE.Axis.X;
+                var dim = connector.master.dimensions();
+                if (dim == 2 || dim == 3) {
+                    if (axisList.selection.index == 1) axis = DuAE.Axis.Y;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.Z;
+                } else if (dim == 4) {
+                    if (axisList.selection.index == 0) axis = DuAE.Axis.RED;
+                    else if (axisList.selection.index == 1) axis = DuAE.Axis.GREEN;
+                    else if (axisList.selection.index == 2) axis = DuAE.Axis.BLUE;
+                    else if (axisList.selection.index == 3) axis = DuAE.Axis.ALPHA;
+                    else if (axisList.selection.index == 4) axis = DuAE.Axis.HUE;
+                    else if (axisList.selection.index == 5) axis = DuAE.Axis.SATURATION;
+                    else if (axisList.selection.index == 6) axis = DuAE.Axis.VALUE;
+                }
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR);
+
+                Duik.Constraint.connector(props, connector.master, min, max, axis, type);
+
+                DuAE.endUndoGroup();
+            };
+
+            var dropdownGroup = DuScriptUI.group(connectorStack, 'column');
+            dropdownGroup.visible = false;
+
+            var dropdownTitleLabel = dropdownGroup.add('statictext', undefined, DuScriptUI.String.CONNECTOR_DROPDOWN_HELP, {
+                multiline: true
+            });
+
+            var dropdownConnectButton = DuScriptUI.button(
+                dropdownGroup,
+                DuScriptUI.String.CONNECT_OPACITIES,
+                w16_layers,
+                DuScriptUI.String.CONNECT_OPACITIES_TIP,
+                false,
+                'column'
+            );
+            dropdownConnectButton.onClick = function() {
+                // Get layer selection
+                var layers = DuAEComp.getSelectedLayers();
+                if (layers.length == 0) return;
+
+                // Prepare settings
+                var min = 1;
+                var max = layers.length;
+                var type = 1;
+                var axis = DuAE.Axis.X;
+                
+                DuAE.beginUndoGroup(DuScriptUI.String.CONNECTOR);
+
+                Duik.Constraint.linkLayersToDropdown(connector.master, layers);
+
+                DuAE.endUndoGroup();
+
+                cancelButton.onClick();
+            };
+
+            var validButtonsGroup = DuScriptUI.group(connectorGroup);
+
+            var cancelButton = DuScriptUI.button(
+                validButtonsGroup,
+                DuScriptUI.String.CANCEL,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            cancelButton.onClick = function() {
+                createGroup.visible = true;
+                settingsGroup.visible = false;
+                connectGroup.visible = false;
+                dropdownGroup.visible = false;
+
+                connectorGroup.visible = false;
+                constraintsGroup.visible = true;
+            }
+
+            connectorGroup.built = true;
+            DuScriptUI.showUI(connectorGroup);
+        }
+        hideAllGroups();
+        connectorGroup.visible = true;
+    };
 
     var keyMorphButton = DuScriptUI.button(
         line1,
@@ -270,57 +987,49 @@
         undefined,
         true // no button on the options popup
     );
-    pinsButton.optionsPopup.build = function ()
-    {
+    pinsButton.optionsPopup.build = function() {
         // Utils
-        function updateEditPanel()
-        {
-            setSideSelector( sideEditSelector, Duik.Layer.side() );
+        function updateEditPanel() {
+            setSideSelector(sideEditSelector, Duik.Layer.side());
 
-            setLocationSelector( locationEditSelector, Duik.Layer.location());
+            setLocationSelector(locationEditSelector, Duik.Layer.location());
 
-            colorEditSelector.setColor( Duik.Pin.color( ) );
+            colorEditSelector.setColor(Duik.Pin.color());
 
-            sizeEdit.setText( Duik.Pin.size() );
+            sizeEdit.setText(Duik.Pin.size());
 
-            characterEdit.setText( Duik.Layer.characterName() );
+            characterEdit.setText(Duik.Layer.characterName());
 
-            limbEdit.setText( Duik.Layer.limbName() );
+            limbEdit.setText(Duik.Layer.limbName());
         }
 
-        function setSide()
-        {
+        function setSide() {
             var side = getSide(sideEditSelector);
             Duik.Pin.setSide(side);
         }
 
-        function setLocation()
-        {
+        function setLocation() {
             var location = getLocation(locationEditSelector);
             Duik.Pin.setLocation(location);
         }
 
-        function setColor()
-        {
+        function setColor() {
             var color = colorEditSelector.color;
             Duik.Pin.setColor(color);
         }
 
-        function setSize()
-        {
-            var size = parseInt( sizeEdit.text );
+        function setSize() {
+            var size = parseInt(sizeEdit.text);
             if (isNaN(size)) return;
             Duik.Pin.setSize(size);
         }
 
-        function setCharacterName()
-        {
-            Duik.Pin.setCharacterName( characterEdit.text );
+        function setCharacterName() {
+            Duik.Pin.setCharacterName(characterEdit.text);
         }
 
-        function setLimbName()
-        {
-            Duik.Pin.setLimbName( limbEdit.text );
+        function setLimbName() {
+            Duik.Pin.setLimbName(limbEdit.text);
         }
 
         var pickButton = DuScriptUI.button(
@@ -331,7 +1040,7 @@
         pickButton.onClick = updateEditPanel;
 
         var sideEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
-        var sideEditSelector = createSideSelector( sideEditGroup );
+        var sideEditSelector = createSideSelector(sideEditGroup);
         var sideEditApplyButton = DuScriptUI.button(
             sideEditGroup,
             "",
@@ -342,7 +1051,7 @@
         sideEditApplyButton.onClick = setSide;
 
         var locationEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
-        var locationEditSelector = createLocationSelector( locationEditGroup );
+        var locationEditSelector = createLocationSelector(locationEditGroup);
         var locationEditApplyButton = DuScriptUI.button(
             locationEditGroup,
             "",
@@ -353,7 +1062,7 @@
         locationEditApplyButton.onClick = setLocation;
 
         var colorEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
-        var colorEditSelector = DuScriptUI.colorSelector( colorEditGroup, DuScriptUI.String.LAYER_COLOR_TIP );
+        var colorEditSelector = DuScriptUI.colorSelector(colorEditGroup, DuScriptUI.String.LAYER_COLOR_TIP);
         var colorEditApplyButton = DuScriptUI.button(
             colorEditGroup,
             "",
@@ -363,8 +1072,8 @@
         colorEditApplyButton.alignment = ['right', 'center'];
         colorEditApplyButton.onClick = setColor;
 
-        var sizeEditGroup = DuScriptUI.group( pinsButton.optionsPanel, 'row' );
-        var sizeEditLabel = DuScriptUI.staticText( sizeEditGroup, tr(DuScriptUI.String.SIZE) + ':',  undefined, false);
+        var sizeEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
+        var sizeEditLabel = DuScriptUI.staticText(sizeEditGroup, tr(DuScriptUI.String.SIZE) + ':', undefined, false);
         sizeEditLabel.alignment = ['left', 'center'];
         var sizeEdit = DuScriptUI.editText(
             sizeEditGroup,
@@ -384,9 +1093,9 @@
         );
         sizeEditApplyButton.alignment = ['right', 'center'];
         sizeEditApplyButton.onClick = setSize;
-    
-        var characterEditGroup = DuScriptUI.group( pinsButton.optionsPanel, 'row' );
-        var characterEditLabel = DuScriptUI.staticText( characterEditGroup, tr(DuScriptUI.String.CHARACTER) + ':',  undefined, false);
+
+        var characterEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
+        var characterEditLabel = DuScriptUI.staticText(characterEditGroup, tr(DuScriptUI.String.CHARACTER) + ':', undefined, false);
         characterEditLabel.alignment = ['left', 'center'];
         var characterEdit = DuScriptUI.editText(
             characterEditGroup,
@@ -407,8 +1116,8 @@
         characterEditApplyButton.alignment = ['right', 'center'];
         characterEditApplyButton.onClick = setCharacterName;
 
-        var limbEditGroup = DuScriptUI.group( pinsButton.optionsPanel, 'row' );
-        var limbEditLabel = DuScriptUI.staticText( limbEditGroup, tr(DuScriptUI.String.LIMB) + ':',  undefined, false);
+        var limbEditGroup = DuScriptUI.group(pinsButton.optionsPanel, 'row');
+        var limbEditLabel = DuScriptUI.staticText(limbEditGroup, tr(DuScriptUI.String.LIMB) + ':', undefined, false);
         limbEditLabel.alignment = ['left', 'center'];
         var limbEdit = DuScriptUI.editText(
             limbEditGroup,
@@ -429,7 +1138,7 @@
         limbEditApplyButton.alignment = ['right', 'center'];
         limbEditApplyButton.onClick = setLimbName;
 
-        DuScriptUI.separator( pinsButton.optionsPanel );
+        DuScriptUI.separator(pinsButton.optionsPanel);
 
         // Valid button
 
@@ -439,8 +1148,7 @@
             DuScriptUI.Icon.CHECK,
             DuScriptUI.String.APPLY
         )
-        applyEditButton.onClick = function ()
-        {
+        applyEditButton.onClick = function() {
             setSide();
             setLocation();
             setColor();
@@ -452,9 +1160,11 @@
 
     }
     pinsButton.onClick = Duik.Constraint.pin;
-    pinsButton.onAltClick = function( ) { Duik.Constraint.pin( false ) };
+    pinsButton.onAltClick = function() {
+        Duik.Constraint.pin(false)
+    };
 
-    var line2 = DuScriptUI.group( constraintsGroup , uiMode >= 2 ? 'row' : 'column');
+    var line2 = DuScriptUI.group(constraintsGroup, uiMode >= 2 ? 'row' : 'column');
 
     var ikGroup = DuScriptUI.multiButton(
         line2,
@@ -462,7 +1172,7 @@
         w16_ik_fk,
         DuScriptUI.String.CONSTRAINT_IK_FK_TIP
     );
-    ikGroup.build = function () {
+    ikGroup.build = function() {
         var ikButton = this.addButton(
             DuScriptUI.String.IK,
             w16_ik,
@@ -470,9 +1180,8 @@
             true
         );
         var ikSelector;
-        ikButton.optionsPopup.build = function ()
-        {
-            ikSelector = DuScriptUI.selector( ikButton.optionsPanel );
+        ikButton.optionsPopup.build = function() {
+            ikSelector = DuScriptUI.selector(ikButton.optionsPanel);
             ikSelector.addButton(
                 DuScriptUI.String.THREE_IK,
                 w16_three_ik,
@@ -488,7 +1197,7 @@
                 w16_two_one_ik,
                 DuScriptUI.String.TWO_ONE_TIP
             );
-            ikSelector.setCurrentIndex( 1 );
+            ikSelector.setCurrentIndex(1);
         }
 
         var bezierIKButton = this.addButton(
@@ -503,13 +1212,11 @@
             DuScriptUI.String.FK_TIP
         );
 
-        ikButton.onClick = function ()
-        {
-            Duik.Constraint.ik( ikSelector.index );
+        ikButton.onClick = function() {
+            Duik.Constraint.ik(ikSelector.index);
         }
 
-        bezierIKButton.onClick = function ()
-        {
+        bezierIKButton.onClick = function() {
             Duik.Constraint.ik(undefined, true);
         }
 
@@ -522,14 +1229,16 @@
         w16_parent,
         DuScriptUI.String.CONSTRAINT_PARENT_TIP
     );
-    parentGroup.build = function () {
+    parentGroup.build = function() {
         var autoParentButton = this.addButton(
             DuScriptUI.String.AUTO_PARENT,
             w16_auto_parent,
             DuScriptUI.String.AUTO_PARENT_TIP
         );
         autoParentButton.onClick = Duik.Constraint.autoParent;
-        autoParentButton.onAltClick = function () { Duik.Constraint.autoParent(true) };
+        autoParentButton.onAltClick = function() {
+            Duik.Constraint.autoParent(true)
+        };
 
         var parentConstraintButton = this.addButton(
             DuScriptUI.String.PARENT_CONSTRAINT,
@@ -543,15 +1252,13 @@
             w16_parent_across_comp,
             DuScriptUI.String.PARENT_ACROSS_COMP_TIP
         );
-        parentAcrossCompButton.onClick = function()
-        {
+        parentAcrossCompButton.onClick = function() {
             // build panel
-            if (!parentAcrossCompGroup.built)
-            {
+            if (!parentAcrossCompGroup.built) {
                 parentAcrossCompGroup.built = true;
 
                 var locatorsGroup = DuScriptUI.group(parentAcrossCompGroup, 'row');
-                DuScriptUI.setBackgroundColor( locatorsGroup, DuColor.Color.DARK_GREY );
+                DuScriptUI.setBackgroundColor(locatorsGroup, DuColor.Color.DARK_GREY);
 
                 var locatorButton = DuScriptUI.button(
                     locatorsGroup,
@@ -570,16 +1277,14 @@
                     true
                 );
                 extractLocatorButton.alignment = ['center', 'top'];
-                extractLocatorButton.onClick = function() 
-                {
+                extractLocatorButton.onClick = function() {
                     var useEssentialProperties = locatorModeSelector.index == 1;
                     Duik.Constraint.extractLocators(useEssentialProperties);
                 }
 
                 var locatorModeSelector;
-                extractLocatorButton.optionsPopup.build = function ()
-                {
-                    locatorModeSelector = DuScriptUI.selector( extractLocatorButton.optionsPanel );
+                extractLocatorButton.optionsPopup.build = function() {
+                    locatorModeSelector = DuScriptUI.selector(extractLocatorButton.optionsPanel);
                     locatorModeSelector.addButton(
                         DuScriptUI.String.USE_EXPRESSIONS,
                         w16_expression
@@ -588,7 +1293,7 @@
                         DuScriptUI.String.USE_ESSENTIAL_PROPERTIES,
                         w16_essential_property
                     );
-                    locatorModeSelector.setCurrentIndex( 1 );
+                    locatorModeSelector.setCurrentIndex(1);
                 }
 
                 DuScriptUI.staticText(
@@ -602,10 +1307,9 @@
                     parentAcrossCompGroup
                 );
                 parentCompSelector.filterComps = DuAEComp.getRelatives;
-                parentCompSelector.onChange = function () 
-                {
+                parentCompSelector.onChange = function() {
                     var comp = parentCompSelector.getComp();
-                    if ( !comp ) return;
+                    if (!comp) return;
                     parentCompLayerSelector.comp = comp;
                     parentCompLayerSelector.refresh();
                 }
@@ -620,13 +1324,12 @@
                 var parentCompLayerSelector = DuScriptUI.layerSelector(
                     parentAcrossCompGroup
                 );
-                parentCompLayerSelector.onChange = function() 
-                {
-                    if ( parentCompLayerSelector.index > 0 ) parentCompValidButton.enabled = true;
+                parentCompLayerSelector.onChange = function() {
+                    if (parentCompLayerSelector.index > 0) parentCompValidButton.enabled = true;
                     else parentCompValidButton.enabled = false;
                 }
 
-                DuScriptUI.separator( parentAcrossCompGroup );
+                DuScriptUI.separator(parentAcrossCompGroup);
 
                 var parentCompValidGroup = DuScriptUI.group(
                     parentAcrossCompGroup,
@@ -642,7 +1345,7 @@
                     'row',
                     'center'
                 );
-                parentCompCancelButton.onClick = function () {
+                parentCompCancelButton.onClick = function() {
                     parentAcrossCompGroup.visible = false;
                     constraintsGroup.visible = true;
                 }
@@ -657,30 +1360,29 @@
                     'center'
                 );
                 parentCompValidButton.enabled = false;
-                parentCompValidButton.onClick = function ()
-                {
+                parentCompValidButton.onClick = function() {
                     //get comp and layer
                     var comp = parentCompSelector.getComp();
-                    var layer = comp.layer( parentCompLayerSelector.index );
+                    var layer = comp.layer(parentCompLayerSelector.index);
 
                     // We need the options of the extract locator button
                     extractLocatorButton.optionsPopup.build();
 
                     var useEssentialProperties = locatorModeSelector.index == 1;
 
-                    Duik.Constraint.parentAcrossComp( layer, useEssentialProperties );
+                    Duik.Constraint.parentAcrossComp(layer, useEssentialProperties);
 
                     parentAcrossCompGroup.visible = false;
                     constraintsGroup.visible = true;
                 }
 
-                DuScriptUI.showUI( parentAcrossCompGroup );
+                DuScriptUI.showUI(parentAcrossCompGroup);
             }
 
             hideAllGroups();
             parentAcrossCompGroup.visible = true;
         }
-    }   
+    }
 
     var transformGroup = DuScriptUI.multiButton(
         line2,
@@ -688,7 +1390,7 @@
         w16_constraint,
         DuScriptUI.String.CONSTRAINT_TRANSFORM_TIP
     );
-    transformGroup.build = function () {
+    transformGroup.build = function() {
         var positionConstraintButton = this.addButton(
             DuScriptUI.String.POSITION_CONSTRAINT,
             w16_move,
@@ -712,16 +1414,15 @@
             undefined,
             false
         );
-        pathConstraintButton.onClick = function ()
-        {
+        pathConstraintButton.onClick = function() {
             var pathProp = null;
             // Get path prop
             function pickPath() {
                 pathProp = null;
                 pathConstraintValidButton.enabled = false;
                 pathConstraintLabel.text = DuScriptUI.String.PICK_PATH;
-                var props = DuAEComp.getSelectedProps( PropertyValueType.SHAPE );
-                if ( props.length == 0 ) return false;
+                var props = DuAEComp.getSelectedProps(PropertyValueType.SHAPE);
+                if (props.length == 0) return false;
 
                 pathProp = props.pop();
                 var parentProp = pathProp.getProperty().parentProperty;
@@ -730,13 +1431,12 @@
             }
 
             // build panel
-            if (!pathConstraintGroup.built)
-            {
+            if (!pathConstraintGroup.built) {
                 pathConstraintGroup.built = true;
 
                 var pathGroup = DuScriptUI.group(pathConstraintGroup, 'row');
 
-                pathConstraintLabel = DuScriptUI.staticText(pathGroup, DuScriptUI.String.PICK_PATH );
+                pathConstraintLabel = DuScriptUI.staticText(pathGroup, DuScriptUI.String.PICK_PATH);
                 pathConstraintLabel.alignment = ['fill', 'center'];
 
                 var pickPathButton = DuScriptUI.button(
@@ -759,7 +1459,7 @@
                     'row',
                     'center'
                 );
-                pathConstraintCancelButton.onClick = function () {
+                pathConstraintCancelButton.onClick = function() {
                     pathConstraintGroup.visible = false;
                     constraintsGroup.visible = true;
                 }
@@ -774,14 +1474,13 @@
                     'center'
                 );
                 pathConstraintValidButton.enabled = false;
-                pathConstraintValidButton.onClick = function ()
-                {
-                    Duik.Constraint.path( pathProp );
+                pathConstraintValidButton.onClick = function() {
+                    Duik.Constraint.path(pathProp);
                     pathConstraintGroup.visible = false;
                     constraintsGroup.visible = true;
                 }
 
-                DuScriptUI.showUI( pathConstraintGroup );
+                DuScriptUI.showUI(pathConstraintGroup);
             }
 
             // we can create
@@ -794,22 +1493,34 @@
         }
     }
 
-    var parentAcrossCompGroup = DuScriptUI.group( mainGroup, 'column');
+    var parentAcrossCompGroup = DuScriptUI.group(mainGroup, 'column');
     parentAcrossCompGroup.visible = false;
     parentAcrossCompGroup.built = false;
 
     var pathConstraintValidButton;
     var pathConstraintLabel;
-    var pathConstraintGroup = DuScriptUI.group( mainGroup, 'column');
+    var pathConstraintGroup = DuScriptUI.group(mainGroup, 'column');
     pathConstraintGroup.visible = false;
     pathConstraintGroup.built = false;
 
     var measureText;
-    var measureGroup = DuScriptUI.group( mainGroup, 'column' );
+    var measureGroup = DuScriptUI.group(mainGroup, 'column');
     measureGroup.visible = false;
     measureGroup.built = false;
 
-    var propInfoGroup = DuScriptUI.group( mainGroup, 'column' );
+    var propInfoGroup = DuScriptUI.group(mainGroup, 'column');
     propInfoGroup.visible = false;
     propInfoGroup.built = false;
+
+    var moveAnchorPointGroup = DuScriptUI.group(mainGroup, 'column');
+    moveAnchorPointGroup.visible = false;
+    moveAnchorPointGroup.built = false;
+
+    var connectorGroup = DuScriptUI.group(mainGroup, 'column');
+    connectorGroup.visible = false;
+    connectorGroup.built = false;
+
+    var effectorMapGroup = DuScriptUI.group(mainGroup, 'column');
+    effectorMapGroup.visible = false;
+    effectorMapGroup.built = false;
 }

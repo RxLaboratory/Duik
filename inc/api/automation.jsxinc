@@ -5,6 +5,88 @@
 Duik.Automation = {};
 
 /**
+ * The types of the comps in an NLA
+ * @enum {int}
+ * @readonly
+ */
+Duik.Automation.NLACompType = {
+    NONE: 0,
+    ORIGINAL: 1,
+    RENDER: 2,
+    CLIP: 3,
+    EDIT: 4
+}
+
+/**
+ * The prefixes for the NLA comp & folder names.<br />
+ * These may be localized, don't use the actual strings!
+ * @enum {string}
+ * @readonly
+ */
+Duik.Automation.NLAPrefixes = {
+    FOLDER: DuScriptUI.String.NLA_SHORT + '::',
+    ORIGINAL: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::',
+    RENDER: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::',
+    CLIP: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::',
+    EDIT: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::'
+}
+
+/**
+ * Checks if the given comp is part of an NLA
+ * @return {Duik.Automation.NLACompType} The type of the comp; Duik.Automation.NLACompType.NONE if it's not part of an NLA.
+ */
+Duik.Automation.NLAType = function(comp) {
+    // It must be in an NLA folder
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return Duik.Automation.NLACompType.NONE;
+
+    var name = comp.name;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) return Duik.Automation.NLACompType.ORIGINAL;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) return Duik.Automation.NLACompType.RENDER;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.CLIP) == 0) return Duik.Automation.NLACompType.CLIP;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) return Duik.Automation.NLACompType.EDIT;
+    return Duik.Automation.NLACompType.NONE;
+}
+
+/**
+ * Gets the folder containing the NLA Compositions like the given comp.
+ * @param {CompItem} comp The comp
+ * @return {FolderItem|null} The folder or null if the comp is not part of an NLA
+ */
+Duik.Automation.getNLAFolder = function(comp) {
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return null;
+    return nlaFolder;
+}
+
+/**
+ * Gets the render, original and edit comps for this NLA
+ * @param {FolderItem} nlaFolder The NLA Folder
+ * @return {CompItem[]} The compositions in this order: [Original, Edit, Render]. Note that if one is not found, null is returned.
+ */
+Duik.Automation.getNLAComps = function(nlaFolder) {
+    var originalComp = null;
+    var editComp = null;
+    var renderComp = null;
+    for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
+        var c = nlaFolder.item(i);
+        if (!c instanceof CompItem) continue;
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) {
+            originalComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) {
+            editComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) {
+            renderComp = c;
+        }
+        // Got'em all
+        if (originalComp && editComp && renderComp) break;
+    }
+    return [originalComp, editComp, renderComp];
+}
+
+/**
  * The list of automation functions
  */
 Duik.CmdLib['Automation'] = [];
@@ -19,51 +101,41 @@ Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
  * @param {Boolean} [layerTypes=[Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]] The types of layer to setup; if empty, will setup all layers.
  * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
  */
-Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effectProps, layerTypes, props )
-{
-    comp = def( comp, DuAEProject.getActiveComp() );
+Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectProps, layerTypes, props) {
+    comp = def(comp, DuAEProject.getActiveComp());
 
-    if (typeof props === 'undefined')
-    {
-        selectedProps = def( selectedProps, true );
-        transformProps = def( transformProps, true );
-        effectProps = def( effectProps, false );
-        layerTypes = def( layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER] );
+    if (typeof props === 'undefined') {
+        selectedProps = def(selectedProps, true);
+        transformProps = def(transformProps, true);
+        effectProps = def(effectProps, false);
+        layerTypes = def(layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]);
 
         // List properties according to the filters
 
-        if (selectedProps)
-        {
+        if (selectedProps) {
             props = DuAEComp.getSelectedProps();
             if (props.length == 0) selectedProps = false;
         }
 
-        if (!selectedProps)
-        {
+        if (!selectedProps) {
             // Get the layers
             var layers = [];
             props = [];
-            if (layerTypes.length > 0)
-            {
-                for (var i = 1, n = comp.numLayers; i <= n; i++)
-                {
+            if (layerTypes.length > 0) {
+                for (var i = 1, n = comp.numLayers; i <= n; i++) {
                     var l = comp.layer(i);
-                    for (var j = 0, nt = layerTypes.length; j < nt; j++)
-                    {
-                        if (Duik.Layer.isType(l, layerTypes[j]))
-                        {
+                    for (var j = 0, nt = layerTypes.length; j < nt; j++) {
+                        if (Duik.Layer.isType(l, layerTypes[j])) {
                             layers.push(l);
                             break;
                         }
                     }
                 }
-            }
-            else layers = comp.layers;
+            } else layers = comp.layers;
             layers = new DuList(layers);
-            layers.do( function(layer)
-            {
-                if ( transformProps ) props.push( new DuAEProperty( layer.transform ) );
-                if ( effectProps ) props.push( new DuAEProperty( layer.property('ADBE Effects Parade') ) );
+            layers.do(function(layer) {
+                if (transformProps) props.push(new DuAEProperty(layer.transform));
+                if (effectProps) props.push(new DuAEProperty(layer.property('ADBE Effects Parade')));
             });
         }
     }
@@ -72,52 +144,94 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
     if (props.length() == 0) return;
 
     DuAE.beginUndoGroup(DuScriptUI.String.NLA, false);
+    DuAEProject.setProgressMode(true);
+    DuScriptUI.progressBar.setMax(props.length() + 6);
 
     var compName = comp.name;
 
-    // Create folderitem NLA::compName
-    var parentFolder = comp.parentFolder;
-    var nlaFolder = app.project.items.addFolder( DuScriptUI.String.NLA_SHORT + '::' + compName );
-    nlaFolder.parentFolder = parentFolder;
-    comp.parentFolder = nlaFolder;
+    var editComp;
 
-    // Duplicate comp twice
-    // One will be NLA.Render::compName
-    oComp = comp.duplicate();
-    oComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::' + compName;
-    // Other NLA.Clip::compName
-    clipComp = comp.duplicate();
-    clipComp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::' + compName;
-    // and keep NLA.Original::compName
-    comp.name = DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::' + compName;
-    // Create NLA.Edit::compName
-    editComp = nlaFolder.items.addComp(
-        DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::' + compName,
-        comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+    // Check if it's already an NLA; in this case don't create, just add the properties.
+    DuScriptUI.progressBar.hit(1, "Checking if we're updating an existing NLA...");
+    var create = true;
+    if (Duik.Automation.NLAType(comp) != Duik.Automation.NLACompType.NONE) {
+        var nlaFolder = Duik.Automation.getNLAFolder(comp);
+        if (nlaFolder) {
+            create = false;
+            var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+            var renderComp = nlaComps[2];
+            editComp = nlaComps[1];
+            // Find the same properties in the render comp
+            if (renderComp) {
+                DuScriptUI.progressBar.addMax(props.length());
+                DuScriptUI.progressBar.hit(2, "Preparing properties to be added...");
+                var renderProps = [];
+                props.do(function(prop) {
+                    DuScriptUI.progressBar.hit();
+                    renderProp = prop.findInComp(renderComp);
+                    if (renderProp) renderProps.push(renderProp);
+                });
+                // Replace props with the ones from the render comp
+                props = new DuList(renderProps);
+                DuScriptUI.progressBar.hit(6 + props.length(), "Adding expressions...");
+            }
+        }
+    }
 
-    // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
-    clipPrecomp = editComp.layers.add( clipComp );
-    clipPrecomp.enabled = false;
-    clipPrecomp.guideLayer = false;
+    if (create) {
+        // Create folderitem NLA::compName
+        DuScriptUI.progressBar.hit(2, "Creating NLA Folder...");
+        var parentFolder = comp.parentFolder;
+        var nlaFolder = app.project.items.addFolder(Duik.Automation.NLAPrefixes.FOLDER + compName);
+        nlaFolder.parentFolder = parentFolder;
+        comp.parentFolder = nlaFolder;
+        var renderComp = comp;
 
-    // Add NLA.Render
-    editComp.layers.add( comp );
+        // Duplicate comp twice
+        // One will be NLA.Render::compName
+        DuScriptUI.progressBar.hit(2, "Saving original composition...");
+        var oComp = renderComp.duplicate();
+        oComp.name = Duik.Automation.NLAPrefixes.ORIGINAL + compName;
+        // Other NLA.Clip::compName
+        DuScriptUI.progressBar.hit(3, "Creating the first clip...");
+        var clipComp = renderComp.duplicate();
+        clipComp.name = Duik.Automation.NLAPrefixes.CLIP + compName;
+        // and keep NLA.Original::compName
+        DuScriptUI.progressBar.hit(4, "Creating the render composition...");
+        renderComp.name = Duik.Automation.NLAPrefixes.RENDER + compName;
+        // Create NLA.Edit::compName
+        DuScriptUI.progressBar.hit(5, "Creating the edit composition...");
+        var editComp = nlaFolder.items.addComp(
+            Duik.Automation.NLAPrefixes.EDIT + compName,
+            renderComp.width, renderComp.height, renderComp.pixelAspect, renderComp.duration, renderComp.frameRate
+        );
+
+        // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
+        var clipPrecomp = editComp.layers.add(clipComp);
+        clipPrecomp.enabled = false;
+        clipPrecomp.guideLayer = false;
+
+        // Add NLA.Render
+        editComp.layers.add(comp);
+
+        DuScriptUI.progressBar.hit(6, "Adding expressions...");
+    }
 
     // Setup properties in NLA.Render
 
-    var exp = [ DuAEExpression.Id.NLA,
+    var exp = [DuAEExpression.Id.NLA,
         'var editComp = comp("' + editComp.name + '");',
         '',
         'var result = value;',
         'var weights = 0;',
         '',
-        DuAEExpression.Library.get(['getSameProp','isZero']),
+        DuAEExpression.Library.get(['getSameProp', 'isZero']),
         '',
         'for (var i = 1, n = editComp.numLayers; i <= n; i++)',
         '{',
         '	var l = editComp.layer(i);',
         '	if (l.name == thisComp.name) continue;',
-        '   if (l.name.indexOf(\'NLA.Clip::\') != 0) continue;',
+        '   if (l.name.indexOf("' + Duik.Automation.NLAPrefixes.CLIP + '") != 0) continue;',
         '	if (time >= l.inPoint && time < l.outPoint)',
         '	{',
         '	    var precomp = l.source;',
@@ -134,16 +248,18 @@ Duik.Automation.setupNLA = function ( comp, selectedProps, transformProps, effec
         '	}',
         '}',
         'result;'
-	].join('\n');
+    ].join('\n');
 
-    props.do( function(prop)
-    {
+    props.do(function(prop) {
+        DuScriptUI.progressBar.hit();
         prop.setExpression(exp);
     });
 
     // Open edit comp
+    DuScriptUI.progressBar.hit(undefined, "Ready!");
     editComp.openInViewer();
 
+    DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.NLA);
 
 }
@@ -154,31 +270,19 @@ Duik.CmdLib['Automation']["NLA Clip"] = "Duik.Automation.addNLAClip()";
  * @param {CompItem} [nlaComp] A comp belonging to an NLA, the active comp if omitted.
  * @returns {int} Success code: 1 if the clip could be created, 0 if the original comp is not found, -1 if the NLA is invalid/not found
  */
-Duik.Automation.addNLAClip = function ( nlaComp )
-{
-    nlaComp = def( nlaComp, DuAEProject.getActiveComp() );
+Duik.Automation.addNLAClip = function(nlaComp) {
+    nlaComp = def(nlaComp, DuAEProject.getActiveComp());
     if (!nlaComp) return -1;
 
-    var nlaFolder = nlaComp.parentFolder;
-    if (nlaFolder.name.indexOf('NLA::') != 0) return -1;
-    
+    var nlaFolder = Duik.Automation.getNLAFolder(nlaComp);
+    if (!nlaFolder) return -1;
+
     var nlaName = nlaFolder.name.replace('NLA::', '');
 
     // Get the original comp
-    var originalComp = null;
-    var editComp = null;
-    for (var i = 1, n = nlaFolder.numItems; i <= n; i++)
-    {
-        var c = nlaFolder.item(i);
-        if (c.name.indexOf('NLA.Original::') == 0)
-        {
-            originalComp = c;
-        }
-        if (c.name.indexOf('NLA.Edit::') == 0)
-        {
-            editComp = c;
-        }
-    }
+    var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+    var originalComp = nlaComps[0];
+    var editComp = nlaComps[1];
 
     if (!originalComp) return 0;
 
@@ -189,11 +293,10 @@ Duik.Automation.addNLAClip = function ( nlaComp )
     newClip.name = originalComp.name.replace('NLA.Original', 'NLA.Clip') + '-newClip';
 
     // Add to edit
-    if (editComp)
-    {
-        var clipLayer = editComp.layers.add( newClip );
+    if (editComp) {
+        var clipLayer = editComp.layers.add(newClip);
         clipLayer.enabled = false;
-        if (editComp.numLayers >= 2) clipLayer.moveAfter( editComp.layer(2) );
+        if (editComp.numLayers >= 2) clipLayer.moveAfter(editComp.layer(2));
     }
 
     // Open clip
@@ -209,20 +312,19 @@ Duik.CmdLib['Automation']["Looper"] = "Duik.Automation.looper()";
  * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
  * @returns {PropertyGroup} The pseudo-effect
  */
-Duik.Automation.looper = function ( props, effect )
-{
-    effect = Duik.Animation.interpolator( props, effect );
+Duik.Automation.looper = function(props, effect) {
+    effect = Duik.Animation.interpolator(props, effect);
 
     var i = Duik.PseudoEffect.INTERPOLATOR.props;
 
     // Set interpolation to none
-    effect( i['Type'].index ).setValue(1);
+    effect(i['Type'].index).setValue(1);
     // Set cycles
-    effect( i['In Extrapolation and loop']['Type'].index ).setValue( 4 );
-    effect( i['Out Extrapolation and loop']['Type'].index ).setValue( 4 );
+    effect(i['In Extrapolation and loop']['Type'].index).setValue(4);
+    effect(i['Out Extrapolation and loop']['Type'].index).setValue(4);
     // Activate
-    effect( i['In Extrapolation and loop']['Before keys'].index ).setValue( 1 );
-    effect( i['Out Extrapolation and loop']['After keys'].index ).setValue( 1 );
+    effect(i['In Extrapolation and loop']['Before keys'].index).setValue(1);
+    effect(i['Out Extrapolation and loop']['After keys'].index).setValue(1);
 
     return effect;
 }
@@ -234,18 +336,15 @@ Duik.CmdLib['Automation']["Copy Expression"] = "Duik.Automation.copyExpression()
  * @param {Property|DuAEProperty} [prop] The property, the selected/active property if omitted.
  * @returns {string} The expression.
  */
-Duik.Automation.copyExpression = function( prop )
-{
-    if (typeof prop === 'undefined')
-    {
+Duik.Automation.copyExpression = function(prop) {
+    if (typeof prop === 'undefined') {
         var props = DuAEComp.getSelectedProps();
         if (props.length == 0) return Duik.Automation.copiedExpression;
         prop = props.pop();
     }
 
     prop = new DuAEProperty(prop);
-    if (prop.riggable())
-    {
+    if (prop.riggable()) {
         prop = prop.getProperty();
         Duik.Automation.copiedExpression = prop.expression;
     }
@@ -259,19 +358,16 @@ Duik.CmdLib['Automation']["Paste Expression"] = "Duik.Automation.pasteExpression
  * @param {Property[]|DuAEProperty[]} [props] The properties where to paste the expression, the selecte properties if omitted.
  * @param {string} [expression] A specific expression to paste.
  */
-Duik.Automation.pasteExpression = function( props, expression )
-{
+Duik.Automation.pasteExpression = function(props, expression) {
     props = def(props, DuAEComp.getSelectedProps());
     if (props.length == 0) return;
-    expression = def (expression , Duik.Automation.copiedExpression);
+    expression = def(expression, Duik.Automation.copiedExpression);
 
     DuAE.beginUndoGroup(DuScriptUI.String.PASTE_EXPRESSION, false);
 
     var i = new DuList(props);
-    i.do(function(prop)
-    {
-        if (prop.riggable())
-        {
+    i.do(function(prop) {
+        if (prop.riggable()) {
             prop.setExpression(expression, false);
         }
     });
@@ -285,20 +381,388 @@ Duik.CmdLib['Automation']["Remove Expressions"] = "Duik.Automation.removeExpress
  * @param {Boolean} [keepPostExpressionValue=true]  Set to false to just remove the expressions and get back the pre expression value.
  * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
  */
-Duik.Automation.removeExpressions = function( keepPostExpressionValue, props )
-{
-    keepPostExpressionValue = def (keepPostExpressionValue, true);
+Duik.Automation.removeExpressions = function(keepPostExpressionValue, props) {
+    keepPostExpressionValue = def(keepPostExpressionValue, true);
     props = def(props, DuAEComp.getSelectedProps());
     if (props.length == 0) props = DuAEComp.getSelectedLayers();
 
     DuAE.beginUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS, false);
 
-    for (var i = 0, num = props.length; i < num; i++)
-    {
-        var p = new DuAEProperty( props[i] );
-        p.removeExpressions( undefined, keepPostExpressionValue);
+    for (var i = 0, num = props.length; i < num; i++) {
+        var p = new DuAEProperty(props[i]);
+        p.removeExpressions(undefined, keepPostExpressionValue);
     }
 
     DuAE.endUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS);
 
+}
+
+Duik.CmdLib['Automation']["Bake Expressions"] = "Duik.Automation.bakeExpressions()"
+/**
+ * Bakes the expressions to keyframes
+ * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.SELECTED_PROPERTIES] The expressions to bake
+ */
+Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
+    // Defaults
+    mode = def(mode, DuAEExpression.BakeAlgorithm.SMART);
+    frameStep = def(frameStep, 1);
+    selectionMode = def(selectionMode, DuAE.SelectionMode.SELECTED_PROPERTIES);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS, false);
+    DuAEProject.setProgressMode(true, false); // For some reason the progress bar keeps poping up...
+
+    //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
+
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
+        var comps = DuAEProject.getSelectedComps();
+        for (var i = 0, n = comps.length; i < n; i++) {
+            DuAEComp.bakeExpressions(mode, frameStep, comp);
+        }
+    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS) {
+        var layers = DuAEComp.getSelectedLayers();
+        for (var i = 0, n = layers.length; i < n; i++) {
+            var p = new DuAEProperty(layers[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    } else {
+        var props = DuAEComp.getSelectedProps();
+        for (var i = 0, n = props.length; i < n; i++) {
+            var p = new DuAEProperty(props[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS);
+}
+
+Duik.CmdLib['Automation']["Effector"] = "Duik.Automation.effector()"
+/**
+ * Creates a spatial effector to control the selected properties.
+ * @param {CompItem} [comp] The composition containing the effector. The active composition by default.
+ */
+Duik.Automation.effector = function(comp) {
+    comp = def(comp, DuAEProject.getActiveComp());
+    if (!comp) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.EFFECTOR, false);
+
+    var props = DuAEComp.getSelectedProps();
+    var layers = DuAEComp.getSelectedLayers();
+
+    // Create the effector layer and effect
+    var ctrlLayer = comp.layers.addShape();
+    Duik.Layer.setAttributes(ctrlLayer, Duik.Layer.Type.EFFECTOR, DuScriptUI.String.EFFECTOR);
+    //effect
+    var pe = Duik.PseudoEffect.EFFECTOR;
+    var innerId = pe.props['Inner limit'].index
+    var outerId = pe.props['Outer limit'].index
+    var modeId = pe.props['Mode'].index;
+    var typeId = pe.props['Interpolation']['Type'].index;
+    var reverseId = pe.props['Interpolation']['Reverse'].index;
+    var effect = pe.apply(ctrlLayer);
+    //content
+    var centerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    centerGroup.name = "Center";
+    var centerContent = centerGroup.property("ADBE Vectors Group");
+    var centerCircle = centerContent.addProperty("ADBE Vector Shape - Ellipse");
+    centerCircle("ADBE Vector Ellipse Size").setValue([4, 4]);
+    var centerFill = centerContent.addProperty("ADBE Vector Graphic - Fill");
+    centerFill("ADBE Vector Fill Color").setValue(DuColor.Color.BLACK.floatRGBA());
+    centerFill("ADBE Vector Fill Opacity").setValue(50);
+
+    var innerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    innerGroup.name = "Inner (Circle)";
+    var innerContent = innerGroup.property("ADBE Vectors Group");
+    var innerCircle = innerContent.addProperty("ADBE Vector Shape - Ellipse");
+    innerCircle("ADBE Vector Ellipse Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1)\n' +
+        '{\n' +
+        'var inner = effect("' + effect.name + '")(' + innerId + ')*2;\n' +
+        '[inner,inner];\n' +
+        '}\n' +
+        'else [0,0];';
+    var innerStroke = innerContent.addProperty("ADBE Vector Graphic - Stroke");
+    innerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.GREEN.floatRGBA());
+    innerGroup.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1) 100; else 0;';
+
+    var outerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    outerGroup.name = "Outer (Circle)";
+    var outerContent = outerGroup.property("ADBE Vectors Group");
+    var outerCircle = outerContent.addProperty("ADBE Vector Shape - Ellipse");
+    outerCircle("ADBE Vector Ellipse Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1)\n' +
+        '{\n' +
+        'var inner = effect("' + effect.name + '")(' + outerId + ')*2;\n' +
+        '[inner,inner];\n' +
+        '}\n' +
+        'else [0,0];';
+    var outerStroke = outerContent.addProperty("ADBE Vector Graphic - Stroke");
+    outerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.RAINBOX_RED.floatRGBA());
+    outerGroup.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1) 100; else 0;';
+
+    var innerGroupLinear = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    innerGroupLinear.name = "Inner (Line)";
+    var innerContentLinear = innerGroupLinear.property("ADBE Vectors Group");
+    var innerRect = innerContentLinear.addProperty("ADBE Vector Shape - Rect");
+    innerRect("ADBE Vector Rect Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2)\n' +
+        '[effect("' + effect.name + '")(' + innerId + '),thisComp.height];\n' +
+        'else [0,0];';
+    var innerTrim = innerContentLinear.addProperty('ADBE Vector Filter - Trim');
+    innerTrim('ADBE Vector Trim Start').setValue(50);
+    innerTrim('ADBE Vector Trim End').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'var w = effect("' + effect.name + '")(' + innerId + ');\n' +
+        'var h = thisComp.height;\n' +
+        'var l = 2*w+2*h;\n' +
+        '100-w/l*100;';
+    var innerStroke = innerContentLinear.addProperty("ADBE Vector Graphic - Stroke");
+    innerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.GREEN.floatRGBA());
+    innerGroupLinear.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2) 100; else 0;';
+
+    var outerGroupLinear = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    outerGroupLinear.name = "Inner (Line)";
+    var outerContentLinear = outerGroupLinear.property("ADBE Vectors Group");
+    var outerRect = outerContentLinear.addProperty("ADBE Vector Shape - Rect");
+    outerRect("ADBE Vector Rect Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2)\n' +
+        '[effect("' + effect.name + '")(' + innerId + '),thisComp.height];\n' +
+        'else [0,0];';
+    var outerTrim = outerContentLinear.addProperty('ADBE Vector Filter - Trim');
+    outerTrim('ADBE Vector Trim Start').setValue(0);
+    outerTrim('ADBE Vector Trim End').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'var w = effect("' + effect.name + '")(' + innerId + ');\n' +
+        'var h = thisComp.height;\n' +
+        'var l = 2*w+2*h;\n' +
+        '100-(h+2*w)/l*100;';
+    var outerStroke = outerContentLinear.addProperty("ADBE Vector Graphic - Stroke");
+    outerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.RAINBOX_RED.floatRGBA());
+    outerGroupLinear.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2) 100; else 0;';
+
+    // Set defaults
+    // Get half the maximum distance between layers
+    var distance = DuAELayer.getMaxDistance(layers) / 2;
+    effect(innerId).setValue(distance * .25);
+    effect(outerId).setValue(distance * .75);
+
+    // Setup Properties
+    if (props.length != 0) {
+        // Setup properties
+        var ctrlLink;
+        var exp = [ DuAEExpression.Id.EFFECTOR,
+            'var fx = null;',
+            'var result = value;',
+            '',
+            'try',
+            '{',
+            '    var ctrl = effect( "{#}" )( 1 );',
+            '    fx = ctrl.effect( "' + effect.name + '" );',
+            '}',
+            'catch ( e )',
+            '{}',
+            '',
+            DuAEExpression.Library.get(['getScale']),
+            '',
+            '// Get layer world position',
+            'function p ( l )',
+            '{',
+            '    return l.toWorld( l.anchorPoint )',
+            '}',
+            '',
+            'function effector ()',
+            '{',
+            '    var min = fx( ' + innerId + ' ).value;',
+            '    var max = fx( ' + outerId + ' ).value;',
+            '    var mode = fx( ' + modeId + ' ).value;',
+            '    var type = fx( ' + typeId + ' ).value;',
+            '    var reverse = fx( ' + reverseId + ' ).value;',
+            '',
+            '    if ( mode == 2 ) //line',
+            '    {',
+            '        max = min;',
+            '        min = 0;',
+            '        reverse = !reverse;',
+            '    }',
+            '',
+            ' 	// Get scale values',
+            '	min = min * (getScale(ctrl)[0] / 100);',
+            '	max = max * (getScale(ctrl)[0] / 100);',
+            '',
+            '   var distance = effectorDistance( max, mode );',
+            '',
+            '   return effectorValue( distance, min, max, type, reverse );',
+            '}',
+            '',
+            'function effectorDistance ( max, mode )',
+            '{',
+            '    var distance = 0;',
+            '',
+            '    var worldPos = p( thisLayer );',
+            '',
+            '    if ( mode == 1 ) //circle',
+            '    {',
+            '        distance = length( worldPos, p( ctrl ) );',
+            '    }',
+            '    else if ( mode == 2 ) //line',
+            '    {',
+            '        var coords = ctrl.fromWorld( worldPos );',
+            '        distance = -coords[ 0 ] + max / 2;',
+            '    }',
+            '',
+            '    return distance;',
+            '}',
+            '',
+            'function effectorValue ( distance, min, max, type, reverse )',
+            '{',
+            '    var t = 0;',
+            '    var beginTime = key( 1 ).time;',
+            '    var endTime = key( numKeys ).time;',
+            '',
+            '    if ( type == 1 )',
+            '    {',
+            '        if ( !reverse ) t = linear( distance, min, max, endTime, beginTime );',
+            '        else t = linear( distance, min, max, beginTime, endTime );',
+            '    }',
+            '    else',
+            '    {',
+            '        var mid = ( min + max ) / 2;',
+            '        if ( !reverse )',
+            '        {',
+            '            if ( distance > mid ) t = linear( distance, mid, max, endTime, beginTime );',
+            '            else t = linear( distance, min, mid, beginTime, endTime );',
+            '        }',
+            '        else',
+            '        {',
+            '            if ( distance > mid ) t = linear( distance, mid, max, beginTime, endTime );',
+            '            else t = linear( distance, min, mid, endTime, beginTime );',
+            '        }',
+            '    }',
+            '    return valueAtTime( t );',
+            '}',
+            '',
+            'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+            ''
+		].join('\n');
+        for(var i = 0, n = props.length; i < n; i++) {
+            var prop = props [i];
+            var layer = prop.layer;
+            var linkEffect = DuAELayer.getCreateLayerEffect(layer, ctrlLayer, DuScriptUI.String.EFFECTOR);
+            prop.setExpression( DuString.args(exp, linkEffect.name), false);
+        }
+    }
+
+    DuAE.endUndoGroup(DuScriptUI.String.EFFECTOR, false);
+
+    return ctrlLayer;
+}
+
+/**
+ * Creates a map (texture) effector to control the selected properties.
+ * @param {AVLayer} mapLayer The layer to use as a texture/map.
+ * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.effectorMap = function( mapLayer, props ) {
+
+    // Create effect
+    var pe = Duik.PseudoEffect.EFFECTOR_MAP;
+    var channelId = pe.props['Channel'].index;
+    var minId = pe.props['Minimum'].index;
+    var maxId = pe.props['Maximum'].index;
+    var reverseId = pe.props['Reverse'].index;
+
+    var effect = pe.apply(mapLayer);
+
+
+    // Setup properties
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    // Setup properties
+    var ctrlLink;
+    var exp = [DuAEExpression.Id.EFFECTOR_MAP,
+		'var fx = null;',
+		'var ctrl = null;',
+		'var result = value;',
+		'',
+		'try',
+		'{',
+		'    ctrl = effect("{#}")(1);',
+		'    fx = ctrl.effect( "' + effect.name + '" );',
+		'}',
+		'catch ( e )',
+		'{}',
+		'',
+		'// Get layer world position',
+		'function p ( l )',
+		'{',
+		'    return l.toWorld( l.anchorPoint )',
+		'}',
+		'',
+		'function effector ()',
+		'{',
+		'    var min = fx( ' + minId + ' ).value;',
+		'    var max = fx( ' + maxId + ' ).value;',
+		'    var reverse = fx( ' + reverseId + ' ).value;',
+		'    var channel = fx( ' + channelId + ' ).value;',
+		'',
+		'    min = min / 100;',
+		'    max = max / 100;',
+		'',
+		'    var distance = effectorDistance( channel );',
+		'    return effectorValue( distance, min, max, reverse );',
+		'',
+		'}',
+		'',
+		'function effectorDistance ( channel )',
+		'{',
+		'    var distance = 0;',
+		'',
+		'    var worldPos = p( thisLayer );',
+		'',
+		'    if ( typeof channel === "undefined" ) channel = 5;',
+		'    var colorPoint = ctrl.fromWorld( worldPos );',
+		'    var color = ctrl.sampleImage( colorPoint );',
+		'    if ( channel <= 3 ) distance = color[ channel-1 ];',
+		'	else if (channel <= 6)',
+		'	{',
+		'		color = rgbToHsl(color);',
+		'		distance = color[ channel - 4 ];',
+		'	}',
+		'    else distance = color[ 3 ];',
+		'',
+		'    return distance;',
+		'}',
+		'',
+		'function effectorValue ( distance, min, max, reverse )',
+		'{',
+		'    var t = 0;',
+		'    var beginTime = key( 1 ).time;',
+		'    var endTime = key( numKeys ).time;',
+		'',
+		'    if ( !reverse ) t = linear( distance, min, max, beginTime, endTime );',
+		'    else t = linear( distance, min, max, endTime, beginTime );',
+		'',
+		'    return valueAtTime( t );',
+		'}',
+		'',
+		'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+		''
+	].join('\n');
+    props.do(function(prop) {
+        var layer = prop.layer;
+        var linkEffect = DuAELayer.getCreateLayerEffect(layer, mapLayer, DuScriptUI.String.EFFECTOR_MAP);
+        prop.setExpression( DuString.args(exp, linkEffect.name), false);
+    });
+
+    // Select the map only
+    DuAEComp.unselectLayers();
+    mapLayer.selected = true;
 }
