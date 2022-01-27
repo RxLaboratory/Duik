@@ -13,9 +13,10 @@ mkdir "output\Duik\Help"
 mkdir "output\Duik_API"
 DuBuilder ..\..\inc\api.jsxinc -nobanner output\Duik_API\Duik_api.jsxinc
 DuBuilder ..\..\inc\api_all.jsxinc -nobanner -d jsdoc_conf.json output\Duik_API\DuAEF_Duik_api.jsxinc
-DuBuilder ..\..\Duik.jsx -nobanner "output\Duik\ScriptUI Panels\Duik.jsx"
-DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Managers.jsx"
+DuBuilder "..\..\Duik Angela.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Angela.jsx"
+DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "..\..\Duik Rigging.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Rigging.jsx"
+DuBuilder "..\..\Duik Notes.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Notes.jsx"
 echo " " > "output\Duik\LICENSE.md"
 echo " " > "output\Duik_API\LICENSE.md"
 echo " " > "output\Duik\LICENSE.txt"
