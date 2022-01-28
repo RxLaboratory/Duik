@@ -1,6 +1,6 @@
 // Duik Kleaner v4
 
-// <=== PARAMETERS ===>
+// <=== MAIN PARAMETERS ===>
 
 var size = effect("Behaviors")(3).value;
 var weight = effect("Behaviors")(4).value;
@@ -8,6 +8,14 @@ var strength = effect("Behaviors")(5).value;
 var will = effect("Behaviors")(6).value;
 var flexibility = effect("Behaviors")(7).value;
 var friction = effect("Behaviors")(8).value;
+
+// <=== ADVANCED PARAMETERS ===>
+
+var anticipationCustomQuantity = effect("Behaviors")(12).value;
+var anticipationCustomDuration = effect("Behaviors")(13).value;
+var fThroughCustomFlexibility = effect("Behaviors")(19).value;
+var fThroughCustomDuration = effect("Behaviors")(20).value;
+var bounce = effect("Behaviors")(21).value;
 
 // <=== VALUES ===>
 
@@ -63,6 +71,25 @@ return true;
 d = Math.abs(d);
 return d < threshold;
 }
+}
+
+function isKeyTop(k, axis) {
+	var prevSpeed = velocityAtTime(k.time - thisComp.frameDuration/2);
+	var nextSpeed = velocityAtTime(k.time + thisComp.frameDuration/2);
+	if (value instanceof Array) {
+		prevSpeed = prevSpeed[axis];
+		nextSpeed = nextSpeed[axis];
+	}
+	if (Math.abs(prevSpeed) < 0.01 || Math.abs(nextSpeed) < 0.01) return true;
+	return prevSpeed * nextSpeed < 0;
+}
+
+function getPropWorldSpeed(t, prop) {
+	return length(getPropWorldVelocity(t, prop));
+}
+
+function getPropWorldVelocity(t, prop) {
+	return (getPropWorldValue(t + 0.005, prop) - getPropWorldValue(t - 0.005, prop)) * 100;
 }
 
 function mean( values )
@@ -167,6 +194,19 @@ function bezierInterpolation(t, tMin, tMax, value1, value2, bezierPoints) {
     }
 }
 
+function gaussianRateToBezierPoints(rate) {
+  var i = 0;
+  var o = 1;
+  if (rate <= -.025) {
+    i = linear(rate, -0.4, -0.025, 0.17, 0.415);
+    o = 1-easeIn(rate, -0.4, -0.025, 1, 0.415);
+  }
+  else {
+    i = linear(rate, -0.025, 0.7, 0.415, 1);
+    o = 1-easeOut(rate, -0.025, 0.7, 0.415, 0.15);
+  }
+  return [i,0,o,1];
+}
 
 // <=== FUZZY LOGIC ===>
 
@@ -403,7 +443,8 @@ FuzzyValue.prototype = {
       // Check if this set is already here
       for (var i = 0, num = this.sets.length; i < num; i++)
       {
-          if (fuzzyset.name == this.sets[i].name) 
+          var s = this.sets[i].fuzzyset;
+          if (fuzzyset.name == s.name) 
           {
               this.sets[i].quantifiers.push(quantifier);
               this.sets[i].veracities.push(v);
@@ -412,9 +453,11 @@ FuzzyValue.prototype = {
       }
   
       //otherwise, add it
-      fuzzyset.quantifiers = [quantifier];
-      fuzzyset.veracities = [v];
-      this.sets.push( fuzzyset );
+      var s = {};
+      s.fuzzyset = fuzzyset;
+      s.quantifiers = [quantifier];
+      s.veracities = [v];
+      this.sets.push( s );
   },
   
   crispify: function ( clearSets )
@@ -436,14 +479,14 @@ FuzzyValue.prototype = {
       var sumWeights = 0;
       for (var i = 0, num = this.sets.length; i < num; i++)
       {
-          var fuzzyset = this.sets[i];
-          for( var j = 0, numV = fuzzyset.veracities.length; j < numV; j++)
+          var s = this.sets[i];
+          for( var j = 0, numV = s.veracities.length; j < numV; j++)
           {
               // the veracity
-              var v = fuzzyset.veracities[j];
-              var q = fuzzyset.quantifiers[j];
+              var v = s.veracities[j];
+              var q = s.quantifiers[j];
               // the corresponding values
-              var vals = fuzzyset.crispify( q, v );
+              var vals = s.fuzzyset.crispify( q, v );
               var val;
               var ver;
   
@@ -628,6 +671,7 @@ FuzzyVeracity.prototype = {
 function FuzzyLogic( )
 {
     this.veracity = new FuzzyVeracity(0);
+    this.sets = [];
 }
 
 FuzzyLogic.prototype = {
@@ -712,13 +756,49 @@ function weightedInterpolation(t, tMin, tMax, value1, value2, gaussianRate, bezi
   return linear(linearRate, 0, 1, g, b);
 }
 
-function mainMotion(gaussianRate, bezierRate) {
+function mainMotion(t, gaussianRate, bezierRate, slowDown) {
   if (numKeys < 2) return zeroVal;
-  var nKey = getNextKey(time, thisProperty);
+  var nKey = getNextKey(t, thisProperty);
   if (!nKey) return zeroVal;
-  var pKey = getPrevKey(time, thisProperty);
+  var pKey = getPrevKey(t, thisProperty);
   if (!pKey) return zeroVal;
-  return weightedInterpolation(time, pKey.time, nKey.time, pKey.value, nKey.value, gaussianRate, bezierRate) - value;
+  // 4 cases : both keys are a summit, or each one is, or none.
+  var pKeyTop = isKeyTop(pKey);
+  var nKeyTop = isKeyTop(nKey);
+  var nLastKey = slowDown >= 1;
+  if (!nLastKey) {
+    nLastKey = nKey.index == numKeys;
+    // Check if we stop after the next keyframe
+    if (!nLastKey && Math.abs(velocityAtTime(nKey.time + thisComp.frameDuration)) < .001) nLastKey = true;
+  }
+  if (pKeyTop && nKeyTop) {
+    if (slowDown == 1 || !nLastKey) return weightedInterpolation(t, pKey.time, nKey.time, pKey.value, nKey.value, gaussianRate, bezierRate) - value;
+  }
+    
+  // Prepare bezier values for continuous keyframes
+  // Try to be as close as possible to the gaussian interpolation
+  var bPoints = gaussianRateToBezierPoints( gaussianRate );
+  var sO = bPoints[0];
+	var sOV = bPoints[1];
+  var sI = bPoints[2];
+	var sIV = bPoints[3];
+	if (!pKeyTop) {
+	  var prevKey = key(pKey.index - 1);
+		var pVal = prevKey.value;
+		sOV = (pKey.value - pVal) / (nKey.value - pVal);
+		sO = .33;
+	}
+	if (!nKeyTop) {
+	  var nextKey = key(nKey.index + 1);
+		var nVal = nextKey.value;
+		sIV = (nKey.value - pKey.value) / (nVal - pKey.value);
+		sI = .66;
+	}
+	else if (nLastKey) {
+	  // end speed
+	  sIV = slowDown/2+.5;
+	}
+	return bezierInterpolation(t, pKey.time, nKey.time, pKey.value, nKey.value, [sO, sOV, sI, sIV]) - value;
 }
 
 function anticipation(duration, quantity, rate, linearRate) {
@@ -743,7 +823,7 @@ function anticipation(duration, quantity, rate, linearRate) {
 	var anticipationStart = anticipationMiddle - anticipationDuration;
 	var anticipationEnd = key(anticipationKey.index + 1).time;
 	var startValue = anticipation;
-	var midValue = (-valueAtTime(anticipationMiddle + anticipationDuration) + anticipationKey.value) * anticipationQuantity;
+	var midValue = (-valueAtTime(anticipationMiddle + anticipationDuration) + anticipationKey.value) * anticipationQuantity / 2;
 	var endValue = anticipation;
 
 	if (time < anticipationStart) {
@@ -771,6 +851,160 @@ function anticipation(duration, quantity, rate, linearRate) {
 	}
 }
 
+function followThrough(flexibility, duration, slowDown, bounce, simulate, overlapDuration, anticipationDuration) {
+  
+  var propSpeed = length(velocity);
+	if (propSpeed < .001) return followThroughAtTime(time - overlapDuration, flexibility, duration, slowDown, bounce, simulate);
+
+	//need to get back in time get the last follow-through value to fade it
+	var fThrough = zeroVal;
+
+	var t = time;
+	while (t > 0) {
+		t = t - thisComp.frameDuration;
+		if (simulate) propSpeed = getPropWorldSpeed(t - overlapDuration, thisProperty);
+		else propSpeed = length(velocityAtTime(t));
+		if (propSpeed < .001) {
+			fThrough = followThroughAtTime(t - overlapDuration, flexibility, duration, slowDown, bounce, simulate);
+			break;
+		}
+	}
+
+	return easeIn(time, t, t + anticipationDuration * 2, fThrough, zeroVal);
+}
+
+function followThroughAtTime(t, flexibility, duration, slowDown, bounce, simulate) {
+	var fThrough = zeroVal;
+
+	//checks
+	if (flexibility == 0) return fThrough;
+	var elasticity = 1/flexibility;
+	if (duration == 0) return fThrough;
+	var damping = 1/duration;
+	if (slowDown == 1) return fThrough;
+	
+	var propSpeed;
+	
+	if (!simulate) {
+		if (numKeys < 2) return fThrough;
+		if (nearestKey(t).index == 1) return fThrough;
+		propSpeed = length(velocityAtTime(t));
+		if (propSpeed >= .001) return fThrough;
+	} else {
+		propSpeed = getPropWorldSpeed(t, thisProperty);
+		if (propSpeed >= .001) return fThrough;
+	}
+
+	//check state and time
+	var fThroughStart = 0;
+	var fThroughTime = 0;
+
+	if (simulate) {
+		var speedI = getPropWorldSpeed(t, thisProperty);
+		var i = t;
+		//search for the time when the layer last moved
+		while (speedI < .001 && i > 0) {
+			i = i - thisComp.frameDuration / moBlurPrecision;
+			speedI = getPropWorldSpeed(i, thisProperty);
+		}
+		fThroughStart = i;
+	} else {
+		//follow through starts at previous key
+		var fThroughKey = getPrevKey(t, thisProperty);
+		fThroughStart = fThroughKey.time;
+	}
+
+	if (fThroughStart == 0) return fThrough;
+
+	fThroughTime = t - fThroughStart;
+
+	//from velocity
+	if (simulate) fThrough = getPropWorldVelocity(fThroughStart - thisComp.frameDuration, thisProperty ) / 2;
+	else {
+	  
+	  fThrough = velocityAtTime(fThroughStart - thisComp.frameDuration) / 2;
+	  fThrough *= 1-Math.cbrt(slowDown);
+	}
+
+
+	if (bounce) {
+		var cycleDamp = Math.exp(fThroughTime * damping * .1);
+		var damp = Math.exp(fThroughTime * damping) / (elasticity / 2);
+		var cycleDuration = 1 / (elasticity * 2);
+		//round to whole frames for better animation
+		cycleDuration = Math.round(timeToFrames(cycleDuration));
+		cycleDuration = framesToTime(cycleDuration);
+		var midDuration = cycleDuration / 2;
+		var maxValue = fThrough * midDuration;
+		//check which cycle it is and cycvarime
+		var cycvarime = fThroughTime;
+		// the number of cycles where we "cheat" which are rounded to two frames
+		var numEndCycles = 1;
+		while (cycvarime > cycleDuration) {
+			cycvarime = cycvarime - cycleDuration;
+			cycleDuration = cycleDuration / cycleDamp;
+			//round everything to whole frames for better animation
+			cycleDuration = Math.round(timeToFrames(cycleDuration));
+			//this is where we cheat to continue to bounce on cycles < 2 frames
+			if (cycleDuration < 2) {
+				cycleDuration = 2;
+				numEndCycles++;
+			}
+			cycleDuration = framesToTime(cycleDuration);
+			midDuration = cycleDuration / 2;
+			maxValue = fThrough * midDuration / damp;
+			if (numEndCycles > 100 / damping && maxValue < .001) return zeroVal;
+		}
+
+		if (cycvarime < midDuration) fThrough = bezierInterpolation(cycvarime, 0, midDuration, 0, maxValue, [0, .1, .33, 1]);
+		else fThrough = bezierInterpolation(cycvarime, midDuration, cycleDuration, maxValue, 0, [1 - .33, 0, 1, .9]);
+	} else {
+		// damping ratio
+		var damp = Math.exp(fThroughTime * damping);
+		// sinus evolution 
+		var sinus = elasticity * fThroughTime * 2 * Math.PI;
+		//sinus
+		sinus = Math.sin(sinus);
+		// elasticity
+		sinus = .3 / elasticity * sinus;
+		// damping
+		sinus = sinus / damp;
+		if (Math.abs(sinus) < .001 / 100) return 0;
+		// result
+		fThrough = fThrough * sinus;
+
+		if (.001 > 0) {
+			fThrough = fThrough * (1 - propSpeed / .001);
+		}
+	}
+
+	if (bounce) {
+		var prevValue = valueAtTime(fThroughStart - thisComp.frameDuration);
+		var startValue = valueAtTime(fThroughStart);
+		if (value instanceof Array) {
+			for (var i = 0; i < prevValue.length; i++) {
+				if (prevValue[i] > startValue[i]) fThrough[i] = Math.abs(fThrough[i]);
+				if (prevValue[i] < startValue[i]) fThrough[i] = -Math.abs(fThrough[i]);
+			}
+		} else {
+			if (prevValue > startValue) fThrough = Math.abs(fThrough);
+			if (prevValue < startValue) fThrough = -Math.abs(fThrough);
+		}
+	}
+
+	if (simulate) {
+		if (!isThisPosition) {
+			fThrough = fThrough + getLayerWorldPos(time, thisLayer);
+			fThrough = thisLayer.fromWorld(fThrough) - thisLayer.anchorPoint;
+		} else if (thisLayer.hasParent) {
+			fThrough = fThrough + getLayerWorldPos(time, thisLayer.parent);
+			fThrough = thisLayer.parent.fromWorld(fThrough) - thisLayer.parent.anchorPoint;
+		}
+	}
+
+	return fThrough;
+}
+
 // <=== DO IT ===>
 
 // Use fuzzy logic to output needed values
@@ -781,23 +1015,34 @@ var logic = new FuzzyLogic();
 // INPUT SETS
 var tiny = logic.newSet("Tiny", 100, 0);
 var small = logic.newSet("Small", 200, 0);
-var medium = logic.newSet("Medium", 50, 100);
 var big = logic.newSet("Big", 0, 200);
-var huge = logic.newSet("Huge",0, 500);
+var huge = logic.newSet("Huge",100, 500);
+var einstein = logic.newSet("Einstein", 200, 1000);
 
 // OUTPUT SETS
+// speed
 var quick = logic.newSet("Quick", 0, -.85);
 var slow = logic.newSet("Slow", -.3, 0);
-var slowest = logic.newSet("Slow", -.05, 0);
+var slowest = logic.newSet("Slowest", -.05, 0);
+// ratios
 var min = logic.newSet("Min", 0.5, 0);
-var max = logic.newSet("Max", 0, 0.5);
+var low = logic.newSet("Low", 1, 0);
+var high = logic.newSet("High", 0, 1);
+var max = logic.newSet("Max", 0.5, 1);
+var double = logic.newSet("Double", 0.5, 2);
+var triple = logic.newSet("Triple", 1, 3);
+var quadruple = logic.newSet("Quadruple", 2, 4);
+// durations
+var none = logic.newSet("Short", 0.01, 0);
+var planck = logic.newSet("Short", 0.2, 0);
 var short = logic.newSet("Short", 0.4, 0);
-var long = logic.newSet("Long", 0.2, .75);
-var veryLong = logic.newSet("Very Long", 0.4, 1.5);
+var mediumD = logic.newSet("Medium Duration", 0.2, 0.4);
+var long = logic.newSet("Long", 0.05, .6);
+var veryLong = logic.newSet("Very Long", 0.2, 1.2);
 
 // INPUT VALUES 
 var linearRate = (100-weight)/100;
-size = logic.newValue(size/2);
+size = logic.newValue(size);
 weight = logic.newValue(weight);
 strength = logic.newValue(strength);
 will = logic.newValue(will);
@@ -808,61 +1053,120 @@ friction = logic.newValue(friction);
 var interpolationRate = logic.newValue(0);
 var anticipationDuration = logic.newValue(0);
 var anticipationQuantity = logic.newValue(0);
+var fThroughFlexibility = logic.newValue(flexibility.val/100);
+var fThroughDuration = logic.newValue(0);
+var slowDown = logic.newValue(0);
 
 // RULES
 
 // Size 
-logic.IF( size.IS( tiny ));
-logic.THEN( anticipationDuration, short );
 logic.IF( size.IS( small ));
 logic.THEN( anticipationDuration, short );
+logic.THEN( fThroughFlexibility, low );
 logic.IF( size.IS( big ) );
 logic.THEN( anticipationDuration, long );
+logic.THEN( fThroughFlexibility, high );
 logic.IF( size.IS( huge ) );
 logic.THEN( anticipationDuration, veryLong );
+logic.THEN( fThroughFlexibility, triple );
+logic.IF( size.IS( einstein ) );
+logic.THEN( fThroughFlexibility, quadruple );
 
 // Weight
 logic.IF( weight.IS( small )
   .AND( will.IS_NOT(tiny) )
   );
 logic.THEN( interpolationRate, quick );
+logic.THEN( fThroughDuration, long );
 logic.IF( weight.IS( big ));
 logic.THEN( interpolationRate, slow );
+logic.THEN( fThroughDuration, short );
 logic.IF( weight.IS( huge ));
+logic.THEN( interpolationRate, slow );
+logic.THEN( fThroughDuration, planck );
+logic.IF( weight.IS( einstein ) );
+logic.THEN( fThroughDuration, none );
 logic.THEN( interpolationRate, slow );
 
 // Strength
 logic.IF( strength.IS( big ));
 logic.THEN( interpolationRate, quick );
+logic.THEN( fThroughDuration, short );
+logic.THEN( slowDown, low );
 logic.IF( strength.IS( small ));
 logic.THEN( interpolationRate, slow );
+logic.THEN( fThroughDuration, long );
+logic.THEN( slowDown, high );
 
 // Will
 logic.IF( will.IS( small ));
 logic.THEN( anticipationQuantity, min );
 logic.THEN( interpolationRate, slow );
+logic.THEN( fThroughDuration, long );
+logic.THEN( slowDown, low );
 logic.IF( will.IS( tiny ));
 logic.THEN( anticipationQuantity, min );
+logic.THEN( slowDown, min );
+logic.IF( will.IS( big ));
+logic.THEN( anticipationQuantity, low );
 logic.IF( will.IS( huge ));
-logic.THEN( anticipationQuantity, max );
+logic.THEN( anticipationQuantity, high );
 logic.THEN( interpolationRate, quick );
+logic.THEN( fThroughDuration, short );
+logic.THEN( slowDown, max );
 
-// friction
+// Flexibility
+logic.IF( flexibility.IS( tiny ));
+logic.THEN( fThroughFlexibility, min );
+logic.IF( flexibility.IS( small ));
+logic.THEN( fThroughFlexibility, low );
+logic.IF( flexibility.IS( big ));
+logic.THEN( fThroughFlexibility, high );
+logic.IF( flexibility.IS( huge ));
+logic.THEN( fThroughFlexibility, max );
+logic.IF( flexibility.IS( einstein ));
+logic.THEN( fThroughFlexibility, double );
+
+// Friction
 logic.IF( friction.IS( tiny )
   .AND( will.IS_NOT(tiny) )
   );
 logic.THEN( interpolationRate, quick );
+logic.IF( friction.IS ( tiny ) );
+logic.THEN( slowDown, min );
+logic.IF( friction.IS( small ) );
+logic.THEN( slowDown, low );
 logic.IF( friction.IS( big ));
 logic.THEN( interpolationRate, slow );
+logic.THEN( fThroughDuration, planck );
+logic.THEN( slowDown, high );
+logic.IF( friction.IS( huge ));
+logic.THEN( fThroughDuration, none );
+logic.THEN( slowDown, max );//*/
 
 // GET RESULTS 
 interpolationRate = interpolationRate.crispify();
 anticipationQuantity = anticipationQuantity.crispify();
 anticipationDuration = anticipationDuration.crispify();
+fThroughFlexibility = fThroughFlexibility.crispify();
+fThroughDuration = fThroughDuration.crispify();
+slowDown = slowDown.crispify();
 
 // ADJUSTMENTS
+// anticipation
+var simulate = false;
 anticipationQuantity = linear(will.val, 0, 20, 0, anticipationQuantity);
+anticipationDuration *= anticipationCustomDuration/100;
+anticipationQuantity *= anticipationCustomQuantity/100;
+var overlapDuration = 0;
+fThroughFlexibility *= fThroughCustomFlexibility/100;
+fThroughDuration *= fThroughCustomDuration/100;
+if (fThroughFlexibility < .01) fThroughFlexibility = 0;
+if (fThroughDuration < .01) fThroughDuration = 0;
+if (fThroughFlexibility == 0 || fThroughDuration == 0) slowDown = 1;
+var bounce = bounce == 1;
 
-result += mainMotion(interpolationRate, linearRate);
+result += mainMotion(time, interpolationRate, linearRate, slowDown);
 result += anticipation(anticipationDuration, anticipationQuantity, interpolationRate, linearRate);
-
+result += followThrough(fThroughFlexibility, fThroughDuration, slowDown, bounce, simulate, overlapDuration, anticipationDuration);
+result;
