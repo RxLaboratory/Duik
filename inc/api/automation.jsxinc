@@ -797,7 +797,7 @@ Duik.Automation.kleaner = function(props, effect) {
     p = new DuAEProperty(p);
     var ctrlLayer = p.layer;
 
-    DuAE.beginUndoGroup(DuScriptUI.String.KLEANER, false);
+    DuAE.beginUndoGroup("_" + DuScriptUI.String.KLEANER, false);
 
     // Add the effect
     if (!effect)
@@ -810,7 +810,7 @@ Duik.Automation.kleaner = function(props, effect) {
 
     // Setup the expressions in the Data
     
-    var fuzzyLib = DuAEExpression.Library.get(["FuzzyVeracity"]);
+    var fuzzyLib = DuAEExpression.Library.get(["FuzzyVeracity", "linearExtrapolation"]);
 
     var interpolationRateExp = [DuAEExpression.Id.KLEANER,
         '',
@@ -832,70 +832,17 @@ Duik.Automation.kleaner = function(props, effect) {
         '// <=== DO IT ===>',
         '',
         'if (useFuzzyLogic) {',
-        '  // Use fuzzy logic to output needed values',
-        '  var logic = new FuzzyLogic();',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
         '  ',
-        '  // SETS',
-        '  ',
-        '  // INPUT SETS',
-        '  var tiny = logic.newSet("Tiny", 100, 0);',
-        '  var small = logic.newSet("Small", 200, 0);',
-        '  var big = logic.newSet("Big", 0, 200);',
-        '  var huge = logic.newSet("Huge",100, 500);',
-        '  var einstein = logic.newSet("Einstein", 200, 1000);',
-        '  ',
-        '  // OUTPUT SETS',
-        '  // speed',
-        '  var quick = logic.newSet("Quick", 0, -.85);',
-        '  var slow = logic.newSet("Slow", -.3, 0);',
-        '  var slowest = logic.newSet("Slowest", -.05, 0);',
-        '  ',
-        '  // INPUT VALUES ',
-        '  var linearRate = (100-weight)/100;',
-        '  weight = logic.newValue(weight);',
-        '  strength = logic.newValue(strength);',
-        '  will = logic.newValue(will);',
-        '  friction = logic.newValue(friction);',
-        '  ',
-        '  // OUTPUT VALUES',
-        '  var interpolationRate = logic.newValue(0);',
-        '  ',
-        '  // RULES',
-        '  ',
-        '  // Weight',
-        '  logic.IF( weight.IS( small )',
-        '    .AND( will.IS_NOT(tiny) )',
-        '    );',
-        '  logic.THEN( interpolationRate, quick );',
-        '  logic.IF( weight.IS( big ));',
-        '  logic.THEN( interpolationRate, slow );',
-        '  logic.IF( weight.IS( huge ));',
-        '  logic.THEN( interpolationRate, slow );',
-        '  logic.IF( weight.IS( einstein ) );',
-        '  logic.THEN( interpolationRate, slow );',
-        '  ',
-        '  // Strength',
-        '  logic.IF( strength.IS( big ));',
-        '  logic.THEN( interpolationRate, quick );',
-        '  logic.IF( strength.IS( small ));',
-        '  logic.THEN( interpolationRate, slow );',
-        '  ',
-        '  // Will',
-        '  logic.IF( will.IS( small ));',
-        '  logic.THEN( interpolationRate, slow );',
-        '  logic.IF( will.IS( huge ));',
-        '  logic.THEN( interpolationRate, quick );',
-        '  ',
-        '  // Friction',
-        '  logic.IF( friction.IS( tiny )',
-        '    .AND( will.IS_NOT(tiny) )',
-        '    );',
-        '  logic.THEN( interpolationRate, quick );',
-        '  logic.IF( friction.IS( big ));',
-        '  logic.THEN( interpolationRate, slow );',
-        '  ',
-        '  // GET RESULTS ',
-        '  result = interpolationRate.crispify();',
+        '  // Compute ratio',
+        '  var inertia = weight.OR( strength.NEGATE() );',
+        '  var resistance = friction.OR( will.NEGATE() );',
+        '  var rate = resistance.OR( inertia );',
+        '',
+        '  result = linearExtrapolation(rate.veracity, 0.3, 1, -.8, 0);',
         '}',
         'result;'
 	].join('\n');
@@ -923,11 +870,11 @@ Duik.Automation.kleaner = function(props, effect) {
         '// <=== DO IT ===>',
         '',
         'if (useFuzzyLogic) {',
-        '  weight = new Veracity( weight / 1000 );',
-        '  strength = new Veracity( strength / 1000 );',
-        '  will = new Veracity( will / 1000 );',
-        '  flexibility = new Veracity( flexibility / 1000 );',
-        '  friction = new Veracity( friction / 1000 );',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  flexibility = new FuzzyVeracity( flexibility / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
         '  ',
         '  flexibility.factor = 2;',
         '  friction.factor = 2;',
@@ -1016,8 +963,8 @@ Duik.Automation.kleaner = function(props, effect) {
         '// <=== DO IT ===>',
         '',
         'if (useFuzzyLogic) {',
-        '  size = new Veracity( size / 1000 );',
-        '  flexibility = new Veracity( flexibility / 1000 );',
+        '  size = new FuzzyVeracity( size / 1000 );',
+        '  flexibility = new FuzzyVeracity( flexibility / 1000 );',
         '  ',
         '  flexibility.factor = 2;',
         '  ',
@@ -1077,6 +1024,7 @@ Duik.Automation.kleaner = function(props, effect) {
         'var strength = fx(' + i['Strength'].index + ').value;',
         'var will = fx(' + i['Will'].index + ').value;',
         'var friction = fx(' + i['Friction'].index + ').value;',
+        'var bounce = fx(' + i['Follow through']['Bounce'].index  +').value == 1;',
         'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
         '',
         'var result = 0.60;',
@@ -1087,7 +1035,7 @@ Duik.Automation.kleaner = function(props, effect) {
         '',
         '// <=== DO IT ===>',
         '',
-        'if (useFuzzyLogic) {',
+        'if (useFuzzyLogic && !bounce) {',
         '  weight = new FuzzyVeracity( weight / 1000 );',
         '  strength = new FuzzyVeracity( strength / 1000 );',
         '  will = new FuzzyVeracity( will / 1000 );',
@@ -1101,6 +1049,7 @@ Duik.Automation.kleaner = function(props, effect) {
         '',
         '  result = linearExtrapolation(slowDown.veracity, 0, 0.2, 0, 5);',
         '}',
+        'else if (bounce) result = 0;',
         'result;'
 	].join('\n');
 
@@ -1111,7 +1060,7 @@ Duik.Automation.kleaner = function(props, effect) {
 	    '(100-weight)/100;'
 	].join('\n');
 
-    effect(i['Data']['Linearize'].index).expression = slowDownRatioExp;
+    effect(i['Data']['Linearize'].index).expression = linearizeExp;
 
     // Setup the main expression
 
@@ -1629,7 +1578,7 @@ Duik.Automation.kleaner = function(props, effect) {
         
     });
 
-    DuAE.endUndoGroup(DuScriptUI.String.KLEANER);
+    DuAE.endUndoGroup("_" + DuScriptUI.String.KLEANER);
 
     return effect;
 }
