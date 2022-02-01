@@ -367,9 +367,10 @@ Duik.Automation.pasteExpression = function(props, expression) {
 
     var i = new DuList(props);
     i.do(function(prop) {
-        if (prop.riggable()) {
-            prop.setExpression(expression, false);
-        }
+        prop = new DuAEProperty(prop);
+        // Only for true props and not groups
+        if (prop.riggable())
+            prop.setExpression( expression, false );
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.PASTE_EXPRESSION);
@@ -390,7 +391,9 @@ Duik.Automation.removeExpressions = function(keepPostExpressionValue, props) {
 
     for (var i = 0, num = props.length; i < num; i++) {
         var p = new DuAEProperty(props[i]);
-        p.removeExpressions(undefined, keepPostExpressionValue);
+        // Only for true props and not groups
+        if (p.riggable())
+            p.removeExpressions(undefined, keepPostExpressionValue);
     }
 
     DuAE.endUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS);
@@ -653,9 +656,13 @@ Duik.Automation.effector = function(comp) {
 		].join('\n');
         for(var i = 0, n = props.length; i < n; i++) {
             var prop = props [i];
-            var layer = prop.layer;
-            var linkEffect = DuAELayer.getCreateLayerEffect(layer, ctrlLayer, DuScriptUI.String.EFFECTOR);
-            prop.setExpression( DuString.args(exp, linkEffect.name), false);
+            // Only for true props and not groups
+            if (prop.riggable())
+            {
+                var layer = prop.layer;
+                var linkEffect = DuAELayer.getCreateLayerEffect(layer, ctrlLayer, DuScriptUI.String.EFFECTOR);
+                prop.setExpression( DuString.args(exp, linkEffect.name), false );
+            }
         }
     }
 
@@ -757,9 +764,15 @@ Duik.Automation.effectorMap = function( mapLayer, props ) {
 		''
 	].join('\n');
     props.do(function(prop) {
-        var layer = prop.layer;
-        var linkEffect = DuAELayer.getCreateLayerEffect(layer, mapLayer, DuScriptUI.String.EFFECTOR_MAP);
-        prop.setExpression( DuString.args(exp, linkEffect.name), false);
+        // Only for true props and not groups
+        prop = new DuAEProperty(prop)
+        if (prop.riggable())
+        {
+            var layer = prop.layer;
+            var linkEffect = DuAELayer.getCreateLayerEffect(layer, mapLayer, DuScriptUI.String.EFFECTOR_MAP);
+            prop.setExpression( DuString.args(exp, linkEffect.name), false);
+        }
+        
     });
 
     // Select the map only
@@ -1891,16 +1904,21 @@ Duik.Automation.kleaner = function(props, effect) {
     props.do(function (prop)
     {
         prop = new DuAEProperty(prop);
-        // Fix spatial interpolations
-        prop.fixSpatialInterpolation();
-        // Set Linear
-        prop.setInterpolation(KeyframeInterpolationType.LINEAR);
-        // Clean keyframes
-        prop.cleanKeyframes();
-        // Set auto roving
-        prop.setRoving();
-        // Set expression
-        prop.setExpression( exp, false );
+        if (prop.isProperty())
+        {
+            // Fix spatial interpolations
+            prop.fixSpatialInterpolation();
+            // Set Linear
+            prop.setInterpolation(KeyframeInterpolationType.LINEAR);
+            // Clean keyframes
+            prop.cleanKeyframes();
+            // Set auto roving
+            prop.setRoving();
+            // Set expression
+            if (prop.riggable())
+                prop.setExpression( exp, false );
+        }
+        
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.KLEANER);
