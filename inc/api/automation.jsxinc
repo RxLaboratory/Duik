@@ -443,6 +443,40 @@ Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
     DuAE.endUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS);
 }
 
+Duik.CmdLib['Automation']["Bake Composition"] = "Duik.Automation.bakeComposition()"
+/**
+ * Bakes the expressions to keyframes, and remove all non-renderable layers
+ * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ */
+Duik.Automation.bakeComposition = function(mode, frameStep, selectionMode) {
+    // Defaults
+    mode = def(mode, DuAEExpression.BakeAlgorithm.SMART);
+    frameStep = def(frameStep, 1);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_COMPOSITION, false);
+    DuAEProject.setProgressMode(true, false); // For some reason the progress bar keeps poping up...
+
+    //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
+
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeCompositions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
+        var comps = DuAEProject.getSelectedComps();
+        for (var i = 0, n = comps.length; i < n; i++) {
+            DuAEComp.bake(mode, frameStep, comp);
+        }
+    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bake(mode, frameStep);
+    else {
+        var layers = DuAEComp.getSelectedLayers();
+        for (var i = 0, n = layers.length; i < n; i++) {
+            DuAELayer.bake( mode, frameStep, layers[i] );
+        }
+    } 
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_COMPOSITION);
+}
+
 Duik.CmdLib['Automation']["Effector"] = "Duik.Automation.effector()"
 /**
  * Creates a spatial effector to control the selected properties.
