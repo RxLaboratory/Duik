@@ -1719,6 +1719,8 @@ Duik.Automation.swink = function(props) {
     // Apply
     var effects = [];
     props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
         var layer = prop.layer;
 
         // Add effect
@@ -1746,4 +1748,155 @@ Duik.Automation.swink = function(props) {
     DuAE.endUndoGroup(DuScriptUI.String.SWINK);
 
     return effects;
+}
+
+Duik.CmdLib['Automation']["Swink"] = "Duik.Automation.swink()"
+/**
+ * Adds a random but smooth animation to the selected properties.
+ * @param {Bool} [separateDimensions=false] Use one value for each dimension/channel.
+ * @param {Bool} [individualControls=false] Use one control for each of the properties.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @return {DuAEProperty[]} The Swink effects.
+ */
+Duik.Automation.wiggle = function(separateDimensions, individualControls, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return [];
+
+    separateDimensions = def ( separateDimensions, false );
+    individualControls = def ( individualControls, false );
+
+    DuAE.beginUndoGroup(DuScriptUI.String.WIGGLE, false);
+
+    var effect = null;
+    var pe = null;
+    var i = null;
+
+    var layers = DuAEComp.unselectLayers();
+    props.do(function(prop)
+    {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        var layer = prop.layer;
+        var dimensions = prop.dimensions();
+        var comp = prop.comp;
+
+        // Create effect
+        if (effect == null || individualControls)
+        {
+            var effectName = DuScriptUI.String.WIGGLE;
+            if (individualControls) effectName = prop.name + " | " + effectName;
+
+            if (!separateDimensions && dimensions > 1) pe = Duik.PseudoEffect.MULTI_WIGGLE;
+            else if (dimensions == 1) pe = Duik.PseudoEffect.ONED_WIGGLE;
+            else if (dimensions == 2) pe = Duik.PseudoEffect.TWOD_WIGGLE;
+            else if (dimensions == 3) pe = Duik.PseudoEffect.THREED_WIGGLE;
+            else if (dimensions == 4) pe = Duik.PseudoEffect.COLOR_WIGGLE;
+            else return;
+
+            effect = pe.apply(layer, effectName);
+            effect = new DuAEProperty(effect);
+
+            // Set default values
+            i = pe.props;
+            effect.prop( i['Loop duration (s)'].index ).setValue( comp.duration );
+            effect.prop( i['Details']['Random Seed'].index ).setValue( layer.index );
+        }
+
+        // Check the comp link
+        var sameComp = effect.comp.name == comp.name;
+
+        var effectLink = "var fx = " + effect.expressionLink(sameComp);
+        if (!separateDimensions && dimensions > 1)
+	    {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+				'var freq = fx(' + i['Frequency'].index + ');\n' +
+				'var amp = fx(' + i['Amplitude'].index + ');\n' +
+				'var linked = fx(' + i['Link dimensions'].index + ').value;\n' +
+				'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+				'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+				'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+				'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+				'seedRandom(seed);\n' +
+				'if (loop == 0) loop = thisComp.duration;\n' +
+				'var t = (time % loop)-loop;\n' +
+				'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
+				'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
+				'var w = ease(t, -loop,  0, w1, w2);\n' +
+				'var result = [];\n' +
+				'if(linked) while (result.length < value.length) result.push(w[0]);\n' +
+				'else result = w;\n' +
+				'result + value - valueAtTime(0);';
+        }
+        else if (dimensions == 3)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
+                    'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
+                    'var Zfreq = fx(' + i['Z']['Frequency'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
+                    'var Zamp = fx(' + i['Z']['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
+                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
+                    'var Z1 = wiggle(Zfreq,Zamp, complexity, multiplier, t);\n' +
+                    'var w1 = [X1[0],Y1[1],Z1[2]];\n' +
+                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
+                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
+                    'var Z2 = wiggle(Zfreq,Zamp, complexity, multiplier, t - loop);\n' +
+                    'var w2 = [X2[0],Y2[1],Z2[2]];\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+        else if (dimensions == 2)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
+                    'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
+                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
+                    'var w1 = [X1[0],Y1[1]];\n' +
+                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
+                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
+                    'var w2 = [X2[0],Y2[1]];\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+        else if (dimensions == 1)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var freq = fx(' + i['Frequency'].index + ');\n' +
+                    'var amp = fx(' + i['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
+                    'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+    });
+    DuAEComp.selectLayers(layers);
+    
+    DuAE.endUndoGroup(DuScriptUI.String.WIGGLE);
 }
