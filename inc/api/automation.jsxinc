@@ -1911,6 +1911,8 @@ Duik.Automation.wheel = function( layers ) {
     layers = new DuList(layers);
     if (layers.length() == 0) return;
 
+    DuAE.beginUndoGroup(DuScriptUI.String.WHEEL, false);
+
     var pe = Duik.PseudoEffect.WHEEL;
     var i = pe.props;
 
@@ -1969,4 +1971,43 @@ Duik.Automation.wheel = function( layers ) {
             'result;'
         ].join('\n');
     });
+
+    DuAE.endUndoGroup(DuScriptUI.String.WHEEL);
+}
+
+/**
+ * Adds a control to move the layers away from their parent.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.moveAway = function(layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.MOVE_AWAY, false);
+    
+    layers.do(function(layer)
+    {
+        // add control
+        var effect = layer.property("ADBE Effect Parade").addProperty("ADBE Slider Control");
+        effect.name = DuAELayer.newUniqueEffectName(DuScriptUI.String.MOVE_AWAY, layer);
+        // add expression
+        layer.transform.position.expression = [ DuAEExpression.Id.MOVE_AWAY,
+            'var result = value;',
+            'if (thisLayer.hasParent && value[0] != 0 && value[1] != 0)',
+            '{',
+            '	thisWorldPos = thisLayer.toWorld(thisLayer.anchorPoint);',
+            '	parentWorldPos = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);',
+            '	depl = effect("' + effect.name + '")(1).value;',
+            '	dist = length(parentWorldPos ,thisWorldPos )',
+            '	coef = (dist+depl)/dist',
+            '	newWorldPos = (thisWorldPos-parentWorldPos)*coef+parentWorldPos',
+            '	result = thisLayer.parent.fromWorld(newWorldPos)',
+            '}',
+            'result;'
+        ].join('\n');
+    });
+    
+    DuAE.endUndoGroup(DuScriptUI.String.MOVE_AWAY_TIP);
+
 }
