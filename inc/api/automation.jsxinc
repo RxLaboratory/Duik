@@ -1901,3 +1901,72 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
     
     DuAE.endUndoGroup(DuScriptUI.String.WIGGLE);
 }
+
+/**
+ * Automates the rotation of layers as wheels
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.wheel = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    var pe = Duik.PseudoEffect.WHEEL;
+    var i = pe.props;
+
+    layers.do(function(layer) {
+        var r = DuAELayer.width(layer) / 2;
+
+        var rotProp = layer.transform.rotation;
+	    if (layer.threeDLayer) rotProp = layer.transform.zRotation;
+
+        var effect = pe.apply(layer);
+        
+        effect( i['Radius'].index ).setValue( r );
+
+        rotProp.expression = [ DuAEExpression.Id.WHEEL,
+            'var fx = effect("' + effect.name + '");',
+            'var wheelRadius = fx(' + i['Radius'].index +  ').value;',
+            'var reversed = fx(' + i['Reverse'].index +  ').value;',
+            'var trajectory = fx(' + i['Trajectory'].index +  ').value;',
+            'var moBlurPrecision = fx(' + i['Motion Blur Precision'].index +  ').value;',
+            '',
+            'var result = value;',
+            '',
+            'function wheel(r, type, precision) {',
+            '  ',
+            '  if (r == 0) return 0;',
+            '  ',
+            '  function p(t) {',
+            '      return thisLayer.toWorld(thisLayer.anchorPoint, t);',
+            '  }',
+            '  ',
+            '  var distance = 0;',
+            '    // curved',
+            '    if (type == 3) {',
+            '        var start = thisLayer.inPoint > thisComp.displayStartTime ? thisLayer.inPoint : thisComp.displayStartTime;',
+            '        var end = time < thisLayer.outPoint ? time : thisLayer.outPoint;',
+            '        var step = framesToTime(1)/precision;',
+            '        var currentTime = start;',
+            '        while (currentTime <= end)',
+            '        {',
+            '            if (p(currentTime+step)[0] - p(step)[0] > 0) distance += length(p(currentTime+step), p(currentTime));',
+            '            else distance -= length(p(currentTime+step), p(currentTime));',
+            '            currentTime += step;',
+            '        }',
+            '    } else if (type == 2) {',
+            '        distance = length(p(time), p(0));',
+            '    }',
+            '    else {',
+            '        distance = p(time)[0];',
+            '    }',
+            '    return radiansToDegrees(distance / r);',
+            '}',
+            '',
+            'if (reversed) result -= wheel( wheelRadius, trajectory, moBlurPrecision );',
+            'else result += wheel( wheelRadius, trajectory, moBlurPrecision );',
+            '',
+            'result;'
+        ].join('\n');
+    });
+}
