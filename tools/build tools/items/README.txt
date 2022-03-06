@@ -1,4 +1,4 @@
-﻿(c) 2021 Nicolas Dufresne and contributors  
+﻿(c) 2021-2022 RxLaboratory, Nicolas Dufresne and contributors  
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
@@ -16,7 +16,7 @@ There are a lot of ways to get help with Duik!
 
 - Read the official comprehensive user guide: http://duik.rxlab.guide where you will find documentation for all the tools, an FAQ, and a lot of other information.
 
-- Watch some tutorials! http://tuts.rxlab.info
+- Access tutorials, talks, video quicktips, and more on the official website: http://rxlaboratory.org
 
 - Come and have a chat on the dedicated server! http://chat.rxlab.info
 
@@ -35,7 +35,10 @@ You'll find several folders and files.
 - The *Tools* folder contains some useful scripts and other tools.
 - The *ScriptUI Panels* folder contains the actual *Duik* script you need to install. A lot of different panels are available, you can install all of them or just pick the ones you need.
 
-- There are several ways to install Duik very easily:  
+- There are several easy methods to install Duik, read the next sections.
+
+!!! note
+    When Duik is installed for the first time, you'll need to restart After Effects to make it available.
 
 ## a. Copy the files
 
@@ -44,23 +47,18 @@ Copy all the files from the *ScriptUI Panels* folder to:
 - Windows: `C:\Program Files\Adobe\Adobe After Effects CC\Support Files\Scripts\ScriptUI Panels\`  
 - Mac OS: `/Applications/Adobe After Effects CC/Scripts/ScriptUI Panels`
 
-You may need administrator privileges to install Duik this way. If you don't have them, see the other ways below.
-
-!!! Warning
-    With the other installation methods, some features using third party tools, like transcoding sound when exporting to Adobe Audition, may not work correctly.
+You may need administrator privileges to install Duik this way. If you don't have them, see the other methods below.
 
 ## b. Shortcut for After Effects CC2018 and more recent
 
 - Open After Effects  
-- *Windows*: Holding the [Alt] and [Shift] keys, drag and drop the file `Duik Bassel.jsx` onto the project panel.  
-- *Mac OS*: Holding the [Options] and [Shift] keys, drag and drop the file `Duik Bassel.jsx` onto the project panel.  
+- *Windows*: Holding the [Alt] and [Shift] keys, drag and drop the ScriptUI Panels files onto the project panel.  
+- *Mac OS*: Holding the [Options] and [Shift] keys, drag and drop the ScriptUI Panels files onto the project panel.  
 
 ## c. Using the menu for After Effects CC2019 and more recent
 
 - Open After Effects  
-- Use the `File/Scritps/Install ScriptUI Panel...` menu to select and install `Duik Bassel.jsx`.  
-
-- Restart After Effects and Duik will be available in the "Window" menu.
+- Use the `File/Scritps/Install ScriptUI Panel...` menu to select and install the ScriptUI Panels files.  
 
 # Without installation 
 
