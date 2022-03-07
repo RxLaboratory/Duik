@@ -2142,3 +2142,360 @@ Duik.Automation.moveAway = function(layers) {
     DuAE.endUndoGroup(DuScriptUI.String.MOVE_AWAY_TIP);
 
 }
+
+/**
+ * Assigns random values to the properties at the current time.<br/>
+ * This method creates keyframes if the properties are animated.
+ * @param {float} [xMin] The minimum X Value
+ * @param {float} [xMax] The maximum X Value
+ * @param {float} [yMin] The minimum Y Value
+ * @param {float} [yMax] The maximum Y Value
+ * @param {float} [zMin] The minimum Z Value
+ * @param {float} [zMax] The maximum Z Value
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [separate=true] If true, sets a different value for all axis. If false, use the same value for all axis, ignore Y and Z values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeValues = function(xMin, xMax, yMin, yMax, zMin, zMax, offset, separate, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    var x = (typeof xMin !== 'undefined' && typeof xMax !== 'undefined' && !isNaN(xMin) && !isNaN(xMax));
+	var y = (typeof yMin !== 'undefined'&& typeof yMax !== 'undefined' && !isNaN(yMin) && !isNaN(yMax));
+	var z = (typeof zMin !== 'undefined' && typeof zMax !== 'undefined' && !isNaN(zMin) && !isNaN(zMax));
+
+    offset = def(offset, true);
+    separate = def(separate, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    props.do(function(propInfo) {
+        propInfo = new DuAEProperty(propInfo);
+        if (propInfo.isGroup()) return;
+        var prop = propInfo.getProperty();
+        var dim = propInfo.dimensions();
+        var xVal = 0;
+        var yVal = 0;
+        var zVal = 0;
+
+        // Random
+
+        if (x) xVal = rnd(xMin, xMax);
+
+        if (dim > 1 && y) yVal = rnd(yMin, yMax);
+        
+        if (dim > 2 && z) zVal = rnd(zMin, zMax);
+
+        // Set new value
+        var val;
+        if (dim == 1) val = xVal;
+        else if (separate) {
+            val = [xVal, yVal];
+            if (dim > 2) val.push(zVal);
+            while (dim > val.length) val.push(0);
+        }
+        else {
+            val = [xVal];
+            while (dim > val.length) val.push(xVal);
+        }
+
+        if (offset) val = val + prop.value;
+        var comp = propInfo.comp;
+        prop.numKeys > 0 ? prop.setValueAtTime( comp.time, val) : prop.setValue(val);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer start times (moves them in time).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerTimes = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var startTime = rnd(min, max) * comp.frameDuration;
+        if (offset) layer.startTime = layer.startTime + startTime;
+        else layer.startTime = startTime - (layer.inPoint - layer.startTime);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer indices (their position in the layer stack).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerIndices = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var index = parseInt(rnd(min,max));
+        if (offset) index = layer.index + index;
+        if (index == layer.index) return;
+        if (index >= comp.numLayers) layer.moveToEnd();
+		else if (index < 2) layer.moveToBeginning();
+		else layer.moveBefore(comp.layer(index));
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer in points.
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerInPoints = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var inPoint = rnd(min, max) * comp.frameDuration;
+        // We need to reset the out point, because Ae...
+        var out = layer.outPoint;
+        if (offset) inPoint = layer.inPoint + inPoint;
+        if (inPoint >= layer.outPoint) inPoint = layer.outPoint - comp.frameDuration;
+        layer.inPoint = inPoint;
+        layer.outPoint = out;
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer out points.
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerOutPoints = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var outPoint = rnd(min, max) * comp.frameDuration;
+        if (offset) outPoint = layer.outPoint + outPoint;
+        if (outPoint <= layer.inPoint) outPoint = layer.inPoint + comp.frameDuration;
+        layer.outPoint = outPoint;
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the key times (moves them in time).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeKeyTimes = function (min, max, offset, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    //array to list keys to be removed
+	var krKeys = [];
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+
+        var krK = [];
+
+        var comp = prop.comp;
+        var dim = prop.dimensions();
+
+        //loop through selected keyframes
+        var selectedKeys = prop.selectedKeys();
+        for (var j = 0 ; j < selectedKeys.length; j++)
+        {
+            var key = selectedKeys[j];
+            var t = rnd(min,max)*comp.frameDuration;
+            // SET VALUE
+            if (!offset) t -= prop.keyTime(key);
+            var oldKey = prop.keyAtIndex(key);
+            krK.push(prop.keyTime(key));
+            prop.setKey(oldKey,t);
+        }
+        krKeys.push(krK);
+    });
+
+    // Delete keyframes
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+
+        for (var j = 0 ; j < krKeys[props.current].length ; j++)
+		{
+			prop.removeKey(prop.nearestKeyIndex(krKeys[props.current][j]));
+		}
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Assigns random values to the values of the selected keyframes.
+ * @param {float} [xMin] The minimum X Value
+ * @param {float} [xMax] The maximum X Value
+ * @param {float} [yMin] The minimum Y Value
+ * @param {float} [yMax] The maximum Y Value
+ * @param {float} [zMin] The minimum Z Value
+ * @param {float} [zMax] The maximum Z Value
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [separate=true] If true, sets a different value for all axis. If false, use the same value for all axis, ignore Y and Z values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeKeyValues = function (xMin, xMax, yMin, yMax, zMin, zMax, offset, separate, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    var x = (typeof xMin !== 'undefined' && typeof xMax !== 'undefined' && !isNaN(xMin) && !isNaN(xMax));
+	var y = (typeof yMin !== 'undefined'&& typeof yMax !== 'undefined' && !isNaN(yMin) && !isNaN(yMax));
+	var z = (typeof zMin !== 'undefined' && typeof zMax !== 'undefined' && !isNaN(zMin) && !isNaN(zMax));
+
+    offset = def(offset, true);
+    separate = def(separate, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        //Get containing comp and dimensions
+        var comp = prop.comp;
+        var dim = prop.dimensions();
+        //loop through selected keyframes
+        var selectedKeys = prop.selectedKeys();
+        for (var j = 0 ; j < selectedKeys.length; j++)
+        {
+            var key = selectedKeys[j];
+            var xval = 0;
+            var yval = 0;
+            var zval = 0;
+            //X
+            if (x) xVal = rnd(xMin,xMax);
+            //Y
+            if (dim > 1 && y) yVal = rnd(yMin,yMax);
+            //Z
+            if (dim > 2 && z) zVal = rnd(zMin,zMax);
+
+            var val;
+            if (dim == 1) val = xVal;
+            else if (separate) {
+                val = [xVal, yVal];
+                if (dim > 2) val.push(zVal);
+                while (dim > val.length) val.push(0);
+            }
+            else {
+                val = [xVal];
+                while (dim > val.length) val.push(xVal);
+            }
+            //SET VALUE
+            if (offset) val += prop.keyValue(key);
+            prop.setValueAtKey(val,key);
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
