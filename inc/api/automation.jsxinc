@@ -2500,6 +2500,7 @@ Duik.Automation.randomizeKeyValues = function (xMin, xMax, yMin, yMax, zMin, zMa
     DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
 }
 
+Duik.CmdLib['Automation']["Motion trail"] = "Duik.Automation.motionTrail()";
 /**
  * Draws a trail following the selected layers.
  * @param {Boolean} [createNewLayer = false] Option to create a new layer for each trail.
@@ -2765,4 +2766,48 @@ Duik.Automation.motionTrail = function( createNewLayer, layers) {
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.MOTION_TRAIL);
+}
+
+Duik.CmdLib['Automation']["Time remap"] = "Duik.Automation.timeRemap()";
+/**
+ * Activates the time remapping on the layers, adjusts the keyframes and adds a loop effect.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.timeRemap = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TIME_REMAP, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        if (!layer.canSetTimeRemapEnabled) return;
+        
+        var comp = layer.containingComp;
+		var lastValueTime = layer.outPoint - comp.frameDuration;
+
+		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
+
+		if (layer.inPoint < lastValueTime)
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
+			layer.timeRemap.setValueAtTime(lastValueTime + comp.frameDuration, layer.timeRemap.valueAtTime(layer.inPoint, true));
+			if ( layer.inPoint > layer.timeRemap.keyTime(1))
+			{
+				layer.timeRemap.setValueAtTime(layer.inPoint, layer.timeRemap.valueAtTime(layer.inPoint, true));
+				layer.timeRemap.removeKey(1);
+			}
+		}
+		else
+		{
+			layer.timeRemap.removeKey(2);
+		}
+
+		Duik.Automation.looper(layer.timeRemap);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.TIME_REMAP);
 }
