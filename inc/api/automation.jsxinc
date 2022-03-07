@@ -2499,3 +2499,270 @@ Duik.Automation.randomizeKeyValues = function (xMin, xMax, yMin, yMax, zMin, zMa
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
 }
+
+/**
+ * Draws a trail following the selected layers.
+ * @param {Boolean} [createNewLayer = false] Option to create a new layer for each trail.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.motionTrail = function( createNewLayer, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    
+    // Get comp
+    var comp;
+    if (layers.length() == 0) comp = DuAEProject.getActiveComp();
+    else comp = layers.at(0).containingComp;
+    if (!comp) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.MOTION_TRAIL, false);
+    DuAEProject.setProgressMode(true);
+
+    createNewLayer = def(createNewLayer, false);
+
+    // Get existing trail layer
+    var trailLayer;
+    if (!createNewLayer) {
+        var trailLayers = Duik.Layer.get( Duik.Layer.Type.MOTION_TRAIL, false, comp );
+        if (trailLayers.length == 0) createNewLayer = true;
+        else trailLayer = trailLayers[0];
+    }
+
+    if (createNewLayer) {
+        trailLayer = comp.layers.addShape();
+        Duik.Layer.setType(Duik.Layer.Type.MOTION_TRAIL, trailLayer);
+        trailLayer.name = DuAEComp.newUniqueLayerName( DuScriptUI.String.MOTION_TRAILS, comp );
+    }
+
+    var pe = Duik.PseudoEffect.MOTION_TRAIL;
+    var p = pe.props;
+
+    function createTrail(layer) {
+        var effect = pe.apply( trailLayer, DuScriptUI.String.MOTION_TRAIL );
+
+        // Create shape
+        var trailGroup = trailLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+        trailGroup.name = effect.name;
+
+        var trailPath = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group");
+        trailPath = trailPath.property("ADBE Vector Shape");
+        trailPath.expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect("' + effect.name + '");',
+            '//parameters',
+            'var trailLayer = getEffectLayer(fx, ' + p['Motion source'].index + ');',
+            'var inFrame = fx(' + p['Start (frames)'].index + ').value;',
+            'var outFrame = fx(' + p['End (frames)'].index + ').value;',
+            'var trailStrokeWidth = fx(' + p['Width'].index + ').value;',
+            'var useAutoWidth = fx(' + p['Advanced: auto-width'].index + ').value;',
+            'var pathOffset = fx(' + p['Path offset'].index + ').value;',
+            'var taperStartLength = fx(' + p['Taper']['Start length'].index + ').value;',
+            'var taperEndLength = fx(' + p['Taper']['End length'].index + ').value;',
+            'var taperEaseStart = fx(' + p['Taper']['Start ease'].index + ').value;',
+            'var taperEaseEnd = fx(' + p['Taper']['End ease'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'var sampleMethod = fx(' + p['Sampling']['Method'].index + ').value;',
+            'var samples = fx(' + p['Sampling']['Samples'].index + ').value;',
+            '',
+            DuAEExpression.Library.get([
+                'bezierInterpolation',
+                'getEffectLayer',
+                'getCompScale'
+            ]),
+            '',
+            'if (trailLayer != null && fx.active) {',
+            '',
+            '	//adjust parameters',
+            '	taperStartLength /= 100;',
+            '	taperEndLength /= 100;',
+            '	taperEaseStart /= 100;',
+            '	taperEaseEnd /= 100;',
+            '',
+            '	//will store the path points and the values for the taper',
+            '	var trailPoints = [];',
+            '	var taperValues = [];',
+            '',
+            '	//compute time range',
+            '	var currentFrame = timeToFrames(time);',
+            '	if (inFrame > outFrame) inFrame = -inFrame;',
+            '	else if (inFrame == outFrame) inFrame = -1;',
+            '	var autoSampleLimit = 1 / (samples * 5);',
+            '	var startFrame = currentFrame + inFrame;',
+            '	var endFrame = currentFrame + outFrame;',
+            '	var sTime = framesToTime(startFrame);',
+            '	var eTime = framesToTime(endFrame);',
+            '',
+            '	// for each frame starting from the end',
+            '	for (var i = endFrame; i >= startFrame; i--) {',
+            '',
+            '		var t = framesToTime(i);',
+            '		var pT = framesToTime(i - 1);',
+            '		var nT = framesToTime(i + 1);',
+            '		var pos = trailLayer.toComp(trailLayer.anchorPoint, t);',
+            '		if (pos.length == 3) pos.pop();',
+            '		var prevPos = trailLayer.toComp(trailLayer.anchorPoint, pT);',
+            '		if (prevPos.length == 3) prevPos.pop();',
+            '		var nextPos = trailLayer.toComp(trailLayer.anchorPoint, nT);',
+            '		if (nextPos.length == 3) nextPos.pop();',
+            '',
+            '		if (pos == prevPos) continue;',
+            '',
+            '		//compute samples',
+            '		if (sampleMethod == 1) {',
+            '			try {',
+            '				var vec = normalize(nextPos - pos);',
+            '				var prevVec = normalize(pos - prevPos);',
+            '				var step = length(prevVec, vec);',
+            '				var stepRatio = step / autoSampleLimit;',
+            '				if (stepRatio > 1) samples = Math.floor(stepRatio);',
+            '				else samples = 1;',
+            '			} catch (e) {}',
+            '		}',
+            '',
+            '		//build path and store taper values',
+            '		var step = thisComp.frameDuration / samples;',
+            '		for (var sub = t + thisComp.frameDuration - step; sub >= t; sub -= step) {',
+            '',
+            '			var subPos = trailLayer.toComp(trailLayer.anchorPoint, sub);',
+            '			if (subPos.length == 3) subPos.pop();',
+            '',
+            '			subPos = subPos - position;',
+            '			trailPoints.push(subPos);',
+            '',
+            '			if (trailMode == 2) {',
+            '				var w = trailStrokeWidth;',
+            '',
+            '				var duration = eTime - sTime;',
+            '				var elapsed = sub - sTime;',
+            '				var tRatio = elapsed / duration;',
+            '',
+            '				if (tRatio > 1 - taperStartLength) {',
+            '					w = bezierInterpolation(sub, eTime - duration * taperStartLength, eTime, w, 0, [taperEaseStart, 0, 1 - taperEaseStart, 0]);',
+            '				}',
+            '',
+            '				if (tRatio < taperEndLength) {',
+            '					w = bezierInterpolation(tRatio, 0, taperEndLength, 0, w, [1 - taperEaseEnd, 1, taperEaseEnd, 1]);',
+            '				}',
+            '',
+            '				if (useAutoWidth) {',
+            '					var ratio = getCompScale(trailLayer, t);',
+            '					w = w * ratio;',
+            '				}',
+            '',
+            '				taperValues.push(w);',
+            '			}',
+            '		}',
+            '',
+            '	}',
+            '',
+            '	//offset',
+            '	if (trailPoints.length > 1) {',
+            '		//compute offset',
+            '		var rightSidePoints = [];',
+            '		var leftSidePoints = [];',
+            '		for (var i = 1, num = trailPoints.length; i < num; i++) {',
+            '			var w = [0, 0];',
+            '			var o = [0, 0];',
+            '',
+            '			var vec = normalize(trailPoints[i - 1] - trailPoints[i]);',
+            '			var normal = [-vec[1], vec[0]];',
+            '',
+            '			//width & taper',
+            '			if (trailMode == 2) {',
+            '				try {',
+            '					w = normal * taperValues[i - 1] / 2;',
+            '				} catch (e) {}',
+            '			}',
+            '',
+            '			//offset',
+            '			try {',
+            '				o = normal * pathOffset;',
+            '			} catch (e) {}',
+            '',
+            '			if (trailMode == 2) {',
+            '				rightSidePoints[i - 1] = trailPoints[i - 1] + w + o;',
+            '				leftSidePoints[i - 1] = trailPoints[i - 1] - w + o;',
+            '			} else {',
+            '				trailPoints[i - 1] = trailPoints[i - 1] + o;',
+            '			}',
+            '		}',
+            '		if (trailMode == 2) trailPoints = rightSidePoints.concat(leftSidePoints.reverse());',
+            '		else trailPoints.pop();',
+            '	}',
+            '',
+            '	if (trailPoints.length > 1) createPath(trailPoints, [], [], useAutoWidth);',
+            '	else value;',
+            '} else value;'
+        ].join('\n');
+
+        var trailStroke = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Stroke");
+        trailStroke('ADBE Vector Stroke Color').expression= [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Color'].index + ').value;'
+        ].join('\n');
+
+        trailStroke('ADBE Vector Stroke Opacity').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'var trailOpacity = fx(' + p['Opacity'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'if ( trailMode == 2 ) 0;',
+            'else trailOpacity;'
+        ].join('\n');
+
+        trailStroke('ADBE Vector Stroke Width').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Width'].index + ').value;'
+            ].join('\n');
+
+        // Taper for Ae >= 17.1
+        if (DuAE.version.version >= 17.0) {
+            var taper = trailStroke('ADBE Vector Stroke Taper');
+            taper('ADBE Vector Taper Start Length').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['Start length'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper End Length').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['End length'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper Start Ease').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['Start ease'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper End Ease').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['End ease'].index + ').value;'
+            ].join('\n');
+        }
+        
+        var trailFill = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Fill");
+
+        trailFill('ADBE Vector Fill Color').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Color'].index + ').value;'
+        ].join('\n');
+
+        trailFill('ADBE Vector Fill Opacity').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'var trailOpacity = fx(' + p['Opacity'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'if ( trailMode == 1 ) 0;',
+            'else trailOpacity;'
+        ].join('\n');
+
+        // set layer
+        if (typeof layer !== 'undefined') effect( p['Motion source'].index ).setValue(layer.index);
+    }
+
+    // For each layer
+    layers.do(function(layer) {
+        createTrail(layer);
+    });
+
+    // If there's no layer, an empty trail
+    if (layers.length() == 0) {
+        createTrail();
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.MOTION_TRAIL);
+}
