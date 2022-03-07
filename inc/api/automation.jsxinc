@@ -2811,3 +2811,170 @@ Duik.Automation.timeRemap = function( layers ) {
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.TIME_REMAP);
 }
+
+Duik.CmdLib['Automation']["Paint rig"] = "Duik.Automation.paintRig()";
+/**
+ * Rigs paint effects and brush strokes to animate them more easily.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.paintRig = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.PAINT_RIG, false);
+    DuAEProject.setProgressMode(true);
+
+    var pe = Duik.PseudoEffect.PAINT_RIG;
+    var p = pe.props;
+
+    layers.do(function(layer) {
+        //if there's no paint effect
+        var paintEffect = layer("ADBE Effect Parade")("ADBE Paint");
+        if (paintEffect == null) return;
+
+        //add effect
+        var effect = pe.apply(layer);
+        
+        //need to get the paint effect again after addProperty, invalid Object blah blah blah.......
+        var paintEffect = layer("Effects")("ADBE Paint");
+
+        //the first diameter and color
+        var defaultDiam = 0;
+        var defaultCol = [0,0,0,0];
+
+        //for each stroke
+        var n = paintEffect.property(2).numProperties;
+        for (var j=1; j<=n; j++)
+        {
+            var stroke = paintEffect.property(2).property(j);
+            var propStart = new DuAEProperty( stroke.property(4).property('ADBE Paint Begin') );
+            var propEnd = new DuAEProperty( stroke.property(4).property('ADBE Paint End') );
+            var propCol = new DuAEProperty( stroke.property(4).property('ADBE Paint Color') );
+            var propDiam = new DuAEProperty( stroke.property(4).property('ADBE Paint Diameter') );
+
+            if (defaultDiam == 0)
+            {
+                defaultDiam = propDiam.value();
+                effect( p['Diameter']['Diameter A'].index ).setValue(defaultDiam);
+                effect( p['Diameter']['Diameter B'].index ).setValue(defaultDiam);
+            }
+            if (defaultCol[3] == 0)
+            {
+                defaultCol = propCol.value();
+                effect( p['Color']['Color A'].index ).setValue(defaultCol);
+                effect( p['Color']['Color A'].index ).setValue(defaultCol);
+            }
+
+            var startExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var ctrl = effect("' + effect.name + '")(' + p['Start'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex\n' +
+                'result = ctrl - ((100/total)*(ind-1));\n' +
+                'result = result * total;\n' +
+                'result;';
+            propStart.setExpression( startExp, false );
+
+            var endExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var ctrl = effect("' + effect.name + '")(' + p['End'].index + ');\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'result = ctrl - ((100/total)*(ind-1));\n' +
+                'result = result * total;\n' +
+                'result;';
+            propEnd.setExpression( endExp, false );
+
+            
+            var diamExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var fx = effect("' + effect.name + '");\n' +
+                'var ctrlA = fx(' + p['Diameter']['Diameter A'].index + ').value;\n' +
+                'var ctrlB = fx(' + p['Diameter']['Diameter B'].index + ').value;\n' +
+                'var reverse = fx(' + p['Interpolation']['Reverse'].index + ').value;\n' +
+                'var interpolation =fx(' + p['Interpolation']['Ease'].index + ').value;\n' +
+                'var mode = fx(' + p['Interpolation']['Mode'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'if (reverse)\n' +
+                '{\n' +
+                'var t = ctrlA;\n' +
+                'ctrlA = ctrlB;\n' +
+                'ctrlB = t;\n' +
+                '}\n' +
+                'var result = ctrlA;\n' +
+                'if (mode == 2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else if (mode == 3)\n' +
+                '{\n' +
+                'if (ind < total /2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+                '}\n' +
+                '}\n' +
+                'result;';
+            propDiam.setExpression( diamExp, false );
+
+            
+            var colExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var fx = effect("' + effect.name + '");\n' +
+                'var ctrlA = fx(' + p['Color']['Color A'].index + ').value;\n' +
+                'var ctrlB = fx(' + p['Color']['Color B'].index + ').value;\n' +
+                'var reverse = fx(' + p['Interpolation']['Reverse'].index + ').value;\n' +
+                'var interpolation =fx(' + p['Interpolation']['Ease'].index + ').value;\n' +
+                'var mode = fx(' + p['Interpolation']['Mode'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'if (reverse)\n' +
+                '{\n' +
+                'var t = ctrlA;\n' +
+                'ctrlA = ctrlB;\n' +
+                'ctrlB = t;\n' +
+                '}\n' +
+                'var result = ctrlA;\n' +
+                'if (mode == 2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else if (mode == 3)\n' +
+                '{\n' +
+                'if (ind < total /2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+                '}\n' +
+                '}\n' +
+                'result;';
+            propCol.setExpression( colExp , false );
+
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.PAINT_RIG);
+}
