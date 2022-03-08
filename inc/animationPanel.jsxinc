@@ -522,6 +522,285 @@
 
     keyEditOptionsPopup.tieTo( ksettingsButton );
 
+    DuScriptUI.separator( animationGroup );
+
+    var easePresetsGroup = DuScriptUI.group( animationGroup );
+    var easePresetSettingsButton = DuScriptUI.button(
+        easePresetsGroup,
+        '',
+        DuScriptUI.Icon.OPTIONS,
+        DuScriptUI.String.SET_KEY_OPTIONS
+    );
+    easePresetSettingsButton.alignment = ['left', 'fill'];
+    var easeOptionsPopup = DuScriptUI.popUp( DuScriptUI.String.EASE_OPTIONS );
+    var easeResetListButton = DuScriptUI.button(
+        easeOptionsPopup.content,
+        DuScriptUI.String.RESET_PRESET_LIST,
+        w16_reset,
+        DuScriptUI.String.RESET_PRESET_LIST_TIP
+    );
+    easeResetListButton.onClick = function() {
+        easePresetList.removeAll();
+        for(var i = 0; i < defaultEasePresets.length; i++) {
+            easePresetList.add('item', defaultEasePresets[i]);
+        };
+        easePresetList.selection = 0;
+        DuESF.scriptSettings.data.easePresets = defaultEasePresets;
+        DuESF.scriptSettings.save();
+        easeOptionsPopup.hide();
+    };
+    easeOptionsPopup.tieTo(easePresetSettingsButton);
+    var defaultEasePresets = [ "Ease presets",
+        "25/75 | 0/0", "33/33 | 0/0", "33/33 | 100/100", "33/66 | 0/0", "50/50 | 0/0", "50/50 | 100/100", "66/33 | 0/0", "75/25 | 0/0", "80/80 | 0/0"
+    ];
+    DuESF.scriptSettings.data.easePresets = def(DuESF.scriptSettings.data.easePresets, defaultEasePresets);
+    var easePresetList = easePresetsGroup.add('dropdownlist',undefined,DuESF.scriptSettings.data.easePresets);
+    easePresetList.alignment = ['fill', 'top'];
+    easePresetList.selection = 0;
+    easePresetList.onChange = function() {
+        if (!easePresetList.selection) return;
+        if (easePresetList.selection.index == 0) return;
+        var preset = easePresetList.selection.text;
+        var rePreset = /(\d+)\/(\d+) \| (-?\d+)\/(-?\d+)/i;
+        var vals = preset.match(rePreset);
+        if (vals == null) return;
+        if (vals.length != 5) return;
+        easeInSlider.setValue( parseInt(vals[1]) );
+        easeOutSlider.setValue( parseInt(vals[2]) );
+        velocityInSlider.setValue( vals[3] );
+        velocityOutSlider.setValue( vals[4] );
+        easeLinkButton.setChecked(vals[1] != vals[2]);
+        velocityLinkButton.setChecked(vals[3] != vals[4]);
+        easeApplyAllButton.onClick();
+    }
+    var easePresetAddButton = DuScriptUI.button( 
+        easePresetsGroup,
+        '',
+        w12_add,
+        DuScriptUI.String.ADD_EASE_PRESET
+    );
+    easePresetAddButton.alignment = ['right', 'fill'];
+    easePresetAddButton.onClick = function() {
+        var presets = [];
+        for (var i = 1 ; i < easePresetList.items.length ; i++)
+        {
+            presets.push(easePresetList.items[i].text);
+        }
+        presets.push(easeInSlider.value + '/' + easeOutSlider.value + ' | ' + velocityInSlider.value + '/' + velocityOutSlider.value);
+        presets.sort();
+        presets.unshift('Ease presets');
+        easePresetList.removeAll();
+        for (var i=0;i<presets.length;i++)
+        {
+            easePresetList.add('item',presets[i]);
+        }
+        DuESF.scriptSettings.data.easePresets = presets;
+        DuESF.scriptSettings.save();
+        easePresetList.selection = 0;
+    };
+    var easePresetRemoveButton = DuScriptUI.button( 
+        easePresetsGroup,
+        '',
+        w12_remove,
+        DuScriptUI.String.REMOVE_EASE_PRESET
+    );
+    easePresetRemoveButton.alignment = ['right', 'fill'];
+    easePresetRemoveButton.onClick = function() {
+        if (!easePresetList.selection) return;
+        if (easePresetList.selection.index == 0) return;
+        easePresetList.remove(easePresetList.selection);
+        var presets = [];
+        for (var i = 0 ; i < easePresetList.items.length ; i++)
+        {
+            presets.push(easePresetList.items[i].text);
+        }
+        DuESF.scriptSettings.data.easePresets = presets;
+        DuESF.scriptSettings.save();
+        easePresetList.selection = 0;
+    };
+    var easePickButton = DuScriptUI.button(
+        easePresetsGroup,
+        '',
+        DuScriptUI.Icon.EYE_DROPPER,
+        DuScriptUI.String.PICK_EASE_TIP
+    );
+    easePickButton.alignment = ['right', 'fill'];
+    easePickButton.onClick = function() {
+        var props = DuAEComp.getSelectedProps();
+        props = new DuList(props);
+        if (props.length == 0) return;
+
+        var propInfo;
+        while(propInfo = props.next()) {
+            var prop = propInfo.getProperty();
+			if (prop.selectedKeys.length == 0) continue;
+			var speed = propInfo.velocityToPercent(prop.selectedKeys[0]);
+			var speedIn = speed[0];
+			var speedOut = speed[1];
+			var easeIn = prop.keyInTemporalEase(prop.selectedKeys[0])[0].influence;
+			var easeOut = prop.keyOutTemporalEase(prop.selectedKeys[0])[0].influence;
+			easeInSlider.setValue(easeIn);
+			easeOutSlider.setValue(easeOut);
+			velocityInSlider.setValue(speedIn);
+			velocityOutSlider.setValue(speedOut);
+			easeLinkButton.setChecked(easeIn != easeOut);
+			velocityLinkButton.setChecked(speedIn != speedOut);
+			break;
+        }
+    };
+    var easeApplyAllButton = DuScriptUI.button(
+        easePresetsGroup,
+        '',
+        DuScriptUI.Icon.CHECK,
+        DuScriptUI.String.APPLY_EASE_VELOCITY_TIP
+    );
+    easeApplyAllButton.alignment = ['right', 'fill'];
+    easeApplyAllButton.onClick = function() {
+        DuAE.beginUndoGroup(DuScriptUI.String.SET_EASE);
+        easeApplyButton.onClick();
+        velocityApplyButton.onClick();
+        DuAE.endUndoGroup();
+    };
+
+    var easeGroup = DuScriptUI.group(animationGroup, 'row');
+    var easeInSlider = DuScriptUI.slider(easeGroup,33,1,100,'column',true,'','%','right',[75,50,33]);
+    easeInSlider.onChange = function() {
+        easeInSlider.lastModified = true;
+		easeOutSlider.lastModified = false;
+
+		if (!easeLinkButton.checked) easeOutSlider.setValue(easeInSlider.value);
+
+		easeApplyButton.onClick();
+    };
+    easeInSlider.onChanging = function() {
+        if (!easeLinkButton.checked) easeOutSlider.setValue(easeInSlider.value);
+    };
+    var easeButtonGroup = DuScriptUI.group( easeGroup, 'column' );
+    easeButtonGroup.alignment = ['center', 'fill'];
+    var easeSwitchButton = DuScriptUI.button(
+        easeButtonGroup,
+        '',
+        w12_switch,
+        DuScriptUI.String.SWITCH_EASES_TIP
+    );
+    easeSwitchButton.onClick = function() {
+        var inVal = easeInSlider.value;
+		easeInSlider.setValue(easeOutSlider.value);
+		easeOutSlider.setValue(inVal);
+		easeApplyButton.onClick();
+    };
+    var easeLinkButton = DuScriptUI.checkBox(
+        easeButtonGroup,
+        '',
+        w12_constraints,
+        '',
+        '',
+        w12_unlink_chain
+    );
+    easeLinkButton.onClick = function() {
+        if (easeInSlider.lastModified)
+		{
+			easeOutSlider.setValue(easeInSlider.value);
+		}
+		else
+		{
+			easeInSlider.setValue(easeOutSlider.value);
+		}
+    };
+    var easeOutSlider = DuScriptUI.slider(easeGroup,33,1,100,'column',false,'','%','left',[33,50,75]);
+    easeOutSlider.onChange = function() {
+        easeInSlider.lastModified = false;
+		easeOutSlider.lastModified = true;
+
+		if (!easeLinkButton.checked) easeInSlider.setValue(easeOutSlider.value);
+
+		easeApplyButton.onClick();
+    };
+    easeOutSlider.onChanging = function() {
+        if (!easeLinkButton.checked) easeInSlider.setValue(easeOutSlider.value);
+    };
+    var easeApplyButton = DuScriptUI.button(
+        easeGroup,
+        '',
+        DuScriptUI.Icon.CHECK,
+        DuScriptUI.String.APPLY_EASE_TIP
+    );
+    easeApplyButton.alignment = ['right', 'fill'];
+    easeApplyButton.onClick =  function() {
+        Duik.Animation.setEase( easeInSlider.value, easeOutSlider.value );
+    };
+
+    var velocityGroup = DuScriptUI.group(animationGroup,'row');
+    var velocityInSlider = DuScriptUI.slider(velocityGroup,0,-400,400,'column',true,'','%','right',[200,100,0]);
+    velocityInSlider.onChange = function() {
+        velocityInSlider.lastModified = true;
+		velocityOutSlider.lastModified = false;
+
+		if (!velocityLinkButton.checked) velocityOutSlider.setValue(velocityInSlider.value);
+
+		velocityApplyButton.onClick();
+    };
+    velocityInSlider.onChanging = function() {
+        if (!velocityLinkButton.checked) velocityOutSlider.setValue(velocityInSlider.value);
+    };
+    var velocityButtonGroup = DuScriptUI.group( velocityGroup, 'column' );
+    velocityButtonGroup.alignment = ['center', 'fill'];
+    var velocitySwitchButton = DuScriptUI.button(
+        velocityButtonGroup,
+        '',
+        w12_switch,
+        DuScriptUI.String.SWITCH_VELOCITIES_TIP
+    );
+    velocitySwitchButton.onClick = function() {
+        var inVal = velocityInSlider.value;
+		velocityInSlider.setValue(velocityOutSlider.value);
+		velocityOutSlider.setValue(inVal);
+		velocityApplyButton.onClick();
+    }
+    var velocityLinkButton = DuScriptUI.checkBox(
+        velocityButtonGroup,
+        '',
+        w12_constraints,
+        '',
+        '',
+        w12_unlink_chain
+    );
+    velocityLinkButton.onClick = function() {
+        if (velocityInSlider.lastModified)
+		{
+			velocityOutSlider.setValue(velocityInSlider.value);
+		}
+		else
+		{
+			velocityInSlider.setValue(velocityOutSlider.value);
+		}
+    };
+    var velocityOutSlider = DuScriptUI.slider(velocityGroup,0,-400,400,'column',false,'','%','left',[0, 100, 200]);
+    velocityOutSlider.onChange = function() {
+        velocityInSlider.lastModified = false;
+		velocityOutSlider.lastModified = true;
+
+		if (!velocityLinkButton.checked) velocityInSlider.setValue(velocityOutSlider.value);
+
+		velocityApplyButton.onClick();
+    };
+    velocityOutSlider.onChanging = function() {
+        if (!velocityLinkButton.checked) velocityInSlider.setValue(velocityOutSlider.value);
+    };
+    var velocityApplyButton = DuScriptUI.button(
+        velocityGroup,
+        '',
+        DuScriptUI.Icon.CHECK,
+        DuScriptUI.String.APPLY_VELOCITY_TIP
+    );
+    velocityApplyButton.alignment = ['right', 'fill'];
+    velocityApplyButton.onClick = function() {
+        Duik.Animation.setVelocity( velocityInSlider.value, velocityOutSlider.value );
+    };
+
+
+    DuScriptUI.separator( animationGroup );
+
     var animationLibButton = DuScriptUI.button(
         animationGroup,
         DuScriptUI.String.ANIMATION_LIB + '...',
@@ -562,6 +841,8 @@
         animationLibGroup.visible = true;
         animationLibGroup.refreshLib();
     }
+
+    createKleanerButton( animationGroup );
 
     var nlaButton = DuScriptUI.button(
         animationGroup,
