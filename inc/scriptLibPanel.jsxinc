@@ -15,6 +15,131 @@ function buildScriptLibPanel( scriptLibGroup ) {
     // Prepare defaults
     if (typeof scriptLib.data.categories === 'undefined') scriptLib.data.categories = [];
     if (typeof scriptLib.data.scripts === 'undefined') scriptLib.data.scripts = [];
+    if (typeof scriptLib.data.recent === 'undefined') scriptLib.data.recent = [];
+
+    // Utils
+    function getCreateLibEntry( file ) {
+        if (file instanceof File) file = file.absoluteURI;
+        for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var s = scriptLib.data.scripts[i];
+            if (s.absoluteURI == file) {
+                // Update defaults
+                s.favorite = def(s.favorite, false);
+                s.count = def(s.count, 0);
+                return s;
+            }
+        }
+
+        var s = {};
+        s.absoluteURI = file;
+        s.favorite = false;
+        s.count = 0;
+        s.name = DuPath.getBasename(file);
+        s.icon = '';
+        s.category = '';
+        return s;
+    }
+
+    function updateLibEntry( entry ) {
+        for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var a = scriptLib.data.scripts[i];
+            if (a.absoluteURI == entry.absoluteURI) {
+                scriptLib.data.scripts[i] = entry;
+                scriptLib.save();
+                return;
+            }
+        }
+        scriptLib.data.scripts.push(entry);
+        scriptLib.save();
+    }
+
+    function removeLibEntry( entry ) {
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--) {
+            var script = scriptLib.data.scripts[i];
+            if (script.absoluteURI == entry.absoluteURI) {
+                // Remove from recent list
+                for (var j = scriptLib.data.recent.length - 1; j >= 0; j--) {
+                    if (scriptLib.data.recent[j] == script.absoluteURI) scriptLib.data.recent.splice(j, 1);
+                }
+                // Remove from script list
+                scriptLib.data.scripts.splice(i, 1);
+            }
+        }
+
+        scriptLib.save();
+    }
+
+    function removeCatEntry( catName ) {
+        // Remove from categories list
+        for (var i = 0; i < scriptLib.data.categories.length; i++) {
+            var cat = scriptLib.data.categories[i];
+            if (cat.name == catName) {
+                scriptLib.data.categories.splice(i, 1);
+                break;
+            }
+        }
+
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--) {
+            var script = scriptLib.data.scripts[i];
+            if (script.category == catName) {
+                // Remove from recent list
+                for (var j = scriptLib.data.recent.length - 1; j >= 0; j--) {
+                    if (scriptLib.data.recent[j] == script.absoluteURI) scriptLib.data.recent.splice(j, 1);
+                }
+                // Remove from script list
+                scriptLib.data.scripts.splice(i, 1);
+            }
+        }
+
+        scriptLib.save();
+    }
+
+    function cleanScriptLib() {
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0 ; i--) {
+            var a = scriptLib.data.scripts[i];
+            var f = new File(a.absoluteURI);
+            if (!f.exists) scriptLib.data.scripts.splice(i, 1);
+        }
+        for (var i = scriptLib.data.recent.length - 1; i >= 0 ; i--) {
+            var a = scriptLib.data.recent[i];
+            var f = new File(a);
+            if (!f.exists) scriptLib.data.recent.splice(i, 1);
+        }
+        scriptLib.save();
+    }
+
+    function addToRecent( entry ) {
+        var uri = entry.absoluteURI;
+        // If the first is not the same
+        if (scriptLib.data.recent.length > 0 && scriptLib.data.recent[0] == uri) return;
+
+        // Insert
+        scriptLib.data.recent.unshift( uri );
+
+        // Remove others
+        for (var i = scriptLib.data.recent.length -1; i > 0; i--) {
+            if (scriptLib.data.recent[i] == uri) scriptLib.data.recent.splice(i, 1);
+        }
+
+        scriptLib.save();
+    }
+
+    function entryRun( file ){
+        // Count uses
+        var a = getCreateLibEntry(file);
+        a.count++;
+        updateLibEntry(a);
+
+        // Update recent
+        addToRecent(a);
+    }
+
+    function updateCatSelector( catSel ) {
+        // Load other cats
+        for (var i = 0; i < scriptLib.data.categories.length; i++) {
+            catSel.addButton(scriptLib.data.categories[i]);
+        }
+    }
 
     // Popups
     var catNameEditor = DuScriptUI.stringPrompt(
@@ -96,6 +221,22 @@ function buildScriptLibPanel( scriptLibGroup ) {
         // Refresh list
         scriptLibGroup.refreshLib();
     };
+    var scriptSettingsFavButton = DuScriptUI.checkBox(
+        scriptSettingsEditor.content,
+        DuScriptUI.String.FAVORITE,
+        w12_fav
+    );
+    scriptSettingsFavButton.onClick = function() {
+        if (!scriptSettingsEditor.editing) return;
+
+        var s = getCreateLibEntry( scriptSettingsEditor.editing );
+        s.favorite = scriptSettingsFavButton.checked;
+        updateLibEntry(s);
+
+        scriptSettingsEditor.hide();
+
+        scriptLibGroup.refreshLib();
+    };
     scriptSettingsNameEditor = DuScriptUI.editText(
         scriptSettingsEditor.content,
         '',
@@ -162,23 +303,8 @@ function buildScriptLibPanel( scriptLibGroup ) {
         var ok = confirm(DuString.args(DuScriptUI.String.SCRIPT_LIB_CONFIRM_REMOVE_CAT, [catName]));
         if (!ok) return;
         
-        // Remove from categories list
-        for (var i = 0; i < scriptLib.data.categories.length; i++) {
-            var cat = scriptLib.data.categories[i];
-            if (cat.name == catName) {
-                scriptLib.data.categories.splice(i, 1);
-                break;
-            }
-        }
-        // Remove from scripts list
-        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--) {
-            var script = scriptLib.data.scripts[i];
-            if (script.category == catName) {
-                scriptLib.data.scripts.splice(i, 1);
-            }
-        }
+        removeCatEntry( catName );
 
-        scriptLib.save();
         scriptLibGroup.refreshLib();
     }
 
@@ -190,7 +316,7 @@ function buildScriptLibPanel( scriptLibGroup ) {
     );
     editCatButton.alignment = ['left', 'fill'];
     editCatButton.onClick = function() {
-        if (catSelector.index < 6) {
+        if (catSelector.index < 9) {
             catNameEditor.block = true;
             return;
         }
@@ -211,12 +337,6 @@ function buildScriptLibPanel( scriptLibGroup ) {
     }
 
     var catSelector = DuScriptUI.selector(categoriesGroup);
-    catSelector.addButton('All categories');
-    catSelector.addButton('Uncategorized');
-    catSelector.addButton('Dockable Scripts');
-    catSelector.addButton('Ae Scripts');
-    catSelector.addButton('Startup Scripts');
-    catSelector.addButton('Shutdown Scripts');
     catSelector.onChange = function() {
 
         // A function to list scripts
@@ -246,17 +366,57 @@ function buildScriptLibPanel( scriptLibGroup ) {
             }
         }
 
+        function addItem( entry ) {
+            var f = new File(entry.absoluteURI);
+            if (!f.exists) return;
+            var item = scriptList.add('item', entry.name );
+            item.file = new File(entry.absoluteURI);
+            var iconFile = new File(entry.icon);
+            if (iconFile.exists) item.image = entry.icon;
+        }
+
         // List script files
         scriptList.removeAll();
 
-        if (catSelector.index == 0) { // All
+        if (catSelector.index == 0) { // Most used
+            // Sort list
+            scriptLib.data.scripts.sort(function (a, b) {
+                b.count = def(b.count, 0);
+                a.count = def(a.count, 0);
+                return (b.count - a.count);
+            });
+
+            // add
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var script = scriptLib.data.scripts[i];
+                if (script.count > 0) addItem( script );
+            }
+        } else if (catSelector.index == 1) { // Recent
+            for (var i = 0; i < scriptLib.data.recent.length; i++) {
+                var s = scriptLib.data.recent[i];
+                var f = new File(s);
+                if (!f.exists) continue;
+                s = getCreateLibEntry(f);
+                addItem( s );
+            }
+        } else if (catSelector.index == 2) { // Favs
+            // Sort list
+            scriptLib.data.scripts.sort(function (a, b) {
+                b.count = def(b.count, 0);
+                a.count = def(a.count, 0);
+                return (b.count - a.count);
+            });
+
+            // add items
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var s = scriptLib.data.scripts[i];
+                if (s.favorite) addItem(s);
+            }
+        } else if (catSelector.index == 3) { // All
             // Categories
             for (var i = 0; i < scriptLib.data.scripts.length; i++) {
                 var script = scriptLib.data.scripts[i];
-                var item = scriptList.add('item', script.name );
-                item.file = new File(script.absoluteURI);
-                var iconFile = new File(script.icon);
-                if (iconFile.exists) item.image = script.icon;
+                addItem(script);
             }
             // ScriptUI
             var folders = DuAE.scriptFolders("ScriptUI Panels");
@@ -278,32 +438,27 @@ function buildScriptLibPanel( scriptLibGroup ) {
             for (var i = 0; i < folders.length; i++) {
                 listScripts(folders[i]);
             }
-        } else if (catSelector.index == 1) { // Uncategorized
+        } else if (catSelector.index == 4) { // Uncategorized
             for (var i = 0; i < scriptLib.data.scripts.length; i++) {
                 var script = scriptLib.data.scripts[i];
-                if (script.category == "") {
-                    var item = scriptList.add('item', script.name );
-                    item.file = new File(script.absoluteURI);
-                    var iconFile = new File(script.icon);
-                    if (iconFile.exists) item.image = script.icon;
-                }
+                if (script.category == "") addItem(script);
             }
-        } else if (catSelector.index == 2) { // ScriptUI
+        } else if (catSelector.index == 5) { // ScriptUI
             var folders = DuAE.scriptFolders("ScriptUI Panels");
             for (var i = 0; i < folders.length; i++) {
                 listScripts(folders[i]);
             }
-        } else if (catSelector.index == 3) { // Ae Scripts
+        } else if (catSelector.index == 6) { // Ae Scripts
             var folders = DuAE.scriptFolders("");
             for (var i = 0; i < folders.length; i++) {
                 listScripts(folders[i]);
             }
-        } else if (catSelector.index == 4) { // Startup Scripts
+        } else if (catSelector.index == 7) { // Startup Scripts
             var folders = DuAE.scriptFolders("Startup");
             for (var i = 0; i < folders.length; i++) {
                 listScripts(folders[i]);
             }
-        } else if (catSelector.index == 5) { // Shutdown Scripts
+        } else if (catSelector.index == 8) { // Shutdown Scripts
             var folders = DuAE.scriptFolders("Shutdown");
             for (var i = 0; i < folders.length; i++) {
                 listScripts(folders[i]);
@@ -312,12 +467,7 @@ function buildScriptLibPanel( scriptLibGroup ) {
             var catName = catSelector.text;
             for (var i = 0; i < scriptLib.data.scripts.length; i++) {
                 var script = scriptLib.data.scripts[i];
-                if (script.category == catName) {
-                    var item = scriptList.add('item', script.name );
-                    item.file = new File(script.absoluteURI);
-                    var iconFile = new File(script.icon);
-                    if (iconFile.exists) item.image = script.icon;
-                }
+                if (script.category == catName) addItem(script);
             }
         }
 
@@ -367,7 +517,7 @@ function buildScriptLibPanel( scriptLibGroup ) {
     var listGroup = DuScriptUI.group(scriptLibGroup, 'row');
     listGroup.alignment = ['fill', 'fill'];
 
-    // Animations
+    // Scripts
     var scriptList = listGroup.add('listbox');
     scriptList.alignment = ['fill', 'fill'];
 
@@ -415,12 +565,16 @@ function buildScriptLibPanel( scriptLibGroup ) {
 
             if (DuPath.getName( f.parent) == "ScriptUI Panels" && !dontDockButton.checked) DuAE.openScriptUIPanel( DuPath.getName( f ) );
             else $.evalFile(f.absoluteURI);
+
+            entryRun( f );
         };
 
         applyButton.onAltClick = function() {
             if (!scriptList.selection) return;
             var f = scriptList.selection.file;
             $.evalFile(f.absoluteURI);
+
+            entryRun( f );
         }
     }
     scriptList.onDoubleClick = function() {
@@ -523,15 +677,10 @@ function buildScriptLibPanel( scriptLibGroup ) {
         // Add to settings and refresh
         for (var i = 0; i < files.length; i++) {
             var f = files[i];
-            var fobj = {};
-            fobj.name = DuPath.getName( f );
-            fobj.absoluteURI = f.absoluteURI;
-            fobj.icon = "";
-            if (catSelector.index > 5) fobj.category = catSelector.text;
-            else fobj.category = "";
-            scriptLib.data.scripts.push(fobj);
+            var s = getCreateLibEntry( f );
+            if (catSelector.index > 8) s.category = catSelector.text;
+            updateLibEntry(s);
         }
-        scriptLib.save();
         scriptLibGroup.refreshLib();
     }
 
@@ -555,25 +704,17 @@ function buildScriptLibPanel( scriptLibGroup ) {
         var f = scriptList.selection.file;
         scriptSettingsEditor.editing = f;
 
-        // Get category
-        var cat = "";
-        for (var i = 0; i < scriptLib.data.scripts.length; i++) {
-            var s = scriptLib.data.scripts[i];
-            if (s.absoluteURI == f.absoluteURI) {
-                cat = s.category;
-                break;
-            }
-        }
+        var s = getCreateLibEntry(f);
 
         // Set category
         scriptSettingsCatSelector.clear();
-        scriptSettingsCatSelector.addButton("Uncategorized");
-        for (var i = 0; i < scriptLib.data.categories.length; i++) {
-            scriptSettingsCatSelector.addButton(scriptLib.data.categories[i]);
-        }
-        if (cat == "") scriptSettingsCatSelector.setCurrentIndex(0);
-        else scriptSettingsCatSelector.setCurrentText(cat);
-        
+        scriptSettingsCatSelector.addButton("Uncategorized", w12_file );
+        updateCatSelector(scriptSettingsCatSelector);
+        if (s.category == "") scriptSettingsCatSelector.setCurrentIndex(0);
+        else scriptSettingsCatSelector.setCurrentText(s.category);
+
+        // Set fav
+        scriptSettingsFavButton.setChecked( s.favorite ); 
     };
 
     var removeScriptButton = DuScriptUI.button(
@@ -588,15 +729,8 @@ function buildScriptLibPanel( scriptLibGroup ) {
 
         var f = scriptList.selection.file;
 
-        // remove from settings
-        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--)
-        {
-            var s = scriptLib.data.scripts[i];
-            if (s.absoluteURI == f.absoluteURI) {
-                scriptLib.data.scripts.splice(i, 1);
-            }
-        }
-        scriptLib.save();
+        removeLibEntry( getCreateLibEntry(f) );
+        
         scriptLibGroup.refreshLib();
     };
 
@@ -611,7 +745,7 @@ function buildScriptLibPanel( scriptLibGroup ) {
         // Rename
         else {
             // Get the current name
-            if (catSelector.index < 6) return;
+            if (catSelector.index < 9) return;
             // rename in settings and in all scripts in settings
             for (var i = 0; i < scriptLib.data.categories.length; i++) {
                 if (scriptLib.data.categories[i] == catNameEditor.previousString) scriptLib.data.categories[i] = newName;
@@ -645,21 +779,25 @@ function buildScriptLibPanel( scriptLibGroup ) {
         if (currentCat < 0) currentCat = DuESF.scriptSettings.data.scriptLib.currentCategory;
 
         // Reset cat list
+        catSelector.freeze = true;
         catSelector.clear();
-        catSelector.addButton('All categories');
-        catSelector.addButton('Uncategorized');
+        catSelector.addButton(DuScriptUI.String.MOST_USED, w12_count);
+        catSelector.addButton(DuScriptUI.String.RECENT, w12_recent);
+        catSelector.addButton(DuScriptUI.String.FAVORITES, w12_fav);
+        catSelector.addButton(DuScriptUI.String.ALL_CATEGORIES, w12_library);
+        catSelector.addButton(DuScriptUI.String.UNCATEGORIZED, w12_file);
         catSelector.addButton('Dockable Scripts');
         catSelector.addButton('Ae Scripts');
         catSelector.addButton('Startup Scripts');
         catSelector.addButton('Shutdown Scripts');
         catSelector.setCurrentIndex(0);
 
-        // Load other cats
-        for (var i = 0; i < scriptLib.data.categories.length; i++) {
-            catSelector.addButton(scriptLib.data.categories[i]);
-        }
+        updateCatSelector( catSelector );
 
         catSelector.setCurrentIndex(currentCat);
+
+        catSelector.freeze = false;
+        catSelector.onChange();
     }
 
     catNameEditor.tieTo(editCatButton);
