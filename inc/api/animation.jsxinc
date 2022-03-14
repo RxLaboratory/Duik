@@ -921,3 +921,127 @@ Duik.Animation.setVelocity = function( vIn, vOut ) {
 
     DuAE.endUndoGroup(DuScriptUI.String.SET_VELOCITY);
 }
+
+/**
+ * Sets the selected keyframes spatial interpolation
+ */
+Duik.Animation.setSpatialInterpolation = function( inType, outType) {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length == 0) return;
+
+    outType = def(outType, inType);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SPATIAL_INTERPOLATION, false);
+
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        prop.setSpatialInterpolation( inType, outType, true );
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SPATIAL_INTERPOLATION);
+};
+
+Duik.CmdLib['Animation']["Set spatial linear"] = "Duik.Animation.setSpatialLinear()";
+/**
+ * Sets the selected keyframes spatial interpolation to linear
+ */
+Duik.Animation.setSpatialLinear = function() {
+    Duik.Animation.setSpatialInterpolation(KeyframeInterpolationType.LINEAR);
+};
+
+Duik.CmdLib['Animation']["Set spatial bezier in"] = "Duik.Animation.setSpatialBezierIn()";
+/**
+ * Sets the selected keyframes spatial interpolation to linear
+ */
+Duik.Animation.setSpatialBezierIn = function() {
+    Duik.Animation.setSpatialInterpolation(KeyframeInterpolationType.BEZIER, KeyframeInterpolationType.LINEAR);
+};
+
+Duik.CmdLib['Animation']["Set spatial bezier out"] = "Duik.Animation.setSpatialBezierOut()";
+/**
+ * Sets the selected keyframes spatial interpolation to linear
+ */
+Duik.Animation.setSpatialBezierOut = function() {
+    Duik.Animation.setSpatialInterpolation(KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.BEZIER);
+};
+
+Duik.CmdLib['Animation']["Set spatial bezier"] = "Duik.Animation.setSpatialBezier()";
+/**
+ * Sets the selected keyframes spatial interpolation to linear
+ */
+Duik.Animation.setSpatialBezier = function() {
+    Duik.Animation.setSpatialInterpolation(KeyframeInterpolationType.BEZIER, KeyframeInterpolationType.BEZIER);
+};
+
+Duik.CmdLib['Animation']["Fix spatial interpolation"] = "Duik.Animation.fixSpatialInterpolation()";
+/**
+ * Sets the selected keyframes spatial interpolation to linear
+ */
+Duik.Animation.fixSpatialInterpolation = function() {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SPATIAL_INTERPOLATION, false);
+
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        prop.fixSpatialInterpolation( undefined, true );
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SPATIAL_INTERPOLATION);
+};
+
+/**
+ * Adds a key to the properties at current time, tweening according to the previous and next keyframe
+ * @param {float} [tweenRatio=0.5] The value ratio for tweening: 0.0 is the value of the previous key, 1.0 is the value of the next key. Note that this value can be < 0 and > 1.0 if you wish.
+ * @param {Bool} [animatedProps=true] Set to false to add a key to all selected properties, instead of all animated properties.
+ * @param {Bool} [selectedLayers=true] Set to false to add a key to all layers instead of just the selection.
+ */
+Duik.Animation.tween = function(tweenRatio, animatedProps, selectedLayers) {
+    tweenRatio = def(tweenRatio, 0.5);
+    animatedProps = def(animatedProps, true);
+    selectedLayers = def(selectedLayers, true);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TWEEN, false);
+
+    var props;
+    if (animatedProps) props = DuAEComp.getAnimatedProps(undefined, undefined, undefined, selectedLayers);
+    else props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length == 0) return;
+
+    props.do(function(prop) {
+        var numKeys = prop.numKeys(false);
+        if (numKeys == 0) return;
+        // Current time
+        var time = prop.comp.time;
+        // Values
+        var nKey = prop.nearestKeyAtTime(time);
+        var pKey;
+        // There's a keyframe at the current time, remove it and try again
+        if (nKey._time == time && nKey._index != 0 && nKey._index != numKeys) {
+            prop.removeKey(nKey);
+            nKey = prop.nearestKeyAtTime(time);
+        }
+        // Get the previous key
+        if (nKey._time < time) {
+            // It's the last one; ignore
+            if (nKey._index == numKeys) return;
+            pKey = nKey;
+            nKey = prop.keyAtIndex(nKey._index + 1);
+        }
+        else {
+            // It's the first one; just set a new key at current time
+            if (nKey._index == 0) return;
+            pKey = prop.keyAtIndex(nKey._index - 1);
+        }
+    
+        // Interpolate the value and set the new key
+        var newValue = DuMath.linear(tweenRatio, 0.0, 1.0, pKey.value, nKey.value);
+        prop.setValueAtTime( newValue, time);
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.TWEEN, false);
+};
