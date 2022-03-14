@@ -1045,3 +1045,86 @@ Duik.Animation.tween = function(tweenRatio, animatedProps, selectedLayers) {
 
     DuAE.endUndoGroup(DuScriptUI.String.TWEEN, false);
 };
+
+/**
+ * Splits the selected keyframes into couple of keyframes with the same values
+ * @param {int} [duration=2] The number of frames between the two keyframes.
+ * @param {DuAE.TimeAlignment} [alignment = DuAE.TimeAlignment.CENTER] How to align the new keyframes according to the current time.
+ */
+Duik.Animation.splitKeys = function( duration, alignment ) {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length == 0) return;
+
+    alignment = def(alignment, DuAE.TimeAlignment.CENTER);
+    duration = def(duration, 2);
+
+    if (isNaN(duration)) duration  = 2;
+    if (duration < 1) duration = 1;
+    duration = Math.abs(duration);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SPLIT_KEYS, false);
+
+    // When modifying properties, keys are deselected. Let's keep the list.
+    var selectedKeys = [];
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        selectedKeys.push(prop.selectedKeys());
+    });
+
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        var d = prop.comp.frameDuration * duration;
+        // For each selected keyframe
+        var keys = selectedKeys[props.current];
+        for (var i=keys.length-1; i >= 0; i--) {
+            var key = prop.keyAtIndex(keys[i]);
+
+            var pKey, nKey;
+
+            if (alignment == DuAE.TimeAlignment.CENTER) {
+                prop.removeKey(key);
+
+                var pD = -d/2;
+                var nD = d/2;
+                // Snap!
+                if (duration % 2 == 1) {
+                    pD += prop.comp.frameDuration / 2;
+                    nD += prop.comp.frameDuration / 2;
+                }
+
+                pKey = key._clone();
+                pKey._time += pD;
+                prop.setKey(pKey, 0);
+
+                nKey = key._clone();
+                nKey._time += nD;
+                nKey._index++;
+
+                prop.setKey(nKey, 0);
+            }
+            else if (alignment == DuAE.TimeAlignment.IN_POINT) {
+                nKey = key._clone();
+                nKey._time += d;
+                nKey._index++;
+                prop.setKey(nKey, 0);
+
+                pKey = key._clone();
+            }
+            else {
+                nKey = key._clone();
+                nKey._index++;
+
+                pKey = key._clone();
+                pKey._time -= d;
+                prop.setKey(pKey, 0);
+            }
+
+            // Adjust spatial interpolation
+            prop.setSpatialTangentsAtKey( pKey, prop.keyInSpatialTangent(pKey), [0,0]);
+            prop.setSpatialTangentsAtKey( nKey, [0,0], prop.keyOutSpatialTangent(nKey));
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SPLIT_KEYS);
+}
