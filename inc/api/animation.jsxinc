@@ -1128,3 +1128,289 @@ Duik.Animation.splitKeys = function( duration, alignment ) {
 
     DuAE.endUndoGroup(DuScriptUI.String.SPLIT_KEYS);
 }
+
+Duik.CmdLib['Animation']["Cel onion skin"] = "Duik.Animation.celOnionSkin()";
+/**
+ * (De)activates or updates the onion skin of a Duik cel animation comp.
+ * @param {Boolean} [enabled=true] If omitted, will try to get it from the existing cels.
+ * @param {int} [frames=5] The duration (in frames) of the onion skin. If omitted, will try to get it from the existing cels.
+ * @param {int} [exposure=2] The animation exposure. If omitted, will try to get it from the existing cels.
+ * @param {float} [inOpacity=50] The in opacity. If omitted, will try to get it from the existing cels.
+ * @param {float} [outOpacity=50] The out opacity. If omitted, will try to get it from the existing cels.
+ */
+Duik.Animation.celOnionSkin = function( enabled, frames, exposure, inOpacity, outOpacity) {
+
+    frames = def(frames, -1);
+    exposure = def(exposure, -1);
+    inOpacity = def(inOpacity, -1);
+    outOpacity = def(outOpacity, -1);
+
+    if (isNaN(frames)) frames = 5;
+
+    if (isNaN(exposure)) exposure = 2;
+
+    if (inOpacity == 0 && outOpacity == 0) enabled = false;
+
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    var layers = comp.selectedLayers;
+    if (layers.length == 0) layers = comp.layers;
+    layers = new DuList(layers);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.ONION_SKIN, false);
+    
+    // TODO Get/Set settings to the layer if enabled
+    layers.do(function(layer) {
+
+        var tag = DuAETag.get(layer);
+
+        // Try to get parameters from the layer tags
+        if (typeof enabled === 'undefined') enabled = DuAETag.getValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_ENABLED, DuAETag.Type.BOOL, tag );
+        if (enabled === null) enabled = true;
+
+        if (frames < 1) frames = DuAETag.getValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_FRAMES, DuAETag.Type.INT, tag );
+        if (frames === null) frames = 5;
+
+        if (exposure < 1) exposure = DuAETag.getValue( layer, DuAETag.Key.DUIK_CEL_EXPOSURE, DuAETag.Type.INT, tag );
+        if (exposure === null) exposure = 2;
+
+        if (inOpacity < 0) inOpacity = DuAETag.getValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_IN, DuAETag.Type.FLOAT, tag );
+        if (inOpacity === null) inOpacity = 50;
+
+        if (outOpacity < 0) outOpacity = DuAETag.getValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_OUT, DuAETag.Type.FLOAT, tag );
+        if (outOpacity === null) outOpacity = 50;
+
+        for (var i = 1 ; i <= layer.Effects.numProperties ; i++)
+        {
+            var paint = layer.effect(i);
+            if (!paint) continue;
+            if (paint.matchName != "ADBE Paint") continue;
+            if (paint.name.indexOf(DuScriptUI.String.CELLULOID) < 0) continue;
+            for (var j = 1 ; j <= paint.property("ADBE Paint Group").numProperties ; j++)
+            {
+                var stroke = paint.property("ADBE Paint Group")(j);
+                if (stroke.matchName != "ADBE Paint Atom") continue;
+
+                var inPoint = stroke.property("ADBE Paint Duration").value[0];
+                var duration = stroke.property("ADBE Paint Duration").value[1];
+
+                //adjust exposure
+                if (stroke.name.indexOf("#Duik") < 0)
+                {
+                    duration = exposure*comp.frameDuration;
+                    stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+                    stroke.name = stroke.name + " #Duik";
+                }
+
+                DuAETag.setValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_ENABLED, enabled, tag );
+
+                if (enabled)
+                {
+                    //stroke.property("ADBE Paint Transfer Mode") : blending mode
+                    var outPoint = duration + inPoint;
+                    var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+                    //if keyframes (already activated)
+                    if (opacity.numKeys > 0)
+                    {
+                        if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+                        {
+                            outPoint = opacity.keyTime(2) - layer.startTime;
+                        }
+                        else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+                        {
+                            inPoint = opacity.keyTime(3) - layer.startTime;
+                        }
+                        else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+                        {
+                            inPoint = opacity.keyTime(3) - layer.startTime;
+                            outPoint = opacity.keyTime(5) - layer.startTime;
+                        }
+
+                        //remove keys
+                        while (opacity.numKeys>0)
+                        {
+                            opacity.removeKey(1);
+                        }
+                        opacity.setValue(100);
+                        stroke.name = stroke.name.replace(/ #Out/g,"");
+                        stroke.name = stroke.name.replace(/ #In/g,"");
+
+                        // Set tags
+                        DuAETag.setValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_FRAMES, frames, tag );
+                        DuAETag.setValue( layer, DuAETag.Key.DUIK_CEL_EXPOSURE, exposure, tag );
+                        DuAETag.setValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_IN, inOpacity, tag );
+                        DuAETag.setValue( layer, DuAETag.Key.DUIK_CEL_ONION_SKIN_OUT, outOpacity, tag );
+                    }
+
+                    //set duration
+                    if (outOpacity > 0 && inOpacity <= 0)
+                    {
+                        duration = outPoint - inPoint + frames*comp.frameDuration;
+                        stroke.property("ADBE Paint Duration").setValue([inPoint,duration]);
+                    }
+                    else if (outOpacity <= 0 && inOpacity > 0)
+                    {
+                        duration = outPoint - inPoint + frames*comp.frameDuration;
+                        stroke.property("ADBE Paint Duration").setValue([inPoint-frames*comp.frameDuration,duration]);
+                    }
+                    else
+                    {
+                        duration = outPoint - inPoint + 2*frames*comp.frameDuration;
+                        stroke.property("ADBE Paint Duration").setValue([inPoint-frames*comp.frameDuration,duration]);
+                    }
+
+
+                    //add keyframes
+                    if (outOpacity > 0)
+                    {
+                        opacity.setValueAtTime(outPoint-comp.frameDuration+layer.startTime,100);
+                        opacity.setValueAtTime(outPoint+layer.startTime,outOpacity);
+                        opacity.setValueAtTime(outPoint + frames*comp.frameDuration+layer.startTime,0);
+                        stroke.name = stroke.name + " #Out";
+                    }
+                    if (inOpacity > 0)
+                    {
+                        opacity.setValueAtTime(inPoint+layer.startTime,100);
+                        opacity.setValueAtTime(inPoint-frames*comp.frameDuration+layer.startTime,0);
+                        opacity.setValueAtTime(inPoint-comp.frameDuration+layer.startTime,inOpacity);
+                        stroke.name = stroke.name + " #In";
+                    }
+
+                }
+                else
+                {
+                    var opacity = stroke.property("ADBE Paint Properties").property("ADBE Paint Opacity");
+                    if (opacity.numKeys > 0)
+                    {
+                        inPoint = 0;
+                        outPoint = 1;
+                        if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0)
+                        {
+                            inPoint = stroke.property("ADBE Paint Duration").value[0];
+                            outPoint = opacity.keyTime(2);
+                        }
+                        else if (stroke.name.indexOf("#Out") < 0 && stroke.name.indexOf("#In") >= 0)
+                        {
+                            outPoint = stroke.property("ADBE Paint Duration").value[0] + stroke.property("ADBE Paint Duration").value[1];
+                            inPoint = opacity.keyTime(3);
+                        }
+                        else if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") >= 0)
+                        {
+                            inPoint = opacity.keyTime(3);
+                            outPoint = opacity.keyTime(5);
+                        }
+
+
+                        while (opacity.numKeys>0)
+                        {
+                            opacity.removeKey(1);
+                        }
+                        opacity.setValue(100);
+                        //set duration
+                        var o = outPoint-inPoint;
+                        var i = inPoint;
+                        if (stroke.name.indexOf("#Out") >= 0 && stroke.name.indexOf("#In") < 0) o = o-layer.startTime;
+                        else if (stroke.name.indexOf("#Out") < 0) o = o + layer.startTime;
+                        if (stroke.name.indexOf("#In") >= 0) i = i-layer.startTime;
+
+                        stroke.property("ADBE Paint Duration").setValue([i,o]);
+
+                        stroke.name = stroke.name.replace(/ #In/g,"");
+                        stroke.name = stroke.name.replace(/ #Out/g,"");
+                    }
+                }
+            }
+        }
+
+        //deselect
+        while(layer.selectedProperties.length > 0)
+        {
+            layer.selectedProperties[0].selected = false;
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.ONION_SKIN);
+};
+
+Duik.CmdLib['Animation']["New Cel"] = "Duik.Animation.newCel()";
+/**
+ * Creates a new cel for a Duik cel animation
+ * @param {Boolean} [createNewLayer=false] Set to true to create the cel on a new layer
+ */
+Duik.Animation.newCel = function( createNewLayer ) {
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    createNewLayer = def(createNewLayer, false);
+
+    var layer = null;
+
+    if (!createNewLayer) {
+        layer = Duik.Layer.get( Duik.Layer.Type.CEL, true, comp );
+        if (layer.length == 0) layer = Duik.Layer.get( Duik.Layer.Type.CEL, false, comp );
+        if (layer.length > 0) layer = layer[0];
+        else layer = null;
+    }
+
+    DuAE.beginUndoGroup(DuScriptUI.String.NEW_CEL, false);
+
+    if (!layer) {
+        layer = comp.layers.addSolid( [0,0,0], DuScriptUI.String.CELLULOID, comp.width, comp.height, comp.pixelAspect, comp.duration );
+        Duik.Layer.setType(Duik.Layer.Type.CEL, layer);
+    }
+
+    var first = true;
+	for (var i = 1 ; i <= layer('ADBE Effect Parade').numProperties ; i++)
+	{
+		if (layer.effect(i).matchName == 'ADBE Paint')
+		{
+			first = false;
+			break;
+		}
+	}
+
+	var newName = DuAELayer.newUniqueEffectName(DuScriptUI.String.CELLULOID,layer);
+	var paint = layer('ADBE Effect Parade').addProperty('ADBE Paint');
+	paint.name = newName;
+
+	if (first) paint.property('ADBE Paint On Transparent').setValue(true);
+
+    DuAE.endUndoGroup(DuScriptUI.String.NEW_CEL);
+}
+
+Duik.CmdLib['Animation']["Previous Cel"] = "Duik.Animation.previousCel()";
+/**
+ * Goes to the previous frame in a Duik cel animation
+ * @param {int} [exposure=2] The animation exposure
+ */
+Duik.Animation.previousCel = function(exposure) {
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    exposure = def(exposure,2);
+    if (isNaN(exposure)) exposure = 2;
+    if (exposure < 1) exposure = 1;
+
+    comp.time = comp.time - comp.frameDuration * exposure;
+
+    Duik.Animation.celOnionSkin();
+}
+
+Duik.CmdLib['Animation']["Next Cel"] = "Duik.Animation.nextCel()";
+/**
+ * Goes to the next frame in a Duik cel animation
+ * @param {int} [exposure=2] The animation exposure
+ */
+Duik.Animation.nextCel = function(exposure) {
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    exposure = def(exposure,2);
+    if (isNaN(exposure)) exposure = 2;
+    if (exposure < 1) exposure = 1;
+
+    comp.time = comp.time + comp.frameDuration * exposure;
+
+    Duik.Animation.celOnionSkin();
+}
