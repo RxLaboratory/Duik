@@ -5,6 +5,7 @@
         animationGroup.visible = false;
         animationLibGroup.visible = false;
         moveAnchorPointGroup.visible = false;
+        celAnimationGroup.visible = false;
     }
 
     // A Spacer
@@ -362,6 +363,14 @@
     };
 
     createAlignButton(toolsGroup);
+
+    var motionTrailButton = toolsGroup.addButton(
+        DuScriptUI.String.MOTION_TRAIL,
+        w12_motion_trail,
+        DuScriptUI.String.MOTION_TRAIL_TIP
+    );
+    motionTrailButton.onClick = Duik.Automation.motionTrail;
+    motionTrailButton.onAltClick = function() { Duik.Automation.motionTrail(true) };
 
     var mainGroup = DuScriptUI.group(this, 'stacked');
     mainGroup.margins = 3;
@@ -984,6 +993,184 @@
         clipButton.onClick = Duik.Automation.addNLAClip;
     }
 
+    var celAnimationButton = DuScriptUI.button(
+        animationGroup,
+        DuScriptUI.String.CEL_ANIMATION + '...',
+        w16_cel_animation,
+        DuScriptUI.String.CEL_ANIMATION_TIP,
+        false,
+        undefined,
+        undefined,
+        false // Don't translate
+    );
+    celAnimationButton.onClick = function() {
+        if (!celAnimationGroup.built) {
+            celAnimationGroup.built = true;
+
+            var newCelButton = DuScriptUI.button(
+                celAnimationGroup,
+                DuScriptUI.String.NEW_CEL,
+                w16_new_cel,
+                DuScriptUI.String.NEW_CEL_TIP
+            );
+            newCelButton.onClick = Duik.Animation.newCel;
+            newCelButton.onAltClick = function() { Duik.Animation.newCel(true) };
+
+            DuScriptUI.separator(celAnimationGroup);
+
+            var onionSkinGroup = DuScriptUI.group( celAnimationGroup, 'row');
+
+            var onionSkinButton = DuScriptUI.checkBox(
+                onionSkinGroup,
+                DuScriptUI.String.ONION_SKIN,
+                w16_onion_skin,
+                DuScriptUI.String.ONION_SKIN_TIP
+            );
+            onionSkinButton.alignment = ['left', 'fill'];
+            onionSkinButton.setChecked(true);
+            onionSkinButton.onClick = function() {
+                if (onionSkinButton.checked) {
+                    onionInGroup.enabled = true;
+                    onionOutGroup.enabled = true;
+                    onionSkinEdit.enabled = true;
+                }
+                else {
+                    onionInGroup.enabled = false;
+                    onionOutGroup.enabled = false
+                    onionSkinEdit.enabled = false;
+                }
+
+                var i = onionInSlider.value;
+                var o = onionOutSlider.value;
+                if (!onionInButton.checked) i = 0;
+                if (!onionOutButton.checked) o = 0;
+
+                var f = parseInt( onionSkinEdit.text );
+                var e = parseInt( frameEditButton.text );
+
+                Duik.Animation.celOnionSkin( onionSkinButton.checked, f, e, i, o);
+            };
+            
+            var onionSkinEdit = DuScriptUI.editText(
+                onionSkinGroup,
+                '5',
+                '',
+                ' ' + DuScriptUI.String.FRAMES,
+                '',
+                '',
+                false
+            );
+            onionSkinEdit.onChange = onionSkinButton.onClick;
+
+            var onionInGroup = DuScriptUI.group( celAnimationGroup, 'row');
+
+            var onionInButton = DuScriptUI.checkBox(
+                onionInGroup,
+                DuScriptUI.String.IN
+            );
+            onionInButton.setChecked(true);
+            onionInButton.alignment = ['left', 'fill'];
+            onionInButton.onClick = function() {
+                onionInSlider.enabled = onionInButton.checked;
+                onionSkinButton.onClick();
+            };
+
+            var onionInSlider = DuScriptUI.slider(
+                onionInGroup,
+                50,
+                0,
+                100,
+                'row',
+                undefined,
+                '',
+                '%'
+            );
+            onionInSlider.onChange = onionSkinButton.onClick;
+
+            var onionOutGroup = DuScriptUI.group( celAnimationGroup, 'row');
+
+            var onionOutButton = DuScriptUI.checkBox(
+                onionOutGroup,
+                DuScriptUI.String.OUT
+            );
+            onionOutButton.setChecked(true);
+            onionOutButton.alignment = ['left', 'fill'];
+            onionOutButton.onClick = function() {
+                onionOutSlider.enabled = onionOutButton.checked;
+                onionSkinButton.onClick();
+            };
+
+            var onionOutSlider = DuScriptUI.slider(
+                onionOutGroup,
+                50,
+                0,
+                100,
+                'row',
+                undefined,
+                '',
+                '%'
+            );
+            onionOutSlider.onChange = onionSkinButton.onClick;
+
+            DuScriptUI.separator(celAnimationGroup);
+
+            var celFrameGroup = DuScriptUI.group( celAnimationGroup, 'row');
+
+            var prevFrameButton = DuScriptUI.button(
+                celFrameGroup,
+                '',
+                w16_previous_frame,
+                DuScriptUI.String.PREVIOUS_FRAME_TIP
+            );
+            prevFrameButton.onClick = function() {
+                var e = parseInt( frameEditButton.text );
+                Duik.Animation.previousCel(e);
+            };
+
+            var frameEditButton = DuScriptUI.editText(
+                celFrameGroup,
+                '2',
+                DuScriptUI.String.EXPOSURE + ': ',
+                ' ' + DuScriptUI.String.FRAMES,
+                '',
+                DuScriptUI.String.EXPOSURE_TIP,
+                false
+            );
+
+            var nextFrameButton = DuScriptUI.button(
+                celFrameGroup,
+                '',
+                w16_next_frame,
+                DuScriptUI.String.NEXT_FRAME_TIP
+            );
+            nextFrameButton.onClick = function() {
+                var e = parseInt( frameEditButton.text );
+                Duik.Animation.nextCel(e);
+            };
+
+            // Close button
+            var cancelButton = DuScriptUI.button(
+                celAnimationGroup,
+                DuScriptUI.String.CLOSE,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            cancelButton.alignment = ['fill', 'bottom'];
+            cancelButton.onClick = function() {
+                hideAllGroups();
+                animationGroup.visible = true;
+            }
+
+            DuScriptUI.showUI(celAnimationGroup);
+        }
+
+        hideAllGroups();
+        celAnimationGroup.visible = true;
+    };
+
     var animationLibGroup = DuScriptUI.group(mainGroup, 'column');
     animationLibGroup.visible = false;
     animationLibGroup.built = false;
@@ -991,4 +1178,8 @@
     var moveAnchorPointGroup = DuScriptUI.group(mainGroup, 'column');
     moveAnchorPointGroup.visible = false;
     moveAnchorPointGroup.built = false;
+
+    var celAnimationGroup = DuScriptUI.group(mainGroup, 'column');
+    celAnimationGroup.visible = false;
+    celAnimationGroup.built = false;
 }
