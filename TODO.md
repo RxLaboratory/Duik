@@ -1,9 +1,6 @@
 # TODO
 
-## DuAEF & DuESF
 
-- [x] Add random button to the color selector
-- [ ] option to hide options button in all modes.
 
 ## Notes
 
