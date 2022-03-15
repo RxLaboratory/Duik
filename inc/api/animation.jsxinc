@@ -1004,13 +1004,13 @@ Duik.Animation.tween = function(tweenRatio, animatedProps, selectedLayers) {
     animatedProps = def(animatedProps, true);
     selectedLayers = def(selectedLayers, true);
 
-    DuAE.beginUndoGroup(DuScriptUI.String.TWEEN, false);
-
     var props;
     if (animatedProps) props = DuAEComp.getAnimatedProps(undefined, undefined, undefined, selectedLayers);
     else props = DuAEComp.getSelectedProps();
     props = new DuList(props);
     if (props.length == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TWEEN, false);
 
     props.do(function(prop) {
         var numKeys = prop.numKeys(false);
@@ -1046,6 +1046,7 @@ Duik.Animation.tween = function(tweenRatio, animatedProps, selectedLayers) {
     DuAE.endUndoGroup(DuScriptUI.String.TWEEN, false);
 };
 
+Duik.CmdLib['Animation']["Split keys"] = "Duik.Animation.splitKeys()";
 /**
  * Splits the selected keyframes into couple of keyframes with the same values
  * @param {int} [duration=2] The number of frames between the two keyframes.
@@ -1127,7 +1128,52 @@ Duik.Animation.splitKeys = function( duration, alignment ) {
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.SPLIT_KEYS);
-}
+};
+
+Duik.CmdLib['Animation']["Freeze pose"] = "Duik.Animation.freezePose()";
+/**
+ * Freezes the pose; copies the previous keyframe to the current time.
+ * @param {Bool} [animatedProps=true] Set to false to add a key to all selected properties, instead of all animated properties.
+ * @param {Bool} [selectedLayers=true] Set to false to add a key to all layers instead of just the selection.
+ * @param {Bool} [useNextPose=false] If true, will freeze the next pose instead of the previous one (copies the next keyframe to the current time).
+ */
+Duik.Animation.freezePose = function(animatedProps, selectedLayers, useNextPose) {
+    useNextPose = def(useNextPose, false);
+    animatedProps = def(animatedProps, true);
+    selectedLayers = def(selectedLayers, true);
+
+    var props;
+    if (animatedProps) props = DuAEComp.getAnimatedProps(undefined, undefined, undefined, selectedLayers);
+    else props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.FREEZE_POSE, false);
+
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        // Get the previous keyframe (or next)
+        var time = prop.comp.time;
+        var key = prop.nearestKeyAtTime( time );
+        // Adjust
+        if (useNextPose && key._time <= time) {
+            if (key._index == prop.numKeys()) return;
+            key = prop.keyAtIndex( key._index + 1);
+        }
+        else if (!useNextPose && key._time >= time) {
+            if (key._index == 1) return;
+            key = prop.keyAtIndex( key._index - 1);
+        }
+        key._time = 0;
+        // Set new key
+        prop.setKey(key, time);
+        // Adjust spatial interpolation
+        prop.setSpatialTangentsAtKey( key._index, prop.keyInSpatialTangent(key._index), [0,0]);
+        prop.setSpatialTangentsAtKey( key._index + 1, [0,0], prop.keyOutSpatialTangent(key._index + 1));
+    });
+    
+    DuAE.endUndoGroup(DuScriptUI.String.FREEZE_POSE);
+};
 
 Duik.CmdLib['Animation']["Cel onion skin"] = "Duik.Animation.celOnionSkin()";
 /**
@@ -1377,7 +1423,7 @@ Duik.Animation.newCel = function( createNewLayer ) {
 	if (first) paint.property('ADBE Paint On Transparent').setValue(true);
 
     DuAE.endUndoGroup(DuScriptUI.String.NEW_CEL);
-}
+};
 
 Duik.CmdLib['Animation']["Previous Cel"] = "Duik.Animation.previousCel()";
 /**
@@ -1395,7 +1441,7 @@ Duik.Animation.previousCel = function(exposure) {
     comp.time = comp.time - comp.frameDuration * exposure;
 
     Duik.Animation.celOnionSkin();
-}
+};
 
 Duik.CmdLib['Animation']["Next Cel"] = "Duik.Animation.nextCel()";
 /**
@@ -1413,4 +1459,4 @@ Duik.Animation.nextCel = function(exposure) {
     comp.time = comp.time + comp.frameDuration * exposure;
 
     Duik.Animation.celOnionSkin();
-}
+};
