@@ -3,6 +3,14 @@ cd ..
 del /s /q docs
 rmdir /s /q docs
 mkdir docs
+cd Duik_Docs
+cd src
+mkdocs build
+cd ..
+cd docs
+echo duik-docs.rainboxlab.org > "CNAME"
+cd ..
+cd ..
 cd tools
 cd "build tools"
 mkdir output
@@ -14,6 +22,7 @@ mkdir "output\Duik_API"
 DuBuilder ..\..\inc\api.jsxinc -nobanner output\Duik_API\Duik_api.jsxinc
 DuBuilder ..\..\inc\api_all.jsxinc -nobanner -d jsdoc_conf.json output\Duik_API\DuAEF_Duik_api.jsxinc
 DuBuilder "..\..\Duik Angela.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Angela.jsx"
+DuBuilder "..\..\Duik Animation.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation.jsx"
 DuBuilder "..\..\Duik Animation Library.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation Library.jsx"
 DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "..\..\Duik Notes.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Notes.jsx"
