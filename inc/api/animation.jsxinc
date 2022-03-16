@@ -1460,3 +1460,39 @@ Duik.Animation.nextCel = function(exposure) {
 
     Duik.Animation.celOnionSkin();
 };
+
+Duik.CmdLib['Animation']["Snap keys"] = "Duik.Animation.snapKeys()";
+/**
+ * Snaps selected (or all) keyframes to the closest frames if they're in between.
+ */
+Duik.Animation.snapKeys = function() {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    var selected = true;
+    if (props.length() == 0) {
+        var comp = DuAEProject.getActiveComp();
+        if (!comp) return;
+        if (comp.selectedLayers.length > 0) props = new DuList(comp.selectedLayers);
+        else props = new DuList(comp.layers);
+        selected = false;
+    }
+
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SNAP_KEYS, false);
+
+    // When modifying properties, keys are deselected. Let's keep the list.
+    var selectedKeys = [];
+    if (selected) {
+        props.do(function(prop) {
+            selectedKeys.push(prop.selectedKeys());
+        });
+    }
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        prop.snapKeys(selectedKeys[props.current], selected);
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SNAP_KEYS);
+}
