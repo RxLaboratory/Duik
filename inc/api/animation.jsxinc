@@ -1531,3 +1531,62 @@ Duik.Animation.syncKeys = function() {
 
     DuAE.endUndoGroup(DuScriptUI.String.SYNC);
 }
+
+Duik.CmdLib['Animation']["Sequence layers"] = "Duik.Animation.sequenceLayers()";
+/**
+ * Sequences selected layers.
+ * @param {int} [duration=24] The transition duration, in frames
+ * @param {Bool} [moveLayers=true] If set to false, the layer are not moved, and the in or out points are changed instead (layers are "cut")
+ * @param {Bool} [useInPoints=true] If moveLayers is false, setting this to false changes the out points instead of the in points (cuts the end instead of the start).
+ * @param {Bool} [reverse=false] Set to true to reverse the order.
+ * @param {function} [interpolation=DuInterpolation.linear] An interpolation function, taking 4 arguments in the form <code>i(value, min, max, targetMin, targetMax)</code>
+ */
+Duik.Animation.sequenceLayers = function(duration, moveLayers, useInPoints, reverse, interpolation) {
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+    var layers = comp.selectedLayers;
+    if (layers.length == 0) layers = comp.layers;
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    duration = def(duration, 24);
+    moveLayers = def(moveLayers, true);
+    useInPoints = def(useInPoints, true);
+    reverse = def(reverse, false);
+    interpolation = def(interpolation, DuMath.linear);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SEQUENCE, false);
+
+    var n = layers.length();
+    var startTime = comp.time;
+    duration = duration * comp.frameDuration;
+    var endTime = startTime + duration;
+
+    for (var i = 0; i < n; i++) {
+        var layer = layers.at(i);
+        var s = reverse ? 0 : n-1;
+        var e = reverse ? n-1 : 0;
+        newTime = interpolation(i, s, e, startTime, endTime);
+        if (moveLayers) layer.startTime = newTime - (layer.inPoint - layer.startTime);
+        else if (useInPoints) {
+            var out = layer.outPoint;
+            if (newTime >= layer.outPoint) newTime = layer.outPoint - comp.frameDuration;
+            layer.inPoint = newTime;
+            layer.outPoint = out;
+        }
+        else {
+            if (newTime <= layer.inPoint) newTime = layer.inPoint + comp.frameDuration;
+            layer.outPoint = newTime;
+        }
+    }//*/
+
+    DuAE.endUndoGroup(DuScriptUI.String.SEQUENCE);
+}
+
+Duik.CmdLib['Animation']["Sequence keys"] = "Duik.Animation.sequenceKeys()";
+/**
+ * Sequences selected keyframes.
+ */
+Duik.Animation.sequenceKeys = function() {
+    
+}

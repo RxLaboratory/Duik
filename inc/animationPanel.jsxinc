@@ -8,6 +8,7 @@
         animationLibGroup.visible = false;
         moveAnchorPointGroup.visible = false;
         celAnimationGroup.visible = false;
+        sequenceGroup.visible = false;
     }
 
     if (!standAlone) {
@@ -628,6 +629,173 @@
     );
     syncKeysButton.onClick = Duik.Animation.syncKeys;
 
+    var sequenceButton = tweenTools.addButton(
+        DuScriptUI.String.SEQUENCE,
+        w16_sequencer
+    );
+    sequenceButton.onClick = function() {
+
+        if (!sequenceGroup.built){
+            sequenceGroup.built = true;
+
+            var layerModeGroup = DuScriptUI.group( sequenceGroup );
+
+            layerModeGroup.add('statictext', undefined, DuScriptUI.String.LAYERS + ':' );
+
+            var layerModeSelector = DuScriptUI.selector( layerModeGroup );
+
+            layerModeSelector.addButton(
+                DuScriptUI.String.TIMES,
+                w16_sequencer_times
+            );
+            layerModeSelector.addButton(
+                DuScriptUI.String.IN_POINTS,
+                w16_sequencer
+            );
+            layerModeSelector.addButton(
+                DuScriptUI.String.OUT_POINTS,
+                w16_sequencer_out
+            );
+            layerModeSelector.setCurrentIndex(0);
+
+            var shapeSelector = DuScriptUI.selector( sequenceGroup );
+            shapeSelector.addButton(
+                DuScriptUI.String.LINEAR,
+                w16_linear_interpolation
+            );
+            shapeSelector.addButton(
+                DuScriptUI.String.SIGMOID,
+                w16_interpolator
+            );
+            shapeSelector.addButton(
+                DuScriptUI.String.GAUSSIAN_BELL,
+                w16_gaussian_interpolation
+            );
+            shapeSelector.addButton(
+                DuScriptUI.String.EASE_IN_LOGARITHMIC,
+                w16_logarithmic_interpolation
+            );
+            shapeSelector.addButton(
+                DuScriptUI.String.EASE_OUT_EXPONENTIAL,
+                w16_exponential_interpolation
+            );
+            shapeSelector.setCurrentIndex(2);
+
+            var durationEdit = DuScriptUI.editText(
+                sequenceGroup,
+                '24',
+                DuScriptUI.String.DURATION + ': ',
+                ' ' + DuScriptUI.String.FRAMES,
+                '',
+                '',
+                false
+            );
+
+            var rateSlider = DuScriptUI.slider(
+                sequenceGroup,
+                30,
+                0,
+                100,
+                'row',
+                false,
+                DuScriptUI.String.RATE
+            );
+
+            var sequenceButtonsGroup = DuScriptUI.group(sequenceGroup);
+
+            var cancelButton = DuScriptUI.button(
+                sequenceButtonsGroup,
+                DuScriptUI.String.CLOSE,
+                DuScriptUI.Icon.BACK,
+                DuScriptUI.String.CLOSE,
+                false,
+                'row',
+                'center'
+            );
+            cancelButton.alignment = ['fill', 'bottom'];
+            cancelButton.onClick = function() {
+                hideAllGroups();
+                animationGroup.visible = true;
+            };
+
+            var okButton = DuScriptUI.button(
+                sequenceButtonsGroup,
+                DuScriptUI.String.SEQUENCE,
+                DuScriptUI.Icon.CHECK,
+                DuScriptUI.String.SEQUENCE_TIP,
+                false,
+                'row',
+                'center'
+            );
+            okButton.onClick = function() {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
+                Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, false, getInterpolation());
+            };
+            okButton.onAltClick = function( ) {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
+                Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, true, getInterpolation());
+            };
+
+
+            function getInterpolation() {
+
+                // For now, approximate with a Bezier function
+                var rate = rateSlider.value / 100;
+                var s = shapeSelector.index;
+                if (s == 0) return DuInterpolation.linear;
+
+                if (s == 1) { // S
+                    return function(t, tm, tM, vm, vM) {
+                        return DuInterpolation.bezier(t, tm, tM, vm, vM, [0, rate, 1, 1-rate]);
+                    };
+                }
+                if (s == 2) { // B
+                    //var outRate = 
+                    return function(t, tm, tM, vm, vM) {
+                        return DuInterpolation.bezier(t, tm, tM, vm, vM, [0, rate, 1, rate]);
+                    };
+                }
+                if (s == 3) { // Log
+                    //var outRate = 
+                    return function(t, tm, tM, vm, vM) {
+                        return DuInterpolation.bezier(t, tm, tM, vm, vM, [0, 0, 1, 1-rate]);
+                    };
+                }
+                if (s == 4) { // exp
+                    //var outRate = 
+                    return function(t, tm, tM, vm, vM) {
+                        return DuInterpolation.bezier(t, tm, tM, vm, vM, [0, rate, 1, 1]);
+                    };
+                }
+
+                /*
+                if (s == 1) {
+                    rate = DuInterpolation.linear(rate, 0, 20, 0, 1);
+                    return function(t, tm, tM, vm, vM) { return DuInterpolation.logistic(t, tm, tM, vm, vM, rate); };
+                }
+                if (s == 2) return DuInterpolation.inverseGaussian;
+                if (s == 3) return DuInterpolation.logarithmic;
+                if (s == 4) return DuInterpolation.exponential;
+                return DuInterpolation.gaussian;*/
+            }
+
+            DuScriptUI.showUI(sequenceGroup);
+        }
+
+        hideAllGroups();
+        sequenceGroup.visible = true;
+    }
+
     var tweenGroup = DuScriptUI.group( animationGroup, 'row' );
 
     var tweenSettingsButton = DuScriptUI.button(
@@ -1230,5 +1398,9 @@
     var celAnimationGroup = DuScriptUI.group(mainGroup, 'column');
     celAnimationGroup.visible = false;
     celAnimationGroup.built = false;
+
+    var sequenceGroup = DuScriptUI.group(mainGroup, 'column');
+    sequenceGroup.visible = false;
+    sequenceGroup.built = false;
     //*/
 }
