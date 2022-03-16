@@ -369,6 +369,13 @@
 
     createAlignButton(toolsGroup);
 
+    var snapButton = toolsGroup.addButton(
+        DuScriptUI.String.SNAP_KEYS,
+        w12_snap,
+        DuScriptUI.String.SNAP_KEYS_TIP
+    );
+    snapButton.onClick = Duik.Animation.snapKeys;
+
     var motionTrailButton = toolsGroup.addButton(
         DuScriptUI.String.MOTION_TRAIL,
         w12_motion_trail,
@@ -378,7 +385,7 @@
     motionTrailButton.onAltClick = function() { Duik.Automation.motionTrail(true) };
 
     var mainGroup = DuScriptUI.group(tab, 'stacked');
-    mainGroup.margins = 3;
+    //mainGroup.margins = 3;
     mainGroup.alignment = ['fill', 'fill'];
 
     var animationGroup = DuScriptUI.group(mainGroup, 'column');
@@ -536,44 +543,16 @@
 
     keyEditOptionsPopup.tieTo( ksettingsButton );
 
-    DuScriptUI.separator( animationGroup, uiMode <= 1 ? DuScriptUI.String.TWEENING : ''  );
+    if (uiMode < 2) DuScriptUI.separator( animationGroup, uiMode <= 1 ? DuScriptUI.String.TWEENING : ''  );
 
-    var tweenGroup = DuScriptUI.group( animationGroup, 'row' );
+    var tweenTools = DuScriptUI.toolBar(animationGroup);
 
-    var tweenSettingsButton = DuScriptUI.button(
-        tweenGroup,
-        '',
-        DuScriptUI.Icon.OPTIONS,
-        DuScriptUI.String.TWEEN_OPTIONS
-    );
-    tweenSettingsButton.alignment = ['left', 'fill'];
-    var tweenOptionsPopup = DuScriptUI.popUp( DuScriptUI.String.TWEEN_OPTIONS );
-    var tweenPropsSelector = DuScriptUI.selector( tweenOptionsPopup.content );
-    tweenPropsSelector.addButton( DuScriptUI.String.ANIMATED_PROPERTIES, w16_animated_prop );
-    tweenPropsSelector.addButton( DuScriptUI.String.SELECTED_PROPERTIES, w16_selected_props );
-    tweenPropsSelector.setCurrentIndex(0);
-    var tweenLayersSelector = DuScriptUI.selector( tweenOptionsPopup.content );
-    tweenLayersSelector.addButton( DuScriptUI.String.SELECTED_LAYERS, w16_selected_layers );
-    tweenLayersSelector.addButton( DuScriptUI.String.ALL_LAYERS, w16_layers );
-    tweenLayersSelector.setCurrentIndex(0);
-    tweenOptionsPopup.tieTo(tweenSettingsButton);
-
-    var tweenSlider = DuScriptUI.slider(tweenGroup,50,0,100,'column',false,'','%','left',[0,25,33,50,66,75,100]);
-    tweenSlider.onChange = function() {
-        var animatedProps = tweenPropsSelector.index == 0;
-        var selectedLayers = tweenLayersSelector.index == 0;
-        Duik.Animation.tween( tweenSlider.value / 100, animatedProps, selectedLayers);
-    };
-
-    var splitKeyButton = DuScriptUI.button(
-        tweenGroup,
-        uiMode < 2 ? DuScriptUI.String.SPLIT_KEYS : '',
+    var splitKeyButton = tweenTools.addButton(
+        DuScriptUI.String.SPLIT_KEYS,
         w16_split_keyframe,
         DuScriptUI.String.SPLIT_KEYFRAME_TIP,
-        true,
-        uiMode < 2 ? 'column' : 'row'
+        true
     );
-    splitKeyButton.alignment = ['right', 'fill'];
     splitKeyButton.optionsPopup.build = function() {
         var splitKeyDurationEdit = DuScriptUI.editText(
             splitKeyButton.optionsPanel,
@@ -614,15 +593,12 @@
         };
     };
 
-    var freezePoseButton = DuScriptUI.button(
-        tweenGroup,
-        uiMode < 2 ? DuScriptUI.String.FREEZE_POSE : '',
+    var freezePoseButton = tweenTools.addButton(
+        DuScriptUI.String.FREEZE_POSE,
         w16_freeze_pose,
         DuScriptUI.String.FREEZE_POSE_TIP,
-        true,
-        uiMode < 2 ? 'column' : 'row'
+        true
     );
-    freezePoseButton.alignment = ['right', 'fill'];
     freezePoseButton.optionsPopup.build = function() {
         var propsSelector = DuScriptUI.selector( freezePoseButton.optionsPanel );
         propsSelector.addButton( DuScriptUI.String.ANIMATED_PROPERTIES, w16_animated_prop );
@@ -643,6 +619,39 @@
             var selectedLayers = tweenLayersSelector.index == 0;
             Duik.Animation.freezePose(animatedProps, selectedLayers, true);
         };
+    };
+
+    var syncKeysButton = tweenTools.addButton(
+        DuScriptUI.String.SYNC,
+        w16_sync_keys,
+        DuScriptUI.String.SYNC_KEYS_TIP
+    );
+
+    var tweenGroup = DuScriptUI.group( animationGroup, 'row' );
+
+    var tweenSettingsButton = DuScriptUI.button(
+        tweenGroup,
+        '',
+        DuScriptUI.Icon.OPTIONS,
+        DuScriptUI.String.TWEEN_OPTIONS
+    );
+    tweenSettingsButton.alignment = ['left', 'fill'];
+    var tweenOptionsPopup = DuScriptUI.popUp( DuScriptUI.String.TWEEN_OPTIONS );
+    var tweenPropsSelector = DuScriptUI.selector( tweenOptionsPopup.content );
+    tweenPropsSelector.addButton( DuScriptUI.String.ANIMATED_PROPERTIES, w16_animated_prop );
+    tweenPropsSelector.addButton( DuScriptUI.String.SELECTED_PROPERTIES, w16_selected_props );
+    tweenPropsSelector.setCurrentIndex(0);
+    var tweenLayersSelector = DuScriptUI.selector( tweenOptionsPopup.content );
+    tweenLayersSelector.addButton( DuScriptUI.String.SELECTED_LAYERS, w16_selected_layers );
+    tweenLayersSelector.addButton( DuScriptUI.String.ALL_LAYERS, w16_layers );
+    tweenLayersSelector.setCurrentIndex(0);
+    tweenOptionsPopup.tieTo(tweenSettingsButton);
+
+    var tweenSlider = DuScriptUI.slider(tweenGroup,50,0,100,'column',false,'','%','left',[0,25,33,50,66,75,100]);
+    tweenSlider.onChange = function() {
+        var animatedProps = tweenPropsSelector.index == 0;
+        var selectedLayers = tweenLayersSelector.index == 0;
+        Duik.Animation.tween( tweenSlider.value / 100, animatedProps, selectedLayers);
     };
 
     DuScriptUI.separator( animationGroup, uiMode <= 1 ? DuScriptUI.String.TEMPORAL_INTERPOLATION : '' );
@@ -963,8 +972,10 @@
 
     DuScriptUI.separator( animationGroup );
 
+    var line1 = DuScriptUI.group(animationGroup, uiMode >= 2 ? 'row' : 'column');
+
     var animationLibButton = DuScriptUI.button(
-        animationGroup,
+        line1,
         DuScriptUI.String.ANIMATION_LIB + '...',
         w16_library,
         DuScriptUI.String.ANIMATION_LIB_TIP
@@ -1004,10 +1015,10 @@
         animationLibGroup.refreshLib();
     }
 
-    createKleanerButton( animationGroup );
+    createKleanerButton( line1 );
 
     var nlaButton = DuScriptUI.button(
-        animationGroup,
+        line1,
         DuScriptUI.String.NLA,
         w16_nla,
         DuScriptUI.String.NLA_TIP,
@@ -1030,7 +1041,7 @@
     }
 
     var celAnimationButton = DuScriptUI.button(
-        animationGroup,
+        line1,
         DuScriptUI.String.CEL_ANIMATION + '...',
         w16_cel_animation,
         DuScriptUI.String.CEL_ANIMATION_TIP,
