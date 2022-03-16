@@ -1069,7 +1069,6 @@ Duik.Animation.splitKeys = function( duration, alignment ) {
     // When modifying properties, keys are deselected. Let's keep the list.
     var selectedKeys = [];
     props.do(function(prop) {
-        if (prop.isGroup()) return;
         selectedKeys.push(prop.selectedKeys());
     });
 
@@ -1491,8 +1490,44 @@ Duik.Animation.snapKeys = function() {
 
     props.do(function(prop) {
         prop = new DuAEProperty(prop);
-        prop.snapKeys(selectedKeys[props.current], selected);
+        prop.snapKeys(selectedKeys[props.current]);
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.SNAP_KEYS);
+}
+
+Duik.CmdLib['Animation']["Sync keys"] = "Duik.Animation.syncKeys()";
+/**
+ * Syncs the selected keyframes; moves them to the current time.< br />
+ * If multiple keyframes are selected for the same property, they're offset to the current time, keeping the animation.
+ */
+Duik.Animation.syncKeys = function() {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SYNC, false);
+
+    // When modifying properties, keys are deselected. Let's keep the list.
+    var selectedKeys = [];
+    props.do(function(prop) {
+        selectedKeys.push(prop.selectedKeys());
+    });
+
+    props.do(function(prop) {
+        if (prop.isGroup()) return;
+        var keys = selectedKeys[props.current];
+        if (keys.length == 0) return;
+        // Get offset
+        var fKey = prop.keyAtIndex( keys[0] );
+        var offset = fKey._time - prop.comp.time;
+        // Move key
+        for (var k = 0; k < keys.length; k++) {
+            var key = prop.keyAtIndex( keys[k] );
+            prop.removeKey( key );
+            prop.setKey(key, -offset);
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SYNC);
 }
