@@ -67,19 +67,12 @@
     moveAnchorPointButton.onClick = function() {
 
         if (!moveAnchorPointGroup.built) {
-            var cancelButton = buildMoveAnchorPointGroup(moveAnchorPointGroup);
-
-            cancelButton.onClick = function() {
-                hideAllGroups();
-                constraintsGroup.visible = true;
-            }
+            buildMoveAnchorPointGroup(moveAnchorPointGroup, constraintsGroup);
         }
 
         hideAllGroups();
         moveAnchorPointGroup.visible = true;
     };
-
-    createAlignButton(toolsGroup);
 
     var etmButton = toolsGroup.addButton(
         DuScriptUI.String.EXPOSE_TRANSFORM,
@@ -88,38 +81,74 @@
     );
     etmButton.onClick = Duik.Constraint.exposeTransform;
 
+    var locatorButton = toolsGroup.addButton(
+        DuScriptUI.String.LOCATOR,
+        w12_locator,
+        DuScriptUI.String.LOCATOR_TIP
+    );
+    locatorButton.onClick = Duik.Constraint.locator;
+
+    var extractLocatorButton = toolsGroup.addButton(
+        DuScriptUI.String.EXTRACT_LOCATORS,
+        w12_extract_locator,
+        DuScriptUI.String.EXTRACT_LOCATOR_TIP,
+        true
+    );
+    extractLocatorButton.optionsPopup.build = function() {
+        locatorModeSelector = DuScriptUI.selector(extractLocatorButton.optionsPanel);
+        locatorModeSelector.addButton(
+            DuScriptUI.String.USE_EXPRESSIONS,
+            w16_expression
+        );
+        locatorModeSelector.addButton(
+            DuScriptUI.String.USE_ESSENTIAL_PROPERTIES,
+            w16_essential_property
+        );
+        locatorModeSelector.setCurrentIndex(1);
+
+        extractLocatorButton.onClick = function() {
+            var useEssentialProperties = locatorModeSelector.index == 1;
+            Duik.Constraint.extractLocators(useEssentialProperties);
+        }
+    }
+
+    createAlignButton(toolsGroup);
+
     var measureButton = toolsGroup.addButton(
         DuScriptUI.String.MEASURE_DISTANCE,
         w12_measure,
         DuScriptUI.String.MEASURE_DISTANCE_TIP
     );
     measureButton.onClick = function() {
+        
         // Build panel
         if (!measureGroup.built) {
-            measureGroup.built = true;
+            createSubPanel(
+                measureGroup,
+                DuScriptUI.String.MEASURE_DISTANCE,
+                constraintsGroup,
+                false
+            );
+
             measureText = DuScriptUI.staticText(measureGroup, '', undefined, false);
 
-            var measureCancelButton = DuScriptUI.button(
+            measureValidButton = addValidButton (
                 measureGroup,
-                DuScriptUI.String.BACK_PREVIOUS,
-                DuScriptUI.Icon.BACK,
-                DuScriptUI.String.CLOSE,
-                false,
-                'row',
-                'center'
+                DuScriptUI.String.MEASURE_DISTANCE,
+                DuScriptUI.String.MEASURE_DISTANCE_TIP
             );
-            measureCancelButton.onClick = function() {
-                measureGroup.visible = false;
-                constraintsGroup.visible = true;
-            }
+
+            measureValidButton.onClick = function() {
+                var dist = DuAELayer.getDistance();
+                dist = Math.round(dist);
+                if (dist < 0) measureText.setText(DuScriptUI.String.MEASURE_HELP);
+                else measureText.setText(DuScriptUI.String.MEASURE_RESULT.replace("{#}", dist));
+            };
 
             DuScriptUI.showUI(measureGroup);
         }
 
-        var dist = DuAELayer.getDistance();
-        dist = Math.round(dist);
-        if (dist < 0) measureText.setText(DuScriptUI.String.MEASURE_HELP);
-        else measureText.setText(DuScriptUI.String.MEASURE_RESULT.replace("{#}", dist));
+        measureValidButton.onClick();
 
         hideAllGroups()
         measureGroup.visible = true;
@@ -181,6 +210,13 @@
 
         // Build panel
         if (!propInfoGroup.built) {
+            var titleBar = createSubPanel(
+                propInfoGroup,
+                DuScriptUI.String.PROP_INFO,
+                constraintsGroup,
+                false
+            );
+
             var propInfoForm = DuScriptUI.form(propInfoGroup);
             propInfoGroup.propInfoIndex = propInfoForm.addField("Index", "statictext", "0", "The index of the property")[1];
             propInfoGroup.name = propInfoForm.addField("Name", "edittext", "", "The name of the property")[1];
@@ -194,34 +230,13 @@
             propInfoGroup.preExp = propInfoForm.addField("Pre-expression val.", "checkbox", "", "Display pre-expression values.")[1];
             propInfoGroup.precision = propInfoForm.addField("Hi-precision", "checkbox", "", "Samples the values and velocity with a higher precision.\nWarning: this can be quite slong if the composition is very long.")[1];
 
-            var validButtonsGroup = DuScriptUI.group(propInfoGroup);
 
-            var propInfoCancelButton = DuScriptUI.button(
-                validButtonsGroup,
-                DuScriptUI.String.BACK_PREVIOUS,
-                DuScriptUI.Icon.BACK,
-                DuScriptUI.String.CLOSE,
-                false,
-                'row',
-                'center'
-            );
-            propInfoCancelButton.onClick = function() {
-                propInfoGroup.visible = false;
-                constraintsGroup.visible = true;
-            }
-
-            var validButton = DuScriptUI.button(
-                validButtonsGroup,
+            var validButton = addValidButton(
+                propInfoGroup,
                 DuScriptUI.String.PROPERTY_INFO,
-                DuScriptUI.Icon.CHECK,
-                DuScriptUI.String.PROP_INFO_TIP,
-                false,
-                'row',
-                'center'
-            )
+                DuScriptUI.String.PROP_INFO_TIP
+            );
             validButton.onClick = update;
-
-            propInfoGroup.built = true;
 
             DuScriptUI.showUI(propInfoGroup);
         }
@@ -516,6 +531,12 @@
                 maxEdit.setText(Math.floor(max));
             }
 
+            var titleBar = createSubPanel(
+                connectorGroup,
+                DuScriptUI.String.DUIK_CONNECTOR,
+                constraintsGroup
+            );
+
             var connectorStack = DuScriptUI.group(connectorGroup, 'stacked');
 
             var createGroup = DuScriptUI.group(connectorStack, 'column');
@@ -670,11 +691,7 @@
             );
             mapButton.onClick = function () {
                 if (!effectorMapGroup.built) {
-                    var cancelButton = buildEffectorMapGroup(effectorMapGroup);
-                    cancelButton.onClick = function() {
-                        hideAllGroups();
-                        constraintsGroup.visible = true;
-                    }
+                    buildEffectorMapGroup(effectorMapGroup, constraintsGroup);
                 }
 
                 // Set the layer
@@ -936,29 +953,18 @@
 
                 DuAE.endUndoGroup();
 
-                cancelButton.onClick();
+                if(!titleBar.pinned) titleBar.onClose();
             };
 
-            var validButtonsGroup = DuScriptUI.group(connectorGroup);
-
-            var cancelButton = DuScriptUI.button(
-                validButtonsGroup,
-                DuScriptUI.String.CANCEL,
-                DuScriptUI.Icon.BACK,
-                DuScriptUI.String.CLOSE,
-                false,
-                'row',
-                'center'
-            );
-            cancelButton.onClick = function() {
+            connectorGroup.reInit = function() {
+                connector = {};
+                connector.master = null;
+                connector.type = 'prop';
                 createGroup.visible = true;
                 settingsGroup.visible = false;
                 connectGroup.visible = false;
                 dropdownGroup.visible = false;
-
-                connectorGroup.visible = false;
-                constraintsGroup.visible = true;
-            }
+            };
 
             connectorGroup.built = true;
             DuScriptUI.showUI(connectorGroup);
@@ -966,6 +972,7 @@
         if (showUI) {
             hideAllGroups();
             connectorGroup.visible = true;
+            connectorGroup.reInit();
         }
     };
 
@@ -1245,50 +1252,23 @@
         parentConstraintButton.onClick = Duik.Constraint.parent;
 
         var parentAcrossCompButton = this.addButton(
-            DuScriptUI.String.PARENT_ACROSS_COMP,
+            DuScriptUI.String.PARENT_ACROSS_COMP + '...',
             w16_parent_across_comp,
-            DuScriptUI.String.PARENT_ACROSS_COMP_TIP
+            DuScriptUI.String.PARENT_ACROSS_COMP_TIP,
+            undefined, // options
+            undefined, // orientation
+            undefined, //alignment
+            false // localize
         );
         parentAcrossCompButton.onClick = function() {
             // build panel
             if (!parentAcrossCompGroup.built) {
-                parentAcrossCompGroup.built = true;
 
-                var locatorsGroup = DuScriptUI.toolBar(parentAcrossCompGroup);
-
-                var locatorButton = locatorsGroup.addButton(
-                    DuScriptUI.String.LOCATOR,
-                    w12_locator,
-                    DuScriptUI.String.LOCATOR_TIP
+                var titleBar = createSubPanel(
+                    parentAcrossCompGroup,
+                    DuScriptUI.String.PARENT_ACROSS_COMP,
+                    constraintsGroup
                 );
-                locatorButton.alignment = ['center', 'top'];
-                locatorButton.onClick = Duik.Constraint.locator;
-
-                var extractLocatorButton = locatorsGroup.addButton(
-                    DuScriptUI.String.EXTRACT_LOCATORS,
-                    w12_extract_locator,
-                    DuScriptUI.String.EXTRACT_LOCATOR_TIP,
-                    true
-                );
-                extractLocatorButton.alignment = ['center', 'top'];
-                extractLocatorButton.onClick = function() {
-                    var useEssentialProperties = locatorModeSelector.index == 1;
-                    Duik.Constraint.extractLocators(useEssentialProperties);
-                }
-
-                var locatorModeSelector;
-                extractLocatorButton.optionsPopup.build = function() {
-                    locatorModeSelector = DuScriptUI.selector(extractLocatorButton.optionsPanel);
-                    locatorModeSelector.addButton(
-                        DuScriptUI.String.USE_EXPRESSIONS,
-                        w16_expression
-                    );
-                    locatorModeSelector.addButton(
-                        DuScriptUI.String.USE_ESSENTIAL_PROPERTIES,
-                        w16_essential_property
-                    );
-                    locatorModeSelector.setCurrentIndex(1);
-                }
 
                 DuScriptUI.staticText(
                     parentAcrossCompGroup,
@@ -1323,36 +1303,12 @@
                     else parentCompValidButton.enabled = false;
                 }
 
-                DuScriptUI.separator(parentAcrossCompGroup);
-
-                var parentCompValidGroup = DuScriptUI.group(
-                    parentAcrossCompGroup,
-                    'row'
-                );
-
-                var parentCompCancelButton = DuScriptUI.button(
-                    parentCompValidGroup,
-                    DuScriptUI.String.BACK_PREVIOUS,
-                    DuScriptUI.Icon.BACK,
-                    DuScriptUI.String.CLOSE_SETTINGS,
-                    false,
-                    'row',
-                    'center'
-                );
-                parentCompCancelButton.onClick = function() {
-                    parentAcrossCompGroup.visible = false;
-                    constraintsGroup.visible = true;
-                }
-
-                var parentCompValidButton = DuScriptUI.button(
-                    parentCompValidGroup,
+                var parentCompValidButton = addValidButton (
+                    pathConstraintGroup,
                     DuScriptUI.String.PARENT_ACROSS_COMP,
-                    DuScriptUI.Icon.CHECK,
-                    DuScriptUI.String.PARENT_ACROSS_COMP_TIP,
-                    false,
-                    'row',
-                    'center'
+                    DuScriptUI.String.PARENT_ACROSS_COMP_TIP
                 );
+
                 parentCompValidButton.enabled = false;
                 parentCompValidButton.onClick = function() {
                     //get comp and layer
@@ -1366,8 +1322,7 @@
 
                     Duik.Constraint.parentAcrossComp(layer, useEssentialProperties);
 
-                    parentAcrossCompGroup.visible = false;
-                    constraintsGroup.visible = true;
+                    if (!titleBar.pinned) titleBar.onClose();
                 }
 
                 DuScriptUI.showUI(parentAcrossCompGroup);
@@ -1375,7 +1330,7 @@
 
             hideAllGroups();
             parentAcrossCompGroup.visible = true;
-        }
+        };
     }
 
     var transformGroup = DuScriptUI.multiButton(
@@ -1426,7 +1381,12 @@
 
             // build panel
             if (!pathConstraintGroup.built) {
-                pathConstraintGroup.built = true;
+
+                var titleBar = createSubPanel(
+                    pathConstraintGroup,
+                    DuScriptUI.String.PATH_CONSTRAINT,
+                    constraintsGroup
+                );
 
                 var pathGroup = DuScriptUI.group(pathConstraintGroup, 'row');
 
@@ -1442,36 +1402,15 @@
                 pickPathButton.alignment = ['right', 'center'];
                 pickPathButton.onClick = pickPath;
 
-                var pathConstraintValidGroup = DuScriptUI.group(pathConstraintGroup, 'row');
-
-                var pathConstraintCancelButton = DuScriptUI.button(
-                    pathConstraintValidGroup,
-                    DuScriptUI.String.BACK_PREVIOUS,
-                    DuScriptUI.Icon.BACK,
-                    DuScriptUI.String.CANCEL,
-                    false,
-                    'row',
-                    'center'
-                );
-                pathConstraintCancelButton.onClick = function() {
-                    pathConstraintGroup.visible = false;
-                    constraintsGroup.visible = true;
-                }
-
-                pathConstraintValidButton = DuScriptUI.button(
-                    pathConstraintValidGroup,
+                pathConstraintValidButton = addValidButton (
+                    pathConstraintGroup,
                     DuScriptUI.String.PATH_CONSTRAINT,
-                    DuScriptUI.Icon.CHECK,
-                    DuScriptUI.String.PATH_CONSTRAINT_TIP,
-                    false,
-                    'row',
-                    'center'
+                    DuScriptUI.String.PATH_CONSTRAINT_TIP
                 );
                 pathConstraintValidButton.enabled = false;
                 pathConstraintValidButton.onClick = function() {
                     Duik.Constraint.path(pathProp);
-                    pathConstraintGroup.visible = false;
-                    constraintsGroup.visible = true;
+                    if (!titleBar.pinned) titleBar.onClose();
                 }
 
                 DuScriptUI.showUI(pathConstraintGroup);
@@ -1498,6 +1437,7 @@
     pathConstraintGroup.built = false;
 
     var measureText;
+    var measureValidButton;
     var measureGroup = DuScriptUI.group(mainGroup, 'column');
     measureGroup.visible = false;
     measureGroup.built = false;
