@@ -631,18 +631,32 @@
 
     var sequenceButton = tweenTools.addButton(
         DuScriptUI.String.SEQUENCE,
-        w16_sequencer
+        w16_sequencer,
+        DuScriptUI.String.SEQUENCE_TIP,
+        true,
+        true
     );
-    sequenceButton.onClick = function() {
+    sequenceButton.onOptions = function(showUI) {
+        showUI = def(showUI, true);
 
         if (!sequenceGroup.built){
             sequenceGroup.built = true;
 
-            var layerModeGroup = DuScriptUI.group( sequenceGroup );
+            var layerKeySelector = DuScriptUI.selector( sequenceGroup );
+            layerKeySelector.addButton(
+                DuScriptUI.String.LAYERS,
+                w16_layers
+            );
+            layerKeySelector.addButton(
+                DuScriptUI.String.KEYFRAMES,
+                w16_keyframe
+            );
+            layerKeySelector.setCurrentIndex(0);
+            layerKeySelector.onChange = function() {
+                layerModeSelector.visible = layerKeySelector.index == 0;
+            };
 
-            layerModeGroup.add('statictext', undefined, DuScriptUI.String.LAYERS + ':' );
-
-            var layerModeSelector = DuScriptUI.selector( layerModeGroup );
+            var layerModeSelector = DuScriptUI.selector( sequenceGroup );
 
             layerModeSelector.addButton(
                 DuScriptUI.String.TIMES,
@@ -734,9 +748,29 @@
                 var duration = parseInt(durationEdit.text);
                 if (isNaN(duration)) duration = 24;
 
+                if (layerKeySelector.index == 0) Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, false, getInterpolation());
+                else Duik.Animation.sequenceKeys(duration, false, getInterpolation());
+            };
+            sequenceButton.onClick = function() {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
                 Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, false, getInterpolation());
             };
-            okButton.onAltClick = function( ) {
+            okButton.onAltClick = function() {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
+                if (layerKeySelector.index == 0) Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, true, getInterpolation());
+                else Duik.Animation.sequenceKeys(duration, true, getInterpolation());
+            };
+            sequenceButton.onAltClick = function() {
                 var moveLayers = layerModeSelector.index == 0;
                 var inPoints = layerModeSelector.index == 1;
 
@@ -746,6 +780,24 @@
                 Duik.Animation.sequenceLayers(duration, moveLayers, inPoints, true, getInterpolation());
             };
 
+            sequenceButton.onCtrlClick = okButton.onCtrlClick = function() {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
+                Duik.Animation.sequenceKeys(duration, false, getInterpolation());
+            };
+            sequenceButton.onCtrlAltClick = okButton.onCtrlAltClick = function() {
+                var moveLayers = layerModeSelector.index == 0;
+                var inPoints = layerModeSelector.index == 1;
+
+                var duration = parseInt(durationEdit.text);
+                if (isNaN(duration)) duration = 24;
+
+                Duik.Animation.sequenceKeys(duration, true, getInterpolation());
+            };
 
             function getInterpolation() {
 
@@ -791,9 +843,10 @@
 
             DuScriptUI.showUI(sequenceGroup);
         }
-
-        hideAllGroups();
-        sequenceGroup.visible = true;
+        if (showUI) {
+            hideAllGroups();
+            sequenceGroup.visible = true;
+        }
     }
 
     var tweenGroup = DuScriptUI.group( animationGroup, 'row' );

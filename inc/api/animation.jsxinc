@@ -1586,7 +1586,53 @@ Duik.Animation.sequenceLayers = function(duration, moveLayers, useInPoints, reve
 Duik.CmdLib['Animation']["Sequence keys"] = "Duik.Animation.sequenceKeys()";
 /**
  * Sequences selected keyframes.
+ * @param {int} [duration=24] The transition duration, in frames
+ * @param {Bool} [reverse=false] Set to true to reverse the order.
+ * @param {function} [interpolation=DuInterpolation.linear] An interpolation function, taking 4 arguments in the form <code>i(value, min, max, targetMin, targetMax)</code>
  */
-Duik.Animation.sequenceKeys = function() {
-    
+Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SEQUENCE, false);
+
+    var comp = props.at(0).comp;
+
+    // Get animations
+    var selectedKeys = [];
+    props.do(function(prop) {
+        var keys = prop.selectedKeys();
+        if (keys.length == 0) return;
+        var p = {};
+        p.prop = prop;
+        p.anim = prop.animation(true);
+        selectedKeys.push(p);
+    });
+
+    var n = selectedKeys.length;
+    var startTime = comp.time;
+    duration = duration * comp.frameDuration;
+    var endTime = startTime + duration;
+
+    for (var i = 0; i < n; i++) {
+        var prop = selectedKeys[i].prop;
+        var anim = selectedKeys[i].anim;
+        var s = reverse ? 0 : n-1;
+        var e = reverse ? n-1 : 0;
+
+        // New time
+        newTime = interpolation(i, s, e, startTime, endTime);
+        var offset = newTime - anim.startTime;
+
+        // remove keyframes
+        for (var k = anim.keys.length -1; k >= 0; k--)
+        {
+            prop.removeKey( anim.keys[k] );
+        }
+        
+        prop.setAnim(anim, offset);
+    }
+
+    DuAE.endUndoGroup(DuScriptUI.String.SEQUENCE);
 }
