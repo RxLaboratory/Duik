@@ -1636,3 +1636,142 @@ Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
 
     DuAE.endUndoGroup(DuScriptUI.String.SEQUENCE);
 }
+
+Duik.CmdLib['Animation']["X-Sheet"] = "Duik.Animation.xSheet()";
+/**
+ * Adjusts the exposure of the animation.
+ * @param {Bool} [autoCompute=false] (Try to) auto-compute the best values..
+ */
+Duik.Animation.xSheet = function( autoCompute ) {
+    var comp = DuAEProject.getActiveComp();
+    if (!comp) return;
+
+    autoCompute = def(autoCompute, false);
+
+    var props = DuAEComp.getSelectedProps();
+    props = new DuList(props);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.X_SHEET, false);
+
+    DuAEComp.setUniqueLayerNames(undefined, comp);
+
+    var ok = false;
+    var pe = Duik.PseudoEffect.X_SHEET;
+    var exp = "";
+
+    if (props.length() > 0) {
+        var effect = null;
+        props.do(function(prop) {
+            if (!prop.riggable()) return;
+            var layer = prop.layer;
+
+            // add effect
+            if (effect == null) {
+                effect = pe.apply(layer);
+                exp = [ DuAEExpression.Id.X_SHEET,
+                    'var fx = thisComp.layer("' + layer.name + '").effect("' + effect.name + '");',
+                    'var mode = fx(' + pe.props['Mode'].index + ');',
+                    'var frameDuration = fx(' + pe.props['Frame duration'].index + ').value;',
+                    'var xSheet = fx(' + pe.props['X-sheet'].index + ');',
+                    'var result = value;',
+                    'function getValAtKey(prop)',
+                    '{',
+                    'if (prop.numKeys > 0)',
+                    '{',
+                    'var k = prop.nearestKey(time);',
+                    'if (k.time > time && k.index > 1) k = prop.key(k.index-1);',
+                    'return valueAtTime(k.time);',
+                    '}',
+                    'else return value;',
+                    '}',
+                    'if (mode == 1)',
+                    '{',
+                    'frameDuration = Math.round(frameDuration);',
+                    'timef = timeToFrames(time);',
+                    'result = valueAtTime(framesToTime( timef - timef%frameDuration ))',
+                    '}',
+                    'else if (mode == 2) result = getValAtKey(xSheet);',
+                    'else if (mode == 3) result = getValAtKey(thisLayer.marker);',
+                    'else result = getValAtKey(thisComp.marker);',
+                    'result;'
+                ].join('\n');
+            }
+            prop.setExpression(exp, false);
+            ok = true;
+        });
+    }
+    if (!ok) {
+        var newName = DuAEComp.newUniqueLayerName(DuScriptUI.String.X_SHEET,comp);
+        var layer = DuAEComp.addAdjustmentLayer(comp);
+		layer.name = newName;
+        Duik.Layer.setType(Duik.Layer.Type.X_SHEET, layer);
+
+        effect = pe.apply(layer);
+        var effectName = effect.name;
+
+        var timeWarp = layer('ADBE Effect Parade').addProperty('ADBE Timewarp');
+		timeWarp(1).setValue(1);
+		timeWarp(2).setValue(2);
+        timeWarp(4).expression = [ DuAEExpression.Id.X_SHEET,
+            'var fx = effect("' + effectName + '")',
+            'var mode = fx(' + pe.props['Mode'].index + ');',
+            'var frameDuration = fx(' + pe.props['Frame duration'].index + ').value;',
+            'var xSheet = fx(' + pe.props['X-sheet'].index + ');',
+            'var result = timeToFrames(time);',
+            'function getValAtKey(prop)',
+            '{',
+            'if (prop.numKeys > 0)',
+            '{',
+            'var k = prop.nearestKey(time);',
+            'if (k.time > time && k.index > 1) k = prop.key(k.index-1);',
+            'return timeToFrames(k.time);',
+            '}',
+            'else return timeToFrames(time);',
+            '}',
+            'if (mode == 1)',
+            '{',
+            'frameDuration = Math.round(frameDuration);',
+            'timef = timeToFrames(time);',
+            'result = timef - timef%frameDuration;',
+            '}',
+            'else if (mode == 2) result = getValAtKey(xSheet);',
+            'else if (mode == 3) result = getValAtKey(thisLayer.marker);',
+            'else result = getValAtKey(thisComp.marker);',
+            'result;'
+        ].join('\n');
+    }
+
+    if (autoCompute && props.length() > 0) {
+        //detect limit
+        var averageSpeed = DuAEProperty.getAverageSpeed(props);
+        if (averageSpeed > 0)
+        {
+            var precision = averageSpeed*2.5;
+            var frames = comp.duration / comp.frameDuration;
+            //set Keyframes
+            var step = 0;
+            effect(pe.props['X-sheet'].index).addKey(0);
+            for (var frame = 0 ; frame < frames ; frame++)
+            {
+                var time = frame * comp.frameDuration;
+
+                var maxSpeed = 0;
+                props.do(function(prop) {
+                    var speedTest = prop.speedAtTime(time);
+                    if (speedTest > maxSpeed) maxSpeed = speedTest;
+                });
+
+                step += maxSpeed;
+
+                if (step >= precision && averageSpeed > 0)
+                {
+                    step = 0;
+                    effect(pe.props['X-sheet'].index).addKey(time);
+                }
+            }
+            effect(pe.props['Mode'].index).setValue(2);
+        }
+    }
+
+    DuAE.endUndoGroup(DuScriptUI.String.X_SHEET);
+}
