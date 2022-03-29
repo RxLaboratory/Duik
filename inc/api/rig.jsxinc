@@ -147,8 +147,8 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     else if( riggedSpines.length > 0) fishParentSpine = riggedSpines[0];
 
     for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], fishParentSpine, customControllers );
-    /*for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], customControllers );
-    for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
+    for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], parentSpine, customControllers );
+    /*for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
     for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
     for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailIK, longChainMode, customControllers );*/
 
@@ -1537,7 +1537,7 @@ Duik.Rig.fin = function( layers, parentSpine, customControllers )
     }
 
     DuScriptUI.progressBar.stg(DuScriptUI.String.FIN);
-    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
+    DuScriptUI.progressBar.hit(1, DuScriptUI.String.SORTING_BONES);
 
     customControllers = new DuList(customControllers);
 
@@ -1599,13 +1599,13 @@ Duik.Rig.fin = function( layers, parentSpine, customControllers )
         }
     }
 
-    DuScriptUI.progressBar.msg('Creating controllers...');
+    DuScriptUI.progressBar.msg(DuScriptUI.String.CREATING_CONTROLLERS);
 
     var fkNull = DuAEComp.addNull(comp, 20, arm);
     Duik.Layer.copyAttributes( fkNull, arm, Duik.Layer.Type.NULL );
     var ctrl = Duik.Controller.getCreate(arm, Duik.Controller.Type.FIN, customControllers);
 
-    DuScriptUI.progressBar.msg('Parenting...');
+    DuScriptUI.progressBar.msg(DuScriptUI.String.PARENTING);
 
     // We also need to get the max distance between a fin and the arm
     var maxFinDistance = 0;
@@ -1896,4 +1896,491 @@ Duik.Rig.fishSpine = function( layers, fishIK, customControllers )
     fs.bones = spine;
     fs.controllers.push(bodyCtrl);
     return fs;
+}
+
+/**
+ * Rigs a wing with feathers
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
+ * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
+ * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
+ * @param {AVLayer} [customController] - Existing custom controller to use
+ */
+Duik.Rig.wing = function( layers, parentSpine, customControllers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return [];
+
+    if (typeof parentSpine === 'undefined')
+    {
+        parentSpine = {};
+        parentSpine.bones = [];
+        parentSpine.controllers = [];
+    }
+
+    customControllers = new DuList(customControllers);
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.WING);
+    DuScriptUI.progressBar.hit(1, DuScriptUI.String.SORTING_BONES);
+
+    var comp = layers.first().containingComp;
+
+    // expected
+    var arm = null;
+    var forearm = null;
+    var hand = null;
+    var handTip = null;
+    var feathers = [];
+
+    var side = DuOCO.Side.NONE;
+    var type = DuOCO.LimbType.CUSTOM;
+
+    // get'em all
+    layers.do(function(layer) {
+        var tag = DuAETag.get( layer );
+        var bone = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING, tag );
+
+        if (bone == DuOCO.Bone.HUMERUS) arm = layer;
+        else if (bone == DuOCO.Bone.RADIUS) forearm = layer;
+        else if (bone == DuOCO.Bone.CARPUS) hand = layer;
+        else if (bone == DuOCO.Bone.FEATHER) feathers.push( layer );
+
+        if ( side == DuOCO.Side.NONE ) side = Duik.Layer.side(layer);
+        if ( type == DuOCO.LimbType.CUSTOM ) type = DuAETag.getValue( layer, DuAETag.Key.DUIK_LIMB_TYPE, DuAETag.Type.STRING, tag );
+    });
+
+    // unparent & reset transform
+    if (arm)
+    {
+        arm.parent = null;
+        Duik.Bone.resetTransform(arm);
+    }
+    if (forearm)
+    {
+        forearm.parent = null;
+        Duik.Bone.resetTransform(forearm);
+    }
+    if (hand)
+    {
+        hand.parent = null;
+        Duik.Bone.resetTransform(hand);
+    }
+    for (var i = 0; i < feathers.length; i++)
+    {
+        var f = feathers[i];
+        var parent = f.parent;
+        f.parent = null;
+        Duik.Bone.resetTransform(f);
+        f.parent = parent;
+    }
+
+    // adjust/fix what we got! We're very friendly...
+    // we need a hand and a root
+    if (!hand && !forearm && !arm) {
+        // Sorry, can't do anything!
+        return;
+    }
+    if (!hand) {
+        hand = forearm;
+        forearm = null;
+    }
+    if (!hand) {
+        hand = arm;
+        arm = null;
+    }
+    if (!forearm) {
+        forearm = arm;
+        arm = null;
+    }
+    var root = null;
+    if (arm) root = arm;
+    else if (forearm) root = forearm;
+    else root = hand;
+
+    // Find the hand tip
+    var layer;
+    while( layer = layers.next() ) {
+        var tag = DuAETag.get( layer );
+        var bone = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING, tag );
+
+        if (bone == DuOCO.Bone.TIP) {
+            if (layer.parent == hand) {
+                handTip = layer;
+                break;
+            }
+        }
+    };
+
+    DuScriptUI.progressBar.msg(DuScriptUI.String.CREATING_CONTROLLERS);
+
+    var ctrl = Duik.Controller.getCreate(root, Duik.Controller.Type.WING, customControllers);
+
+    DuScriptUI.progressBar.msg(DuScriptUI.String.PARENTING);
+
+    // arm's been unparented, just use the position
+    var spineAttach = Duik.Rig.getSpineAttach( root.transform.position.value, parentSpine.bones);
+    forearm.parent = arm;
+    hand.parent = forearm;
+    root.parent = ctrl;
+    ctrl.parent = spineAttach;
+
+    // Rig!
+    DuScriptUI.progressBar.msg('Rigging...');
+
+    // Add effect
+    var pe = Duik.PseudoEffect.WING;
+    var ctrlEffect = pe.apply( ctrl );
+    var ctrlInfo = new DuAEProperty(ctrlEffect);
+    ctrlEffect.name = DuScriptUI.String.FIN;
+
+    // Set effect
+    var peLayers = pe.props['Data']['Layers'];
+    var peLengths = pe.props['Data']['Lengths'];
+    if (arm) ctrlEffect(peLayers['Arm'].index).setValue(arm.index);
+    if (forearm) ctrlEffect(peLayers['Forearm'].index).setValue(forearm.index);
+    if (hand) ctrlEffect(peLayers['Hand'].index).setValue(hand.index);
+    if (handTip) ctrlEffect(peLayers['Tip'].index).setValue(handTip.index);
+
+    // Add expressions
+    ctrlEffect(peLengths['Arm'].index).expression = [ DuAEExpression.Id.WING,
+        'var fx = thisProperty.propertyGroup();',
+        'var forearm = null;',
+        'try { forearm = fx(' + peLayers['Forearm'].index + '); } catch(e) {}',
+        'if (forearm) length(forearm.position);',
+        'else 0;'
+	].join('\n');
+
+    ctrlEffect(peLengths['Forearm'].index).expression = [ DuAEExpression.Id.WING,
+        'var fx = thisProperty.propertyGroup();',
+        'var hand = null;',
+        'try { hand = fx(' + peLayers['Hand'].index + '); } catch(e) {}',
+        'if (hand) length(hand.position);',
+        'else 0;'
+	].join('\n');
+
+    ctrlEffect(peLengths['Hand'].index).expression = [ DuAEExpression.Id.WING,
+        'var fx = thisProperty.propertyGroup();',
+        'var tip = null;',
+        'var hand = null;',
+        'try { tip = fx(' + peLayers['Tip'].index + '); } catch(e) {}',
+        'try { hand = fx(' + peLayers['Hand'].index + '); } catch(e) {}',
+        'if (tip) length(tip.position);',
+        'else if (hand) length(hand.position) * .8;',
+        'else 0;'
+	].join('\n');
+
+    if (hand) {
+        var linkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.WING, hand );
+        var linkEffect = hand.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        linkEffect.name = linkEffectName;
+        linkEffect(1).setValue(ctrl.index);
+        hand.transform.rotation.expression = [ DuAEExpression.Id.WING,
+            'var controller = null;',
+            'var fkFx =  effect("' + linkEffect.name + '");',
+            'var result = value;',
+            'try { controller = fkFx(1); } catch (e) {}',
+            'if ( controller !=null )',
+            '{',
+            '   var fx = controller.effect("' + ctrlEffect.name + '");',
+            '	var flapProperty = controller.rotation;',
+            '	var flex = fx(' + pe.props['General parameters']['Wing flexibility'].index + ').value;',
+            '	var overlap = fx(' + pe.props['General parameters']['Air resistance'].index + ').value;',
+            '	var follow = fx(' + pe.props['General parameters']['Forearm orientation'].index + ').value;',
+            '	var fk = fx(' + pe.props['Hand rotation'].index + ').value;',
+            '	var foldProperty = fx(' + pe.props['Fold wing'].index + ');',
+            '	var arm = null;',
+            '	',
+            '	// adjust values',
+            '	overlap /= 100;',
+            '	overlap *= .1; // hand multiplicator',
+            '	flex /= 100;',
+            '	',
+            '	// flap and fold delay',
+            '	var flap = flapProperty.valueAtTime(time - overlap);',
+            '	var fold = -3*foldProperty.valueAtTime(time - overlap); // hand folding ',
+            '',
+            '	// remove current values (it is in the flap value)',
+            '	result -= flapProperty.value*flex;',
+            '	// add flap and fold',
+            '	result += flap*flex;',
+            '	result += fold;',
+            '	// Flexibility based on control velocity',
+            '	result -= flapProperty.velocityAtTime(time-overlap/2) * overlap;',
+            '	result -= foldProperty.velocityAtTime(time-overlap/2) * overlap;',
+            '',
+            '	// FK control',
+            '    result += fk;',
+            '}',
+            'result;'
+        ].join('\n');
+    }
+
+    if (forearm) {
+        var linkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.WING, forearm );
+        var linkEffect = forearm.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        linkEffect.name = linkEffectName;
+        linkEffect(1).setValue(ctrl.index);
+        forearm.transform.rotation.expression = [ DuAEExpression.Id.WING,
+            'var controller = null;',
+            'var fkFx =  effect("' + linkEffect.name + '");',
+            'var result = value;',
+            'try { controller = fkFx(1); } catch (e) {}',
+            'if ( controller !=null )',
+            '{',
+            '   var fx = controller.effect("' + ctrlEffect.name + '");',
+            '	var flapProperty = controller.rotation;',
+            '	var flex = fx(' + pe.props['General parameters']['Wing flexibility'].index + ').value;',
+            '	var overlap = fx(' + pe.props['General parameters']['Air resistance'].index + ').value;',
+            '	var follow = fx(' + pe.props['General parameters']['Forearm orientation'].index + ').value;',
+            '	var fk = fx(' + pe.props['Forearm rotation'].index + ').value;',
+            '	var foldProperty = fx(' + pe.props['Fold wing'].index + ');',
+            '	var arm = null;',
+            '	try { arm = fx(' + peLayers['Arm'].index + ') } catch(e) {}',
+            '	if (arm) {',
+            '		var armFK = fx(' + pe.props['Arm rotation'].index + ').value;',
+            '		if (!follow) result -= armFK;',
+            '	}',
+            '	',
+            '	// adjust values',
+            '	overlap /= 100;',
+            '	overlap *= .05; // forearm multiplicator',
+            '	flex /= 100;',
+            '	',
+            '	// flap and fold delay',
+            '	var flap = flapProperty.valueAtTime(time - overlap);',
+            '	var fold = 2*foldProperty.valueAtTime(time - overlap); // forearm folding ',
+            '',
+            '	// remove current values (it is in the flap value)',
+            '	result -= flapProperty.value*flex;',
+            '	// add flap and fold',
+            '	result += flap*flex;',
+            '	result += fold;',
+            '	// Flexibility based on control velocity',
+            '	result -= flapProperty.velocityAtTime(time-overlap/2) * overlap;',
+            '	result -= foldProperty.velocityAtTime(time-overlap/2) * overlap;',
+            '',
+            '	// FK control',
+            '    result += fk;',
+            '}',
+            'result;'
+        ].join('\n');
+    }
+
+    if (arm) {
+        var linkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.WING, arm );
+        var linkEffect = arm.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        linkEffect.name = linkEffectName;
+        linkEffect(1).setValue(ctrl.index);
+        arm.transform.rotation.expression = [ DuAEExpression.Id.WING,
+            'var controller = null;',
+            'var fkFx =  effect("' + linkEffect.name + '");',
+            'var result = value;',
+            'try { controller = fkFx(1); } catch (e) {}',
+            'if ( controller !=null )',
+            '{',
+            '   var fx = controller.effect("' + ctrlEffect.name + '");',
+            '	var fk = fx(' + pe.props['Arm rotation'].index + ').value;',
+            '	var fold = -fx(' + pe.props['Fold wing'].index + ').value;',
+            '	var flap = controller.rotation.value;',
+            '   result += fk + fold;',
+            '	if (!hasParent) result += flap ;',
+            '	else if (parent != controller) result += flap;',
+            '}',
+            'result;'
+        ].join('\n');
+    }
+
+    for (var i = 0; i < feathers.length; i++) {
+        var feather = feathers[i];
+        var linkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.WING, feather );
+        var linkEffect = feather.property('ADBE Effect Parade').addProperty('ADBE Layer Control');
+        linkEffect.name = linkEffectName;
+        linkEffect(1).setValue(ctrl.index);
+
+        // Add the feather control
+        var fkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.FEATHER, feather );
+        var fkEffect = ctrl.property('ADBE Effect Parade').addProperty('ADBE Angle Control');
+        fkEffect.name = fkEffectName;
+        // The ctrlEffect is now invalid, get it back
+        var ctrlEffect = ctrlInfo.getProperty();
+
+        feather.transform.rotation.expression = [ DuAEExpression.Id.WING,
+            'var controller = null;',
+            'try { controller = effect("' + linkEffect.name + '")(1); } catch (e) {}',
+            'var fx = controller.effect("' + ctrlEffect.name + '");',
+            'var fFx = controller.effect("' + fkEffect.name + '");',
+            'var r = fFx(1).value;',
+            'var overlap = fx(' + pe.props['General parameters']['Air resistance'].index + ').value;',
+            'var handCustomInfluence = fx(' + pe.props['Feather parameters']['Hand rotation multiplicator'].index + ').value;',
+            'var armLength = fx(' + peLengths['Arm'].index + ').value;',
+            'var forearmLength = fx(' + peLengths['Forearm'].index + ').value;',
+            'var handLength = fx(' + peLengths['Hand'].index + ').value;',
+            'var arm = null;',
+            'var forearm = null;',
+            'var hand = null;',
+            'try { arm = fx(' + peLayers['Arm'].index + '); } catch(e) {}',
+            'try { forearm = fx(' + peLayers['Forearm'].index + '); } catch(e) {}',
+            'try { hand = fx(' + peLayers['Hand'].index + '); } catch(e) {}',
+            DuAEExpression.Library.get([
+                'getOrientation',
+                'dishineritRotation',
+                'getLayerDistance',
+                'linearExtrapolation',
+                'normalizeWeights'
+            ]),
+            '',
+            'function featherOrientation() {',
+            '  if (!hasParent) return value; // Stupid rig.',
+            '	',
+            '	// Prepare values',
+            '	overlap /= 100;',
+            '	overlap *= 0.1;',
+            '	var t = time - overlap;',
+            '	var armInfluence = 1;',
+            '	var forearmInfluence = 1;',
+            '	var handInfluence = 1;',
+            '	handCustomInfluence -= 1;',
+            '	',
+            '  // The orientations we\'re getting from each part.',
+            '  var armOrientation = 0;',
+            '  var forearmOrientation = 0;',
+            '  var handOrientation = 0;',
+            '  ',
+            '  // Adjust the layers we\'ve got...',
+            '  if (!hand && !forearm && !arm) {',
+            '    hand = parent;',
+            '  }',
+            '  else {',
+            '    if (!hand) {',
+            '      hand = forearm;',
+            '      handLength = forearmLength;',
+            '      forearm = null;',
+            '    }',
+            '    if (!hand) {',
+            '      hand = arm;',
+            '      handLength = armLength;',
+            '      arm = null;',
+            '    }',
+            '    if (!forearm) {',
+            '      forearm = arm;',
+            '      forearmLength = armLength;',
+            '      arm = null;',
+            '    }',
+            '  }',
+            '',
+            '  // Check where the feather is attached',
+            '  var handFeather = parent == hand;',
+            '  var forearmFeather = false;',
+            '  if (forearm) forearmFeather = parent == forearm;',
+            '  var armFeather = false;',
+            '  if (arm) armFeather = parent == arm;',
+            '  ',
+            '  // Get distances',
+            '  var handDistance = getLayerDistance(hand);',
+            '  var forearmDistance = -1;',
+            '  if (forearm) forearmDistance = getLayerDistance(forearm);',
+            '  var armDistance = -1;',
+            '  if (arm) armDistance = getLayerDistance(arm);',
+            '  ',
+            '  // Get orientations',
+            '',
+            '  if (armFeather) {',
+            '    // Influences',
+            '    forearmInfluence = linear(armDistance,',
+            '      armLength*.66, armLength + forearmLength * .2,',
+            '      0, forearmInfluence',
+            '    );',
+            '    armInfluence = linear(armDistance,',
+            '      armLength*.66, armLength + forearmLength * .2,',
+            '      armInfluence, 0',
+            '    );',
+            '    var w = normalizeWeights([armInfluence, forearmInfluence]);',
+            '    // Arm orientation',
+            '    armOrientation += getOrientation(arm, t);',
+            '    armOrientation *= w[0];',
+            '    // Forearm orientation ',
+            '    forearmOrientation += getOrientation(forearm, t);',
+            '    forearmOrientation *= w[1];',
+            '    ',
+            '    return dishineritRotation() + armOrientation + forearmOrientation;',
+            '  }',
+            '  ',
+            '  if (forearmFeather) {',
+            '    // Hand influence',
+            '    handInfluence = linear(forearmDistance,',
+            '      forearmLength*.5, forearmLength + handLength,',
+            '      0, handInfluence',
+            '    );',
+            '    // Hand orientation',
+            '    handOrientation = getOrientation(hand, t);',
+            '    ',
+            '    if (!arm) {',
+            '      // Forearm Influence',
+            '      forearmInfluence = linear(forearmDistance,',
+            '        forearmLength*.5, forearmLength + handLength*.5,',
+            '        forearmInfluence, 0',
+            '      );',
+            '      var w = normalizeWeights([forearmInfluence, handInfluence]);',
+            '      ',
+            '      handOrientation *= w[1];',
+            '      forearmOrientation = getOrientation(forearm, t);',
+            '      forearmOrientation *= w[0];',
+            '      ',
+            '      return dishineritRotation() + handOrientation + forearmOrientation;',
+            '    }',
+            '    ',
+            '    // Influence of the arm',
+            '    armInfluence = linear(armDistance,',
+            '      armLength*.66, armLength + forearmLength * .2,',
+            '      armInfluence, 0',
+            '    );',
+            '    // Influence of the forearm',
+            '    forearmInfluence = linear( forearmDistance,',
+            '      forearmLength*.5,  forearmLength + handLength,',
+            '      forearmInfluence, 0',
+            '    );',
+            '    var w = normalizeWeights([armInfluence, forearmInfluence, handInfluence]);',
+            '    armOrientation = getOrientation(arm, t);',
+            '    armOrientation *= w[0];',
+            '    forearmOrientation = getOrientation(forearm, t);',
+            '    forearmOrientation *= w[1];',
+            '    handOrientation *= w[2];',
+            '    return dishineritRotation() + handOrientation + forearmOrientation + armOrientation;',
+            '  }',
+            '',
+            '  var handRotation = hand.rotation.valueAtTime(t) - hand.rotation.valueAtTime(0);',
+            '  handRotation *= linearExtrapolation( handDistance,',
+            '    0, handLength,',
+            '    0, handCustomInfluence',
+            '  );',
+            '  ',
+            '  if (!forearm) return value + handRotation;',
+            '  // Influences',
+            '  handInfluence = linear( handDistance,',
+            '    0, handLength,',
+            '    handInfluence*.5, handInfluence',
+            '  );',
+            '  forearmInfluence = linear( handDistance,',
+            '    0, handLength,',
+            '    forearmInfluence/2, 0',
+            '  );',
+            '  forearmInfluence += linear( forearmDistance,',
+            '    0, forearmLength,',
+            '    .4, 0',
+            '  );',
+            '',
+            '  var w = normalizeWeights([forearmInfluence, handInfluence]);',
+            '  forearmOrientation = getOrientation(forearm, t);',
+            '  forearmOrientation *= w[0];',
+            '  handOrientation = getOrientation(hand, t);',
+            '  handOrientation *= w[1];',
+            '  return dishineritRotation() + forearmOrientation + handOrientation + handRotation;',
+            '',
+            '}',
+            '',
+            'var result = featherOrientation() + r;',
+            'result;',
+            ''
+        ].join('\n');
+    }
 }
