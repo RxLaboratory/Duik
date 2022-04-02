@@ -1186,15 +1186,17 @@ Duik.CmdLib['Constraint']["IK"] = "Duik.Constraint.ik()";
 Duik.CmdLib['Constraint']["IK (2+1-layer)"] = "Duik.Constraint.ik(Duik.Constraint.IKType.TWO_ONE)";
 Duik.CmdLib['Constraint']["IK (1+2-layer)"] = "Duik.Constraint.ik(Duik.Constraint.IKType.ONE_TWO)";
 Duik.CmdLib['Constraint']["Bézier IK"] = "Duik.Constraint.ik(undefined, true)";
+Duik.CmdLib['Constraint']["Bézier FK"] = "Duik.Constraint.ik(undefined, true, undefined, undefined, true)";
 /**
  * Creates an IK on the layers
  * @param {Duik.IKType} [type=Duik.Constraint.IKType.ONE_TWO] The type of IK to use with three layers.
  * @param {boolean} [forceBezier=false] - force the use of a bezier IK even with two or three layers
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  * @param {Layer} [controller] - An already existing controller.
+ * @param {boolean} [bezierFK=false] - If forceBezier, adds a layer for FK Control
  * @return {Layer[]} The controller(s) of the IK.
  */
-Duik.Constraint.ik = function(type, forceBezier, layers, controller) {
+Duik.Constraint.ik = function(type, forceBezier, layers, controller, bezierFK) {
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
     if (layers.length() < 1) return [];
@@ -1241,7 +1243,8 @@ Duik.Constraint.ik = function(type, forceBezier, layers, controller) {
     else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.ONE_TWO) controller = [Duik.Constraint.oneTwoLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
     else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.TWO_ONE) controller = [Duik.Constraint.twoOneLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
     else if (layers.length() == 3 && !forceBezier && type == Duik.Constraint.IKType.THREE) controller = [Duik.Constraint.threeLayerIK(layers.at(0), layers.at(1), layers.at(2), goal, controller)];
-    else controller = Duik.Constraint.bezierIK(layers, goal, controller);
+    else if (!bezierFK) controller = Duik.Constraint.bezierIK(layers, goal, controller);
+    else controller = Duik.Constraint.bezierFK(layers, goal, controller);
 
     DuAE.endUndoGroup(DuScriptUI.String.IK);
 
@@ -2851,6 +2854,77 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     DuAE.endUndoGroup(DuScriptUI.String.BEZIER_IK);
 
     return [curveController, controller, rootController];
+}
+
+/**
+ * Creates a bezier fk on the layers
+ * @param {Layer[]|DuList.<Layer>} layers - The layers, ordered from root to end
+ * @param {Layer|null} [goal] - The goal layer, at the end of the IK
+ * @param {Layer|null} [controller] - The layer to use as controller, can be automatically created.<br />
+ * Must be provided if goal is undefined.
+ * @param {Boolean} [showGuides=true] - Set to false to hide guides on the controllers (and improve performance)
+ * @param {Layer|null} [rootController] - The layer to use as root controller, can be automatically created.
+ * @return {Layer[]} The controllers [curve,end,root]
+ */
+Duik.Constraint.bezierFK = function(layers, goal, controller, showGuides, rootController) {
+
+    goal = def(goal, null);
+    controller = def(controller, null);
+    rootController = def(rootController, null);
+    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
+
+    showGuides = def(showGuides, 1);
+    if (!showGuides) showGuides = 0;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BEZIER_FK, false);
+
+    // Create the underlying bezier IK
+    var ctrls = Duik.Constraint.bezierIK(layers, goal, controller, showGuides);
+
+    layers = new DuList(layers);
+    var comp = layers.first().containingComp;
+
+    // Adjust root appearance (it's a null!)
+    Duik.Layer.setType(Duik.Layer.Type.IK, ctrls[2]);
+    ctrls[2].enabled = false;
+
+    // Create new Root controller
+    if (!rootController) rootController = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, ctrls[2]);
+
+    ctrls[2].parent = rootController;
+    ctrls[0].parent = ctrls[2];
+    ctrls[1].parent = rootController;
+
+    // Rig the root
+    var autoCurveEffect = ctrls[1].property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+    autoCurveEffect.name = DuScriptUI.String.CTRL_AUTOCURVE;
+    autoCurveEffect(1).setValue(100);
+    ctrls[2].transform.rotation.expression = [DuAEExpression.Id.BEZIER_IK,
+        'var ctrlLayer = thisComp.layer("' + ctrls[1].name + '");',
+        'var rootLayer = thisComp.layer("' + rootController.name + '");',
+        'var autoCurve = ctrlLayer.effect("' + autoCurveEffect.name + '")(1).value;',
+        'autoCurve /= 100;',
+        'autoCurve = autoCurve;',
+        'var result = value;',
+        '',
+        DuAEExpression.Library.get([
+            'dishineritRotation'
+        ]),
+        '',
+        'var curve = dishineritRotation() + rootLayer.transform.rotation / 2 - ctrlLayer.transform.rotation / 2;',
+        'curve *= autoCurve;',
+        'result += curve;',
+        'result;'
+    ].join('\n');
+
+    ctrls[2].moveAfter(ctrls[0]);
+    rootController.moveAfter(ctrls[0]);
+
+    ctrls[2].locked = true;
+
+    DuAE.endUndoGroup(DuScriptUI.String.BEZIER_FK);
+
+    return [ctrls[0], ctrls[1], rootController];
 }
 
 Duik.CmdLib['Constraint']["FK"] = "Duik.Constraint.fk()";
