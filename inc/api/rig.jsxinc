@@ -148,8 +148,8 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
 
     for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], fishParentSpine, customControllers );
     for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], parentSpine, customControllers );
-    /*for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], customControllers );
-    for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
+    for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], parentSpine, customControllers );
+    /*for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
     for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailIK, longChainMode, customControllers );*/
 
     DuAEProject.setProgressMode( false );
@@ -443,18 +443,19 @@ Duik.Rig.spine = function( layers, customControllers )
  * @param {Boolean} [tailIK=false] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
  * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
- * @returns {Layer[]} The controllers of the tail
+ * @returns {Layer[]} The controller(s) of the tail
  */
-Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
+Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers, isHair )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
     if( layers.isEmpty() ) return [];
 
+    isHair = def(isHair, false); // low-level undocumented method: changes the coontrol shape to a hair strand
     tailIK = def(tailIK, false);
 
     DuScriptUI.progressBar.stg(DuScriptUI.String.TAIL);
-    DuScriptUI.progressBar.hit(1, 'Sorting bones...');
+    DuScriptUI.progressBar.hit(1, DuScriptUI.String.SORTING_BONES);
 
     if (typeof parentSpine === 'undefined')
     {
@@ -506,16 +507,19 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
         var tailCtrl = Duik.Controller.create(comp, Duik.Controller.Type.TAIL, tail[0] );
         tail[0].parent = tailCtrl;
         if (parentSpine.bones.length > 0) tailCtrl.parent = parentSpine.bones[0];
-        return;
+        return [];
     }
 
     DuScriptUI.progressBar.msg('Rigging...');
+
+    var ctrlType = Duik.Controller.Type.TAIL;
+    if (isHair) ctrlType = Duik.Controller.Type.PONEYTAIL;
 
     //ik
     if (tailIK)
     {
         //controllers
-        var tailCtrl = Duik.Controller.getCreate( tip, Duik.Controller.Type.TAIL, customControllers);
+        var tailCtrl = Duik.Controller.getCreate( tip, ctrlType, customControllers);
 
         if (tail.length > 1)
         {
@@ -527,6 +531,7 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
                 ctrls[1].parent = parentSpine.controllers[0];
             }
             if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+            return ctrls;
         }
         else
         {
@@ -534,21 +539,31 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers )
             //parent
             if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
             if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+            return [tailCtrl];
         }
-        return;
     }
 
     //fk
 
     //controllers
-    var tailCtrl = Duik.Controller.getCreate( tail[0], Duik.Controller.Type.TAIL, customControllers);
+    var tailCtrl = Duik.Controller.getCreate( tail[0], ctrlType, customControllers);
     tail.push(tip);
 
     var tailRoot = tail[0];
     Duik.Constraint.fk( tail.reverse(), tailCtrl);
     //parent
-    if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
-    if (parentSpine.bones.length > 0) tailRoot.parent = parentSpine.bones[0];
+    if (isHair) {
+        if (parentSpine.bones.length > 1) tailRoot.parent = parentSpine.bones[parentSpine.bones.length - 2];
+        else if (parentSpine.bones.length == 1) tailRoot.parent = parentSpine.bones[0];
+        if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[parentSpine.controllers.length - 1];
+    }
+    else {
+        if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
+        if (parentSpine.bones.length > 0) tailRoot.parent = parentSpine.bones[0];
+    }
+    
+
+    return [tailCtrl];
 }
 
 /**
@@ -1903,7 +1918,6 @@ Duik.Rig.fishSpine = function( layers, fishIK, customControllers )
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
- * @param {AVLayer} [customController] - Existing custom controller to use
  */
 Duik.Rig.wing = function( layers, parentSpine, customControllers )
 {
@@ -2198,7 +2212,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
         linkEffect(1).setValue(ctrl.index);
 
         // Add the feather control
-        var fkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.FEATHER, feather );
+        var fkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.FEATHER, ctrl );
         var fkEffect = ctrl.property('ADBE Effect Parade').addProperty('ADBE Angle Control');
         fkEffect.name = fkEffectName;
         // The ctrlEffect is now invalid, get it back
@@ -2383,4 +2397,23 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             ''
         ].join('\n');
     }
+}
+
+/**
+ * Rigs hair strands
+ * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
+ * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
+ * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
+ */
+Duik.Rig.hair = function( layers, parentSpine, customControllers )
+{
+    // Hair are tails :-)
+    var hairCtrls = Duik.Rig.tail(layers, false, parentSpine, customControllers, true);
+    if (hairCtrls.length == 0) return;
+
+    // Just set the FK control to no follow
+    var pe = Duik.PseudoEffect.FK;
+    var fx = hairCtrls[0].property('ADBE Effect Parade').property(pe.matchName);
+    if (!fx) return;
+    fx(pe.props['Parent rotation'].index).setValue(0);
 }
