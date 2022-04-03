@@ -273,7 +273,12 @@ Duik.Rig.spine = function( layers, customControllers )
     }
     else if (spine.length > 0) bodyCtrl = Duik.Controller.getCreate( spine[0], Duik.Controller.Type.BODY, customControllers );
     else if (torso) bodyCtrl = Duik.Controller.getCreate( torso, Duik.Controller.Type.BODY, customControllers );
-    if (bodyCtrl) Duik.Layer.setLimbName( DuScriptUI.String.BODY, bodyCtrl );
+    else if (neck.length > 0) bodyCtrl = Duik.Controller.getCreate( neck[0], Duik.Controller.Type.BODY, customControllers );
+    if (bodyCtrl) {
+        Duik.Layer.setLimbName( DuScriptUI.String.BODY, bodyCtrl );
+        var peCtrl = Duik.PseudoEffect.CONTROLLER;
+        bodyCtrl.effect( peCtrl.matchName ).property( peCtrl.props['Icon']['Position'].index ).setValue([25, 0]);
+    }
 
 
     // Spine controller
@@ -328,9 +333,12 @@ Duik.Rig.spine = function( layers, customControllers )
     DuScriptUI.progressBar.msg('Rigging...');
 
     // hips
-    if (hipsCtrl) hipsCtrl.parent = bodyCtrl;
+    if (hipsCtrl && bodyCtrl) {
+        hipsCtrl.parent = bodyCtrl;
 
-    //spine IK
+    }
+
+    //spine FK
     var goal;
     if (torso) goal = torso;
     else if (neck.length > 0) goal = neck[0];
@@ -346,20 +354,30 @@ Duik.Rig.spine = function( layers, customControllers )
         if (hips && spine.length == 0)
         {
             var backCtrl = Duik.Constraint.oneLayerIK(hips , goal, ctrl, false);
-            if (!ctrl) backCtrl.parent = bodyCtrl;
+            if (!ctrl && bodyCtrl) backCtrl.parent = bodyCtrl;
         }
         else if (spine.length == 1)
         {
             var backCtrl = Duik.Constraint.oneLayerIK(spine[0], goal, ctrl, false);
-            if (!ctrl) backCtrl.parent = bodyCtrl;
+            if (!ctrl && bodyCtrl) backCtrl.parent = bodyCtrl;
         }
         else if (spine.length > 1)
         {
-            Duik.Constraint.bezierFK(spine, goal, ctrl, false, spineCtrl);
+            var ctrls = Duik.Constraint.bezierFK(spine, goal, ctrl, false, spineCtrl);
+            if (ctrls.length == 4) {
+                ctrls[3].locked = false;
+                if (hipsCtrl) ctrls[3].parent = hipsCtrl;
+                ctrls[3].locked = true;
+            }
+            
         }
     }
 
-    if (spineCtrl) spineCtrl.parent = bodyCtrl;
+    // Spine controller
+    if (spineCtrl) {
+        if (bodyCtrl) spineCtrl.parent = bodyCtrl;
+        if (hipsCtrl) DuAEProperty.lock(spineCtrl.transform.position);
+    }
 
     // Torso
     if (torso) torso.parent = torsoCtrl;
@@ -376,18 +394,31 @@ Duik.Rig.spine = function( layers, customControllers )
         if (neck.length == 1)
         {
             var backCtrl = Duik.Constraint.oneLayerIK(neck[0], goal, ctrl, false);
-            if (!ctrl) backCtrl.parent = bodyCtrl;
+            neck[0].parent = shoulderCtrl;
+            backCtrl.parent = shoulderCtrl;
         }
         else if (neck.length > 1)
         {
-            Duik.Constraint.bezierFK(neck, goal, ctrl, false, neckCtrl);
+            Duik.Constraint.bezierFK(neck, goal, ctrl, false, shoulderCtrl);
         }
+    }
+    if (shoulderCtrl) {
+        if (torsoCtrl) shoulderCtrl.parent = torsoCtrl;
+        else if (spineCtrl) shoulderCtrl.parent = spineCtrl;
+        else if (hipsCtrl)  shoulderCtrl.parent = hipsCtrl;
+        else if (bodyCtrl) shoulderCtrl.parent = bodyCtrl;
     }
 
     //head
     if (head)
     {
         Duik.Constraint.simpleFK(head, headCtrl);
+        head.parent = headCtrl;
+        if (shoulderCtrl) headCtrl.parent = shoulderCtrl;
+        else if (torsoCtrl) headCtrl.parent = torsoCtrl;
+        else if (spineCtrl) headCtrl.parent = spineCtrl;
+        else if (hipsCtrl)  headCtrl.parent = hipsCtrl;
+        else if (bodyCtrl) headCtrl.parent = bodyCtrl;
     }
     
     if ( bodyCtrl ) riggedSpine.controllers.push(bodyCtrl);
