@@ -264,10 +264,12 @@ Duik.Constraint.separatePropDimensions = function(prop) {
 Duik.CmdLib['Constraint']["Lock"] = "Duik.Constraint.lock()";
 /**
  * Lock propery values
+ * @param {Property|DuAEProperty|Property[]|DuAeProperty[]|DuList.<Property>|DuList.<DuAEProperty>} [props] - The properties. If omitted, locks the selected properties
  */
-Duik.Constraint.lock = function() {
-    var props = DuAEComp.getSelectedProps();
-    if (props.length == 0) return;
+Duik.Constraint.lock = function(props) {
+    props = def(props, DuAEComp.getSelectedProps() );
+    props = new DuList(props);
+    if (props.length() == 0) return;
 
     DuAE.beginUndoGroup(DuScriptUI.String.LOCK_PROPERTIES);
 
@@ -2884,22 +2886,24 @@ Duik.Constraint.bezierFK = function(layers, goal, controller, showGuides, rootCo
     layers = new DuList(layers);
     var comp = layers.first().containingComp;
 
-    // Adjust root appearance (it's a null!)
-    Duik.Layer.setType(Duik.Layer.Type.IK, ctrls[2]);
-    ctrls[2].enabled = false;
+    // Add null for the rotation
+    var rotNull = DuAEComp.addNull(comp, 25, ctrls[2]);
+    Duik.Layer.copyAttributes(rotNull, ctrls[2]);
+    Duik.Layer.setLimbName( DuScriptUI.String.SPINE + '_RootRot', rotNull );
 
     // Create new Root controller
     if (!rootController) rootController = Duik.Controller.create(comp, Duik.Controller.Type.TRANSFORM, ctrls[2]);
 
     ctrls[2].parent = rootController;
-    ctrls[0].parent = ctrls[2];
+    ctrls[0].parent = rotNull;
     ctrls[1].parent = rootController;
+    rotNull.parent = rootController;
 
     // Rig the root
     var autoCurveEffect = ctrls[1].property('ADBE Effect Parade').addProperty('ADBE Slider Control');
     autoCurveEffect.name = DuScriptUI.String.CTRL_AUTOCURVE;
     autoCurveEffect(1).setValue(100);
-    ctrls[2].transform.rotation.expression = [DuAEExpression.Id.BEZIER_IK,
+    rotNull.transform.rotation.expression = [DuAEExpression.Id.BEZIER_IK,
         'var ctrlLayer = thisComp.layer("' + ctrls[1].name + '");',
         'var rootLayer = thisComp.layer("' + rootController.name + '");',
         'var autoCurve = ctrlLayer.effect("' + autoCurveEffect.name + '")(1).value;',
@@ -2911,20 +2915,24 @@ Duik.Constraint.bezierFK = function(layers, goal, controller, showGuides, rootCo
             'dishineritRotation'
         ]),
         '',
-        'var curve = dishineritRotation() + rootLayer.transform.rotation / 2 - ctrlLayer.transform.rotation / 2;',
+        'var curve = - rootLayer.transform.rotation.value/2 - ctrlLayer.transform.rotation.value / 2;',
         'curve *= autoCurve;',
         'result += curve;',
         'result;'
     ].join('\n');
 
     ctrls[2].moveAfter(ctrls[0]);
+    rotNull.moveAfter(ctrls[0]);
     rootController.moveAfter(ctrls[0]);
 
+    ctrls[2].enabled = false;
     ctrls[2].locked = true;
+    rotNull.enabled = false;
+    rotNull.locked = true;
 
     DuAE.endUndoGroup(DuScriptUI.String.BEZIER_FK);
 
-    return [ctrls[0], ctrls[1], rootController];
+    return [ctrls[0], ctrls[1], rootController, ctrls[2]];
 }
 
 Duik.CmdLib['Constraint']["FK"] = "Duik.Constraint.fk()";
