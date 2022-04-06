@@ -13,17 +13,17 @@ Duik.CmdLib['Auto-rig'] = [];
 Duik.CmdLib['Auto-rig']['Rig'] = 'Duik.Rig.auto()';
 /**
  * The auto-rig for everything
- * @param {Boolean} [bakeBones=true] whether to bake the appearance of rigged bones to improve performance or not.
- * @param {Boolean} [tailIK=false] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
+ * @param {Boolean} [bakeMode='envelops'] What to bake to improve performance. One of 'none', 'bones' or 'envelop'.
+ * @param {Boolean} [tailMode=Duik.Constraint.IKType.FK] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
  * @param {Duik.Constraint.IKType} [longChainMode=Duik.Constraint.IKType.ONE_TWO] The type of IK to use with custom 3-layer chains.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @return {Layer[]} The controllers which are used in the rig
  */
-Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
+Duik.Rig.auto = function ( bakeBones, tailMode, longChainMode, layers )
 {
-    bakeBones = def( bakeBones, true );
+    bakeBones = def( bakeBones, 'envelop' );
     longChainMode = def( longChainMode, Duik.Constraint.IKType.ONE_TWO );
-    tailIK = def( tailIK , false );
+    tailMode = def( tailMode , Duik.Constraint.IKType.FK );
 
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
@@ -42,8 +42,9 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     DuAE.beginUndoGroup( DuScriptUI.String.AUTORIG, false );
     DuAEProject.setProgressMode( true );
 
-    // Start by baking (improves perf and keeps envelops)
-    if (bakeBones) Duik.Bone.bake(layers);
+    // Start by baking (improves perf and optionaly keeps envelops)
+    if (bakeBones == 'envelops') Duik.Bone.bake(true, layers);
+    else if (bakeBones == 'bones') Duik.Bone.bake(false, layers);
 
     // Progress
     DuScriptUI.progressBar.reset(1);
@@ -136,12 +137,12 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     var parentSpine;
     if( riggedSpines.length > 0) parentSpine = riggedSpines[0];
 
-    for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailIK, parentSpine, customControllers );
+    for (var i = 0, n = tails.length; i < n; i++) Duik.Rig.tail( tails[i], tailMode, parentSpine, customControllers );
     for (var i = 0, n = legs.length; i < n; i++) Duik.Rig.leg( legs[i], parentSpine, customControllers );
     for (var i = 0, n = arms.length; i < n; i++) Duik.Rig.arm( arms[i], parentSpine, customControllers );
 
     var fishRiggedSpines = [];
-    for (var i = 0, n = fishSpines.length; i < n; i++) fishRiggedSpines.push( Duik.Rig.fishSpine( fishSpines[i], tailIK, parentSpine, customControllers ) );
+    for (var i = 0, n = fishSpines.length; i < n; i++) fishRiggedSpines.push( Duik.Rig.fishSpine( fishSpines[i], tailMode, parentSpine, customControllers ) );
     var fishParentSpine;
     if( fishRiggedSpines.length > 0) fishParentSpine = fishRiggedSpines[0];
     else if( riggedSpines.length > 0) fishParentSpine = riggedSpines[0];
@@ -149,8 +150,8 @@ Duik.Rig.auto = function ( bakeBones, tailIK, longChainMode, layers )
     for (var i = 0, n = fins.length; i < n; i++) Duik.Rig.fin( fins[i], fishParentSpine, customControllers );
     for (var i = 0, n = wings.length; i < n; i++) Duik.Rig.wing( wings[i], parentSpine, customControllers );
     for (var i = 0, n = hairs.length; i < n; i++) Duik.Rig.hair( hairs[i], parentSpine, customControllers );
-    /*for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
-    for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailIK, longChainMode, customControllers );*/
+    //for (var i = 0, n = snakeSpines.length; i < n; i++) Duik.Rig.snakeSpine( snakeSpines[i], customControllers );
+    for (var i = 0, n = customArmatures.length; i < n; i++) Duik.Rig.custom( customArmatures[i], tailMode, longChainMode, customControllers );
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( DuScriptUI.String.AUTORIG );
@@ -442,19 +443,19 @@ Duik.Rig.spine = function( layers, customControllers )
 /**
  * Rigs a tail.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
- * @param {Boolean} [tailIK=false] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
+ * @param {Boolean} [tailMode=Duik.Constraint.IKType.FK] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
  * @param {Object} [parentSpine] An object with two Arrays: bones and controllers.
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
  * @returns {Layer[]} The controller(s) of the tail
  */
-Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers, isHair )
+Duik.Rig.tail = function ( layers, tailMode, parentSpine, customControllers, isHair )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
     if( layers.isEmpty() ) return [];
 
     isHair = def(isHair, false); // low-level undocumented method: changes the coontrol shape to a hair strand
-    tailIK = def(tailIK, false);
+    tailMode = def(tailMode, Duik.Constraint.IKType.FK);
 
     DuScriptUI.progressBar.stg(DuScriptUI.String.TAIL);
     DuScriptUI.progressBar.hit(1, DuScriptUI.String.SORTING_BONES);
@@ -518,7 +519,7 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers, isHai
     if (isHair) ctrlType = Duik.Controller.Type.PONEYTAIL;
 
     //ik
-    if (tailIK)
+    if (tailMode == Duik.Constraint.IKType.BEZIER_IK)
     {
         //controllers
         var tailCtrl = Duik.Controller.getCreate( tip, ctrlType, customControllers);
@@ -542,6 +543,33 @@ Duik.Rig.tail = function ( layers, tailIK, parentSpine, customControllers, isHai
             if (parentSpine.controllers.length > 0) tailCtrl.parent = parentSpine.controllers[0];
             if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
             return [tailCtrl];
+        }
+    }
+
+    //bezier fk
+    if (tailMode == Duik.Constraint.IKType.BEZIER_FK)
+    {
+        if (tail.length > 1)
+        {
+            var ctrl = Duik.Controller.getCreate( tip, ctrlType, customControllers);
+            var ctrl1 = Duik.Controller.getCreate( tail[0], ctrlType, customControllers);
+            var ctrls = Duik.Constraint.bezierFK( tail, tip, tailCtrl, false, ctrl1);
+            //parent
+            if (parentSpine.controllers.length > 0)
+            {
+                ctrls[2].parent = parentSpine.controllers[0];
+            }
+            if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+            return ctrls;
+        }
+        else
+        {
+            var ctrl = Duik.Controller.getCreate( tail[0], ctrlType, customControllers);
+            Duik.Constraint.simpleFK( tail, ctrl);
+            //parent
+            if (parentSpine.controllers.length > 0) ctrl.parent = parentSpine.controllers[0];
+            if (parentSpine.bones.length > 0) tail[0].parent = parentSpine.bones[0];
+            return [ctrl];
         }
     }
 
@@ -2041,7 +2069,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
     ctrl.parent = spineAttach;
 
     // Rig!
-    DuScriptUI.progressBar.msg('Rigging...');
+    DuScriptUI.progressBar.msg(DuScriptUI.String.RIGGING);
 
     // Add effect
     var pe = Duik.PseudoEffect.WING;
@@ -2418,4 +2446,91 @@ Duik.Rig.hair = function( layers, parentSpine, customControllers )
     var fx = hairCtrls[0].property('ADBE Effect Parade').property(pe.matchName);
     if (!fx) return;
     fx(pe.props['Parent rotation'].index).setValue(0);
+}
+
+Duik.Rig.custom = function( layers, tailMode, threeLayerMode, customControllers ) {
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return [];
+    
+    tailMode = def(tailMode, Duik.Constraint.IKType.FK);
+    threeLayerMode = def(threeLayerMode, Duik.Constraint.IKType.ONE_TWO);
+
+    customControllers = new DuList(customControllers);
+
+    DuScriptUI.progressBar.stg(DuScriptUI.String.CUSTOM_BONES);
+    DuScriptUI.progressBar.hit(1, DuScriptUI.String.SORTING_BONES);
+
+    var comp = layers.first().containingComp;
+
+    // Sort
+    // a sorter for spine and neck
+	function sortBones(a,b)
+	{
+        var ai = DuAETag.getValue( a, DuAETag.Key.DUIK_BONE_INDEX, DuAETag.Type.INT );
+        var bi = DuAETag.getValue( b, DuAETag.Key.DUIK_BONE_INDEX, DuAETag.Type.INT );
+		return ai - bi;
+	}
+
+    layers.sort(sortBones);
+    
+    var numLayers = layers.length();
+
+    DuScriptUI.progressBar.msg(DuScriptUI.String.RIGGING);
+
+    // Rig
+    if (numLayers == 1) {
+        var ctrl = Duik.Controller.getCreate( layers.first(), Duik.Controller.Type.TRANSFORM, customControllers );
+        Duik.Constraint.simpleFK( layers, ctrl );
+    }
+    else if (numLayers == 2) {
+        var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+        Duik.Constraint.oneLayerIK( layers.first(), layers.last(), ctrl );
+    }
+    else if (numLayers == 3) {
+        var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+        Duik.Constraint.twoLayerIK( layers.first(), layers.at(1), layers.last(), ctrl );
+    }
+    else if (numLayers == 4) {
+        if (threeLayerMode == Duik.Constraint.IKType.FK) {
+            var ctrl = Duik.Controller.getCreate( layers.first(), Duik.Controller.Type.TRANSFORM, customControllers );
+            Duik.Constraint.fk(layers, ctrl);
+        }
+        else if (threeLayerMode == Duik.Constraint.IKType.ONE_TWO) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            Duik.Constraint.oneTwoLayerIK(layers.at(0), layers.at(1), layers.at(2), layers.last(), ctrl);
+        }
+        else if (threeLayerMode == Duik.Constraint.IKType.TWO_ONE) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            Duik.Constraint.twoOneLayerIK(layers.at(0), layers.at(1), layers.at(2), layers.last(), ctrl);
+        }
+        else if (threeLayerMode == Duik.Constraint.IKType.BEZIER_IK) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var tip = layers.pop();
+            Duik.Constraint.bezierIK(layers, tip, ctrl);
+        }
+        else if (threeLayerMode == Duik.Constraint.IKType.BEZIER_FK) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var ctrl1 = Duik.Controller.getCreate( layers.first(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var tip = layers.pop();
+            Duik.Constraint.bezierFK(layers, tip, ctrl, undefined, ctrl1);
+        }
+    }
+    else {
+        if (tailMode == Duik.Constraint.IKType.FK) {
+            var ctrl = Duik.Controller.getCreate( layers.first(), Duik.Controller.Type.TRANSFORM, customControllers );
+            Duik.Constraint.fk(layers, ctrl);
+        }
+        else if (tailMode == Duik.Constraint.IKType.BEZIER_IK) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var tip = layers.pop();
+            Duik.Constraint.bezierIK(layers, tip, ctrl);
+        }
+        else if (tailMode == Duik.Constraint.IKType.BEZIER_FK) {
+            var ctrl = Duik.Controller.getCreate( layers.last(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var ctrl1 = Duik.Controller.getCreate( layers.first(), Duik.Controller.Type.TRANSFORM, customControllers );
+            var tip = layers.pop();
+            Duik.Constraint.bezierFK(layers, tip, ctrl, undefined, ctrl1);
+        }
+    }
 }
