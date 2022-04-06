@@ -26,6 +26,18 @@ Duik.Layer.Type = {
 }
 
 /**
+ * Checks if a string is one of the prefixes used to identify layer types in their names
+ * @param {string} prefix The string to check
+ * @return {bool} True if the string is one of the predefined prefixes.
+ */
+Duik.Layer.isTypePrefix = function( prefix ) {
+    for (i in Duik.Layer.Type) {
+        if (prefix == Duik.Layer.Type[i]) return true;
+    }
+    return false;
+}
+
+/**
  * Checks if the layer is one of the types created by duik.
  * @param {Layer} layer - The layer to check
  * @param {Duik.Layer.Type} layerType - The type of layer
@@ -436,7 +448,11 @@ Duik.Layer.rename = function(layer, name, newPrefix) {
         var newName = newName.split(' | ');
         if (newName.length == 1) newName = newPrefix + ' | ' + newName[0];
         else {
-            if (newName[0].length <= 3) newName[0] = newPrefix;
+            // the first one is a prefix
+            if (Duik.Layer.isTypePrefix(newName[0])) newName[0] = newPrefix;
+            // enough parameters, the first one should be a prefix
+            else if (newName.length >= 4) newName[0] = newPrefix;
+            // insert the new prefix
             else newName.unshift(newPrefix);
             // Keep side
             newName = newName.join(' | ');
@@ -516,8 +532,15 @@ Duik.Layer.sanitizeName = function(layer) {
     if (name.length >= 3) {
         // Character / Group
         if (name[1] != '-' && name[1] != '') DuAETag.addGroup(layer, name[1]);
+        // Adjust count
+        // Consider the last one is the side
+        while (name.length >= 5) {
+            name[2] = name[2] + '_' + name[3];
+            name.splice(3, 1);
+        }
+        layer.name = name.join(' | ');
         // Side
-        if (name.length >= 4) {
+        if (name.length == 4) {
             var n = DuString.trimNumbers(name[3]);
             // Side group
             if (DuString.endsWith(n, DuScriptUI.String.LEFT_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.LEFT);
