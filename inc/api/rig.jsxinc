@@ -2075,7 +2075,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
     var pe = Duik.PseudoEffect.WING;
     var ctrlEffect = pe.apply( ctrl );
     var ctrlInfo = new DuAEProperty(ctrlEffect);
-    ctrlEffect.name = DuScriptUI.String.FIN;
+    ctrlEffect.name = DuScriptUI.String.WING;
 
     // Set effect
     var peLayers = pe.props['Data']['Layers'];
@@ -2242,9 +2242,8 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
         linkEffect(1).setValue(ctrl.index);
 
         // Add the feather control
-        var fkEffectName = DuAELayer.newUniqueEffectName( DuScriptUI.String.FEATHER, ctrl );
-        var fkEffect = ctrl.property('ADBE Effect Parade').addProperty('ADBE Angle Control');
-        fkEffect.name = fkEffectName;
+        var peFK = Duik.PseudoEffect.FEATHER;
+        var fkEffect = peFK.apply(ctrl);
         // The ctrlEffect is now invalid, get it back
         var ctrlEffect = ctrlInfo.getProperty();
 
@@ -2253,12 +2252,14 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             'try { controller = effect("' + linkEffect.name + '")(1); } catch (e) {}',
             'var fx = controller.effect("' + ctrlEffect.name + '");',
             'var fFx = controller.effect("' + fkEffect.name + '");',
-            'var r = fFx(1).value;',
+            'var r = fFx(' + peFK.props['Rotation'].index + ').value;',
+            'var foldedAngle = fFx(' + peFK.props['Settings']['Folded angle'].index + ').value;',
             'var overlap = fx(' + pe.props['General parameters']['Air resistance'].index + ').value;',
             'var handCustomInfluence = fx(' + pe.props['Feather parameters']['Hand rotation multiplicator'].index + ').value;',
             'var armLength = fx(' + peLengths['Arm'].index + ').value;',
             'var forearmLength = fx(' + peLengths['Forearm'].index + ').value;',
             'var handLength = fx(' + peLengths['Hand'].index + ').value;',
+            'var fold = fx(' + pe.props['Fold wing'].index + ').value;',
             'var arm = null;',
             'var forearm = null;',
             'var hand = null;',
@@ -2326,6 +2327,13 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             '  var armDistance = -1;',
             '  if (arm) armDistance = getLayerDistance(arm);',
             '  ',
+            '    // Check if we\'re folded ',
+            '    var armExtension = getLayerDistance(hand, arm);',
+            '    var limbLength = armLength + forearmLength;',
+            '    var folded = linear(armExtension, 0, limbLength, 1, 0);',
+            '    folded *= linear(Math.abs(fold), 0, 30, 0, 1);',
+            '    foldedAngle *= folded;',
+            '',
             '  // Get orientations',
             '',
             '  if (armFeather) {',
@@ -2346,7 +2354,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             '    forearmOrientation += getOrientation(forearm, t);',
             '    forearmOrientation *= w[1];',
             '    ',
-            '    return dishineritRotation() + armOrientation + forearmOrientation;',
+            '    return dishineritRotation() + armOrientation + forearmOrientation + foldedAngle;',
             '  }',
             '  ',
             '  if (forearmFeather) {',
@@ -2370,7 +2378,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             '      forearmOrientation = getOrientation(forearm, t);',
             '      forearmOrientation *= w[0];',
             '      ',
-            '      return dishineritRotation() + handOrientation + forearmOrientation;',
+            '      return dishineritRotation() + handOrientation + forearmOrientation + foldedAngle;',
             '    }',
             '    ',
             '    // Influence of the arm',
@@ -2389,7 +2397,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             '    forearmOrientation = getOrientation(forearm, t);',
             '    forearmOrientation *= w[1];',
             '    handOrientation *= w[2];',
-            '    return dishineritRotation() + handOrientation + forearmOrientation + armOrientation;',
+            '    return dishineritRotation() + handOrientation + forearmOrientation + armOrientation + foldedAngle;',
             '  }',
             '',
             '  var handRotation = hand.rotation.valueAtTime(t) - hand.rotation.valueAtTime(0);',
@@ -2418,7 +2426,7 @@ Duik.Rig.wing = function( layers, parentSpine, customControllers )
             '  forearmOrientation *= w[0];',
             '  handOrientation = getOrientation(hand, t);',
             '  handOrientation *= w[1];',
-            '  return dishineritRotation() + forearmOrientation + handOrientation + handRotation;',
+            '  return dishineritRotation() + forearmOrientation + handOrientation + handRotation + foldedAngle;',
             '',
             '}',
             '',
