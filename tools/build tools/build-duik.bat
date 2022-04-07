@@ -24,6 +24,7 @@ DuBuilder ..\..\inc\api_all.jsxinc -nobanner -d jsdoc_conf.json output\Duik_API\
 DuBuilder "..\..\Duik Angela.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Angela.jsx"
 DuBuilder "..\..\Duik Animation.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation.jsx"
 DuBuilder "..\..\Duik Animation Library.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation Library.jsx"
+DuBuilder "..\..\Duik Cmd.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Cmd.jsx"
 DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "..\..\Duik Notes.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Notes.jsx"
 DuBuilder "..\..\Duik Rigging.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Rigging.jsx"
