@@ -1057,6 +1057,38 @@ Duik.Bone.size = function( layer )
 }
 
 /**
+ * Checks the size of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
+ */
+Duik.Bone.envelopSize = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 25;
+        content = content.property('Bone');
+        if (!content) return 25;
+        content = content.property('ADBE Vectors Group').property('Envelop');
+        if (!content) return 25;
+        content = content.property('ADBE Vectors Group').property('root');
+        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale').value;
+        if (v[0] != 0) return Math.abs(v[0]);
+        if (v[1] != 0) return Math.abs(v[1]);
+        return 25;
+    }
+    return effect( sizeIndex ).value;
+}
+
+/**
  * Sets the size of the bone layer
  * @param {float} size The size in %.
  * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
@@ -1169,4 +1201,61 @@ Duik.Bone.resetTransform = function( layer )
         child.parent = layer;
         child.locked = locked;
     } );
+}
+
+Duik.CmdLib['Bone']["Auto Parent"] = "Duik.Bone.autoParent()";
+/**
+ * Automatically (tries to) links the artwork layers to their corresponding bones.<br />
+ * Finds the bones using the anchor point coordinates of the artworks.
+ * @param {Layer[]|DuList.<Layer>|LayerCollection} [layers] The artwork layers. If bones is omitted, it may also contain the bones.
+ * @param {Layer[]|DuList.<Layer>|LayerCollection} [bones] The bones to parent to. If omitted, will try to find them in layers, or in the comp if there's no bone in layers.
+ */
+Duik.Bone.autoParent = function( layers, bones ) {
+    layers = def(layers,DuAEComp.getSelectedLayers() );
+    layers = new DuList(layers);
+    if (layers.length() == 0) {
+        var comp = DuAEProject.getActiveComp();
+        if (!comp) return;
+        layers = new DuList(comp.layers);
+        if (layers.length() == 0) return;
+    }
+    var comp = layers.first().containingComp;
+
+    bones = def(bones, []);
+    bones = new DuList(bones);
+    if (bones.length() == 0) {
+        // Find them in layers
+        var layer;
+        layers.goToEnd();
+        while (layer = layers.previous()) {
+            if (Duik.Layer.isType(layer, Duik.Layer.Type.BONE)) {
+                bones.push(layer);
+                layers.remove( layers.current );
+            }
+        }
+        // Get in the comp
+        // Get selected first
+        if (bones.length() == 0) bones = new DuList( Duik.Bone.get(true, comp) );
+        // or all of them
+        if (bones.length() == 0) bones = new DuList( Duik.Bone.get(false, comp) );
+        // Still no bone, can't do
+        if (bones.length() == 0) return;
+    }
+
+    // First, for each bone, get range
+    // (improves performance, better than scanning for each layer)
+    bones.do(function(bone) {
+        bone.envelopSize = Duik.Bone.envelopSize(bone);
+    });
+
+    // Parent
+    layers.do(function(layer) {
+        bones.do(function(bone) {
+            var dist = DuAELayer.getDistance(layer, bone);
+            if (dist <= bone.envelopSize) {
+                layer.parent = bone;
+                return;
+            }
+        });
+    });
 }
