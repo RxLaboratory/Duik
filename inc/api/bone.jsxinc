@@ -1242,6 +1242,8 @@ Duik.Bone.autoParent = function( layers, bones ) {
         if (bones.length() == 0) return;
     }
 
+    DuAE.beginUndoGroup(DuScriptUI.String.LINK_ART, false);
+
     // First, for each bone, get range
     // (improves performance, better than scanning for each layer)
     bones.do(function(bone) {
@@ -1250,6 +1252,17 @@ Duik.Bone.autoParent = function( layers, bones ) {
 
     // Parent
     layers.do(function(layer) {
+        // Ignore locked layers
+        if (layer.locked) return;
+        // Don't parent if already parented
+        if (layer.parent) return;
+        // Check type
+        var type = Duik.Layer.type( layer );
+        // Parent only these types:
+        if (type != Duik.Layer.Type.NONE &&
+            type != Duik.Layer.Type.PIN && 
+            type != Duik.Layer.Type.ART ) return;
+        // Find the bone & parent
         bones.do(function(bone) {
             var dist = DuAELayer.getDistance(layer, bone);
             if (dist <= bone.envelopSize) {
@@ -1258,4 +1271,6 @@ Duik.Bone.autoParent = function( layers, bones ) {
             }
         });
     });
+
+    DuAE.endUndoGroup(DuScriptUI.String.LINK_ART);
 }
