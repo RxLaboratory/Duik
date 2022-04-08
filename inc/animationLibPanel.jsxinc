@@ -1,10 +1,9 @@
 function buildAnimationLibPanel( animationLibGroup ) {
+
+    // Init the folder
     var folderURI = def(DuESF.scriptSettings.data.animationLibFolder, DuESF.scriptSettings.file.parent.absoluteURI + '/' + DuScriptUI.String.ANIMATION_LIB);
     var libFolder = new Folder(folderURI);
     if (!libFolder.exists) libFolder.create();
-
-    DuESF.scriptSettings.data.animLib = def(DuESF.scriptSettings.data.animLib, {} );
-    DuESF.scriptSettings.data.animLib.currentCategory = def(DuESF.scriptSettings.data.animLib.currentCategory, 0);
 
     // Get the anim library metadata
     // Get/create the anim lib file
@@ -97,6 +96,7 @@ function buildAnimationLibPanel( animationLibGroup ) {
         animLib.save();
     }
 
+
     function addToRecent( entry ) {
         var uri = entry.absoluteURI;
         // If the first is not the same
@@ -112,237 +112,59 @@ function buildAnimationLibPanel( animationLibGroup ) {
 
         animLib.save();
     }
-
-    function entryRun( file ){
-        // Count uses
-        var a = getCreateLibEntry(file);
-        a.count++;
-        updateLibEntry(a);
-
-        // Update recent
-        addToRecent(a);
-    }
-
-    function updateCatSelector( catSel ) {
-        if (!libFolder.exists) return;
-        var subFiles = libFolder.getFiles();
-        for (var i = 0, n = subFiles.length; i < n; i++) {
-            if (!(subFiles[i] instanceof Folder)) continue;
-            // Add the folder name
-            catSel.addButton(DuPath.getName(subFiles[i]));
-        }
-    }
-
-    // Popups
-    var catNameEditor = DuScriptUI.stringPrompt(
-        DuScriptUI.String.ANIMATION_LIB_RENAME_CAT,
-        DuScriptUI.String.ANIMATION_LIB_NEW_CAT
-    );
-
-    var animNameEditor = DuScriptUI.stringPrompt( 
-        DuScriptUI.String.ANIMATION_LIB_RENAME_ANIM,
-        DuScriptUI.String.ANIMATION_LIB_NEW_ANIM
-    );
-
-    var animEditorPopup = DuScriptUI.popUp( DuScriptUI.String.ANIMATION_LIB_ANIM_SETTINGS );
-    animEditorPopup.content.alignment = ['fill','top'];
-    animEditorPopup.editing = null;
-
-    var animEditorButtonsGroup = DuScriptUI.toolBar(animEditorPopup.content);
-
-    var animEditorUpdateThumbButton = animEditorButtonsGroup.addButton(
-        DuScriptUI.String.UPDATE_THUMBNAIL,
-        w16_update_thumbnail,
-        DuScriptUI.String.UPDATE_THUMBNAIL_TIP
-    );
-    animEditorUpdateThumbButton.alignment = ['center', 'top'];
-    animEditorUpdateThumbButton.onClick = function() {
-        if (!animEditorPopup.editing) return;
-        var folderPath = animEditorPopup.editing.parent.absoluteURI;
-        var fileName = DuPath.getBasename( animEditorPopup.editing );
-        // Save thumbnail
-        var thumbnailFile = new File(folderPath + '/' + fileName + '.png');
-        DuAEComp.thumbnail(thumbnailFile, [32, 32]);
-
-        animEditorPopup.hide();
-        // Update list
-        animationLibGroup.refreshLib();
-    };
     
-    var animEditorUpdateAnimButton = animEditorButtonsGroup.addButton(
-        DuScriptUI.String.UPDATE_ANIMATION,
-        w16_update_anim,
-        DuScriptUI.String.UPDATE_ANIMATION_TIP
-    );
-    animEditorUpdateAnimButton.alignment = ['center', 'top'];
-    animEditorUpdateAnimButton.onClick = function() {
-        if (!animEditorPopup.editing) return;
-        DuIO.Animation.toJson(animEditorPopup.editing);
+    function refreshLib( category ) {
+        // Clear
+        DuJSObj.clear( category, ['data', 'libType', 'editableData', 'editableItem', 'icon'] );
 
-        animEditorPopup.hide();
-    };
+        var catFolder;
 
-    var animEditorCatSelector = DuScriptUI.selector(animEditorPopup.content);
-    animEditorCatSelector.onChange = function () {
-        if (!animEditorPopup.editing) return;
-
-        // Keep prev path to update lib metadata
-        var oldURI = animEditorPopup.editing.absoluteURI;
-
-        // Move file and thumb to the new folder
-        var newFolderPath = libFolder.absoluteURI + '/' + animEditorCatSelector.text + '/';
-        var fileName = DuPath.getName( animEditorPopup.editing );
-        var thumbPath = DuPath.switchExtension( animEditorPopup.editing, 'png' );
-        var thumbName = DuPath.getName(thumbPath);
-        // Move files
-        var newFile = DuFile.move( animEditorPopup.editing, newFolderPath + fileName);
-        alert(thumbPath);
-        alert(newFolderPath + thumbName);
-        DuFile.move( thumbPath, newFolderPath + thumbName);
-        // Update metadata
-        if (newFile) updateEntryURI( oldURI, newFile.absoluteURI);
-
-        animationLibGroup.refreshLib();
-    };
-
-    var animEditorFavButton = DuScriptUI.checkBox(
-        animEditorPopup.content,
-        DuScriptUI.String.FAVORITE,
-        w12_fav
-    );
-    animEditorFavButton.onClick = function() {
-        if (!animEditorPopup.editing) return;
-
-        var a = getCreateLibEntry( animEditorPopup.editing );
-        a.favorite = animEditorFavButton.checked;
-        updateLibEntry(a);
-
-        animEditorPopup.hide();
-
-        animationLibGroup.refreshLib();
-    };
-
-    animEditorNameEdit = DuScriptUI.editText(
-        animEditorPopup.content,
-        '',
-        '',
-        '',
-        DuScriptUI.String.ANIMATION_LIB_ANIM_NAME
-    );
-
-    var animEditorOKButton = DuScriptUI.button(
-        animEditorPopup.content,
-        DuScriptUI.String.OK,
-        DuScriptUI.Icon.CHECK,
-        DuScriptUI.String.ANIMATION_LIB_ANIM_SETTINGS,
-        false,
-        'row',
-        'center'
-    );
-    animEditorOKButton.onClick = animEditorNameEdit.onChange = function() {
-        if (!animEditorPopup.editing) return;
-
-        // Keep prev path to update lib metadata
-        var oldURI = animEditorPopup.editing.absoluteURI;
-
-        // Rename file and thumbnail
-        // Get the containing folder.
-        var folderPath = animEditorPopup.editing.parent.absoluteURI;
-        // rename
-        newName = DuPath.fixName(animEditorNameEdit.text, '_');
-        imageFile = new File(DuPath.switchExtension(animEditorPopup.editing, 'png'));
-        if (imageFile.exists) imageFile.rename(newName + '.png');
-        animEditorPopup.editing.rename(newName + '.duio');
-
-        // Update metadata
-        updateEntryURI( oldURI, animEditorPopup.editing.absoluteURI);
-
-        animEditorPopup.hide();
-
-        animationLibGroup.refreshLib();
-    };
-
-    // Categories
-    var categoriesGroup = DuScriptUI.group(animationLibGroup, 'row');
-
-    var removeCatButton = DuScriptUI.button(
-        categoriesGroup,
-        "",
-        w12_remove,
-        DuScriptUI.String.ANIMATION_LIB_REMOVE_CAT_TIP
-    );
-    removeCatButton.alignment = ['left', 'fill'];
-    removeCatButton.onClick = function() {
-        if (catSelector.index < 5) return;
-        var ok = confirm(DuString.args(DuScriptUI.String.ANIMATION_LIB_CONFIRM_REMOVE_CAT, [catSelector.text]));
-        if (!ok) return;
-        var folder = new Folder(libFolder.absoluteURI + '/' + catSelector.text);
-        DuFolder.wipeFolder(folder);
-        animationLibGroup.refreshLib();
-    };
-
-    var editCatButton = DuScriptUI.button(
-        categoriesGroup,
-        "",
-        w12_edit,
-        DuScriptUI.String.ANIMATION_LIB_RENAME_CAT_TIP
-    );
-    editCatButton.alignment = ['left', 'fill'];
-    editCatButton.onClick = function() {
-        if (catSelector.index < 5) {
-            catNameEditor.block = true;
-            return;
-        }
-        catNameEditor.setText(catSelector.text);
-        catNameEditor.edit();
-    };
-
-    var addCatButton = DuScriptUI.button(
-        categoriesGroup,
-        "",
-        w12_add,
-        DuScriptUI.String.ANIMATION_LIB_ADD_CAT_TIP
-    );
-    addCatButton.alignment = ['left', 'fill'];
-    addCatButton.onClick = function() {
-        catNameEditor.setText('');
-        catNameEditor.edit();
-    };
-
-    var catSelector = DuScriptUI.selector(categoriesGroup);
-    catSelector.onChange = function() {
-
-        // Adds an animation to the list
+        // Adds an anim file to the category
         function addItem( f ) {
+            var item = {};
+            item.data = f;
+            item.libType = 'item';
+            item.editableData = false;
+            item.editableItem = true;
+
             var icon = new File(DuPath.switchExtension(f, 'png'));
-            var item = animationList.add('item', DuPath.getBasename(f));
-            item.file = f;
-            if (icon.exists) {
-                // The image may not be written yet, or contain invalid data
-                try {
-                    item.image = icon.absoluteURI;
-                } catch (e) {};
-            }
+            if (icon.exists) item.icon = icon.absoluteURI;
+
+            category[ DuPath.getBasename(f) ] = item;
         }
 
-        // A function to list anims
-        function listAnims(folder) {
-            var files = folder.getFiles('*.duio');
-            for (var i = 0, n = files.length; i < n; i++) {
-                addItem(files[i]);
-            }
+        // List special categories
+        if (category.data == 'rootCat') {
+            catFolder = libFolder;
+
+            // Most used
+            var mostUsed = {};
+            mostUsed.data = 'mostUsed';
+            mostUsed.libType = 'category';
+            mostUsed.editableData = false;
+            mostUsed.editableItem = false;
+            mostUsed.icon = w12_count.binAsString;
+            category[ '* ' + DuScriptUI.String.MOST_USED ] = mostUsed;
+
+            // Recent
+            var recent = {};
+            recent.data = 'recent';
+            recent.libType = 'category';
+            recent.editableData = false;
+            recent.editableItem = false;
+            recent.icon = w12_recent.binAsString;
+            category[ '* ' + DuScriptUI.String.RECENT ] = recent;
+
+            // Favorites
+            var favs = {};
+            favs.data = 'favorites';
+            favs.libType = 'category';
+            favs.editableData = false;
+            favs.editableItem = false;
+            favs.icon = w12_fav.binAsString;
+            category[ '* ' + DuScriptUI.String.FAVORITES ] = favs;
         }
-
-        // List anim files
-        animationList.removeAll();
-        if (catSelector.index == 0) // Most used
-        {
-            // Sort list
-            animLib.data.anims.sort(function (a, b) {
-                return (b.count - a.count);
-            });
-
-            // add items
+        else if (category.data == 'mostUsed') {
             for (var i = 0; i < animLib.data.anims.length; i++) {
                 var a = animLib.data.anims[i];
                 if (a.count >= 1) {
@@ -351,9 +173,9 @@ function buildAnimationLibPanel( animationLibGroup ) {
                     addItem(f);
                 }
             }
+            return;
         }
-        else if (catSelector.index == 1) // Recent
-        {
+        else if (category.data == 'recent') {
             // add items
             for (var i = 0; i < animLib.data.recent.length; i++) {
                 var a = animLib.data.recent[i];
@@ -361,14 +183,9 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 if (!f.exists) continue;
                 addItem(f);
             }
+            return;
         }
-        else if (catSelector.index == 2) // Favs
-        {
-            // Sort list
-            animLib.data.anims.sort(function (a, b) {
-                return (b.count - a.count);
-            });
-
+        else if (category.data == 'favorites') {
             // add items
             for (var i = 0; i < animLib.data.anims.length; i++) {
                 var a = animLib.data.anims[i];
@@ -378,77 +195,43 @@ function buildAnimationLibPanel( animationLibGroup ) {
                     addItem(f);
                 }
             }
+            return;
         }
-        else if (catSelector.index == 3) // All
-        {
-            listAnims(libFolder);
-            var subFiles = libFolder.getFiles();
-            for (var i = 0, n = subFiles.length; i < n; i++) {
-                if (!(subFiles[i] instanceof Folder)) continue;
-                // Add the content
-                listAnims(subFiles[i]);
+        else {
+            catFolder = category.data;
+        }
+
+        // List subfolders (categories)
+        if (!catFolder) return; 
+        if (!catFolder.exists) return;
+
+        var subFiles = catFolder.getFiles();
+        for (var i = 0, n = subFiles.length; i < n; i++) {
+            var f = subFiles[i];
+            // Cat
+            if (f instanceof Folder) {
+                // Add the folder category
+                var cat = {};
+                cat.data = f;
+                cat.libType = 'category';
+                cat.editableData = false;
+                cat.editableItem = true;
+
+                category[ DuPath.getName(f) ] = cat;
             }
-        } else if (catSelector.index == 4) // Uncategorized
-        {
-            listAnims(libFolder);
-        } else { // Cat
-            var folder = new Folder(libFolder.absoluteURI + '/' + catSelector.text);
-            listAnims(folder);
+            // Anim
+            else if ( DuPath.getExtension(f) == 'duio' ) {
+                addItem(f);
+            }
         }
+    }
 
-        // Save settings
-        DuESF.scriptSettings.data.animLib.currentCategory = catSelector.index;
-        DuESF.scriptSettings.save();
-    };
+    // UI Popups
+    var runOptionsPopup = DuScriptUI.popUp( 'Options' );
+    runOptionsPopup.build = function() {
+        if (runOptionsPopup.built) return;
 
-    // Search group
-    var searchGroup = DuScriptUI.group(animationLibGroup, 'row');
-
-    var searchButton = DuScriptUI.button(
-        searchGroup,
-        '',
-        DuScriptUI.Icon.SEARCH
-    );
-    searchButton.alignment = ['left', 'fill'];
-    var searchEdit = DuScriptUI.editText(
-        searchGroup,
-        '',
-        '',
-        '',
-        "Search..."
-    );
-    searchEdit.alignment = ['fill', 'fill'];
-    searchButton.onClick = searchEdit.onChange = function() {
-        animationLibGroup.refreshLib();
-    };
-
-    // Main group
-    var listGroup = DuScriptUI.group(animationLibGroup, 'row');
-    listGroup.alignment = ['fill', 'fill'];
-
-    // Animations
-    var animationList = listGroup.add('listbox');
-    animationList.alignment = ['fill', 'fill'];
-
-    // Buttons
-    var buttonGroup = DuScriptUI.group(listGroup, 'column');
-    buttonGroup.alignment = ['right', 'fill'];
-    // Top (apply & settings)
-    var topButtons = DuScriptUI.group(buttonGroup, 'column');
-    topButtons.alignment = ['right', 'top'];
-
-    var applyButton = DuScriptUI.button(
-        topButtons,
-        '',
-        DuScriptUI.Icon.CHECK,
-        DuScriptUI.String.APPLY_ANIMATION_TIP,
-        true
-    );
-    applyButton.optionsPopup.build = function() {
-        if (applyButton.optionsPopup.built) return;
-        applyButton.optionsPopup.built = true;
-
-        var settingsKeysSelector = DuScriptUI.selector(applyButton.optionsPanel);
+        var settingsKeysSelector = DuScriptUI.selector(runOptionsPopup.content);
         settingsKeysSelector.addButton(
             DuScriptUI.String.ALL_PROPERTIES,
             w16_props
@@ -459,7 +242,7 @@ function buildAnimationLibPanel( animationLibGroup ) {
         );
         settingsKeysSelector.setCurrentIndex(0);
 
-        var propsGroup = DuScriptUI.group(applyButton.optionsPanel, 'row');
+        var propsGroup = DuScriptUI.group(runOptionsPopup.content, 'row');
         propsGroup.alignment = ['center', 'top'];
 
         var posButton = DuScriptUI.checkBox(
@@ -563,7 +346,7 @@ function buildAnimationLibPanel( animationLibGroup ) {
             return props;
         }
 
-        var offsetSelector = DuScriptUI.selector(applyButton.optionsPanel);
+        var offsetSelector = DuScriptUI.selector(runOptionsPopup.content);
         offsetSelector.addButton(
             DuScriptUI.String.OFFSET_VALUES,
             w16_offset,
@@ -577,38 +360,89 @@ function buildAnimationLibPanel( animationLibGroup ) {
         offsetSelector.setCurrentIndex(1);
 
         var reverseButton = DuScriptUI.checkBox(
-            applyButton.optionsPanel,
+            runOptionsPopup.content,
             DuScriptUI.String.REVERSE_KEYFRAMES,
             undefined,
             DuScriptUI.String.REVERSE_KEYFRAMES_TIP
         );
 
-        applyButton.onClick = function() {
-            if (!animationList.selection) return;
+        DuScriptUI.separator(runOptionsPopup.content);
 
+        var applyButton = DuScriptUI.button(
+            runOptionsPopup.content,
+            '',
+            w12_check,
+            ''
+        );
+
+        applyButton.onClick = lib.runItem;
+
+        function getMatchNames() {
+            var props = [];
+            if (!allPropsButton.checked) {
+                if (posButton.checked) {
+                    props.push('ADBE Position');
+                    props.push('ADBE Vector Position');
+                    props.push('ADBE Position_0');
+                    props.push('ADBE Position_1');
+                    props.push('ADBE Position_2');
+                }
+                if (rotButton.checked) {
+                    props.push('ADBE Rotate Z');
+                    props.push('ADBE Rotate Y');
+                    props.push('ADBE Rotate X');
+                    props.push('ADBE Orientation');
+                    props.push('ADBE Vector Rotation');
+                }
+                if (scaButton.checked) {
+                    props.push('ADBE Scale');
+                    props.push('ADBE Vector Scale');
+                }
+                if (opaButton.checked) {
+                    props.push('ADBE Opacity');
+                    props.push('ADBE Vector Group Opacity');
+                }
+                if (masksButton.checked) {
+                    props.push('ADBE Mask Parade');
+                }
+                if (fxButton.checked) {
+                    props.push('ADBE Effect Parade');
+                }
+            }
+            return props;
+        }
+
+        function runItem( f ) {
+            // Add to recent and most used
+            var a = getCreateLibEntry(f);
+            a.count++;
+            updateLibEntry(a);
+            // Update recent
+            addToRecent(a);
+        }
+
+        lib.onRun = function (item) {
             // Build matchname list
             var props = getMatchNames();
 
+            // Load animation
             DuIO.Animation.fromJson(
-                animationList.selection.file,
+                item.data,
                 undefined,
                 settingsKeysSelector.index == 1,
                 props,
                 offsetSelector.index == 0,
                 reverseButton.checked
             );
-
-            entryRun( animationList.selection.file );
+            runItem(item.data);
         };
 
-        applyButton.onCtrlClick = function() {
-            if (!animationList.selection) return;
-
+        lib.onCtrlRun = function (item) {
             // Build matchname list
             var props = getMatchNames();
 
             DuIO.Animation.fromJson(
-                animationList.selection.file,
+                item.data,
                 undefined,
                 settingsKeysSelector.index == 1,
                 props,
@@ -616,17 +450,15 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 reverseButton.checked
             );
 
-            entryRun( animationList.selection.file );
-        }
+            runItem(item.data);
+        };
 
-        applyButton.onAltClick = function() {
-            if (!animationList.selection) return;
-
+        lib.onAltRun = function (item) {
             // Build matchname list
             var props = getMatchNames();
 
             DuIO.Animation.fromJson(
-                animationList.selection.file,
+                item.data,
                 undefined,
                 settingsKeysSelector.index == 1,
                 props,
@@ -634,17 +466,15 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 true
             );
 
-            entryRun( animationList.selection.file );
-        }
+            runItem(item.data);
+        };
 
-        applyButton.onCtrlAltClick = function() {
-            if (!animationList.selection) return;
-
+        lib.onCtrlAltRun = function (item) {
             // Build matchname list
             var props = getMatchNames();
 
             DuIO.Animation.fromJson(
-                animationList.selection.file,
+                item.data,
                 undefined,
                 settingsKeysSelector.index == 1,
                 props,
@@ -652,22 +482,194 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 true
             );
 
-            entryRun( animationList.selection.file );
-            
-        }
-    };
-    animationList.onDoubleClick = function() {
-        applyButton.optionsPopup.build();
-        applyButton.onClick();
+            runItem(item.data);
+        };
     };
 
-    var folderButton = DuScriptUI.button(
-        topButtons,
-        '',
-        DuScriptUI.Icon.FOLDER,
-        DuScriptUI.String.ANIMATION_LIB_SELECT_FOLDER_TIP
+    var catNameEditor = DuScriptUI.stringPrompt(
+        DuScriptUI.String.ANIMATION_LIB_RENAME_CAT,
+        DuScriptUI.String.ANIMATION_LIB_NEW_CAT
     );
-    folderButton.onClick = function() {
+
+    var animNameEditor = DuScriptUI.stringPrompt( 
+        DuScriptUI.String.ANIMATION_LIB_RENAME_ANIM,
+        DuScriptUI.String.ANIMATION_LIB_NEW_ANIM
+    );
+
+    var animEditorPopup = DuScriptUI.popUp( DuScriptUI.String.ANIMATION_LIB_ANIM_SETTINGS );
+    animEditorPopup.content.alignment = ['fill','top'];
+    animEditorPopup.editing = null;
+
+    var animEditorButtonsGroup = DuScriptUI.toolBar(animEditorPopup.content);
+
+    var animEditorUpdateThumbButton = animEditorButtonsGroup.addButton(
+        DuScriptUI.String.UPDATE_THUMBNAIL,
+        w16_update_thumbnail,
+        DuScriptUI.String.UPDATE_THUMBNAIL_TIP
+    );
+    animEditorUpdateThumbButton.alignment = ['center', 'top'];
+    animEditorUpdateThumbButton.onClick = function() {
+        if (!animEditorPopup.editing) return;
+        var folderPath = animEditorPopup.editing.parent.absoluteURI;
+        var fileName = DuPath.getBasename( animEditorPopup.editing );
+        // Save thumbnail
+        var thumbnailFile = new File(folderPath + '/' + fileName + '.png');
+        DuAEComp.thumbnail(thumbnailFile, [32, 32]);
+
+        animEditorPopup.hide();
+        // Update list
+        lib.refresh();
+    };
+    
+    var animEditorUpdateAnimButton = animEditorButtonsGroup.addButton(
+        DuScriptUI.String.UPDATE_ANIMATION,
+        w16_update_anim,
+        DuScriptUI.String.UPDATE_ANIMATION_TIP
+    );
+    animEditorUpdateAnimButton.alignment = ['center', 'top'];
+    animEditorUpdateAnimButton.onClick = function() {
+        if (!animEditorPopup.editing) return;
+        DuIO.Animation.toJson(animEditorPopup.editing);
+
+        animEditorPopup.hide();
+    };
+
+    // For now, can't move between categories. Just move them from their folders
+    /*var animEditorCatSelector = DuScriptUI.selector(animEditorPopup.content);
+    animEditorCatSelector.onChange = function () {
+        if (!animEditorPopup.editing) return;
+
+        // Keep prev path to update lib metadata
+        var oldURI = animEditorPopup.editing.absoluteURI;
+
+        // Move file and thumb to the new folder
+        var newFolderPath = libFolder.absoluteURI + '/' + animEditorCatSelector.text + '/';
+        var fileName = DuPath.getName( animEditorPopup.editing );
+        var thumbPath = DuPath.switchExtension( animEditorPopup.editing, 'png' );
+        var thumbName = DuPath.getName(thumbPath);
+        // Move files
+        var newFile = DuFile.move( animEditorPopup.editing, newFolderPath + fileName);
+        alert(thumbPath);
+        alert(newFolderPath + thumbName);
+        DuFile.move( thumbPath, newFolderPath + thumbName);
+        // Update metadata
+        if (newFile) updateEntryURI( oldURI, newFile.absoluteURI);
+
+        animationLibGroup.refreshLib();
+    };*/
+
+    var animEditorFavButton = DuScriptUI.checkBox(
+        animEditorPopup.content,
+        DuScriptUI.String.FAVORITE,
+        w12_fav
+    );
+    animEditorFavButton.onClick = function() {
+        if (!animEditorPopup.editing) return;
+
+        var a = getCreateLibEntry( animEditorPopup.editing );
+        a.favorite = animEditorFavButton.checked;
+        updateLibEntry(a);
+
+        animEditorPopup.hide();
+
+        lib.refresh();
+    };
+
+    animEditorNameEdit = DuScriptUI.editText(
+        animEditorPopup.content,
+        '',
+        '',
+        '',
+        DuScriptUI.String.ANIMATION_LIB_ANIM_NAME
+    );
+
+    var animEditorOKButton = DuScriptUI.button(
+        animEditorPopup.content,
+        DuScriptUI.String.OK,
+        DuScriptUI.Icon.CHECK,
+        DuScriptUI.String.ANIMATION_LIB_ANIM_SETTINGS,
+        false,
+        'row',
+        'center'
+    );
+    animEditorOKButton.onClick = animEditorNameEdit.onChange = function() {
+        if (!animEditorPopup.editing) return;
+
+        // Keep prev path to update lib metadata
+        var oldURI = animEditorPopup.editing.absoluteURI;
+
+        // Rename file and thumbnail
+        // Get the containing folder.
+        var folderPath = animEditorPopup.editing.parent.absoluteURI;
+        // rename
+        newName = DuPath.fixName(animEditorNameEdit.text, '_');
+        imageFile = new File(DuPath.switchExtension(animEditorPopup.editing, 'png'));
+        if (imageFile.exists) imageFile.rename(newName + '.png');
+        animEditorPopup.editing.rename(newName + '.duio');
+
+        // Update metadata
+        updateEntryURI( oldURI, animEditorPopup.editing.absoluteURI);
+
+        animEditorPopup.hide();
+
+        lib.refresh();
+    };
+
+
+    // Set initial data
+    var animationLib = {};
+    animationLib.data = 'rootCat';
+    animationLib.libType = 'category';
+    animationLib.isRootCat = true;
+    refreshLib(animationLib);
+
+    var libOptions = {};
+    libOptions.runButton = false;
+    libOptions.canEditFolder = true;
+    libOptions.refreshInterval = 10000;
+    libOptions.itemName = DuScriptUI.String.ANIMATION;
+    libOptions.runHelpTip = DuScriptUI.String.APPLY_ANIMATION_TIP + "\n\n" + DuScriptUI.String.MORE_OPTIONS_TIP;
+    libOptions.folderHelpTip = DuScriptUI.String.ANIMATION_LIB_SELECT_FOLDER_TIP;
+    libOptions.addItemHelpTip = DuScriptUI.String.ANIMATION_LIB_ADD_ANIM_TIP;
+    libOptions.editItemHelpTip = DuScriptUI.String.ANIMATION_LIB_EDIT_ANIM_TIP;
+    libOptions.removeItemHelpTip = DuScriptUI.String.ANIMATION_LIB_REMOVE_ANIM_TIP;
+   
+    var lib = DuScriptUI.library(
+        animationLibGroup, // container
+        animationLib, // library
+        libOptions
+    );
+
+    lib.onRefresh = refreshLib;
+    runOptionsPopup.tieTo(lib.runButton, true);
+    lib.onRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onRun(item); };
+    lib.onAltRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onAltRun(item); };
+    lib.onCtrlRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onCtrlRun(item); };
+    lib.onCtrlAltRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onCtrlAltRun(item); };
+
+    lib.onFolderOpened = function(item, category) {
+        if (item) {
+            if (item.libType == 'item' || item.libType == 'category') {
+                var f = item.data;
+                if (f instanceof File || f instanceof Folder) {
+                    f.parent.execute();
+                    return;
+                }  
+            }
+        }
+        else {
+            var f = category.data;
+            if (f instanceof Folder) {
+                f.execute();
+                return;
+            }  
+        }
+
+        if (libFolder.exists) libFolder.execute();
+        else alert(DuScriptUI.String.ANIMATION_LIB_NO_FOLDER);
+    };
+
+    lib.onFolderEdited = function() {
         var folder = Folder.selectDialog(DuScriptUI.String.ANIMATION_LIB_FOLDER_PROMPT);
         if (folder == null) return;
         libFolder = folder;
@@ -682,127 +684,30 @@ function buildAnimationLibPanel( animationLibGroup ) {
         if (typeof animLib.data.recent === 'undefined') animLib.data.recent = [];
 
         // Reload categories and animations
-        animationLibGroup.refreshLib();
-    };
-    folderButton.onAltClick = function() {
-        if (libFolder.exists) libFolder.execute();
-        else alert(DuScriptUI.String.ANIMATION_LIB_NO_FOLDER);
+        lib.clear();
+        lib.clear();
+        refreshLib(animationLib);
     };
 
-    // Bottom (create, edit & remove)
-    var bottomButtons = DuScriptUI.group(buttonGroup, 'column');
-    bottomButtons.alignment = ['right', 'bottom'];
-
-    var addAnimButton = DuScriptUI.button(
-        bottomButtons,
-        "",
-        w12_add,
-        DuScriptUI.String.ANIMATION_LIB_ADD_ANIM_TIP
-    );
-    addAnimButton.alignment = ['right', 'bottom'];
-    addAnimButton.onClick = function() {
-        animEditorPopup.setText('');
-        animEditorPopup.edit();
-    };
-
-    var editAnimButton = DuScriptUI.button(
-        bottomButtons,
-        "",
-        w12_edit,
-        DuScriptUI.String.ANIMATION_LIB_RENAME_ANIM_TIP
-    );
-    editAnimButton.alignment = ['right', 'bottom'];
-    editAnimButton.onClick = function() {
-        if (!animationList.selection) {
-            animEditorPopup.block = true;
+    animNameEditor.tieTo(lib.addItemButton);
+    lib.onAddItem = function( category ) {
+        if (!(category.data instanceof Folder)) {
+            animNameEditor.block = true;
+            alert(DuScriptUI.String.ANIMATION_LIB_CANT_SAVE_IN_CAT);
             return;
         }
-
-        // Set name
-        animEditorNameEdit.setText( animationList.selection.text );
-
-        // Editing
-        animEditorPopup.editing = animationList.selection.file;
-
-        // Set categories
-        var cat = DuPath.getName( animationList.selection.file.parent );
-        if (cat == DuPath.getName(libFolder)) cat = DuScriptUI.String.UNCATEGORIZED;
-        
-        animEditorCatSelector.freeze = true;
-
-        animEditorCatSelector.clear();
-        animEditorCatSelector.addButton( DuScriptUI.String.UNCATEGORIZED, w12_file);
-        
-        updateCatSelector( animEditorCatSelector  );
-        animEditorCatSelector.setCurrentText( cat );
-
-        // Set Fav
-        var a = getCreateLibEntry( animEditorPopup.editing );
-        animEditorFavButton.setChecked( a.favorite );
-
-        animEditorCatSelector.freeze = false;
+        animNameEditor.setText('');
+        animNameEditor.edit();
     };
-
-    var removeAnimButton = DuScriptUI.button(
-        bottomButtons,
-        "",
-        w12_remove,
-        DuScriptUI.String.ANIMATION_LIB_REMOVE_ANIM_TIP
-    );
-    removeAnimButton.alignment = ['right', 'bottom'];
-    removeAnimButton.onClick = function() {
-        if (!animationList.selection) return;
-
-        var item = animationList.selection;
-
-        var ok = confirm(DuString.args(DuScriptUI.String.ANIMATION_LIB_CONFIRM_REMOVE_ANIM, [item.text]));
-        if (!ok) return;
-
-        var animFile = item.file;
-        var iconFile = new File(DuPath.switchExtension(animFile, 'png'));
-
-        if (animFile.exists) animFile.remove();
-        if (iconFile.exists) iconFile.remove();
-
-        animationList.remove(item);
-
-        // Clean metadata
-        cleanAnimLib();
-    };
-
-    catNameEditor.onAccept = function(newName) {
-        if (newName == '') return;
-
-        // Create
-        if (catNameEditor.previousString == '') {
-            var folder = new Folder(libFolder.absoluteURI + '/' + newName);
-            if (folder.exists) return;
-            folder.create();
-            catSelector.addButton(newName);
-        }
-        // Rename
-        else {
-            // Get the current name
-            if (catSelector.index < 5) return;
-            var folder = new Folder(libFolder.absoluteURI + '/' + catSelector.text);
-            if (!folder.exists) return;
-            folder.rename(newName);
-            updateEntryCat( catSelector.text, newName );
-        }
-
-        // Refresh list
-        animationLibGroup.refreshLib();
-        // Reset selection
-        catSelector.setCurrentText(newName);
-    };
-
     animNameEditor.onAccept = function(newName) {
         if (newName == '') return;
 
         // Create
         // Get the containing folder.
+        var cat = lib.currentCategory;
         var folderPath = libFolder.absoluteURI;
-        if (catSelector.index >= 2) folderPath += '/' + catSelector.text;
+        if (cat.data instanceof Folder) folderPath = cat.data.absoluteURI;
+        
         // The file
         newName = DuPath.fixName(newName, '_');
         var saveFile = new File(folderPath + '/' + newName + '.duio');
@@ -816,64 +721,106 @@ function buildAnimationLibPanel( animationLibGroup ) {
         var thumbnailFile = new File(folderPath + '/' + newName + '.png');
         DuAEComp.thumbnail(thumbnailFile, [32, 32]);
 
-        // Add to list
-        var item = animationList.add('item', newName);
-        // The image may not be written yet
-        try {
-            item.image = thumbnailFile.absoluteURI;
-        } catch (e) {};
-
-        // Refresh list
-        animationLibGroup.refreshLib();
-        // Reset selection
-        catSelector.setCurrentText(newName);
+        // Refresh
+        lib.refresh();
     };
 
-    animationLibGroup.refreshLib = function() {
-        if (!animationLibGroup.visible) return;
+    catNameEditor.tieTo(lib.addCategoryButton);
+    lib.onAddCategory = function( category ) {
+        if (!(category.data instanceof Folder)) {
+            catNameEditor.block = true;
+            alert(DuScriptUI.String.ANIMATION_LIB_CANT_CREATE_CAT_IN_CAT);
+            return;
+        }
+        catNameEditor.setText('');
+        catNameEditor.edit();
+    };
+    catNameEditor.onAccept = function(newName) {
+        if (newName == '') return;
 
-        // Keep current cat
-        var currentCat = catSelector.text;
+        // Get the containing folder.
+        var cat = lib.currentCategory;
+        var folderPath = libFolder.absoluteURI;
+        if (cat.data instanceof Folder) folderPath = cat.data.absoluteURI;
 
-        // Reset cat list
-        catSelector.freeze = true;
-        catSelector.clear();
-        catSelector.addButton(DuScriptUI.String.MOST_USED, w12_count);
-        catSelector.addButton(DuScriptUI.String.RECENT, w12_recent);
-        catSelector.addButton(DuScriptUI.String.FAVORITES, w12_fav);
-        catSelector.addButton(DuScriptUI.String.ALL_CATEGORIES, w12_library);
-        catSelector.addButton(DuScriptUI.String.UNCATEGORIZED, w12_file);
-        catSelector.setCurrentIndex(0);
+        // Create
+        if (catNameEditor.previousString == '') {
+            var folder = new Folder(folderPath + '/' + newName);
+            if (folder.exists) return;
+            folder.create();
+        }
+        // Rename
+        else {
+            // Get the current name
+            var folder = new Folder(folderPath + '/' + catNameEditor.previousString);
+            if (!folder.exists) return;
+            folder.rename(newName);
+            updateEntryCat( catNameEditor.previousString, newName );
+        }
 
-        // Load other cats
-        updateCatSelector( catSelector );
+        // Refresh list
+        lib.refresh();
+    };
 
-        catSelector.setCurrentText(currentCat);
+    catNameEditor.tieTo(lib.editItemButton, false, true);
+    animEditorPopup.tieTo(lib.editItemButton, false, true);
+    lib.onEditItem = function(item, category) {
+        if (item.libType == 'item') {
+            // Set name
+            animEditorNameEdit.setText( item.text );
 
-        catSelector.freeze = false;
-        catSelector.onChange();
+            // Editing
+            animEditorPopup.editing = item.data;
 
-        var search = searchEdit.text;
-        if (search == "") return;
-        search = search.toLowerCase();
-        // Remove items
-        for (var i = animationList.items.length -1; i >= 0; i--) {
-            var item = animationList.items[i];
-            if ( item.text.toLowerCase().indexOf(search) < 0 )
-            {
-                animationList.remove(i);
-            }
+            // Set categories
+            // For now can't move between categories.
+            /*var cat = DuPath.getName( animationList.selection.file.parent );
+            if (cat == DuPath.getName(libFolder)) cat = DuScriptUI.String.UNCATEGORIZED;
+            
+            animEditorCatSelector.freeze = true;
+
+            animEditorCatSelector.clear();
+            animEditorCatSelector.addButton( DuScriptUI.String.UNCATEGORIZED, w12_file);
+            
+            updateCatSelector( animEditorCatSelector  );
+            animEditorCatSelector.setCurrentText( cat );
+            
+            animEditorCatSelector.freeze = false;*/
+
+            // Set Fav
+            var a = getCreateLibEntry( animEditorPopup.editing );
+            animEditorFavButton.setChecked( a.favorite );
+
+            animEditorPopup.show();
+        }
+        else if (item.data instanceof Folder) {
+            catNameEditor.setText(item.text);
+            catNameEditor.edit();
+            catNameEditor.show();
         }
     };
 
-    catNameEditor.tieTo(editCatButton);
-    catNameEditor.tieTo(addCatButton);
+    lib.onRemoveItem = function (item, category) {
+        if (item.libType == 'item') {
+            var ok = confirm(DuString.args(DuScriptUI.String.ANIMATION_LIB_CONFIRM_REMOVE_ANIM, [item.text]));
+            if (!ok) return;
 
-    animEditorPopup.tieTo(editAnimButton);
-    animNameEditor.tieTo(addAnimButton);
+            var animFile = item.data;
+            var iconFile = new File(DuPath.switchExtension(animFile, 'png'));
 
-    DuScriptUI.addEvent(animationLibGroup.refreshLib, 10000);
+            if (animFile.exists) animFile.remove();
+            if (iconFile.exists) iconFile.remove();
 
-    var settingsPopup = {};
-    settingsPopup.built = false;
+            // Clean metadata
+            cleanAnimLib();
+            lib.refresh();
+        }
+        else if (item.data instanceof Folder) {
+            var ok = confirm(DuString.args(DuScriptUI.String.ANIMATION_LIB_CONFIRM_REMOVE_CAT, [item.text]));
+            if (!ok) return;
+            var folder = item.data;
+            DuFolder.wipeFolder(folder);
+            lib.refresh();
+        }
+    };
 }
