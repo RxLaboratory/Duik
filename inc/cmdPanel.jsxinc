@@ -1,193 +1,35 @@
 function buildCmdPanel( container ) {
 
-    // Sort the cmdlib!
-    function sortLib( lib ) {
-        var newLib = {};
-        var tempArray = [];
+    // Adjust lib
+    function fixLib( lib ) {
+        lib.libType = 'category';
         for (i in lib) {
-            tempArray.push(i);
-        }
-        tempArray.sort();
-        for (var i = 0; i < tempArray.length; i++)
-        {
-            var key = tempArray[i]
-            newLib[key] = lib[key];
-        }
-        return newLib;
-    }
-
-    // UTILS
-    var currentNamespace = Duik.CmdLib;
-    var currentCommand = [];
-
-    function setNamespace( ns ) {
-        
-        currentNamespace = ns;
-
-        ns = sortLib(ns);
-
-        libList.removeAll();
-
-        if (currentNamespace != Duik.CmdLib) {
-            var item = libList.add('item', '..');
-            item.image = w12_previous_frame.binAsString;
-            item.libType = 'parent';
-        }
-
-        for (i in ns) {
-            if (!ns.hasOwnProperty(i)) continue;
-            var val = ns[i];
-            if (typeof val === 'string') {
-                var item = libList.add('item', i);
-                item.libType = 'script';
-                item.source = val;
-                item.image = w12_cmd.binAsString;
+            if (!lib.hasOwnProperty(i)) continue;
+            if (typeof lib[i] === 'string') {
+                var val = {};
+                val.data = lib[i];
+                val.libType = 'item';
+                lib[i] = val;
             }
-            else {
-                var item = libList.add('item', i);
-                item.libType = 'ns';
-                item.image = w12_folder.binAsString;
-            }
+            else fixLib( lib[i] );
         }
     }
 
-    function updateNamespace() {
-        var ns = Duik.CmdLib;
-        for (var i = 0; i < currentCommand.length; i++) {
-            ns = ns[currentCommand[i]];
-        }
-        setNamespace(ns);
-    }
+    fixLib(Duik.CmdLib);
 
-    function updateBreadCrumbs() {
-        tipLabel.text = currentCommand.join(' > ');
-    }
+    var lib = DuScriptUI.library(
+        container,
+        Duik.CmdLib,
+        true,
+        false,
+        false,
+        false,
+        false,
+        -1,
+        w12_cmd.binAsString
+    );
 
-    function parseCmd() {
-        // Check if we're starting a new block
-        var currentCmd = cmdEdit.text;
-        if ( DuString.endsWith(currentCmd, ' >')) return;
-        if ( DuString.fullTrim(currentCmd) == '') {
-            updateNamespace();
-            return;
-        }
-        var newBlock = DuString.endsWith(currentCmd, ' ');
-        // Search
-        if (!newBlock) {
-            // Get last block
-            var search = currentCmd.toLowerCase();
-            // Reset list
-            setNamespace(currentNamespace);
-            // Filter
-            for (var i = libList.items.length -1; i >= 0; i--) {
-                var item = libList.items[i];
-                if ( // unsuccessful search
-                    item.text.toLowerCase().indexOf(search) < 0
-                    )
-                {
-                    libList.remove(i);
-                }
-            }
-        }
-        // Select
-        else if (libList.items.length > 0 && currentCmd.length > 0) {
-            var item = libList.items[0];
-            if (item.libType == 'parent') {
-                currentCommand.pop();
-                updateBreadCrumbs();
-                updateNamespace();
-                cmdEdit.setText('');
-            }
-            else if (item.libType == 'ns') {
-                currentCommand.push(item.text);
-                updateBreadCrumbs();
-                updateNamespace();
-                cmdEdit.setText('');
-            }
-            /*else if (item.libType == 'script') {
-                cmdEdit.setText(item.text + ' >');
-                updateNamespace();
-            }*/
-        }
+    lib.onRun = function(item) {
+        eval(item.data);
     };
-
-    function run() {
-        parseCmd();
-        cmdEdit.setText(cmdEdit.text + ' ');
-        parseCmd();
-        if (libList.items.length < 0) return;
-        var item = libList.items[0];
-        if (item.libType == 'script') {
-            eval( item.source );
-            // Clears the edit
-            clear();
-            // Clears the namespace
-            clear();
-        }
-    }
-
-    function clear() {
-        var currentCmd = cmdEdit.text;
-        // Empty
-        if ( DuString.fullTrim(currentCmd) == '') {
-            currentCommand = [];
-            updateBreadCrumbs();
-            updateNamespace();
-        }
-        cmdEdit.setText('');
-        parseCmd();
-    }
-
-    // UI
-
-    var cmdGroup = DuScriptUI.group(container, 'row');
-    cmdGroup.spacing = 3;
-
-    var clearButton = DuScriptUI.button(
-        cmdGroup,
-        '',
-        DuScriptUI.Icon.CLOSE
-    );
-    clearButton.alignment = ['left', 'fill'];
-    clearButton.onClick = clear;
-
-    var cmdEdit = DuScriptUI.editText(
-        cmdGroup,
-        '',
-        '',
-        '',
-        DuScriptUI.String.START_TYPING_CMD
-    );
-    cmdEdit.alignment = ['fill', 'fill'];
-    cmdEdit.onChanging = cmdEdit.onChange = parseCmd;
-    cmdEdit.onEnterPressed = run;
-
-    var runButton = DuScriptUI.button(
-        cmdGroup,
-        '',
-        w12_automation
-    );
-    runButton.alignment = ['right','fill'];
-    runButton.onClick = run;
-
-    var tipGroup = DuScriptUI.group( container, 'row');
-
-    var tipLabel = DuScriptUI.staticText(
-        tipGroup,
-        DuScriptUI.String.START_TYPING_CMD
-    );
-    tipLabel.alignment = ['fill', 'fill'];
-
-    var libList = container.add('listbox');
-    libList.alignment = ['fill', 'fill'];
-    libList.onDoubleClick = function() {
-        var selection = libList.selection;
-        if (!selection) return;
-        cmdEdit.setText(selection.text);
-        run();
-    }
-
-    // INIT
-    setNamespace(Duik.CmdLib);
-
 }
