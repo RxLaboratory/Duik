@@ -1,0 +1,838 @@
+function buildScriptLibPanel( scriptLibGroup ) {
+
+    // Settings
+    DuESF.scriptSettings.data.scriptLib = def(DuESF.scriptSettings.data.scriptLib, {} );
+    DuESF.scriptSettings.data.scriptLib.dontDockScriptUI = def(DuESF.scriptSettings.data.scriptLib.dontDockScriptUI, false );
+    DuESF.scriptSettings.data.scriptLib.useDuikEditor = def(DuESF.scriptSettings.data.scriptLib.useDuikEditor, true );
+    DuESF.scriptSettings.data.scriptLib.scriptEditor = def(DuESF.scriptSettings.data.scriptLib.scriptEditor, "System default");
+    DuESF.scriptSettings.data.scriptLib.currentCategory = def(DuESF.scriptSettings.data.scriptLib.currentCategory, 0);
+
+    // Default icons
+    var defaultIcons = {};
+    defaultIcons["Duik Angela"] = w16_move_rotate.binAsString;
+    defaultIcons["Duik Animation"] = w16_animation.binAsString;
+    defaultIcons["Duik Animation Library"] = w16_library.binAsString;
+    defaultIcons["Duik Constraints"] = w16_constraint.binAsString;
+    defaultIcons["Duik Layer Manager"] = w16_layers.binAsString;
+    defaultIcons["Duik Notes"] = w16_file.binAsString;
+    defaultIcons["Duik Rigging"] = w16_bone.binAsString;
+    defaultIcons["Duik Script Library"] = w16_library.binAsString;
+    defaultIcons["DuGR"] = w16_dugr.binAsString;
+    defaultIcons["Create Nulls From Paths"] = w16_null_path.binAsString;
+    defaultIcons["VR Comp Editor"] = w16_vr.binAsString;
+
+    // Get the script library
+    // Same folder as the settings file
+    var duikSettingsFolder = DuESF.scriptSettings.file.parent;
+    // Get/create the script lib file
+    var scriptLib = new DuSettings( "Duik_script_library", duikSettingsFolder.absoluteURI + "/Duik_script_library.json", true );
+    // Prepare defaults
+    if (typeof scriptLib.data.categories === 'undefined') scriptLib.data.categories = [];
+    if (typeof scriptLib.data.scripts === 'undefined') scriptLib.data.scripts = [];
+    if (typeof scriptLib.data.recent === 'undefined') scriptLib.data.recent = [];
+
+    // Utils
+    function getCreateLibEntry( file ) {
+        if (file instanceof File) file = file.absoluteURI;
+        for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var s = scriptLib.data.scripts[i];
+            if (s.absoluteURI == file) {
+                // Update defaults
+                s.favorite = def(s.favorite, false);
+                s.count = def(s.count, 0);
+                return s;
+            }
+        }
+
+        var s = {};
+        s.absoluteURI = file;
+        s.favorite = false;
+        s.count = 0;
+        s.name = DuPath.getBasename(file);
+        s.icon = '';
+        s.category = '';
+        return s;
+    }
+
+    function updateLibEntry( entry ) {
+        for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var a = scriptLib.data.scripts[i];
+            if (a.absoluteURI == entry.absoluteURI) {
+                scriptLib.data.scripts[i] = entry;
+                scriptLib.save();
+                return;
+            }
+        }
+        scriptLib.data.scripts.push(entry);
+        scriptLib.save();
+    }
+
+    function removeLibEntry( entry ) {
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--) {
+            var script = scriptLib.data.scripts[i];
+            if (script.absoluteURI == entry.absoluteURI) {
+                // Remove from recent list
+                for (var j = scriptLib.data.recent.length - 1; j >= 0; j--) {
+                    if (scriptLib.data.recent[j] == script.absoluteURI) scriptLib.data.recent.splice(j, 1);
+                }
+                // Remove from script list
+                scriptLib.data.scripts.splice(i, 1);
+            }
+        }
+
+        scriptLib.save();
+    }
+
+    function removeCatEntry( catName ) {
+        // Remove from categories list
+        for (var i = 0; i < scriptLib.data.categories.length; i++) {
+            var cat = scriptLib.data.categories[i];
+            if (cat.name == catName) {
+                scriptLib.data.categories.splice(i, 1);
+                break;
+            }
+        }
+
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0; i--) {
+            var script = scriptLib.data.scripts[i];
+            if (script.category == catName) {
+                // Remove from recent list
+                for (var j = scriptLib.data.recent.length - 1; j >= 0; j--) {
+                    if (scriptLib.data.recent[j] == script.absoluteURI) scriptLib.data.recent.splice(j, 1);
+                }
+                // Remove from script list
+                scriptLib.data.scripts.splice(i, 1);
+            }
+        }
+
+        scriptLib.save();
+    }
+
+    function cleanScriptLib() {
+        for (var i = scriptLib.data.scripts.length - 1; i >= 0 ; i--) {
+            var a = scriptLib.data.scripts[i];
+            var f = new File(a.absoluteURI);
+            if (!f.exists) scriptLib.data.scripts.splice(i, 1);
+        }
+        for (var i = scriptLib.data.recent.length - 1; i >= 0 ; i--) {
+            var a = scriptLib.data.recent[i];
+            var f = new File(a);
+            if (!f.exists) scriptLib.data.recent.splice(i, 1);
+        }
+        scriptLib.save();
+    }
+
+    function addToRecent( entry ) {
+        var uri = entry.absoluteURI;
+        // If the first is not the same
+        if (scriptLib.data.recent.length > 0 && scriptLib.data.recent[0] == uri) return;
+
+        // Insert
+        scriptLib.data.recent.unshift( uri );
+
+        // Remove others
+        for (var i = scriptLib.data.recent.length -1; i > 0; i--) {
+            if (scriptLib.data.recent[i] == uri) scriptLib.data.recent.splice(i, 1);
+        }
+
+        scriptLib.save();
+    }
+
+    function entryRun( file ){
+        // Count uses
+        var a = getCreateLibEntry(file);
+        a.count++;
+        updateLibEntry(a);
+
+        // Update recent
+        addToRecent(a);
+    }
+
+    function updateCatSelector( catSel ) {
+        // Load other cats
+        for (var i = 0; i < scriptLib.data.categories.length; i++) {
+            catSel.addButton(scriptLib.data.categories[i]);
+        }
+    }
+
+    // Popups
+    var catNameEditor = DuScriptUI.stringPrompt(
+        DuScriptUI.String.SCRIPT_LIB_RENAME_CAT,
+        DuScriptUI.String.SCRIPTLIB_NEW_CAT
+    );
+
+    var scriptSettingsEditor = DuScriptUI.popUp( DuScriptUI.String.SCRIPT_LIB_SCRIPT_SETTINGS );
+    scriptSettingsEditor.content.alignment = ['fill','top'];
+    scriptSettingsEditor.editing = null;
+    var scriptSettingsCatSelector = DuScriptUI.selector(scriptSettingsEditor.content);
+    scriptSettingsCatSelector.onChange = function() {
+        if (!scriptSettingsEditor.editing) return;
+
+        var f = scriptSettingsEditor.editing;
+
+        var catName = "";
+        if (scriptSettingsCatSelector.index > 0) catName = scriptSettingsCatSelector.text;
+
+        // set cat in settings
+        var ok = false;
+        for(var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var s = scriptLib.data.scripts[i];
+            if (s.absoluteURI == f.absoluteURI) {
+                s.category = catName;
+                ok = true;
+            }
+            scriptLib.data.scripts[i] = s;
+        }
+        if (!ok) {
+            var s = {};
+            s.name = DuPath.getBasename(f);
+            s.category = catName;
+            s.icon = "";
+            s.absoluteURI = f.absoluteURI;
+            scriptLib.data.scripts.push(s);
+        }
+        scriptLib.save();
+
+        // Refresh list
+        scriptLibGroup.refreshLib();
+    };
+    var scriptSettingsIconSelector = DuScriptUI.fileSelector(
+        scriptSettingsEditor.content,
+        DuScriptUI.String.SCRIPT_LIB_SELECT_ICON + "...",
+        false,
+        '',
+        undefined,
+        'open',
+        "Portable Network Graphics: *.png, All Files: *.*",
+    );
+    scriptSettingsIconSelector.onChange = function() {
+        if (!scriptSettingsEditor.editing) return;
+        var iconFile = scriptSettingsIconSelector.getFile();
+        if (!iconFile) return;
+
+        var f = scriptSettingsEditor.editing;
+
+        // set icon in settings
+        var ok = false;
+        for(var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var s = scriptLib.data.scripts[i];
+            if (s.absoluteURI == f.absoluteURI) {
+                s.icon = iconFile.absoluteURI;
+                ok = true;
+            }
+            scriptLib.data.scripts[i] = s;
+        }
+        if (!ok) {
+            var s = {};
+            s.name = DuPath.getBasename(f);
+            s.category = "";
+            s.icon = iconFile.absoluteURI;
+            s.absoluteURI = f.absoluteURI;
+            scriptLib.data.scripts.push(s);
+        }
+        scriptLib.save();
+
+        // Refresh list
+        scriptLibGroup.refreshLib();
+    };
+    var scriptSettingsFavButton = DuScriptUI.checkBox(
+        scriptSettingsEditor.content,
+        DuScriptUI.String.FAVORITE,
+        w12_fav
+    );
+    scriptSettingsFavButton.onClick = function() {
+        if (!scriptSettingsEditor.editing) return;
+
+        var s = getCreateLibEntry( scriptSettingsEditor.editing );
+        s.favorite = scriptSettingsFavButton.checked;
+        updateLibEntry(s);
+
+        scriptSettingsEditor.hide();
+
+        scriptLibGroup.refreshLib();
+    };
+    scriptSettingsNameEditor = DuScriptUI.editText(
+        scriptSettingsEditor.content,
+        '',
+        '',
+        '',
+        DuScriptUI.String.SCRIPT_LIB_SCRIPT_NAME
+    );
+    var scriptSettingsOKButton = DuScriptUI.button(
+        scriptSettingsEditor.content,
+        DuScriptUI.String.OK,
+        DuScriptUI.Icon.CHECK,
+        DuScriptUI.String.SCRIPT_LIB_SCRIPT_SETTINGS,
+        false,
+        'row',
+        'center'
+    );
+    scriptSettingsOKButton.onClick = scriptSettingsNameEditor.onChange = function() {
+        if (!scriptSettingsEditor.editing) return;
+
+        var f = scriptSettingsEditor.editing;
+
+        // Rename in settings
+        var ok = false;
+        for(var i = 0; i < scriptLib.data.scripts.length; i++) {
+            var s = scriptLib.data.scripts[i];
+            if (s.absoluteURI == f.absoluteURI) {
+                s.name = scriptSettingsNameEditor.text;
+                ok = true;
+            }
+            scriptLib.data.scripts[i] = s;
+        }
+        if (!ok) {
+            var s = {};
+            s.name = scriptSettingsNameEditor.text;
+            s.category = "";
+            s.icon = "";
+            s.absoluteURI = f.absoluteURI;
+            scriptLib.data.scripts.push(s);
+        }
+        scriptLib.save();
+
+        // Refresh list
+        scriptLibGroup.refreshLib();
+
+        if (!scriptSettingsEditor.pinned) {
+            scriptSettingsEditor.editing = null;
+            scriptSettingsEditor.hide();
+        }
+    }
+
+    // Categories
+    var categoriesGroup = DuScriptUI.group(scriptLibGroup, 'row');
+
+    var removeCatButton = DuScriptUI.button(
+        categoriesGroup,
+        "",
+        w12_remove,
+        DuScriptUI.String.SCRIPT_LIB_REMOVE_CAT_TIP
+    );
+    removeCatButton.alignment = ['left', 'fill'];
+    removeCatButton.onClick = function() {
+        if (catSelector.index < 2) return;
+        var catName = catSelector.text;
+        var ok = confirm(DuString.args(DuScriptUI.String.SCRIPT_LIB_CONFIRM_REMOVE_CAT, [catName]));
+        if (!ok) return;
+        
+        removeCatEntry( catName );
+
+        scriptLibGroup.refreshLib();
+    }
+
+    var editCatButton = DuScriptUI.button(
+        categoriesGroup,
+        "",
+        w12_edit,
+        DuScriptUI.String.SCRIPT_LIB_RENAME_CAT_TIP
+    );
+    editCatButton.alignment = ['left', 'fill'];
+    editCatButton.onClick = function() {
+        if (catSelector.index < 9) {
+            catNameEditor.block = true;
+            return;
+        }
+        catNameEditor.setText(catSelector.text);
+        catNameEditor.edit();
+    };
+
+    var addCatButton = DuScriptUI.button(
+        categoriesGroup,
+        "",
+        w12_add,
+        DuScriptUI.String.SCRIPT_LIB_ADD_CAT_TIP
+    );
+    addCatButton.alignment = ['left', 'fill'];
+    addCatButton.onClick = function() {
+        catNameEditor.setText('');
+        catNameEditor.edit();
+    }
+
+    var catSelector = DuScriptUI.selector(categoriesGroup);
+    catSelector.onChange = function() {
+
+        // A function to list scripts
+        function listScripts(folder) {
+            var files = folder.getFiles();
+            for (var i = 0, n = files.length; i < n; i++) {
+                var f = files[i];
+                var ext = DuPath.getExtension(f);
+                if (ext != 'jsx' && ext != 'jsxbin') continue;
+                // get icon and name from settings
+                var icon = "";
+                var name = "";
+                for (var j = 0; j < scriptLib.data.scripts.length; j++)
+                {
+                    var script = scriptLib.data.scripts[j];
+                    if (script.absoluteURI == f.absoluteURI) {
+                        if (script.name) name = script.name;
+                        if (script.icon) icon = script.icon;
+                        break;
+                    }
+                }
+                if (name == "") name = DuPath.getBasename(f);
+                // Get the default icon
+                if (icon == "" && defaultIcons[name] !== undefined) {
+                    icon = defaultIcons[name]; 
+                }
+
+                var item = scriptList.add('item', name );
+                item.file = f;
+                if (icon != "") {
+                    item.image = icon;
+                }
+            }
+        }
+
+        function addItem( entry ) {
+            var f = new File(entry.absoluteURI);
+            if (!f.exists) return;
+            var item = scriptList.add('item', entry.name );
+            item.file = new File(entry.absoluteURI);
+            
+            // Get the default icon
+            var icon = '';
+            if (entry.icon == '' && defaultIcons[entry.name] !== undefined) {
+                icon = defaultIcons[entry.name];
+            }
+            else {
+                var iconFile = new File(entry.icon);
+                if (iconFile.exists) 
+                    icon = entry.icon;
+            }
+            
+            if (icon != '') item.image = icon;
+        }
+
+        // List script files
+        scriptList.removeAll();
+
+        if (catSelector.index == 0) { // Most used
+            // Sort list
+            scriptLib.data.scripts.sort(function (a, b) {
+                b.count = def(b.count, 0);
+                a.count = def(a.count, 0);
+                return (b.count - a.count);
+            });
+
+            // add
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var script = scriptLib.data.scripts[i];
+                if (script.count > 0) addItem( script );
+            }
+        } else if (catSelector.index == 1) { // Recent
+            for (var i = 0; i < scriptLib.data.recent.length; i++) {
+                var s = scriptLib.data.recent[i];
+                var f = new File(s);
+                if (!f.exists) continue;
+                s = getCreateLibEntry(f);
+                addItem( s );
+            }
+        } else if (catSelector.index == 2) { // Favs
+            // Sort list
+            scriptLib.data.scripts.sort(function (a, b) {
+                b.count = def(b.count, 0);
+                a.count = def(a.count, 0);
+                return (b.count - a.count);
+            });
+
+            // add items
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var s = scriptLib.data.scripts[i];
+                if (s.favorite) addItem(s);
+            }
+        } else if (catSelector.index == 3) { // All
+            // Categories
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var script = scriptLib.data.scripts[i];
+                addItem(script);
+            }
+            // ScriptUI
+            var folders = DuAE.scriptFolders("ScriptUI Panels");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+            // Scripts
+            var folders = DuAE.scriptFolders("");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+            // Startup
+            var folders = DuAE.scriptFolders("Startup");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+            // Shutdown
+            var folders = DuAE.scriptFolders("Shutdown");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+        } else if (catSelector.index == 4) { // Uncategorized
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var script = scriptLib.data.scripts[i];
+                if (script.category == "") addItem(script);
+            }
+        } else if (catSelector.index == 5) { // ScriptUI
+            var folders = DuAE.scriptFolders("ScriptUI Panels");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+        } else if (catSelector.index == 6) { // Ae Scripts
+            var folders = DuAE.scriptFolders("");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+        } else if (catSelector.index == 7) { // Startup Scripts
+            var folders = DuAE.scriptFolders("Startup");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+        } else if (catSelector.index == 8) { // Shutdown Scripts
+            var folders = DuAE.scriptFolders("Shutdown");
+            for (var i = 0; i < folders.length; i++) {
+                listScripts(folders[i]);
+            }
+        } else {
+            var catName = catSelector.text;
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                var script = scriptLib.data.scripts[i];
+                if (script.category == catName) addItem(script);
+            }
+        }
+
+        // Save settings
+        DuESF.scriptSettings.data.scriptLib.currentCategory = catSelector.index;
+        DuESF.scriptSettings.save();
+
+    }
+
+    // Search group
+    var searchGroup = DuScriptUI.group(scriptLibGroup, 'row');
+
+    var searchButton = DuScriptUI.button(
+        searchGroup,
+        '',
+        DuScriptUI.Icon.SEARCH
+    );
+    searchButton.alignment = ['left', 'fill'];
+    var searchEdit = DuScriptUI.editText(
+        searchGroup,
+        '',
+        '',
+        '',
+        "Search..."
+    );
+    searchEdit.alignment = ['fill', 'fill'];
+    searchButton.onClick = searchEdit.onChange = function() {
+        // Refresh
+        scriptLibGroup.refreshLib();
+        var search = searchEdit.text;
+        if (search == "") return;
+        search = search.toLowerCase();
+        // Remove items
+        for (var i = scriptList.items.length -1; i >= 0; i--) {
+            var item = scriptList.items[i];
+            if ( // unsuccessful search
+                item.text.toLowerCase().indexOf(search) < 0
+                ||item.file.fsName.toLowerCase().indexOf(search) < 0
+                )
+            {
+                scriptList.remove(i);
+            }
+        }
+    };
+
+    // Main group
+    var listGroup = DuScriptUI.group(scriptLibGroup, 'row');
+    listGroup.alignment = ['fill', 'fill'];
+
+    // Scripts
+    var scriptList = listGroup.add('listbox');
+    scriptList.alignment = ['fill', 'fill'];
+
+    // Buttons
+    var buttonGroup = DuScriptUI.group(listGroup, 'column');
+    buttonGroup.alignment = ['right', 'fill'];
+    // Top (apply, edit)
+    var topButtons = DuScriptUI.group(buttonGroup, 'column');
+    topButtons.alignment = ['right', 'top'];
+
+    var applyButton = DuScriptUI.button(
+        topButtons,
+        '',
+        w12_automation,
+        DuScriptUI.String.SCRIPT_LIB_RUN_SCRIPT_TIP,
+        true
+    );
+    applyButton.optionsPopup.build = function() {
+        if (applyButton.optionsPopup.built) return;
+        applyButton.optionsPopup.built = true;
+
+        // option to not open scriptui panels as dockable
+        var dontDockButton = DuScriptUI.checkBox(
+            applyButton.optionsPanel,
+            DuScriptUI.String.SCRIPT_LIB_DOCK,
+            undefined,
+            DuScriptUI.String.SCRIPT_LIB_DONT_DOCK_TIP,
+            DuScriptUI.String.SCRIPT_LIB_DONT_DOCK
+        );
+        dontDockButton.onClick = function() {
+            DuESF.scriptSettings.data.scriptLib.dontDockScriptUI = dontDockButton.checked;
+            DuESF.scriptSettings.save();
+        };
+        dontDockButton.setChecked( DuESF.scriptSettings.data.scriptLib.dontDockScriptUI );
+
+        applyButton.onClick = function() {
+            if (!scriptList.selection) return;
+
+            // Check if this is a scriptUI Panel
+            var f = scriptList.selection.file;
+            if (!f.exists) {
+                alert(DuScriptUI.String.SCRIPT_NOT_FOUND + ":\n\n" + f.fsName);
+                return;
+            }
+
+            if (DuPath.getName( f.parent) == "ScriptUI Panels" && !dontDockButton.checked) DuAE.openScriptUIPanel( DuPath.getName( f ) );
+            else $.evalFile(f.absoluteURI);
+
+            entryRun( f );
+        };
+
+        applyButton.onAltClick = function() {
+            if (!scriptList.selection) return;
+            var f = scriptList.selection.file;
+            $.evalFile(f.absoluteURI);
+
+            entryRun( f );
+        }
+    }
+    scriptList.onDoubleClick = function() {
+        applyButton.optionsPopup.build();
+        applyButton.onClick();
+    };
+
+    var editScriptButton = DuScriptUI.button(
+        topButtons,
+        "",
+        w12_edit,
+        DuScriptUI.String.SCRIPT_LIB_EDIT_SCRIPT_TIP,
+        true
+    );
+    editScriptButton.optionsPopup.build = function() {
+        // setting to change the external editor
+        var editorSelector = DuScriptUI.fileSelector(
+            editScriptButton.optionsPanel,
+            DuScriptUI.String.SCRIPT_LIB_SELECT_EDITOR,
+            true,
+            DuScriptUI.String.SCRIPT_LIB_SELECT_EDITOR_TIP,
+            undefined,
+            'open',
+            undefined,
+            'column'
+        );
+        editorSelector.onChange = function() {
+            var f = editorSelector.getFile();
+            if (!f && editorSelector.editText.text != "") return;
+            if (f) DuESF.scriptSettings.data.scriptLib.scriptEditor = f.absoluteURI;
+            else DuESF.scriptSettings.data.scriptLib.scriptEditor = "";
+            DuESF.scriptSettings.save();
+        }
+        editorSelector.setPath( DuESF.scriptSettings.data.scriptLib.scriptEditor );
+        editorSelector.setPlaceholder( "System default" );
+
+        // Checkbox to use the Duik quick editor by default
+        var useDuikButton = DuScriptUI.checkBox(
+            editScriptButton.optionsPanel,
+            DuScriptUI.String.SCRIPT_LIB_USE_DUIK_EDITOR,
+            undefined,
+            DuScriptUI.String.SCRIPT_LIB_USE_DUIK_EDITOR_TIP
+        );
+        useDuikButton.onClick = function() {
+            DuESF.scriptSettings.data.scriptLib.useDuikEditor = useDuikButton.checked;
+            DuESF.scriptSettings.save();
+        };
+        useDuikButton.setChecked( DuESF.scriptSettings.data.scriptLib.useDuikEditor );
+
+        editScriptButton.onClick = function() {
+            if (!scriptList.selection) return;
+            var f = scriptList.selection.file;
+
+            if (!useDuikButton.checked) {
+                // Check if an editor is selected and exists
+                var editor = editorSelector.getFile();
+                if (editor) DuProcess.run(editor, [f.fsName]);
+                else f.execute();
+            }
+            else editScriptButton.onAltClick();
+        };
+
+        editScriptButton.onAltClick = function() {
+            if (!scriptList.selection) return;
+            var f = scriptList.selection.file;
+
+            var content = DuFile.read(f);
+            scriptEditorButton.onClick();
+            scriptEditorGroup.edit.text = content;
+        };
+    };
+
+    var folderButton = DuScriptUI.button(
+        topButtons,
+        '',
+        DuScriptUI.Icon.FOLDER,
+        DuScriptUI.String.SCRIPT_LIB_OPEN_FOLDER_TIP
+    );
+    folderButton.onClick = function () {
+        if (!scriptList.selection) return;
+        var f = scriptList.selection.file;
+        if (f && f.exists) f.parent.execute();
+    };
+
+    // Bottom (create, edit & remove)
+    var bottomButtons = DuScriptUI.group(buttonGroup, 'column');
+    bottomButtons.alignment = ['right', 'bottom'];
+
+    var addScriptButton = DuScriptUI.button(
+        bottomButtons,
+        "",
+        w12_add,
+        DuScriptUI.String.SCRIPT_LIB_ADD_SCRIPT_TIP
+    );
+    addScriptButton.alignment = ['right', 'bottom'];
+    addScriptButton.onClick = function() {
+        // Select files
+        var files = File.openDialog( DuScriptUI.String.SCRIPT_LIB_ADD_SCRIPTS, "All Files: *.*", true);
+        if (!files) return;
+        // Add to settings and refresh
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            var s = getCreateLibEntry( f );
+            if (catSelector.index > 8) s.category = catSelector.text;
+            updateLibEntry(s);
+        }
+        scriptLibGroup.refreshLib();
+    }
+
+    var renameScriptButton = DuScriptUI.button(
+        bottomButtons,
+        "",
+        w12_edit,
+        DuScriptUI.String.SCRIPT_LIB_RENAME_SCRIPT_TIP
+    );
+    renameScriptButton.alignment = ['right', 'bottom'];
+    renameScriptButton.onClick = function() {
+        if (!scriptList.selection) {
+            scriptSettingsEditor.block = true;
+            return;
+        }
+
+        // Set name
+        scriptSettingsNameEditor.setText(scriptList.selection.text);
+
+        // Editing
+        var f = scriptList.selection.file;
+        scriptSettingsEditor.editing = f;
+
+        var s = getCreateLibEntry(f);
+
+        // Set category
+        scriptSettingsCatSelector.clear();
+        scriptSettingsCatSelector.addButton("Uncategorized", w12_file );
+        updateCatSelector(scriptSettingsCatSelector);
+        if (s.category == "") scriptSettingsCatSelector.setCurrentIndex(0);
+        else scriptSettingsCatSelector.setCurrentText(s.category);
+
+        // Set fav
+        scriptSettingsFavButton.setChecked( s.favorite ); 
+    };
+
+    var removeScriptButton = DuScriptUI.button(
+        bottomButtons,
+        "",
+        w12_remove,
+        DuScriptUI.String.SCRIPT_LIB_REMOVE_SCRIPT_TIP
+    );
+    removeScriptButton.alignment = ['right', 'bottom'];
+    removeScriptButton.onClick = function() {
+        if (!scriptList.selection) return;
+
+        var f = scriptList.selection.file;
+
+        removeLibEntry( getCreateLibEntry(f) );
+
+        scriptLibGroup.refreshLib();
+    };
+
+    catNameEditor.onAccept = function(newName) {
+        if (newName == '') return;
+
+        // Create
+        if (catNameEditor.previousString == '') {
+            scriptLib.data.categories.push(newName);
+            catSelector.addButton(newName);
+        }
+        // Rename
+        else {
+            // Get the current name
+            if (catSelector.index < 9) return;
+            // rename in settings and in all scripts in settings
+            for (var i = 0; i < scriptLib.data.categories.length; i++) {
+                if (scriptLib.data.categories[i] == catNameEditor.previousString) scriptLib.data.categories[i] = newName;
+            }
+            for (var i = 0; i < scriptLib.data.scripts.length; i++) {
+                if (scriptLib.data.scripts[i].category == catNameEditor.previousString) scriptLib.data.scripts[i].category = newName;
+            }
+        }
+
+        scriptLib.save();
+
+        // Refresh list
+        scriptLibGroup.refreshLib();
+        // Reset selection
+        catSelector.setCurrentText(newName);
+    }
+
+    // Refresh
+    scriptLibGroup.refreshLib = function() {
+        if (!scriptLibGroup.visible) return;
+
+        // Clean the lib
+        for (var i = scriptLib.data.scripts.length -1; i >= 0; i--)
+        {
+            var f = new File( scriptLib.data.scripts[i].absoluteURI );
+            if (!f.exists) scriptLib.data.scripts.splice(i, 1);
+        }
+
+        // Keep current cat
+        var currentCat = catSelector.index;
+        if (currentCat < 0) currentCat = DuESF.scriptSettings.data.scriptLib.currentCategory;
+
+        // Reset cat list
+        catSelector.freeze = true;
+        catSelector.clear();
+        catSelector.addButton(DuScriptUI.String.MOST_USED, w12_count);
+        catSelector.addButton(DuScriptUI.String.RECENT, w12_recent);
+        catSelector.addButton(DuScriptUI.String.FAVORITES, w12_fav);
+        catSelector.addButton(DuScriptUI.String.ALL_CATEGORIES, w12_library);
+        catSelector.addButton(DuScriptUI.String.UNCATEGORIZED, w12_file);
+        catSelector.addButton(DuScriptUI.String.DOCKABLE_SCRIPTS, w12_dock);
+        catSelector.addButton(DuScriptUI.String.AE_SCRIPTS, w12_script);
+        catSelector.addButton(DuScriptUI.String.STARTUP_SCRIPTS, w12_startup);
+        catSelector.addButton(DuScriptUI.String.SHUTDOWN_SCRIPTS, w12_shutdown);
+        catSelector.setCurrentIndex(0);
+
+        updateCatSelector( catSelector );
+
+        catSelector.setCurrentIndex(currentCat);
+
+        catSelector.freeze = false;
+        catSelector.onChange();
+    }
+
+    catNameEditor.tieTo(editCatButton);
+    catNameEditor.tieTo(addCatButton);
+
+    scriptSettingsEditor.tieTo(renameScriptButton);
+}
