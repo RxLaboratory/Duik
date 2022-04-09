@@ -1,0 +1,2980 @@
+﻿/**
+ * The lazy animator's toolkit.
+ * @namespace
+ */
+Duik.Automation = {};
+
+/**
+ * The types of the comps in an NLA
+ * @enum {int}
+ * @readonly
+ */
+Duik.Automation.NLACompType = {
+    NONE: 0,
+    ORIGINAL: 1,
+    RENDER: 2,
+    CLIP: 3,
+    EDIT: 4
+}
+
+/**
+ * The prefixes for the NLA comp & folder names.<br />
+ * These may be localized, don't use the actual strings!
+ * @enum {string}
+ * @readonly
+ */
+Duik.Automation.NLAPrefixes = {
+    FOLDER: DuScriptUI.String.NLA_SHORT + '::',
+    ORIGINAL: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.ORIGINAL + '::',
+    RENDER: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.RENDER + '::',
+    CLIP: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.CLIP + '::',
+    EDIT: DuScriptUI.String.NLA_SHORT + '.' + DuScriptUI.String.EDIT + '::'
+}
+
+/**
+ * Checks if the given comp is part of an NLA
+ * @return {Duik.Automation.NLACompType} The type of the comp; Duik.Automation.NLACompType.NONE if it's not part of an NLA.
+ */
+Duik.Automation.NLAType = function(comp) {
+    // It must be in an NLA folder
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return Duik.Automation.NLACompType.NONE;
+
+    var name = comp.name;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) return Duik.Automation.NLACompType.ORIGINAL;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) return Duik.Automation.NLACompType.RENDER;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.CLIP) == 0) return Duik.Automation.NLACompType.CLIP;
+    if (name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) return Duik.Automation.NLACompType.EDIT;
+    return Duik.Automation.NLACompType.NONE;
+}
+
+/**
+ * Gets the folder containing the NLA Compositions like the given comp.
+ * @param {CompItem} comp The comp
+ * @return {FolderItem|null} The folder or null if the comp is not part of an NLA
+ */
+Duik.Automation.getNLAFolder = function(comp) {
+    var nlaFolder = comp.parentFolder;
+    if (nlaFolder.name.indexOf(Duik.Automation.NLAPrefixes.FOLDER) != 0) return null;
+    return nlaFolder;
+}
+
+/**
+ * Gets the render, original and edit comps for this NLA
+ * @param {FolderItem} nlaFolder The NLA Folder
+ * @return {CompItem[]} The compositions in this order: [Original, Edit, Render]. Note that if one is not found, null is returned.
+ */
+Duik.Automation.getNLAComps = function(nlaFolder) {
+    var originalComp = null;
+    var editComp = null;
+    var renderComp = null;
+    for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
+        var c = nlaFolder.item(i);
+        if (!c instanceof CompItem) continue;
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) {
+            originalComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.EDIT) == 0) {
+            editComp = c;
+        }
+        if (c.name.indexOf(Duik.Automation.NLAPrefixes.RENDER) == 0) {
+            renderComp = c;
+        }
+        // Got'em all
+        if (originalComp && editComp && renderComp) break;
+    }
+    return [originalComp, editComp, renderComp];
+}
+
+/**
+ * The list of automation functions
+ */
+Duik.CmdLib['Automation'] = [];
+
+Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
+/**
+ * Sets up a non-linear animation comp.
+ * @param {CompItem} [comp] The composition to set up. The active composition if omitted.
+ * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all properties (according to the other options) if false.
+ * @param {Boolean} [transformProps=true] If true, filters only properties in the transform group of the layers. Ignored if selectedProps is true.
+ * @param {Boolean} [effectProps=false] If true, filters only properties in effects. Ignored if selectedProps is true.
+ * @param {Boolean} [layerTypes=[Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]] The types of layer to setup; if empty, will setup all layers.
+ * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
+ */
+Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectProps, layerTypes, props) {
+    comp = def(comp, DuAEProject.getActiveComp());
+
+    if (typeof props === 'undefined') {
+        selectedProps = def(selectedProps, true);
+        transformProps = def(transformProps, true);
+        effectProps = def(effectProps, false);
+        layerTypes = def(layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]);
+
+        // List properties according to the filters
+
+        if (selectedProps) {
+            props = DuAEComp.getSelectedProps();
+            if (props.length == 0) selectedProps = false;
+        }
+
+        if (!selectedProps) {
+            // Get the layers
+            var layers = [];
+            props = [];
+            if (layerTypes.length > 0) {
+                for (var i = 1, n = comp.numLayers; i <= n; i++) {
+                    var l = comp.layer(i);
+                    for (var j = 0, nt = layerTypes.length; j < nt; j++) {
+                        if (Duik.Layer.isType(l, layerTypes[j])) {
+                            layers.push(l);
+                            break;
+                        }
+                    }
+                }
+            } else layers = comp.layers;
+            layers = new DuList(layers);
+            layers.do(function(layer) {
+                if (transformProps) props.push(new DuAEProperty(layer.transform));
+                if (effectProps) props.push(new DuAEProperty(layer.property('ADBE Effects Parade')));
+            });
+        }
+    }
+
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.NLA, false);
+    DuAEProject.setProgressMode(true);
+    DuScriptUI.progressBar.setMax(props.length() + 6);
+
+    var compName = comp.name;
+
+    var editComp;
+
+    // Check if it's already an NLA; in this case don't create, just add the properties.
+    DuScriptUI.progressBar.hit(1, "Checking if we're updating an existing NLA...");
+    var create = true;
+    if (Duik.Automation.NLAType(comp) != Duik.Automation.NLACompType.NONE) {
+        var nlaFolder = Duik.Automation.getNLAFolder(comp);
+        if (nlaFolder) {
+            create = false;
+            var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+            var renderComp = nlaComps[2];
+            editComp = nlaComps[1];
+            // Find the same properties in the render comp
+            if (renderComp) {
+                DuScriptUI.progressBar.addMax(props.length());
+                DuScriptUI.progressBar.hit(2, "Preparing properties to be added...");
+                var renderProps = [];
+                props.do(function(prop) {
+                    DuScriptUI.progressBar.hit();
+                    renderProp = prop.findInComp(renderComp);
+                    if (renderProp) renderProps.push(renderProp);
+                });
+                // Replace props with the ones from the render comp
+                props = new DuList(renderProps);
+                DuScriptUI.progressBar.hit(6 + props.length(), "Adding expressions...");
+            }
+        }
+    }
+
+    if (create) {
+        // Create folderitem NLA::compName
+        DuScriptUI.progressBar.hit(2, "Creating NLA Folder...");
+        var parentFolder = comp.parentFolder;
+        var nlaFolder = app.project.items.addFolder(Duik.Automation.NLAPrefixes.FOLDER + compName);
+        nlaFolder.parentFolder = parentFolder;
+        comp.parentFolder = nlaFolder;
+        var renderComp = comp;
+
+        // Duplicate comp twice
+        // One will be NLA.Render::compName
+        DuScriptUI.progressBar.hit(2, "Saving original composition...");
+        var oComp = renderComp.duplicate();
+        oComp.name = Duik.Automation.NLAPrefixes.ORIGINAL + compName;
+        // Other NLA.Clip::compName
+        DuScriptUI.progressBar.hit(3, "Creating the first clip...");
+        var clipComp = renderComp.duplicate();
+        clipComp.name = Duik.Automation.NLAPrefixes.CLIP + compName;
+        // and keep NLA.Original::compName
+        DuScriptUI.progressBar.hit(4, "Creating the render composition...");
+        renderComp.name = Duik.Automation.NLAPrefixes.RENDER + compName;
+        // Create NLA.Edit::compName
+        DuScriptUI.progressBar.hit(5, "Creating the edit composition...");
+        var editComp = nlaFolder.items.addComp(
+            Duik.Automation.NLAPrefixes.EDIT + compName,
+            renderComp.width, renderComp.height, renderComp.pixelAspect, renderComp.duration, renderComp.frameRate
+        );
+
+        // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
+        var clipPrecomp = editComp.layers.add(clipComp);
+        clipPrecomp.enabled = false;
+        clipPrecomp.guideLayer = false;
+
+        // Add NLA.Render
+        editComp.layers.add(comp);
+
+        DuScriptUI.progressBar.hit(6, "Adding expressions...");
+    }
+
+    // Setup properties in NLA.Render
+
+    var exp = [DuAEExpression.Id.NLA,
+        'var editComp = comp("' + editComp.name + '");',
+        '',
+        'var result = value;',
+        'var weights = 0;',
+        '',
+        DuAEExpression.Library.get(['getSameProp', 'isZero']),
+        '',
+        'for (var i = 1, n = editComp.numLayers; i <= n; i++)',
+        '{',
+        '	var l = editComp.layer(i);',
+        '	if (l.name == thisComp.name) continue;',
+        '   if (l.name.indexOf("' + Duik.Automation.NLAPrefixes.CLIP + '") != 0) continue;',
+        '	if (time >= l.inPoint && time < l.outPoint)',
+        '	{',
+        '	    var precomp = l.source;',
+        '	    try { var c = precomp.layer(thisLayer.name); }',
+        '        catch(e) { continue; }',
+        '        var weight = l.opacity.value/100;',
+        '        var t = time;',
+        '        try { t = l.timeRemap.value; }',
+        '        catch(e) { t = time - l.startTime; }',
+        '        var dif = getSameProp(c).valueAtTime(t) - value;',
+        '        if (isZero(dif)) continue;',
+        '        weights += weight;',
+        '        result += dif * weight;',
+        '	}',
+        '}',
+        'result;'
+    ].join('\n');
+
+    props.do(function(prop) {
+        DuScriptUI.progressBar.hit();
+        prop.setExpression(exp);
+    });
+
+    // Open edit comp
+    DuScriptUI.progressBar.hit(undefined, "Ready!");
+    editComp.openInViewer();
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.NLA);
+
+}
+
+Duik.CmdLib['Automation']["NLA Clip"] = "Duik.Automation.addNLAClip()";
+/**
+ * Creates a clip and adds it to the NLA
+ * @param {CompItem} [nlaComp] A comp belonging to an NLA, the active comp if omitted.
+ * @returns {int} Success code: 1 if the clip could be created, 0 if the original comp is not found, -1 if the NLA is invalid/not found
+ */
+Duik.Automation.addNLAClip = function(nlaComp) {
+    nlaComp = def(nlaComp, DuAEProject.getActiveComp());
+    if (!nlaComp) return -1;
+
+    var nlaFolder = Duik.Automation.getNLAFolder(nlaComp);
+    if (!nlaFolder) return -1;
+
+    var nlaName = nlaFolder.name.replace('NLA::', '');
+
+    // Get the original comp
+    var nlaComps = Duik.Automation.getNLAComps(nlaFolder);
+    var originalComp = nlaComps[0];
+    var editComp = nlaComps[1];
+
+    if (!originalComp) return 0;
+
+    // Duplicate
+    var newClip = originalComp.duplicate();
+
+    // Rename
+    newClip.name = originalComp.name.replace('NLA.Original', 'NLA.Clip') + '-newClip';
+
+    // Add to edit
+    if (editComp) {
+        var clipLayer = editComp.layers.add(newClip);
+        clipLayer.enabled = false;
+        if (editComp.numLayers >= 2) clipLayer.moveAfter(editComp.layer(2));
+    }
+
+    // Open clip
+    newClip.openInViewer();
+
+    return 1;
+}
+
+Duik.CmdLib['Automation']["Looper"] = "Duik.Automation.looper()";
+/**
+ * Adds a loop expression and pseudo effect with more options than the loopOut and loopIn expressions.
+ * @param {PropertyBase[]|DuList.<PropertyBase>|PropertyBase} [props] The properties to loop. The selected properties in the active comp if omitted.
+ * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
+ * @returns {PropertyGroup} The pseudo-effect
+ */
+Duik.Automation.looper = function(props, effect) {
+    effect = Duik.Animation.interpolator(props, effect);
+
+    var i = Duik.PseudoEffect.INTERPOLATOR.props;
+
+    // Set interpolation to none
+    effect(i['Type'].index).setValue(1);
+    // Set cycles
+    effect(i['In Extrapolation and loop']['Type'].index).setValue(4);
+    effect(i['Out Extrapolation and loop']['Type'].index).setValue(4);
+    // Activate
+    effect(i['In Extrapolation and loop']['Before keys'].index).setValue(1);
+    effect(i['Out Extrapolation and loop']['After keys'].index).setValue(1);
+
+    return effect;
+}
+
+Duik.Automation.copiedExpression = '';
+Duik.CmdLib['Automation']["Copy Expression"] = "Duik.Automation.copyExpression()";
+/**
+ * Copies the expression from the property, which can be pasted in multiple properties with {@link Duik.Automation.pasteExpression}.
+ * @param {Property|DuAEProperty} [prop] The property, the selected/active property if omitted.
+ * @returns {string} The expression.
+ */
+Duik.Automation.copyExpression = function(prop) {
+    if (typeof prop === 'undefined') {
+        var props = DuAEComp.getSelectedProps();
+        if (props.length == 0) return Duik.Automation.copiedExpression;
+        prop = props.pop();
+    }
+
+    prop = new DuAEProperty(prop);
+    if (prop.riggable()) {
+        prop = prop.getProperty();
+        Duik.Automation.copiedExpression = prop.expression;
+    }
+
+    return Duik.Automation.copiedExpression;
+}
+
+Duik.CmdLib['Automation']["Paste Expression"] = "Duik.Automation.pasteExpression()";
+/**
+ * Pastes the expression previously copied with {@link Duik.Automation.copyExpression}.
+ * @param {Property[]|DuAEProperty[]} [props] The properties where to paste the expression, the selecte properties if omitted.
+ * @param {string} [expression] A specific expression to paste.
+ */
+Duik.Automation.pasteExpression = function(props, expression) {
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) return;
+    expression = def(expression, Duik.Automation.copiedExpression);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.PASTE_EXPRESSION, false);
+
+    var i = new DuList(props);
+    i.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        // Only for true props and not groups
+        if (prop.riggable())
+            prop.setExpression( expression, false );
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.PASTE_EXPRESSION);
+}
+
+Duik.CmdLib['Automation']["Remove Expressions"] = "Duik.Automation.removeExpressions()";
+/**
+ * Removes the expressions from the properties.
+ * @param {Boolean} [keepPostExpressionValue=true]  Set to false to just remove the expressions and get back the pre expression value.
+ * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.removeExpressions = function(keepPostExpressionValue, props) {
+    keepPostExpressionValue = def(keepPostExpressionValue, true);
+    props = def(props, DuAEComp.getSelectedProps());
+    if (props.length == 0) props = DuAEComp.getSelectedLayers();
+
+    DuAE.beginUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS, false);
+
+    for (var i = 0, num = props.length; i < num; i++) {
+        var p = new DuAEProperty(props[i]);
+        // Only for true props and not groups
+        if (p.riggable())
+            p.removeExpressions(undefined, keepPostExpressionValue);
+    }
+
+    DuAE.endUndoGroup(DuScriptUI.String.REMOVE_EXPRESSIONS);
+
+}
+
+Duik.CmdLib['Automation']["Bake Expressions"] = "Duik.Automation.bakeExpressions()";
+/**
+ * Bakes the expressions to keyframes
+ * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ * @param {Duik.SelectionMode} [selectionMode=DuAE.SelectionMode.SELECTED_PROPERTIES] The expressions to bake
+ */
+Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
+    // Defaults
+    mode = def(mode, DuAEExpression.BakeAlgorithm.SMART);
+    frameStep = def(frameStep, 1);
+    selectionMode = def(selectionMode, DuAE.SelectionMode.SELECTED_PROPERTIES);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS, false);
+    DuAEProject.setProgressMode(true, false); // For some reason the progress bar keeps poping up...
+
+    //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
+
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
+        var comps = DuAEProject.getSelectedComps();
+        for (var i = 0, n = comps.length; i < n; i++) {
+            DuAEComp.bakeExpressions(mode, frameStep, comp);
+        }
+    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS) {
+        var layers = DuAEComp.getSelectedLayers();
+        for (var i = 0, n = layers.length; i < n; i++) {
+            var p = new DuAEProperty(layers[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    } else {
+        var props = DuAEComp.getSelectedProps();
+        for (var i = 0, n = props.length; i < n; i++) {
+            var p = new DuAEProperty(props[i]);
+            p.bakeExpressions(mode, frameStep);
+        }
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_EXPRESSIONS);
+}
+
+Duik.CmdLib['Automation']["Bake Composition"] = "Duik.Automation.bakeComposition()";
+/**
+ * Bakes the expressions to keyframes, and remove all non-renderable layers
+ * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ */
+Duik.Automation.bakeComposition = function(mode, frameStep, selectionMode) {
+    // Defaults
+    mode = def(mode, DuAEExpression.BakeAlgorithm.SMART);
+    frameStep = def(frameStep, 1);
+
+    DuAE.beginUndoGroup(DuScriptUI.String.BAKE_COMPOSITION, false);
+    DuAEProject.setProgressMode(true, false); // For some reason the progress bar keeps poping up...
+
+    //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
+
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeCompositions(mode, frameStep);
+    else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
+        var comps = DuAEProject.getSelectedComps();
+        for (var i = 0, n = comps.length; i < n; i++) {
+            DuAEComp.bake(mode, frameStep, comp);
+        }
+    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bake(mode, frameStep);
+    else {
+        var layers = DuAEComp.getSelectedLayers();
+        for (var i = 0, n = layers.length; i < n; i++) {
+            DuAELayer.bake( mode, frameStep, layers[i] );
+        }
+    } 
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.BAKE_COMPOSITION);
+}
+
+Duik.CmdLib['Automation']["Effector"] = "Duik.Automation.effector()";
+/**
+ * Creates a spatial effector to control the selected properties.
+ * @param {CompItem} [comp] The composition containing the effector. The active composition by default.
+ */
+Duik.Automation.effector = function(comp) {
+    comp = def(comp, DuAEProject.getActiveComp());
+    if (!comp) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.EFFECTOR, false);
+
+    var props = DuAEComp.getSelectedProps();
+    var layers = DuAEComp.getSelectedLayers();
+
+    // Create the effector layer and effect
+    var ctrlLayer = comp.layers.addShape();
+    Duik.Layer.setAttributes(ctrlLayer, Duik.Layer.Type.EFFECTOR, DuScriptUI.String.EFFECTOR);
+    //effect
+    var pe = Duik.PseudoEffect.EFFECTOR;
+    var innerId = pe.props['Inner limit'].index
+    var outerId = pe.props['Outer limit'].index
+    var modeId = pe.props['Mode'].index;
+    var typeId = pe.props['Interpolation']['Type'].index;
+    var reverseId = pe.props['Interpolation']['Reverse'].index;
+    var effect = pe.apply(ctrlLayer);
+    //content
+    var centerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    centerGroup.name = "Center";
+    var centerContent = centerGroup.property("ADBE Vectors Group");
+    var centerCircle = centerContent.addProperty("ADBE Vector Shape - Ellipse");
+    centerCircle("ADBE Vector Ellipse Size").setValue([4, 4]);
+    var centerFill = centerContent.addProperty("ADBE Vector Graphic - Fill");
+    centerFill("ADBE Vector Fill Color").setValue(DuColor.Color.BLACK.floatRGBA());
+    centerFill("ADBE Vector Fill Opacity").setValue(50);
+
+    var innerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    innerGroup.name = "Inner (Circle)";
+    var innerContent = innerGroup.property("ADBE Vectors Group");
+    var innerCircle = innerContent.addProperty("ADBE Vector Shape - Ellipse");
+    innerCircle("ADBE Vector Ellipse Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1)\n' +
+        '{\n' +
+        'var inner = effect("' + effect.name + '")(' + innerId + ')*2;\n' +
+        '[inner,inner];\n' +
+        '}\n' +
+        'else [0,0];';
+    var innerStroke = innerContent.addProperty("ADBE Vector Graphic - Stroke");
+    innerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.GREEN.floatRGBA());
+    innerGroup.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1) 100; else 0;';
+
+    var outerGroup = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    outerGroup.name = "Outer (Circle)";
+    var outerContent = outerGroup.property("ADBE Vectors Group");
+    var outerCircle = outerContent.addProperty("ADBE Vector Shape - Ellipse");
+    outerCircle("ADBE Vector Ellipse Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1)\n' +
+        '{\n' +
+        'var inner = effect("' + effect.name + '")(' + outerId + ')*2;\n' +
+        '[inner,inner];\n' +
+        '}\n' +
+        'else [0,0];';
+    var outerStroke = outerContent.addProperty("ADBE Vector Graphic - Stroke");
+    outerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.RAINBOX_RED.floatRGBA());
+    outerGroup.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 1) 100; else 0;';
+
+    var innerGroupLinear = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    innerGroupLinear.name = "Inner (Line)";
+    var innerContentLinear = innerGroupLinear.property("ADBE Vectors Group");
+    var innerRect = innerContentLinear.addProperty("ADBE Vector Shape - Rect");
+    innerRect("ADBE Vector Rect Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2)\n' +
+        '[effect("' + effect.name + '")(' + innerId + '),thisComp.height];\n' +
+        'else [0,0];';
+    var innerTrim = innerContentLinear.addProperty('ADBE Vector Filter - Trim');
+    innerTrim('ADBE Vector Trim Start').setValue(50);
+    innerTrim('ADBE Vector Trim End').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'var w = effect("' + effect.name + '")(' + innerId + ');\n' +
+        'var h = thisComp.height;\n' +
+        'var l = 2*w+2*h;\n' +
+        '100-w/l*100;';
+    var innerStroke = innerContentLinear.addProperty("ADBE Vector Graphic - Stroke");
+    innerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.GREEN.floatRGBA());
+    innerGroupLinear.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2) 100; else 0;';
+
+    var outerGroupLinear = ctrlLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+    outerGroupLinear.name = "Inner (Line)";
+    var outerContentLinear = outerGroupLinear.property("ADBE Vectors Group");
+    var outerRect = outerContentLinear.addProperty("ADBE Vector Shape - Rect");
+    outerRect("ADBE Vector Rect Size").expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2)\n' +
+        '[effect("' + effect.name + '")(' + innerId + '),thisComp.height];\n' +
+        'else [0,0];';
+    var outerTrim = outerContentLinear.addProperty('ADBE Vector Filter - Trim');
+    outerTrim('ADBE Vector Trim Start').setValue(0);
+    outerTrim('ADBE Vector Trim End').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'var w = effect("' + effect.name + '")(' + innerId + ');\n' +
+        'var h = thisComp.height;\n' +
+        'var l = 2*w+2*h;\n' +
+        '100-(h+2*w)/l*100;';
+    var outerStroke = outerContentLinear.addProperty("ADBE Vector Graphic - Stroke");
+    outerStroke("ADBE Vector Stroke Color").setValue(DuColor.Color.RAINBOX_RED.floatRGBA());
+    outerGroupLinear.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').expression = DuAEExpression.Id.EFFECTOR + '\n' +
+        'if (effect("' + effect.name + '")(' + modeId + ').value == 2) 100; else 0;';
+
+    // Set defaults
+    // Get half the maximum distance between layers
+    var distance = DuAELayer.getMaxDistance(layers) / 2;
+    effect(innerId).setValue(distance * .25);
+    effect(outerId).setValue(distance * .75);
+
+    // Setup Properties
+    if (props.length != 0) {
+        // Setup properties
+        var ctrlLink;
+        var exp = [ DuAEExpression.Id.EFFECTOR,
+            'var fx = null;',
+            'var result = value;',
+            '',
+            'try',
+            '{',
+            '    var ctrl = effect( "{#}" )( 1 );',
+            '    fx = ctrl.effect( "' + effect.name + '" );',
+            '}',
+            'catch ( e )',
+            '{}',
+            '',
+            DuAEExpression.Library.get(['getScale']),
+            '',
+            '// Get layer world position',
+            'function p ( l )',
+            '{',
+            '    return l.toWorld( l.anchorPoint )',
+            '}',
+            '',
+            'function effector ()',
+            '{',
+            '    var min = fx( ' + innerId + ' ).value;',
+            '    var max = fx( ' + outerId + ' ).value;',
+            '    var mode = fx( ' + modeId + ' ).value;',
+            '    var type = fx( ' + typeId + ' ).value;',
+            '    var reverse = fx( ' + reverseId + ' ).value;',
+            '',
+            '    if ( mode == 2 ) //line',
+            '    {',
+            '        max = min;',
+            '        min = 0;',
+            '        reverse = !reverse;',
+            '    }',
+            '',
+            ' 	// Get scale values',
+            '	min = min * (getScale(ctrl)[0] / 100);',
+            '	max = max * (getScale(ctrl)[0] / 100);',
+            '',
+            '   var distance = effectorDistance( max, mode );',
+            '',
+            '   return effectorValue( distance, min, max, type, reverse );',
+            '}',
+            '',
+            'function effectorDistance ( max, mode )',
+            '{',
+            '    var distance = 0;',
+            '',
+            '    var worldPos = p( thisLayer );',
+            '',
+            '    if ( mode == 1 ) //circle',
+            '    {',
+            '        distance = length( worldPos, p( ctrl ) );',
+            '    }',
+            '    else if ( mode == 2 ) //line',
+            '    {',
+            '        var coords = ctrl.fromWorld( worldPos );',
+            '        distance = -coords[ 0 ] + max / 2;',
+            '    }',
+            '',
+            '    return distance;',
+            '}',
+            '',
+            'function effectorValue ( distance, min, max, type, reverse )',
+            '{',
+            '    var t = 0;',
+            '    var beginTime = key( 1 ).time;',
+            '    var endTime = key( numKeys ).time;',
+            '',
+            '    if ( type == 1 )',
+            '    {',
+            '        if ( !reverse ) t = linear( distance, min, max, endTime, beginTime );',
+            '        else t = linear( distance, min, max, beginTime, endTime );',
+            '    }',
+            '    else',
+            '    {',
+            '        var mid = ( min + max ) / 2;',
+            '        if ( !reverse )',
+            '        {',
+            '            if ( distance > mid ) t = linear( distance, mid, max, endTime, beginTime );',
+            '            else t = linear( distance, min, mid, beginTime, endTime );',
+            '        }',
+            '        else',
+            '        {',
+            '            if ( distance > mid ) t = linear( distance, mid, max, beginTime, endTime );',
+            '            else t = linear( distance, min, mid, endTime, beginTime );',
+            '        }',
+            '    }',
+            '    return valueAtTime( t );',
+            '}',
+            '',
+            'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+            ''
+		].join('\n');
+        for(var i = 0, n = props.length; i < n; i++) {
+            var prop = props [i];
+            // Only for true props and not groups
+            if (prop.riggable())
+            {
+                var layer = prop.layer;
+                var linkEffect = DuAELayer.getCreateLayerEffect(layer, ctrlLayer, DuScriptUI.String.EFFECTOR);
+                prop.setExpression( DuString.args(exp, linkEffect.name), false );
+            }
+        }
+    }
+
+    DuAE.endUndoGroup(DuScriptUI.String.EFFECTOR, false);
+
+    return ctrlLayer;
+}
+
+/**
+ * Creates a map (texture) effector to control the selected properties.
+ * @param {AVLayer} mapLayer The layer to use as a texture/map.
+ * @param {Property[]|DuAEProperty[]} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.effectorMap = function( mapLayer, props ) {
+
+    // Create effect
+    var pe = Duik.PseudoEffect.EFFECTOR_MAP;
+    var channelId = pe.props['Channel'].index;
+    var minId = pe.props['Minimum'].index;
+    var maxId = pe.props['Maximum'].index;
+    var reverseId = pe.props['Reverse'].index;
+
+    var effect = pe.apply(mapLayer);
+
+
+    // Setup properties
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    // Setup properties
+    var ctrlLink;
+    var exp = [DuAEExpression.Id.EFFECTOR_MAP,
+		'var fx = null;',
+		'var ctrl = null;',
+		'var result = value;',
+		'',
+		'try',
+		'{',
+		'    ctrl = effect("{#}")(1);',
+		'    fx = ctrl.effect( "' + effect.name + '" );',
+		'}',
+		'catch ( e )',
+		'{}',
+		'',
+		'// Get layer world position',
+		'function p ( l )',
+		'{',
+		'    return l.toWorld( l.anchorPoint )',
+		'}',
+		'',
+		'function effector ()',
+		'{',
+		'    var min = fx( ' + minId + ' ).value;',
+		'    var max = fx( ' + maxId + ' ).value;',
+		'    var reverse = fx( ' + reverseId + ' ).value;',
+		'    var channel = fx( ' + channelId + ' ).value;',
+		'',
+		'    min = min / 100;',
+		'    max = max / 100;',
+		'',
+		'    var distance = effectorDistance( channel );',
+		'    return effectorValue( distance, min, max, reverse );',
+		'',
+		'}',
+		'',
+		'function effectorDistance ( channel )',
+		'{',
+		'    var distance = 0;',
+		'',
+		'    var worldPos = p( thisLayer );',
+		'',
+		'    if ( typeof channel === "undefined" ) channel = 5;',
+		'    var colorPoint = ctrl.fromWorld( worldPos );',
+		'    var color = ctrl.sampleImage( colorPoint );',
+		'    if ( channel <= 3 ) distance = color[ channel-1 ];',
+		'	else if (channel <= 6)',
+		'	{',
+		'		color = rgbToHsl(color);',
+		'		distance = color[ channel - 4 ];',
+		'	}',
+		'    else distance = color[ 3 ];',
+		'',
+		'    return distance;',
+		'}',
+		'',
+		'function effectorValue ( distance, min, max, reverse )',
+		'{',
+		'    var t = 0;',
+		'    var beginTime = key( 1 ).time;',
+		'    var endTime = key( numKeys ).time;',
+		'',
+		'    if ( !reverse ) t = linear( distance, min, max, beginTime, endTime );',
+		'    else t = linear( distance, min, max, endTime, beginTime );',
+		'',
+		'    return valueAtTime( t );',
+		'}',
+		'',
+		'result = ( fx && numKeys >= 2 ) ? effector() : result;',
+		''
+	].join('\n');
+    props.do(function(prop) {
+        // Only for true props and not groups
+        prop = new DuAEProperty(prop)
+        if (prop.riggable())
+        {
+            var layer = prop.layer;
+            var linkEffect = DuAELayer.getCreateLayerEffect(layer, mapLayer, DuScriptUI.String.EFFECTOR_MAP);
+            prop.setExpression( DuString.args(exp, linkEffect.name), false);
+        }
+        
+    });
+
+    // Select the map only
+    DuAEComp.unselectLayers();
+    mapLayer.selected = true;
+}
+
+Duik.CmdLib['Automation']["Kleaner"] = "Duik.Automation.kleaner()";
+/**
+ * Adds the <i>Kleaner</i> effect and expression to the properties.
+ * The <i>Kleaner</i> (Keyframe Cleaner) makes it quick and easy to interpolate, add anticipation, overlap and follow through to any animation.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
+ * @return {PropertyGroup|null} The Kleaner effect (or null if there's no property to setup).
+ */
+Duik.Automation.kleaner = function(props, effect) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return null;
+
+    var p = props.at(0);
+    p = new DuAEProperty(p);
+    var ctrlLayer = p.layer;
+
+    DuAE.beginUndoGroup("_" + DuScriptUI.String.KLEANER, false);
+
+    // Add the effect
+    if (!effect)
+    {
+        effect = Duik.PseudoEffect.KLEANER.apply( ctrlLayer, DuScriptUI.String.KLEANER + ' | ' + p.name );
+    }
+
+    // Indices
+    var i = Duik.PseudoEffect.KLEANER.props;
+
+    // Setup the expressions in the Data
+    
+    var fuzzyLib = DuAEExpression.Library.get(["FuzzyVeracity", "linearExtrapolation"]);
+
+    var interpolationRateExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var weight = fx(' + i['Weight'].index + ').value;',
+        'var strength = fx(' + i['Strength'].index + ').value;',
+        'var will = fx(' + i['Will'].index + ').value;',
+        'var friction = fx(' + i['Friction'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = -.187;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
+        '  ',
+        '  // Compute ratio',
+        '  var inertia = weight.OR( strength.NEGATE() );',
+        '  var resistance = friction.OR( will.NEGATE() );',
+        '  var rate = resistance.OR( inertia );',
+        '',
+        '  result = linearExtrapolation(rate.veracity, 0.3, 1, -.8, 0);',
+        '}',
+        'result;'
+	].join('\n');
+
+    effect(i['Data']['Interpolation rate'].index).expression = interpolationRateExp;
+
+    var overlapExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var weight = fx(' + i['Weight'].index + ').value;',
+        'var strength = fx(' + i['Strength'].index + ').value;',
+        'var will = fx(' + i['Will'].index + ').value;',
+        'var flexibility = fx(' + i['Flexibility'].index + ').value;',
+        'var friction = fx(' + i['Friction'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.1;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  flexibility = new FuzzyVeracity( flexibility / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
+        '  ',
+        '  flexibility.factor = 2;',
+        '  friction.factor = 2;',
+        '',
+        '  // Compute ratio',
+        '  var inertia = weight.OR( strength.NEGATE() );',
+        '  var resistance = flexibility.AND( friction );',
+        '  resistance.factor = 2;',
+        '  resistance = resistance.OR( will.NEGATE() );',
+        '  var overlap = resistance.OR(inertia);',
+        '',
+        '  result = linearExtrapolation(overlap.veracity, 0.72, 1, 0, 1);',
+        '}',
+        'result;'
+	].join('\n');
+
+    effect(i['Data']['Overlap'].index).expression = overlapExp;
+
+    var anticipationQuantityExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var will = fx(' + i['Will'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.15;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  result = linearExtrapolation(will, 0, 100, 0, result);',
+        '}',
+        'result;'
+	].join('\n');
+
+    effect(i['Data']['Anticipation quantity'].index).expression = anticipationQuantityExp;
+
+    var anticipationDurationExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var size = fx(' + i['Size'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.395;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  result = linearExtrapolation(size, 0, 100, 0, .2 );',
+        '  result = Math.min(result, 1.2);',
+        '}',
+        'result;',
+        ''
+	].join('\n');
+
+    effect(i['Data']['Anticipation duration'].index).expression = anticipationDurationExp;
+
+    var followThroughFlexibilityExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var size = fx(' + i['Size'].index + ').value;',
+        'var flexibility = fx(' + i['Flexibility'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.70;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  size = new FuzzyVeracity( size / 1000 );',
+        '  flexibility = new FuzzyVeracity( flexibility / 1000 );',
+        '  ',
+        '  flexibility.factor = 2;',
+        '  ',
+        '  var flex = flexibility.AND( size );',
+        '  result = linearExtrapolation(flex.veracity, 0, 0.03, 0, 1);',
+        '}',
+        'result;',
+        ''
+	].join('\n');
+
+    effect(i['Data']['Follow through flexibility'].index).expression = followThroughFlexibilityExp;
+
+    var followThroughDurationExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var weight = fx(' + i['Weight'].index + ').value;',
+        'var strength = fx(' + i['Strength'].index + ').value;',
+        'var will = fx(' + i['Will'].index + ').value;',
+        'var friction = fx(' + i['Friction'].index + ').value;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.388;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic) {',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
+        '  ',
+        '  // Compute ratio',
+        '  var damping = weight.OR( strength );',
+        '  var resistance = friction.OR( will );',
+        '  damping = resistance.OR( damping );',
+        '  var duration = damping.NEGATE();',
+        '',
+        '  result = linearExtrapolation(duration.veracity, 0.55, 1, 0, 1);',
+        '}',
+        'result;'
+	].join('\n');
+
+    effect(i['Data']['Follow through duration'].index).expression = followThroughDurationExp;
+    
+    var slowDownRatioExp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== MAIN PARAMETERS ===>',
+        '',
+        'var fx = thisProperty.propertyGroup();',
+        'var weight = fx(' + i['Weight'].index + ').value;',
+        'var strength = fx(' + i['Strength'].index + ').value;',
+        'var will = fx(' + i['Will'].index + ').value;',
+        'var friction = fx(' + i['Friction'].index + ').value;',
+        'var bounce = fx(' + i['Follow through']['Bounce'].index  +').value == 1;',
+        'var useFuzzyLogic = fx(' + i['Performance']['Disable general parameters'].index + ').value == 0;',
+        '',
+        'var result = 0.60;',
+        '',
+        '// <=== FUNCTIONS ===>',
+        '',
+        fuzzyLib,
+        '',
+        '// <=== DO IT ===>',
+        '',
+        'if (useFuzzyLogic && !bounce) {',
+        '  weight = new FuzzyVeracity( weight / 1000 );',
+        '  strength = new FuzzyVeracity( strength / 1000 );',
+        '  will = new FuzzyVeracity( will / 1000 );',
+        '  friction = new FuzzyVeracity( friction / 1000 );',
+        '  ',
+        '  friction.factor = 2;',
+        '  ',
+        '  var strong = strength.AND( will );',
+        '  var slowDown = strong.OR( friction );',
+        '  slowDown = slowDown.AND( weight );',
+        '',
+        '  result = linearExtrapolation(slowDown.veracity, 0, 0.2, 0, 5);',
+        '}',
+        'else if (bounce) result = 0;',
+        'result;'
+	].join('\n');
+
+    effect(i['Data']['Slow down ratio'].index).expression = slowDownRatioExp;
+
+    var linearizeExp = [DuAEExpression.Id.KLEANER,
+        'var weight = thisProperty.propertyGroup()(' + i['Weight'].index + ').value;',
+	    '(100-weight)/100;'
+	].join('\n');
+
+    effect(i['Data']['Linearize'].index).expression = linearizeExp;
+
+    // Setup the main expression
+
+    var exp = [DuAEExpression.Id.KLEANER,
+        '',
+        '// <=== ADVANCED PARAMETERS ===>',
+        '',
+        'var fx = thisComp.layer("' + ctrlLayer.name + '").effect("' + effect.name + '");',
+        'var anticipationCustomQuantity = fx(' + i['Anticipation']['Anticipation'].index + ').value;',
+        'var anticipationCustomDuration = fx(' + i['Anticipation']['Duration'].index + ').value;',
+        'var motionInterpolationRatio = fx(' + i['Motion interpolation']['Motion interpolation'].index + ').value;',
+        'var motionUseAETrajectory = fx(' + i['Motion interpolation']['Use Ae spatial trajectory'].index + ').value;',
+        'var customOverlap = fx(' + i['Overlap']['Overlap'].index + ').value;',
+        'var fThroughCustomFlexibility = fx(' + i['Follow through']['Flexibility'].index + ').value;',
+        'var fThroughCustomDuration = fx(' + i['Follow through']['Duration'].index + ').value;',
+        'var bounce = fx(' + i['Follow through']['Bounce'].index + ').value;',
+        'var customSoftBody = fx(' + i['Soft body']['Flexibility'].index + ').value;',
+        'var randomness = fx(' + i['Randomness']['Randomness'].index + ').value;',
+        'var disableSimulation = fx(' + i['Performance']['Always disable simulations'].index + ').value;',
+        'var timePrecision = fx(' + i['Performance']['Time precision'].index + ').value;',
+        'var valuePrecision = fx(' + i['Performance']['Value precision'].index + ').value;',
+        '',
+        '// <=== VALUES ===>',
+        '',
+        'var zeroVal = zero();',
+        'var result = value;',
+        'var interpolationRate = 0.725;',
+        '',
+        '// <=== GENERAL FUNCTIONS ===>',
+        '',
+        DuAEExpression.Library.get([
+            "cbrt",
+            "zero",
+            "addNoise",
+            "isAfterLastKey",
+            "getNextKey",
+            "getPrevKey",
+            "getNextStopKey",
+            "getPrevStartKey",
+            "isStill",
+            "isSpatial",
+            "isKeyTop",
+            "getPropWorldSpeed",
+            "getPropWorldVelocity",
+            "getPropWorldValue",
+            "getLayerWorldPos",
+            "gaussianInterpolation",
+            "bezierInterpolation",
+            "gaussianRateToBezierPoints"
+        ]),
+        '',
+        '// <=== BEHAVIOR FUNCTIONS ===>',
+        '',
+        'function weightedInterpolation(t, tMin, tMax, value1, value2, gaussianRate, bezierRate) {',
+        '  if (bezierRate >= 1) return linear(t, tMin, tMax, value1, value2);',
+        '  ',
+        '  var g = gaussianInterpolation(t, tMin, tMax, value1, value2, gaussianRate );',
+        '  if (bezierRate <= 0) return g; ',
+        '  ',
+        '  var b = bezierInterpolation( t, tMin, tMax, value1, value2, [1-bezierRate, 0, bezierRate, 1]);',
+        '  return linear(linearRate, 0, 1, g, b);',
+        '}',
+        '',
+        'function mainMotion(t, gaussianRate, bezierRate, slowDown, useAETrajectory) {',
+        '  if (numKeys < 2) return zeroVal;',
+        '  var nKey = getNextKey(t, thisProperty);',
+        '  if (!nKey) return zeroVal;',
+        '  var pKey = getPrevKey(t, thisProperty);',
+        '  if (!pKey) return zeroVal;',
+        '',
+        '  if (useAETrajectory && isSpatial()) return mainTrajectoryInterpolation(t, gaussianRate, bezierRate, slowDown);',
+        '  ',
+        '  return mainValueInterpolation(t, gaussianRate, bezierRate, slowDown);',
+        '}',
+        '',
+        'function mainValueInterpolation(t, gaussianRate, bezierRate, slowDown) {',
+        '  ',
+        '  var nKey = getNextKey(t, thisProperty);',
+        '  var pKey = getPrevKey(t, thisProperty);',
+        '  ',
+        '  // For each axis',
+        '  var r = value;',
+        '  var m = r instanceof Array;',
+        '  if (!m) r = [r];',
+        '  ',
+        '  for ( var axis = 0; axis < r.length; axis++ ) {',
+        '    ',
+        '    // Values',
+        '    var currentValue = value;',
+        '    var nValue = nKey.value;',
+        '    var pValue = pKey.value;',
+        '    if (m) {',
+        '      currentValue = currentValue[axis];',
+        '      nValue = nValue[axis];',
+        '      pValue = pValue[axis];',
+        '    }',
+        '    ',
+        '    // Times',
+        '    var nTime = nKey.time;',
+        '    var pTime = pKey.time;',
+        '    ',
+        '    // 4 cases : both keys are a summit, or each one is, or none.',
+        '    var pKeyTop = isKeyTop(pKey, axis);',
+        '    var nKeyTop = isKeyTop(nKey, axis);',
+        '    ',
+        '    // Check if we can stop (we\'re still moving after the next key)',
+        '    // i.e. there\'s no follow through later',
+        '    var stop = slowDown >= 1;',
+        '    if (!stop) stop = nKey.index < numKeys && !isStill(nKey.time + thisComp.frameDuration, threshold = .01, axis);',
+        '',
+        '    if (stop && nKeyTop && pKeyTop) {',
+        '      r[axis] = weightedInterpolation(t, pTime, nTime, pValue, nValue, gaussianRate, bezierRate) - currentValue;',
+        '      continue;',
+        '    }',
+        '    ',
+        '    // Prepare bezier values for continuous keyframes',
+        '    // Try to be as close as possible to the gaussian interpolation',
+        '    var bPoints = gaussianRateToBezierPoints( gaussianRate );',
+        '    var sO = bPoints[0];',
+        '  	var sOV = bPoints[1];',
+        '    var sI = bPoints[2];',
+        '  	var sIV = bPoints[3];',
+        '  	if (!pKeyTop) {',
+        '  	  var prevKey = key(pKey.index - 1);',
+        '  		var prevVal = prevKey.value;',
+        '  		if (m) prevVal = prevVal[axis];',
+        '  		sOV = (pValue - prevVal) / (nValue - prevVal);',
+        '  		sO = .33;',
+        '  	}',
+        '  	if (!nKeyTop) {',
+        '  	  var nextKey = key(nKey.index + 1);',
+        '  		var nextVal = nextKey.value;',
+        '  		if (m) nextVal = nextVal[axis];',
+        '  		sIV = (nValue - nValue) / (nextVal - nValue);',
+        '  		sI = .66;',
+        '  	}',
+        '  	else if (!stop) {',
+        '  	  // end speed',
+        '  	  sIV = slowDown/2+.5;',
+        '  	}',
+        '  	r[axis] = bezierInterpolation(t, pTime, nTime, pValue, nValue, [sO, sOV, sI, sIV]) - currentValue;',
+        '  }',
+        '',
+        '  if (m) return r;',
+        '  else return r[0];',
+        '}',
+        '',
+        'function mainTrajectoryInterpolation(t, gaussianRate, bezierRate, slowDown) {',
+        '  if (isStill(t)) return zeroVal;',
+        '  ',
+        '  var sKey = getPrevStartKey(t);',
+        '  var eKey = getNextStopKey(t);',
+        '  ',
+        '  var stop = slowDown >= 1;',
+        '  ',
+        '  if (stop) return valueAtTime(',
+        '    weightedInterpolation(t, sKey.time, eKey.time, sKey.time, eKey.time, gaussianRate, bezierRate)',
+        '    ) - value;',
+        '    ',
+        '  // Try to be as close as possible to the gaussian interpolation',
+        '  var bPoints = gaussianRateToBezierPoints( gaussianRate );',
+        '  bPoints[3] = slowDown/2+.5;',
+        '  return valueAtTime(',
+        '    bezierInterpolation(t, sKey.time, eKey.time, sKey.time, eKey.time, bPoints)',
+        '    ) - value;',
+        '}',
+        '',
+        'function anticipation(duration, quantity, rate, linearRate) {',
+        '  var anticipation = zeroVal;',
+        '  // Check values',
+        '  if (duration == 0) return anticipation;',
+        '  if (quantity == 0) return anticipation;',
+        '  // We need at least two keyframes, and can\'t be after the last one',
+        '	if (isAfterLastKey()) return anticipation;',
+        '	if (numKeys < 2) return anticipation;',
+        '',
+        '  // Check if an anticipation is needed',
+        '	var nextKey = getNextKey(time, thisProperty);',
+        '	var anticipationKey = nextKey;',
+        '	if (!isStill(anticipationKey.time - 0.1, valuePrecision)) {',
+        '		anticipationKey = getPrevKey(time, thisProperty);',
+        '		if (!isStill(anticipationKey.time - 0.1, valuePrecision)) return anticipation;',
+        '	}',
+        '	if (anticipationKey.index == numKeys) return anticipation;',
+        '',
+        '	var anticipationMiddle = anticipationKey.time;',
+        '	var anticipationStart = anticipationMiddle - anticipationDuration;',
+        '	var anticipationEnd = key(anticipationKey.index + 1).time;',
+        '	var startValue = anticipation;',
+        '	var midValue = (-valueAtTime(anticipationMiddle + anticipationDuration) + anticipationKey.value) * anticipationQuantity / 2;',
+        '	var endValue = anticipation;',
+        '',
+        '	if (time < anticipationStart) {',
+        '		return anticipation;',
+        '	} else if (time < anticipationMiddle) {',
+        '		if (value instanceof Array) {',
+        '			for (var i = 0; i < value.length; i++) {',
+        '				anticipation[i] = weightedInterpolation(time, anticipationStart, anticipationMiddle, startValue[i], midValue[i], rate, linearRate);',
+        '			}',
+        '			return anticipation;',
+        '		} else {',
+        '			return weightedInterpolation(time, anticipationStart, anticipationMiddle, startValue, midValue, rate, linearRate);',
+        '		}',
+        '	} else if (time <= anticipationEnd) {',
+        '		if (value instanceof Array) {',
+        '			for (var i = 0; i < value.length; i++) {',
+        '				anticipation[i] = weightedInterpolation(time, anticipationMiddle, anticipationEnd, midValue[i], endValue[i], rate, linearRate);',
+        '			}',
+        '			return anticipation;',
+        '		} else {',
+        '			return weightedInterpolation(time, anticipationMiddle, anticipationEnd, midValue, endValue, rate, linearRate);',
+        '		}',
+        '	} else {',
+        '		return anticipation;',
+        '	}',
+        '}',
+        '',
+        'function followThrough(flexibility, duration, slowDown, bounce, simulate, overlapDuration, anticipationDuration) {',
+        '  ',
+        '  var propSpeed = length(velocity);',
+        '  if (simulate) propSpeed = getPropWorldSpeed(time - overlapDuration, thisProperty);',
+        '	if (propSpeed < .001) return followThroughAtTime(time - overlapDuration, flexibility, duration, slowDown, bounce, simulate);',
+        '	',
+        '	//need to get back in time get the last follow-through value to fade it',
+        '	var fThrough = zeroVal;',
+        '',
+        '	var t = time;',
+        '	while (t > 0) {',
+        '		t = t - thisComp.frameDuration;',
+        '		if (simulate) propSpeed = getPropWorldSpeed(t - overlapDuration, thisProperty);',
+        '		else propSpeed = length(velocityAtTime(t));',
+        '		if (propSpeed < .001) {',
+        '			fThrough = followThroughAtTime(t - overlapDuration, flexibility, duration, slowDown, bounce, simulate);',
+        '			break;',
+        '		}',
+        '	}',
+        '',
+        '	return easeIn(time, t, t + anticipationDuration * 2, fThrough, zeroVal);',
+        '}',
+        '',
+        'function followThroughAtTime(t, flexibility, duration, slowDown, bounce, simulate) {',
+        '	var fThrough = zeroVal;',
+        '',
+        '	//checks',
+        '	if (flexibility == 0) return fThrough;',
+        '	var elasticity = 1/flexibility;',
+        '	if (duration == 0) return fThrough;',
+        '	var damping = 1/duration;',
+        '	if (slowDown == 1) return fThrough;',
+        '	',
+        '	var propSpeed;',
+        '	',
+        '	if (!simulate) {',
+        '		if (numKeys < 2) return fThrough;',
+        '		if (nearestKey(t).index == 1) return fThrough;',
+        '		propSpeed = length(velocityAtTime(t));',
+        '		if (propSpeed >= .001) return fThrough;',
+        '	} else {',
+        '		propSpeed = getPropWorldSpeed(t, thisProperty);',
+        '		if (propSpeed >= .001) return fThrough;',
+        '	}',
+        '',
+        '	//check state and time',
+        '	var fThroughStart = 0;',
+        '	var fThroughTime = 0;',
+        '',
+        '	if (simulate) {',
+        '		var speedI = getPropWorldSpeed(t, thisProperty);',
+        '		var i = t;',
+        '		//search for the time when the layer last moved',
+        '		while (speedI < valuePrecision && i > 0) {',
+        '			i = i - thisComp.frameDuration / timePrecision;',
+        '			speedI = getPropWorldSpeed(i, thisProperty);',
+        '		}',
+        '		fThroughStart = i;',
+        '	} else {',
+        '		//follow through starts at previous key',
+        '		var fThroughKey = getPrevKey(t, thisProperty);',
+        '		fThroughStart = fThroughKey.time;',
+        '	}',
+        '',
+        '	if (fThroughStart == 0) return fThrough;',
+        '',
+        '	fThroughTime = t - fThroughStart;',
+        '',
+        '	//from velocity',
+        '	if (simulate) fThrough = getPropWorldVelocity(fThroughStart - thisComp.frameDuration, thisProperty ) / 2;',
+        '	else {',
+        '	  ',
+        '	  fThrough = velocityAtTime(fThroughStart - thisComp.frameDuration) / 2;',
+        '	  fThrough *= 1-Math.cbrt(slowDown);',
+        '	}',
+        '',
+        '',
+        '	if (bounce) {',
+        '		var cycleDamp = Math.exp(fThroughTime * damping * .1);',
+        '		var damp = Math.exp(fThroughTime * damping) / (elasticity / 2);',
+        '		var cycleDuration = 1 / (elasticity * 2);',
+        '		//round to whole frames for better animation',
+        '		cycleDuration = Math.round(timeToFrames(cycleDuration));',
+        '		cycleDuration = framesToTime(cycleDuration);',
+        '		var midDuration = cycleDuration / 2;',
+        '		var maxValue = fThrough * midDuration;',
+        '		//check which cycle it is and cycvarime',
+        '		var cycvarime = fThroughTime;',
+        '		// the number of cycles where we "cheat" which are rounded to two frames',
+        '		var numEndCycles = 1;',
+        '		while (cycvarime > cycleDuration) {',
+        '			cycvarime = cycvarime - cycleDuration;',
+        '			cycleDuration = cycleDuration / cycleDamp;',
+        '			//round everything to whole frames for better animation',
+        '			cycleDuration = Math.round(timeToFrames(cycleDuration));',
+        '			//this is where we cheat to continue to bounce on cycles < 2 frames',
+        '			if (cycleDuration < 2) {',
+        '				cycleDuration = 2;',
+        '				numEndCycles++;',
+        '			}',
+        '			cycleDuration = framesToTime(cycleDuration);',
+        '			midDuration = cycleDuration / 2;',
+        '			maxValue = fThrough * midDuration / damp;',
+        '			if (numEndCycles > 100 / damping && maxValue < valuePrecision) return zeroVal;',
+        '		}',
+        '',
+        '		if (cycvarime < midDuration) fThrough = bezierInterpolation(cycvarime, 0, midDuration, 0, maxValue, [0, .1, .33, 1]);',
+        '		else fThrough = bezierInterpolation(cycvarime, midDuration, cycleDuration, maxValue, 0, [1 - .33, 0, 1, .9]);',
+        '	} else {',
+        '		// damping ratio',
+        '		var damp = Math.exp(fThroughTime * damping);',
+        '		// sinus evolution ',
+        '		var sinus = elasticity * fThroughTime * 2 * Math.PI;',
+        '		//sinus',
+        '		sinus = Math.sin(sinus);',
+        '		// elasticity',
+        '		sinus = .3 / elasticity * sinus;',
+        '		// damping',
+        '		sinus = sinus / damp;',
+        '		if (Math.abs(sinus) < .001 / 100) return 0;',
+        '		// result',
+        '		fThrough = fThrough * sinus;',
+        '',
+        '		if (.001 > 0) {',
+        '			fThrough = fThrough * (1 - propSpeed / valuePrecision);',
+        '		}',
+        '	}',
+        '',
+        '	if (bounce) {',
+        '		var prevValue = valueAtTime(fThroughStart - thisComp.frameDuration);',
+        '		var startValue = valueAtTime(fThroughStart);',
+        '		if (value instanceof Array) {',
+        '			for (var i = 0; i < prevValue.length; i++) {',
+        '				if (prevValue[i] > startValue[i]) fThrough[i] = Math.abs(fThrough[i]);',
+        '				if (prevValue[i] < startValue[i]) fThrough[i] = -Math.abs(fThrough[i]);',
+        '			}',
+        '		} else {',
+        '			if (prevValue > startValue) fThrough = Math.abs(fThrough);',
+        '			if (prevValue < startValue) fThrough = -Math.abs(fThrough);',
+        '		}',
+        '	}',
+        '',
+        '	if (simulate) {',
+        '		if (thisProperty !== position) {',
+        '			fThrough = fThrough + getLayerWorldPos(time, thisLayer);',
+        '			fThrough = thisLayer.fromWorld(fThrough) - thisLayer.anchorPoint;',
+        '		} else if (thisLayer.hasParent) {',
+        '			fThrough = fThrough + getLayerWorldPos(time, thisLayer.parent);',
+        '			fThrough = thisLayer.parent.fromWorld(fThrough) - thisLayer.parent.anchorPoint;',
+        '		}',
+        '	}',
+        '',
+        '	return fThrough;',
+        '}',
+        '',
+        'function overlap(overlapDuration, flexibility, t) {',
+        '',
+        '	var isThisPosition = thisProperty === position;',
+        '	',
+        '	if (isThisPosition && !hasParent) return zeroVal;',
+        '	',
+        '	if (typeof t === \'undefined\') t = time;',
+        '	',
+        '	// The position before overlapDuration',
+        '	var ol = getPropWorldValue(t - overlapDuration, thisProperty);',
+        '	',
+        '	// A ratio : velocity of the motion / distance between parent',
+        '	var motionRatio = 1;',
+        '	var originalDistance = length(valueAtTime(0));',
+        '	var motionVelocity = length(getPropWorldValue(t-thisComp.frameDuration/timePrecision, thisProperty), getPropWorldValue(t, thisProperty));',
+        '	motionRatio = ease(motionVelocity, 0, originalDistance, 1, 1-flexibility);',
+        '',
+        '	//pull towards the anchor position (or the parent for the position)',
+        '  if (isThisPosition) {',
+        '  	var prevParentWorldPos = getLayerWorldPos(t - overlapDuration, parent);',
+        '  	ol = (ol - prevParentWorldPos) * motionRatio + prevParentWorldPos;',
+        '  }',
+        '	else {',
+        '	  var prevAnchorWorldPos = getPropWorldValue(t - overlapDuration, anchorPoint);',
+        '	  ol = (ol - prevAnchorWorldPos) * motionRatio + prevAnchorWorldPos;',
+        '	}',
+        '	',
+        '	',
+        '	// Convert back to local coordinates',
+        '	if (isThisPosition) ol = parent.fromWorld(ol);',
+        '	else ol = thisLayer.fromWorld(ol);',
+        '',
+        '	return ol - value;',
+        '}',
+        '',
+        '// Logic results',
+        '',
+        'var interpolationRate = fx(' + i['Data']['Interpolation rate'].index + ').value;',
+        'var overlapDuration = fx(' + i['Data']['Overlap'].index + ').value;',
+        'var anticipationQuantity = fx(' + i['Data']['Anticipation quantity'].index + ').value;',
+        'var anticipationDuration = fx(' + i['Data']['Anticipation duration'].index + ').value;',
+        'var fThroughFlexibility = fx(' + i['Data']['Follow through flexibility'].index + ').value;',
+        'var fThroughDuration = fx(' + i['Data']['Follow through duration'].index + ').value;',
+        'var slowDown = fx(' + i['Data']['Slow down ratio'].index + ').value;',
+        'var linearRate = fx(' + i['Data']['Linearize'].index + ').value;',
+        'var softBodyFexibility = fThroughFlexibility;',
+        '',
+        '// ADJUSTMENTS',
+        '',
+        '// random!',
+        'seedRandom(0, true);',
+        '',
+        '// anticipation',
+        'anticipationDuration *= anticipationCustomDuration/100;',
+        'anticipationQuantity *= anticipationCustomQuantity/100;',
+        'motionInterpolationRatio /= 100;',
+        'motionUseAETrajectory = motionUseAETrajectory == 1;',
+        'fThroughFlexibility *= fThroughCustomFlexibility/100;',
+        'fThroughFlexibility = addNoise( fThroughFlexibility, randomness );',
+        'fThroughDuration *= fThroughCustomDuration/100;',
+        'fThroughDuration = addNoise( fThroughDuration, randomness );',
+        'if (fThroughFlexibility < .01) fThroughFlexibility = 0;',
+        'if (fThroughDuration < .01) fThroughDuration = 0;',
+        'var doFollowThrough = fThroughFlexibility != 0 && fThroughDuration != 0;',
+        'if (!doFollowThrough) slowDown = 1;',
+        'var bounce = bounce == 1;',
+        'softBodyFexibility *= customSoftBody/100;',
+        'var simulate = disableSimulation == 0;',
+        'if (simulate)',
+        '{',
+        '  // Check if simulation is possible, and needed',
+        '  // disable if :',
+        '  // - prop is not spatial, or position has keyframes',
+        '  if (!isSpatial()) simulate = false;',
+        '  else if (thisProperty === position && thisProperty.numKeys > 0) simulate = false;',
+        '  // - custom soft body and custom overlap are 0',
+        '  else if (customSoftBody == 0 && customOverlap == 0) simulate = false;',
+        '  // - overlap is 0 and (!doFollowThrough)',
+        '  else if (overlapDuration == 0 && !doFollowThrough) simulate = false;',
+        '  // - No parent = no simulation on the position',
+        '  else if (thisProperty === position && !thisLayer.hasParent) simulate = false;',
+        '  ',
+        '  // Adjust the flexibility and other parameters in case of simulation',
+        '  //adjust elasticity based on flexibility',
+        '  if (simulate) {',
+        '    ',
+        '    if (thisProperty === position) overlapDuration *= customOverlap/100;',
+        '    else overlapDuration *= softBodyFexibility;',
+        '    ',
+        '  	//get the distance from anchor ratio',
+        '  	var distanceRatio = 1;',
+        '  	if (thisProperty !== position)',
+        '  	{',
+        '  	  distanceRatio = length(valueAtTime(0), anchorPoint) / (thisLayer.width / 2);',
+        '  	  //adjust with soft-body flexibility',
+        '  	  distanceRatio *= softBodyFexibility;',
+        '  	}',
+        '  ',
+        '	  fThroughFlexibility = fThroughFlexibility * distanceRatio;',
+        '	  fThroughDuration = fThroughDuration * distanceRatio;',
+        '	  overlapDuration = overlapDuration * distanceRatio;',
+        '	  ',
+        '	  overlapDuration = addNoise( overlapDuration, randomness );',
+        '  }',
+        '}',
+        '// Disable overlap without simulation',
+        'if (!simulate) overlapDuration = 0;',
+        '',
+        'if (motionInterpolationRatio > 0)',
+        '{',
+        '  result += mainMotion(time, interpolationRate, linearRate, slowDown, motionUseAETrajectory) * motionInterpolationRatio;',
+        '}',
+        'result += anticipation(anticipationDuration, anticipationQuantity, interpolationRate, linearRate);',
+        'if (overlapDuration > 0)',
+        '{',
+        '  result += overlap(overlapDuration, fThroughFlexibility);',
+        '}',
+        'if (doFollowThrough)',
+        '{',
+        '  result += followThrough(fThroughFlexibility, fThroughDuration, slowDown, bounce, simulate, overlapDuration, anticipationDuration);',
+        '}',
+        'result;',//*/
+        ''
+	].join('\n');
+
+    // Clean keyframes and Add expressions
+    props.do(function (prop)
+    {
+        prop = new DuAEProperty(prop);
+        if (prop.isProperty())
+        {
+            // Fix spatial interpolations
+            prop.fixSpatialInterpolation();
+            // Set Linear
+            prop.setInterpolation(KeyframeInterpolationType.LINEAR);
+            // Clean keyframes
+            prop.cleanKeyframes();
+            // Set auto roving
+            prop.setRoving();
+            // Set expression
+            if (prop.riggable())
+                prop.setExpression( exp, false );
+        }
+        
+    });
+
+    DuAE.endUndoGroup("_" + DuScriptUI.String.KLEANER);
+
+    return effect;
+}
+
+Duik.CmdLib['Automation']["Swink"] = "Duik.Automation.swink()";
+/**
+ * Adds the <i>Swink</i> effect and expression to the properties.
+ * The <i>Swink</i> (Swing and Blink) makes the property swing between two values, with optional controls on the interpolation.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @return {DuAEProperty[]} The Swink effects.
+ */
+Duik.Automation.swink = function(props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return [];
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SWINK, false);
+
+    // The indices
+    var i = Duik.PseudoEffect.ONED_SWINK.props;
+
+    // The expression
+    var exp = [ 
+        'var AValue = fx(' + i['A'].index + ').value;',
+        'var BValue = fx(' + i['B'].index + ').value;',
+        'var frequencyValue = fx(' + i['Frequency'].index + ').value;',
+        'var interpolationValue = fx(' + i['Interpolation']['Mode'].index + ').value;',
+        'var rateValue = fx(' + i['Interpolation']['Rate'].index + ').value;',
+        'var offsetValue = fx(' + i['Cycle offset'].index + ').value;',
+        'var ratioValue = fx(' + i['A/B Ratio'].index + ').value;',
+        'var plateauValue = fx(' + i['Plateau'].index + ').value;',
+        '',
+        'var result = value;',
+        '',
+        DuAEExpression.Library.get([
+            'bezierInterpolation',
+            'gaussianInterpolation',
+            'logInterpolation',
+            'expInterpolation'
+        ]),
+        '',
+        'function blink( A, B, frequency, offset, ratio ) {',
+        '  if (typeof frequency === \'undefined\') frequency = 1.0;',
+        '  if (typeof offset === \'undefined\') offset = 0.0;',
+        '  if (typeof ratio === \'undefined\') ratio = 0.5;',
+        '',
+        '  var phase = 1/frequency;',
+        '  ',
+        '  var currentTime = (time+offset)%phase;',
+        '  var ADuration = phase*ratio;',
+        '  ',
+        '	if (currentTime > ADuration) return B;',
+        '	return A;',
+        '}',
+        '',
+        'function swing( A, B, frequency, offset, ratio, plateau, interpolationMethod ) {',
+        '  if (typeof frequency === \'undefined\') frequency = 1.0;',
+        '  if (typeof offset === \'undefined\') offset = 0.0;',
+        '  if (typeof ratio === \'undefined\') ratio = 0.5;',
+        '  if (typeof plateau === \'undefined\') plateau = 0.0;',
+        '  if (typeof interpolationMethod === \'undefined\') interpolationMethod = ease;',
+        '  ',
+        '  var phase = 1/frequency;',
+        '  ',
+        '  var currentTime = (time+offset)%phase;',
+        '  var ADuration = phase*ratio;',
+        '  var APlateau = ADuration*plateau;',
+        '  var BDuration = phase*(1-ratio);',
+        '  var BPlateau = BDuration*plateau;',
+        '  ',
+        '  // A to B',
+        '  if (currentTime < ADuration-APlateau) return interpolationMethod(currentTime, 0, ADuration-APlateau, A, B);',
+        '  // B plateau',
+        '  if (currentTime >= ADuration-APlateau && currentTime < ADuration) return B;',
+        '  // B to A',
+        '  if (currentTime >= ADuration && currentTime < phase-BPlateau) return interpolationMethod(currentTime, ADuration, phase-BPlateau, B, A);',
+        '  // A plateau ',
+        '  return A;',
+        '}',
+        '',
+        'if (frequencyValue > 0) {',
+        '  offsetValue = offsetValue/100/frequencyValue;',
+        '  ratioValue /= 100;',
+        '  plateauValue /= 100;',
+        '  // Hold (Blink)',
+        '  if (interpolationValue == 1) result += blink( AValue, BValue, frequencyValue, offsetValue, ratioValue);',
+        '  else {',
+        '    var i = linear;',
+        '    // Smooth',
+        '    if (interpolationValue == 3) i = function (t, tMin, tMax, value1, value2) { return bezierInterpolation(t, tMin, tMax, value1, value2, [rateValue/10.0, 0.0, 1-rateValue/10.0, 1.0]); };',
+        '    // Natural',
+        '    if (interpolationValue == 4) i = function (t, tMin, tMax, value1, value2) { return gaussianInterpolation(t, tMin, tMax, value1, value2, linear(rateValue, 0, 10, -1, 1)); };',
+        '    // Slow Down',
+        '    if (interpolationValue == 5) i = function (t, tMin, tMax, value1, value2) { return logInterpolation(t, tMin, tMax, value1, value2, rateValue*50*frequencyValue); };',
+        '    // Speed up',
+        '    if (interpolationValue == 6) i = function (t, tMin, tMax, value1, value2) { return expInterpolation(t, tMin, tMax, value1, value2, rateValue*frequencyValue); };',
+        '    result += swing( AValue, BValue, frequencyValue, offsetValue, ratioValue, plateauValue, i);',
+        '  }',
+        '}',
+        '',
+        'result;'
+	].join('\n');
+
+    // Apply
+    var effects = [];
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        var layer = prop.layer;
+
+        // Add effect
+        var d = prop.dimensions();
+        var effect = null;
+        if (d == 1) effect = Duik.PseudoEffect.ONED_SWINK.apply(layer, prop.name + " | " + DuScriptUI.String.SWINK);
+        else if (d == 2) effect = Duik.PseudoEffect.TWOD_SWINK.apply(layer, prop.name + " | " + DuScriptUI.String.SWINK);
+        else if (d == 3) effect = Duik.PseudoEffect.THREED_SWINK.apply(layer, prop.name + " | " + DuScriptUI.String.SWINK);
+        else if (d == 4) effect = Duik.PseudoEffect.COLOR_SWINK.apply(layer, prop.name + " | " + DuScriptUI.String.SWINK);
+        else return;
+
+        prop.setExpression(
+            DuAEExpression.Id.SWINK + '\nvar fx = effect("' + effect.name + '");\n' + exp,
+            false
+        );
+
+        // Set A/B values
+        var v = prop.value( true )/4;
+        effect(i['A'].index).setValue( - v );
+        effect(i['B'].index).setValue( v );
+
+        effects.push(new DuAEProperty(effect));
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SWINK);
+
+    return effects;
+}
+
+Duik.CmdLib['Automation']["Wiggle"] = "Duik.Automation.wiggle()";
+/**
+ * Adds a random but smooth animation to the selected properties.
+ * @param {Bool} [separateDimensions=false] Use one value for each dimension/channel.
+ * @param {Bool} [individualControls=false] Use one control for each of the properties.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.wiggle = function(separateDimensions, individualControls, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return [];
+
+    separateDimensions = def ( separateDimensions, false );
+    individualControls = def ( individualControls, false );
+
+    DuAE.beginUndoGroup(DuScriptUI.String.WIGGLE, false);
+
+    var effect = null;
+    var pe = null;
+    var i = null;
+
+    var layers = DuAEComp.unselectLayers();
+    props.do(function(prop)
+    {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        var layer = prop.layer;
+        var dimensions = prop.dimensions();
+        var comp = prop.comp;
+
+        // Create effect
+        if (effect == null || individualControls)
+        {
+            var effectName = DuScriptUI.String.WIGGLE;
+            if (individualControls) effectName = prop.name + " | " + effectName;
+
+            if (!separateDimensions && dimensions > 1) pe = Duik.PseudoEffect.MULTI_WIGGLE;
+            else if (dimensions == 1) pe = Duik.PseudoEffect.ONED_WIGGLE;
+            else if (dimensions == 2) pe = Duik.PseudoEffect.TWOD_WIGGLE;
+            else if (dimensions == 3) pe = Duik.PseudoEffect.THREED_WIGGLE;
+            else if (dimensions == 4) pe = Duik.PseudoEffect.COLOR_WIGGLE;
+            else return;
+
+            effect = pe.apply(layer, effectName);
+            effect = new DuAEProperty(effect);
+
+            // Set default values
+            i = pe.props;
+            effect.prop( i['Loop duration (s)'].index ).setValue( comp.duration );
+            effect.prop( i['Details']['Random Seed'].index ).setValue( layer.index );
+        }
+
+        // Check the comp link
+        var sameComp = effect.comp.name == comp.name;
+
+        var effectLink = "var fx = " + effect.expressionLink(sameComp);
+        if (!separateDimensions && dimensions > 1)
+	    {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+				'var freq = fx(' + i['Frequency'].index + ');\n' +
+				'var amp = fx(' + i['Amplitude'].index + ');\n' +
+				'var linked = fx(' + i['Link dimensions'].index + ').value;\n' +
+				'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+				'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+				'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+				'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+				'seedRandom(seed);\n' +
+				'if (loop == 0) loop = thisComp.duration;\n' +
+				'var t = (time % loop)-loop;\n' +
+				'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
+				'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
+				'var w = ease(t, -loop,  0, w1, w2);\n' +
+				'var result = [];\n' +
+				'if(linked) while (result.length < value.length) result.push(w[0]);\n' +
+				'else result = w;\n' +
+				'result + value - valueAtTime(0);';
+        }
+        else if (dimensions == 3)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
+                    'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
+                    'var Zfreq = fx(' + i['Z']['Frequency'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
+                    'var Zamp = fx(' + i['Z']['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
+                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
+                    'var Z1 = wiggle(Zfreq,Zamp, complexity, multiplier, t);\n' +
+                    'var w1 = [X1[0],Y1[1],Z1[2]];\n' +
+                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
+                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
+                    'var Z2 = wiggle(Zfreq,Zamp, complexity, multiplier, t - loop);\n' +
+                    'var w2 = [X2[0],Y2[1],Z2[2]];\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+        else if (dimensions == 2)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
+                    'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
+                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
+                    'var w1 = [X1[0],Y1[1]];\n' +
+                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
+                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
+                    'var w2 = [X2[0],Y2[1]];\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+        else if (dimensions == 1)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+                    'var freq = fx(' + i['Frequency'].index + ');\n' +
+                    'var amp = fx(' + i['Amplitude'].index + ');\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var seed = fx(' + i['Details']['Random Seed'].index + ');\n' +
+                    'seedRandom(seed);\n' +
+                    'if (loop == 0) loop = thisComp.duration;\n' +
+                    'var t = (time % loop)-loop;\n' +
+                    'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
+                    'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
+                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'w + value - valueAtTime(0)';
+        }
+    });
+    DuAEComp.selectLayers(layers);
+    
+    DuAE.endUndoGroup(DuScriptUI.String.WIGGLE);
+}
+
+Duik.CmdLib['Automation']["Wiggle"] = "Duik.Automation.random()";
+/**
+ * Adds a completely random animation to the selected properties.
+ * @param {Bool} [separateDimensions=false] Use one value for each dimension/channel.
+ * @param {Bool} [individualControls=false] Use one control for each of the properties.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.random = function(separateDimensions, individualControls, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return [];
+
+    separateDimensions = def ( separateDimensions, false );
+    individualControls = def ( individualControls, false );
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOM_MOTION, false);
+
+    var effect = null;
+    var pe = null;
+    var i = null;
+
+    var layers = DuAEComp.unselectLayers();
+    props.do(function(prop)
+    {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        var layer = prop.layer;
+        var dimensions = prop.dimensions();
+        var comp = prop.comp;
+
+        // Create effect
+        if (effect == null || individualControls)
+        {
+            var effectName = DuScriptUI.String.RANDOM;
+            if (individualControls) effectName = prop.name + " | " + effectName;
+
+            if (!separateDimensions && dimensions > 1) pe = Duik.PseudoEffect.MULTI_RANDOM;
+            else if (dimensions == 1) pe = Duik.PseudoEffect.ONED_RANDOM;
+            else if (dimensions == 2) pe = Duik.PseudoEffect.TWOD_RANDOM;
+            else if (dimensions == 3) pe = Duik.PseudoEffect.THREED_RANDOM;
+            else return;
+
+            effect = pe.apply(layer, effectName);
+            effect = new DuAEProperty(effect);
+
+            // Set default values
+            i = pe.props;
+            effect.prop( i['Details']['Random seed'].index ).setValue( layer.index );
+        }
+
+        // Check the comp link
+        var sameComp = effect.comp.name == comp.name;
+
+        var effectLink = "var fx = " + effect.expressionLink(sameComp);
+        if (!separateDimensions && dimensions > 1)
+	    {
+            prop.getProperty().expression = [ DuAEExpression.Id.RANDOM,
+                effectLink + '\n',
+                'var amp = fx(' + i['Amplitude'].index + ').value;',
+                'var animated = fx(' + i['Animated'].index + ').value;',
+                'var linked = fx(' + i['Link dimensions'].index + ').value;',
+                'var randomMode = fx(' + i['Details']['Mode'].index + ').value;',
+                'var seed = fx(' + i['Details']['Random seed'].index + ').value;',
+                '',
+                'var result = value;',
+                '',
+                'if (fx.active) {',
+                '',
+                '   seedRandom(seed, !animated);',
+                '',
+                '   var rnd = 0;',
+                '   amp = amp/2;',
+                '',
+                '	if (randomMode == 1) rnd = gaussRandom(-amp, amp);',
+                '	else rnd = random(-amp, amp);',
+                '	if (value instanceof Array) {',
+                '		var v = [rnd];',
+                '		while (v.length < value.length)',
+                '		{',
+                '			if (!linked)',
+                '			{',
+                '				if (randomMode == 1) a = gaussRandom(-amp, amp);',
+                '				else a = random(-amp, amp);',
+                '				v.push( a );',
+                '			}',
+                '			else {',
+                '				v.push(rnd);',
+                '			}',
+                '		}',
+                '		rnd = v;',
+                '	}',
+                '	result += rnd;',
+                '}',
+                '',
+                'result;',
+                ''
+            ].join('\n');
+        }
+        else
+        {
+            prop.getProperty().expression = [ DuAEExpression.Id.RANDOM,
+                effectLink + '\n',
+                'var amp = fx(' + i['Amplitude'].index + ').value;',
+                'var animated = fx(' + i['Animated'].index + ').value;',
+                'var randomMode = fx(' + i['Details']['Mode'].index + ').value;',
+                'var seed = fx(' + i['Details']['Random seed'].index + ').value;',
+                '',
+                'var result = value;',
+                '',
+                'if (fx.active) {',
+                '',
+                '   seedRandom(seed, !animated);',
+                '',
+                '   var rnd = 0;',
+                '   amp = amp/2;',
+                '',
+                '	if (randomMode == 1) result += gaussRandom(-amp, amp);',
+                '	else result += random(-amp, amp);',
+                '}',
+                '',
+                'result;',
+                ''
+            ].join('\n');
+        }
+    });
+    DuAEComp.selectLayers(layers);
+    
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOM_MOTION);
+}
+
+Duik.CmdLib['Automation']["Wheel"] = "Duik.Automation.wheel()";
+/**
+ * Automates the rotation of layers as wheels
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.wheel = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.WHEEL, false);
+
+    var pe = Duik.PseudoEffect.WHEEL;
+    var i = pe.props;
+
+    layers.do(function(layer) {
+        var r = DuAELayer.width(layer) / 2;
+
+        var rotProp = layer.transform.rotation;
+	    if (layer.threeDLayer) rotProp = layer.transform.zRotation;
+
+        var effect = pe.apply(layer);
+        
+        effect( i['Radius'].index ).setValue( r );
+
+        rotProp.expression = [ DuAEExpression.Id.WHEEL,
+            'var fx = effect("' + effect.name + '");',
+            'var wheelRadius = fx(' + i['Radius'].index +  ').value;',
+            'var reversed = fx(' + i['Reverse'].index +  ').value;',
+            'var trajectory = fx(' + i['Trajectory'].index +  ').value;',
+            'var moBlurPrecision = fx(' + i['Motion Blur Precision'].index +  ').value;',
+            '',
+            'var result = value;',
+            '',
+            'function wheel(r, type, precision) {',
+            '  ',
+            '  if (r == 0) return 0;',
+            '  ',
+            '  function p(t) {',
+            '      return thisLayer.toWorld(thisLayer.anchorPoint, t);',
+            '  }',
+            '  ',
+            '  var distance = 0;',
+            '    // curved',
+            '    if (type == 3) {',
+            '        var start = thisLayer.inPoint > thisComp.displayStartTime ? thisLayer.inPoint : thisComp.displayStartTime;',
+            '        var end = time < thisLayer.outPoint ? time : thisLayer.outPoint;',
+            '        var step = framesToTime(1)/precision;',
+            '        var currentTime = start;',
+            '        while (currentTime <= end)',
+            '        {',
+            '            if (p(currentTime+step)[0] - p(step)[0] > 0) distance += length(p(currentTime+step), p(currentTime));',
+            '            else distance -= length(p(currentTime+step), p(currentTime));',
+            '            currentTime += step;',
+            '        }',
+            '    } else if (type == 2) {',
+            '        distance = length(p(time), p(0));',
+            '    }',
+            '    else {',
+            '        distance = p(time)[0];',
+            '    }',
+            '    return radiansToDegrees(distance / r);',
+            '}',
+            '',
+            'if (reversed) result -= wheel( wheelRadius, trajectory, moBlurPrecision );',
+            'else result += wheel( wheelRadius, trajectory, moBlurPrecision );',
+            '',
+            'result;'
+        ].join('\n');
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.WHEEL);
+}
+
+Duik.CmdLib['Automation']["Move away"] = "Duik.Automation.moveAway()";
+/**
+ * Adds a control to move the layers away from their parent.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.moveAway = function(layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.MOVE_AWAY, false);
+    
+    layers.do(function(layer)
+    {
+        // add control
+        var effect = layer.property("ADBE Effect Parade").addProperty("ADBE Slider Control");
+        effect.name = DuAELayer.newUniqueEffectName(DuScriptUI.String.MOVE_AWAY, layer);
+        // add expression
+        layer.transform.position.expression = [ DuAEExpression.Id.MOVE_AWAY,
+            'var result = value;',
+            'if (thisLayer.hasParent && value[0] != 0 && value[1] != 0)',
+            '{',
+            '	thisWorldPos = thisLayer.toWorld(thisLayer.anchorPoint);',
+            '	parentWorldPos = thisLayer.parent.toWorld(thisLayer.parent.anchorPoint);',
+            '	depl = effect("' + effect.name + '")(1).value;',
+            '	dist = length(parentWorldPos ,thisWorldPos )',
+            '	coef = (dist+depl)/dist',
+            '	newWorldPos = (thisWorldPos-parentWorldPos)*coef+parentWorldPos',
+            '	result = thisLayer.parent.fromWorld(newWorldPos)',
+            '}',
+            'result;'
+        ].join('\n');
+    });
+    
+    DuAE.endUndoGroup(DuScriptUI.String.MOVE_AWAY_TIP);
+
+}
+
+/**
+ * Assigns random values to the properties at the current time.<br/>
+ * This method creates keyframes if the properties are animated.
+ * @param {float} [xMin] The minimum X Value
+ * @param {float} [xMax] The maximum X Value
+ * @param {float} [yMin] The minimum Y Value
+ * @param {float} [yMax] The maximum Y Value
+ * @param {float} [zMin] The minimum Z Value
+ * @param {float} [zMax] The maximum Z Value
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [separate=true] If true, sets a different value for all axis. If false, use the same value for all axis, ignore Y and Z values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeValues = function(xMin, xMax, yMin, yMax, zMin, zMax, offset, separate, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    var x = (typeof xMin !== 'undefined' && typeof xMax !== 'undefined' && !isNaN(xMin) && !isNaN(xMax));
+	var y = (typeof yMin !== 'undefined'&& typeof yMax !== 'undefined' && !isNaN(yMin) && !isNaN(yMax));
+	var z = (typeof zMin !== 'undefined' && typeof zMax !== 'undefined' && !isNaN(zMin) && !isNaN(zMax));
+
+    offset = def(offset, true);
+    separate = def(separate, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    props.do(function(propInfo) {
+        propInfo = new DuAEProperty(propInfo);
+        if (propInfo.isGroup()) return;
+        var prop = propInfo.getProperty();
+        var dim = propInfo.dimensions();
+        var xVal = 0;
+        var yVal = 0;
+        var zVal = 0;
+
+        // Random
+
+        if (x) xVal = rnd(xMin, xMax);
+
+        if (dim > 1 && y) yVal = rnd(yMin, yMax);
+        
+        if (dim > 2 && z) zVal = rnd(zMin, zMax);
+
+        // Set new value
+        var val;
+        if (dim == 1) val = xVal;
+        else if (separate) {
+            val = [xVal, yVal];
+            if (dim > 2) val.push(zVal);
+            while (dim > val.length) val.push(0);
+        }
+        else {
+            val = [xVal];
+            while (dim > val.length) val.push(xVal);
+        }
+
+        if (offset) val = val + prop.value;
+        var comp = propInfo.comp;
+        prop.numKeys > 0 ? prop.setValueAtTime( comp.time, val) : prop.setValue(val);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer start times (moves them in time).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerTimes = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var startTime = rnd(min, max) * comp.frameDuration;
+        if (offset) layer.startTime = layer.startTime + startTime;
+        else layer.startTime = startTime - (layer.inPoint - layer.startTime);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer indices (their position in the layer stack).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerIndices = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var index = parseInt(rnd(min,max));
+        if (offset) index = layer.index + index;
+        if (index == layer.index) return;
+        if (index >= comp.numLayers) layer.moveToEnd();
+		else if (index < 2) layer.moveToBeginning();
+		else layer.moveBefore(comp.layer(index));
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer in points.
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerInPoints = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var inPoint = rnd(min, max) * comp.frameDuration;
+        // We need to reset the out point, because Ae...
+        var out = layer.outPoint;
+        if (offset) inPoint = layer.inPoint + inPoint;
+        if (inPoint >= layer.outPoint) inPoint = layer.outPoint - comp.frameDuration;
+        layer.inPoint = inPoint;
+        layer.outPoint = out;
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the layer out points.
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.randomizeLayerOutPoints = function(min, max, offset, gaussian, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        var comp = layer.containingComp;
+        var outPoint = rnd(min, max) * comp.frameDuration;
+        if (offset) outPoint = layer.outPoint + outPoint;
+        if (outPoint <= layer.inPoint) outPoint = layer.inPoint + comp.frameDuration;
+        layer.outPoint = outPoint;
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Shuffles the key times (moves them in time).
+ * @param {int} min The minimum value, in frames.
+ * @param {int} max The maximum value, in frames.
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeKeyTimes = function (min, max, offset, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    offset = def(offset, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    //array to list keys to be removed
+	var krKeys = [];
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+
+        var krK = [];
+
+        var comp = prop.comp;
+        var dim = prop.dimensions();
+
+        //loop through selected keyframes
+        var selectedKeys = prop.selectedKeys();
+        for (var j = 0 ; j < selectedKeys.length; j++)
+        {
+            var key = selectedKeys[j];
+            var t = rnd(min,max)*comp.frameDuration;
+            // SET VALUE
+            if (!offset) t -= prop.keyTime(key);
+            var oldKey = prop.keyAtIndex(key);
+            krK.push(prop.keyTime(key));
+            prop.setKey(oldKey,t);
+        }
+        krKeys.push(krK);
+    });
+
+    // Delete keyframes
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+
+        for (var j = 0 ; j < krKeys[props.current].length ; j++)
+		{
+			prop.removeKey(prop.nearestKeyIndex(krKeys[props.current][j]));
+		}
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+/**
+ * Assigns random values to the values of the selected keyframes.
+ * @param {float} [xMin] The minimum X Value
+ * @param {float} [xMax] The maximum X Value
+ * @param {float} [yMin] The minimum Y Value
+ * @param {float} [yMax] The maximum Y Value
+ * @param {float} [zMin] The minimum Z Value
+ * @param {float} [zMax] The maximum Z Value
+ * @param {Boolean} [offset=true] If true, offsets the current values. If false, sets absolute values.
+ * @param {Boolean} [separate=true] If true, sets a different value for all axis. If false, use the same value for all axis, ignore Y and Z values.
+ * @param {Boolean} [gaussian=true] If true, uses random values with a gaussian distribution instead of true random values.
+ * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ */
+Duik.Automation.randomizeKeyValues = function (xMin, xMax, yMin, yMax, zMin, zMax, offset, separate, gaussian, props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.RANDOMIZE, false);
+    DuAEProject.setProgressMode(true);
+
+    var x = (typeof xMin !== 'undefined' && typeof xMax !== 'undefined' && !isNaN(xMin) && !isNaN(xMax));
+	var y = (typeof yMin !== 'undefined'&& typeof yMax !== 'undefined' && !isNaN(yMin) && !isNaN(yMax));
+	var z = (typeof zMin !== 'undefined' && typeof zMax !== 'undefined' && !isNaN(zMin) && !isNaN(zMax));
+
+    offset = def(offset, true);
+    separate = def(separate, true);
+    gaussian = def(gaussian, true);
+
+    var rnd;
+    if (gaussian) rnd = DuMath.gaussRandom;
+    else rnd = DuMath.random;
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        //Get containing comp and dimensions
+        var comp = prop.comp;
+        var dim = prop.dimensions();
+        //loop through selected keyframes
+        var selectedKeys = prop.selectedKeys();
+        for (var j = 0 ; j < selectedKeys.length; j++)
+        {
+            var key = selectedKeys[j];
+            var xval = 0;
+            var yval = 0;
+            var zval = 0;
+            //X
+            if (x) xVal = rnd(xMin,xMax);
+            //Y
+            if (dim > 1 && y) yVal = rnd(yMin,yMax);
+            //Z
+            if (dim > 2 && z) zVal = rnd(zMin,zMax);
+
+            var val;
+            if (dim == 1) val = xVal;
+            else if (separate) {
+                val = [xVal, yVal];
+                if (dim > 2) val.push(zVal);
+                while (dim > val.length) val.push(0);
+            }
+            else {
+                val = [xVal];
+                while (dim > val.length) val.push(xVal);
+            }
+            //SET VALUE
+            if (offset) val += prop.keyValue(key);
+            prop.setValueAtKey(val,key);
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.RANDOMIZE);
+}
+
+Duik.CmdLib['Automation']["Motion trail"] = "Duik.Automation.motionTrail()";
+/**
+ * Draws a trail following the selected layers.
+ * @param {Boolean} [createNewLayer = false] Option to create a new layer for each trail.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.motionTrail = function( createNewLayer, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    
+    // Get comp
+    var comp;
+    if (layers.length() == 0) comp = DuAEProject.getActiveComp();
+    else comp = layers.at(0).containingComp;
+    if (!comp) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.MOTION_TRAIL, false);
+    DuAEProject.setProgressMode(true);
+
+    createNewLayer = def(createNewLayer, false);
+
+    // Get existing trail layer
+    var trailLayer;
+    if (!createNewLayer) {
+        var trailLayers = Duik.Layer.get( Duik.Layer.Type.MOTION_TRAIL, false, comp );
+        if (trailLayers.length == 0) createNewLayer = true;
+        else trailLayer = trailLayers[0];
+    }
+
+    if (createNewLayer) {
+        trailLayer = comp.layers.addShape();
+        Duik.Layer.setType(Duik.Layer.Type.MOTION_TRAIL, trailLayer);
+        trailLayer.name = DuAEComp.newUniqueLayerName( DuScriptUI.String.MOTION_TRAILS, comp );
+    }
+
+    var pe = Duik.PseudoEffect.MOTION_TRAIL;
+    var p = pe.props;
+
+    function createTrail(layer) {
+        var effect = pe.apply( trailLayer, DuScriptUI.String.MOTION_TRAIL );
+
+        // Create shape
+        var trailGroup = trailLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
+        trailGroup.name = effect.name;
+
+        var trailPath = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Shape - Group");
+        trailPath = trailPath.property("ADBE Vector Shape");
+        trailPath.expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect("' + effect.name + '");',
+            '//parameters',
+            'var trailLayer = getEffectLayer(fx, ' + p['Motion source'].index + ');',
+            'var inFrame = fx(' + p['Start (frames)'].index + ').value;',
+            'var outFrame = fx(' + p['End (frames)'].index + ').value;',
+            'var trailStrokeWidth = fx(' + p['Width'].index + ').value;',
+            'var useAutoWidth = fx(' + p['Advanced: auto-width'].index + ').value;',
+            'var pathOffset = fx(' + p['Path offset'].index + ').value;',
+            'var taperStartLength = fx(' + p['Taper']['Start length'].index + ').value;',
+            'var taperEndLength = fx(' + p['Taper']['End length'].index + ').value;',
+            'var taperEaseStart = fx(' + p['Taper']['Start ease'].index + ').value;',
+            'var taperEaseEnd = fx(' + p['Taper']['End ease'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'var sampleMethod = fx(' + p['Sampling']['Method'].index + ').value;',
+            'var samples = fx(' + p['Sampling']['Samples'].index + ').value;',
+            '',
+            DuAEExpression.Library.get([
+                'bezierInterpolation',
+                'getEffectLayer',
+                'getCompScale'
+            ]),
+            '',
+            'if (trailLayer != null && fx.active) {',
+            '',
+            '	//adjust parameters',
+            '	taperStartLength /= 100;',
+            '	taperEndLength /= 100;',
+            '	taperEaseStart /= 100;',
+            '	taperEaseEnd /= 100;',
+            '',
+            '	//will store the path points and the values for the taper',
+            '	var trailPoints = [];',
+            '	var taperValues = [];',
+            '',
+            '	//compute time range',
+            '	var currentFrame = timeToFrames(time);',
+            '	if (inFrame > outFrame) inFrame = -inFrame;',
+            '	else if (inFrame == outFrame) inFrame = -1;',
+            '	var autoSampleLimit = 1 / (samples * 5);',
+            '	var startFrame = currentFrame + inFrame;',
+            '	var endFrame = currentFrame + outFrame;',
+            '	var sTime = framesToTime(startFrame);',
+            '	var eTime = framesToTime(endFrame);',
+            '',
+            '	// for each frame starting from the end',
+            '	for (var i = endFrame; i >= startFrame; i--) {',
+            '',
+            '		var t = framesToTime(i);',
+            '		var pT = framesToTime(i - 1);',
+            '		var nT = framesToTime(i + 1);',
+            '		var pos = trailLayer.toComp(trailLayer.anchorPoint, t);',
+            '		if (pos.length == 3) pos.pop();',
+            '		var prevPos = trailLayer.toComp(trailLayer.anchorPoint, pT);',
+            '		if (prevPos.length == 3) prevPos.pop();',
+            '		var nextPos = trailLayer.toComp(trailLayer.anchorPoint, nT);',
+            '		if (nextPos.length == 3) nextPos.pop();',
+            '',
+            '		if (pos == prevPos) continue;',
+            '',
+            '		//compute samples',
+            '		if (sampleMethod == 1) {',
+            '			try {',
+            '				var vec = normalize(nextPos - pos);',
+            '				var prevVec = normalize(pos - prevPos);',
+            '				var step = length(prevVec, vec);',
+            '				var stepRatio = step / autoSampleLimit;',
+            '				if (stepRatio > 1) samples = Math.floor(stepRatio);',
+            '				else samples = 1;',
+            '			} catch (e) {}',
+            '		}',
+            '',
+            '		//build path and store taper values',
+            '		var step = thisComp.frameDuration / samples;',
+            '		for (var sub = t + thisComp.frameDuration - step; sub >= t; sub -= step) {',
+            '',
+            '			var subPos = trailLayer.toComp(trailLayer.anchorPoint, sub);',
+            '			if (subPos.length == 3) subPos.pop();',
+            '',
+            '			subPos = subPos - position;',
+            '			trailPoints.push(subPos);',
+            '',
+            '			if (trailMode == 2) {',
+            '				var w = trailStrokeWidth;',
+            '',
+            '				var duration = eTime - sTime;',
+            '				var elapsed = sub - sTime;',
+            '				var tRatio = elapsed / duration;',
+            '',
+            '				if (tRatio > 1 - taperStartLength) {',
+            '					w = bezierInterpolation(sub, eTime - duration * taperStartLength, eTime, w, 0, [taperEaseStart, 0, 1 - taperEaseStart, 0]);',
+            '				}',
+            '',
+            '				if (tRatio < taperEndLength) {',
+            '					w = bezierInterpolation(tRatio, 0, taperEndLength, 0, w, [1 - taperEaseEnd, 1, taperEaseEnd, 1]);',
+            '				}',
+            '',
+            '				if (useAutoWidth) {',
+            '					var ratio = getCompScale(trailLayer, t);',
+            '					w = w * ratio;',
+            '				}',
+            '',
+            '				taperValues.push(w);',
+            '			}',
+            '		}',
+            '',
+            '	}',
+            '',
+            '	//offset',
+            '	if (trailPoints.length > 1) {',
+            '		//compute offset',
+            '		var rightSidePoints = [];',
+            '		var leftSidePoints = [];',
+            '		for (var i = 1, num = trailPoints.length; i < num; i++) {',
+            '			var w = [0, 0];',
+            '			var o = [0, 0];',
+            '',
+            '			var vec = normalize(trailPoints[i - 1] - trailPoints[i]);',
+            '			var normal = [-vec[1], vec[0]];',
+            '',
+            '			//width & taper',
+            '			if (trailMode == 2) {',
+            '				try {',
+            '					w = normal * taperValues[i - 1] / 2;',
+            '				} catch (e) {}',
+            '			}',
+            '',
+            '			//offset',
+            '			try {',
+            '				o = normal * pathOffset;',
+            '			} catch (e) {}',
+            '',
+            '			if (trailMode == 2) {',
+            '				rightSidePoints[i - 1] = trailPoints[i - 1] + w + o;',
+            '				leftSidePoints[i - 1] = trailPoints[i - 1] - w + o;',
+            '			} else {',
+            '				trailPoints[i - 1] = trailPoints[i - 1] + o;',
+            '			}',
+            '		}',
+            '		if (trailMode == 2) trailPoints = rightSidePoints.concat(leftSidePoints.reverse());',
+            '		else trailPoints.pop();',
+            '	}',
+            '',
+            '	if (trailPoints.length > 1) createPath(trailPoints, [], [], useAutoWidth);',
+            '	else value;',
+            '} else value;'
+        ].join('\n');
+
+        var trailStroke = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Stroke");
+        trailStroke('ADBE Vector Stroke Color').expression= [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Color'].index + ').value;'
+        ].join('\n');
+
+        trailStroke('ADBE Vector Stroke Opacity').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'var trailOpacity = fx(' + p['Opacity'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'if ( trailMode == 2 ) 0;',
+            'else trailOpacity;'
+        ].join('\n');
+
+        trailStroke('ADBE Vector Stroke Width').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Width'].index + ').value;'
+            ].join('\n');
+
+        // Taper for Ae >= 17.1
+        if (DuAE.version.version >= 17.0) {
+            var taper = trailStroke('ADBE Vector Stroke Taper');
+            taper('ADBE Vector Taper Start Length').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['Start length'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper End Length').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['End length'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper Start Ease').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['Start ease'].index + ').value;'
+            ].join('\n');
+            taper('ADBE Vector Taper End Ease').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+                'var fx = effect(  "' + effect.name + '" );',
+                'fx(' + p['Taper']['End ease'].index + ').value;'
+            ].join('\n');
+        }
+        
+        var trailFill = trailGroup("ADBE Vectors Group").addProperty("ADBE Vector Graphic - Fill");
+
+        trailFill('ADBE Vector Fill Color').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'fx(' + p['Color'].index + ').value;'
+        ].join('\n');
+
+        trailFill('ADBE Vector Fill Opacity').expression = [ DuAEExpression.Id.MOTION_TRAIL,
+            'var fx = effect( "' + effect.name + '" );',
+            'var trailOpacity = fx(' + p['Opacity'].index + ').value;',
+            'var trailMode = fx(' + p['Mode'].index + ').value;',
+            'if ( trailMode == 1 ) 0;',
+            'else trailOpacity;'
+        ].join('\n');
+
+        // set layer
+        if (typeof layer !== 'undefined') effect( p['Motion source'].index ).setValue(layer.index);
+    }
+
+    // For each layer
+    layers.do(function(layer) {
+        createTrail(layer);
+    });
+
+    // If there's no layer, an empty trail
+    if (layers.length() == 0) {
+        createTrail();
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.MOTION_TRAIL);
+}
+
+Duik.CmdLib['Automation']["Time remap"] = "Duik.Automation.timeRemap()";
+/**
+ * Activates the time remapping on the layers, adjusts the keyframes and adds a loop effect.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.timeRemap = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TIME_REMAP, false);
+    DuAEProject.setProgressMode(true);
+
+    layers.do(function(layer) {
+        if (!layer.canSetTimeRemapEnabled) return;
+        
+        var comp = layer.containingComp;
+		var lastValueTime = layer.outPoint - comp.frameDuration;
+
+		if (!layer.timeRemapEnabled) layer.timeRemapEnabled = true;
+
+		if (layer.inPoint < lastValueTime)
+		{
+			layer.timeRemap.setValueAtTime(lastValueTime,layer.timeRemap.valueAtTime(lastValueTime,true));
+			layer.timeRemap.removeKey(3);
+			layer.timeRemap.setValueAtTime(lastValueTime + comp.frameDuration, layer.timeRemap.valueAtTime(layer.inPoint, true));
+			if ( layer.inPoint > layer.timeRemap.keyTime(1))
+			{
+				layer.timeRemap.setValueAtTime(layer.inPoint, layer.timeRemap.valueAtTime(layer.inPoint, true));
+				layer.timeRemap.removeKey(1);
+			}
+		}
+		else
+		{
+			layer.timeRemap.removeKey(2);
+		}
+
+		Duik.Automation.looper(layer.timeRemap);
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.TIME_REMAP);
+}
+
+Duik.CmdLib['Automation']["Paint rig"] = "Duik.Automation.paintRig()";
+/**
+ * Rigs paint effects and brush strokes to animate them more easily.
+ * @param {AVLayer|AVLayer[]|DuList.<AVLayer>} [layers=DuAEComp.getSelectedLayers()] The layers
+ */
+Duik.Automation.paintRig = function( layers ) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.PAINT_RIG, false);
+    DuAEProject.setProgressMode(true);
+
+    var pe = Duik.PseudoEffect.PAINT_RIG;
+    var p = pe.props;
+
+    layers.do(function(layer) {
+        //if there's no paint effect
+        var paintEffect = layer("ADBE Effect Parade")("ADBE Paint");
+        if (paintEffect == null) return;
+
+        //add effect
+        var effect = pe.apply(layer);
+        
+        //need to get the paint effect again after addProperty, invalid Object blah blah blah.......
+        var paintEffect = layer("Effects")("ADBE Paint");
+
+        //the first diameter and color
+        var defaultDiam = 0;
+        var defaultCol = [0,0,0,0];
+
+        //for each stroke
+        var n = paintEffect.property(2).numProperties;
+        for (var j=1; j<=n; j++)
+        {
+            var stroke = paintEffect.property(2).property(j);
+            var propStart = new DuAEProperty( stroke.property(4).property('ADBE Paint Begin') );
+            var propEnd = new DuAEProperty( stroke.property(4).property('ADBE Paint End') );
+            var propCol = new DuAEProperty( stroke.property(4).property('ADBE Paint Color') );
+            var propDiam = new DuAEProperty( stroke.property(4).property('ADBE Paint Diameter') );
+
+            if (defaultDiam == 0)
+            {
+                defaultDiam = propDiam.value();
+                effect( p['Diameter']['Diameter A'].index ).setValue(defaultDiam);
+                effect( p['Diameter']['Diameter B'].index ).setValue(defaultDiam);
+            }
+            if (defaultCol[3] == 0)
+            {
+                defaultCol = propCol.value();
+                effect( p['Color']['Color A'].index ).setValue(defaultCol);
+                effect( p['Color']['Color A'].index ).setValue(defaultCol);
+            }
+
+            var startExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var ctrl = effect("' + effect.name + '")(' + p['Start'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex\n' +
+                'result = ctrl - ((100/total)*(ind-1));\n' +
+                'result = result * total;\n' +
+                'result;';
+            propStart.setExpression( startExp, false );
+
+            var endExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var ctrl = effect("' + effect.name + '")(' + p['End'].index + ');\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'result = ctrl - ((100/total)*(ind-1));\n' +
+                'result = result * total;\n' +
+                'result;';
+            propEnd.setExpression( endExp, false );
+
+            
+            var diamExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var fx = effect("' + effect.name + '");\n' +
+                'var ctrlA = fx(' + p['Diameter']['Diameter A'].index + ').value;\n' +
+                'var ctrlB = fx(' + p['Diameter']['Diameter B'].index + ').value;\n' +
+                'var reverse = fx(' + p['Interpolation']['Reverse'].index + ').value;\n' +
+                'var interpolation =fx(' + p['Interpolation']['Ease'].index + ').value;\n' +
+                'var mode = fx(' + p['Interpolation']['Mode'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'if (reverse)\n' +
+                '{\n' +
+                'var t = ctrlA;\n' +
+                'ctrlA = ctrlB;\n' +
+                'ctrlB = t;\n' +
+                '}\n' +
+                'var result = ctrlA;\n' +
+                'if (mode == 2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else if (mode == 3)\n' +
+                '{\n' +
+                'if (ind < total /2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+                '}\n' +
+                '}\n' +
+                'result;';
+            propDiam.setExpression( diamExp, false );
+
+            
+            var colExp = DuAEExpression.Id.PAINT_RIG + '\n' +
+                'var fx = effect("' + effect.name + '");\n' +
+                'var ctrlA = fx(' + p['Color']['Color A'].index + ').value;\n' +
+                'var ctrlB = fx(' + p['Color']['Color B'].index + ').value;\n' +
+                'var reverse = fx(' + p['Interpolation']['Reverse'].index + ').value;\n' +
+                'var interpolation =fx(' + p['Interpolation']['Ease'].index + ').value;\n' +
+                'var mode = fx(' + p['Interpolation']['Mode'].index + ').value;\n' +
+                'var total = thisProperty.propertyGroup().propertyGroup().propertyGroup().numProperties;\n' +
+                'var ind = total + 1 - thisProperty.propertyGroup().propertyGroup().propertyIndex;\n' +
+                'if (reverse)\n' +
+                '{\n' +
+                'var t = ctrlA;\n' +
+                'ctrlA = ctrlB;\n' +
+                'ctrlB = t;\n' +
+                '}\n' +
+                'var result = ctrlA;\n' +
+                'if (mode == 2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else if (mode == 3)\n' +
+                '{\n' +
+                'if (ind < total /2)\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 2) result = ease(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,1,total/2,ctrlA,ctrlB);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,1,total/2,ctrlA,ctrlB);\n' +
+                '}\n' +
+                'else\n' +
+                '{\n' +
+                'if (interpolation == 1) result = linear(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 2) result = ease(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 3) result = easeIn(ind,total/2,total,ctrlB,ctrlA);\n' +
+                'else if (interpolation == 4) result = easeOut(ind,total/2,total,ctrlB,ctrlA);\n' +
+                '}\n' +
+                '}\n' +
+                'result;';
+            propCol.setExpression( colExp , false );
+
+        }
+    });
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup(DuScriptUI.String.PAINT_RIG);
+}

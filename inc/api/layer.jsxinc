@@ -1,0 +1,596 @@
+/**
+ * Layers related tools.
+ * @namespace
+ */
+Duik.Layer = {};
+
+/**
+ * The types of layers used by Duik
+ * @enum {string}
+ */
+Duik.Layer.Type = {
+    NONE: '-',
+    BONE: 'Bone',
+    PIN: 'Pin',
+    CONTROLLER: 'Ctrl',
+    CONTROLLER_BG: 'CBg',
+    ZERO: 'Zero',
+    IK: 'IK',
+    NULL: 'Null',
+    LOCATOR: 'Loc',
+    EFFECTOR: 'Fctr',
+    AUDIO: 'Aud',
+    MOTION_TRAIL: 'Trail',
+    CEL: 'Cel',
+    X_SHEET: 'X-Sheet',
+    ART: 'Art'
+}
+
+/**
+ * Checks if a string is one of the prefixes used to identify layer types in their names
+ * @param {string} prefix The string to check
+ * @return {bool} True if the string is one of the predefined prefixes.
+ */
+Duik.Layer.isTypePrefix = function( prefix ) {
+    for (i in Duik.Layer.Type) {
+        if (prefix == Duik.Layer.Type[i]) return true;
+    }
+    return false;
+}
+
+/**
+ * Checks if the layer is one of the types created by duik.
+ * @param {Layer} layer - The layer to check
+ * @param {Duik.Layer.Type} layerType - The type of layer
+ * @return {Boolean}
+ */
+Duik.Layer.isType = function(layer, layerType) {
+    return Duik.Layer.type(layer) == layerType;
+}
+
+/**
+ * Gets the type of the layer
+ * @param {Layer} [layer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {Duik.Layer.Type} The type
+ */
+Duik.Layer.type = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return Duik.Layer.Type.NONE;
+    var type = DuAETag.getValue(layer, DuAETag.Key.DUIK_TYPE, DuAETag.Type.STRING);
+    if (type == null) return Duik.Layer.Type.NONE;
+    return type;
+}
+
+/**
+ * Sets the type of the layer
+ * @param {Duik.Layer.Type} type The type
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.setType = function(type, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        var name = Duik.Layer.sanitizeName(layer);
+
+        DuAETag.setValue(layer, DuAETag.Key.DUIK_TYPE, type);
+
+        Duik.Layer.rename(layer, name, type);
+
+        // Remove groups
+        DuAETag.removeGroup(layer, DuScriptUI.String.CONTROLLER);
+        DuAETag.removeGroup(layer, DuScriptUI.String.BONE);
+        DuAETag.removeGroup(layer, DuScriptUI.String.PIN);
+        DuAETag.removeGroup(layer, DuScriptUI.String.DUIK_ZERO);
+        DuAETag.removeGroup(layer, DuScriptUI.String.LOCATOR);
+        DuAETag.removeGroup(layer, DuScriptUI.String.EFFECTOR);
+        DuAETag.removeGroup(layer, DuScriptUI.String.AUDIO_SPECTRUM);
+        DuAETag.removeGroup(layer, DuScriptUI.String.MOTION_TRAIL);
+        DuAETag.removeGroup(layer, DuScriptUI.String.CELLULOID);
+        DuAETag.removeGroup(layer, DuScriptUI.String.X_SHEET);
+
+        // Reset
+        layer.guideLayer = false;
+        layer.label = 8;
+        layer.quality = LayerQuality.BEST;
+
+        if (type == Duik.Layer.Type.BONE) {
+            DuAETag.addGroup(layer, DuScriptUI.String.BONE);
+            layer.label = 7;
+            layer.guideLayer = true;
+            layer.quality = LayerQuality.DRAFT;
+        } else if (type == Duik.Layer.Type.PIN) {
+            layer.guideLayer = true;
+            DuAETag.addGroup(layer, DuScriptUI.String.PIN);
+        } else if (type == Duik.Layer.Type.CONTROLLER) {
+            DuAETag.addGroup(layer, DuScriptUI.String.CONTROLLER);
+            layer.guideLayer = true;
+            layer.label = 9;
+            if (Duik.Controller.draft) ctrl.quality = LayerQuality.DRAFT;
+        } else if (type == Duik.Layer.Type.CONTROLLER_BG) {
+            DuAETag.addGroup(layer, DuScriptUI.String.CONTROLLER);
+            layer.guideLayer = true;
+            if (Duik.Controller.draft) ctrl.quality = LayerQuality.DRAFT;
+        } else if (type == Duik.Layer.Type.ZERO) {
+            DuAETag.addGroup(layer, DuScriptUI.String.DUIK_ZERO);
+            layer.guideLayer = true;
+        } else if (type == Duik.Layer.Type.IK) {
+            layer.guideLayer = true;
+        } else if (type == Duik.Layer.Type.NULL) {
+            layer.guideLayer = true;
+        } else if (type == Duik.Layer.Type.LOCATOR) {
+            layer.guideLayer = true;
+            DuAETag.addGroup(layer, DuScriptUI.String.LOCATOR);
+        } else if (type == Duik.Layer.Type.EFFECTOR) {
+            DuAETag.addGroup(layer, DuScriptUI.String.EFFECTOR);
+            layer.guideLayer = true;
+            layer.label = 9;
+        } else if (type == Duik.Layer.Type.AUDIO) {
+            DuAETag.addGroup(layer, DuScriptUI.String.AUDIO_SPECTRUM);
+            layer.guideLayer = true;
+            layer.label = 9;
+        } else if (type == Duik.Layer.Type.MOTION_TRAIL) {
+            DuAETag.addGroup(layer, DuScriptUI.String.MOTION_TRAIL);
+        } else if (type == Duik.Layer.Type.CEL) {
+            DuAETag.addGroup(layer, DuScriptUI.String.CELLULOID);
+        } else if (type == Duik.Layer.Type.X_SHEET) {
+            DuAETag.addGroup(layer, DuScriptUI.String.X_SHEET);
+        }
+    }
+}
+
+/**
+ * Gets all layers of the specified type
+ * @param {Duik.Layer.Type} type The type
+ * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @returns {Layer[]} The layers of the specified type.
+ */
+Duik.Layer.get = function(type, selectedOnly, comp) {
+    comp = def(comp, DuAEProject.getActiveComp());
+    selectedOnly = def(selectedOnly, true);
+    if (!comp) return [];
+
+    var layers = [];
+    if (selectedOnly) layers = comp.selectedLayers;
+    else layers = comp.layers;
+
+    if (layers.length == 0) return [];
+
+    layers = new DuList(layers);
+    var bones = [];
+    layers.do(function(layer) {
+        if (Duik.Layer.isType(layer, type)) bones.push(layer);
+        else if (type == Duik.Layer.Type.CONTROLLER && Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER_BG)) bones.push(layer);
+    });
+    return bones;
+}
+
+/**
+ * Selects all the layers of the given type (and deselects others)
+ * @param {Duik.Layer.Type} type The type
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ */
+Duik.Layer.select = function(type, comp) {
+    comp = def(comp, DuAEProject.getActiveComp());
+    if (!comp) return;
+
+    for (var i = 1, n = comp.numLayers; i <= n; i++) {
+        var layer = comp.layer(i);
+        if (layer.locked) continue;
+        layer.selected = Duik.Layer.isType(layer, type);
+    }
+}
+
+/**
+ * Show/hides all the layers of the given type
+ * @param {Duik.Layer.Type} type The type
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ */
+Duik.Layer.toggleVisibility = function(type, comp) {
+    var layers = Duik.Layer.get(type, false, comp);
+    if (layers.length == 0) return;
+    var enabled = !layers[0].enabled;
+    for (var i = 0, n = layers.length; i < n; i++) {
+        layers[i].enabled = enabled;
+    }
+}
+
+// Low-level undocumented
+// Returns the part to use in a layer name with side and location 
+Duik.Layer.sideName = function(side, location) {
+    var n = '';
+
+    if (location == DuOCO.Location.NONE && side == DuOCO.Side.NONE) return n;
+
+    if (location != DuOCO.Location.NONE) {
+        if (location == DuOCO.Location.FRONT)
+            n += DuScriptUI.String.FRONT_SHORT;
+        else if (location == DuOCO.Location.BACK)
+            n += DuScriptUI.String.BACK_LOCATION_SHORT;
+        else if (location == DuOCO.Location.TAIL)
+            n += DuScriptUI.String.TAIL_SHORT;
+        else if (location == DuOCO.Location.MIDDLE)
+            n += DuScriptUI.String.MIDDLE_SHORT;
+        else if (location == DuOCO.Location.ABOVE)
+            n += DuScriptUI.String.ABOVE_SHORT;
+        else if (location == DuOCO.Location.UNDER)
+            n += DuScriptUI.String.UNDER_SHORT;
+
+        if (side != DuOCO.Side.NONE) n += '.';
+    }
+
+    if (side != DuOCO.Side.NONE) {
+        if (side == DuOCO.Side.LEFT)
+            n += DuScriptUI.String.LEFT_SHORT;
+        else if (side == DuOCO.Side.RIGHT)
+            n += DuScriptUI.String.RIGHT_SHORT;
+    }
+
+    return n;
+}
+
+/**
+ * Checks the side of the layer
+ * @param {Layer} [layer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuOCO.Side}
+ */
+Duik.Layer.side = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return DuOCO.Side.NONE;
+
+    if (DuGR.inGroups(layer, [DuScriptUI.String.LEFT])) return DuOCO.Side.LEFT;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.RIGHT])) return DuOCO.Side.RIGHT;
+    return DuOCO.Side.NONE;
+}
+
+/**
+ * Sets the side of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.setSide = function(side, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        Duik.Layer.sanitizeName(layer);
+
+        var currentSide = Duik.Layer.side(layer);
+        if (currentSide == side) continue;
+        var currentLocation = Duik.Layer.location(layer);
+
+        if (currentSide == DuOCO.Side.LEFT) DuAETag.removeGroup(layer, DuScriptUI.String.LEFT);
+        else if (currentSide == DuOCO.Side.RIGHT) DuAETag.removeGroup(layer, DuScriptUI.String.RIGHT);
+
+        // Add new
+        if (side == DuOCO.Side.RIGHT) DuAETag.addGroup(layer, DuScriptUI.String.RIGHT);
+        else if (side == DuOCO.Side.LEFT) DuAETag.addGroup(layer, DuScriptUI.String.LEFT);
+
+        // Update name
+        var currentSideName = Duik.Layer.sideName(currentSide, currentLocation);
+        var newSideName = Duik.Layer.sideName(side, currentLocation);
+        var name = layer.name.split(' | ');
+        if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName);
+        else if (name.length == 3) name.push(newSideName);
+        // Remove the third block if it's empty
+        if (DuString.trimNumbers(name[3]) == "") name.splice(3,1);
+        // Rename
+        Duik.Layer.rename(layer, name.join(' | '));//*/
+    }
+}
+
+/**
+ * Checks the location of the layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuOCO.Location}
+ */
+Duik.Layer.location = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return DuOCO.Location.NONE;
+
+    if (DuGR.inGroups(layer, [DuScriptUI.String.FRONT])) return DuOCO.Location.FRONT;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.BACK_LOCATION])) return DuOCO.Location.BACK;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.MIDDLE])) return DuOCO.Location.MIDDLE;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.UNDER])) return DuOCO.Location.UNDER;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.ABOVE])) return DuOCO.Location.ABOVE;
+    if (DuGR.inGroups(layer, [DuScriptUI.String.TAIL])) return DuOCO.Location.TAIL;
+    return DuOCO.Side.NONE;
+}
+
+/**
+ * Sets the location of the layer
+ * @param {DuOCO.Side} side The side
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.setLocation = function(location, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        Duik.Layer.sanitizeName(layer);
+
+        var currentLocation = Duik.Layer.location(layer);
+        if (currentLocation == location) continue;
+
+        var currentSide = Duik.Layer.side(layer);
+
+        if (currentLocation == DuOCO.Location.FRONT) DuAETag.removeGroup(layer, DuScriptUI.String.FRONT);
+        else if (currentLocation == DuOCO.Location.BACK) DuAETag.removeGroup(layer, DuScriptUI.String.BACK_LOCATION);
+        else if (currentLocation == DuOCO.Location.TAIL) DuAETag.removeGroup(layer, DuScriptUI.String.TAIL);
+        else if (currentLocation == DuOCO.Location.MIDDLE) DuAETag.removeGroup(layer, DuScriptUI.String.MIDDLE);
+        else if (currentLocation == DuOCO.Location.ABOVE) DuAETag.removeGroup(layer, DuScriptUI.String.ABOVE);
+        else if (currentLocation == DuOCO.Location.UNDER) DuAETag.removeGroup(layer, DuScriptUI.String.UNDER);
+        
+        // Add new
+        if (location == DuOCO.Location.FRONT)
+            DuAETag.addGroup(layer, DuScriptUI.String.FRONT);
+        else if (location == DuOCO.Location.BACK)
+            DuAETag.addGroup(layer, DuScriptUI.String.BACK_LOCATION);
+        else if (location == DuOCO.Location.TAIL)
+            DuAETag.addGroup(layer, DuScriptUI.String.TAIL);
+        else if (location == DuOCO.Location.MIDDLE)
+            DuAETag.addGroup(layer, DuScriptUI.String.MIDDLE);
+        else if (location == DuOCO.Location.ABOVE)
+            DuAETag.addGroup(layer, DuScriptUI.String.ABOVE);
+        else if (location == DuOCO.Location.UNDER)
+            DuAETag.addGroup(layer, DuScriptUI.String.UNDER);
+
+        // Update name
+        var currentSideName = Duik.Layer.sideName(currentSide, currentLocation);
+        var newSideName = Duik.Layer.sideName(currentSide, location);
+        var name = layer.name.split(' | ');
+        if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName);
+        else if (name.length == 3) name.push(newSideName);
+        // Remove the third block if it's empty
+        if (DuString.trimNumbers(name[3]) == "") name.splice(3,1);
+        Duik.Layer.rename(layer, name.join(' | '));//*/
+    }
+}
+
+/**
+ * Checks the character name this layer belongs to
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Layer.characterName = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return '';
+
+    // Split
+    var name = layer.name.split(' | ');
+    if (name.length <= 1) return '';
+    if (name[1] == '-') return '';
+
+    // Must be in the corresponding group
+    if (!DuGR.inGroups(layer, [name[1]])) return '';
+    return name[1];
+}
+
+/**
+ * Sets the character name of the bone layer
+ * @param {string} characterName The character name.
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.setCharacterName = function(characterName, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        var name = Duik.Layer.sanitizeName(layer);
+
+        // Split
+        var name = name.split(' | ');
+        if (name.length <= 1) continue;
+        DuAETag.removeGroup(layer, name[1]);
+        name[1] = characterName;
+        Duik.Layer.rename(layer, name.join(' | '));
+        if (characterName != '-' && characterName != '') DuAETag.addGroup(layer, characterName);
+    }
+}
+
+/**
+ * Checks the limb name this layer belongs to
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Layer.limbName = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return '';
+
+    // Split
+    var name = layer.name.split(' | ');
+    if (name.length <= 2) return '';
+
+    return name[2];
+}
+
+/**
+ * Sets the limb name of the bone layer
+ * @param {string} limbName The limb name.
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.setLimbName = function(limbName, layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        var name = Duik.Layer.sanitizeName(layer);
+
+        // Split
+        var name = name.split(' | ');
+        if (name.length <= 2) continue;
+        name[2] = limbName;
+        Duik.Layer.rename(layer, name.join(' | '));
+    }
+}
+
+/**
+ * Renames a layer.
+ * @param {Layer} layer The layer to rename
+ * @param {string} name The new name
+ * @param {string} [newPrefix] If provided, will replace the prefix in the new name (or add it if there's no prefix yet)
+ * @returns {string} The actual new name (a number may be added).
+ */
+Duik.Layer.rename = function(layer, name, newPrefix) {
+    newPrefix = def(newPrefix, '');
+    var newName = name;
+    if (newPrefix != '') {
+        var newName = newName.split(' | ');
+        if (newName.length == 1) newName = newPrefix + ' | ' + newName[0];
+        else {
+            // the first one is a prefix
+            if (Duik.Layer.isTypePrefix(newName[0])) newName[0] = newPrefix;
+            // enough parameters, the first one should be a prefix
+            else if (newName.length >= 4) newName[0] = newPrefix;
+            // insert the new prefix
+            else newName.unshift(newPrefix);
+            // Keep side
+            newName = newName.join(' | ');
+        }
+    }
+
+    // Temporarily rename the layer just in case it already has the same name
+    var oldName = layer.name;
+    layer.name = '** Duik Temp Name **';
+    layer.name = DuAEComp.newUniqueLayerName(newName, layer.containingComp);
+    newName = layer.name;
+
+    app.project.autoFixExpressions(oldName, newName);
+
+    return newName;
+}
+
+/**
+ * Copies the attributes from a layer to another layer.
+ * @param {Layer|Layer[]|LayerCollection|DuList.<Layer>} to The layer to set up
+ * @param {Layer} from The source layer
+ * @param {Duik.Layer.Type} type The type of the layer to set up
+ */
+Duik.Layer.copyAttributes = function(to, from, type) {
+    to = new DuList(to);
+    var side = Duik.Layer.side(from);
+    var location = Duik.Layer.location(from);
+    var characterName = Duik.Layer.characterName(from);
+    var limbName = Duik.Layer.limbName(from);
+    type = def(type, Duik.Layer.Type.NONE);
+
+    for (var i = 0, n = to.length(); i < n; i++) {
+        var layer = to.at(i);
+        Duik.Layer.setAttributes(layer, type, limbName, side, location, characterName);
+        Duik.Layer.rename(layer, from.name, type);
+    }
+}
+
+/**
+ * Sets all the attributes of the layer at once; use this method to prepare a layer which doesn't have a proper Duik name yet.
+ * @param {Layer|Layer[]|LayerCollection|DuList.<Layer>} layer The layer to set up
+ * @param {Duik.Layer.Type} type The type
+ * @param {string} [limbName=layer.name] The name of the limb/layer
+ * @param {DuOCO.Side} [side=DuOCO.Side.NONE] The side
+ * @param {DuOCO.Location} [location=DuOCO.Location.NONE] The location
+ * @param {string} [characterName="-"] The name of the character
+ */
+Duik.Layer.setAttributes = function(layer, type, limbName, side, location, characterName) {
+    layer = new DuList(layer);
+    side = def(side, DuOCO.Side.NONE);
+    location = def(location, DuOCO.Location.NONE);
+    characterName = def(characterName, '');
+    limbName = def(limbName, layer.name);
+    for (var i = 0, n = layer.length(); i < n; i++) {
+        var l = layer.at(i);
+        // Dummy name first
+        l.name = '- | - | -';
+        Duik.Layer.setType(type, l);
+        Duik.Layer.setSide(side, l);
+        Duik.Layer.setLocation(location, l);
+        Duik.Layer.setCharacterName(characterName, l);
+        Duik.Layer.setLimbName(limbName, l);
+    }
+}
+
+/**
+ * Sets default name to a layer so it can be correctly managed by Duik, and checks the groups/tags.
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected layer of the current comp
+ * @returns {string} The new name of the layer
+ */
+Duik.Layer.sanitizeName = function(layer) {
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return '';
+
+    var name = layer.name.split(' | ');
+    // That's OK, but let's check the groups too
+    if (name.length >= 3) {
+        // Character / Group
+        if (name[1] != '-' && name[1] != '') DuAETag.addGroup(layer, name[1]);
+        // Adjust count
+        // Consider the last one is the side
+        while (name.length >= 5) {
+            name[2] = name[2] + '_' + name[3];
+            name.splice(3, 1);
+        }
+        layer.name = name.join(' | ');
+        // Side
+        if (name.length == 4) {
+            var n = DuString.trimNumbers(name[3]);
+            // Side group
+            if (DuString.endsWith(n, DuScriptUI.String.LEFT_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.LEFT);
+            else if (DuString.endsWith(n, DuScriptUI.String.RIGHT_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.RIGHT);
+            // Location group
+            if (DuString.startsWith(n, DuScriptUI.String.FRONT_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.FRONT);
+            else if (DuString.startsWith(n, DuScriptUI.String.BACK_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.BACK);
+            else if (DuString.startsWith(n, DuScriptUI.String.TAIL_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.TAIL);
+            else if (DuString.startsWith(n, DuScriptUI.String.MIDDLE_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.MIDDLE);
+            else if (DuString.startsWith(n, DuScriptUI.String.ABOVE_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.ABOVE);
+            else if (DuString.startsWith(n, DuScriptUI.String.UNDER_SHORT)) DuAETag.addGroup(layer, DuScriptUI.String.UNDER);
+        }
+        // Everything should be good to go
+        return layer.name;
+    }
+
+    // Let's rename that
+    // Type prefix
+    var type = Duik.Layer.type(layer);
+    // (Try to) Find a limb & character name
+    var limbName = '';
+    var characterName = '-';
+    if (name.length == 1) {
+        limbName = DuString.trimNumbers(name[0]);
+    } else {
+        limbName = DuString.trimNumbers(name[1]);
+        if (name[0].length > 3) characterName = DuString.trimNumbers(name[0]);
+    }
+    // New name
+    layer.name = type + ' | ' + characterName + ' | ' + limbName;
+    return layer.name;
+}
+
+/**
+ * Toggles the edit mode on selected layers
+ * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ */
+Duik.Layer.unlink = function(layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.TOGGLE_EDIT_MODE);
+    DuAEProject.setProgressMode(true);
+
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        DuAELayer.toggleEditMode(layers.at(i));
+    }
+
+    DuAEProject.setProgressMode(false);
+    DuAE.endUndoGroup();
+}

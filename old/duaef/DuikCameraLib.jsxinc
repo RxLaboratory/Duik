@@ -1,0 +1,502 @@
+﻿/**
+	* Camera tools
+	* @namespace
+	* @memberof DuAEF.Duik
+	*/
+DuAEF.Duik.Camera = {};
+
+/**
+ * How to import TVPaint Cameras
+ * @enum {int}
+ * @readonly
+ */
+DuAEF.Duik.Camera.TVPaintImportMethods =
+{
+	CREATE_CONTROLLER: 0,
+	PRECOMPOSE: 1,
+	USE_SELECTED: 2
+}
+
+/**
+	* Rigs a 3D Camera with handy controllers
+	* @param {CameraLayer} camera - The camera to rig.
+	* @return {Controller[]} The camera controllers [target, camera, main]
+	*/
+DuAEF.Duik.Camera.rigCamera = function(camera)
+{
+	var comp = camera.containingComp;
+	//create target
+	var ctrlType = DuAEF.Duik.Controller.Types.POSITION;
+	if (DuAEF.Duik.Controller.defaultType == DuAEF.Duik.Controller.Types.NULL) ctrlType = DuAEF.Duik.Controller.Types.NULL;
+	var targetCtrl = DuAEF.Duik.Controller.create(comp,ctrlType);
+	var targetLayer = targetCtrl.layer;
+	targetLayer.name = "C | Target | " + camera.name;
+	targetLayer.threeDLayer = true;
+	targetLayer.position.setValue(camera.transform.pointOfInterest.value);
+
+	//create cam
+	var ctrlType = DuAEF.Duik.Controller.Types.POSITION;
+		if (DuAEF.Duik.Controller.defaultType == DuAEF.Duik.Controller.Types.NULL) ctrlType = DuAEF.Duik.Controller.Types.NULL;
+	var camCtrl = DuAEF.Duik.Controller.create(comp,ctrlType);
+	var camLayer = camCtrl.layer;
+	camLayer.name = "C | Position | " + camera.name;
+	camLayer.threeDLayer = true;
+	camLayer.position.setValue(camera.transform.position.value);
+
+	//create main
+	var ctrlType = DuAEF.Duik.Controller.Types.CAMERA;
+		if (DuAEF.Duik.Controller.defaultType == DuAEF.Duik.Controller.Types.NULL) ctrlType = DuAEF.Duik.Controller.Types.NULL;
+	var mainCtrl = DuAEF.Duik.Controller.create(comp, ctrlType);
+	var mainLayer = mainCtrl.layer;
+	mainLayer.name = "C | " + camera.name;
+	mainLayer.threeDLayer = true;
+	mainLayer.position.setValue(camera.transform.position.value);
+
+	camLayer.parent = mainLayer;
+	targetLayer.parent = mainLayer;
+
+	//definir les expressions
+	camera.position.expression = '//Duik.CameraRig\nthisComp.layer(\'' + camLayer.name + '\').toWorld(thisComp.layer(\'' + camLayer.name + '\').transform.anchorPoint)';
+	camera.pointOfInterest.expression = '//Duik.CameraRig\nthisComp.layer(\'' + targetLayer.name + '\').toWorld(thisComp.layer(\'' + targetLayer.name + '\').transform.anchorPoint)';
+	camera.orientation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.orientation';
+	camera.xRotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.xRotation';
+	camera.yRotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.yRotation';
+	if (DuAEF.DuAE.App.version.version >= 16) camera.rotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.zRotation';
+	else camera.rotation.expression = '//Duik.CameraRig\nvalue + thisComp.layer(\'' + camLayer.name + '\').transform.rotation';
+
+	//bloquer la camera
+	camera.locked = true;
+
+	return [targetCtrl,camCtrl,mainCtrl];
+}
+
+/**
+	* Creates a new 2D Multiplane Camera
+	* @param {CompItem} [comp] - The containing comp. Ignored if layers are provided.
+	* @param {Layers[]|LayerCollection|null|undefined} [layers=comp.selectedLayers] - The layers to automatically link to the controllers.<br />
+	* By default, the selected layers will be used, and if there are no selected layers, three controllers will be created
+	* @return {Controller} The camera controller
+	*/
+DuAEF.Duik.Camera.create2DCam = function(comp,layers)
+{
+	if (comp == undefined) comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	if (layers == undefined) layers = comp.selectedLayers;
+	var numLayers = 3;
+	if (layers.length > 1)
+	{
+		layers = DuAEF.DuAE.Layer.sortByIndex(layers);
+		numLayers = layers.length;
+		comp = layers[0].containingComp;
+	}
+	else
+	{
+		layers = [];
+	}
+	var camIndex = Math.ceil(numLayers/2);
+
+	var camCtrl;
+	var camLayer;
+
+	for (var i=1;i<=numLayers;i++)
+	{
+		var name = 'L' + DuNumber.toString(i,2);
+		if (layers.length) name = name + ' | ' + layers[layers.length-i].name;
+
+		//creer les nuls et leurs zeros
+		if (i == camIndex)
+		{
+			var ctrlType = DuAEF.Duik.Controller.Types.CAMERA;
+		if (DuAEF.Duik.Controller.defaultType == DuAEF.Duik.Controller.Types.NULL) ctrlType = DuAEF.Duik.Controller.Types.NULL;
+			var camCtrl = DuAEF.Duik.Controller.create(comp, ctrlType);
+			var camLayer = camCtrl.layer;
+			//Creer un ctrl cam
+			camLayer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name + ' CAMERA',comp);
+			//add a zero
+			DuAEF.Duik.Rigging.addZero(camLayer);
+			//add marker
+			DuAEF.Duik.setDuikMarker(camLayer,"2D Camera Controller",DuAEF.Duik.LayerTypes.CONTROLLER);
+		}
+		else
+		{
+			var layer = app.project.activeItem.layers.addNull() ;
+			layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name,comp,false);
+			layer.shy = true;
+			DuAEF.Duik.setDuikMarker(layer,"2D Camera",DuAEF.Duik.LayerTypes.TWOD_CAMERA_LAYER);
+		}
+	}
+
+	//cam effect
+	var effect = DuAEF.Duik.PseudoEffects.TWOD_CAMERA.apply(camLayer);
+
+	//cam rig
+	var camZero = camLayer.parent;
+	//tilt
+	camZero.transform.rotation.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+	'thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.tiltAngle + ');';
+	//zoom & truck in/out
+	camZero.transform.scale.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+	'var zoom = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.zoomSlider + ');\n' +
+	'var truck = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.truckSlider + ');\n' +
+	'value + [zoom,zoom] + [truck,truck];';
+	//pan
+	camZero.transform.position.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+	'var x = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.horizontalPanSlider + ');\n' +
+	'var y = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.verticalPanSlider + ');\n' +
+	'[x,y] + [thisComp.width/2,thisComp.height/2];';
+
+	//motion
+	effect(DuAEF.Duik.PseudoEffects.TWOD_CAMERA.horizontalPanSlider).expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+		'var fx = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")\n' +
+		'gFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalFrequencySlider + ').value;\n' +
+		'gAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalAmplitudeSlider + ').value;\n' +
+		'sFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeFrequencySlider + ').value;\n' +
+		'sAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeAmplitudeSlider + ').value;\n' +
+		'type = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.typePopup + ').value;\n' +
+		'seed = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.randomSeedSlider + ').value;\n' +
+		'seedRandom(seed);\n' +
+		'complexity = 1;\n' +
+		'gAmp = gAmp * thisComp.width / 100;\n' +
+		'sAmp = sAmp * thisComp.width / 1000;\n' +
+		'if (type == 2)\n' +
+		'{\n' +
+		'gAmp = gAmp/2;\n' +
+		'gFreq = gFreq*2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 3)\n' +
+		'{\n' +
+		'gAmp = gAmp*3/4;\n' +
+		'sAmp = sAmp/2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 4)\n' +
+		'{\n' +
+		'gAmp = 0;\n' +
+		'sAmp = sAmp/4;\n' +
+		'}\n' +
+		'else if (type == 5)\n' +
+		'{\n' +
+		'gAmp = gAmp/3;\n' +
+		'sAmp = sAmp/4;\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		'gAmp = 0;\n' +
+		'sAmp = 0;\n' +
+		'}\n' +
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);\n' +
+		'sw = wiggle(sFreq,sAmp, complexity , 0.7);\n' +
+		'result = sw + gw - valueAtTime(0);\n' +
+		'result;';
+
+	effect(DuAEF.Duik.PseudoEffects.TWOD_CAMERA.verticalPanSlider).expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+		'var fx = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")\n' +
+		'gFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalFrequencySlider + ').value;\n' +
+		'gAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalAmplitudeSlider + ').value;\n' +
+		'sFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeFrequencySlider + ').value;\n' +
+		'sAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeAmplitudeSlider + ').value;\n' +
+		'type = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.typePopup + ').value;\n' +
+		'seed = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.randomSeedSlider + ').value;\n' +
+		'seedRandom(seed+1);\n' +
+		'complexity = 1;\n' +
+		'gAmp = gAmp * thisComp.width / 100;\n' +
+		'sAmp = sAmp * thisComp.width / 1000;\n' +
+		'if (type == 2)\n' +
+		'{\n' +
+		'gAmp = gAmp/2;\n' +
+		'gFreq = gFreq*2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 3)\n' +
+		'{\n' +
+		'gAmp = gAmp*3/4;\n' +
+		'sAmp = sAmp/2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 4)\n' +
+		'{\n' +
+		'gAmp = 0;\n' +
+		'sAmp = sAmp/2;\n' +
+		'}\n' +
+		'else if (type == 5)\n' +
+		'{\n' +
+		'gAmp = gAmp/3;\n' +
+		'sAmp = sAmp/4;\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		'gAmp = 0;\n' +
+		'sAmp = 0;\n' +
+		'}\n' +
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);\n' +
+		'sw = wiggle(sFreq,sAmp, complexity, 0.7);\n' +
+		'result = sw + gw - valueAtTime(0);\n' +
+		'result;';
+
+	effect(DuAEF.Duik.PseudoEffects.TWOD_CAMERA.tiltAngle).expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+		'var fx = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")\n' +
+		'gFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalFrequencySlider + ').value;\n' +
+		'gAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalAmplitudeSlider + ').value;\n' +
+		'sFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeFrequencySlider + ').value;\n' +
+		'sAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeAmplitudeSlider + ').value;\n' +
+		'type = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.typePopup + ').value;\n' +
+		'seed = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.randomSeedSlider + ').value;\n' +
+		'seedRandom(seed+2);\n' +
+		'complexity = 1;\n' +
+		'if (type == 2)\n' +
+		'{\n' +
+		'gAmp = gAmp/5;\n' +
+		'sAmp = sAmp/5;\n' +
+		'gFreq = gFreq*2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 3)\n' +
+		'{\n' +
+		'gAmp = gAmp/15;\n' +
+		'sAmp = sAmp/15;\n' +
+		'complexity = 2;\n' +
+		'}\n' +
+		'else\n' +
+		'{\n' +
+		'gAmp = 0;\n' +
+		'sAmp = 0;\n' +
+		'}\n' +
+		'loop = 0;\n' +
+		'gw = wiggle(gFreq,gAmp, complexity , 0.7);\n' +
+		'sw = wiggle(sFreq,sAmp, complexity , 0.7);\n' +
+		'result = sw + gw - valueAtTime(0);\n' +
+		'result;';
+
+	camLayer.transform.position.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+		'var fx = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")\n' +
+		'gFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalFrequencySlider + ').value;\n' +
+		'gAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.generalAmplitudeSlider + ').value;\n' +
+		'sFreq = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeFrequencySlider + ').value;\n' +
+		'sAmp = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.shakeAmplitudeSlider + ').value;\n' +
+		'type = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.typePopup + ').value;\n' +
+		'seed = fx(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.randomSeedSlider + ').value;\n' +
+		'seedRandom(seed+3);\n' +
+		'complexity = 1;\n' +
+		'gAmp = gAmp * thisComp.width / 100;\n' +
+		'sAmp = sAmp * thisComp.width / 1000;\n' +
+		'if (type == 2)\n' +
+		'{\n' +
+		'gAmp = gAmp/2;\n' +
+		'gFreq = gFreq*2;\n' +
+		'complexity = 3;\n' +
+		'}\n' +
+		'else if (type == 3)\n' +
+		'{\n' +
+		'gAmp = gAmp/4;\n' +
+		'complexity = 2;\n' +
+		'}\n' +
+		'else gAmp = 0;\n' +
+		'gw = wiggle(gFreq,gAmp, complexity , 0.5);\n' +
+		'sw = wiggle(sFreq,sAmp, complexity , 0.5);\n' +
+		'if (type == 4) sw = [sw[0]/2,sw[1]];\n' +
+		'result = sw + gw - value;\n' +
+		'result;';
+
+	//expressions and sliders
+	var numLayersAbove = camLayer.index-1;
+	var numLayersUnder = numLayers - camLayer.index;
+	for (var i=1;i<=numLayers;i++)
+	{
+		//if this is not the cam layer
+		if (i != camLayer.index)
+		{
+			var layer = comp.layer(i);
+			var zero = layer.parent;
+
+			var slider = layer.Effects.addProperty('ADBE Slider Control');
+			slider.name = 'Camera influence';
+			(i<camLayer.index+1) ? slider(1).setValue((1+(numLayersAbove-i+1)*.2)*100) : slider(1).setValue(((1/(camIndex+1))*Math.abs(i-numLayers-2))*100) ;
+
+			//truck
+			layer.transform.anchorPoint.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' + 'var camPosition = thisComp.layer("' + camLayer.name + '").transform.position.value;\nvalueAtTime(0) - camPosition * effect("Camera influence")(1) / 100';
+
+			//tilt
+			layer.transform.rotation.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+			'thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.tiltAngle + ');';
+
+			//zoom & truck in/out
+			layer.transform.scale.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+			'var zoom = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.zoomSlider + ');\n' +
+			'var truck = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.truckSlider + ');\n' +
+			'var infl = effect("Camera influence")(1);\n' +
+			'value + [zoom,zoom] + [truck,truck]*infl/100;';
+
+			//pan
+			layer.transform.position.expression = DuAEF.Duik.expressionIds.CAMERA_2D + '\n' +
+			'var x = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.horizontalPanSlider + ');\n' +
+			'var y = thisComp.layer("' + camLayer.name + '").effect("' + effect.name + '")(' + DuAEF.Duik.PseudoEffects.TWOD_CAMERA.verticalPanSlider + ');\n' +
+			'[x,y] + [thisComp.width/2,thisComp.height/2];';
+		}
+	}
+
+	// Parent layers
+	if (layers.length)
+	{
+		for (var i = 0 ; i<layers.length;i++)
+		{
+			layers[i].parent = comp.layer(i+1);
+		}
+	}
+
+	DuAEF.DuAE.Comp.unselectLayers();
+	camLayer.selected = true;
+}
+
+/**
+ * Links the distance of the layer from the camera to its scale so its apparent size won't change.<br />
+ * If multiple cameras, include the camera used in the array of the first argument<br />
+ * If the layer is already linked, then the link is removed, it acts as a toggle.<br />
+ * @param {LayerCollection|Layer[]} layers	- The layers to scale-link
+ * @return {int} 1 if OK, 0 if missing camera, -1 if no layer
+ */
+DuAEF.Duik.Camera.toggleScaleZLink = function (layers)
+{
+	if (layers.length == 0) return -1;
+
+	var camera = null;
+	//find camera
+	var it  = new DuList(layers);
+	while(layer = it.next())
+	{
+		if (layer instanceof CameraLayer)
+		{
+			camera = layer;
+			break;
+		}
+	}
+
+	if (camera == null)
+	{
+		var comp = layers[0].containingComp;
+
+		for (var i = 1;i<=comp.numLayers;i++)
+		{
+			var l = comp.layers[i];
+			if (l instanceof CameraLayer)
+			{
+				camera = l;
+				break;
+			}
+		}
+	}
+
+	if (camera == null) return 0;
+
+	//go!
+	it.do(function (layer)
+	{
+		var currentDistance = DuAEF.DuAE.Layer.getDistance(layer,camera);
+		if (currentDistance == 0) currentDistance = 1;
+		var currentScale = layer.transform.scale.value;
+		var alreadyLinked = false;
+
+		var expr = layer.transform.scale.expression;
+		if (expr.lastIndexOf('//Duik.scaleZLink\n', 0) === 0) alreadyLinked = true;
+
+		if(alreadyLinked)
+		{
+			var scale = layer.transform.scale.value;
+			layer.transform.scale.expression = '';
+
+			var prop = layer.Effects.property('Scale Z-Link');
+			if (prop != null) prop.remove();
+			layer.transform.scale.setValue(scale);
+
+			layer.name = layer.name.replace('SZL | ', '');
+		}
+		else
+		{
+			if (!layer.threeDLayer) layer.threeDLayer = true;
+			if (!layer.threeDLayer) return;
+			if (!layer.Effects) return;
+
+			var effect = layer.Effects.addProperty("ADBE Slider Control");
+			effect.name = 'Scale Z-Link';
+
+			effect(1).setValue(currentScale[0]);
+
+			layer.transform.scale.expression = "//Duik.scaleZLink\n" +
+				"var sca = effect(\"Scale Z-Link\")(1);\n" +
+				"var C = thisComp.layer(\"" + camera.name + "\").position;\n" +
+				"var O = thisLayer.toWorld(thisLayer.anchorPoint);\n" +
+				"var oDist = " + currentDistance + ";\n" +
+				"if (sca != 0) {\n" +
+				"var factor = oDist / sca;\n" +
+				"var dist = length(C,O);\n" +
+				"var result = dist/factor;\n" +
+				"result = [result,result,result];\n" +
+				"result = result ;\n" +
+				"result;\n" +
+				"} else [0,0,0];";
+
+			layer.name = 'SZL | ' + layer.name;
+		}
+	})
+
+	return 1;
+}
+
+/**
+ * Imports a TVPaint Camera
+ * @param {File} camFile - The .cpt tvpaint camera file
+ * @param {CompItem} [comp=app.project.activeItem] - The composition where to import the camera
+ * @param {DuAEF.Duik.Camera.TVPaintImportMethods} [method=DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER] - How to import the camera
+ * @param {bool} [linkLayers=false] - true to link all orphan layers to the camera
+ * @param {bool} [useAnchorPoint=false] - true to animate the anchor point instead of the position
+*/
+DuAEF.Duik.Camera.importTVPaintCamera = function (camFile,comp,method,linkLayers,useAnchorPoint)
+{
+	if (!camFile) return;
+	if (typeof method === "undefined") method = DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER;
+	if (typeof linkLayers === "undefined") linkLayers = false;
+	if (typeof useAnchorPoint === "undefined") useAnchorPoint = false;
+	if (typeof comp === "undefined") comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+
+	var cam = DuAEF.TVPaint.camera.load(camFile);
+	if (method == DuAEF.Duik.Camera.TVPaintImportMethods.CREATE_CONTROLLER)
+	{
+		var ctrlType = DuAEF.Duik.Controller.Types.CAMERA;
+		if (DuAEF.Duik.Controller.defaultType == DuAEF.Duik.Controller.Types.NULL) ctrlType = DuAEF.Duik.Controller.Types.NULL;
+		var camCtrl = DuAEF.Duik.Controller.create(comp, ctrlType);
+		camCtrl.layer.name = "C | TVPaint Camera";
+		cam.applyToLayer(camCtrl.layer,linkLayers,useAnchorPoint);
+	}
+	else if (method == DuAEF.Duik.Camera.TVPaintImportMethods.USE_SELECTED)
+	{
+		if (comp.selectedLayers.length)
+		{
+			var layer = comp.selectedLayers[0];
+			cam.applyToLayer(layer,linkLayers,useAnchorPoint);
+		}
+	}
+	else
+	{
+		var tvpComp = app.project.items.addComp("TVPaint Camera",comp.width, comp.height, comp.pixelAspect, comp.duration, comp.frameRate)
+		var camLayer = tvpComp.layers.add(comp);
+		cam.applyToLayer(camLayer,false,useAnchorPoint);
+	}
+}
+
+/**
+ * Adds a handy framing guide, safe frames, grid and guides for the composition in the comp.
+ * @param {CompItem} [comp=DuAEF.DuAE.Project.getActiveComp()] - The composition
+ */
+DuAEF.Duik.Camera.addFrame = function(comp)
+{
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return;
+	//a shape layer
+	var frame = comp.layers.addShape();
+	frame.name = "Frame";
+	DuAEF.DuAE.Layer.applyPreset(frame,DuAEF.Duik.Presets.FRAME);
+
+	frame.guideLayer = true;
+
+}

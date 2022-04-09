@@ -1,0 +1,427 @@
+﻿/**
+	* Constructs a Bone
+	* @class Bone
+	* @classdesc A Bone.
+	* @param {ShapeLayer} layer - The layer of the bone
+	* @property {ShapeLayer} layer - The Shape layer of the bone
+	* @property {PropertyGroup} effect - The effect on the bone
+*/
+function Bone(layer)
+{
+	this.layer = layer;
+	var effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.BONE);
+	this.effect = effect;
+}
+
+/**
+	* Sets a new display size for the bone
+	* @memberof Bone
+	* @param {int} [size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+*/
+Bone.prototype.setSize = function (size)
+{
+	if (this.layer == null) return;
+	if (size == undefined)
+	{
+		var comp = this.layer.containingComp;
+		size = comp.width/2 + comp.height/2;
+		if (DuAEF.Duik.Bone.sizeHint == DuAEF.Duik.Sizes.SMALL) size = Math.floor(size*100/1500);
+		else if (DuAEF.Duik.Bone.sizeHint == DuAEF.Duik.Sizes.MEDIUM) size = Math.floor(size*150/1500);
+		else if (DuAEF.Duik.Bone.sizeHint == DuAEF.Duik.Sizes.LARGE) size = Math.floor(size*200/1500);
+		else if (DuAEF.Duik.Bone.sizeHint == DuAEF.Duik.Sizes.CUSTOM) size = DuAEF.Duik.Bone.size;
+	}
+
+	this.effect(2).setValue(size);
+}
+
+/**
+	* Sets a new display color for the bone
+	* @memberof Bone
+	* @param {float[]} color - The new color
+*/
+Bone.prototype.setColor = function (color)
+{
+	if (color == undefined) color = DuAEF.Duik.Bone.color;
+	if (color == DuColor.Color.RANDOM) color = DuColor.randomFloatRGBA();
+
+	this.effect(1).setValue(color);
+}
+
+/**
+ * "Bakes" the appearance of the Bone,<br />
+ * in order to improve performance and simplify the use of the rig when animating.
+ * @memberof Bone
+ */
+Bone.prototype.bakeAppearence = function ()
+{
+	var effect = this.layer.effect(DuAEF.Duik.PseudoEffectsMatchNames.BONE);
+	if (!effect) return;
+
+	var iconGroup = this.layer("ADBE Root Vectors Group").property("Icon");
+
+	if (iconGroup)
+	{
+		//reset the line of tangents
+		var iconContent = iconGroup.property("ADBE Vectors Group");
+		var line = iconContent.property("ADBE Vector Shape - Group");
+		if (line)
+		{
+			line.property('ADBE Vector Shape').expression = '';
+		}
+		//remove all expressions
+		DuAEF.DuAE.Property.removeExpressions(iconGroup);
+	}
+
+	effect.remove();
+}
+
+/**
+	* Bones
+	* @namespace
+	* @memberof DuAEF.Duik
+*/
+DuAEF.Duik.Bone = {};
+
+/**
+	* Size hint of bones
+	* @type {int}
+	* @default DuAEF.Duik.Sizes.SMALL
+*/
+DuAEF.Duik.Bone.sizeHint = DuAEF.Duik.Sizes.SMALL;
+/**
+	* The default size for new bones if boneSizeHint is DuAEF.Duik.Sizes.CUSTOM
+	* @type {int}
+	* @default 100
+*/
+DuAEF.Duik.Bone.size = 100;
+/**
+	* The default color for new bones
+	* @type {float[]}
+	* @default DuColor.Color.RAINBOX_RED
+*/
+DuAEF.Duik.Bone.color = DuColor.Color.RAINBOX_RED;
+
+
+/**
+ * Creates a bone for a vertex or a tangent of a shape, using the corresponding effect set by Duik (DuAEF.Duik.PseudoEffects.SHAPE_LINKER).
+ * @param {Property} prop - The property of the DuAEF.Duik.PseudoEffects.SHAPE_LINKER
+ * @param {float} size - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+ * @return {Bone} The new bone.
+*/
+DuAEF.Duik.Bone.addShapeBone = function (prop, size)
+{
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	var parentProp = prop.parentProperty;
+
+	//create bone
+	var bone;
+	if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint || prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint)
+	{
+		bone = DuAEF.Duik.Bone.createBone(comp, size, DuAEF.Duik.Bone.BoneTypes.TANGENT);
+	}
+	else
+	{
+		bone = DuAEF.Duik.Bone.createBone(comp, size, DuAEF.Duik.Bone.BoneTypes.VERTEX);
+	}
+
+	//position
+	if (layer instanceof ShapeLayer) bone.layer.transform.position.setValue( prop.valueAtTime(0, false) );
+	else bone.layer.transform.position.setValue( DuAEF.DuAE.Layer.getWorldPos( layer, prop.valueAtTime(0, false) ) );
+
+	var baseName = DuAEF.Duik.generateName('B',' | ' + layer.name + ' | ' + DuAEF.Duik.removeDuikPrefix( parentProp.name ));
+
+	if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexPoint)
+	{
+		parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.vertexLayer).setValue(bone.layer.index);
+		DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, true);
+		bone.layer.name = baseName;
+	}
+	else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentPoint)
+	{
+		parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.inTangentLayer).setValue(bone.layer.index);
+		DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, false, true);
+		bone.layer.name = baseName + " | In";
+	}
+	else if (prop.propertyIndex == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentPoint)
+	{
+		parentProp(DuAEF.Duik.PseudoEffects.SHAPE_LINKER.outTangentLayer).setValue(bone.layer.index);
+		DuAEF.Duik.Bone.createShapeControl(layer, parentProp.name, false, false, true);
+		bone.layer.name = baseName + " | Out";
+	}
+
+	return bone;
+}
+
+/**
+ * Adds a bone on a puppet pin
+ * @param {PropertyGroup} prop - The puppet pin
+ * @param {float} size - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+ * @return {Bone} The new bone.
+*/
+DuAEF.Duik.Bone.addPinBone = function(prop, size)
+{
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+	if (typeof prop === 'undefined') return null;
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	//check pin type
+	var type = DuAEF.Duik.Bone.BoneTypes.PIN;
+	if (prop.position)
+	{
+		if (!prop.position.canSetExpression) type = DuAEF.Duik.Bone.BoneTypes.BEND_PIN;
+		else if (prop.property('ADBE FreePin3 PosPin Rotation')) { if (prop.property('ADBE FreePin3 PosPin Rotation').canSetExpression) type = DuAEF.Duik.Bone.BoneTypes.ADVANCED_PIN; }
+	}
+
+	//create bone
+	bone = DuAEF.Duik.Bone.createBone(comp, size, type);
+	bone.layer.moveBefore(layer);
+	//rename bone
+	var name = "B | " + layer.name;
+	if (prop.parentProperty != undefined)  name += " | " + prop.name;
+	if (name.length > 80 && prop.parentProperty != undefined) name = "B | " + prop.name;
+	bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name, comp, false);
+
+	//link properties 
+	var effect = DuAEF.Duik.Bone.linkPositionToBone(prop.position, bone.layer, false);
+	//fix prop
+	prop = propInfo.getProperty();
+
+	if (type == DuAEF.Duik.Bone.BoneTypes.ADVANCED_PIN || type == DuAEF.Duik.Bone.BoneTypes.BEND_PIN)
+	{
+		prop.property('ADBE FreePin3 PosPin Rotation').expression = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = result + l.transform.rotation.value;\n' +
+			'while(l.hasParent)\n' +
+			'{\n' +
+			'l = l.parent;\n' +
+			'result = result + l.transform.rotation.value;\n' +
+			'}\n' +
+			'}\n' +
+			'result;';
+		prop.property('ADBE FreePin3 PosPin Scale').expression = '//Duik.bone\n' +
+			'var l = null;\n' +
+			'function getAverageScale(layer)\n' +
+			'{\n' +
+			'var s = layer.transform.scale.value;\n' +
+			'return (s[0]+s[1])/200;\n' +
+			'}\n' +
+			'try {l = effect("' + effect.name + '")(1)} catch (e) {};\n' +
+			'var result = value;\n' +
+			'if (l != null) {\n' +
+			'result = result * getAverageScale(l);\n' +
+			'while(l.hasParent)\n' +
+			'{\n' +
+			'l = l.parent;\n' +
+			'result = result * getAverageScale(l);\n' +
+			'}\n' +
+			'}\n' +
+			'result;';
+	}
+
+	return bone;
+}
+
+/**
+ * Creates a bone for a multi-dimensionnal property.
+ * @param {Property} prop - The property
+ * @param {float} size - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+ * @return {Bone} The new bone.
+*/
+DuAEF.Duik.Bone.addPositionBone = function (prop, size)
+{
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+
+	var layer = propInfo.layer;
+	var comp = propInfo.comp;
+
+	var parentProp = prop.parentProperty;
+
+	//create bone
+	bone = DuAEF.Duik.Bone.createBone(comp, size, DuAEF.Duik.Bone.BoneTypes.STANDARD);
+	bone.layer.moveBefore(layer);
+	//rename bone
+	var name = "B | " + layer.name;
+	if (prop.parentProperty != undefined)  name += " | " + prop.parentProperty.name;
+	if (name.length > 80 && prop.parentProperty != undefined) name = "B | " + prop.parentProperty.name;
+	bone.layer.name = DuAEF.DuAE.Comp.newUniqueLayerName(name, comp, false);
+
+	//link the property to the bone 
+	DuAEF.Duik.Bone.linkPositionToBone(prop, bone.layer, false);
+
+	return bone;
+}
+
+/**
+	* Links the property to a bone. This will automatically detect the type of the property to create the corresponding bones.
+	* @param {Property|PropertyInfo} prop - The property
+	* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+	* @param {bool} [tangents=true] - True to create bones for the tangents if prop is a Shape
+	* @return {Bone[]} The bones created.
+*/
+DuAEF.Duik.Bone.addBone = function (prop,size,tangents)
+{
+	var bones = [];
+
+	if (typeof tangents === 'undefined') tangents = true;
+
+	if (!Object.isValid(prop)) return bones;
+
+	var propInfo;
+	if (prop instanceof PropertyInfo)
+	{
+		propInfo = prop;
+		prop = propInfo.getProperty();
+	}
+	else
+	{
+		propInfo = new PropertyInfo(prop);
+	}
+
+	//Check the type of the property to create the bone 
+
+	if (prop.matchName == 'ADBE FreePin3 PosPin Position') return bones; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Rotation') return bones; 
+	if (prop.matchName == 'ADBE FreePin3 PosPin Scale') return bones; 
+
+	//Puppet Pin
+	if (prop.matchName == 'ADBE FreePin3 PosPin Atom') if (DuAEF.DuAE.Property.PuppetTool.isRiggable(prop))
+	{
+		var bone = DuAEF.Duik.Bone.addPinBone(prop,size);
+		if (bone != null) bones.push(bone);
+		return bones;
+	}
+
+	//Shape
+	if (prop.propertyValueType == PropertyValueType.SHAPE)
+	{
+		if ( DuAEF.DuAE.App.version.version < 15) return bones;
+		return DuAEF.Duik.Bone.rigShape(prop,size,tangents,true);
+	}
+
+	//If not multi-dimensionnal, ignore
+	if (prop.propertyValueType != PropertyValueType.TwoD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD_SPATIAL && prop.propertyValueType != PropertyValueType.ThreeD  && prop.propertyValueType != PropertyValueType.TwoD)
+	{
+		return bones;
+	}
+
+	//Shape controller Effect
+	var parentProp = prop.parentProperty;
+	if (parentProp.matchName == DuAEF.Duik.PseudoEffects.SHAPE_LINKER.matchName)
+	{
+		var bone = DuAEF.Duik.Bone.addShapeBone(prop, size);
+		bones.push(bone);
+		return bones;
+	}
+
+	//Any other multi-dimensionnal property 
+	var bone = DuAEF.Duik.Bone.addPositionBone(prop, size);
+	bones.push(bone);
+	return bones;
+}
+
+/**
+	* Links the spatial child properties to bones
+	* @param {PropertyGroup|PropertyInfo} propertyGroup - The property
+	* @param {float}	[size] - The bone size, a percentage. By default, it will adjust automatically depending on comp size and DuAEF.Duik.Bone.sizeHint
+	* @param {bool} [tangents=true] - True to create bones for the tangents if prop is a Shape
+	* @return {Bone[]} The bones created.
+*/
+DuAEF.Duik.Bone.addBones = function (propertyGroup, size, tangents)
+{
+	var propInfo;
+
+	if (propertyGroup instanceof PropertyInfo)
+	{
+		propInfo = propertyGroup;
+		propertyGroup = propInfo.getProperty();
+	}
+	else propInfo = new PropertyInfo(propertyGroup);
+
+	var bones = [];
+
+	if (propertyGroup.matchName == 'ADBE FreePin3 PosPin Atom') return DuAEF.Duik.Bone.addPinBone(prop,size);
+	if (propertyGroup.matchName == 'ADBE FreePin3 PosPin Position') return bones; 
+	if (propertyGroup.matchName == 'ADBE FreePin3 PosPin Rotation') return bones; 
+	if (propertyGroup.matchName == 'ADBE FreePin3 PosPin Scale') return bones; 
+
+	if (propertyGroup.propertyType == PropertyType.PROPERTY)
+	{
+		bones.push(DuAEF.Duik.Bone.addBone(propertyGroup,size,tangents));
+	}
+	else
+	{
+		for (var i = 1, num = propertyGroup.numProperties; i <= num; i++)
+		{
+			if (Object.isValid(propertyGroup))
+			{
+				
+				var prop = propertyGroup.property(i);
+				bones = bones.concat(DuAEF.Duik.Bone.addBones(prop,size,tangents));
+			}
+			propertyGroup = propInfo.getProperty();
+		}
+	}
+	
+	return bones;
+}
+
+/**
+ * Gets Bones in the comp or the selection.
+ * @memberof DuAEF.Duik.Bone
+ * @param {CompItem}	[comp]	- The composition where to get the bones. The active comp if not provided
+ * @param {boolean} [selectedOnly=false] - Selected layers only
+ * @return {Bone[]}	The bones.
+ */
+DuAEF.Duik.Bone.getBones = function (comp,selectedOnly)
+{
+	if (typeof comp === 'undefined') comp = DuAEF.DuAE.Project.getActiveComp();
+	if (!comp) return [];
+	if (typeof selectedOnly === 'undefined') selectedOnly = false;
+
+	var bones = [];
+	//get layers
+	var boneLayers = DuAEF.Duik.getLayers(DuAEF.Duik.LayerTypes.BONE,selectedOnly,comp);
+	if (boneLayers.length == 0) return bones;
+	//convert layers to Controller
+	var it = new DuList(boneLayers);
+	it.do(function(layer){
+		bones.push(new Bone(layer));
+	})
+	return bones;
+}
