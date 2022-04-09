@@ -96,7 +96,6 @@ function buildAnimationLibPanel( animationLibGroup ) {
         animLib.save();
     }
 
-
     function addToRecent( entry ) {
         var uri = entry.absoluteURI;
         // If the first is not the same
@@ -173,6 +172,7 @@ function buildAnimationLibPanel( animationLibGroup ) {
                     addItem(f);
                 }
             }
+            lib.sortMode = 'none';
             return;
         }
         else if (category.data == 'recent') {
@@ -183,6 +183,7 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 if (!f.exists) continue;
                 addItem(f);
             }
+            lib.sortMode = 'none';
             return;
         }
         else if (category.data == 'favorites') {
@@ -224,6 +225,10 @@ function buildAnimationLibPanel( animationLibGroup ) {
                 addItem(f);
             }
         }
+    }
+
+    function listCategories( ) {
+        return DuFolder.getFiles(libFolder, DuPath.isFolder);
     }
 
     // UI Popups
@@ -535,28 +540,28 @@ function buildAnimationLibPanel( animationLibGroup ) {
     };
 
     // For now, can't move between categories. Just move them from their folders
-    /*var animEditorCatSelector = DuScriptUI.selector(animEditorPopup.content);
+    var animEditorCatSelector = DuScriptUI.selector(animEditorPopup.content);
     animEditorCatSelector.onChange = function () {
         if (!animEditorPopup.editing) return;
 
         // Keep prev path to update lib metadata
         var oldURI = animEditorPopup.editing.absoluteURI;
 
+        var newFolder = animEditorCatSelector.currentData;
+        if (!newFolder) return;
         // Move file and thumb to the new folder
-        var newFolderPath = libFolder.absoluteURI + '/' + animEditorCatSelector.text + '/';
+        var newFolderPath = newFolder.absoluteURI + '/';
         var fileName = DuPath.getName( animEditorPopup.editing );
         var thumbPath = DuPath.switchExtension( animEditorPopup.editing, 'png' );
         var thumbName = DuPath.getName(thumbPath);
         // Move files
         var newFile = DuFile.move( animEditorPopup.editing, newFolderPath + fileName);
-        alert(thumbPath);
-        alert(newFolderPath + thumbName);
         DuFile.move( thumbPath, newFolderPath + thumbName);
         // Update metadata
         if (newFile) updateEntryURI( oldURI, newFile.absoluteURI);
 
-        animationLibGroup.refreshLib();
-    };*/
+        lib.refresh();
+    };
 
     var animEditorFavButton = DuScriptUI.checkBox(
         animEditorPopup.content,
@@ -626,13 +631,14 @@ function buildAnimationLibPanel( animationLibGroup ) {
     var libOptions = {};
     libOptions.runButton = false;
     libOptions.canEditFolder = true;
-    libOptions.refreshInterval = 10000;
+    //libOptions.refreshInterval = 10000;
     libOptions.itemName = DuScriptUI.String.ANIMATION;
     libOptions.runHelpTip = DuScriptUI.String.APPLY_ANIMATION_TIP + "\n\n" + DuScriptUI.String.MORE_OPTIONS_TIP;
     libOptions.folderHelpTip = DuScriptUI.String.ANIMATION_LIB_SELECT_FOLDER_TIP;
     libOptions.addItemHelpTip = DuScriptUI.String.ANIMATION_LIB_ADD_ANIM_TIP;
     libOptions.editItemHelpTip = DuScriptUI.String.ANIMATION_LIB_EDIT_ANIM_TIP;
     libOptions.removeItemHelpTip = DuScriptUI.String.ANIMATION_LIB_REMOVE_ANIM_TIP;
+    libOptions.refreshButton = true;
    
     var lib = DuScriptUI.library(
         animationLibGroup, // container
@@ -773,8 +779,8 @@ function buildAnimationLibPanel( animationLibGroup ) {
             animEditorPopup.editing = item.data;
 
             // Set categories
-            // For now can't move between categories.
-            /*var cat = DuPath.getName( animationList.selection.file.parent );
+            var allCats = listCategories();
+            var cat = DuPath.getName( item.data.parent );
             if (cat == DuPath.getName(libFolder)) cat = DuScriptUI.String.UNCATEGORIZED;
             
             animEditorCatSelector.freeze = true;
@@ -782,10 +788,14 @@ function buildAnimationLibPanel( animationLibGroup ) {
             animEditorCatSelector.clear();
             animEditorCatSelector.addButton( DuScriptUI.String.UNCATEGORIZED, w12_file);
             
-            updateCatSelector( animEditorCatSelector  );
+            for (var i = 0; i < allCats.length; i++) {
+                var n = DuPath.getName( allCats[i] );
+                animEditorCatSelector.addButton( n, w12_folder, undefined, undefined, allCats[i] );
+            }
+            
             animEditorCatSelector.setCurrentText( cat );
             
-            animEditorCatSelector.freeze = false;*/
+            animEditorCatSelector.freeze = false;
 
             // Set Fav
             var a = getCreateLibEntry( animEditorPopup.editing );
