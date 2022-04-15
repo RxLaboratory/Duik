@@ -1,9 +1,23 @@
 # Duik
 Rigging and Animation tool set for After Effects
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+![After Effects](https://img.shields.io/badge/After%20Effects-Win%20|%20Mac-informational?color=lightgrey&logo=adobeaftereffects) [![GitHub](https://img.shields.io/github/license/RxLaboratory/Duik?color=lightgrey)](LICENSE.md)
 
-![Discord](https://img.shields.io/discord/480782642825134100)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/RxLaboratory/Duik?color=brightgreen)](https://github.com/RxLaboratory/Duik/releases) ![GitHub Release Date](https://img.shields.io/github/release-date/RxLaboratory/Duik) [![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/RxLaboratory/Duik?include_prereleases&label=testing)](https://github.com/RxLaboratory/Duik/tags)
+
+**Stats:**  
+[![GitHub all releases](https://img.shields.io/github/downloads/RxLaboratory/Duik/total)](https://github.com/RxLaboratory/Duik/releases) ![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/RxLaboratory/Duik/latest/total?sort=semver) [![GitHub issues](https://img.shields.io/github/issues-raw/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/issues) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/RxLaboratory/Duik?color=lightgrey)](https://github.com/RxLaboratory/Duik/issues?q=is%3Aissue+is%3Aclosed) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/RxLaboratory/Duik)
+
+**Progress**:  
+[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6?closed=1) ![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)
+
+**Funding:**  
+[![Donate](https://img.shields.io/badge/donate--blue?logo=heart)](http://donate.rxlab.info) [![GitHub Sponsors](https://img.shields.io/github/sponsors/RxLaboratory?logo=github)](https://github.com/sponsors/RxLaboratory) [![Patreon](https://img.shields.io/badge/patreon--blue?logo=patreon)](https://patreon.com/duduf)
+
+**Community:**  
+[![Discord](https://img.shields.io/discord/480782642825134100)](http://chat.rxlab.info) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md) ![GitHub contributors](https://img.shields.io/github/contributors-anon/RxLaboratory/Duik)  
+[![Discord](https://img.shields.io/discord/480782642825134100?logo=discord&style=social&label=Discord)](http://chat.rxlab.info)
+[![Facebook](https://img.shields.io/badge/Facebook-1877F2?logo=facebook&style=social)](https://www.facebook.com/rxlaboratory) [![Instagram](https://img.shields.io/badge/Instagram-E4405F?logo=instagram&style=social)](https://www.instagram.com/rxlaboratory/) [![Twitter Follow](https://img.shields.io/twitter/follow/RxLaboratory?label=Twitter&style=social)](https://www.twitter.com/rxlaboratory/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?logo=linkedin&style=social)](https://www.linkedin.com/company/RxLaboratory/) [![YouTube Channel Views](https://img.shields.io/youtube/channel/views/UC64qGypBbyM-ia-yf0nFSTg?label=Youtube)](https://www.youtube.com/channel/UC64qGypBbyM-ia-yf0nFSTg) [![Github](https://img.shields.io/badge/GitHub-100000?logo=github&logoColor=100000&style=social)](https://github.com/RxLaboratory/Duik)
 
 ## What's this?
 
