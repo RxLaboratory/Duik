@@ -8,7 +8,7 @@ You can help to improve Duik and DuAEF by
 - **proposing** new features;
 - **implementing** new features.
 
- :rocket:  First of all, be sure to join us on our live chat on [Discord](http://chat.rainboxlab.org/), or on our [forum](http://forum.rainboxlab.org/). We will be very happy to help you get started!
+ :rocket:  First of all, be sure to join us on our live chat on [Discord](http://chat.rxlab.info/). We will be very happy to help you get started!
 
 ***
 
