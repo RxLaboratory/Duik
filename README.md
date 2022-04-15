@@ -1,7 +1,7 @@
 # Duik
 Rigging and Animation tool set for After Effects
 
-![After Effects](https://img.shields.io/badge/After%20Effects-Win%20|%20Mac-informational?color=lightgrey&logo=adobeaftereffects) [![GitHub](https://img.shields.io/github/license/RxLaboratory/Duik?color=lightgrey)](LICENSE.md)
+[![After Effects](https://img.shields.io/badge/After%20Effects-Win%20|%20Mac-informational?color=lightgrey&logo=adobeaftereffects)](#) [![GitHub](https://img.shields.io/github/license/RxLaboratory/Duik?color=lightgrey)](LICENSE.md)
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/RxLaboratory/Duik?color=brightgreen)](https://github.com/RxLaboratory/Duik/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/releases) [![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/RxLaboratory/Duik?include_prereleases&label=testing)](https://github.com/RxLaboratory/Duik/tags)
 
