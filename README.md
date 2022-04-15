@@ -3,6 +3,8 @@ Rigging and Animation tool set for After Effects
 
 [![After Effects](https://img.shields.io/badge/After%20Effects-Win%20|%20Mac-informational?color=lightgrey&logo=adobeaftereffects)](#) [![GitHub](https://img.shields.io/github/license/RxLaboratory/Duik?color=lightgrey)](LICENSE.md)
 
+[![Website](https://img.shields.io/badge/website-RxLab-informational)(http://rxlaboratory.org/tools/duik) [![Doc](https://img.shields.io/badge/documentation-duik.rxlab.guide-informational)](http://duik.rxlab.guide) [![API](https://img.shields.io/badge/api%20documentation-duik.rxlab.io-informational)](http://duik.rxlab.io) [![Tuts](https://img.shields.io/badge/tutorials--informational)](https://rxlaboratory.org/category/videos/duik-tutorials/) [![Guide](https://img.shields.io/badge/books--informational)](https://rxlaboratory.org/category/duik-books/) 
+
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/RxLaboratory/Duik?color=brightgreen)](https://github.com/RxLaboratory/Duik/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/releases) [![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/RxLaboratory/Duik?include_prereleases&label=testing)](https://github.com/RxLaboratory/Duik/tags)
 
 **Stats:**  
