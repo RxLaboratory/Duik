@@ -17,7 +17,8 @@ Rigging and Animation tool set for After Effects
 [![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)
 
 **Funding:**  
-[![Donate](https://img.shields.io/badge/donate--blue?logo=heart)](http://donate.rxlab.info) [![GitHub Sponsors](https://img.shields.io/github/sponsors/RxLaboratory?logo=github)](https://github.com/sponsors/RxLaboratory) [![Patreon](https://img.shields.io/badge/patreon--blue?logo=patreon)](https://patreon.com/duduf)
+[![Donate Now!](https://img.shields.io/badge/donate%20now!-donate.rxlab.info-blue?logo=heart)](http://donate.rxlab.info) [![Income](https://img.shields.io/endpoint?url=https%3A%2F%2Fversion.rxlab.io%2Fshields%2F%3FmonthlyIncome)](http://donate.rxlab.info) [![Sponsors](https://img.shields.io/endpoint?url=https%3A%2F%2Fversion.rxlab.io%2Fshields%2F%3FnumBackers)](http://donate.rxlab.info)  
+(includes sponsors from [Github](https://github.com/sponsors/RxLaboratory) and [Patreon](https://patreon.com/duduf))
 
 **Community:**  
 [![Discord](https://img.shields.io/discord/480782642825134100)](http://chat.rxlab.info) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) ![GitHub contributors](https://img.shields.io/github/contributors-anon/RxLaboratory/Duik)  
