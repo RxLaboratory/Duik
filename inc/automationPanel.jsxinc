@@ -138,6 +138,68 @@ function buildAutomationPanelUI(tab) {
     );
     pasteExpButton.onClick = Duik.Automation.pasteExpression;
 
+    var editExpressionButton = toolsGroup.addButton(
+        DuScriptUI.String.EDIT_EXPRESSION,
+        w12_expression_file,
+        DuScriptUI.String.EDIT_EXPRESSION_TIP,
+        true
+    );
+    editExpressionButton.optionsPopup.build = function() {
+
+        // Default settings
+        DuESF.scriptSettings.data.expression = def(DuESF.scriptSettings.data.expression, {});
+        DuESF.scriptSettings.data.expression.expressionEditor = def(DuESF.scriptSettings.data.expression.expressionEditor, "");
+
+        // The list of expressions currently being edited
+        // Associative array filename -> DuAEProperty.
+        var editingExpressions = {};
+
+        var editorSelector = DuScriptUI.fileSelector(
+            editExpressionButton.optionsPanel,
+            DuScriptUI.String.EXPRESSION_SELECT_EDITOR,
+            true,
+            DuScriptUI.String.EXPRESSION_SELECT_EDITOR_TIP,
+            undefined,
+            'open',
+            undefined,
+            'column'
+        );
+        editorSelector.onChange = function() {
+            var f = editorSelector.getFile();
+            if (!f && editorSelector.editText.text != "") return;
+            if (f) DuESF.scriptSettings.data.expression.expressionEditor = f.absoluteURI;
+            else DuESF.scriptSettings.data.expression.expressionEditor = "";
+            DuESF.scriptSettings.save();
+        };
+
+        editorSelector.setPath( DuESF.scriptSettings.data.expression.expressionEditor );
+        editorSelector.setPlaceholder( DuScriptUI.String.SYSTEM_DEFAULT );
+
+        editExpressionButton.onClick = function() {
+            // Get the selected property
+            var prop = DuAEComp.getSelectedProperty();
+            var editFile = Duik.Tool.editExpression(prop);
+            if (editFile) editingExpressions[editFile.absoluteURI] = prop;
+        };
+
+        editExpressionButton.onCtrlClick = function() {
+            DuAE.beginUndoGroup(DuScriptUI.String.EDIT_EXPRESSION);
+            for (f in editingExpressions) {
+                var file = new File(f);
+                if (file.exists) {
+                    if (file.open('r')){
+                        editingExpressions[f].setExpression(file.read(), false);
+                        file.close();
+                    }
+                }
+                else {
+                    delete editingExpressions[f];
+                }
+            };
+            DuAE.endUndoGroup(DuScriptUI.String.EDIT_EXPRESSION);
+        };
+    };
+
     var randomizeButton = toolsGroup.addButton(
         DuScriptUI.String.RANDOMIZE + "...",
         w12_randomize,
