@@ -97,3 +97,42 @@ Duik.Tool.cropPrecompositions = function(precomps) {
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup(DuScriptUI.String.CROP_PRECOMPOSITION);
 }
+
+Duik.CmdLib["Tool"]["Edit Expression"] = 'Duik.Tool.editExpression()';
+/**
+ * Edits the selected expression using an external editor
+ * @param {Property|DuAEProperty} [prop] The propety containing the expression. The first selected property if omited.
+ * @return {File} The file used to edit the expression.
+ */
+Duik.Tool.editExpression = function (prop) {
+    prop = def(prop, DuAEComp.getSelectedProperty());
+    if (!prop) return null;
+
+    // Default settings
+    DuESF.scriptSettings.data.expression = def(DuESF.scriptSettings.data.expression, {});
+    DuESF.scriptSettings.data.expression.expressionEditor = def(DuESF.scriptSettings.data.expression.expressionEditor, "");
+
+    prop = new DuAEProperty(prop);
+
+    // Get a temp file
+    // Locate it in the Duik folder
+    var expressionPath = DuESF.scriptSettings.file.parent.absoluteURI;
+    expressionPath += '/expressions/';
+    // Create if it doesn't exist
+    var expressionFolder = new Folder(expressionPath);
+    if (!expressionFolder.exists) expressionFolder.create();
+    // Create the file
+    var expressionFile = new File(expressionPath + prop.layer.name + ' - ' + prop.name + ' - ' + prop.id);
+    if (expressionFile.open('w')) {
+        expressionFile.write(prop.expression());
+        expressionFile.close();
+    }
+    else return null;
+    // Open
+    var editorPath = DuESF.scriptSettings.data.expression.expressionEditor;
+    var editorFile = new File(editorPath);
+    if (editorFile.exists) DuProcess.run(editorPath, [expressionFile.fsName]);
+    else expressionFile.execute();
+
+    return expressionFile;
+}
