@@ -19,7 +19,7 @@ Rigging and Animation tool set for After Effects
 
 <!-- progress -->
 **Progress**:  
-[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)<!-- end:progress --><!-- {6} -->
+[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/6)](https://github.com/RxLaboratory/Duik/milestone/6?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)<!-- end:progress --><!-- {6} -->
 
 <!-- funding -->
 **Funding:**  
