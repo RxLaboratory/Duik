@@ -14,12 +14,12 @@ Rigging and Animation tool set for After Effects
 <!-- statistics -->
 **Statistics:**  
 [![GitHub all releases](https://img.shields.io/github/downloads/RxLaboratory/Duik/total)](https://github.com/RxLaboratory/Duik/releases) [![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/RxLaboratory/Duik/latest/total?sort=semver)](https://github.com/RxLaboratory/Duik/releases) [![GitHub issues](https://img.shields.io/github/issues-raw/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/issues) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/RxLaboratory/Duik?color=lightgrey)](https://github.com/RxLaboratory/Duik/issues?q=is%3Aissue+is%3Aclosed) [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/graphs/commit-activity)
-<!-- end:statistics -->
+<!-- end:statistics -->  
 (Download count from 15 April 2022)
 
-<!-- {6} --><!-- progress -->
+<!-- progress -->
 **Progress**:  
-[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)<!-- end:progress -->
+[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)<!-- end:progress --><!-- {6} -->
 
 <!-- funding -->
 **Funding:**  
