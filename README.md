@@ -17,7 +17,7 @@ Rigging and Animation tool set for After Effects
 <!-- end:statistics -->
 (Download count from 15 April 2022)
 
-<!-- progress{6} -->
+<!-- {6} --><!-- progress -->
 <!-- end:progress -->
 
 <!-- funding -->
