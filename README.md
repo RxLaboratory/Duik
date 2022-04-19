@@ -13,8 +13,7 @@ Rigging and Animation tool set for After Effects
 
 <!-- statistics -->
 **Statistics:**  
-[![GitHub all releases](https://img.shields.io/github/downloads/RxLaboratory/Duik/total)](https://github.com/RxLaboratory/Duik/releases) [![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/RxLaboratory/Duik/latest/total?sort=semver)](https://github.com/RxLaboratory/Duik/releases) [![GitHub issues](https://img.shields.io/github/issues-raw/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/issues) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/RxLaboratory/Duik?color=lightgrey)](https://github.com/RxLaboratory/Duik/issues?q=is%3Aissue+is%3Aclosed) [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/graphs/commit-activity)  
-<!-- end:statistics -->
+[![GitHub all releases](https://img.shields.io/github/downloads/RxLaboratory/Duik/total)](https://github.com/RxLaboratory/Duik/releases) [![GitHub release (latest by SemVer)](https://img.shields.io/github/downloads/RxLaboratory/Duik/latest/total?sort=semver)](https://github.com/RxLaboratory/Duik/releases) [![GitHub issues](https://img.shields.io/github/issues-raw/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/issues) [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/RxLaboratory/Duik?color=lightgrey)](https://github.com/RxLaboratory/Duik/issues?q=is%3Aissue+is%3Aclosed) [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/graphs/commit-activity)  <!-- end:statistics -->
 (Download count from 15 April 2022)
 
 <!-- progress{6} -->
