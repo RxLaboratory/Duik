@@ -21,7 +21,6 @@ Rigging and Animation tool set for After Effects
 (includes sponsors from [Github](https://github.com/sponsors/RxLaboratory) and [Patreon](https://patreon.com/duduf))
 
 <!-- community -->
-
 **Community:**  
 [![Discord](https://img.shields.io/discord/480782642825134100)](http://chat.rxlab.info) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) ![GitHub contributors](https://img.shields.io/github/contributors-anon/RxLaboratory/Duik)  
 [![Discord](https://img.shields.io/discord/480782642825134100?logo=discord&style=social&label=Discord)](http://chat.rxlab.info)
