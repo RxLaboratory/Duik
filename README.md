@@ -18,7 +18,8 @@ Rigging and Animation tool set for After Effects
 (Download count from 15 April 2022)
 
 <!-- {6} --><!-- progress -->
-<!-- end:progress -->
+**Progress**:  
+[![GitHub milestone](https://img.shields.io/github/milestones/progress-percent/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-open/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined) [![GitHub milestone](https://img.shields.io/github/milestones/issues-closed/RxLaboratory/Duik/undefined)](https://github.com/RxLaboratory/Duik/milestone/undefined?closed=1) [![GitHub commits since latest release (by date)](https://img.shields.io/github/commits-since/RxLaboratory/Duik/latest)](https://github.com/RxLaboratory/Duik/network)<!-- end:progress -->
 
 <!-- funding -->
 **Funding:**  
