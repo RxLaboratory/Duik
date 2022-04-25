@@ -23,7 +23,6 @@ Rigging and Animation tool set for After Effects
 <!-- funding -->
 **Funding:**  
 [![Donate Now!](https://img.shields.io/badge/donate%20now!-donate.rxlab.info-blue?logo=heart)](http://donate.rxlab.info) [![Income](https://img.shields.io/endpoint?url=https%3A%2F%2Fversion.rxlab.io%2Fshields%2F%3FmonthlyIncome)](http://donate.rxlab.info) [![Sponsors](https://img.shields.io/endpoint?url=https%3A%2F%2Fversion.rxlab.io%2Fshields%2F%3FnumBackers)](http://donate.rxlab.info)  
-(includes sponsors from [Github](https://github.com/sponsors/RxLaboratory) and [Patreon](https://patreon.com/duduf))
 <!-- end:funding -->
 
 <!-- community -->
