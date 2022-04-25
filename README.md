@@ -56,7 +56,8 @@ We need your support to release our free tools. You can [donate](donate.rxlab.in
 
 We're always in need for translations, code, documentation, examples, tutorials, quick tips, bug fixes...
 
-[![Discord](https://img.shields.io/discord/480782642825134100)](http://chat.rxlab.info) [![Contributing](https://img.shields.io/badge/contributing%20guide-docs.rxlab.io-informational.svg)](http://docs.rxlab.io) [![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) [![GitHub contributors](https://img.shields.io/github/contributors-anon/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/graphs/contributors)<!-- end:contribution -->
+[![Discord](https://img.shields.io/discord/480782642825134100)](http://chat.rxlab.info) [![Contributing](https://img.shields.io/badge/contributing%20guide-docs.rxlab.io-informational.svg)](http://docs.rxlab.io) [![Contributor Covenant](https://img.shields.io/badge/contributor%20covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md) [![GitHub contributors](https://img.shields.io/github/contributors-anon/RxLaboratory/Duik)](https://github.com/RxLaboratory/Duik/graphs/contributors)
+<!-- end:contribution -->
 
 You can easily use Duik in your own tools (if you release them under a license compatible with the GNU-GPLv3) by including the Duik API.
 
