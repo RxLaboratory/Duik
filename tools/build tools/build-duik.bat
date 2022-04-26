@@ -21,6 +21,7 @@ mkdir "output\Duik\Help"
 mkdir "output\Duik_API"
 DuBuilder ..\..\inc\api.jsxinc -nobanner output\Duik_API\Duik_api.jsxinc
 DuBuilder ..\..\inc\api_all.jsxinc -nobanner -d jsdoc_conf.json output\Duik_API\DuAEF_Duik_api.jsxinc
+DuBuilder "..\..\DuCop.jsx" -nobanner "output\Duik\ScriptUI Panels\DuCop.jsx"
 DuBuilder "..\..\Duik Angela.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Angela.jsx"
 DuBuilder "..\..\Duik Animation.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation.jsx"
 DuBuilder "..\..\Duik Animation Library.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation Library.jsx"

@@ -32,6 +32,7 @@ rd /s /q %1\DuGR
 rd /s /q %1\DuIO
 
 REM link the main files
+mklink %1\"DuCop.jsx" "%repoPath%\DuCop.jsx"
 mklink %1\"Duik Angela.jsx" "%repoPath%\Duik Angela.jsx"
 mklink %1\"Duik Animation Library.jsx" "%repoPath%\Duik Animation Library.jsx"
 mklink %1\"Duik Animation.jsx" "%repoPath%\Duik Animation.jsx"
