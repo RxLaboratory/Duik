@@ -7,6 +7,6 @@ var mainScriptFile = new File($.fileName);
 #include "inc/compSettingsPanel.jsxinc";
 buildCompSettingsPanel( ui.mainGroup );
 
-#include "inc/ui_show.jsxinc"//*/
+#include "inc/ui_show.jsxinc"
 
 })(this);
