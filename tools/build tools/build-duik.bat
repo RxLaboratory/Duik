@@ -8,7 +8,7 @@ cd src
 mkdocs build
 cd ..
 cd docs
-echo duik-docs.rainboxlab.org > "CNAME"
+echo duik.rxlab.guide > "CNAME"
 cd ..
 cd ..
 cd tools
@@ -42,7 +42,7 @@ xcopy /Y items\README.txt "output\Duik\README.txt"
 xcopy /S /I /Y ..\..\docs output\Duik_API\docs
 xcopy /S /I /Y ..\..\Duik_Docs\docs output\Duik\Help
 cd output\Duik\Help
-rm -f CNAME
+del CNAME
 cd ..
 cd ..
 cd ..
