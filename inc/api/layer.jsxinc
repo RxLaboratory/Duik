@@ -146,11 +146,13 @@ Duik.Layer.setType = function(type, layers) {
  * @param {Duik.Layer.Type} type The type
  * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @param {bool} [notSelectedOnly=false] Get only the not selected layers
  * @returns {Layer[]} The layers of the specified type.
  */
-Duik.Layer.get = function(type, selectedOnly, comp) {
+Duik.Layer.get = function(type, selectedOnly, comp, notSelectedOnly) {
     comp = def(comp, DuAEProject.getActiveComp());
     selectedOnly = def(selectedOnly, true);
+    notSelectedOnly = def(notSelectedOnly, false);
     if (!comp) return [];
 
     var layers = [];
@@ -162,6 +164,8 @@ Duik.Layer.get = function(type, selectedOnly, comp) {
     layers = new DuList(layers);
     var bones = [];
     layers.do(function(layer) {
+        if (layer.selected && notSelectedOnly) return;
+        
         if (Duik.Layer.isType(layer, type)) bones.push(layer);
         else if (type == Duik.Layer.Type.CONTROLLER && Duik.Layer.isType(layer, Duik.Layer.Type.CONTROLLER_BG)) bones.push(layer);
     });
@@ -188,9 +192,11 @@ Duik.Layer.select = function(type, comp) {
  * Show/hides all the layers of the given type
  * @param {Duik.Layer.Type} type The type
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @param {bool} [notSelectedOnly=false] Hides only the layers which are not selected
  */
-Duik.Layer.toggleVisibility = function(type, comp) {
-    var layers = Duik.Layer.get(type, false, comp);
+Duik.Layer.toggleVisibility = function(type, comp, notSelectedOnly) {
+    notSelectedOnly = def(notSelectedOnly, false);
+    var layers = Duik.Layer.get(type, false, comp, notSelectedOnly);
     if (layers.length == 0) return;
     var enabled = !layers[0].enabled;
     for (var i = 0, n = layers.length; i < n; i++) {
