@@ -126,6 +126,36 @@ Duik.Animation.copy = function( comp )
     return copiedAnim;
 };
 
+Duik.CmdLib['Animation']["Cut"] = "Duik.Animation.cut()";
+/**
+ * Cuts the currently selected keyframes, which can then be pasted with {@link Duik.Animation.paste}.
+ * @param {CompItem} [comp=DuAEProject.getActiveComp] The composition
+ * @returns {DuAELayerAnimation[]} The list of animations which have been copied.
+ */
+Duik.Animation.cut = function ( comp )
+{
+    comp = def(comp, DuAEProject.getActiveComp() );
+    if(!comp) return;
+
+    var props = new DuList( DuAEComp.getSelectedProps() );
+    // When modifying properties, keys are deselected. Let's keep the list.
+    var selectedKeys = [];
+    props.do(function(prop) {
+        selectedKeys.push(prop.selectedKeys());
+    });
+
+    var animations = Duik.Animation.copy();
+
+    // Remove selected keyframes
+    props.do(function(prop) {
+        var keys = selectedKeys[props.current];
+        for (var i=keys.length-1; i >= 0; i--) {
+            prop.removeKey(keys[i]);
+        }
+    });
+    return animations;
+}
+
 Duik.CmdLib['Animation']["Paste"] = "Duik.Animation.paste()";
 Duik.CmdLib['Animation']["Paste Reversed"] = "Duik.Animation.paste( undefined, false, false, true )";
 Duik.CmdLib['Animation']["Paste Offset"] = "Duik.Animation.paste( undefined, false, true )";
