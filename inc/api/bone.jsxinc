@@ -41,7 +41,7 @@ Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, ha
     hand = def( hand, true );
     claws = def( claws, false );
 
-    DuAE.beginUndoGroup("Create arm");
+    DuAE.beginUndoGroup(DuScriptUI.String.ARM, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -49,10 +49,12 @@ Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, ha
         return doc.newArm( type, side, shoulder, arm, forearm, hand, claws, undefined, location );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.ARM, false);
+
+    return bones;
 }
 
 // Low-level undocumented function
@@ -60,7 +62,7 @@ Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, ha
 Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
 {
     var comp = DuAEProject.getActiveComp();
-    if (!comp) return;
+    if (!comp) return [];
  
     // Links
     var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
@@ -87,7 +89,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
         var limb = limbCreator( doc );
         var boneLayers = doc.toComp( comp );
         DuAELayer.moveInsideComp( boneLayers[0] );
-        return;
+        return boneLayers;
     }
 
     // For each selected layer
@@ -122,7 +124,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
                 ok = true;
             }
             if (layerToRemove) layerToRemove.remove();
-            return;
+            return boneLayers;
         }
 
         //puppet pins
@@ -141,7 +143,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
             // link
             if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
             ok = true;
-            return;
+            return boneLayers;
         }
 
         //puppet effect
@@ -181,7 +183,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
                 if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
                 ok = true;
             }
-            return;
+            return boneLayers;
         }
     });
 
@@ -190,9 +192,6 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
     {
         var layer = it.at(0);
         var side = Duik.Layer.side(layer);
-        var location = Duik.Layer.location(layer);
-        var characterName = Duik.Layer.characterName(layer);
-        var limbName = Duik.Layer.limbName(layer);
         
         // Create a limb for all layers
         // create the OCODoc
@@ -201,10 +200,10 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
         limb.moveArmatureToLayers( doc, layers );
         // create
         var boneLayers = doc.toComp( comp );
-        Duik.Layer.setAttributes(boneLayers, Duik.Layer.Type.BONE, limbName, side, location, characterName );
         DuAELayer.moveInsideComp( boneLayers[0] );
         // link
         if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
+        return boneLayers;
     }
 }
 
@@ -232,157 +231,24 @@ Duik.Bone.customLimb = function ( num, name, characterName, side, location, forc
     side = def( side, DuOCO.Side.NONE);
     location = def( location, DuOCO.Location.NONE);
 
-    DuAE.beginUndoGroup("Create custom limb");
+    DuAE.beginUndoGroup(DuScriptUI.String.LIMB, false);
     DuAEProject.setProgressMode(true);
 
     var layers = comp.selectedLayers;
 
-    // If there's no selected layer, just create
-    if( layers.length == 0 )
+    function limbCreator( doc )
     {
-        var doc = DuOCODoc.fromComp( characterName, comp );
         var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
         limb.newArmature( name, num );
-        var boneLayers = doc.toComp( comp );
-        DuAELayer.moveInsideComp( boneLayers[0] );
-        DuAEProject.setProgressMode(false);
-        DuAE.endUndoGroup();
-        return;
+        return limb;
     }
 
-    // Links
-    var linkPath = def(DuESF.scriptSettings.data.armatureLinkPaths, false);
-    if (forceLink) linkPath = !linkPath;
-    var linkPuppetPins = def(DuESF.scriptSettings.data.armatureLinkPuppetPins, false);
-    if (forceLink) linkPuppetPins = !linkPuppetPins;
-    var linkLayers = def(DuESF.scriptSettings.data.armatureLinkLayers, false);
-    if (forceLink) linkLayers = !linkLayers;
-
-    // if we have a shape layer selected and its path, and only a path, we're going to remove it after creation.  
-    var layerToRemove = null;
-    if (layers.length == 1 && !linkPath)
-    {
-        var l = layers[0];
-        if (DuAEShapeLayer.isSingleShape(l)) layerToRemove = l;
-    }
-
-    // For each selected layer
-    var it = new DuList( layers );
-    var ok = false;
-    it.do( function( layer )
-    {
-        var side = Duik.Layer.side(layer);
-        var location = Duik.Layer.location(layer);
-        var characterName = Duik.Layer.characterName(layer);
-        var limbName = Duik.Layer.limbName(layer);
-
-        //get paths
-        var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
-
-        if ( props.length > 0 )
-        {
-            // Create a limb for each path
-            for (var i = 0, n = props.length; i < n; i++)
-            {
-                var path = props[i];
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
-                limb.armatureFromPath( doc, name, path );
-                // create
-                var boneLayers = doc.toComp( comp );
-                Duik.Layer.setAttributes(boneLayers, Duik.Layer.Type.BONE, limbName, side, location, characterName );
-                DuAELayer.moveInsideComp( boneLayers[0] );
-                // link
-                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
-                ok = true;
-            }
-            if (layerToRemove) layerToRemove.remove();       
-            return;
-        }
-
-        //puppet pins
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3 PosPin Atom" );
-        if ( props.length > 0 )
-        {
-            // Create a limb for all selected pins
-            // create the OCODoc
-            var doc = DuOCODoc.fromComp( characterName, comp );
-            var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
-            limb.armatureFromPuppetPins( doc, name, props );
-            // create
-            var boneLayers = doc.toComp( comp );
-            Duik.Layer.setAttributes(boneLayers, Duik.Layer.Type.BONE, limbName, side, location, characterName );
-            DuAELayer.moveInsideComp( boneLayers[0] );
-            // link
-            if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( props, boneLayers );
-            ok = true;
-            return;
-        }
-
-        //puppet effect
-        props = DuAELayer.getSelectedProps( layer, "ADBE FreePin3" );
-        if ( props.length > 0 )
-        {
-            // Get pins from each effect
-            for(var i = 0, n = props.length; i < n; i++)
-            {
-                var pins = [];
-
-                var meshGroup = props[i].property( "ADBE FreePin3 ARAP Group" ).property( "ADBE FreePin3 Mesh Group" );
-                for ( var j = 1, numProps = meshGroup.numProperties; j <= numProps; j++ )
-                {
-                    var mesh = meshGroup( j );
-                    var pinsGroup = mesh.property( "ADBE FreePin3 PosPins" );
-                    for ( var k = 1, numPins = pinsGroup.numProperties; k <= numPins; k++ )
-                    {
-                        var pin = pinsGroup.property( k );
-                        var test = new DuAEProperty( pin.property( "ADBE FreePin3 PosPin Position" ) );
-                        if ( test.riggable() ) pins.push( new DuAEProperty( pin ) );
-                    }
-                }
-
-                if (pins.length == 0) continue;
-
-                // Create a limb for all pins
-                // create the OCODoc
-                var doc = DuOCODoc.fromComp( characterName, comp );
-                var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
-                limb.armatureFromPuppetPins( doc, name, pins );
-                // create
-                var boneLayers = doc.toComp( comp );
-                Duik.Layer.setAttributes(boneLayers, Duik.Layer.Type.BONE, limbName, side, location, characterName );
-                DuAELayer.moveInsideComp( boneLayers[0] );
-                // link
-                if (linkPuppetPins) Duik.Pin.linkPuppetPinsToLayers( pins, boneLayers );
-                ok = true;
-            }
-            return;
-        }
-    });
-
-    // Nothing was created, use layer anchor points
-    if (!ok)
-    {
-        var layer = it.at(0);
-        var side = Duik.Layer.side(layer);
-        var location = Duik.Layer.location(layer);
-        var characterName = Duik.Layer.characterName(layer);
-        var limbName = Duik.Layer.limbName(layer);
-
-        var doc = DuOCODoc.fromComp( characterName, comp );
-        var limb = doc.newLimb( DuOCO.Limb.CUSTOM, side, location );
-        limb.armatureFromLayers( doc, name, layers );
-        // create
-        var boneLayers = doc.toComp( comp );
-        Duik.Layer.setAttributes(boneLayers, Duik.Layer.Type.BONE, limbName, side, location, characterName );
-        DuAELayer.moveInsideComp( boneLayers[0] );
-        // link
-        if (linkLayers) Duik.Bone.linkLayers( layers, boneLayers );
-    }
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.LIMB);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Leg"] = "Duik.Bone.leg()";
@@ -415,7 +281,7 @@ Duik.Bone.leg = function ( characterName, type, side, thigh, calf, foot, claws, 
     foot = def( foot, true );
     claws = def( claws, false );
 
-    DuAE.beginUndoGroup("Create leg");
+    DuAE.beginUndoGroup(DuScriptUI.String.LEG, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -423,10 +289,12 @@ Duik.Bone.leg = function ( characterName, type, side, thigh, calf, foot, claws, 
         return doc.newLeg( type, side, thigh, calf, foot, claws, undefined, location );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.LEG);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Spine"] = "Duik.Bone.spine()";
@@ -453,7 +321,7 @@ Duik.Bone.spine = function( characterName, head, neck, spine, hips, forceLink )
     spine = def( spine, 2 );
     hips = def( hips, true );
 
-    DuAE.beginUndoGroup("Create spine");
+    DuAE.beginUndoGroup(DuScriptUI.String.SPINE, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -461,10 +329,12 @@ Duik.Bone.spine = function( characterName, head, neck, spine, hips, forceLink )
         return doc.newSpine( head, neck, spine, hips );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.SPINE);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Tail"] = "Duik.Bone.tail()";
@@ -485,7 +355,7 @@ Duik.Bone.tail = function ( characterName, num, forceLink )
 
     num = def( num, 3 );
 
-    DuAE.beginUndoGroup("Create tail");
+    DuAE.beginUndoGroup(DuScriptUI.String.TAIL, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -493,10 +363,12 @@ Duik.Bone.tail = function ( characterName, num, forceLink )
         return doc.newTail( num );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.TAIL);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Hair"] = "Duik.Bone.hair()";
@@ -517,7 +389,7 @@ Duik.Bone.hair = function ( characterName, num, forceLink )
 
     num = def( num, 3 );
 
-    DuAE.beginUndoGroup("Create hair strand");
+    DuAE.beginUndoGroup(DuScriptUI.String.HAIR, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -525,10 +397,12 @@ Duik.Bone.hair = function ( characterName, num, forceLink )
         return doc.newHairStrand( num );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.HAIR);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Wing"] = "Duik.Bone.wing()";
@@ -557,7 +431,7 @@ Duik.Bone.wing = function ( characterName, side, arm, forearm, hand, feathers, f
     hand = def( hand, true );
     feathers = def( feathers, 5 );
 
-    DuAE.beginUndoGroup("Create wing");
+    DuAE.beginUndoGroup(DuScriptUI.String.WING, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -565,10 +439,12 @@ Duik.Bone.wing = function ( characterName, side, arm, forearm, hand, feathers, f
         return doc.newWing( side, arm, forearm, hand, feathers );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.WING);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Snake_spine"] = "Duik.Bone.snakeSpine()";
@@ -625,7 +501,7 @@ Duik.Bone.fin = function ( characterName, side, fishbones, forceLink )
 
     fishbones = def( fishbones, 5 );
 
-    DuAE.beginUndoGroup("Create fin");
+    DuAE.beginUndoGroup(DuScriptUI.String.FIN, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -633,10 +509,12 @@ Duik.Bone.fin = function ( characterName, side, fishbones, forceLink )
         return doc.newFin( side, fishbones );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.FIN);
+
+    return bones;
 }
 
 Duik.CmdLib['Bone']["Fish_spine"] = "Duik.Bone.fishSpine()";
@@ -659,7 +537,7 @@ Duik.Bone.fishSpine = function ( characterName, head, spine, forceLink )
     head = def( head, true );
     spine = def( spine, 3 );
 
-    DuAE.beginUndoGroup("Create snake / worm spine");
+    DuAE.beginUndoGroup(DuScriptUI.String.SPINE, false);
     DuAEProject.setProgressMode(true);
 
     function limbCreator( doc )
@@ -667,10 +545,12 @@ Duik.Bone.fishSpine = function ( characterName, head, spine, forceLink )
         return doc.newFishSpine( head, spine );
     }
 
-    Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
+    var bones = Duik.Bone.createLimb( comp, limbCreator, characterName, forceLink );
 
     DuAEProject.setProgressMode(false);
-    DuAE.endUndoGroup();
+    DuAE.endUndoGroup(DuScriptUI.String.SPINE);
+
+    return bones;
 }
 
 /**

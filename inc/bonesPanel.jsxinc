@@ -249,15 +249,57 @@ function buildBonesUI( )
         var armButton = group.addButton(
             buttonName,
             w16_arm,
-            DuScriptUI.String.DUIK_ARM_TIP,
+            DuScriptUI.String.DUIK_ARM_TIP + '\n\n' + DuScriptUI.String.BONE_CREATION_OPTIONS_TIP,
             true, // Options
-            undefined, // localize
+            false, // localize
             undefined, // optionsWithoutButton
             DuScriptUI.String.CREATE // optionsButtonText
         );
 
         armButton.optionsPopup.build = function ()
         {
+            function createArm(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_ARM);
+
+                // Get options
+                var characterName = nameEdit.text;
+                var  t = DuOCO.LimbType.HOMINOID;
+                if (type == 'digitigrade') t = DuOCO.LimbType.DIGITIGRADE;
+                else if (type == 'plantigrade') t = DuOCO.LimbType.PLANTIGRADE;
+                else if (type == 'ungulate') t = DuOCO.LimbType.UNGULATE;
+                else if (type == 'arthropod') t = DuOCO.LimbType.ARTHROPOD;
+
+                var side = getSide(armSideSelector);
+                var location = getLocation(armLocationSelector);
+
+                var bones = Duik.Bone.arm(
+                    characterName,
+                    t,
+                    side,
+                    armShoulderButton.checked,
+                    armArmButton.checked,
+                    armForearmButton.checked,
+                    armHandButton.checked,
+                    armClawsButton.checked,
+                    location,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                // Set the side to the other for the next limb
+                if (side == DuOCO.Side.LEFT) armSideSelector.setCurrentIndex( 2 );
+                else if (side == DuOCO.Side.RIGHT) armSideSelector.setCurrentIndex( 1 );
+
+                DuAE.endUndoGroup();
+            };
+            
             var illustration;
             if (type == 'hominoid')
             {
@@ -322,35 +364,10 @@ function buildBonesUI( )
             armClawsButton.dim();
             if (type == 'hominoid') armClawsButton.visible = false;
 
-            armButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-                var  t = DuOCO.LimbType.HOMINOID;
-                if (type == 'digitigrade') t = DuOCO.LimbType.DIGITIGRADE;
-                else if (type == 'plantigrade') t = DuOCO.LimbType.PLANTIGRADE;
-                else if (type == 'ungulate') t = DuOCO.LimbType.UNGULATE;
-                else if (type == 'arthropod') t = DuOCO.LimbType.ARTHROPOD;
-
-                var side = getSide(armSideSelector);
-                var location = getLocation(armLocationSelector);
-
-                Duik.Bone.arm(
-                    characterName,
-                    t,
-                    side,
-                    armShoulderButton.checked,
-                    armArmButton.checked,
-                    armForearmButton.checked,
-                    armHandButton.checked,
-                    armClawsButton.checked,
-                    location
-                );
-
-                // Set the side to the other for the next limb
-                if (side == DuOCO.Side.LEFT) armSideSelector.setCurrentIndex( 2 );
-                else if (side == DuOCO.Side.RIGHT) armSideSelector.setCurrentIndex( 1 );
-            };
+            armButton.onClick = createArm;
+            armButton.onAltClick = function() { createArm(false, true); };
+            armButton.onCtrlClick = function() { createArm(true, false); };
+            armButton.onCtrlAltClick = function() { createArm(true, true); };
         }
     }
 
@@ -359,7 +376,7 @@ function buildBonesUI( )
         var legButton = group.addButton(
             DuScriptUI.String.LEG,
             w16_leg,
-            DuScriptUI.String.DUIK_LEG_TIP,
+            DuScriptUI.String.DUIK_LEG_TIP + '\n\n' + DuScriptUI.String.BONE_CREATION_OPTIONS_TIP,
             true, // Options
             undefined, // localize
             undefined, // optionsWithoutButton
@@ -368,6 +385,45 @@ function buildBonesUI( )
 
         legButton.optionsPopup.build = function ()
         {
+            function createLeg(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_LEG);
+
+                // Get options
+                var characterName = nameEdit.text;
+                var t = DuOCO.LimbType.HOMINOID;
+                if (type == 'plantigrade') t = DuOCO.LimbType.PLANTIGRADE;
+                if (type == 'digitigrade') t = DuOCO.LimbType.DIGITIGRADE;
+                else if (type == 'ungulate') t = DuOCO.LimbType.UNGULATE;
+                var side = getSide(legSideSelector);
+                var location = getLocation(legLocationSelector);
+
+                var bones = Duik.Bone.leg(
+                    characterName,
+                    t,
+                    side,
+                    legThighButton.checked,
+                    legCalfButton.checked,
+                    legFootButton.checked,
+                    legClawsButton.checked,
+                    location,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                // Set the side to the other for the next limb
+                if (side == DuOCO.Side.LEFT) legSideSelector.setCurrentIndex( 2 );
+                else if (side == DuOCO.Side.RIGHT) legSideSelector.setCurrentIndex( 1 );
+
+                DuAE.endUndoGroup();
+            };
+
             var illustration;
             if (type == 'hominoid')
             {
@@ -422,32 +478,10 @@ function buildBonesUI( )
             legClawsButton.textColor = DuColor.Color.LIGHT_PURPLE;
             legClawsButton.dim();
 
-            legButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-                var t = DuOCO.LimbType.HOMINOID;
-                if (type == 'plantigrade') t = DuOCO.LimbType.PLANTIGRADE;
-                if (type == 'digitigrade') t = DuOCO.LimbType.DIGITIGRADE;
-                else if (type == 'ungulate') t = DuOCO.LimbType.UNGULATE;
-                var side = getSide(legSideSelector);
-                var location = getLocation(legLocationSelector);
-
-                Duik.Bone.leg(
-                    characterName,
-                    t,
-                    side,
-                    legThighButton.checked,
-                    legCalfButton.checked,
-                    legFootButton.checked,
-                    legClawsButton.checked,
-                    location
-                );
-
-                // Set the side to the other for the next limb
-                if (side == DuOCO.Side.LEFT) legSideSelector.setCurrentIndex( 2 );
-                else if (side == DuOCO.Side.RIGHT) legSideSelector.setCurrentIndex( 1 );
-            };
+            legButton.onClick = createLeg;
+            legButton.onAltClick = function() { createLeg(false, true); };
+            legButton.onCtrlClick = function() { createLeg(true, false); };
+            legButton.onCtrlAltClick = function() { createLeg(true, true); };
         }   
     }
 
@@ -460,7 +494,7 @@ function buildBonesUI( )
         var spineButton = group.addButton(
             DuScriptUI.String.SPINE,
             w16_spine,
-            DuScriptUI.String.DUIK_SPINE_TIP,
+            DuScriptUI.String.DUIK_SPINE_TIP + '\n\n' + DuScriptUI.String.BONE_CREATION_OPTIONS_TIP,
             true, // Options
             undefined, // localize
             undefined, // optionsWithoutButton
@@ -469,6 +503,37 @@ function buildBonesUI( )
 
         spineButton.optionsPopup.build = function ()
         {
+            function createSpine(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_SPINE);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var neck = parseInt(spineNeckEdit.text);
+                if (isNaN(neck)) neck = numNeck;
+                var spine = parseInt(spineNumEdit.text);
+                if (isNaN(spine)) spine = numSpine;
+
+                var bones = Duik.Bone.spine(
+                    characterName,
+                    spineHeadButton.checked,
+                    neck,
+                    spine,
+                    spineHipsButton.checked, 
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                DuAE.endUndoGroup();
+            }
+
             var spineIllu = spineButton.optionsPanel.add('image', undefined, w128_human_spine.binAsString);
             spineIllu.alignment = ['center', 'top'];
 
@@ -510,24 +575,10 @@ function buildBonesUI( )
             spineHipsButton.setChecked(hips);
             spineHipsButton.dim();
 
-            spineButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var neck = parseInt(spineNeckEdit.text);
-                if (isNaN(neck)) neck = numNeck;
-                var spine = parseInt(spineNumEdit.text);
-                if (isNaN(spine)) spine = numSpine;
-
-                Duik.Bone.spine(
-                    characterName,
-                    spineHeadButton.checked,
-                    neck,
-                    spine,
-                    spineHipsButton.checked
-                );
-            };
+            spineButton.onClick = createSpine;
+            spineButton.onAltClick = function() { createSpine(false, true); };
+            spineButton.onCtrlClick = function() { createSpine(true, false); };
+            spineButton.onCtrlAltClick = function() { createSpine(true, true); };
         }
     }
 
@@ -537,7 +588,7 @@ function buildBonesUI( )
         var hairButton = group.addButton(
             DuScriptUI.String.HAIR,
             w16_hair_strand,
-            DuScriptUI.String.DUIK_HAIR_TIP,
+            DuScriptUI.String.DUIK_HAIR_TIP + '\n\n' + DuScriptUI.String.BONE_CREATION_OPTIONS_TIP,
             true, // Options
             undefined, // localize
             undefined, // optionsWithoutButton
@@ -546,6 +597,33 @@ function buildBonesUI( )
 
         hairButton.optionsPopup.build = function ()
         {
+            function createHair(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_HAIR);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var num = parseInt(hairEdit.text);
+                if (isNaN(num)) num = 3;
+
+                var bones = Duik.Bone.hair(
+                    characterName,
+                    num,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                DuAE.endUndoGroup();
+                
+            }
+
             var hairEdit = DuScriptUI.editText(
                 hairButton.optionsPanel,
                 '',
@@ -556,20 +634,11 @@ function buildBonesUI( )
                 false
             );
 
-            hairButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var num = parseInt(hairEdit.text);
-                if (isNaN(num)) num = 3;
-
-                Duik.Bone.hair(
-                    characterName,
-                    num
-                );
-            };
-        }       
+            hairButton.onClick = createHair;
+            hairButton.onAltClick = function() { createHair(false, true); };
+            hairButton.onCtrlClick = function() { createHair(true, false); };
+            hairButton.onCtrlAltClick = function() { createHair(true, true); };
+        }
     }
 
     function createTailButton( group )
@@ -586,6 +655,32 @@ function buildBonesUI( )
 
         tailButton.optionsPopup.build = function ()
         {
+            function createTail(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_TAIL);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var num = parseInt(tailEdit.text);
+                if (isNaN(num)) num = 3;
+
+                var bones = Duik.Bone.tail(
+                    characterName,
+                    num,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                DuAE.endUndoGroup();
+            }
+
             var tailIllu = tailButton.optionsPanel.add('image', undefined, w128_tail.binAsString);
             tailIllu.alignment = ['center', 'top'];
 
@@ -599,19 +694,10 @@ function buildBonesUI( )
                 false
             );
 
-            tailButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var num = parseInt(tailEdit.text);
-                if (isNaN(num)) num = 3;
-
-                Duik.Bone.tail(
-                    characterName,
-                    num
-                );
-            };
+            tailButton.onClick = createTail;
+            tailButton.onAltClick = function() { createTail(false, true); };
+            tailButton.onCtrlClick = function() { createTail(true, false); };
+            tailButton.onCtrlAltClick = function() { createTail(true, true); };
         }
     }
 
@@ -629,6 +715,43 @@ function buildBonesUI( )
 
         wingButton.optionsPopup.build = function ()
         {
+            function createWing(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_WING);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var side = getSide( wingSideSelector );
+
+                var num = parseInt(wingFeathersEdit.text);
+                if (isNaN(num)) num = 5;
+
+                var bones = Duik.Bone.wing(
+                    characterName,
+                    side,
+                    wingArmButton.checked,
+                    wingForearmButton.checked,
+                    wingHandButton.checked,
+                    num,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                // Set the side to the other for the next limb
+                if (side == DuOCO.Side.LEFT) wingSideSelector.setCurrentIndex( 2 );
+                else if (side == DuOCO.Side.RIGHT) wingSideSelector.setCurrentIndex( 1 );
+
+                DuAE.endUndoGroup();
+            };
+
+
             var wingIllu = wingButton.optionsPanel.add('image', undefined, w128_wing.binAsString);
             wingIllu.alignment = ['center', 'top'];
 
@@ -668,29 +791,10 @@ function buildBonesUI( )
             wingFeathersEdit.textColor = DuColor.Color.LIGHT_PURPLE;
             wingFeathersEdit.changed();
 
-            wingButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var side = getSide( wingSideSelector );
-
-                var num = parseInt(wingFeathersEdit.text);
-                if (isNaN(num)) num = 5;
-
-                Duik.Bone.wing(
-                    characterName,
-                    side,
-                    wingArmButton.checked,
-                    wingForearmButton.checked,
-                    wingHandButton.checked,
-                    num
-                );
-
-                // Set the side to the other for the next limb
-                if (side == DuOCO.Side.LEFT) wingSideSelector.setCurrentIndex( 2 );
-                else if (side == DuOCO.Side.RIGHT) wingSideSelector.setCurrentIndex( 1 );
-            };
+            wingButton.onClick = createWing;
+            wingButton.onAltClick = function() { createWing(false, true); };
+            wingButton.onCtrlClick = function() { createWing(true, false); };
+            wingButton.onCtrlAltClick = function() { createWing(true, true); };
         }
     }
 
@@ -708,6 +812,33 @@ function buildBonesUI( )
 
         fishSpineButton.optionsPopup.build = function ()
         {
+            function createFishSpine(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_FISH_SPINE);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var num = parseInt(fishEdit.text);
+                if (isNaN(num)) num = 3;
+
+                var bones =Duik.Bone.fishSpine(
+                    characterName,
+                    fishHeadButton.checked,
+                    num,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                DuAE.endUndoGroup();
+            };
+
             var fishHeadButton = DuScriptUI.checkBox(
                 fishSpineButton.optionsPanel, 
                 DuScriptUI.String.HEAD
@@ -726,21 +857,11 @@ function buildBonesUI( )
                 false
             );
 
-            fishSpineButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var num = parseInt(fishEdit.text);
-                if (isNaN(num)) num = 3;
-
-                Duik.Bone.fishSpine(
-                    characterName,
-                    fishHeadButton.checked,
-                    num
-                );
-            };
-        }  
+            fishSpineButton.onClick = createFishSpine;
+            fishSpineButton.onAltClick = function() { createFishSpine(false, true); };
+            fishSpineButton.onCtrlClick = function() { createFishSpine(true, false); };
+            fishSpineButton.onCtrlAltClick = function() { createFishSpine(true, true); };
+        };
     }
 
     function createFinButton( group )
@@ -757,6 +878,33 @@ function buildBonesUI( )
 
         finButton.optionsPopup.build = function ()
         {
+            function createFin(forceLink, randomColor) {
+                forceLink = def(forceLink, false);
+                randomColor = def(randomColor, false);
+
+                DuAE.beginUndoGroup(DuScriptUI.String.CREATE_FIN);
+
+                // Get options
+                var characterName = nameEdit.text;
+
+                var num = parseInt(finEdit.text);
+                if (isNaN(num)) num = 5;
+
+                var bones = Duik.Bone.fin(
+                    characterName,
+                    DuOCO.Side.NONE,
+                    num,
+                    forceLink
+                );
+
+                // Set the color
+                if (randomColor) {
+                    Duik.Bone.setColor( DuColor.random(), bones );
+                };
+
+                 DuAE.endUndoGroup();
+            };
+
             var finIllu = finButton.optionsPanel.add('image', undefined, w128_fin.binAsString);
             finIllu.alignment = ['center', 'top'];
 
@@ -770,20 +918,10 @@ function buildBonesUI( )
                 false
             );
 
-            finButton.onClick = function() 
-            {
-                // Get options
-                var characterName = nameEdit.text;
-
-                var num = parseInt(finEdit.text);
-                if (isNaN(num)) num = 5;
-
-                Duik.Bone.fin(
-                    characterName,
-                    DuOCO.Side.NONE,
-                    num
-                );
-            };
+            finButton.onClick = createFin;
+            finButton.onAltClick = function() { createFin(false, true); };
+            finButton.onCtrlClick = function() { createFin(true, false); };
+            finButton.onCtrlAltClick = function() { createFin(true, true); };
         }       
     }
 
@@ -950,6 +1088,33 @@ function buildBonesUI( )
     );
     customButton.optionsPopup.build = function ()
     {
+        function createCustom(forceLink, randomColor) {
+            forceLink = def(forceLink, false);
+            randomColor = def(randomColor, false);
+
+            DuAE.beginUndoGroup(DuScriptUI.String.CREATE_CUSTOM_ARMATURE);
+
+            // Get options
+            var num = parseInt( numCustomEdit.text );
+            if (isNaN(num)) num = 2;
+            if (num < 1) num = 1;
+            
+            var name = customNameEdit.text;
+            var characterName = nameEdit.text;
+            var side = getSide(customSideSelector);
+            var location = getLocation(customLocationSelector);
+
+            var bones = Duik.Bone.customLimb(num, name, characterName, side, location, forceLink);
+
+            // Set the color
+            if (randomColor) {
+                Duik.Bone.setColor( DuColor.random(), bones );
+            };
+
+            DuAE.endUndoGroup();
+        };
+            
+
         var customLocationSelector = createLocationSelector( customButton.optionsPanel );
         var customSideSelector = createSideSelector( customButton.optionsPanel );
         var numCustomGroup = DuScriptUI.group( customButton.optionsPanel );
@@ -972,20 +1137,10 @@ function buildBonesUI( )
             "Limb name"
         );
 
-        customButton.onClick = function()
-        {
-            // Get options
-            var num = parseInt( numCustomEdit.text );
-            if (isNaN(num)) num = 2;
-            if (num < 1) num = 1;
-            
-            var name = customNameEdit.text;
-            var characterName = nameEdit.text;
-            var side = getSide(customSideSelector);
-            var location = getLocation(customLocationSelector);
-
-            Duik.Bone.customLimb(num, name, characterName, side, location);
-        };
+        customButton.onClick = createCustom;
+        customButton.onAltClick = function() { createCustom(false, true); };
+        customButton.onCtrlClick = function() { createCustom(true, false); };
+        customButton.onCtrlAltClick = function() { createCustom(true, true); };
     }
 
     // Auto-Rig
