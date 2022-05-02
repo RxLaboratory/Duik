@@ -812,7 +812,7 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
     //parenting
     var spineRoot = null;
     if ( parentSpine.bones.length > 0 ) spineRoot =  parentSpine.bones[0];
-    if (toes)
+    if (toes && !footNull)
     {
         if (foot) toes.parent = foot;
         else if (tibia) toes.parent = tibia;
@@ -864,10 +864,21 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
     }
     if (footNull)
     {
-        footNull.parent = toesNull;
+        tip.parent = null;
+        toes.parent = null;
+        toesNull.parent = null;
+        footNull.parent = null;
+        if(heel) heel.parent = null;
+        foot.parent = null;
+        toes.parent = tip;
         toesNull.parent = tip;
-        if (type == DuOCO.LimbType.PLANTIGRADE || type == DuOCO.LimbType.HOMINOID) heel.parent = ctrl;
-        else if (type == DuOCO.LimbType.DIGITIGRADE) tip.parent = ctrl;
+        footNull.parent = toesNull;
+        foot.parent = toesNull;
+        if (type == DuOCO.LimbType.PLANTIGRADE || type == DuOCO.LimbType.HOMINOID) {
+            tip.parent = heel;
+            heel.parent = ctrl;
+        }
+        else if (type == DuOCO.LimbType.DIGITIGRADE) tip.parent = ctrl;//*/
     }
 
     // Rig!
@@ -891,12 +902,8 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
     }
     else if (footNull)
     {
-        //claws
-        Duik.Constraint.oneLayerIK(toes,undefined,tip, false);
         //leg
-        Duik.Constraint.twoLayerIK(femur,tibia,foot,footNull, false);
-        //foot
-        Duik.Constraint.oneLayerIK(foot,undefined,toesNull, false);
+        Duik.Constraint.twoLayerIK(femur,tibia,undefined,footNull, false);
 
         //add an IK effect on the controller
         var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
@@ -904,26 +911,11 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
         var ikCtrl = pe2.apply(ctrl);
         //the effect on the null of the foot
         var ikEffect = footNull.effect(pe2.matchName);
-        var ikFoot = toesNull.effect(pe1.matchName);
-        var ikToes = tip.effect(pe1.matchName);
         ikCtrl.name = ikEffect.name;
-        //link the properties
-        //The main IK
         //Set the "side" property
         ikCtrl( pe2.props["Side"].index ).setValue(ikEffect( pe2.props["Side"].index ).value);
         var ikEffectProp = new DuAEProperty( ikEffect );
         ikEffectProp.linkProperties(ikCtrl,true);
-        //the IK/FK Switches
-        var ikSwitch = new DuAEProperty( ikFoot( pe1.props["IK"].index ) )
-        ikSwitch.linkProperties( ikCtrl( pe2.props["IK / FK"].index ), true);
-        var fkExp = 'if (effect("' + ikFoot.name + '")(' + pe1.props["IK"].index + ').value) value;\n';
-        fkExp += 'else ';
-        var fkEnd = new DuAEProperty( ikCtrl( pe2.props["FK"]["End"].index ) );
-        fkExp += fkEnd.expressionLink( true );
-        fkExp += ';';
-        ikFoot( pe1.props["FK"].index ).expression = fkExp;
-        var ikToesSwitch = new DuAEProperty( ikToes( pe1.props["IK"].index ) );
-        ikToesSwitch.linkProperties( ikCtrl( pe2.props["IK / FK"].index ), true);
         //and re-setup the layers & needed data
         ikCtrl( pe2.props["Data"]["Layers"]["Upper"].index ).setValue(ikEffect( pe2.props["Data"]["Layers"]["Upper"].index ).value);
         ikCtrl( pe2.props["Data"]["Layers"]["Lower"].index ).setValue(ikEffect( pe2.props["Data"]["Layers"]["Lower"].index ).value);
@@ -944,21 +936,25 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
                 var footPos = DuAELayer.getWorldPos(foot);
                 right = (toesPos[0] - footPos[0]) > 0;
             }
-            
+
             var pe = Duik.PseudoEffect.FOOT_ROLL;
             var footCtrl = pe.apply(ctrl);
+
+            // Toes rotation
+            toes.transform.rotation.expression = DuAEExpression.Id.FOOT_ROLL + "\nthisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Toes"].index + ").value;";
+            // Tiptoe rotation            
             tip.transform.rotation.expression = DuAEExpression.Id.FOOT_ROLL + "\nthisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Tiptoe"].index + ");";
+            // Heel rotation
             var op  = right ? "<" : ">";
             heel.transform.rotation.expression = DuAEExpression.Id.FOOT_ROLL + "\n" +
                 "var ctrl = thisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Heel"].index + ");\n" +
                 "var roll = thisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Foot roll"].index + ");\n" +
                 "roll " + op + " 0 ? roll+ctrl : ctrl;";
+            // Foot roll
             op = right ? ">" : "<";
             toesNull.transform.rotation.expression = DuAEExpression.Id.FOOT_ROLL + "\n" +
                 "var ctrl = thisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Foot roll"].index + ");\n" +
                 "ctrl " + op + " 0 ? ctrl : 0;";
-            var ikToesEffect = tip.effect( pe1.matchName);
-            ikToesEffect( pe1.props["FK"].index ).expression = DuAEExpression.Id.FOOT_ROLL + "\nthisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Toes"].index + ");";
         }
         else if (type == DuOCO.LimbType.DIGITIGRADE)
         {
@@ -969,7 +965,8 @@ Duik.Rig.leg = function ( layers, parentSpine, customControllers )
                 "var ctrl = thisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(3);\n" +
                 "var tiptoe = thisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(1);\n" +
                 "ctrl-tiptoe;";
-            tip.effect( pe1.matchName )( pe1.props["FK"].index ).expression = DuAEExpression.Id.FOOT_ROLL + "\nthisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(2);";
+            // Toes rotation
+            toes.transform.rotation.expression = DuAEExpression.Id.FOOT_ROLL + "\nthisComp.layer(\"" + ctrl.name + "\").effect(\"" + footCtrl.name + "\")(" + pe.props["Claws"].index + ").value;";
         }
 
         // hide and lock
