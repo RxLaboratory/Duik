@@ -1526,7 +1526,7 @@ Duik.Animation.snapKeys = function() {
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.SNAP_KEYS);
-}
+};
 
 Duik.CmdLib['Animation']["Sync keys"] = "Duik.Animation.syncKeys()";
 /**
@@ -1562,7 +1562,7 @@ Duik.Animation.syncKeys = function() {
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.SYNC);
-}
+};
 
 Duik.CmdLib['Animation']["Sequence layers"] = "Duik.Animation.sequenceLayers()";
 /**
@@ -1613,7 +1613,7 @@ Duik.Animation.sequenceLayers = function(duration, moveLayers, useInPoints, reve
     }//*/
 
     DuAE.endUndoGroup(DuScriptUI.String.SEQUENCE);
-}
+};
 
 Duik.CmdLib['Animation']["Sequence keys"] = "Duik.Animation.sequenceKeys()";
 /**
@@ -1667,7 +1667,7 @@ Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
     }
 
     DuAE.endUndoGroup(DuScriptUI.String.SEQUENCE);
-}
+};
 
 Duik.CmdLib['Animation']["X-Sheet"] = "Duik.Animation.xSheet()";
 /**
@@ -1806,4 +1806,295 @@ Duik.Animation.xSheet = function( autoCompute ) {
     }
 
     DuAE.endUndoGroup(DuScriptUI.String.X_SHEET);
-}
+};
+
+Duik.CmdLib['Animation']["Snap IK"] = "Duik.Animation.snapIK()";
+/**
+ * Snaps the IK to the FK values.
+ * @param {Layer[]|DuList.<Layer>} [ctrls] The controllers to snap.
+ */
+Duik.Animation.snapIK = function( ctrls ) {
+    ctrls = def( ctrls, Duik.Controller.get());
+    ctrls = new DuList(ctrls);
+    if (ctrls.length() == 0) ctrls = new DuList( Duik.Controller.get(false) );
+    if (ctrls.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SNAP_IK, false);
+
+    // Find IKs
+    var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+    var p = pe.props;
+    ctrls.do(function(ctrl) {
+        var effect = ctrl.effect( pe.matchName );
+        // Handle the two layer IK first, if any
+        if (effect) {
+            // Already IK
+            if ( effect(p['IK / FK'].index).value == 1) return;
+
+            var comp = ctrl.containingComp;
+
+            // Get the layers
+            var lowerIndex = effect( p['Data']['Layers']['Lower'].index ).value;
+            var upperIndex = effect( p['Data']['Layers']['Upper'].index ).value;
+            // can't do
+            if (!lowerIndex || !upperIndex) return;
+
+            // Position of the controller
+            var goalIndex = effect( p['Data']['Layers']['Goal'].index ).value;
+            if (goalIndex) {
+                var goal = comp.layer(goalIndex);
+                var pos = DuAELayer.getWorldPos( goal );
+                // Set the position of the controller
+                var parent = ctrl.parent;
+                ctrl.parent = null;
+                var posProp = ctrl.transform.position;
+                if (posProp.dimensionsSeparated) {
+                    var xpos = new DuAEProperty(ctrl.transform.property('ADBE Position_0'));
+                    xpos.setValue(pos[0]);
+                    var ypos = new DuAEProperty(ctrl.transform.property('ADBE Position_1'));
+                    ypos.setValue(pos[1]);
+                }
+                else {
+                    posProp = new DuAEProperty(posProp);
+                    posProp.setValue(pos);
+                }
+                ctrl.parent = parent;
+                //fix goal rotation
+                var rot = goal.transform.rotation.value;
+                var goalParent = goal.parent;
+                while(goalParent) {
+                    rot += goalParent.transform.rotation.value;
+                    goalParent = goalParent.parent;
+                }
+                var rotProp = new DuAEProperty( ctrl.transform.rotation );
+                rotProp.setValue(rot);
+            }
+            else {
+                var lower = comp.layer(lowerIndex);
+                var pos = effect( p['Data']['Stretch data']['FK Goal relative position'].index ).value;
+                var parent = ctrl.parent;
+                ctrl.parent = lower;
+                var posProp = ctrl.transform.position;
+                if (posProp.dimensionsSeparated) {
+                    var xpos = new DuAEProperty(ctrl.transform.property('ADBE Position_0'));
+                    xpos.setValue(pos[0]);
+                    var ypos = new DuAEProperty(ctrl.transform.property('ADBE Position_1'));
+                    ypos.setValue(pos[1]);
+                }
+                else {
+                    posProp = new DuAEProperty(posProp);
+                    posProp.setValue(pos);
+                }
+                ctrl.parent = parent;
+            }
+
+            // Adjust side
+            var lowerFK = effect(p['FK']['Lower'].index).value;
+            var sideFX = new DuAEProperty( effect( p['Side'].index ) );
+            if (lowerFK < 0) sideFX.setValue(100);
+            else sideFX.setValue(-100);
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SNAP_IK);
+};
+
+Duik.CmdLib['Animation']["Snap FK"] = "Duik.Animation.snapFK()";
+/**
+ * Snaps the FK to the IK values.
+ * @param {Layer[]|DuList.<Layer>} [ctrls] The controllers to snap.
+ */
+Duik.Animation.snapFK = function( ctrls ) {
+    ctrls = def( ctrls, Duik.Controller.get());
+    ctrls = new DuList(ctrls);
+    if (ctrls.length() == 0) ctrls = new DuList( Duik.Controller.get(false) );
+    if (ctrls.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.SNAP_FK, false);
+
+    // Find a 2-layer IK
+    var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+    var p = pe.props;
+    ctrls.do(function(ctrl) {
+        var effect = ctrl.effect( pe.matchName );
+        if (!effect) return;
+        // Already FK
+        var ikfkProp = effect(p['IK / FK'].index);
+        if ( ikfkProp.value == 0) return;
+
+        var comp = ctrl.containingComp;
+
+        var ikRot = effect(p['Data']['Angles']['Upper angle'].index).value;
+
+        // Temporarilly set FK to get the offset on the upper part
+        var removeKey = false;
+        if (ikfkProp.numKeys > 0) {
+            removeKey = true;
+            if (ikfkProp.keyTime( ikfkProp.nearestKeyIndex(comp.time) ) == comp.time) removeKey = false;
+            ikfkProp.setValueAtTime( comp.time, 0);
+        }
+        else ikfkProp.setValue(0);
+
+        var fkRot = effect(p['Data']['Angles']['Upper angle'].index).value;
+
+        if (removeKey) ikfkProp.removeKey( ikfkProp.nearestKeyIndex(comp.time) );
+        else ikfkProp.setValue(1);
+
+        var newRot = fkRot - ikRot;
+
+        // Get the IK values, and set them to IK
+        var upperProp = new DuAEProperty( effect( p['FK']['Upper'].index ) );
+        var lowerProp = new DuAEProperty( effect( p['FK']['Lower'].index ) );
+        var endProp = new DuAEProperty( effect( p['FK']['End'].index ) );
+        upperProp.setValue( upperProp.value() - newRot );
+        lowerProp.setValue( effect(p['Data']['Angles']['Lower angle'].index ).value );
+        endProp.setValue( effect(p['Data']['Angles']['Goal angle'].index ).value );
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.SNAP_FK);
+};
+
+Duik.CmdLib['Animation']["Switch IK/FK"] = "Duik.Animation.switchIKFK()";
+/**
+ * Switches between IK and FK.
+ * @param {Layer[]|DuList.<Layer>} [ctrls] The controllers to switch.
+ * @param {bool} [addKeyframes=true] Whether to add keyframes on FK and IK properties to keep the switch at the current frame.
+ */
+Duik.Animation.switchIKFK = function( ctrls, addKeyframes ) {
+    addKeyframes = def(addKeyframes, true);
+    ctrls = def( ctrls, Duik.Controller.get());
+    ctrls = new DuList(ctrls);
+    if (ctrls.length() == 0) ctrls = new DuList( Duik.Controller.get(false) );
+    if (ctrls.length() == 0) return;
+
+    DuAE.beginUndoGroup(DuScriptUI.String.IK_FK_SWITCH, false);
+
+    // the IK effects
+    var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
+    var pe1 = Duik.PseudoEffect.ONE_LAYER_IK;
+    var p2 = pe2.props;
+    var p1 = pe1.props;
+    ctrls.do(function(ctrl) {
+        // Check if we're IK or FK
+        var effect = ctrl.effect(pe2.matchName);
+        var ik;
+        if (effect) ik = effect( p2['IK / FK'].index ).value;
+        else {
+            effect = ctrl.effect(pe1.matchName);
+            if (effect) ik = effect( p1['IK'].index ).value;
+            else return;
+        } 
+        
+        if (ik == 1) Duik.Animation.snapFK(ctrl);
+        else Duik.Animation.snapIK(ctrl);
+
+        // Switch all
+        var comp = ctrl.containingComp;
+        var effects = ctrl.property('ADBE Effect Parade');
+
+        // Start with 2-layer IK
+        var two = false;
+        for (var i = 1; i <= effects.numProperties; i++) {
+            var effect = effects(i);
+            if (effect.matchName != pe2.matchName) continue;
+            var ikfkProp = new DuAEProperty( effect( p2['IK / FK'].index ));
+            if (ikfkProp.value() != ik ) continue;
+            two = true;
+            ikfkProp.setValue( 1-ik );
+
+            if (addKeyframes) {
+                // If there's no keyframe before time, we need one
+                if (ikfkProp.numKeys() == 0) ikfkProp.setValueAtTime( ik, 0 );
+                else if (ikfkProp.keyTime(1) >= comp.time ) ikfkProp.setValueAtTime(ik, 0 );
+                // Add the current key
+                ikfkProp.setValueAtTime( 1-ik, comp.time );
+
+                if (ik == 0) {
+                    var sideFX = effect( p2['Side'].index );
+                    sideFX.setValueAtTime( comp.time, sideFX.value );
+
+                    var rot = ctrl.transform.rotation;
+                    rot.setValueAtTime(comp.time, rot.value);
+
+                    var pos = ctrl.transform.position;
+                    if (pos.dimensionsSeparated) {
+                        var xpos = ctrl.transform.property('ADBE Position_0');
+                        var ypos = ctrl.transform.property('ADBE Position_1');
+                        xpos.setValueAtTime(comp.time, xpos.value);
+                        ypos.setValueAtTime(comp.time, ypos.value);
+                    }
+                    else {
+                        pos.setValueAtTime(comp.time, pos.value);
+                    }
+                }
+                else {
+                    effect( p2['FK']['Upper'].index ).setValueAtTime(comp.time,effect( p2['FK']['Upper'].index ).value );
+                    effect( p2['FK']['Lower'].index ).setValueAtTime(comp.time, effect( p2['FK']['Lower'].index ).value );
+                    effect( p2['FK']['End'].index ).setValueAtTime(comp.time, effect( p2['FK']['End'].index ).value );
+                }
+            }
+        }
+
+        // And adjust 1-layer IK
+        var moved = false;
+        for (var i = 1; i <= effects.numProperties; i++) {
+            var effect = effects(i);
+            if (effect.matchName != pe1.matchName) continue;
+            var ikfkProp = new DuAEProperty( effect( p1['IK'].index ) );
+            if ( ikfkProp.value() != ik ) continue;
+            var layerIndex = effect( p1['Data']['Layer'].index ).value;
+            if (!layerIndex) continue;
+            var layer = comp.layer(layerIndex);
+            // Snap it !
+            // Keep the original rotation
+            var fkRot = layer.transform.rotation.value;
+
+            if (addKeyframes) ikfkProp.setValue( 1-ik );
+            else ikfkProp.setValueAtTime(1-ik, comp.time );
+
+            // Get the new rotation
+            var ikRot = layer.transform.rotation.value;
+
+            // We can't move the controller anymore,
+            // So adjust the FK value instead.
+            if (two || moved || ik == 1) {
+                var fkProp = new DuAEProperty( effect( p1['FK'].index ) );
+                if (addKeyframes) fkProp.setValueAtTime( fkProp.value() - ikRot + fkRot, comp.time );
+                else fkProp.setValue( fkProp.value() - ikRot + fkRot );
+                
+            }
+            else if (ik == 0) {
+                // Use a null to get the new coordinates
+                var no = DuAEComp.addNull( comp, 20, layer );
+                var n = DuAEComp.addNull( comp, 20, ctrl );
+                n.parent = no;
+                no.transform.rotation.setValue( fkRot - ikRot );
+                n.parent = ctrl.parent;
+                var pos = ctrl.transform.position;
+                var newPos = n.transform.position.value;
+                if (pos.dimensionsSeparated) {
+                    var xpos = new DuAEProperty( ctrl.transform.property('ADBE Position_0') );
+                    var ypos = new DuAEProperty( ctrl.transform.property('ADBE Position_1') );
+                    if (addKeyframes) {
+                        xpos.setValueAtTime(newPos[0], comp.time);
+                        ypos.setValueAtTime(newPos[1], comp.time);
+                    }
+                    else {
+                        xpos.setValue(newPos[0]);
+                        ypos.setValue(newPos[1]);
+                    }
+                }
+                else {
+                    pos = new DuAEProperty(pos);
+                    if (addKeyframes) pos.setValueAtTime(newPos, comp.time);
+                    else pos.setValue( newPos );
+                }
+                no.remove();
+                n.remove();
+                moved = true;
+            }
+        }
+    });
+
+    DuAE.endUndoGroup(DuScriptUI.String.IK_FK_SWITCH);
+};
