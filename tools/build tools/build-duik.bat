@@ -1,10 +1,10 @@
+@echo off
 cd ..
 cd ..
 del /s /q docs
 rmdir /s /q docs
 mkdir docs
-cd Duik_Docs
-cd src
+cd Duik_Docs\src
 mkdocs build
 cd ..
 cd docs
@@ -20,7 +20,7 @@ mkdir "output\Duik\Tools"
 mkdir "output\Duik\Help"
 mkdir "output\Duik_API"
 DuBuilder ..\..\inc\api.jsxinc -nobanner output\Duik_API\Duik_api.jsxinc
-DuBuilder ..\..\inc\api_all.jsxinc -nobanner -d jsdoc_conf.json output\Duik_API\DuAEF_Duik_api.jsxinc
+DuBuilder ..\..\inc\api_all.jsxinc -nobanner output\Duik_API\DuAEF_Duik_api.jsxinc
 DuBuilder "..\..\DuCop.jsx" -nobanner "output\Duik\ScriptUI Panels\DuCop.jsx"
 DuBuilder "..\..\Duik Angela.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Angela.jsx"
 DuBuilder "..\..\Duik Animation.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Animation.jsx"
@@ -40,21 +40,18 @@ xcopy /Y items\LICENSE.md "output\Duik_API\LICENSE.md"
 xcopy /Y items\LICENSE.txt "output\Duik\LICENSE.txt"
 xcopy /Y items\LICENSE.txt "output\Duik_API\LICENSE.txt"
 xcopy /Y items\README.txt "output\Duik\README.txt"
-xcopy /S /I /Y ..\..\docs output\Duik_API\docs
+xcopy /Y output\Duik_API\Duik_api.jsxinc ..\..\Duik_API\Duik_api.jsxinc
+xcopy /Y output\Duik_API\DuAEF_Duik_api.jsxinc ..\..\Duik_API\DuAEF_Duik_api.jsxinc
+cd ..
+cd ..
+cd Duik_API
+cd tools
+cmd /c build-doc.bat
+cd ..
+cd ..
+cd tools
+cd "build tools"
+xcopy /S /I /Y ..\..\Duik_API\docs output\Duik_API\docs
 xcopy /S /I /Y ..\..\Duik_Docs\docs output\Duik\Help
-cd output\Duik\Help
-del CNAME
-cd ..
-cd ..
-cd ..
-cd output\Duik_API\docs
-xcopy /Y Duik.html index.html
-cd ..
-cd ..
-cd ..
-cd ..
-cd ..
-cd docs
-xcopy /Y Duik.html index.html
-echo duik.rxlab.io > "CNAME"
+del output\Duik\Help\CNAME
 pause
