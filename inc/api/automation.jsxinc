@@ -3095,6 +3095,7 @@ Duik.Automation.walk = function( ctrls ) {
     var foot = 0;
     var neck = 0;
     var hand = 0;
+    var faceRight = true;
     var exp0 = DuAEExpression.Id.WALK_RUN_CYCLE + '\nvalue + ';
     var exp1 = 'thisComp.layer("' + mainControllerName + '").effect("' + effectName + '")("';
     var exp2 = '").value;';
@@ -3160,6 +3161,14 @@ Duik.Automation.walk = function( ctrls ) {
         layer.transform.rotation.expression = exp0 + exp1 + side + '.Foot rotation' + exp2;
 
         if (foot == 0) foot = DuAELayer.getWorldPos( layer );
+
+        // Detect the side
+        var pe = Duik.PseudoEffect.TWO_LAYER_IK;
+        var ikEffect = layer.effect(pe.matchName);
+        if (ikEffect) {
+            var side = ikEffect(pe.props['Side'].index).value;
+            if (side > 0) faceRight = false;
+        }
     }
 
     function rigArm(layer, side) {
@@ -3198,6 +3207,10 @@ Duik.Automation.walk = function( ctrls ) {
     }
 
     effect("Leg height (px)").setValue(leg);
+    if (!faceRight) {
+        effect("Walk speed").setValue(-100);
+        effect("Run speed").setValue(-100);
+    }
 
     DuAE.endUndoGroup(DuScriptUI.String.WALK_RUN_CYCLE);
 
