@@ -1,9 +1,6 @@
 @echo off
 cd ..
 cd ..
-del /s /q docs
-rmdir /s /q docs
-mkdir docs
 cd Duik_Docs\src
 mkdocs build
 cd ..
@@ -54,4 +51,6 @@ cd "build tools"
 xcopy /S /I /Y ..\..\Duik_API\docs output\Duik_API\docs
 xcopy /S /I /Y ..\..\Duik_Docs\docs output\Duik\Help
 del output\Duik\Help\CNAME
+del output\Duik_API\docs\CNAME
+del output\Duik_API\docs\404.md
 pause
