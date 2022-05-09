@@ -3959,14 +3959,36 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         else if (dim > 1) effect(axisId).setValue(axis);
     }
 
+    var peKeyMorph = Duik.PseudoEffect.KEY_MORPH_K;
+    function keyMorphProp( prop ) {
+        if (prop.matchName == peKeyMorph.matchName) return new DuAEProperty(prop.getProperty().property(4));
+        var p = prop.getProperty().parentProperty;
+        if (p.matchName == peKeyMorph.matchName) return prop;
+        return null;
+    }
+
     // Prepare the expression
+
+    var colorValFn = 	[ 'function getColorVal(col, axis) {',
+        '	if (axis == 1) return col[0];',
+        '	if (axis == 2) return col[1];',
+        '	if (axis == 3) return col[2];',
+        '	if (axis == 4) return col[3];',
+        '	var c = rgbToHsl(col);',
+        '	if (axis == 5) return c[0];',
+        '	if (axis == 6) return c[1];',
+        '	if (axis == 4) return c[2];',
+        '}',
+        ''
+    ].join('\n');
+
     var exp = [
         'var ctrlValue = ctrlLayer' + masterProp.expressionLink(false, false) + ';',
         'var ctrlEffect = ctrlLayer.effect("' + effect.name + '");',
         'var ctrlMin = ctrlEffect(' + minId + ').value;',
         'var ctrlMax = ctrlEffect(' + maxId + ').value;',
         'var result = value;',
-        'if (numKeys >= 2 && ctrlEffect.enabled)',
+        'if (numKeys >= 2 && ctrlEffect.active)',
         '{',
         'var useVelocity = ctrlEffect(1).value == 2;',
         'if (useVelocity) ctrlValue = ctrlValue.velocity;',
@@ -3978,18 +4000,9 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
     } else if (dim == 2 || dim == 3) {
         exp += 'var axis = ctrlEffect(' + axisId + ').value-1;\nctrlValue = ctrlValue[axis];\n'
     } else if (dim == 4) {
-        exp += 'var axis = ctrlEffect(' + axisId + ').value;\n' +
-            'if (axis == 1) ctrlValue = ctrlValue[0];\n' +
-            'else if (axis == 2) ctrlValue = ctrlValue[1];\n' +
-            'else if (axis == 3) ctrlValue = ctrlValue[2];\n' +
-            'else if (axis == 4) ctrlValue = ctrlValue[3];\n' +
-            'else \n' +
-            '{\n' +
-            'ctrlValue = rgbToHsl(ctrlValue);\n' +
-            'if (axis == 5) ctrlValue = ctrlValue[0];\n' +
-            'else if (axis == 6) ctrlValue = ctrlValue[1];\n' +
-            'else if (axis == 7) ctrlValue = ctrlValue[2];\n' +
-            '}';
+        exp += colorValFn +
+            'var axis = ctrlEffect(' + axisId + ').value;\n' +
+            'ctrlValue = getColorVal(ctrlValue, axis);\n';
     }
     exp += 'var t = 0;\n' +
         'var beginTime = key(1).time;\n' +
@@ -4004,15 +4017,142 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         '}\n' +
         'result = valueAtTime(t);\n' +
         '}\n' +
-        'result;';
+    'result;';
+
+    var kmExp1 = [
+        '// Connector effect',
+        'var ctrlValue = ctrlLayer' + masterProp.expressionLink(false, false) + ';',
+        'var ctrlEffect = ctrlLayer.effect("' + effect.name + '");',
+        'var ctrlMin = ctrlEffect(' + minId + ').value;',
+        'var ctrlMax = ctrlEffect(' + maxId + ').value;',
+        '// Key morph values'
+    ].join('\n');
+
+    var kmExp2 = [
+        DuAEExpression.Library.get([
+            'getNextKey',
+            'getPrevKey'
+        ]),
+        'function interpolate()',
+        '{',
+        '  if (!ctrlEffect.active) return 0;',
+        '  if (numMorphs == 0) return 0;',
+        '',
+        '  numMorphs--;',
+        '  var pK = getPrevKey(time, ctrlValue);',
+        '  var nK = getNextKey(time, ctrlValue);',
+        '',
+    ].join('\n');
+
+    if (masterProp.isAngle()) {
+        kmExp2 += '\nvar cValue = linear(ctrlValue.value % 360, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 2 || dim == 3) {
+        kmExp2 += '\nvar axis = ctrlEffect(' + axisId + ').value-1;\nvar cValue = linear(ctrlValue.value[axis], ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 4) {
+        kmExp2 += colorValFn +
+            '\nvar axis = ctrlEffect(' + axisId + ').value;\n' +
+            'var cValue = getColorVal(ctrlValue.value, axis);\n' +
+            'cValue = linear(cValue, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+    else {
+        kmExp2 += '\nvar cValue = linear(ctrlValue.value, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+
+    kmExp2 += '  cValue = cValue;\n' +
+        '  if (!pK || !nK) {\n' +
+        '    if (Math.round(cValue) == thisIndex) return 100;\n' +
+        '    else return 0;\n' +
+        '  }\n' +
+        '	var nValue = 0;\n' +
+        '	var pValue = 0;\n' +
+    '	if(nK) {';
+
+    if (masterProp.isAngle()) {
+        kmExp2 += '  nValue = linear(nK.value % 360, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 2 || dim == 3) {
+        kmExp2 += 'nValue = linear(nK.value[axis], ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 4) {
+        kmExp2 += colorValFn +
+            'nValue = getColorVal(nK.value, axis);\n' +
+            'nValue = linear(nValue, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+    else {
+        kmExp2 += '  nValue = linear(nK.value, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+    
+    kmExp2 += '    nValue = Math.round(nValue);\n' +
+        '  }\n' +
+    '	if(pK) {';
+
+    if (masterProp.isAngle()) {
+        kmExp2 += '  pValue = linear(pK.value % 360, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 2 || dim == 3) {
+        kmExp2 += 'pValue = linear(pK.value[axis], ctrlMin, ctrlMax, 0, numMorphs);\n';
+    } else if (dim == 4) {
+        kmExp2 += colorValFn +
+            'pValue = getColorVal(pK.value, axis);\n' +
+            'pValue = linear(pValue, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+    else {
+        kmExp2 += '  pValue = linear(pK.value, ctrlMin, ctrlMax, 0, numMorphs);\n';
+    }
+
+    kmExp2 += '    pValue = Math.round(pValue);\n' +
+        '  }\n' +
+        '\n' +
+        '  if (pValue != thisIndex && nValue != thisIndex) return 0;\n' +
+        '  if (pValue == nValue) return 100;\n' +
+        '\n' +
+        '  if (pValue == thisIndex && pValue < nValue)\n' +
+        '      return linear( cValue, nValue, pValue, 100, 0 );\n' +
+        '  if (pValue == thisIndex && pValue >= nValue)\n' +
+        '       return linear( cValue, pValue, nValue, 0, 100 );\n' +
+        '  if (pValue < nValue)\n' +
+        '      return linear( cValue, pValue, nValue, 0, 100 );\n' +
+        '  return linear( cValue, pValue, nValue, 100, 0 );\n' +
+        '}\n' +
+        '\n' +
+        'var result = value + interpolate();\n' +
+        '\n' +
+    'result;';
+
+    // Count key morphs
+    props = new DuList(props);
+    var kmProps = new DuList();
+    for (var i = props.length()-1; i >= 0; i--)
+    {
+        var kmP = keyMorphProp(new DuAEProperty(props.at(i)));
+        if (kmP) {
+            kmProps.pushUnique(undefined, kmP);
+            props.remove(i);
+        }
+    }
+
+    /*kmProps.sort(function(a, b) {
+        return a.getProperty().parentProperty.propertyIndex - b.getProperty().parentProperty.propertyIndex;
+    });*/
 
     // Set to the props
     var masterComp = masterLayer.containingComp;
     var comp = 'thisComp.';
-    props = new DuList(props);
+
     props.do(function(prop) {
         prop = new DuAEProperty(prop);
         if (!prop.riggable()) return;
+        // check if the current comp is the same than the comp containing the masterProperty
+        var childComp = prop.comp;
+        if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
+        else comp = 'thisComp.';
+        prop.setExpression(
+            DuAEExpression.Id.CONNECTOR + '\n' +
+            'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
+            exp,
+            false
+        );
+        if (prop.matchName == "ADBE Opacity") prop.layer.enabled = true;
+    });
+
+    kmProps.do(function(prop) {
         // check if the current comp is the same than the comp containing the masterProperty
         var childComp = prop.comp;
         if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
@@ -4021,10 +4161,12 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         prop.setExpression(
             DuAEExpression.Id.CONNECTOR + '\n' +
             'var ctrlLayer = ' + comp + 'layer("' + masterLayer.name + '");\n' +
-            exp,
+            kmExp1 +
+            '\nvar numMorphs = ' + kmProps.length() + ';\n' + 
+            'var thisIndex = ' + kmProps.current + ';\n' + 
+            kmExp2,
             false
         );
-        if (prop.matchName == "ADBE Opacity") prop.layer.enabled = true;
     });
 
     return effect;
