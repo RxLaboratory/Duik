@@ -284,6 +284,212 @@ function buildToolsPanelUI(tab) {
                     false
                 );
 
+                var itemSelector = DuScriptUI.selector(replaceGroup);
+                itemSelector.addButton({ text: DuScriptUI.String.EXPRESSIONS, image: w16_expression });
+                itemSelector.addButton({ text: DuScriptUI.String.TEXTS, image: w16_text });
+                itemSelector.addButton({ text: DuScriptUI.String.LAYERS, image: w16_layers });
+                itemSelector.addButton({ text: DuScriptUI.String.PROJECT_ITEMS, image: w16_items });
+                itemSelector.setCurrentIndex(0);
+                itemSelector.onChange = function() {
+                    expButton.visible = itemSelector.index == 2 || itemSelector.index == 3;
+                    compItemGroup.visible = itemSelector.index != 3;
+                    projectItemsGroup.visible = !compItemGroup.visible;
+                };
+
+                var itemMainGroup = DuScriptUI.group( replaceGroup, 'stacked');
+
+                var compItemGroup = DuScriptUI.group(itemMainGroup, 'column');
+                
+                var compSelector = DuScriptUI.selector( compItemGroup );
+                compSelector.addButton({ text: DuScriptUI.String.ACTIVE_COMPOSITION, image: w16_composition });
+                compSelector.addButton({ text: DuScriptUI.String.ALL_COMPOSITIONS, image: w16_compositions });
+                compSelector.setCurrentIndex(0);
+                compSelector.onChange = function() {
+                    layerSelector.visible = compSelector.index == 0;
+                };
+
+                var layerSelector = DuScriptUI.selector( compItemGroup );
+                layerSelector.addButton({ text: DuScriptUI.String.SELECTED_LAYERS, image: w16_selected_layers});
+                layerSelector.addButton({ text: DuScriptUI.String.ALL_LAYERS, image: w16_layers});
+                layerSelector.setCurrentIndex(1);
+
+                var projectItemsGroup = DuScriptUI.group( itemMainGroup, 'column');
+                projectItemsGroup.visible = false;
+
+                var itemTypeGroup = DuScriptUI.group( projectItemsGroup, 'row' );
+
+                var compButton = DuScriptUI.checkBox( itemTypeGroup, {
+                    text: '',
+                    image: w16_composition,
+                    helpTip: DuScriptUI.String.COMPOSITIONS
+                });
+                compButton.alignment = ['left', 'top'];
+                compButton.setChecked(true);
+
+                var footageButton = DuScriptUI.checkBox( itemTypeGroup, {
+                    text: '',
+                    image: w16_footage,
+                    helpTip: DuScriptUI.String.FOOTAGES
+                });
+                footageButton.alignment = ['left', 'top'];
+                footageButton.setChecked(true);
+
+                var folderButton = DuScriptUI.checkBox( itemTypeGroup, {
+                    text: '',
+                    image: w16_folder,
+                    helpTip: DuScriptUI.String.FOLDERS
+                });
+                folderButton.alignment = ['left', 'top'];
+                folderButton.setChecked(true);
+
+                var projectIemsSelector = DuScriptUI.selector( projectItemsGroup );
+                projectIemsSelector.addButton({ text:DuScriptUI.String.ALL_ITEMS, image: w16_items });
+                projectIemsSelector.addButton({ text:DuScriptUI.String.SELECTED_ITEMS, image: w16_selected_items });
+                projectIemsSelector.setCurrentIndex(0);
+
+                var caseButton = DuScriptUI.checkBox( replaceGroup, {
+                    text: DuScriptUI.String.CASE_SENSITIVE,
+                    image: w16_case
+                });
+                caseButton.setChecked(true);
+
+                var expButton = DuScriptUI.checkBox(replaceGroup, {
+                    text: DuScriptUI.String.UPDATE_EXPRESSIONS,
+                    image: w16_update_expression,
+                    helpTip: DuScriptUI.String.UPDATE_EXPRESSIONS_TIP
+                });
+                expButton.setChecked(true);
+                expButton.visible = false;
+
+                var searchEdit = DuScriptUI.editText( replaceGroup, {
+                    text: '',
+                    placeHolder: DuScriptUI.String.SEARCH
+                });
+                searchEdit.alignment = ['fill', 'top'];
+
+                var replaceEdit = DuScriptUI.editText( replaceGroup, {
+                    text: '',
+                    placeHolder: DuScriptUI.String.REPLACE
+                });
+                replaceEdit.alignment = ['fill', 'top'];
+
+                var validButton = DuScriptUI.button( replaceGroup, {
+                    text: DuScriptUI.String.SEARCH_AND_REPLACE,
+                    image: w16_search_replace,
+                    helpTip: DuScriptUI.String.SEARCH_AND_REPLACE_TIP,
+                    orientation: 'row',
+                    alignment: 'center'
+                });
+                validButton.alignment = ['fill', 'top'];
+                validButton.onClick = function() {
+                    var search = searchEdit.text;
+                    var replace = replaceEdit.text;
+                    if (search == replace) return;
+
+                    DuAE.beginUndoGroup( DuScriptUI.String.SEARCH_AND_REPLACE );
+                    app.beginSuppressDialogs();
+
+                    // Expressions
+                    if (itemSelector.index == 0) {
+                        // All comps
+                        if (compSelector.index == 1) {
+                            DuAEProject.replaceInExpressions( search, replace, caseButton.checked );
+                        }
+                        // Active comp
+                        else {
+                            DuAEComp.replaceInExpressions( search, replace, caseButton.checked, layerSelector.index == 0 )
+                        }
+                    }
+                    // Texts
+                    else if (itemSelector.index == 1) {
+                        // All comps
+                        if (compSelector.index == 1) {
+                            var items = new DuList(app.project.items);
+                            items.do(function(item) {
+                                if (!(item instanceof CompItem)) return;
+                                var layers = new DuList(item.layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    if (!(layer instanceof TextLayer)) return;
+                                    var source = layer.sourceText.value;
+                                    source.text = DuString.replace( source.text, search, replace, caseButton.checked);
+                                    layer.sourceText.setValue(source);
+                                });
+                            });
+                        }
+                        // Active comp
+                        else {
+                            var comp = DuAEProject.getActiveComp();
+                            if (comp) {
+                                var layers = [];
+                                if (layerSelector.index == 0) layers = comp.selectedLayers;
+                                else layers = comp.layers;
+                                layers = new DuList(layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    if (!(layer instanceof TextLayer)) return;
+                                    var source = layer.sourceText.value;
+                                    source.text = DuString.replace( source.text, search, replace, caseButton.checked);
+                                    layer.sourceText.setValue(source);
+                                });
+                            }
+                        }
+                    }
+                    // Layers
+                    else if (itemSelector.index == 2) {
+                        // All comps
+                        if (compSelector.index == 1) {
+                            var items = new DuList(app.project.items);
+                            items.do(function (comp) {
+                                if (!(comp instanceof CompItem)) return;
+                                var layers = new DuList(comp.layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    var oldName = layer.name;
+                                    layer.name = DuString.replace(oldName, search, replace, caseButton.checked);
+                                    if (expButton.checked) app.project.autoFixExpressions(oldName,layer.name);
+                                });
+                            });
+                        }
+                        // Active comp
+                        else {
+                            var comp = DuAEProject.getActiveComp();
+                            if (comp) {
+                                var layers = [];
+                                if (layerSelector.index == 0) layers = comp.selectedLayers;
+                                else layers = comp.layers;
+                                layers = new DuList(layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    var oldName = layer.name;
+                                    layer.name = DuString.replace(oldName, search, replace, caseButton.checked);
+                                    if (expButton.checked) app.project.autoFixExpressions(oldName,layer.name);
+                                });
+                            }
+                        }
+                    }
+                    // Items
+                    else if (itemSelector.index == 3) {
+                        var items = [];
+                        if (projectIemsSelector.index == 0) items = app.project.items;
+                        else items = app.project.selection;
+                        items = new DuList(items);
+                        
+                        items.do(function(item) {
+                            if (item instanceof CompItem && !compButton.checked) return;
+                            if (item instanceof FolderItem && !folderButton.checked) return;
+                            if (item instanceof FootageItem && !footageButton.checked) return;
+
+                            var oldName = item.name;
+                            item.name = DuString.replace(oldName, search, replace, caseButton.checked);
+                            if (expButton.checked) app.project.autoFixExpressions(oldName,item.name);
+                        });
+                    }
+
+
+                    app.endSuppressDialogs(false);
+                    DuAE.endUndoGroup();
+                };
 
                 DuScriptUI.showUI(replaceGroup);
             }
