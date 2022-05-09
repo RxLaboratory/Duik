@@ -1,16 +1,208 @@
 function buildCompSettingsPanel( container ) {
 
-    var widthGroup = addSetting(container, DuScriptUI.String.WIDTH);
+    var sizeGroup = DuScriptUI.group( container, 'row');
+
+    var sizeOptionsGroup = DuScriptUI.group( sizeGroup, 'column');
+
+    var sizeSettingsButton = DuScriptUI.button( sizeOptionsGroup, {
+        text: '',
+        helpTip: DuScriptUI.String.SIZE_SETTINGS_TIP,
+        image: DuScriptUI.Icon.OPTIONS
+    });
+    sizeSettingsButton.alignment = ['center', 'top'];
+
+    var sizeAnchorPopup = DuScriptUI.popUp( DuScriptUI.String.SIZE_SETTINGS );
+    sizeAnchorPopup.anchor = DuMath.Location.CENTER;
+    sizeAnchorPopup.build = function() {
+
+        function uncheckAll() {
+            tlButton.setChecked( false );
+            lButton.setChecked( false );
+            blButton.setChecked( false );
+            tButton.setChecked( false );
+            cButton.setChecked( false );
+            bButton.setChecked( false );
+            trButton.setChecked( false );
+            rButton.setChecked( false );
+            brButton.setChecked( false );
+        }
+        
+        var gridGroup = DuScriptUI.group(sizeAnchorPopup.content, 'row');
+        gridGroup.alignment = ['center', 'top'];
+        var column1 = DuScriptUI.group(gridGroup, 'column');
+        var column2 = DuScriptUI.group(gridGroup, 'column');
+        var column3 = DuScriptUI.group(gridGroup, 'column');
+
+        var tlButton = DuScriptUI.checkBox(
+            column1,
+            '',
+            w12_move_tl
+        );
+        tlButton.onClick = function() {
+            uncheckAll();
+            tlButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.TOP_LEFT;
+        };
+        var lButton = DuScriptUI.checkBox(
+            column1,
+            '',
+            w12_move_l
+        );
+        lButton.onClick = function() {
+            uncheckAll();
+            lButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.LEFT;
+        };
+        var blButton = DuScriptUI.checkBox(
+            column1,
+            '',
+            w12_move_bl
+        );
+        blButton.onClick = function() {
+            uncheckAll();
+            blButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.BOTTOM_LEFT;
+        };
+
+        var tButton = DuScriptUI.checkBox(
+            column2,
+            '',
+            w12_move_t
+        );
+        tButton.onClick = function() {
+            uncheckAll();
+            tButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.TOP;
+        };
+        var cButton = DuScriptUI.checkBox(
+            column2,
+            '',
+            w12_center
+        );
+        cButton.onClick = function() {
+            uncheckAll();
+            cButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.CENTER;
+        };
+        var bButton = DuScriptUI.checkBox(
+            column2,
+            '',
+            w12_move_b
+        );
+        bButton.onClick = function() {
+            uncheckAll();
+            bButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.BOTTOM;
+        };
+
+        var trButton = DuScriptUI.checkBox(
+            column3,
+            '',
+            w12_move_tr
+        );
+        trButton.onClick = function() {
+            uncheckAll();
+            trButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.TOP_RIGHT;
+        };
+        var rButton = DuScriptUI.checkBox(
+            column3,
+            '',
+            w12_move_r
+        );
+        rButton.onClick = function() {
+            uncheckAll();
+            rButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.RIGHT;
+        };
+        var brButton = DuScriptUI.checkBox(
+            column3,
+            '',
+            w12_move_br
+        );
+        brButton.onClick = function() {
+            uncheckAll();
+            brButton.setChecked(true);
+            sizeAnchorPopup.anchor = DuMath.Location.BOTTOM_RIGHT;
+        };
+
+        cButton.setChecked(true);
+    };
+    sizeAnchorPopup.tieTo(sizeSettingsButton);
+
+    var sizeLinkButton =  DuScriptUI.checkBox( sizeOptionsGroup, {
+        text: '',
+        helpTip: DuScriptUI.String.SIZE_LINK_TIP,
+        image: w12_constraints,
+        imageChecked: w12_unlink_chain
+    });
+    sizeLinkButton.alignment = ['left', 'center'];
+
+    var sizeValuesGroup = DuScriptUI.group( sizeGroup, 'column');
+
+    var widthGroup = addSetting(sizeValuesGroup, DuScriptUI.String.WIDTH);
+    widthGroup.onClick = function() {
+        if (heightGroup.checked) return;
+        var comp = DuAEProject.getSelectedComp();
+        if (!comp) return;
+        widthEdit.setText(comp.width);
+        heightEdit.setText(comp.height);
+    };
     var widthEdit = DuScriptUI.editText( widthGroup, {
         text: '1920',
         suffix: " px"
     });
+    widthEdit.onChange = function() {
+        if (sizeLinkButton.checked) return;
 
-    var heightGroup = addSetting(container, DuScriptUI.String.HEIGHT);
+        var width = parseInt(widthEdit.text);
+        if ( isNaN(width) ) return;
+        var prevWidth = parseInt( widthEdit.previousText );
+        if ( isNaN(prevWidth) ) return;
+        if (prevWidth == 0) return;
+
+        var height = parseInt(heightEdit.text);
+        if ( isNaN(height) ) return;      
+
+        heightEdit.freeze = true;
+
+        height = width * height / prevWidth;
+        heightEdit.setText( Math.round(height) );
+
+        heightEdit.freeze = false;
+    };
+
+    var heightGroup = addSetting(sizeValuesGroup, DuScriptUI.String.HEIGHT);
+    heightGroup.onClick = function() {
+        if (widthGroup.checked) return;
+        var comp = DuAEProject.getSelectedComp();
+        if (!comp) return;
+        heightEdit.setText(comp.height);
+        widthEdit.setText(comp.width);
+    };
     var heightEdit = DuScriptUI.editText( heightGroup, {
         text: '1080',
         suffix: " px"
-    });//*/
+    });
+    heightEdit.onChange = function() {
+        if (sizeLinkButton.checked) return;
+
+        var height = parseInt(heightEdit.text);
+        if ( isNaN(height) ) return;
+        var prevHeight = parseInt( heightEdit.previousText );
+        if ( isNaN(prevHeight) ) return;
+        if (prevHeight == 0) return;
+
+        var width = parseInt(widthEdit.text);
+        if ( isNaN(width) ) return;
+
+        widthEdit.freeze = true;
+
+        width = height * width / prevHeight;
+        widthEdit.setText( Math.round(width) );
+
+        widthEdit.freeze = false;
+    };
 
     var parGroup = addSetting(container, DuScriptUI.String.PIXEL_ASPECT);
     var parEdit = DuScriptUI.selector( parGroup );
@@ -80,17 +272,81 @@ function buildCompSettingsPanel( container ) {
     var mbGroup = addSetting(container, DuScriptUI.String.MOTION_BLUR);
     var mbEdit = DuScriptUI.checkBox( mbGroup, { text: DuScriptUI.String.ENABLED } );
 
-    var shutterAngleGroup = addSetting(container, DuScriptUI.String.SHUTTER_ANGLE);
+    var shutterGroup = DuScriptUI.group(container, 'row');
+
+    var shutterLinkButton =  DuScriptUI.checkBox( shutterGroup, {
+        text: '',
+        helpTip: DuScriptUI.String.SIZE_LINK_TIP,
+        image: w12_constraints,
+        imageChecked: w12_unlink_chain
+    });
+    shutterLinkButton.alignment = ['left', 'center'];
+
+    var shutterValuesGroup = DuScriptUI.group( shutterGroup, 'column' );
+
+    var shutterAngleGroup = addSetting(shutterValuesGroup, DuScriptUI.String.SHUTTER_ANGLE);
+    shutterAngleGroup.onClick = function() {
+        if (shutterPhaseGroup.checked) return;
+        var comp = DuAEProject.getSelectedComp();
+        if (!comp) return;
+        shutterAngleEdit.setText(comp.shutterAngle);
+        shutterPhaseEdit.setText(comp.shutterPhase);
+    }
     var shutterAngleEdit = DuScriptUI.editText( shutterAngleGroup, {
         text: '90',
         suffix: " \u00B0"
     });
+    shutterAngleEdit.onChange = function() {
+        if (shutterLinkButton.checked) return;
 
-    var shutterPhaseGroup = addSetting(container, DuScriptUI.String.SHUTTER_PHASE);
+        var angle = parseInt(shutterAngleEdit.text);
+        if ( isNaN(angle) ) return;
+        var prevAngle = parseInt( shutterAngleEdit.previousText );
+        if ( isNaN(prevAngle) ) return;
+        if (prevAngle == 0) return;
+
+        var phase = parseInt(shutterPhaseEdit.text);
+        if ( isNaN(phase) ) return;      
+
+        shutterPhaseEdit.freeze = true;
+
+        phase = angle * phase / prevAngle;
+        shutterPhaseEdit.setText( Math.round(phase) );
+
+        shutterPhaseEdit.freeze = false;
+    };
+
+    var shutterPhaseGroup = addSetting(shutterValuesGroup, DuScriptUI.String.SHUTTER_PHASE);
+    shutterPhaseGroup.onClick = function() {
+        if (shutterAngleGroup.checked) return;
+        var comp = DuAEProject.getSelectedComp();
+        if (!comp) return;
+        shutterAngleEdit.setText(comp.shutterAngle);
+        shutterPhaseEdit.setText(comp.shutterPhase);
+    }
     var shutterPhaseEdit = DuScriptUI.editText( shutterPhaseGroup, {
         text: '-45',
         suffix: " \u00B0"
     });
+    shutterPhaseEdit.onChange = function() {
+        if (shutterLinkButton.checked) return;
+
+        var phase = parseInt(shutterPhaseEdit.text);
+        if ( isNaN(phase) ) return;
+        var prevPhase = parseInt( shutterPhaseEdit.previousText );
+        if ( isNaN(prevPhase) ) return;
+        if (prevPhase == 0) return;
+
+        var angle = parseInt(shutterAngleEdit.text);
+        if ( isNaN(angle) ) return;
+
+        shutterAngleEdit.freeze = true;
+
+        angle = phase * angle / prevPhase;
+        shutterAngleEdit.setText( Math.round(angle) );
+
+        shutterAngleEdit.freeze = false;
+    };
 
     var shutterSamplesGroup = addSetting(container, DuScriptUI.String.SAMPLES);
     var shutterSamplesEdit = DuScriptUI.editText( shutterSamplesGroup, {
@@ -127,6 +383,8 @@ function buildCompSettingsPanel( container ) {
             h = parseInt(h);
             if (!isNaN(h) && h >= 4) options.height = h;
         }
+
+        options.anchor = sizeAnchorPopup.anchor;
 
         if (parGroup.checked) options.pixelAspect = parEdit.currentData;
 
