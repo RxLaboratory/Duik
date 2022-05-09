@@ -32,8 +32,6 @@ function buildToolsPanelUI(tab) {
     );
 
     compTab.build = function() {
-        this.margins = 3;
-
         function hideAllGroups() {
             compGroup.visible = false;
             compSettingsGroup.visible = false;
@@ -80,6 +78,226 @@ function buildToolsPanelUI(tab) {
         var compSettingsGroup = DuScriptUI.group(mainGroup, 'column');
         compSettingsGroup.visible = false;
         compSettingsGroup.built = false;
+    };
+
+    textTab.build = function() {
+        function hideAllGroups() {
+            textGroup.visible = false;
+            renameGroup.visible = false;
+            replaceGroup.visible = false;
+        }
+
+        var mainGroup = DuScriptUI.group(this, 'stacked');
+        mainGroup.alignment = ['fill', 'fill'];
+
+        var textGroup = DuScriptUI.group(mainGroup, 'column');
+        if (uiMode >= 2) textGroup.spacing = 3;
+
+        var renameButton = DuScriptUI.button( textGroup, {
+            text: DuScriptUI.String.RENAME + '...',
+            helpTip: DuScriptUI.String.RENAME_TIP,
+            image: w16_rename,
+            localize: false
+        });
+        renameButton.onClick = function() {
+            if (!renameGroup.built) {
+
+                function generateNewName(oldName,i)
+                {
+                    var prefix = prefixEdit.text;
+                    var suffix = suffixEdit.text;
+
+                    var newName = nameEdit.text;
+                    if (newName == '')
+                    {
+                        newName = oldName;
+                        var removeFirst = parseInt(removeFEdit.text);
+                        var removeLast = parseInt(removeLEdit.text);
+                        if (removeFGroup.checked && removeFirst > 0)
+                        {
+                            newName = newName.substr(removeFirst);
+                        }
+                        if (removeLGroup.checked && removeLast > 0)
+                        {
+                            newName = newName.substring(0,newName.length-removeLast);
+                        }
+                    }
+                    var newName = prefix + newName + suffix;
+
+                    var num = parseInt(numberEdit.text);
+                    if (! isNaN(num) && numberGroup.checked)
+                    {
+                        newName += (num + i);
+                    }
+
+                    return newName;
+                }
+
+                createSubPanel(
+                    renameGroup,
+                    DuScriptUI.String.RENAME,
+                    textGroup,
+                    false
+                );
+
+                var itemSelector = DuScriptUI.selector(renameGroup);
+                itemSelector.addButton({ text: DuScriptUI.String.LAYERS, image: w16_layers });
+                itemSelector.addButton({ text: DuScriptUI.String.PUPPET_PINS, image: w16_pin });
+                itemSelector.addButton({ text: DuScriptUI.String.PROJECT_ITEMS, image: w16_items });
+                itemSelector.setCurrentIndex(0);
+
+                var expButton = DuScriptUI.checkBox(renameGroup, {
+                    text: DuScriptUI.String.UPDATE_EXPRESSIONS,
+                    image: w16_update_expression,
+                    helpTip: DuScriptUI.String.UPDATE_EXPRESSIONS_TIP
+                });
+                expButton.setChecked(true);
+
+                var removeFGroup = addSetting( renameGroup, DuScriptUI.String.REMOVE_THE_FIRST_DIGITS);
+                var removeFEdit = DuScriptUI.editText( removeFGroup, {
+                    text: '001',
+                    suffix: ' ' + DuScriptUI.String.DIGITS + '.',
+                    localize: false
+                });
+
+                var removeLGroup = addSetting( renameGroup, DuScriptUI.String.REMOVE_THE_LAST_DIGITS);
+                var removeLEdit = DuScriptUI.editText( removeLGroup, {
+                    text: '001',
+                    suffix: ' ' + DuScriptUI.String.DIGITS + '.',
+                    localize: false
+                });
+
+                var numberGroup = addSetting( renameGroup, DuScriptUI.String.NUMBER_FROM);
+                var numberEdit = DuScriptUI.editText( numberGroup, {
+                    text: '001'
+                });
+
+                var newNameGroup = DuScriptUI.group(renameGroup, 'row');
+
+                var prefixEdit = DuScriptUI.editText( newNameGroup, {
+                    text: '',
+                    placeHolder: DuScriptUI.String.PREFIX + '_',
+                    localize: false
+                });
+                prefixEdit.alignment = ['fill', 'fill'];
+
+                var nameEdit = DuScriptUI.editText( newNameGroup, {
+                    text: '',
+                    placeHolder: DuScriptUI.String.NAME
+                });
+                nameEdit.alignment = ['fill', 'fill'];
+
+                var suffixEdit = DuScriptUI.editText( newNameGroup, {
+                    text: '',
+                    placeHolder: '_' + DuScriptUI.String.SUFFIX,
+                    localize: false
+                });
+                suffixEdit.alignment = ['fill', 'fill'];
+
+                var validButton = DuScriptUI.button( renameGroup, {
+                    text: DuScriptUI.String.RENAME,
+                    image: w16_rename,
+                    helpTip: DuScriptUI.String.RENAME_TIP,
+                    orientation: 'row',
+                    alignment: 'center'
+                });
+                validButton.alignment = ['fill', 'top'];
+                validButton.onClick = function() {
+                    if (itemSelector.index == 0) {
+                        var comp = DuAEProject.getActiveComp();
+                        if (!comp) return;
+                        var layers = comp.selectedLayers;
+                        if (layers.length == 0) return;
+
+                        DuAE.beginUndoGroup(DuScriptUI.String.RENAME);
+                        app.beginSuppressDialogs();
+
+                        layers = new DuList(layers);
+                        layers.do(function (layer) {
+                            var oldName = layer.name;
+                            var newName = generateNewName(oldName, layers.current);
+
+                            layer.name = newName;
+                            if (expButton.checked) app.project.autoFixExpressions(oldName,newName);
+                        });
+
+                        app.endSuppressDialogs(false);
+                        DuAE.endUndoGroup();
+                    }
+                    else if (itemSelector.index == 1) {
+                        var props = DuAEComp.getSelectedProps('ADBE FreePin3 PosPin Atom');
+                        if (props.length == 0) return;
+
+                        DuAE.beginUndoGroup(DuScriptUI.String.RENAME);
+                        app.beginSuppressDialogs();
+
+                        props = new DuList(props);
+                        props.do(function(prop) {
+                            var oldName = prop.getProperty().name;
+                            var newName = generateNewName(oldName,props.current);
+                            prop.getProperty().name = newName;
+                            if (expButton.checked) app.project.autoFixExpressions(oldName,newName);
+                        });
+
+                        app.endSuppressDialogs(false);
+                        DuAE.endUndoGroup();
+                    }
+                    else {
+                        var items = app.project.selection;
+                        if (items.length == 0) return;
+
+                        DuAE.beginUndoGroup(DuScriptUI.String.RENAME);
+                        app.beginSuppressDialogs();
+
+                        items = new DuList(items);
+                        items.do(function (item)
+                        {
+                            var oldName = item.name;
+                            var newName = generateNewName(oldName,items.current);
+                            item.name = newName;
+                            if (expButton.checked) app.project.autoFixExpressions(oldName,newName);
+                        });
+
+                        app.endSuppressDialogs(false);
+                        DuAE.endUndoGroup();
+                    }
+                };
+
+                DuScriptUI.showUI(renameGroup);
+            }
+            hideAllGroups();
+            renameGroup.visible = true;
+        };
+
+        var replaceButton = DuScriptUI.button( textGroup, {
+            text: DuScriptUI.String.SEARCH_AND_REPLACE + '...',
+            helpTip: DuScriptUI.String.SEARCH_AND_REPLACE_TIP,
+            image: w16_search_replace,
+            localize: false
+        });
+        replaceButton.onClick = function() {
+            if (!replaceGroup.built) {
+                createSubPanel(
+                    replaceGroup,
+                    DuScriptUI.String.SEARCH_AND_REPLACE,
+                    textGroup,
+                    false
+                );
+
+
+                DuScriptUI.showUI(replaceGroup);
+            }
+            hideAllGroups();
+            replaceGroup.visible = true;
+        };
+
+        var renameGroup = DuScriptUI.group(mainGroup, 'column');
+        renameGroup.visible = false;
+        renameGroup.built = false;
+
+        var replaceGroup = DuScriptUI.group(mainGroup, 'column');
+        replaceGroup.visible = false;
+        replaceGroup.built = false;
     }
 
     devTab.build = function() {
@@ -92,7 +310,6 @@ function buildToolsPanelUI(tab) {
         }
 
         var mainGroup = DuScriptUI.group(this, 'stacked');
-        mainGroup.margins = 3;
         mainGroup.alignment = ['fill', 'fill'];
 
         var devGroup = DuScriptUI.group(mainGroup, 'column');
