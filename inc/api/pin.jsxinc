@@ -598,6 +598,23 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
                 pinLayer = Duik.Pin.create( comp, Duik.Pin.Type.VERTEX );
                 pinLayer.name = pinName;
             }
+
+			// Check if there's a lock tangent effect
+			var effects = pinLayer.property('ADBE Effect Parade');
+			var lockEffect = null;
+			for (var j = 1; j <= effects.numProperties; j++) {
+				var fx = effects.property(j);
+				if (fx.matchName == 'ADBE Checkbox Control' && fx.name.indexOf(DuScriptUI.String.LOCK_TANGENTS) >= 0) {
+					lockEffect = fx;
+					break;
+				}
+			}
+
+			if (lockEffect == null) {
+				lockEffect = effects.addProperty('ADBE Checkbox Control');
+				lockEffect.name = DuScriptUI.String.LOCK_TANGENTS;
+				lockEffect(1).setValue(1);
+			}
             
             effect( vertexLayerIndex ).setValue(pinLayer.index);
 			pinLayer.position.setValue(vertices[i]);
@@ -612,10 +629,40 @@ Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
 
 				if (pinLayerOut === null)
 				{
-					var pinLayerOut = Duik.Pin.create(comp, Duik.Pin.Type.TANGENT);
+					var pinLayerOut = Duik.Pin.create(comp, Duik.Pin.Type.TANGENT, true);
 					pinLayerOut.parent = pinLayer;
 					pinLayerOut.name = pinNameOut;
 					pinLayerOut.position.setValue(outTangents[i]);
+
+					// Add the position expression
+					pinLayerOut.transform.position.expression = [ DuAEExpression.Id.PIN,
+						'var result = value;',
+						'// The parent should be the vertex',
+						'if (hasParent) {',
+						'	var locked = parent.effect("' + lockEffect.name + '")(1).value;',
+						'	// The other pin must be the layer just above',
+						'	if (locked && index > 2 && parent.index != index - 1) {',
+						'		var other = thisComp.layer(index - 1);',
+						'		if (other.hasParent && other.parent.index == parent.index)',
+						'			result = -other.transform.position;',
+						'	}',
+						'}',
+						'result;'
+						].join('\n');
+					pinLayerOut.transform.opacity.expression = [ DuAEExpression.Id.PIN,
+						'var result = value;',
+						'// The parent should be the vertex',
+						'if (hasParent) {',
+						'	var locked = parent.effect("' + lockEffect.name + '")(1).value;',
+						'	// The other pin must be the layer just above',
+						'	if (locked && index > 2 && parent.index != index - 1) {',
+						'		var other = thisComp.layer(index - 1);',
+						'		if (other.hasParent && other.parent.index == parent.index)',
+						'			result = 0;',
+						'	}',
+						'}',
+						'result;'
+						].join('\n');
 				}
 
 				if (pinLayerIn === null)
