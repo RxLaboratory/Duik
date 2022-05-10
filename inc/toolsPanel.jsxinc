@@ -203,6 +203,7 @@ function buildToolsPanelUI(tab) {
                 });
                 validButton.alignment = ['fill', 'top'];
                 validButton.onClick = function() {
+                    // Layers
                     if (itemSelector.index == 0) {
                         var comp = DuAEProject.getActiveComp();
                         if (!comp) return;
@@ -224,9 +225,28 @@ function buildToolsPanelUI(tab) {
                         app.endSuppressDialogs(false);
                         DuAE.endUndoGroup();
                     }
+                    // Pins
                     else if (itemSelector.index == 1) {
                         var props = DuAEComp.getSelectedProps('ADBE FreePin3 PosPin Atom');
-                        if (props.length == 0) return;
+                        if (props.length == 0) {
+                            // Try to find puppet pins on the first selected layer, if single
+                            var layers = DuAEComp.getSelectedLayers();
+                            if (layers.length != 1) return;
+                            var layer = layers[0];
+                            // Find puppet effects
+                            var effects = layer.property('ADBE Effect Parade');
+                            for(var i = 1; i <= effects.numProperties; i++) {
+                                var effect = effects.property(i);
+                                if (effect.matchName != 'ADBE FreePin3') continue;
+                                var meshGroup = effect.property("ADBE FreePin3 ARAP Group").property("ADBE FreePin3 Mesh Group");
+                                for (var j = 1; j <= meshGroup.numProperties; j++) {
+                                    var pins = meshGroup.property(j).property("ADBE FreePin3 PosPins");
+                                    for (var k = 1; k <= pins.numProperties; k++) {
+                                        props.push(new DuAEProperty(pins.property(k)));
+                                    }
+                                }
+                            }
+                        }
 
                         DuAE.beginUndoGroup(DuScriptUI.String.RENAME);
                         app.beginSuppressDialogs();
@@ -242,6 +262,7 @@ function buildToolsPanelUI(tab) {
                         app.endSuppressDialogs(false);
                         DuAE.endUndoGroup();
                     }
+                    // Project Items
                     else {
                         var items = app.project.selection;
                         if (items.length == 0) return;
