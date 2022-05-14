@@ -753,21 +753,26 @@ Duik.CmdLib['Bone']["Bake"] = "Duik.Bone.bake()";
 Duik.CmdLib['Bone']["Bake_Keep_envelops"] = "Duik.Bone.bake( false )";
 /**
  * Bakes the appearance of the selected bones to improve performance by removing appearance-only expressions and effects.
- * @param {Boolean} [bakeEnvelop=true] - Set to false to keep the envelops dynamic
+ * @param {Boolean} [bakeBones=true] - Set to false to keep the bone display
+ * @param {Boolean} [bakeEnvelop=true] - Set to false to keep the envelop settings
+ * @param {Boolean} [bakeNoodles=true] - Set to false to keep all noodles even if they're hidden
  * @param {Layer[]|DuList.<Layer>|Layer} [layers] - The layers to bake; will use selected layers from the current comp if omitted.
  */
-Duik.Bone.bake = function ( bakeEnvelop, layers )
+Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
     if( layers.isEmpty() ) return;
 
+    bakeBones = def(bakeBones, true);
     bakeEnvelop = def(bakeEnvelop, true);
+    bakeNoodles = def(bakeNoodles, true);
 
     DuAE.beginUndoGroup(DuScriptUI.String.BAKE_BONES, false);
 
     var pe = Duik.PseudoEffect.BONE;
     var peE = Duik.PseudoEffect.BONE_ENVELOP;
+    var peN = Duik.PseudoEffect.BONE_NOODLE;
 
     DuScriptUI.progressBar.addMax( layers.length() );
 
@@ -788,50 +793,71 @@ Duik.Bone.bake = function ( bakeEnvelop, layers )
         {
             return exp.indexOf( DuAEExpression.Id.BONE_ENVELOP ) == 0;
         }
+
+        function isBoneNoodleExpression( exp )
+        {
+            return exp.indexOf( DuAEExpression.Id.BONE_NOODLE ) == 0;
+        }
         
         // remove expressions
-        var mainGroup = layer("ADBE Root Vectors Group").property('Bone');
-        if (mainGroup)
-        {
-            var subGroup = mainGroup.content("Target");
-            if (subGroup)
+        if (bakeBones) {
+            var boneGroup = layer("ADBE Root Vectors Group").property('Bone');
+            if (boneGroup)
             {
-                var groupInfo = new DuAEProperty( subGroup );
-                groupInfo.removeExpression( isBoneExpression );
+                var subGroup = boneGroup.content("Target");
+                if (subGroup)
+                {
+                    var groupInfo = new DuAEProperty( subGroup );
+                    groupInfo.removeExpression( isBoneExpression );
+                }
+                var subGroup = boneGroup.content("Display");
+                if (subGroup)
+                {
+                    var groupInfo = new DuAEProperty( subGroup );
+                    groupInfo.removeExpression( isBoneExpression );
+                }
             }
-            var subGroup = mainGroup.content("Display");
-            if (subGroup)
-            {
-                var groupInfo = new DuAEProperty( subGroup );
-                groupInfo.removeExpression( isBoneExpression );
-            }
+            // remove transform
+            var transform = new DuAEProperty( boneGroup.transform );
+            transform.removeExpression( isBoneExpression );
+
+            // remove effect
+            var effect = layer.effect(pe.matchName);
+            if (effect) effect.remove();
+
         }
-
-        // remove effect
-        var effect = layer.effect(pe.matchName);
-        if (effect) effect.remove();
-
-        if ( !bakeEnvelop ) return;
-
+        
         // Same for envelop
-
-        if (mainGroup)
-        {
-            var subGroup = mainGroup.content("Envelop");
-            if (subGroup)
+        if (bakeEnvelop) {
+            var envelopGroup = layer("ADBE Root Vectors Group").property('Envelop');
+            if (envelopGroup)
             {
-                var groupInfo = new DuAEProperty( subGroup );
+                var groupInfo = new DuAEProperty( envelopGroup );
                 groupInfo.removeExpression( isBoneEnvelopExpression );
             }
+            // remove transform
+            var transform = new DuAEProperty( envelopGroup.transform );
+            transform.removeExpression( isBoneEnvelopExpression );
+
+            // remove effect
+            var effect = layer.effect(peE.matchName);
+            if (effect) effect.remove();
         }
 
-        // remove effect
-        var effect = layer.effect(peE.matchName);
-        if (effect) effect.remove();
+        // And noodles      
+        if (bakeNoodles) {
+            var effect = layer.effect(peN.matchName);
+            var bake = false;
+            if (!effect) bake = true;
+            if (!bake && !effect.active) bake = true;
 
-        // remove lookat
-        var rotInfo = new DuAEProperty( mainGroup.transform.rotation );
-        rotInfo.removeExpression();
+            if (bake) {
+                var noodleGroup = layer("ADBE Root Vectors Group").property('Noodle');
+                if (noodleGroup) noodleGroup.remove();
+            }            
+        }        
+
+        
     });
 
     DuAE.endUndoGroup(DuScriptUI.String.BAKE_BONES);
