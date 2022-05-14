@@ -204,7 +204,7 @@
             }
             propInfoGroup.minVal.text = minVal;
             propInfoGroup.maxVal.text = maxVal;
-            var maxSpeed = Math.round(prop.maxVelocity(preExpression, fastMode) * 100) / 100;
+            var maxSpeed = Math.round(prop.maxSpeed(preExpression, fastMode) * 100) / 100;
             propInfoGroup.velocity.text = maxSpeed;
             if (maxSpeed == 0) propInfoGroup.averageVelocity.text = 0;
             else propInfoGroup.averageVelocity.text = Math.round(prop.averageSpeed(preExpression, fastMode) * 100) / 100;
@@ -529,19 +529,26 @@
    
                 var preExpression = true;
                 if (connector.master.numKeys() < 2) preExpression = false;
-                var range = connector.master.range(axis, preExpression, true);
+
+                var range = [0, 100];
+                if (typeList.selection.index == 0) range = connector.master.range(axis, preExpression, true);
+                else if (typeList.selection.index == 1) { // Speed
+                    var speed = connector.master.maxSpeed(preExpression, true);
+                    range = [0, Math.floor(speed * 100) / 100];
+                }
+                else { // Velocity
+                    var velocityMax = connector.master.maxVelocity(axis, preExpression, true);
+                    var velocityMin = connector.master.minVelocity(axis, preExpression, true);
+                    range = [ Math.floor(velocityMin * 100) / 100, Math.floor(velocityMax * 100) / 100];
+                }
 
                 if (range.length != 2) return;
 
                 var min = Math.floor(range[0]);
                 var max = Math.floor(range[1]);
 
-                if (min < parseFloat(minEdit.text)) minEdit.setText(min);
-                if (max > parseFloat(maxEdit.text)) maxEdit.setText(max);
-
-                if (min == max) return;
-                minEdit.setText(Math.floor(min));
-                maxEdit.setText(Math.floor(max));
+                minEdit.setText(min);
+                maxEdit.setText(max);
             }
 
             var titleBar = createSubPanel(
@@ -763,13 +770,13 @@
             var settingsForm = DuScriptUI.form(settingsGroup);
 
             var propListLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.PROPERTY);
-            var axisLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.AXIS);
             var typeLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.TYPE);
+            var axisLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.AXIS);
             var minLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.MINIMUM);
             var maxLabel = settingsForm.labels.add('statictext', undefined, DuScriptUI.String.MAXIMUM);
             var propList = settingsForm.buttons.add('dropdownlist', undefined, ['                      ']);
+            var typeList = settingsForm.buttons.add('dropdownlist', undefined, ["Value", "Speed", "Velocity"]);
             var axisList = settingsForm.buttons.add('dropdownlist', undefined, ['                      ']);
-            var typeList = settingsForm.buttons.add('dropdownlist', undefined, ["Value", "Velocity"]);
             var minEdit = DuScriptUI.editText(settingsForm.buttons, '0');
             var maxEdit = DuScriptUI.editText(settingsForm.buttons, '10000');
             propListLabel.minimumSize.height = propListLabel.maximumSize.height = propList.preferredSize[1];
@@ -782,20 +789,35 @@
 
             typeList.onChange = function() {
                 if (!connector.master) return;
-                if (typeList.selection.index == 0) {
+                if (typeList.selection.index == 0) { // Value
                     if (connector.master.dimensions() > 1) {
                         axisList.enabled = true;
                         axisLabel.enabled = true;
                     }
+                    else {
+                        axisList.enabled = false;
+                        axisLabel.enabled = false;
+                    }
                     axisList.onChange();
                     return;
                 }
-                if (typeList.selection.index == 1) {
+                if (typeList.selection.index == 1) { // Speed
                     axisList.enabled = false;
                     axisLabel.enabled = false;
-                    var velocity = connector.master.maxVelocity();
-                    minEdit.setText('0');
-                    maxEdit.setText(Math.floor(velocity * 100) / 100);
+                    axisList.onChange();
+                    return;
+                }
+                if (typeList.selection.index == 2) { // Velocity
+                    if (connector.master.dimensions() > 1) {
+                        axisList.enabled = true;
+                        axisLabel.enabled = true;
+                    }
+                    else {
+                        axisList.enabled = false;
+                        axisLabel.enabled = false;
+                    }
+                    axisList.onChange();
+                    return;
                 }
             };
 
