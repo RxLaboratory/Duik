@@ -1840,7 +1840,7 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
         if (!separateDimensions && dimensions > 1)
 	    {
             prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
-				'var freq = fx(' + i['Frequency'].index + ').value;\n' +
+				'var freq = fx(' + i['Frequency'].index + ');\n' +
 				'var amp = fx(' + i['Amplitude'].index + ').value;\n' +
 				'var linked = fx(' + i['Link dimensions'].index + ').value;\n' +
 				'var loop = fx(' + i['Loop duration (s)'].index + ').value;\n' +
@@ -1848,13 +1848,26 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
 				'var multiplier = fx(' + i['Details']['Multiplier'].index + ').value;\n' +
 				'var seed = fx(' + i['Details']['Random Seed'].index + ').value;\n' +
                 'var layerSeed = fx(' + i['Details']['One seed per layer'].index + ').value;\n' + 
-                'if (layerSeed) seed += index;\n' +
-				'seedRandom(seed);\n' +
-				'if (loop == 0) loop = thisComp.duration;\n' +
-				'var t = (time % loop)-loop;\n' +
-				'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
-				'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
-				'var w = ease(t, -loop,  0, w1, w2);\n' +
+                '\n' +
+                DuAEExpression.Library.get(['integrateLinearKeys']) + '\n' + 
+                '\n' +
+                'if (layerSeed) seed += index;\n' + 
+                'seedRandom(seed);\n' + 
+                'var doLoop = freq.numKeys < 2;\n' + 
+                'if (loop == 0) loop = thisComp.duration;\n' + 
+                'var t = time;\n' + 
+                'var f = 1;\n' + 
+                'if (doLoop) {\n' + 
+                '    t = (time % loop)-loop;\n' + 
+                '    f = freq.value;\n' + 
+                '}\n' + 
+                'else {\n' + 
+                '    t = integrateLinearKeys( freq );\n' + 
+                '}\n' + 
+				'var w1 = wiggle(f, amp, complexity, multiplier, t);\n' +
+				'var w2 = wiggle(f, amp, complexity, multiplier, t - loop);\n' +
+				'var w = w1;\n' +
+                'if (doLoop) w = ease(t, -loop,  0, w1, w2);\n' +
 				'var result = [];\n' +
 				'if(linked) while (result.length < value.length) result.push(w[0]);\n' +
 				'else result = w;\n' +
@@ -1866,27 +1879,48 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
                     'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
                     'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
                     'var Zfreq = fx(' + i['Z']['Frequency'].index + ');\n' +
-                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
-                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
-                    'var Zamp = fx(' + i['Z']['Amplitude'].index + ');\n' +
-                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
-                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
-                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ').value;\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ').value;\n' +
+                    'var Zamp = fx(' + i['Z']['Amplitude'].index + ').value;\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ').value;\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ').value;\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ').value;\n' +
                     'var seed = fx(' + i['Details']['Random Seed'].index + ').value;\n' +
                     'var layerSeed = fx(' + i['Details']['One seed per layer'].index + ').value;\n' + 
+                    '\n' +
+                    DuAEExpression.Library.get(['integrateLinearKeys']) + '\n' + 
+                    '\n' +
                     'if (layerSeed) seed += index;\n' +
                     'seedRandom(seed);\n' +
-                    'if (loop == 0) loop = thisComp.duration;\n' +
-                    'var t = (time % loop)-loop;\n' +
-                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
-                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
-                    'var Z1 = wiggle(Zfreq,Zamp, complexity, multiplier, t);\n' +
+                    'var doLoop = Xfreq.numKeys < 2 && Yfreq.numKeys < 2 && Zfreq.numKeys < 2;\n' + 
+                    'if (loop == 0) loop = thisComp.duration;\n' + 
+                    'var tX = time;\n' + 
+                    'var tY = time;\n' + 
+                    'var tZ = time;\n' + 
+                    'var fX = 1;\n' + 
+                    'var fY = 1;\n' + 
+                    'var fZ = 1;\n' + 
+                    'if (doLoop) {\n' + 
+                    '    tX = tY = tZ = (time % loop)-loop;\n' + 
+                    '    fX = Xfreq.value;\n' + 
+                    '    fY = Yfreq.value;\n' + 
+                    '    fZ = Zfreq.value;\n' + 
+                    '}\n' + 
+                    'else {\n' + 
+                    '    tX = integrateLinearKeys( Xfreq );\n' + 
+                    '    tY = integrateLinearKeys( Yfreq );\n' + 
+                    '    tZ = integrateLinearKeys( Zfreq );\n' + 
+                    '}\n' + 
+                    'var X1 = wiggle(fX,Xamp, complexity, multiplier, tX);\n' +
+                    'var Y1 = wiggle(fY,Yamp, complexity, multiplier, tY);\n' +
+                    'var Z1 = wiggle(fZ,Zamp, complexity, multiplier, tZ);\n' +
                     'var w1 = [X1[0],Y1[1],Z1[2]];\n' +
-                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
-                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
-                    'var Z2 = wiggle(Zfreq,Zamp, complexity, multiplier, t - loop);\n' +
+                    'var Y2 = wiggle(fX,Yamp, complexity, multiplier, tX - loop);\n' +
+                    'var X2 = wiggle(fY,Xamp, complexity, multiplier, tY - loop);\n' +
+                    'var Z2 = wiggle(fZ,Zamp, complexity, multiplier, tZ - loop);\n' +
                     'var w2 = [X2[0],Y2[1],Z2[2]];\n' +
-                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'var w = w1;\n' +
+                    'if (doLoop)  w = ease(t, -loop,  0, w1, w2);\n' +
                     'w + value - valueAtTime(0)';
         }
         else if (dimensions == 2)
@@ -1894,44 +1928,74 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
             prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
                     'var Xfreq = fx(' + i['X']['Frequency'].index + ');\n' +
                     'var Yfreq = fx(' + i['Y']['Frequency'].index + ');\n' +
-                    'var Xamp = fx(' + i['X']['Amplitude'].index + ');\n' +
-                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ');\n' +
-                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
-                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
-                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var Xamp = fx(' + i['X']['Amplitude'].index + ').value;\n' +
+                    'var Yamp = fx(' + i['Y']['Amplitude'].index + ').value;\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ').value;\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ').value;\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ').value;\n' +
                     'var seed = fx(' + i['Details']['Random Seed'].index + ').value;\n' +
                     'var layerSeed = fx(' + i['Details']['One seed per layer'].index + ').value;\n' + 
+                    '\n' +
+                    DuAEExpression.Library.get(['integrateLinearKeys']) + '\n' + 
+                    '\n' +
                     'if (layerSeed) seed += index;\n' +
                     'seedRandom(seed);\n' +
-                    'if (loop == 0) loop = thisComp.duration;\n' +
-                    'var t = (time % loop)-loop;\n' +
-                    'var X1 = wiggle(Xfreq,Xamp, complexity, multiplier, t);\n' +
-                    'var Y1 = wiggle(Yfreq,Yamp, complexity, multiplier, t);\n' +
+                    'var doLoop = Xfreq.numKeys < 2 && Yfreq.numKeys < 2;\n' + 
+                    'if (loop == 0) loop = thisComp.duration;\n' + 
+                    'var tX = time;\n' + 
+                    'var tY = time;\n' + 
+                    'var fX = 1;\n' + 
+                    'var fY = 1;\n' + 
+                    'if (doLoop) {\n' + 
+                    '    tX = tY = (time % loop)-loop;\n' + 
+                    '    fX = Xfreq.value;\n' + 
+                    '    fY = Yfreq.value;\n' + 
+                    '}\n' + 
+                    'else {\n' + 
+                    '    tX = integrateLinearKeys( Xfreq );\n' + 
+                    '    tY = integrateLinearKeys( Yfreq );\n' + 
+                    '}\n' + 
+                    'var X1 = wiggle(fX,Xamp, complexity, multiplier, tX);\n' +
+                    'var Y1 = wiggle(fY,Yamp, complexity, multiplier, tY);\n' +
                     'var w1 = [X1[0],Y1[1]];\n' +
-                    'var X2 = wiggle(Xfreq,Xamp, complexity, multiplier, t - loop);\n' +
-                    'var Y2 = wiggle(Yfreq,Yamp, complexity, multiplier, t - loop);\n' +
+                    'var X2 = wiggle(fX,Xamp, complexity, multiplier, tX - loop);\n' +
+                    'var Y2 = wiggle(fY,Yamp, complexity, multiplier, tY - loop);\n' +
                     'var w2 = [X2[0],Y2[1]];\n' +
-                    'var w = ease(t, -loop,  0, w1, w2);\n' +
+                    'var w = w1;\n' +
+                    'if (doLoop)  w = ease(t, -loop,  0, w1, w2);\n' +
                     'w + value - valueAtTime(0)';
         }
         else if (dimensions == 1)
         {
             prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
                     'var freq = fx(' + i['Frequency'].index + ');\n' +
-                    'var amp = fx(' + i['Amplitude'].index + ');\n' +
-                    'var loop = fx(' + i['Loop duration (s)'].index + ');\n' +
-                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ');\n' +
-                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ');\n' +
+                    'var amp = fx(' + i['Amplitude'].index + ').value;\n' +
+                    'var loop = fx(' + i['Loop duration (s)'].index + ').value;\n' +
+                    'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ').value;\n' +
+                    'var multiplier = fx(' + i['Details']['Multiplier'].index + ').value;\n' +
                     'var seed = fx(' + i['Details']['Random Seed'].index + ').value;\n' +
                     'var layerSeed = fx(' + i['Details']['One seed per layer'].index + ').value;\n' + 
-                    'if (layerSeed) seed += index;\n' +
-                    'seedRandom(seed);\n' +
-                    'if (loop == 0) loop = thisComp.duration;\n' +
-                    'var t = (time % loop)-loop;\n' +
-                    'var w1 = wiggle(freq,amp, complexity, multiplier, t);\n' +
-                    'var w2 = wiggle(freq,amp, complexity, multiplier, t - loop);\n' +
-                    'var w = ease(t, -loop,  0, w1, w2);\n' +
-                    'w + value - valueAtTime(0)';
+                    '\n' +
+                    DuAEExpression.Library.get(['integrateLinearKeys']) + '\n' + 
+                    '\n' +
+                    'if (layerSeed) seed += index;\n' + 
+                    'seedRandom(seed);\n' + 
+                    'var doLoop = freq.numKeys < 2;\n' + 
+                    'if (loop == 0) loop = thisComp.duration;\n' + 
+                    'var t = time;\n' + 
+                    'var f = 1;\n' + 
+                    'if (doLoop) {\n' + 
+                    '    t = (time % loop)-loop;\n' + 
+                    '    f = freq.value;\n' + 
+                    '}\n' + 
+                    'else {\n' + 
+                    '    t = integrateLinearKeys( freq );\n' + 
+                    '}\n' + 
+                    'var w1 = wiggle(f, amp, complexity, multiplier, t);\n' + 
+                    'var w2 = wiggle(f, amp, complexity, multiplier, t - loop);\n' + 
+                    'var w = w1;\n' + 
+                    'if (doLoop) w = ease(t, -loop,  0, w1, w2);\n' + 
+                    'w + value - valueAtTime(0);'; 
         }
     });
     DuAEComp.selectLayers(layers);
