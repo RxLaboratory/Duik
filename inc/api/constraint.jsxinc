@@ -2996,22 +2996,24 @@ Duik.Constraint.fk = function(layers, controller) {
     var fkEffectName = fkEffect.name;
 
     //rig layers
+    var prevMAName = "";
     layers.do(function(layer) {
         //add Data
         var layerData = layer('ADBE Effect Parade').addProperty('ADBE Layer Control');
         layerData.name = DuScriptUI.String.FK;
         layerData(1).setValue(controller.index);
+        var layerDataName = layerData.name;
 
         //add FK control
         var fkControl = controller('ADBE Effect Parade').addProperty('ADBE Angle Control');
         fkControl.name = DuScriptUI.String.FK + ' | ' + Duik.Layer.limbName(layer);
 
-        //add expression
+        //add expression and move away for the stretch
         if (layers.current == 0) {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
-                'try { controller = effect("' + layerData.name + '")(1); } catch (e) {}',
+                'try { controller = effect("' + layerDataName + '")(1); } catch (e) {}',
                 'if ( controller !=null )',
                 '{',
                 '   var fx = controller.effect("' + fkEffectName + '");',
@@ -3035,7 +3037,7 @@ Duik.Constraint.fk = function(layers, controller) {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
-                'try { controller=effect("' + layerData.name + '")(1); } catch (e) {}',
+                'try { controller=effect("' + layerDataName + '")(1); } catch (e) {}',
                 'if (controller !=null && hasParent)',
                 '{',
                 '   var fx = controller.effect("' + fkEffectName + '");',
@@ -3048,7 +3050,7 @@ Duik.Constraint.fk = function(layers, controller) {
                 '   var follow = fx(' + pe.props["Parent rotation"].index + ').value;',
                 '   delay = delay / 100;',
                 '   amp = amp / 100 ;',
-                '   result = ctrlRot.valueAtTime(time-delay) + fx(3).valueAtTime(time-delay);',
+                '   result = ctrlRot.valueAtTime(time-delay) + fx(' + pe.props["Curve"].index + ').valueAtTime(time-delay);',
                 '   if (follow && hasParent)',
                 '   {',
                 '       var cP = parent;',
@@ -3071,11 +3073,27 @@ Duik.Constraint.fk = function(layers, controller) {
                 '}',
                 'result;'
             ].join('\n');
+
+            Duik.Automation.moveAway(layer);
+            // Get the effect and set it
+            var maEffect = layer.effect( layer.property('ADBE Effect Parade').numProperties );
+            prevMAName = maEffect.name;
+            maEffect(1).expression = [DuAEExpression.Id.FK,
+                'var controller = null;',
+                'var result = value;',
+                'try { controller=effect("' + layerDataName + '")(1); } catch (e) {}',
+                'if (controller !=null )',
+                '{',
+                '   var fx = controller.effect("' + fkEffectName + '");',
+                '   result += fx(' + pe.props["Stretch"].index + ').value;',
+                '}',
+                'result;'
+            ].join('\n');
         } else {
             layer.transform.rotation.expression = [DuAEExpression.Id.FK,
                 'var controller = null;',
                 'var result = value;',
-                'try { controller=effect("' + layerData.name + '")(1); }catch (e) {}',
+                'try { controller=effect("' + layerDataName + '")(1); }catch (e) {}',
                 'if (controller !=null && hasParent)',
                 '{',
                 '   var fx = controller.effect("' + fkEffectName + '");',
@@ -3098,6 +3116,26 @@ Duik.Constraint.fk = function(layers, controller) {
                 '}',
                 'result;'
             ].join('\n');
+
+            Duik.Automation.moveAway(layer);
+            // Get the effect and set it
+            var maEffect = layer.effect( layer.property('ADBE Effect Parade').numProperties );
+            maEffect(1).expression = [DuAEExpression.Id.FK,
+                'var controller = null;',
+                'var result = value;',
+                'try { controller=effect("' + layerDataName + '")(1); } catch (e) {}',
+                'if (controller !=null && hasParent)',
+                '{',
+                '   var fx = controller.effect("' + fkEffectName + '");',
+                '   var delay = fx(' + pe.props["Resistance"].index + ').value;',
+                '   delay = delay / 100;',
+                '   var maEffect = parent.effect("' + prevMAName + '");',
+                '   var ma = maEffect(1);',
+                '   result += ma.valueAtTime(time-delay);',
+                '}',
+                'result;'
+            ].join('\n');
+            prevMAName = maEffect.name;
         }
     });
 
