@@ -1,57 +1,55 @@
 @echo off
 
-REM The first arg must be the path to ScriptUI Panels
-IF "%~1"=="" (
-    echo Usage:
-    echo dev-install.bat "path/to/Support Files/Scripts/ScriptUI Panels"
-    pause
-    exit /B
-)
+REM The path to ScriptUI Panels
+SET aePath=C:\Program Files\Adobe\Adobe After Effects 2022\Support Files\Scripts\ScriptUI Panels
 
-REM Optional second argyment: the repo. If omitted, will use the current directory
-IF "%~2"=="" (
-    SET repoPath=%~dp0..
-) else (
-    SET repoPath=%~2
-)
+REM The repo (current dir)
+SET repoPath=%~dp0..
+
+:: Need admin to create symlinks
+@echo off
+if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
+:: Get back to original dir
+pushd "%CD%"
+CD /D "%~dp0"
 
 echo Installing "%repoPath%" in "%~1"...
 
 REM (Trying to) remove older files
-del %1\"Duik Angela.jsx"
-del %1\"Duik Animation Library.jsx"
-del %1\"Duik Animation.jsx"
-del %1\"Duik Cmd.jsx"
-del %1\"Duik Layer Manager.jsx"
-del %1\"Duik Notes.jsx"
-del %1\"Duik Rigging.jsx"
-del %1\"Duik Script Library.jsx"
-rd /s /q %1\inc
-rd /s /q %1\DuAEF
-rd /s /q %1\DuGR
-rd /s /q %1\DuIO
+del "%aePath%\Duik Angela.jsx"
+del "%aePath%\Duik Animation Library.jsx"
+del "%aePath%\Duik Animation.jsx"
+del "%aePath%\Duik Cmd.jsx"
+del "%aePath%\Duik Layer Manager.jsx"
+del "%aePath%\Duik Notes.jsx"
+del "%aePath%\Duik Rigging.jsx"
+del "%aePath%\Duik Script Library.jsx"
+rd /s /q "%aePath%\inc"
+rd /s /q "%aePath%\DuAEF"
+rd /s /q "%aePath%\DuGR"
+rd /s /q "%aePath%\DuIO"
 
 REM link the main files
-mklink %1\"DuCop.jsx" "%repoPath%\DuCop.jsx"
-mklink %1\"Duik Angela.jsx" "%repoPath%\Duik Angela.jsx"
-mklink %1\"Duik Animation Library.jsx" "%repoPath%\Duik Animation Library.jsx"
-mklink %1\"Duik Animation.jsx" "%repoPath%\Duik Animation.jsx"
-mklink %1\"Duik Cmd.jsx" "%repoPath%\Duik Cmd.jsx"
-mklink %1\"Duik Layer Manager.jsx" "%repoPath%\Duik Layer Manager.jsx"
-mklink %1\"Duik Notes.jsx" "%repoPath%\Duik Notes.jsx"
-mklink %1\"Duik Rigging.jsx" "%repoPath%\Duik Rigging.jsx"
-mklink %1\"Duik Script Library.jsx" "%repoPath%\Duik Script Library.jsx"
+mklink "%aePath%\DuCop.jsx" "%repoPath%\DuCop.jsx"
+mklink "%aePath%\Duik Angela.jsx" "%repoPath%\Duik Angela.jsx"
+mklink "%aePath%\Duik Animation Library.jsx" "%repoPath%\Duik Animation Library.jsx"
+mklink "%aePath%\Duik Animation.jsx" "%repoPath%\Duik Animation.jsx"
+mklink "%aePath%\Duik Cmd.jsx" "%repoPath%\Duik Cmd.jsx"
+mklink "%aePath%\Duik Layer Manager.jsx" "%repoPath%\Duik Layer Manager.jsx"
+mklink "%aePath%\Duik Notes.jsx" "%repoPath%\Duik Notes.jsx"
+mklink "%aePath%\Duik Rigging.jsx" "%repoPath%\Duik Rigging.jsx"
+mklink "%aePath%\Duik Script Library.jsx" "%repoPath%\Duik Script Library.jsx"
 echo Linked main files
 
-mklink /D %1\inc %repoPath%\inc
+mklink /D "%aePath%\inc" "%repoPath%\inc"
 echo Linked included files in 'inc\'
 
 REM link dependencies
-mklink /D %1\DuAEF %repoPath%\DuAEF
+mklink /D "%aePath%\DuAEF" "%repoPath%\DuAEF"
 echo Linked DuAEF
-mklink /D %1\DuGR %repoPath%\DuGR
+mklink /D "%aePath%\DuGR" "%repoPath%\DuGR"
 echo Linked DuGR
-mklink /D %1\DuIO %repoPath%\DuIO
+mklink /D "%aePath%\DuIO" "%repoPath%\DuIO"
 echo Linked DuIO
 
 pause
