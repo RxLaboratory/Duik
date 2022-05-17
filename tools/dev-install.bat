@@ -28,6 +28,7 @@ rd /s /q "%aePath%\inc"
 rd /s /q "%aePath%\DuAEF"
 rd /s /q "%aePath%\DuGR"
 rd /s /q "%aePath%\DuIO"
+rd /s /q "%aePath%\DuSan"
 
 REM link the main files
 mklink "%aePath%\DuCop.jsx" "%repoPath%\DuCop.jsx"
@@ -51,5 +52,7 @@ mklink /D "%aePath%\DuGR" "%repoPath%\DuGR"
 echo Linked DuGR
 mklink /D "%aePath%\DuIO" "%repoPath%\DuIO"
 echo Linked DuIO
+mklink /D "%aePath%\DuSan" "%repoPath%\DuSan"
+echo Linked DuSan
 
 pause
