@@ -27,7 +27,7 @@ DuBuilder "..\..\Duik Bones.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Bon
 DuBuilder "..\..\Duik Camera.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Camera.jsx"
 DuBuilder "..\..\Duik Cmd.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Cmd.jsx"
 DuBuilder "..\..\Duik Constraints.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Constraints.jsx"
-DuBuilder "..\..\Duik Controller.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Controller.jsx"
+DuBuilder "..\..\Duik Controllers.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Controllers.jsx"
 DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "..\..\Duik Notes.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Notes.jsx"
 DuBuilder "..\..\Duik Rigging.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Rigging.jsx"
