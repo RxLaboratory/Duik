@@ -4,8 +4,8 @@ var mainScriptFile = new File($.fileName);
 
 #include "inc/core.jsxinc"
 
-#include "inc/cmdPanel.jsxinc"
-buildCmdPanel( ui.mainGroup, true );
+#include "inc/automationPanel.jsxinc"
+buildAutomationPanelUI( ui.mainGroup, true );
 
 #include "inc/ui_show.jsxinc"
 
