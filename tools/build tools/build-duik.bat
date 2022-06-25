@@ -56,7 +56,4 @@ cd tools
 cd "build tools"
 xcopy /S /I /Y ..\..\Duik_API\docs output\Duik_API\docs
 xcopy /S /I /Y ..\..\Duik_Docs\docs output\Duik\Help
-del output\Duik\Help\CNAME
-del output\Duik_API\docs\CNAME
-del output\Duik_API\docs\404.md
 pause
