@@ -43,6 +43,7 @@ xcopy /Y items\LICENSE.md "output\Duik_API\LICENSE.md"
 xcopy /Y items\LICENSE.txt "output\Duik\LICENSE.txt"
 xcopy /Y items\LICENSE.txt "output\Duik_API\LICENSE.txt"
 xcopy /Y items\README.txt "output\Duik\README.txt"
+xcopy /Y items\DuSI.jsx "output\Duik\Tools\DuSI.jsx"
 xcopy /Y output\Duik_API\Duik_api.jsxinc ..\..\Duik_API\Duik_api.jsxinc
 xcopy /Y output\Duik_API\DuAEF_Duik_api.jsxinc ..\..\Duik_API\DuAEF_Duik_api.jsxinc
 cd ..
