@@ -1,12 +1,11 @@
 import os
 import re
 
-folder_path = "DuSan/inc/api"
+folder_path = "inc/api"
 
 # Load string libs
 dict_paths = (
-    #"DuGR/inc/strings.jsxinc",
-    "DuSan/inc/api/strings.jsxinc",
+    "inc/strings.jsxinc",
     "DuAEF/inc/duscriptui_extension.jsxinc",
     "DuAEF/DuESF/inc/scriptui/strings_.jsxinc",
 )
@@ -45,7 +44,14 @@ for file_name in os.listdir(folder_path):
             match = re_source.search( line )
             if match:
                 matched = True
-                print(match)
+                if match.group(3) not in dictionary:
+                    print(">>>>> WARNING! <<<<< Can't replace: " + match.group(0))
+                    print("   Not found in dictionnaries.")
+                    newContent.append(line) 
+                    continue
+
+                print('-- Replacing: ' + match.group(0))
+                print('   With: ' + dictionary[match.group(3)])
                 if match.group(1) is None:
                     space = ' '
                     if match.group(2):
