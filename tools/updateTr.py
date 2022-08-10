@@ -1,7 +1,7 @@
 import os
 import re
 
-folder_path = "inc/api"
+folder_path = "inc"
 
 # Load string libs
 dict_paths = (
