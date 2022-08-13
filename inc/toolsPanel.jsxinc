@@ -308,11 +308,12 @@ function buildToolsPanelUI(tab) {
                 var itemSelector = DuScriptUI.selector(replaceGroup);
                 itemSelector.addButton({ text: i18n._("Expressions"), image: w16_expression });
                 itemSelector.addButton({ text: i18n._("Texts"), image: w16_text });
+                itemSelector.addButton({ text: i18n._("Effects"), image: w16_fx });
                 itemSelector.addButton({ text: i18n._("Layers"), image: w16_layers });
                 itemSelector.addButton({ text: i18n._("Project items"), image: w16_items });
                 itemSelector.setCurrentIndex(0);
                 itemSelector.onChange = function() {
-                    expButton.visible = itemSelector.index == 2 || itemSelector.index == 3;
+                    expButton.visible = itemSelector.index == 2 || itemSelector.index == 3 || itemSelector.index == 4;
                     compItemGroup.visible = itemSelector.index != 3;
                     projectItemsGroup.visible = !compItemGroup.visible;
                 };
@@ -456,8 +457,45 @@ function buildToolsPanelUI(tab) {
                             }
                         }
                     }
-                    // Layers
+                    // Effects
                     else if (itemSelector.index == 2) {
+                        // All comps
+                        if (compSelector.index == 1) {
+                            var items = new DuList(app.project.items);
+                            items.do(function (comp) {
+                                if (!(comp instanceof CompItem)) return;
+                                var layers = new DuList(comp.layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    for (var i = 1, n = layer.property('ADBE Effect Parade').numProperties; i <= n; i++) {
+                                        var oldName = layer.effect(i).name;
+                                        layer.effect(i).name = DuString.replace(oldName, search, replace, caseButton.checked);
+                                        if (expButton.checked) app.project.autoFixExpressions(oldName,layer.effect(i).name);
+                                    }
+                                });
+                            });
+                        }
+                        // Active comp
+                        else {
+                            var comp = DuAEProject.getActiveComp();
+                            if (comp) {
+                                var layers = [];
+                                if (layerSelector.index == 0) layers = comp.selectedLayers;
+                                else layers = comp.layers;
+                                layers = new DuList(layers);
+                                layers.do(function(layer) {
+                                    if (layer.locked) return;
+                                    for (var i = 1, n = layer.property('ADBE Effect Parade').numProperties; i <= n; i++) {
+                                        var oldName = layer.effect(i).name;
+                                        layer.effect(i).name = DuString.replace(oldName, search, replace, caseButton.checked);
+                                        if (expButton.checked) app.project.autoFixExpressions(oldName,layer.effect(i).name);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    // Layers
+                    else if (itemSelector.index == 3) {
                         // All comps
                         if (compSelector.index == 1) {
                             var items = new DuList(app.project.items);
@@ -490,7 +528,7 @@ function buildToolsPanelUI(tab) {
                         }
                     }
                     // Items
-                    else if (itemSelector.index == 3) {
+                    else if (itemSelector.index == 4) {
                         var items = [];
                         if (projectIemsSelector.index == 0) items = app.project.items;
                         else items = app.project.selection;
