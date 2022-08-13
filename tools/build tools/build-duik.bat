@@ -4,9 +4,6 @@ cd ..
 cd Duik_Docs\src
 mkdocs build
 cd ..
-cd docs
-echo duik.rxlab.guide > "CNAME"
-cd ..
 cd ..
 cd tools
 cd "build tools"
