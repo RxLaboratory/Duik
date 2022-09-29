@@ -1,13 +1,13 @@
 import os
 import re
 
-folder_path = "inc"
+folder_path = "DuGR/inc"
 
 # Load string libs
 dict_paths = (
-    "inc/strings.jsxinc",
-    "DuAEF/inc/duscriptui_extension.jsxinc",
-    "DuAEF/DuESF/inc/scriptui/strings_.jsxinc",
+    "DuGR/inc/strings.jsxinc.txt",
+    "DuGR/DuAEF/inc/duscriptui_extension.jsxinc",
+    "DuGR/DuAEF/DuESF/inc/scriptui/strings_.jsxinc",
 )
 dictionary = {}
 
