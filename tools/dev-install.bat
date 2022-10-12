@@ -1,9 +1,9 @@
 @echo off
 
-REM The path to ScriptUI Panels
+:: The path to ScriptUI Panels
 SET "aePath=C:\Program Files\Adobe\Adobe After Effects (Beta)\Support Files\Scripts\ScriptUI Panels"
 
-REM The repo (current dir)
+:: The repo (current dir)
 SET repoPath=%~dp0..
 
 :: Need admin to create symlinks
@@ -15,7 +15,7 @@ CD /D "%~dp0"
 
 echo Installing "%repoPath%" in "%~1"...
 
-REM (Trying to) remove older files
+:: (Trying to) remove older files
 del "%aePath%\Duik Angela.jsx"
 del "%aePath%\Duik Animation Library.jsx"
 del "%aePath%\Duik Animation.jsx"
@@ -30,7 +30,7 @@ rd /s /q "%aePath%\DuGR"
 rd /s /q "%aePath%\DuIO"
 rd /s /q "%aePath%\DuSan"
 
-REM link the main files
+:: link the main files
 mklink "%aePath%\DuCop.jsx" "%repoPath%\DuCop.jsx"
 mklink "%aePath%\Duik Angela.jsx" "%repoPath%\Duik Angela.jsx"
 mklink "%aePath%\Duik Animation Library.jsx" "%repoPath%\Duik Animation Library.jsx"
@@ -51,7 +51,7 @@ echo Linked main files
 mklink /D "%aePath%\inc" "%repoPath%\inc"
 echo Linked included files in 'inc\'
 
-REM link dependencies
+:: link dependencies
 mklink /D "%aePath%\DuAEF" "%repoPath%\DuAEF"
 echo Linked DuAEF
 mklink /D "%aePath%\DuGR" "%repoPath%\DuGR"
