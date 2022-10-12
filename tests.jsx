@@ -4,14 +4,10 @@
 
 
 
-    var layer = app.project.activeItem.layer(1);
+    var win = new Window('palette', '', [0,0,360,86]);
+    var stage = win.add( 'statictext', { x:20, y:15, width:320, height:16 }, "Working");
 
-    Duik.Layer.setType( Duik.Layer.Type.CONTROLLER );
-    Duik.Layer.setLocation( DuOCO.Location.FRONT );
-    Duik.Layer.setSide( DuOCO.Side.RIGHT );
-    Duik.Layer.setCharacterName( "Test" );
-    Duik.Layer.setLimbName( "kjh" );
-
+    alert(stage.parent.parent);
 
 })();
 
