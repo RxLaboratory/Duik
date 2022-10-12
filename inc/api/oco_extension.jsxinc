@@ -4,12 +4,18 @@
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition
  * @param {Boolean} [empty=false] Set to true to create an empty doc.
  * @param {Boolean} [selectedLayers=false] If empty is true, will use only the selected layers
+ * @param {float} [characterTop] The max Y coordinate of the character, in px in the comp
+ * @param {float[]} [characterCenterOfMass] The coordinates of center of mass of the character, in px in the comp
+ * @param {float} [ground] The Y coordinate of the ground, in px in the comp
+ * @param {float} [height=185] The height of the character, in cm
  * @return {DoOCODoc} The new doc
  */
-DuOCODoc.fromComp = function( name, comp , empty, selectedLayers )
+DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, characterCenterOfMass, ground, height )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     name = def( name, '');
+    height = def(height, 185)
+
     if (!comp) return new DuOCODoc( name );
 
     if (name == '')
@@ -28,12 +34,110 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers )
 
     // Set the default params
 
-    // world in the center, 20% above the bottom of the comp
-    doc.world = [comp.width/2, comp.height*0.2];
-    // 50% of the comp height, divided by 185cm
-    doc.pixelsPerCm = comp.height*0.5/185;
+    doc.height = height;
 
-    // TODO Get ground, character, etc
+    if (empty) {
+        // Coordinates
+        var top = def(characterTop, comp.height * .3 );
+        var center = def(characterCenterOfMass, [comp.width/2, comp.height*.51]);
+        var bottom = def(ground, comp.height*.8);
+        
+        // the height in px, divided by the height in cm
+        doc.pixelsPerCm = (bottom-top) / height;
+        // Vertical of the center of mass
+        doc.world = [center[0], bottom];
+        // Empty, no width
+        doc.width = 0;
+        // Max Y coordinate
+        doc.centerOfMass = doc.fromPixels( center );
+
+        return doc;
+    }
+
+    var bottom = def(ground, 0);; // The lowest leg tip Y coordinate if we find it.
+    var top = def(characterTop, comp.height); // The highest point
+    var characterName = "Character"; // The first character name we find
+    var bounds = [comp.width,comp.height,0,0]; // The bounds left, top, right, bottom, needed to find the center of mass
+
+    // Collect limbs
+    var limbs = Duik.Bone.getLimbs(selectedLayers)
+    
+    // Get the character name and find the lowest foot
+    for (var i = 0, ni = limbs.length; i < ni; i++)
+    {
+        for (var j = 0, nj = limbs[i].length; j < nj; j++)
+        {
+            var bone = limbs[i][j];
+            if (characterName == "")
+            {
+                var name = Duik.Layer.characterName(bone);
+                characterName = name;
+            }
+            var pos = DuAELayer.getWorldPos(bone);
+            // Find a leg tip
+            var limbType = DuAETag.getValue( bone, DuAETag.Key.DUIK_LIMB, DuAETag.Type.STRING );
+            if (limbType == DuOCO.Limb.LEG)
+            {
+                var boneType = DuAETag.getValue( bone, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING );
+                if (boneType == DuOCO.Bone.TIP)
+                {
+                    if (pos[1] > bottom) bottom = pos[1];
+                }
+            }
+            if (pos[1] < top) top = pos[1];
+            if (pos[0] < bounds[0]) bounds[0] = pos[0];
+            else if (pos[0] > bounds[2]) bounds[2] = pos[0];
+            if (pos[1] < bounds[1]) bounds[1] = pos[1];
+            else if (pos[1] > bounds[3]) bounds[3] = pos[1];
+        }
+    }
+
+
+    alert(bounds);
+    alert(bottom);
+    alert(top);
+
+    // Complete doc params
+    if (bottom == 0) bottom = bounds [2];
+    var center = ([bounds[0], bounds[1]] + [bounds[2], bounds[3]]) / 2;
+    center = def(characterCenterOfMass, center);
+
+    alert(center);
+
+    doc.pixelsPerCm = (bottom-top) / height;
+    doc.world = [center[0], bottom];
+    doc.centerOfMass = doc.fromPixels( center );
+    doc.width = (bounds[2] - bounds[0]) / doc.pixelsPerCm;
+
+    // Add limbs to the doc
+    // TODO check parent between limbs. For now they're all added to the root
+    for (var i = 0, ni = limbs.length; i < ni; i++)
+    {
+        if (limbs[i].length == 0) continue;
+        var rootBone = limbs[i][0];
+
+        var limb = DuAETag.getValue( rootBone, DuAETag.Key.DUIK_LIMB, DuAETag.Type.STRING );
+        var side = Duik.Layer.side(rootBone);
+        var location = Duik.Layer.location(rootBone);
+        var limbType = DuAETag.getValue( rootBone, DuAETag.Key.DUIK_LIMB_TYPE, DuAETag.Type.STRING );
+
+        var l = doc.newLimb(limb, side, location, limbType);
+
+        // Add bones to the limb
+
+        // The Root first
+        var bone = DuOCOBone.fromComp(rootBone, doc);
+        l.armature.push(bone);
+
+        for (var j = 1, nj = limbs[i].length; j < nj; j++)
+        {
+            var b = DuOCOBone.fromComp( limbs[i][j], doc );
+            bone.children.push(b);
+            bone = b;
+        }
+    }
+
+    // Compute 
 
     return doc;
 }
@@ -475,4 +579,29 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     }
 
     return layers;
+}
+
+/**
+ * Creates a bone using a layer from a comp
+ * @param {Layer} layer the layer
+ * @param {DuOCODoc} doc the doc which will be containing the bone. Needed for coordinates.
+ * @return {DuOCOBone} the bone
+ */
+DuOCOBone.fromComp = function ( layer, doc )
+{
+    // Check the name
+    var boneName = Duik.Layer.limbName( layer );
+    if (boneName == '') boneName = 'Limb';
+    var bone = new DuOCOBone(boneName);
+
+    // The coordinates
+    var pos = DuAELayer.getWorldPos( layer );
+    pos = doc.fromPixels( pos );
+    bone.x = pos[0];
+    bone.y = pos[1];
+
+    bone.attached = DuAETag.getValue( layer, DuAETag.Key.DUIK_ATTACHED_BONE, DuAETag.Type.BOOL );
+    bone.type = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING );
+
+    return bone;
 }

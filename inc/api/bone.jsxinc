@@ -88,6 +88,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
     {
         var doc = DuOCODoc.fromComp( characterName, comp );
         var limb = limbCreator( doc );
+        doc.toFile("X:/test.oco");
         var boneLayers = doc.toComp( comp );
         DuAELayer.moveInsideComp( boneLayers[0] );
         return boneLayers;
@@ -185,7 +186,7 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
         }
     });
 
-    //anchor points
+    // anchor points
     if(!ok)
     {
         var layer = it.at(0);
@@ -952,6 +953,57 @@ Duik.Bone.autoParent = function( layers, bones ) {
 Duik.Bone.get = function ( selectedOnly, comp )
 {
     return Duik.Layer.get( Duik.Layer.Type.BONE, selectedOnly, comp );
+}
+
+/**
+ * Returns the bones sorted by limbs they belong to
+ * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
+ * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp
+ * @return {ShapeLayer[][]} the limbs
+ */
+Duik.Bone.getLimbs = function( selectedOnly, comp )
+{
+    var bones = Duik.Bone.get( selectedOnly, comp );
+
+    var limbs = [];
+    // A function to add layers to the list of limbs
+    function addToLimb( layer, armatureId )
+    {
+        // look for existing limb
+        var limb = null;
+        for (var i = 0, n = limbs.length; i < n; i++)
+        {
+            if( limbs[i].id == armatureId )
+            {
+                limb = limbs[i];
+                break;
+            }
+        }
+        // create 
+        if (limb == null)
+        {
+            limb = [];
+            limb.id = armatureId;
+            limbs.push(limb);
+        }
+
+        limb.push( layer );
+    }
+
+    for (var i = 0, n = bones.length; i < n; i++)
+    {
+        var bone = bones[i];
+        var armatureId = DuAETag.getValue( bone, DuAETag.Key.DUIK_LIMB_ID, DuAETag.Type.INT );
+        addToLimb(bone, armatureId);
+    }
+
+    // Sort bones by parenting
+    for (var i = 0, n = limbs.length; i < n; i++)
+    {
+        limbs[i] = DuAELayer.sortByParent( limbs[i] );
+    }
+
+    return limbs;
 }
 
 /**
