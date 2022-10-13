@@ -1,6 +1,6 @@
 # TODO
 
-- separate the OCO API from DuAEF
+- separate the OCO API from DuAEF (WIP)
 - OCO Meta-rig panel in Duik
 - implement limb hierarchy in OCODoc.fromComp
 - update Duik autorig to use Duik.Bone.getLimbs()
