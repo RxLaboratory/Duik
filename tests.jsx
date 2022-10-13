@@ -1,13 +1,14 @@
 ﻿(function() {
 
     #include "inc/api_all.jsxinc"
+    DuAEF.init("Duik tests", "RxLaboratory", "0.0.0");
 
+    var doc = OCODoc.fromComp();
+    doc.toFile("X:\testChara.oco");
 
+    var doc = OCODoc.fromFile("X:/testChara.oco");
+    doc.toComp();
 
-    var win = new Window('palette', '', [0,0,360,86]);
-    var stage = win.add( 'statictext', { x:20, y:15, width:320, height:16 }, "Working");
-
-    alert(stage.parent.parent);
 
 })();
 
