@@ -10,13 +10,13 @@
  * @param {float} [height=185] The height of the character, in cm
  * @return {DoOCODoc} The new doc
  */
-DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, characterCenterOfMass, ground, height )
+OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, characterCenterOfMass, ground, height )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     name = def( name, '');
     height = def(height, 185)
 
-    if (!comp) return new DuOCODoc( name );
+    if (!comp) return new OCODoc( name );
 
     if (name == '')
     {
@@ -29,7 +29,7 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, 
     empty = def(empty, false);
     selectedLayers = def( selectedLayers, false);
     
-    var doc = new DuOCODoc( name );
+    var doc = new OCODoc( name );
     doc.resolution = [comp.width, comp.height];
 
     // Set the default params
@@ -76,10 +76,10 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, 
             var pos = DuAELayer.getWorldPos(bone);
             // Find a leg tip
             var limbType = DuAETag.getValue( bone, DuAETag.Key.DUIK_LIMB, DuAETag.Type.STRING );
-            if (limbType == DuOCO.Limb.LEG)
+            if (limbType == OCO.Limb.LEG)
             {
                 var boneType = DuAETag.getValue( bone, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING );
-                if (boneType == DuOCO.Bone.TIP)
+                if (boneType == OCO.Bone.TIP)
                 {
                     if (pos[1] > bottom) bottom = pos[1];
                 }
@@ -126,12 +126,12 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, 
         // Add bones to the limb
 
         // The Root first
-        var bone = DuOCOBone.fromComp(rootBone, doc);
+        var bone = OCOBone.fromComp(rootBone, doc);
         l.armature.push(bone);
 
         for (var j = 1, nj = limbs[i].length; j < nj; j++)
         {
-            var b = DuOCOBone.fromComp( limbs[i][j], doc );
+            var b = OCOBone.fromComp( limbs[i][j], doc );
             bone.children.push(b);
             bone = b;
         }
@@ -149,7 +149,7 @@ DuOCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, 
  * @param {frameRate} [float=24.0] The frame rate of the new comp.
  * @return {Layer[]} The new layers
  */
-DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
+OCODoc.prototype.toComp = function( comp, duration, frameRate )
 {
     duration = def(duration, 60);
     frameRate = def(frameRate, 24);
@@ -167,13 +167,13 @@ DuOCODoc.prototype.toComp = function( comp, duration, frameRate )
 
 /**
  * Creates the limb and armatures in the comp
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition to use.
  * @param {Layer} [parentLayer=null] The parent layer of the bone.
  * @param {int} [limbId] A Unique identifier for this armature. If omitted, a new one will be assigned.
  * @return {Layer[]} The new layers
  */
-DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, limbId )
+OCOLimb.prototype.toComp = function( doc, comp, parentLayer, limbId )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     if (!comp) return;
@@ -192,12 +192,12 @@ DuOCOLimb.prototype.toComp = function( doc, comp, parentLayer, limbId )
 
 /**
  * Creates a new chain of bones located on the vertices of the path.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
  * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
- * @returns {DuOCOBone} The root bone of the new chain
+ * @returns {OCOBone} The root bone of the new chain
  */
-DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
+OCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
 {
     pathProp = new DuAEProperty(pathProp);
     var vertices = pathProp.verticesToComp( );
@@ -211,7 +211,7 @@ DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
     {
         var vertex = vertices[i];
         var boneName = DuString.generateUnique(name, names);
-        var bone = new DuOCOBone( boneName );
+        var bone = new OCOBone( boneName );
         names.push(boneName);
         var coord = doc.fromPixels( vertex );
         bone.x = coord[0];
@@ -235,10 +235,10 @@ DuOCOLimb.prototype.armatureFromPath = function( doc, name, pathProp )
 
 /**
  * Moves the armature of the limb to the vertices of the path.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {PropertyGroup|DuAEProperty} pathProp The path property (either an "ADBE Vector Shape - Group" or an "ADBE Mask Atom")
  */
-DuOCOLimb.prototype.moveArmatureToPath = function( doc, pathProp )
+OCOLimb.prototype.moveArmatureToPath = function( doc, pathProp )
 {
     if (this.armature.length == 0) return;
 
@@ -267,10 +267,10 @@ DuOCOLimb.prototype.moveArmatureToPath = function( doc, pathProp )
 
 /**
  * Moves the armature of the limb to the puppet pins.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {Property[]|DuAEProperty[]} pins The puppet pins
  */
-DuOCOLimb.prototype.moveArmatureToPuppetPins = function( doc, pins )
+OCOLimb.prototype.moveArmatureToPuppetPins = function( doc, pins )
 {
     if (this.armature.length == 0) return;
 
@@ -304,12 +304,12 @@ DuOCOLimb.prototype.moveArmatureToPuppetPins = function( doc, pins )
 
 /**
  * Creates a new chain of bones located on the puppet pins.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
  * @param {Property[]|DuAEProperty[]} pins The puppet pins
- * @returns {DuOCOBone} The root bone of the new chain
+ * @returns {OCOBone} The root bone of the new chain
  */
-DuOCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
+OCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
 {
     var b = null;
     var root = null;
@@ -319,7 +319,7 @@ DuOCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
     for (var i = 0, n = pins.length; i < n; i++)
     {
         var boneName = DuString.generateUnique(name, names);
-        var bone = new DuOCOBone( boneName );
+        var bone = new OCOBone( boneName );
         names.push(boneName);
 
         var pin = new DuAEProperty( pins[i] );
@@ -355,10 +355,10 @@ DuOCOLimb.prototype.armatureFromPuppetPins = function( doc, name, pins )
 
 /**
  * Moves the armature of the limb to the layers.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {Layer[]|LayerCollection} layers The layers
  */
-DuOCOLimb.prototype.moveArmatureToLayers = function( doc, layers )
+OCOLimb.prototype.moveArmatureToLayers = function( doc, layers )
 {
     var b = null;
 
@@ -399,12 +399,12 @@ DuOCOLimb.prototype.moveArmatureToLayers = function( doc, layers )
 
 /**
  * Creates a new chain of bones located on the layer anchor points.
- * @param {DuOCODoc} doc The doc containing the limb.
+ * @param {OCODoc} doc The doc containing the limb.
  * @param {string} name The name of the bones (will increment if needed)
  * @param {Layer[]|LayerCollection} layers The layers
- * @returns {DuOCOBone} The root bone of the new chain
+ * @returns {OCOBone} The root bone of the new chain
  */
-DuOCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
+OCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
 {
     var b = null;
     var root = null;
@@ -439,7 +439,7 @@ DuOCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
     it.reinitIterator();
     while (layer = it.next()) {
         var boneName = DuString.generateUnique(name, names);
-        var bone = new DuOCOBone( boneName );
+        var bone = new OCOBone( boneName );
         names.push(boneName);
         
         if (moveLayers)
@@ -476,15 +476,15 @@ DuOCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
 
 /**
  * Creates the limbs and armatures in the comp
- * @param {DuOCODoc} doc The doc containing the bone.
- * @param {DuOCOLimb} limb The limb containing the bone.
+ * @param {OCODoc} doc The doc containing the bone.
+ * @param {OCOLimb} limb The limb containing the bone.
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition to use.
  * @param {Layer} [parentLayer=null] The parent layer of the bone.
  * @param {int} [limbId] A Unique identifier for this armature. If omitted, a new one will be assigned.
  * @param {int} [boneIndex = 0] The index of the bone in the chain.
  * @return {Layer[]} The new layers
  */
-DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, boneIndex )
+OCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, boneIndex )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     if (!comp) return;
@@ -519,49 +519,49 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
     DuAELayer.applyPreset( boneLayer, preset );
     
     // And set the color
-    if ( this.type == DuOCO.Bone.CLAVICLE ||
-        this.type == DuOCO.Bone.HIPS
+    if ( this.type == OCO.Bone.CLAVICLE ||
+        this.type == OCO.Bone.HIPS
         )
         Duik.Bone.setColor( DuColor.Color.RAINBOX_RED, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.HUMERUS || 
-        this.type == DuOCO.Bone.FEMUR ||
-        this.type == DuOCO.Bone.SPINE ||
-        this.type == DuOCO.Bone.TAIL_ROOT ||
-        this.type == DuOCO.Bone.SNAKE_SPINE_ROOT || 
-        this.type == DuOCO.Bone.FISH_SPINE_ROOT || 
-        this.type == DuOCO.Bone.FIN ||
-        this.type == DuOCO.Bone.HAIR_ROOT
+    else if ( this.type == OCO.Bone.HUMERUS || 
+        this.type == OCO.Bone.FEMUR ||
+        this.type == OCO.Bone.SPINE ||
+        this.type == OCO.Bone.TAIL_ROOT ||
+        this.type == OCO.Bone.SNAKE_SPINE_ROOT || 
+        this.type == OCO.Bone.FISH_SPINE_ROOT || 
+        this.type == OCO.Bone.FIN ||
+        this.type == OCO.Bone.HAIR_ROOT
         )
         Duik.Bone.setColor( DuColor.Color.ORANGE, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.TORSO)
+    else if ( this.type == OCO.Bone.TORSO)
         Duik.Bone.setColor( DuColor.Color.YELLOW_ORANGE, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.RADIUS ||
-        this.type == DuOCO.Bone.TIBIA ||
-        this.type == DuOCO.Bone.NECK ||
-        this.type == DuOCO.Bone.TAIL_MID ||
-        this.type == DuOCO.Bone.SNAKE_SPINE_MID ||
-        this.type == DuOCO.Bone.FISH_SPINE_MID ||
-        this.type == DuOCO.Bone.HAIR_MID
+    else if ( this.type == OCO.Bone.RADIUS ||
+        this.type == OCO.Bone.TIBIA ||
+        this.type == OCO.Bone.NECK ||
+        this.type == OCO.Bone.TAIL_MID ||
+        this.type == OCO.Bone.SNAKE_SPINE_MID ||
+        this.type == OCO.Bone.FISH_SPINE_MID ||
+        this.type == OCO.Bone.HAIR_MID
         )
         Duik.Bone.setColor( DuColor.Color.YELLOW, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.CARPUS ||
-        this.type == DuOCO.Bone.TARSUS ||
-        this.type == DuOCO.Bone.SKULL ||
-        this.type == DuOCO.Bone.TAIL_END ||
-        this.type == DuOCO.Bone.SNAKE_SPINE_END ||
-        this.type == DuOCO.Bone.FISH_SPINE_END ||
-        this.type == DuOCO.Bone.HAIR_END
+    else if ( this.type == OCO.Bone.CARPUS ||
+        this.type == OCO.Bone.TARSUS ||
+        this.type == OCO.Bone.SKULL ||
+        this.type == OCO.Bone.TAIL_END ||
+        this.type == OCO.Bone.SNAKE_SPINE_END ||
+        this.type == OCO.Bone.FISH_SPINE_END ||
+        this.type == OCO.Bone.HAIR_END
         )
         Duik.Bone.setColor( DuColor.Color.LIGHT_BLUE, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.FINGER ||
-        this.type == DuOCO.Bone.TIP ||
-        this.type == DuOCO.Bone.SKULL_TIP ||
-        this.type == DuOCO.Bone.TOE ||
-        this.type == DuOCO.Bone.FEATHER || 
-        this.type == DuOCO.Bone.FIN_FISHBONE
+    else if ( this.type == OCO.Bone.FINGER ||
+        this.type == OCO.Bone.TIP ||
+        this.type == OCO.Bone.SKULL_TIP ||
+        this.type == OCO.Bone.TOE ||
+        this.type == OCO.Bone.FEATHER || 
+        this.type == OCO.Bone.FIN_FISHBONE
         )
         Duik.Bone.setColor( DuColor.Color.LIGHT_PURPLE, [boneLayer] );
-    else if ( this.type == DuOCO.Bone.HEEL )
+    else if ( this.type == OCO.Bone.HEEL )
         Duik.Bone.setColor( DuColor.Color.GREEN, [boneLayer] );
     
     // Child bones
@@ -584,15 +584,15 @@ DuOCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, bon
 /**
  * Creates a bone using a layer from a comp
  * @param {Layer} layer the layer
- * @param {DuOCODoc} doc the doc which will be containing the bone. Needed for coordinates.
- * @return {DuOCOBone} the bone
+ * @param {OCODoc} doc the doc which will be containing the bone. Needed for coordinates.
+ * @return {OCOBone} the bone
  */
-DuOCOBone.fromComp = function ( layer, doc )
+OCOBone.fromComp = function ( layer, doc )
 {
     // Check the name
     var boneName = Duik.Layer.limbName( layer );
     if (boneName == '') boneName = 'Limb';
-    var bone = new DuOCOBone(boneName);
+    var bone = new OCOBone(boneName);
 
     // The coordinates
     var pos = DuAELayer.getWorldPos( layer );
