@@ -27,6 +27,7 @@ DuBuilder "..\..\Duik Constraints.jsx" -nobanner "output\Duik\ScriptUI Panels\Du
 DuBuilder "..\..\Duik Controllers.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Controllers.jsx"
 DuBuilder "..\..\Duik Layer Manager.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "..\..\Duik Notes.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Notes.jsx"
+DuBuilder "..\..\Duik OCO.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik OCO.jsx"
 DuBuilder "..\..\Duik Rigging.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Rigging.jsx"
 DuBuilder "..\..\Duik Script Editor.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Script Editor.jsx"
 DuBuilder "..\..\Duik Script Library.jsx" -nobanner "output\Duik\ScriptUI Panels\Duik Script Library.jsx"
