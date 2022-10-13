@@ -2,6 +2,7 @@
 
 - separate the OCO API from DuAEF (WIP)
 - Implement bone size (0 by default) (and show envelop if size is not 0)
+- toComp() progressbar
 - implement limb hierarchy in OCODoc.fromComp
 - update Duik autorig to use Duik.Bone.getLimbs()
 - update Duik autorig to respect limb hierarchy
