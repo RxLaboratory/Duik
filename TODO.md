@@ -1,12 +1,10 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- OCO Meta-rig panel in Duik
+- Implement bone size (0 by default) (and show envelop if size is not 0)
 - implement limb hierarchy in OCODoc.fromComp
 - update Duik autorig to use Duik.Bone.getLimbs()
 - update Duik autorig to respect limb hierarchy
-- Implement bone size (0 by default) (and show envelop if size is not 0)
-- OCO as zip format; include thumbnail; include icon
 
 ## Notes
 
