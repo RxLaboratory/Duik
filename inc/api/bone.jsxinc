@@ -1097,11 +1097,97 @@ Duik.Bone.size = function( layer )
 }
 
 /**
+ * Checks if the bone layer has a visible envelop
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {bool}
+ */
+Duik.Bone.hasEnvelop = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (effect) return effect.enabled;
+
+    // Get from the shape layer content
+    var content = layer.property('ADBE Root Vectors Group');
+    if (!content) return false;
+    content = content.property('Envelop');
+    if (!content) return false;
+    var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').value;
+    return v != 0;
+}
+
+/**
+ * Toggles the envelop
+ * @param {bool} [enabled=true]
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ */
+Duik.Bone.setEnvelopEnabled = function( enabled, layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+    enabled = def(enabled, true);
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (effect) effect.enabled = enabled;
+    else {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return;
+        content = content.property('Envelop');
+        if (!content) return;
+        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity');
+        if (enabled) v.setValue(100);
+        else v.setValue(0);
+    }
+}
+
+/**
  * Checks the size of the envelop of the bone layer
  * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
  * @returns {float}
  */
 Duik.Bone.envelopSize = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Envelop');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('root');
+        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale').value;
+        if (v[0] != 0) return Math.abs(v[0]);
+        if (v[1] != 0) return Math.abs(v[1]);
+        return 0;
+    }
+    return effect( sizeIndex ).value;
+}
+
+/**
+ * Sets the size of the envelop of the bone layer
+ * @param {float} size The new size
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ */
+Duik.Bone.setEnvelopSize = function( size, layer )
 {
     layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return 0;
@@ -1114,18 +1200,74 @@ Duik.Bone.envelopSize = function( layer )
     if (!effect) {
         // Get from the shape layer content
         var content = layer.property('ADBE Root Vectors Group');
-        if (!content) return 25;
-        content = content.property('Bone');
-        if (!content) return 25;
-        content = content.property('ADBE Vectors Group').property('Envelop');
-        if (!content) return 25;
+        if (!content) return;
+        content = content.property('Envelop');
+        if (!content) return;
         content = content.property('ADBE Vectors Group').property('root');
-        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale').value;
-        if (v[0] != 0) return Math.abs(v[0]);
-        if (v[1] != 0) return Math.abs(v[1]);
-        return 25;
+        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale');
+        v.setValue([size, size]);
+        return;
     }
-    return effect( sizeIndex ).value;
+    effect( sizeIndex ).setValue(size);
+}
+
+/**
+ * Checks the offset of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
+ */
+Duik.Bone.envelopOffset = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var offsetIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Offset'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Envelop');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('root');
+        var p = content.property('ADBE Vector Transform Group').property('ADBE Vector Position').value;
+        return -p[0];
+    }
+    return effect( offsetIndex ).value;
+}
+
+/**
+ * Sets the offset of the envelop of the bone layer
+ * @param {float} offset The offset
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ */
+Duik.Bone.setEnvelopOffset = function( offset, layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    var offsetIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Offset'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return;
+        content = content.property('Envelop');
+        if (!content) return;
+        content = content.property('ADBE Vectors Group').property('root');
+        var p = content.property('ADBE Vector Transform Group').property('ADBE Vector Position');
+        p.setValue([-offset, p.value[0]]);
+        return;
+    }
+    effect( offsetIndex ).setValue(offset);
 }
 
 /**
