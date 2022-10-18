@@ -6,7 +6,6 @@
 - update Duik autorig to respect limb hierarchy
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes
-- Connector changes first keyframe value?
 
 ## Notes
 
