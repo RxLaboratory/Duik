@@ -1,6 +1,8 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
+- OCO Don't extrat icon if exists
+- OCO don't reload if not visible
 - toComp() progressbar
 - implement limb hierarchy in OCODoc.fromComp
 - update Duik autorig to use Duik.Bone.getLimbs()
