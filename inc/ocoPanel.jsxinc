@@ -316,6 +316,89 @@ function buildOCOUI( tab, standAlone )
     }
 
     // UI Popups
+    var runOptionsPopup = DuScriptUI.popUp( 'Options' );
+    runOptionsPopup.build = function() {
+
+        if (runOptionsPopup.built) return;
+
+        var envelopBox = DuScriptUI.checkBox(runOptionsPopup.content, {
+            text: i18n._("Show envelops"),
+            image: w16_envelop
+        });
+
+        var noodleBox = DuScriptUI.checkBox(runOptionsPopup.content, {
+            text: i18n._("Show noodles"),
+            image: w16_noodle
+        });
+
+        var compBox = DuScriptUI.checkBox(runOptionsPopup.content, {
+            text: i18n._("Create new composition"),
+            image: w16_composition
+        });
+
+        DuScriptUI.separator(runOptionsPopup.content);
+
+        var applyButton = DuScriptUI.button(
+            runOptionsPopup.content,
+            i18n._("Create"),
+            w12_check,
+            i18n._("[Alt]: Create and build in a new composition.")
+        );
+        applyButton.onClick = lib.runItem;
+
+        lib.onRun = function(item) {
+            var doc = OCODoc.fromFile( item.data );
+            if (nameEdit.text != "") doc.name = nameEdit.text;
+
+            DuScriptUI.progressBar.reset();
+            DuScriptUI.progressBar.show();
+
+            DuAE.beginUndoGroup( i18n._("Create OCO Meta-rig") );
+
+            var bones = [];
+            if (compBox.checked) bones = doc.toComp( );
+            else bones = doc.toComp( DuAEProject.getActiveComp() );
+            Duik.Bone.setEnvelopEnabled( envelopBox.checked, bones );
+            Duik.Bone.setNoodleEnabled( noodleBox.checked, bones );
+            // Open comp
+            if (compBox.checked && bones.length > 0)
+            {
+                var comp = layers[0].containingComp;
+                comp.openInViewer();
+            }
+            runItem( item.data );
+
+            DuAE.endUndoGroup();
+
+            DuScriptUI.progressBar.close();
+        };
+
+        lib.onAltRun = function(item) {
+            var doc = OCODoc.fromFile( item.data );
+            if (nameEdit.text != "") doc.name = nameEdit.text;
+
+            DuScriptUI.progressBar.reset();
+            DuScriptUI.progressBar.show();
+
+            DuAE.beginUndoGroup( i18n._("Create OCO Meta-rig") );
+
+            var layers = doc.toComp();
+            Duik.Bone.setEnvelopEnabled( envelopBox.checked, layers );
+            Duik.Bone.setNoodleEnabled( noodleBox.checked, layers );
+            // Open comp
+            if (layers.length > 0)
+            {
+                var comp = layers[0].containingComp;
+                comp.openInViewer();
+            }
+            runItem( item.data );
+
+            DuAE.endUndoGroup();
+
+            DuScriptUI.progressBar.close();
+        };       
+    };
+
     var catNameEditor = DuScriptUI.stringPrompt(
         i18n._("Edit category name"),
         i18n._("New Category")
@@ -420,7 +503,8 @@ function buildOCOUI( tab, standAlone )
     libOptions.refreshInterval = 60000;
     libOptions.itemName = i18n._("Meta-Rig");
     libOptions.runHelpTip = i18n._("Build selected Meta-Rig.") + "\n\n" +
-        i18n._("[Alt]: Create and build in a new composition.");
+        i18n._("[Alt]: Create and build in a new composition.") + "\n" +
+        i18n._("[Shift]: More options...");
     libOptions.folderHelpTip = i18n._("Open the folder in the file explorer/finder.") +
         "\n\n" + i18n._("[Alt]: Select the library location.");
     libOptions.addItemHelpTip = i18n._("Create a new Meta-Rig from selected bones or create a new category.");
@@ -435,38 +519,9 @@ function buildOCOUI( tab, standAlone )
     );
 
     lib.onRefresh = refreshLib;
-    //runOptionsPopup.tieTo(lib.runButton, true);
-    lib.onRun = function(item) {
-        var doc = OCODoc.fromFile( item.data);
-        if (nameEdit.text != "") doc.name = nameEdit.text;
-
-        DuScriptUI.progressBar.reset();
-        DuScriptUI.progressBar.show();
-
-        doc.toComp( DuAEProject.getActiveComp() );
-        runItem( item.data );
-
-        DuScriptUI.progressBar.close();
-    };
-
-    lib.onAltRun = function(item) {
-        var doc = OCODoc.fromFile( item.data );
-        if (nameEdit.text != "") doc.name = nameEdit.text;
-
-        DuScriptUI.progressBar.reset();
-        DuScriptUI.progressBar.show();
-
-        var layers = doc.toComp();
-        // Open comp
-        if (layers.length > 0)
-        {
-            var comp = layers[0].containingComp;
-            comp.openInViewer();
-        }
-        runItem( item.data );
-
-        DuScriptUI.progressBar.close();
-    };
+    runOptionsPopup.tieTo(lib.runButton, true);
+    lib.onRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onRun(item); };
+    lib.onAltRun = function(item) { runOptionsPopup.build(); runOptionsPopup.built = true; lib.onAltRun(item); };
 
     lib.onFolderOpened = function( item, category ) {
         if (item) {

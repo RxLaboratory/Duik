@@ -1110,8 +1110,6 @@ Duik.Bone.hasEnvelop = function( layer )
 
     if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
 
-    var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
-
     var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
     if (effect) return effect.enabled;
 
@@ -1127,29 +1125,32 @@ Duik.Bone.hasEnvelop = function( layer )
 /**
  * Toggles the envelop
  * @param {bool} [enabled=true]
- * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer} [layers] The layers. If omitted, will use all selected bones
  */
-Duik.Bone.setEnvelopEnabled = function( enabled, layer )
+Duik.Bone.setEnvelopEnabled = function( enabled, layers )
 {
-    layer = def(layer, DuAEComp.getActiveLayer());
-    if (!layer) return 0;
-
-    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
 
     enabled = def(enabled, true);
 
-    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
-    if (effect) effect.enabled = enabled;
-    else {
-        // Get from the shape layer content
-        var content = layer.property('ADBE Root Vectors Group');
-        if (!content) return;
-        content = content.property('Envelop');
-        if (!content) return;
-        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity');
-        if (enabled) v.setValue(100);
-        else v.setValue(0);
-    }
+    layers.do(function(layer) {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (effect) effect.enabled = enabled;
+        else {
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return;
+            content = content.property('Envelop');
+            if (!content) return;
+            var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity');
+            if (enabled) v.setValue(100);
+            else v.setValue(0);
+        }
+    });    
 }
 
 /**
@@ -1270,6 +1271,57 @@ Duik.Bone.setEnvelopOffset = function( offset, layer )
         return;
     }
     effect( offsetIndex ).setValue(offset);
+}
+
+Duik.Bone.hasNoodle = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_NOODLE.matchName );
+    if (effect) return effect.enabled;
+
+    // Get from the shape layer content
+    var content = layer.property('ADBE Root Vectors Group');
+    if (!content) return false;
+    content = content.property('Noodle');
+    if (!content) return false;
+    var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').value;
+    return v != 0;
+}
+
+/**
+ * Toggles the noodle
+ * @param {bool} [enabled=true]
+ * @param {Layer} [layers] The layers. If omitted, will use all selected bones
+ */
+Duik.Bone.setNoodleEnabled = function ( enabled, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    enabled = def(enabled, true);
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_NOODLE.matchName );
+        if (effect) effect.enabled = enabled;
+        else {
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return;
+            content = content.property('Noodle');
+            if (!content) return;
+            var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity');
+            if (enabled) v.setValue(100);
+            else v.setValue(0);
+        }
+    });
 }
 
 /**
