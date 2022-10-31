@@ -1,7 +1,9 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- implement limb hierarchy in OCODoc.fromComp
+- include rabbit
+- Don't add envelops when 0; default to -1 for "auto"
+- implement limb hierarchy in OCODoc.fromComp (important)
 - update Duik autorig to use Duik.Bone.getLimbs()
 - update Duik autorig to respect limb hierarchy
 - DuSan up time no warning

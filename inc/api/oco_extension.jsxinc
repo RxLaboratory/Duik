@@ -132,6 +132,9 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
         }
     }
 
+    // Normalize z indices
+    doc.normalizeZIndices();
+
     return doc;
 }
 
@@ -150,8 +153,11 @@ OCODoc.prototype.toComp = function( comp, duration, frameRate )
     if (typeof comp === 'undefined') comp = app.project.items.addComp( this.name, this.resolution[0], this.resolution[1], 1.0, duration, frameRate);
     if (!comp) return;
 
-    DuScriptUI.progressBar.stg("Building OCO character: " + this.name);
+    DuScriptUI.progressBar.stg(i18n._("Building OCO character:") + " " + this.name);
     DuScriptUI.progressBar.addMax(this.numBones()+1);
+
+    // Normalize z indices
+    this.normalizeZIndices();
 
     var layers = [];
     // For each limb
@@ -159,6 +165,15 @@ OCODoc.prototype.toComp = function( comp, duration, frameRate )
     {
         layers = layers.concat( this.limbs[i].toComp( this, comp ) );
     }
+
+    // Move according to the z-index
+    DuScriptUI.progressBar.stg(i18n._("Sorting bones..."));
+    var allBones = this.getBones();
+    for(var i = allBones.length - 1; i >= 0; i--)
+    {
+        allBones[i].layer.moveToBeginning();
+    }
+
     return layers;
 }
 
@@ -499,6 +514,8 @@ OCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, boneI
     // Create the layer for this one
     var boneLayer = comp.layers.addShape();
     layers.push(boneLayer);
+    // Store the layer object
+    this.layer = boneLayer;
 
     // Tag & Attributes
     Duik.Layer.setAttributes( boneLayer, Duik.Layer.Type.BONE, this.name, limb.side, limb.location, doc.name );
@@ -603,11 +620,15 @@ OCOBone.fromComp = function ( layer, doc )
     if (boneName == '') boneName = 'Limb';
     var bone = new OCOBone(boneName);
 
+    // Store the layer object
+    bone.layer = layer;
+
     // The coordinates
     var pos = DuAELayer.getWorldPos( layer );
     pos = doc.fromPixels( pos );
     bone.x = pos[0];
     bone.y = pos[1];
+    bone.zIndex = layer.index;
     bone.envelop.width = doc.fromPixels( Duik.Bone.envelopSize( layer ) );
     bone.envelop.offset = doc.fromPixels( Duik.Bone.envelopOffset( layer ) );
 
