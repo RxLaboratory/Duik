@@ -54,9 +54,9 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
         return doc;
     }
 
-    var bottom = def(ground, 0);; // The lowest leg tip Y coordinate if we find it.
+    var bottom = def(ground, 0); // The lowest leg tip Y coordinate if we find it.
     var top = def(characterTop, comp.height); // The highest point
-    var characterName = "Character"; // The first character name we find
+    var characterName = ""; // The first character name we find
     var bounds = [comp.width,comp.height,0,0]; // The bounds left, top, right, bottom, needed to find the center of mass
 
     // Collect limbs
@@ -65,17 +65,16 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
     if (limbs.length == 0) return doc;
     
     // Get the character name and find the lowest foot
-    for (var i = 0, ni = limbs.length; i < ni; i++)
+    function findNameAndBounds(limbArray)
     {
-        for (var j = 0, nj = limbs[i].length; j < nj; j++)
+        for (var i = 0, ni = limbArray.length; i < ni; i++)
         {
-            var bone = limbs[i][j];
-            if (characterName == "")
-            {
-                var name = Duik.Layer.characterName(bone);
-                characterName = name;
-            }
+            var bone = limbArray[i];
+
+            if (characterName == "") characterName = Duik.Layer.characterName(bone);
+
             var pos = DuAELayer.getWorldPos(bone);
+
             // Find a leg tip
             var limbType = DuAETag.getValue( bone, DuAETag.Key.DUIK_LIMB, DuAETag.Type.STRING );
             if (limbType == OCO.Limb.LEG)
@@ -91,8 +90,21 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
             else if (pos[0] > bounds[2]) bounds[2] = pos[0];
             if (pos[1] < bounds[1]) bounds[1] = pos[1];
             else if (pos[1] > bounds[3]) bounds[3] = pos[1];
+            
+            // Try with children limbs
+            for (var j = 0, nj = bone.childLimbs.length; j < nj; j++)
+            {
+                findNameAndBounds( bone.childLimbs[j] );
+            }
         }
     }
+
+    for (var i = 0, ni = limbs.length; i < ni; i++)
+    {
+        findNameAndBounds( limbs[i] );
+    }
+
+    if (characterName == "") characterName = "Character";
 
     // Complete doc params
     if (bottom == 0) bottom = bounds [2];
@@ -105,18 +117,18 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
     doc.width = (bounds[2] - bounds[0]) / doc.pixelsPerCm;
 
     // Add limbs to the doc
-    // TODO check parent between limbs. For now they're all added to the root
-    for (var i = 0, ni = limbs.length; i < ni; i++)
+    function createLimb( limbArray, parent )
     {
-        if (limbs[i].length == 0) continue;
-        var rootBone = limbs[i][0];
+        if (limbArray.length == 0) return;
+        var rootBone = limbArray[0];
 
         var limb = DuAETag.getValue( rootBone, DuAETag.Key.DUIK_LIMB, DuAETag.Type.STRING );
         var side = Duik.Layer.side(rootBone);
         var location = Duik.Layer.location(rootBone);
         var limbType = DuAETag.getValue( rootBone, DuAETag.Key.DUIK_LIMB_TYPE, DuAETag.Type.STRING );
 
-        var l = doc.newLimb(limb, side, location, limbType);
+        // Create the limb
+        l = parent.newLimb(limb, side, location, limbType);
 
         // Add bones to the limb
 
@@ -124,12 +136,30 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
         var bone = OCOBone.fromComp(rootBone, doc);
         l.armature.push(bone);
 
-        for (var j = 1, nj = limbs[i].length; j < nj; j++)
+        // Create children limbs
+        for (var i = 0, ni = rootBone.childLimbs.length; i < ni; i++)
         {
-            var b = OCOBone.fromComp( limbs[i][j], doc );
+            createLimb( rootBone.childLimbs[i], bone);
+        }
+
+        for (var i = 1, ni = limbArray.length; i < ni; i++)
+        {
+            var bLayer = limbArray[i];
+            var b = OCOBone.fromComp( bLayer, doc );
             bone.children.push(b);
             bone = b;
+
+            // Create children limbs
+            for (var j = 0, nj = bLayer.childLimbs.length; j < nj; j++)
+            {
+                createLimb( bLayer.childLimbs[j], bone);
+            }
         }
+    }
+
+    for (var i = 0, ni = limbs.length; i < ni; i++)
+    {
+        createLimb(limbs[i], doc);
     }
 
     // Normalize z indices
