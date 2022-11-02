@@ -2,15 +2,14 @@
  * Creates an OCO doc from the given composition.
  * @param {string} [name] The name of the character. If omitted, will use the comp name.
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The composition
- * @param {Boolean} [empty=false] Set to true to create an empty doc.
- * @param {Boolean} [selectedLayers=false] If empty is true, will use only the selected layers
+ * @param {Layer[]} [layers=Duik.Bone.get(false)] The layers to include as bones in the doc
  * @param {float} [characterTop] The max Y coordinate of the character, in px in the comp
  * @param {float[]} [characterCenterOfMass] The coordinates of center of mass of the character, in px in the comp
  * @param {float} [ground] The Y coordinate of the ground, in px in the comp
  * @param {float} [height=185] The height of the character, in cm
  * @return {DoOCODoc} The new doc
  */
-OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, characterCenterOfMass, ground, height )
+OCODoc.fromComp = function( name, comp, layers, characterTop, characterCenterOfMass, ground, height )
 {
     comp = def(comp, DuAEProject.getActiveComp());
     name = def( name, '');
@@ -26,9 +25,8 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
         else name = comp.name;
     }
 
-    empty = def(empty, false);
-    selectedLayers = def( selectedLayers, false);
-    
+    layers = def(layers, Duik.Bone.get(false, comp));
+   
     var doc = new OCODoc( name );
     doc.resolution = [comp.width, comp.height];
 
@@ -36,7 +34,7 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
 
     doc.height = height;
 
-    if (empty) {
+    if (layers.length == 0) {
         // Coordinates
         var top = def(characterTop, comp.height * .3 );
         var center = def(characterCenterOfMass, [comp.width/2, comp.height*.51]);
@@ -60,7 +58,7 @@ OCODoc.fromComp = function( name, comp , empty, selectedLayers, characterTop, ch
     var bounds = [comp.width,comp.height,0,0]; // The bounds left, top, right, bottom, needed to find the center of mass
 
     // Collect limbs
-    var limbs = Duik.Bone.getLimbs(selectedLayers)
+    var limbs = Duik.Bone.getLimbs(layers);
 
     if (limbs.length == 0) return doc;
     

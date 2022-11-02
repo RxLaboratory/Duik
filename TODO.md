@@ -1,8 +1,7 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- implement limb hierarchy in OCODoc.fromComp (important)
-- update Duik autorig to use Duik.Bone.getLimbs()
+- update Duik autorig to use OCODoc.fromComp
 - update Duik autorig to respect limb hierarchy
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes
