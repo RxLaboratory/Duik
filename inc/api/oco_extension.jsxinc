@@ -102,7 +102,7 @@ OCODoc.fromComp = function( name, comp, layers, characterTop, characterCenterOfM
         findNameAndBounds( limbs[i] );
     }
 
-    if (characterName == "") characterName = "Character";
+    if (characterName == "") characterName = name;
 
     // Complete doc params
     if (bottom == 0) bottom = bounds [2];
@@ -113,6 +113,7 @@ OCODoc.fromComp = function( name, comp, layers, characterTop, characterCenterOfM
     doc.world = [center[0], bottom];
     doc.centerOfMass = doc.fromPixels( center );
     doc.width = (bounds[2] - bounds[0]) / doc.pixelsPerCm;
+    doc.name = characterName;
 
     // Add limbs to the doc
     function createLimb( limbArray, parent )
@@ -517,6 +518,21 @@ OCOLimb.prototype.armatureFromLayers = function( doc, name, layers )
 }
 
 /**
+ * Gets the After Effects layers representing this limb
+ * @return {Layer[]} May be an empty array if this limb has not been created in After Effects yet
+ */
+OCOLimb.prototype.getLayers = function()
+{
+    var layers = [];
+    for (var i = 0, ni = this.armature.length; i < ni; i++)
+    {
+        var bone = this.armature[i];
+        layers = layers.concat(bone.getLayers());
+    }
+    return layers;
+}
+
+/**
  * Creates the limbs and armatures in the comp
  * @param {OCODoc} doc The doc containing the bone.
  * @param {OCOLimb} limb The limb containing the bone.
@@ -632,6 +648,22 @@ OCOBone.prototype.toComp = function( doc, limb, comp, parentLayer, limbId, boneI
         layers = layers.concat( this.limbs[i].toComp(doc, comp, boneLayer, limbId, boneIndex) );
     }
 
+    return layers;
+}
+
+/**
+ * Gets the After Effects child layers of this bone (including it)
+ * @return {Layer[]} May be an empty array if this bone has not been created in After Effects yet
+ */
+OCOBone.prototype.getLayers = function()
+{
+    var layers = [];
+    if (this.layer) layers.push(this.layer);
+    for (var i = 0, ni = this.children.length; i < ni; i++)
+    {
+        var bone = this.children[i];
+        layers = layers.concat(bone.getLayers());
+    }
     return layers;
 }
 

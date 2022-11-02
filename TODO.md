@@ -1,8 +1,8 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- update Duik autorig to use OCODoc.fromComp
-- update Duik autorig to respect limb hierarchy
+- test autorig
+  - getSpineAttach not working correctly?
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes
 
