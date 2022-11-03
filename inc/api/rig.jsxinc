@@ -80,7 +80,6 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
         Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
 
     // Try to parent limbs which weren't parented.
-    // TODO parent controllers; check if root has a parent controller
     var spine = ocoDoc.getSpine();
     if (spine != null)
     {
@@ -97,23 +96,21 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
                 if (limb.armature.length == 0)
                     continue;
 
-                for (var j = 0, nj = limb.armature.length; j < nj; j++)
-                {
-                    var rootBone = limb.armature[j];
-                    if (rootBone.layer)
-                    {
-                        var attach = null;
-                        // If it's a leg -> parent to the hips no matter what!
-                        if (limb.limb == OCO.Limb.LEG)
-                            attach = spineLayers[0];
-                        else
-                            var attach = Duik.Rig.getSpineAttach(
-                                DuAELayer.getWorldPos(rootBone.layer),
-                                spineLayers
-                            );
-                        rootBone.layer.parent = attach;
-                    }
-                }
+                // Find the parent bone
+                var parentBone = null;
+                var rootBone = limb.armature[0];
+                if (!rootBone.layer) continue;
+
+                // If it's a leg -> parent to the hips no matter what!
+                if (limb.limb == OCO.Limb.LEG)
+                    parentBone = spineLayers[0];
+                else
+                    parentBone = Duik.Rig.getSpineAttach(
+                        DuAELayer.getWorldPos(rootBone.layer),
+                        spineLayers
+                    );
+
+                Duik.Rig.parentLimb(limb, parentBone);
             }
         }
     }
@@ -123,6 +120,64 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( i18n._("Auto-rig") );
+}
+
+/**
+ * Parents a rigged limb (i.e. the bones and controllers) to a bone.<br/>
+ * The limb must have been rigged with {@link Duik.Rig.limb}, or must have a <code>.ctrls</code> attribute, which is an array of Layer containing the controllers.
+ * @param {OCOLimb} limb The limb to parent
+ * @param {OCOBone} bone The parent bone
+ */
+Duik.Rig.parentLimb = function(limb, parentLayer)
+{
+    // Parent root bones
+    for (var i = 0, ni = limb.armature.length; i < ni; i++)
+    {
+        var rootBone = limb.armature[i];
+        if (rootBone.layer)
+        {
+            var rootParent = rootBone.layer.parent;
+            if (rootParent == null)
+                rootBone.layer.parent = parentLayer;
+            else if (rootParent.parent == null)
+                rootParent.parent = parentLayer;
+        }
+    }
+
+    // For some limbs, we need to parent controllers too
+    if (limb.limb == OCO.Limb.TAIL)
+    {
+        // Ctrls should follow the parent
+        for (var i = 0, ni = limb.ctrls.length; i < ni; i++)
+        {
+            var ctrl = limb.ctrls.length;
+            if (ctrl.parent == null) ctrl.parent = parentLayer;
+        }
+    }
+    else if (limb.limb == OCO.Limb.WING)
+    {
+        var ctrl = limb.ctrls[0];
+        if (ctrl.parent == null) ctrl.parent = parentLayer;
+    }
+    else if (limb.limb == OCO.Limb.HAIR)
+    {
+        var ctrl = limb.ctrls[0];
+        if (ctrl.parent == null) ctrl.parent = parentLayer;
+    }
+    else if (limb.limb == OCO.Limb.FIN)
+    {
+        var ctrl = limb.ctrls[0];
+        if (ctrl.parent == null) ctrl.parent = parentLayer;
+    }
+    else if (limb.limb == OCO.Limb.CUSTOM)
+    {
+        // Ctrls follow the parent by default (?)
+        for (var i = 0, ni = limb.ctrls.length; i < ni; i++)
+        {
+            var ctrl = limb.ctrls.length;
+            if (ctrl.parent == null) ctrl.parent = parentLayer;
+        }
+    }
 }
 
 /**
@@ -137,27 +192,27 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
     // Check the type of the limb
     if (limb.limb == OCO.Limb.SPINE)
     {
-        Duik.Rig.spine( limb.getLayers(), customControllers );
+        limb.ctrls = Duik.Rig.spine( limb.getLayers(), customControllers );
     }
     else if (limb.limb == OCO.Limb.ARM)
     {
-        Duik.Rig.arm( limb.getLayers(), customControllers );
+        limb.ctrls = [ Duik.Rig.arm( limb.getLayers(), customControllers ) ];
     }
     else if (limb.limb == OCO.Limb.LEG)
     {
-        Duik.Rig.leg( limb.getLayers(), customControllers );
+        limb.ctrls = [ Duik.Rig.leg( limb.getLayers(), customControllers ) ];
     }
     else if (limb.limb == OCO.Limb.TAIL)
     {
-        Duik.Rig.tail( limb.getLayers(), longChainMode, customControllers );
+        limb.ctrls = Duik.Rig.tail( limb.getLayers(), longChainMode, customControllers );
     }
     else if (limb.limb == OCO.Limb.WING)
     {
-        Duik.Rig.wing( limb.getLayers(), customControllers );
+        limb.ctrls = [ Duik.Rig.wing( limb.getLayers(), customControllers ) ];
     }
     else if (limb.limb == OCO.Limb.HAIR)
     {
-        Duik.Rig.hair( limb.getLayers(), customControllers );
+        limb.ctrls = Duik.Rig.hair( limb.getLayers(), customControllers );
     }
     else if (limb.limb == OCO.Limb.SNAKE_SPINE)
     {
@@ -165,15 +220,15 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
     }
     else if (limb.limb == OCO.Limb.FISH_SPINE)
     {
-        Duik.Rig.fishSpine( limb.getLayers(), longChainMode, customControllers );
+        limb.ctrls = Duik.Rig.fishSpine( limb.getLayers(), longChainMode, customControllers );
     }
     else if (limb.limb == OCO.Limb.FIN)
     {
-        Duik.Rig.fin( limb.getLayers(), customControllers );
+        limb.ctrls = [ Duik.Rig.fin( limb.getLayers(), customControllers ) ];
     }
     else if (limb.limb == OCO.Limb.CUSTOM)
     {
-        Duik.Rig.custom( limb.getLayers(), longChainMode, threeLayerMode, customControllers );
+        limb.ctrls = [ Duik.Rig.custom( limb.getLayers(), longChainMode, threeLayerMode, customControllers ) ];
     }
 
     // Rig child limbs (and parent them)
@@ -184,13 +239,7 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
             var childLimb = bone.limbs[j];
             if (childLimb.armature.length == 0) continue;
             Duik.Rig.limb(childLimb, customControllers, longChainMode, threeLayerMode);
-            // Parent
-            for(var k = 0, nk = childLimb.armature.length; k < nk; k++)
-            {
-                if (childLimb.armature[k].layer && bone.layer)
-                    childLimb.armature[k].layer.parent = bone.layer;
-            }
-            
+            Duik.Rig.parentLimb(childLimb, bone);
         }
         for (var j = 0, nj = bone.children.length; j < nj; j++)
         {
@@ -208,19 +257,15 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
  * Rigs a spine.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig
  * @param {Layer[]|DuList.<Layer>} [customControllers] - Existing custom controllers to use
- * @returns {Object} An object with two Arrays: bones and controllers.
+ * @returns {Layer[]} The controllers for the spine.
  */
 Duik.Rig.spine = function( layers, customControllers )
 {
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
 
-    var riggedSpine = {};
-    riggedSpine.bones = [];
-    riggedSpine.controllers = [];
-
-    if( layers.isEmpty() ) return riggedSpine;
-    if( layers.length() == 1 ) return riggedSpine;
+    if( layers.isEmpty() ) return [];
+    if( layers.length() == 1 ) return [];
 
     DuScriptUI.progressBar.stg( i18n._("Spine"));
     DuScriptUI.progressBar.hit(1, 'Sorting bones...');
@@ -272,13 +317,6 @@ Duik.Rig.spine = function( layers, customControllers )
     spine.sort( sortBones );
     neck.sort( sortBones );
 
-    if (hips) riggedSpine.bones.push( hips );
-    riggedSpine.bones = riggedSpine.bones.concat( spine );
-    if (torso) riggedSpine.bones.push( torso );
-    riggedSpine.bones = riggedSpine.bones.concat( neck );
-    if (head) riggedSpine.bones.push( head );
-    if (tip) riggedSpine.bones.push( tip );
-
     //find the root
 	var spineRoot = null;
 	if (hips) spineRoot = hips;
@@ -289,7 +327,7 @@ Duik.Rig.spine = function( layers, customControllers )
 	else if (tip) spineRoot = tip;
 
     // Nothing to do
-    if (spineRoot == null) return riggedSpine;
+    if (spineRoot == null) return [];
 
     // Let's rig!
 
@@ -503,15 +541,16 @@ Duik.Rig.spine = function( layers, customControllers )
         else if (bodyCtrl) headCtrl.parent = bodyCtrl;
     }
     
-    if ( bodyCtrl ) riggedSpine.controllers.push(bodyCtrl);
-    if ( hipsCtrl ) riggedSpine.controllers.push(hipsCtrl);
-    if ( spineCtrl ) riggedSpine.controllers.push(spineCtrl);
-    if ( spineCurveCtrl ) riggedSpine.controllers.push(spineCurveCtrl);
-    if ( torsoCtrl ) riggedSpine.controllers.push(torsoCtrl);
-    if ( shoulderCtrl ) riggedSpine.controllers.push(shoulderCtrl);
-    if ( headCtrl ) riggedSpine.controllers.push(headCtrl);
-    DuAELayer.stack(riggedSpine.controllers);
-    return riggedSpine;
+    var ctrls = []
+    if ( bodyCtrl ) ctrls.push(bodyCtrl);
+    if ( hipsCtrl ) ctrls.push(hipsCtrl);
+    if ( spineCtrl ) ctrls.push(spineCtrl);
+    if ( spineCurveCtrl ) ctrls.push(spineCurveCtrl);
+    if ( torsoCtrl ) ctrls.push(torsoCtrl);
+    if ( shoulderCtrl ) ctrls.push(shoulderCtrl);
+    if ( headCtrl ) ctrls.push(headCtrl);
+    DuAELayer.stack( ctrls );
+    return ctrls;
 }
 
 /**
