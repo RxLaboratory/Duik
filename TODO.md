@@ -1,9 +1,6 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- test autorig
-  - getSpineAttach not working correctly?
-  - How to autoparent limbs? Use logic (legs to hips, etc.) or closest? Check if it matches
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes
 
