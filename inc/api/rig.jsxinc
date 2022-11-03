@@ -76,10 +76,11 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     // Rig all limbs
     DuScriptUI.progressBar.addMax( ocoDoc.numLimbs() * 4 ); // 4 steps per limb
 
-    //for (var i  = 0, ni = ocoDoc.limbs.length; i < ni; i++ )
-    //    Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
+    for (var i  = 0, ni = ocoDoc.limbs.length; i < ni; i++ )
+        Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
 
     // Try to parent limbs which weren't parented.
+    // TODO parent controllers; check if root has a parent controller
     var spine = ocoDoc.getSpine();
     if (spine != null)
     {
@@ -101,16 +102,24 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
                     var rootBone = limb.armature[j];
                     if (rootBone.layer)
                     {
-                        var attach = Duik.Rig.getSpineAttach(
-                            DuAELayer.getWorldPos(rootBone.layer),
-                            spineLayers
-                        );
+                        var attach = null;
+                        // If it's a leg -> parent to the hips no matter what!
+                        if (limb.limb == OCO.Limb.LEG)
+                            attach = spineLayers[0];
+                        else
+                            var attach = Duik.Rig.getSpineAttach(
+                                DuAELayer.getWorldPos(rootBone.layer),
+                                spineLayers
+                            );
                         rootBone.layer.parent = attach;
                     }
                 }
             }
         }
     }
+
+
+    // TODO Get/Create a master, parent orphan controllers to it
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( i18n._("Auto-rig") );
@@ -175,9 +184,13 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
             var childLimb = bone.limbs[j];
             if (childLimb.armature.length == 0) continue;
             Duik.Rig.limb(childLimb, customControllers, longChainMode, threeLayerMode);
-            // Parent (if we know the corresponding layer)
-            if (childLimb.armature[0].layer && bone.layer)
-                childLimb.armature[0].layer.parent = bone.layer;
+            // Parent
+            for(var k = 0, nk = childLimb.armature.length; k < nk; k++)
+            {
+                if (childLimb.armature[k].layer && bone.layer)
+                    childLimb.armature[k].layer.parent = bone.layer;
+            }
+            
         }
         for (var j = 0, nj = bone.children.length; j < nj; j++)
         {
