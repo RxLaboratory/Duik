@@ -76,8 +76,8 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     // Rig all limbs
     DuScriptUI.progressBar.addMax( ocoDoc.numLimbs() * 4 ); // 4 steps per limb
 
-    for (var i  = 0, ni = ocoDoc.limbs.length; i < ni; i++ )
-        Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
+    //for (var i  = 0, ni = ocoDoc.limbs.length; i < ni; i++ )
+    //    Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
 
     // Try to parent limbs which weren't parented.
     var spine = ocoDoc.getSpine();
@@ -96,14 +96,17 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
                 if (limb.armature.length == 0)
                     continue;
 
-                var rootBone = limb.armature[0];
-                if (rootBone.layer)
+                for (var j = 0, nj = limb.armature.length; j < nj; j++)
                 {
-                    var attach = Duik.Rig.getSpineAttach(
-                        DuAELayer.getWorldPos(rootBone.layer),
-                        spineLayers
-                    );
-                    rootBone.layer.parent = attach;
+                    var rootBone = limb.armature[j];
+                    if (rootBone.layer)
+                    {
+                        var attach = Duik.Rig.getSpineAttach(
+                            DuAELayer.getWorldPos(rootBone.layer),
+                            spineLayers
+                        );
+                        rootBone.layer.parent = attach;
+                    }
                 }
             }
         }
@@ -1055,12 +1058,14 @@ Duik.Rig.getSpineAttach = function ( location, spineBones)
     spineAttach = null;
 
     if (spineBones.length == 0) return spineAttach;
+    if (spineBones.length == 1) return spineBones[0];
 
     // The bone needs to be the one just before, no matter the orientation: check the distance between hips & shoulder
     // on the furthest axis
     var rootPos = DuAELayer.getWorldPos( spineBones[0] );
-    var x = location[0] - rootPos[0];
-    var y = location[1] - rootPos[1];
+    var endPos = DuAELayer.getWorldPos( spineBones[spineBones.length-1] );
+    var x = endPos[0] - rootPos[0];
+    var y = endPos[1] - rootPos[1];
     var axis = 1;
     var sign = DuMath.sign( y );
     if ( Math.abs( x ) > Math.abs( y ) )
@@ -1074,6 +1079,7 @@ Duik.Rig.getSpineAttach = function ( location, spineBones)
         var b = spineBones[i];
         var bPos = DuAELayer.getWorldPos( b );
         var l = location[axis] - bPos[axis];
+        if (l == 0) return b;
         var s = DuMath.sign(l);
         // too far, we're ready
         if (s != sign ) return spineAttach;
