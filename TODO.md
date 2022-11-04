@@ -1,7 +1,6 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- bake chicken, -> oco -> test
 - master ctrl
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes

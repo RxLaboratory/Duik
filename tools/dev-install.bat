@@ -1,7 +1,7 @@
 @echo off
 
 :: The path to ScriptUI Panels
-SET "aePath=C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\Scripts\ScriptUI Panels"
+SET "aePath=C:\Program Files\Adobe\Adobe After Effects 2022\Support Files\Scripts\ScriptUI Panels"
 
 :: The repo (current dir)
 SET repoPath=%~dp0..

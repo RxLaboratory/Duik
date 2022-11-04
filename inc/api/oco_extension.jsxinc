@@ -129,24 +129,35 @@ OCODoc.fromComp = function( name, comp, layers, characterTop, characterCenterOfM
         // Create the limb
         l = parent.newLimb(limb, side, location, limbType);
 
-        // Add bones to the limb
-
-        // The Root first
-        var bone = OCOBone.fromComp(rootBone, doc);
-        l.armature.push(bone);
-
-        // Create children limbs
-        for (var i = 0, ni = rootBone.childLimbs.length; i < ni; i++)
-        {
-            createLimb( rootBone.childLimbs[i], bone);
-        }
-
-        for (var i = 1, ni = limbArray.length; i < ni; i++)
+        // Create bones
+        var newBones = [];
+        for (var i = 0, ni = limbArray.length; i < ni; i++)
         {
             var bLayer = limbArray[i];
-            var b = OCOBone.fromComp( bLayer, doc );
-            bone.children.push(b);
-            bone = b;
+            var bone = OCOBone.fromComp( bLayer, doc );
+            newBones.push(bone);
+        }
+
+        // Sort & create child limbs
+        for (var i = 0, ni = newBones.length; i < ni; i++)
+        {
+            var bone = newBones[i];
+            var bLayer = bone.layer;
+
+            // Push the bone to its parent children list
+            var found = false;
+            for (var j = 0, nj = newBones.length; j < nj; j++)
+            {
+                var nBone =  newBones[j];
+                var nLayer = nBone.layer;
+                if (bLayer.parent == nLayer)
+                {
+                    found = true;
+                    nBone.children.push(bone);
+                    break;
+                }
+            }
+            if (!found) l.armature.push(bone);
 
             // Create children limbs
             for (var j = 0, nj = bLayer.childLimbs.length; j < nj; j++)
