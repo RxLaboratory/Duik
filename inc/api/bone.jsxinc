@@ -772,13 +772,38 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
 
     DuAE.beginUndoGroup( i18n._("Bake bones"), false);
 
+    // Progress
+    DuScriptUI.progressBar.addMax( layers.length() + 1 );
+
+     DuScriptUI.progressBar.hit(1, DuString.args( i18n._('Resetting bone transform...') ));
+
+    // First, set all rotation to 0!
+    // 1- unparent all
+    var parents = [];
+    layers.do(function(layer)
+    {
+        layer.children = DuAELayer.getChildren( layer );
+        parents.push(layer.parent);
+        layer.parent = null;
+    });
+    // 2- set rotations to 0
+    layers.do(function(layer)
+    {
+        layer.transform.rotation.setValue(0);
+    });
+    // 3- reparent
+    layers.do(function(layer)
+    {
+        for (var i = 0, ni = layer.children.length; i < ni; i++)
+        {
+            layer.children[i].parent = layer;
+        }
+        layer.parent = parents[ layers.current ];
+    });
+
     var pe = Duik.PseudoEffect.BONE;
     var peE = Duik.PseudoEffect.BONE_ENVELOP;
     var peN = Duik.PseudoEffect.BONE_NOODLE;
-
-
-    // Progress
-    DuScriptUI.progressBar.addMax( layers.length() );
 
     var n = layers.length();
     var i = 1;

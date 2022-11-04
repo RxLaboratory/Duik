@@ -1,10 +1,8 @@
 # TODO
 
 - separate the OCO API from DuAEF (WIP)
-- Autorig: before rigging limbs, set their rotation to 0
-  - unparent all
-  - set rotation to 0
-  - reparent?
+- bake chicken, -> oco -> test
+- master ctrl
 - DuSan up time no warning
 - Kleaner follow through wrong flex between keyframes
 
