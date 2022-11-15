@@ -782,9 +782,22 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
     var parents = [];
     layers.do(function(layer)
     {
-        layer.children = DuAELayer.getChildren( layer );
+        layer.locked = false;
         parents.push(layer.parent);
         layer.parent = null;
+    });
+    // 1B - Unpaernt remaining children
+    layers.do(function(layer)
+    {
+        layer.children = DuAELayer.getChildren( layer );
+        // Unparent children
+        for (var i = 0, ni = layer.children.length; i < ni; i++)
+        {
+            var child = layer.children[i];
+            child.wasLocked = child.locked;
+            child.locked = false;
+            child.parent = null;
+        }
     });
     // 2- set rotations to 0
     layers.do(function(layer)
@@ -794,11 +807,14 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
     // 3- reparent
     layers.do(function(layer)
     {
+        layer.parent = parents[ layers.current ];
+        // Reparent children
         for (var i = 0, ni = layer.children.length; i < ni; i++)
         {
+            var child = layer.children[i];
             layer.children[i].parent = layer;
+            child.locked = child.wasLocked;
         }
-        layer.parent = parents[ layers.current ];
     });
 
     var pe = Duik.PseudoEffect.BONE;
@@ -887,6 +903,10 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
             if (bake) {
                 var noodleGroup = layer("ADBE Root Vectors Group").property('Noodle');
                 if (noodleGroup) noodleGroup.remove();
+
+                // remove effect
+                var effect = layer.effect(peN.matchName);
+                if (effect) effect.remove();
             }            
         }        
 
