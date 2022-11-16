@@ -992,6 +992,50 @@ Duik.Bone.autoParent = function( layers, bones ) {
 }
 
 /**
+ * Rotates the chain so that the bones form a straight line.<br/>
+ * The bones must be parented together.
+ * @param {ShapeLayer[]|DuList.<ShapeLayer>} bones The bones to align
+ * @return {float[]} The list of the original rotations (before alignment)
+ */
+Duik.Bone.align = function( bones ) {
+    bones = new DuList(bones);
+    
+    // Keep current rotation values
+    var originalRotations = [];
+    bones.do(function(bone) {
+        originalRotations.push( bone.transform.rotation.value );
+    });
+
+    // Sort
+    bones = DuAELayer.sortByParent( bones );
+
+    // Set new rotations
+    for(var i = 1, ni = bones.length; i < ni; i++)
+    {
+        var b = bones[i];
+        // Get parent
+        var pO = Duik.Bone.getOrientation( bones[i-1] );
+        var o = Duik.Bone.getOrientation( b );
+        b.transform.rotation.setValue( pO - o );
+    }
+
+    return originalRotations;
+}
+
+/**
+ * Gets the bone orientation value
+ * @param {ShapeLayer} bone The bone
+ * @return {float} The orientation
+ */
+Duik.Bone.getOrientation = function( bone ) {
+    var content = bone.property("ADBE Root Vectors Group");
+    if (!content) return 0;
+    content = content.property("Bone");
+    if (!content) return 0;
+    return content.property('ADBE Vector Transform Group').property('ADBE Vector Rotation').value;
+}
+
+/**
  * Gets the bones in the comp
  * @param {Boolean} [selectedOnly=true] Whether to get only the selected layers or all of them
  * @param {CompItem} [comp=DuAEProject.getActiveComp()] The comp

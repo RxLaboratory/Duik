@@ -2613,8 +2613,45 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
         goal.parent = null;
         controller.transform.rotation.setValue(goal.transform.rotation.value);
     }
+    // Keep the original position
+    var controllerPosition = controller.transform.position.value;
 
     if (goal != null) goal.parent = controller;
+
+    // Align all layers
+
+    // Unparent children (will be reparented at the end)
+    layers.do(function(layer) {
+        layer.children = DuAELayer.getChildren( layer );
+        // Unparent children
+        for (var i = 0, ni = layer.children.length; i < ni; i++)
+        {
+            var child = layer.children[i];
+            child.wasLocked = child.locked;
+            child.locked = false;
+            child.parent = null;
+        }
+    });
+    // Parent them together to ease the alignment
+    for(var i = 1, ni = layers.length(); i < ni; i++) {
+        layers.at(i).parent = layers.at(i-1);
+    }
+    // and the controller
+    controller.parent = layers.last();
+    // Align
+    for(var i = 1, ni = layers.length(); i < ni; i++) {
+        // Get the angle
+        var l = layers.at(i);
+        var a = layers.at(i-1);
+        var b = null;
+        if (i != layers.length() -1) b = layers.at(i+1);
+        else b = controller;
+        var angle = 180 - DuAELayer.angleFromLayers(l, a, b);
+        var currentRotation = l.transform.rotation.value;
+        l.transform.rotation.setValue( currentRotation + angle );
+    }
+    // Unparent
+    controller.parent = null;
 
     //add effect
     var name = Duik.Layer.limbName(layers.first());
@@ -2857,6 +2894,37 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
         var rotProp = new DuAEProperty(layer.transform.rotation);
         rotProp.setExpression(expr);
     }
+
+    // Move back the controller to its original position
+    // And adjust the curve controller
+    var controllerOffset = controller.transform.position.value - controllerPosition;
+    controller.transform.position.setValue(controllerPosition);
+    curveController.transform.position.setValue(
+        curveController.transform.position.value + controllerOffset / 3
+    );
+
+    // Re-parent children
+    layers.do(function(layer)
+    {
+        // Reparent children
+        for (var i = 0, ni = layer.children.length; i < ni; i++)
+        {
+            var child = layer.children[i];
+            // Only if it's not one of the bones
+            var ok = true;
+            for (var j = 0, nj = layers.length(); j < nj; j++)
+            {
+                if (child.index == layers.at(j).index )
+                {
+                    ok = false;
+                    break;
+                }
+            }
+            if (!ok) continue;
+            layer.children[i].parent = layer;
+            child.locked = child.wasLocked;
+        }
+    });
 
     curveController.selected = false;
     controller.moveBefore(curveController);
