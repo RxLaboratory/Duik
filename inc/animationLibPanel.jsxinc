@@ -496,10 +496,73 @@ function buildAnimationLibPanel( animationLibGroup ) {
         i18n._("New Category")
     );
 
-    var animNameEditor = DuScriptUI.stringPrompt( 
-        i18n._("Edit animation name"),
-        i18n._("New Animation")
+    var animCreateEditor = DuScriptUI.popUp( i18n._("Create animation") );
+    animCreateEditor.content.alignment = ['fill', 'top'];
+
+    var animCreateBakeButton = DuScriptUI.checkBox( animCreateEditor.content, {
+        text: i18n._("Bake Expressions"),
+        image: w12_expression_baker
+    });
+
+    animCreateNameEdit = DuScriptUI.editText(
+        animCreateEditor.content,
+        '',
+        '',
+        '',
+        i18n._("Animation name")
     );
+
+    var animCreateOKButton = DuScriptUI.button(
+        animCreateEditor.content,
+        i18n._("OK"),
+        DuScriptUI.Icon.CHECK,
+        i18n._("Save animation."),
+        false,
+        'row',
+        'center'
+    );
+    animCreateOKButton.onClick = function() {
+        var newName = animCreateNameEdit.text;
+        if (newName == '') return;
+
+        var comp = DuAEProject.getActiveComp();
+        if (!comp) return;
+
+        // Create
+        // Get the containing folder.
+        var cat = lib.currentCategory;
+        var folderPath = libFolder.absoluteURI;
+        if (cat.data instanceof Folder) folderPath = cat.data.absoluteURI;
+        
+        // The file
+        newName = DuPath.fixName(newName, '_');
+        var saveFile = new File(folderPath + '/' + newName + '.duio');
+        var ok = true;
+        if (saveFile.exists) ok = confirm(i18n._("This animation already exists.\nDo you want to overwrite it?"));
+        if (!ok) return;
+
+        // Bake expressions
+        var props = DuAEComp.getSelectedProps();
+        if (animCreateBakeButton.checked) {
+            for (var i = 0, n = props.length; i < n; i++) {
+                var p = new DuAEProperty(props[i]);
+                p.bakeExpressions(DuAEExpression.BakeAlgorithm.PRECISE, 1.0);
+            }
+            for (var i = 0, n = props.length; i < n; i++) {
+                var p = new DuAEProperty(props[i]);
+                p.selectKeys(0, comp.duration);
+            }
+        }
+        DuIO.Animation.toJson(saveFile);
+
+        // Save thumbnail
+        var thumbnailFile = new File(folderPath + '/' + newName + '.png');
+        DuAEComp.thumbnail(thumbnailFile, [32, 32]);
+
+        animCreateEditor.hide();
+
+        lib.refresh();
+    };
 
     var animEditorPopup = DuScriptUI.popUp( i18n._("Animation settings.") );
     animEditorPopup.content.alignment = ['fill','top'];
@@ -696,40 +759,15 @@ function buildAnimationLibPanel( animationLibGroup ) {
         refreshLib(animationLib);
     };
 
-    animNameEditor.tieTo(lib.addItemButton);
+    animCreateEditor.tieTo(lib.addItemButton, false, true);
     lib.onAddItem = function( category ) {
         if (!(category.data instanceof Folder) && category.data != 'rootCat') {
-            animNameEditor.block = true;
+            animCreateEditor.block = true;
             alert( i18n._("Sorry, we can't save an animation directly in the current category."));
             return;
         }
-        animNameEditor.setText('');
-        animNameEditor.edit();
-    };
-    animNameEditor.onAccept = function(newName) {
-        if (newName == '') return;
-
-        // Create
-        // Get the containing folder.
-        var cat = lib.currentCategory;
-        var folderPath = libFolder.absoluteURI;
-        if (cat.data instanceof Folder) folderPath = cat.data.absoluteURI;
-        
-        // The file
-        newName = DuPath.fixName(newName, '_');
-        var saveFile = new File(folderPath + '/' + newName + '.duio');
-        var ok = true;
-        if (saveFile.exists) ok = confirm(DuScriptUI.ANIMATION_LIB_FILE_EXISTS);
-        if (!ok) return;
-
-        DuIO.Animation.toJson(saveFile);
-
-        // Save thumbnail
-        var thumbnailFile = new File(folderPath + '/' + newName + '.png');
-        DuAEComp.thumbnail(thumbnailFile, [32, 32]);
-
-        // Refresh
-        lib.refresh();
+        animCreateNameEdit.setText("");
+        animCreateEditor.show();
     };
 
     catNameEditor.tieTo(lib.addCategoryButton);
