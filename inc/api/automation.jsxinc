@@ -99,17 +99,21 @@ Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
  * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all properties (according to the other options) if false.
  * @param {Boolean} [transformProps=true] If true, filters only properties in the transform group of the layers. Ignored if selectedProps is true.
  * @param {Boolean} [effectProps=false] If true, filters only properties in effects. Ignored if selectedProps is true.
- * @param {Boolean} [layerTypes=[Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]] The types of layer to setup; if empty, will setup all layers.
+ * @param {Boolean} [layerTypes=[Duik.Layer.Type.CONTROLLER]] The types of layer to setup if there's no selected layer; if empty, will setup all layers.
  * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
  */
 Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectProps, layerTypes, props) {
     comp = def(comp, DuAEProject.getActiveComp());
 
+    DuAE.beginUndoGroup( i18n._("Non-linear animation"), false);
+
+    DuAEComp.setUniqueLayerNames(comp.layers, comp);
+
     if (typeof props === 'undefined') {
         selectedProps = def(selectedProps, true);
         transformProps = def(transformProps, true);
         effectProps = def(effectProps, false);
-        layerTypes = def(layerTypes, [Duik.Layer.Type.BONE, Duik.Layer.Type.CONTROLLER]);
+        layerTypes = def(layerTypes, [Duik.Layer.Type.CONTROLLER]);
 
         // List properties according to the filters
 
@@ -122,7 +126,8 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
             // Get the layers
             var layers = [];
             props = [];
-            if (layerTypes.length > 0) {
+            var selectedLayers = comp.selectedLayers;
+            if (layerTypes.length > 0 && selectedLayers.length == 0) {
                 for (var i = 1, n = comp.numLayers; i <= n; i++) {
                     var l = comp.layer(i);
                     for (var j = 0, nt = layerTypes.length; j < nt; j++) {
@@ -132,7 +137,10 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
                         }
                     }
                 }
-            } else layers = comp.layers;
+            }
+            else layers = selectedLayers;
+            if (layers.length == 0) layers = comp.layers;
+
             layers = new DuList(layers);
             layers.do(function(layer) {
                 if (transformProps) props.push(new DuAEProperty(layer.transform));
@@ -142,17 +150,16 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
     }
 
     props = new DuList(props);
-    if (props.length() == 0) return;
 
-    DuAE.beginUndoGroup( i18n._("Non-linear animation"), false);
-
-    DuAEComp.setUniqueLayerNames(comp.layers, comp);
+    if (props.length() == 0) {
+        DuAE.endUndoGroup( i18n._("Non-linear animation"));
+        return;
+    }
 
     DuAEProject.setProgressMode(true);
     DuScriptUI.progressBar.setMax(props.length() + 6);
 
     var compName = comp.name;
-
     var editComp;
 
     // Check if it's already an NLA; in this case don't create, just add the properties.
