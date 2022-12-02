@@ -923,11 +923,12 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
 Duik.CmdLib['Bone']["Auto_Parent"] = "Duik.Bone.autoParent()";
 /**
  * Automatically (tries to) links the artwork layers to their corresponding bones.<br />
- * Finds the bones using the anchor point coordinates of the artworks.
+ * Finds the bones using the anchor point coordinates of the artworks, or their names
  * @param {Layer[]|DuList.<Layer>|LayerCollection} [layers] The artwork layers. If bones is omitted, it may also contain the bones.
  * @param {Layer[]|DuList.<Layer>|LayerCollection} [bones] The bones to parent to. If omitted, will try to find them in layers, or in the comp if there's no bone in layers.
+ * @param {bool} [useNames=false] If true, will use layer names instead of locations to find the corresponding bone.
  */
-Duik.Bone.autoParent = function( layers, bones ) {
+Duik.Bone.autoParent = function( layers, bones, useNames ) {
     layers = def(layers,DuAEComp.getSelectedLayers() );
     layers = new DuList(layers);
     if (layers.length() == 0) {
@@ -959,38 +960,161 @@ Duik.Bone.autoParent = function( layers, bones ) {
         if (bones.length() == 0) return;
     }
 
+    useNames = def(useNames, false);
+
     DuAE.beginUndoGroup( i18n._("Link art"), false);
 
-    // First, for each bone, get range
-    // (improves performance, better than scanning for each layer)
-    bones.do(function(bone) {
-        bone.envelopSize = Duik.Bone.envelopSize(bone);
-    });
+    DuScriptUI.progressBar.addMax( layers.length() );
 
-    // Parent
-    layers.do(function(layer) {
-        // Ignore locked layers
-        if (layer.locked) return;
-        // Don't parent if already parented
-        if (layer.parent) return;
-        // Check type
-        var type = Duik.Layer.type( layer );
-        // Parent only these types:
-        if (type != Duik.Layer.Type.NONE &&
-            type != Duik.Layer.Type.PIN && 
-            type != Duik.Layer.Type.ART ) return;
-        // Find the closest bone & parent
-        var b = null;
-        var d = 32000;
+    if (useNames) {
+        // For each layer, check if the name is "duik managed" to get the limb name, or the layer name
+        // Remove (and keep) any "Bk", "Fr", "L", "R" parts...
+        // Check correspondance using fuzzy string comparison
+
+        layers.do(function(layer) {
+            DuScriptUI.progressBar.hit(1, i18n._('Trying to parent layer "%1"', layer.name) );
+            // Ignore locked layers
+            if (layer.locked) return;
+            // Don't parent if already parented
+            if (layer.parent) return;
+            // Check type
+            var type = Duik.Layer.type( layer );
+            // Parent only these types:
+            if (type != Duik.Layer.Type.NONE &&
+                type != Duik.Layer.Type.PIN && 
+                type != Duik.Layer.Type.ART ) return;
+            // Sanitize
+            Duik.Layer.sanitizeName(layer);
+            // Get the limbname
+            var limbName = Duik.Layer.limbName(layer);
+            // And the character
+            var characterName = Duik.Layer.characterName(layer);
+            // Search a corresponding bone
+            var score = 32000;
+            var b = null;
+            // First, all perfect matches of the limbname
+            var foundBones = [];
+            bones.do(function(bone) {
+                var bLimbName = Duik.Layer.limbName(bone);
+                if (bLimbName.toLowerCase() == limbName.toLowerCase()) foundBones.push(bone);
+            });
+            // Then, partial matches
+            if (foundBones.length == 0) {
+                bones.do(function(bone) {
+                    var bLimbName = Duik.Layer.limbName(bone);
+                    var s = DuString.match(bLimbName, limbName);
+                    if (s > score) return;
+                    if (s == 0 && score == 32000)
+                    {
+                        foundBones = [bone];
+                        return;
+                    }
+                    if (s <= score) {
+                        score = s;
+                        foundBones = [bone];
+                        return;
+                    }
+                    foundBones.push(bone);
+                });
+            }
+            // Nothing, can't parent
+            if (foundBones.length == 0) return;
+            // Multiple, check side and location
+            if (foundBones.length > 1) {
+                // The side
+                var side = Duik.Layer.side(layer);
+                // The location
+                var loc = Duik.Layer.location(layer);
+
+                score = 0;
+                var cache = foundBones;
+                foundBones = [];
+                for(var i = 0, ni = cache.length; i < ni; i++) {
+                    var bone = cache[i];
+                    var bSide = Duik.Layer.side(bone);
+                    var bLocation = Duik.Layer.location(bone);
+                    var s = 0;
+                    if (bSide == side) s++;
+                    if (bLocation = loc) s++;
+                    if (s < score) continue;
+                    if (s == score) {
+                        foundBones.push(bone);
+                        continue;
+                    }
+                    foundBones = [bone];
+                    score = s;
+                }
+            }
+            // Still multiple, check character
+            if (foundBones.length > 1) {
+                var characterName = Duik.Layer.characterName(layer);
+                score = 32000;
+                for(var i = 0, ni = foundBones.length; i < ni; i++) {
+                    var bone = foundBones[i];
+                    var bCharacterName = Duik.Layer.characterName(bone);
+                    var s = DuString.match(bCharacterName, characterName);
+                    if (s > score) continue;
+                    if (s == 0 && score == 32000)
+                    {
+                        b = bone;
+                        continue;
+                    }
+                    if (s < score) {
+                        score = s;
+                        b = bone;
+                        continue;
+                    }
+                }
+            }
+            else b = foundBones[0];
+
+            layer.parent = b;
+            // We can now make sure the character name is the same
+            Duik.Layer.setCharacterName( 
+                Duik.Layer.characterName(b),
+                layer
+            );
+        });
+    }
+    else {
+        // First, for each bone, get range
+        // (improves performance, better than scanning for each layer)
         bones.do(function(bone) {
-            var dist = DuAELayer.getDistance(layer, bone);
-            if (dist <= bone.envelopSize && dist < d) {
-                b = bone;
-                d = dist;
+            bone.envelopSize = Duik.Bone.envelopSize(bone);
+        });
+
+        // Parent
+        layers.do(function(layer) {
+            // Ignore locked layers
+            if (layer.locked) return;
+            // Don't parent if already parented
+            if (layer.parent) return;
+            // Check type
+            var type = Duik.Layer.type( layer );
+            // Parent only these types:
+            if (type != Duik.Layer.Type.NONE &&
+                type != Duik.Layer.Type.PIN && 
+                type != Duik.Layer.Type.ART ) return;
+            // Find the closest bone & parent
+            var b = null;
+            var d = 32000;
+            bones.do(function(bone) {
+                var dist = DuAELayer.getDistance(layer, bone);
+                if (dist <= bone.envelopSize && dist < d) {
+                    b = bone;
+                    d = dist;
+                }
+            });
+            if (b) {
+                layer.parent = b;
+                // We can now make sure the character name is the same
+                Duik.Layer.setCharacterName( 
+                    Duik.Layer.characterName(b),
+                    layer
+                );
             }
         });
-        if (b) layer.parent = b;
-    });
+    }
 
     DuAE.endUndoGroup( i18n._("Link art"));
 }
