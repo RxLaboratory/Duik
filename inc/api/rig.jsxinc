@@ -485,14 +485,30 @@ Duik.Rig.spine = function( layers, customControllers )
         if (shoulderCtrl) ctrl = shoulderCtrl;
         else if (headCtrl) ctrl = headCtrl;
         ctrl =  Duik.Constraint.oneLayerIK(torso, goal, ctrl, false);
+
+        // Without spine, we need an orientation constraint on the torso controller (a parent null)
+        if (bodyCtrl && hipsCtrl && !spineCtrl) {
+            var orientNull = DuAEComp.addNull( comp, undefined, torsoCtrl );
+            var orientEffect = Duik.Constraint.orientation( orientNull )[0];
+            var pe = Duik.PseudoEffect.ORIENTATION;
+            orientEffect( pe.props['Constraint to'].index ).setValue( bodyCtrl.index );
+            orientNull.moveBefore( torso );
+            
+            torsoCtrl.parent = orientNull;
+            orientNull.parent = hipsCtrl;
+
+            orientNull.enabled = false;
+            orientNull.shy = true;
+            orientNull.locked = true;
+        }
+        else {
+            if (spineCtrl) torsoCtrl.parent = spineCtrl;
+            else if (hipsCtrl) torsoCtrl.parent = hipsCtrl;
+            else if (bodyCtrl) torsoCtrl.parent = bodyCtrl;
+        }
+
         torso.parent = torsoCtrl;
         ctrl.parent = torsoCtrl;
-    }
-
-    if (torsoCtrl) {
-        if (spineCtrl) torsoCtrl.parent = spineCtrl;
-        else if (hipsCtrl) torsoCtrl.parent = hipsCtrl;
-        else if (bodyCtrl) torsoCtrl.parent = bodyCtrl;
     }
 
     // Neck IK
