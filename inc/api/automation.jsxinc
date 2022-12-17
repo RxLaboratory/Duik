@@ -190,6 +190,9 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
         }
     }
 
+    clipPrecomp = null;
+    weightEffectName = "NLA::" + i18n._("Weight"); /// TRANSLATORS: weight as the multiplicator of a value, a % or a ratio.
+
     if (create) {
         // Create folderitem NLA::compName
         DuScriptUI.progressBar.hit(1, "Creating NLA Folder...");
@@ -218,14 +221,18 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
             renderComp.width, renderComp.height, renderComp.pixelAspect, renderComp.duration, renderComp.frameRate
         );
 
-        // Add NLA.Clip + time remap + looper, and a keyframe on the opacity
+        // Add NLA.Clip
         var clipPrecomp = editComp.layers.add(clipComp);
         clipPrecomp.enabled = false;
         clipPrecomp.guideLayer = false;
 
+        // Add a weight slider
+        var weightEffect = clipPrecomp.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+        weightEffect.name = weightEffectName;
+        weightEffect(1).setValue(100);
+
         // Add NLA.Render
         editComp.layers.add(comp);
-
     }
 
     DuScriptUI.progressBar.hit(1, "Adding expressions...");
@@ -251,6 +258,8 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
         '	    try { var c = precomp.layer(thisLayer.name); }',
         '        catch(e) { continue; }',
         '        var weight = l.opacity.value/100;',
+        '        try { weight *= l.effect("' + weightEffectName + '")(1).value/100; }',
+        '        catch(e) {}',
         '        var t = time;',
         '        try { t = l.timeRemap.value; }',
         '        catch(e) { t = time - l.startTime; }',
@@ -271,6 +280,9 @@ Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectP
     // Open edit comp
     DuScriptUI.progressBar.hit(undefined, "Ready!");
     editComp.openInViewer();
+
+    // Open clip comp
+    if (clipPrecomp) clipPrecomp.openInViewer();
 
     DuAEProject.setProgressMode(false);
     DuAE.endUndoGroup( i18n._("Non-linear animation"));
@@ -310,6 +322,11 @@ Duik.Automation.addNLAClip = function(nlaComp) {
         var clipLayer = editComp.layers.add(newClip);
         clipLayer.enabled = false;
         if (editComp.numLayers >= 2) clipLayer.moveAfter(editComp.layer(2));
+
+        // Add a weight slider
+        var weightEffect = clipLayer.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+        weightEffect.name = "NLA::" + i18n._("Weight"); /// TRANSLATORS: weight as the multiplicator of a value, a % or a ratio.
+        weightEffect(1).setValue(100);
     }
 
     // Open clip
