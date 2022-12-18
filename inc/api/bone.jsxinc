@@ -993,29 +993,91 @@ Duik.Bone.autoParent = function( layers, bones, useNames ) {
             // Search a corresponding bone
             var score = 32000;
             var b = null;
+
+            // ** USE THE BONE LIMB NAME FIRST **
+
             // First, all perfect matches of the limbname
             var foundBones = [];
             bones.do(function(bone) {
                 var bLimbName = Duik.Layer.limbName(bone);
                 if (bLimbName.toLowerCase() == limbName.toLowerCase()) foundBones.push(bone);
             });
+            // Try again with exact synonyms of the limbname
+            if (foundBones.length == 0) {
+                var synonyms = OCOBone.getNameSynonyms( limbName, false );
+                var s = 32000;
+                for (var i = 0, ni = synonyms.length; i < ni; i++) {
+                    var synonym = synonyms[i];
+                    bones.do(function(bone) {
+                        var bLimbName = Duik.Layer.limbName(bone);
+                        if (bLimbName.toLowerCase() == synonym) foundBones.push(bone);
+                    });
+                }
+            }
+
             // Then, partial matches
             if (foundBones.length == 0) {
+                // Using synonyms of the limbname
                 bones.do(function(bone) {
                     var bLimbName = Duik.Layer.limbName(bone);
-                    var s = DuString.match(bLimbName, limbName);
-                    if (s > score || s <= 0) return;
-                    if (s == score) {
-                        foundBones.push(bone);
+                    var synonyms = OCOBone.getNameSynonyms( limbName, true );
+                    if (synonyms.score <= 0) return;
+                    if (synonyms.score > score) return;
+                    // Get the best score for all synonyms
+                    for (var i = 0, ni = synonyms.length; i < ni; i++) {
+                        var synonym = synonyms[i];
+                        var s = DuString.match(bLimbName, synonym);
+                        if (s <= 0) continue;
+                        if (s > score) continue;
+                        if (s == score) {
+                            foundBones.push(bone);
+                            continue;
+                        }
+                        if (s < score) {
+                            score = s;
+                            foundBones = [bone];
+                            continue;
+                        }
                     }
-                    if (s < score) {
-                        score = s;
-                        foundBones = [bone];
-                        return;
-                    }
-                    
                 });
             }
+
+            // ** TRY WITH THE BONE TYPE **
+
+            if (foundBones.length == 0) {
+                // Using synonyms of the limbname
+                bones.do(function(bone) {
+                    var bType = Duik.Bone.type(bone);
+                    var boneSynonyms = OCO.Bone.Name[bType];
+                    if (typeof boneSynonyms === 'undefined') return;
+                    if (!boneSynonyms.length) return;
+
+                    var synonyms = OCOBone.getNameSynonyms( limbName, true );
+                    if (synonyms.score <= 0) return;
+                    if (synonyms.score > score) return;
+
+                    for (var bs = 0, nbs = boneSynonyms.length; bs < nbs; bs++) {
+                        var bLimbName = boneSynonyms[bs];
+                        // Get the best score for all synonyms
+                        for (var i = 0, ni = synonyms.length; i < ni; i++) {
+                            var synonym = synonyms[i];
+                            var s = DuString.match(bLimbName, synonym);
+                            if (s <= 0) continue;
+                            if (s > score) continue;
+                            if (s == score) {
+                                foundBones.push(bone);
+                                continue;
+                            }
+                            if (s < score) {
+                                score = s;
+                                foundBones = [bone];
+                                continue;
+                            }
+                        }
+                    }
+                });
+            }
+
             // Nothing, can't parent
             if (foundBones.length == 0) return;
             // Multiple, check side and location
@@ -1363,6 +1425,21 @@ Duik.Bone.size = function( layer )
     if (!effect) return 100;
 
     return effect( sizeIndex ).value;
+}
+
+/**
+ * Gets the type of bone
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {OCO.Bone} The type
+ */
+Duik.Bone.type = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return "";
+
+    var bType = DuAETag.getValue( layer, DuAETag.Key.DUIK_BONE_TYPE, DuAETag.Type.STRING );
+    if (bType == "") return OCO.Bone.CUSTOM;
+    return bType;
 }
 
 /**
