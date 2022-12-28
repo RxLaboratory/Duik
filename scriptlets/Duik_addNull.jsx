@@ -1,5 +1,6 @@
 (function(){
-    #include "DuAEF_Duik_api.jsxinc"
+    #include "DuAEF_Duik_api.jsxinc";
+
     DuAEF.init( "Add Null", "1.0.0", "RxLaboratory" );
     DuAEF.enterRunTime();
 
