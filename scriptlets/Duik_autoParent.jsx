@@ -1,5 +1,5 @@
 (function(){
-    #include "DuAEF_Duik_api.jsxinc"
+    #include "Duik_api.jsxinc"
     DuAEF.init( "Auto-Parent", "1.0.0", "RxLaboratory" );
     DuAEF.enterRunTime();
 

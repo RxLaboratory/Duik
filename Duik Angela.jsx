@@ -8,6 +8,5 @@ var mainScriptFile = new File($.fileName);
 buildMainPanelUI( ui.mainGroup );
 
 #include "inc/ui_show.jsxinc"
-//*/
 
 })(this);
