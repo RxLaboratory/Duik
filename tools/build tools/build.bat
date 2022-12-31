@@ -17,7 +17,6 @@ md "%repoPath%\scriptlets\libs"
 
 :: Build folders
 md "%build_path%\Duik"
-md "%build_path%\Duik\Help"
 md "%build_path%\Duik\Tools"
 md "%build_path%\Duik\Scripts"
 md "%build_path%\Duik\Scripts\ScriptUI Panels"
@@ -73,8 +72,6 @@ del "%build_path%\Duik_API\Duik_api_fordoc.jsxinc"
 :: Build Guide
 cd "%repoPath%\Duik_Docs\src"
 mkdocs build
-cd "%repoPath%\tools\build"
-xcopy /S /I /Y "%repoPath%\Duik_Docs\docs" "%build_path%\Duik\Help"
 
 :: Copy other items
 echo " " > "%build_path%\Duik\LICENSE.md"
@@ -83,12 +80,11 @@ echo " " > "%build_path%\Duik\README.txt"
 echo " " > "%build_path%\Duik_API\LICENSE.md"
 echo " " > "%build_path%\Duik_API\LICENSE.txt"
 echo " " > "%build_path%\Duik\Tools\DuSI.jsx"
-xcopy /Y "%repoPath%\tools\build\items\LICENSE.md" "%build_path%\Duik\LICENSE.md"
-xcopy /Y "%repoPath%\tools\build\items\LICENSE.txt" "%build_path%\Duik\LICENSE.txt"
-xcopy /Y "%repoPath%\tools\build\items\README.txt" "%build_path%\Duik\README.txt"
-xcopy /Y "%repoPath%\tools\build\items\LICENSE.md" "%build_path%\Duik_API\LICENSE.md"
-xcopy /Y "%repoPath%\tools\build\items\LICENSE.txt" "%build_path%\Duik_API\LICENSE.txt"
-xcopy /Y "%repoPath%\tools\build\items\DuSI.jsx" "%build_path%\Duik\Tools\DuSI.jsx"
+xcopy /Y "%repoPath%\tools\build tools\items\LICENSE.md" "%build_path%\Duik\LICENSE.md"
+xcopy /Y "%repoPath%\tools\build tools\items\LICENSE.txt" "%build_path%\Duik\LICENSE.txt"
+xcopy /Y "%repoPath%\tools\build tools\items\README.txt" "%build_path%\Duik\README.txt"
+xcopy /Y "%repoPath%\tools\build tools\items\LICENSE.md" "%build_path%\Duik_API\LICENSE.md"
+xcopy /Y "%repoPath%\tools\build tools\items\LICENSE.txt" "%build_path%\Duik_API\LICENSE.txt"
+xcopy /Y "%repoPath%\tools\build tools\items\DuSI.jsx" "%build_path%\Duik\Tools\DuSI.jsx"
 
 echo Done !
-pause
