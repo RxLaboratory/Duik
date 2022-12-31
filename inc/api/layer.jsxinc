@@ -5,6 +5,9 @@
  */
 Duik.Layer = {};
 
+// Low-level
+Duik.Layer.sanitizing = false;
+
 /**
  * The types of layers used by Duik
  * @enum {string}
@@ -30,13 +33,26 @@ Duik.Layer.Type = {
 }
 
 /**
+ * The regular expressions used to validate names
+ * @enum {RegExp}
+ */
+Duik.Layer.NameRegExp = {
+    DUIK_NAME: /^([^≪≫|\[\]]+)?(?:\s*[≪|])?\s*([^≪≫|\[\]]+)?(?:\s*[|]\s*)?([^≪≫|\[\]]+)\s*(?:\s*[≫])?\s*\[?([a-zA-Z.]+)?\]?\s*(\d*)$/,
+    SIMPLE: /^([^≪≫|\[\]\-_\/\\]+)\s*(?:[|\-_\/\\])\s*([^≪≫|\[\]]+)$/,
+    LOCATION:/\[(.*)\]/,
+    MAIN_NAME:/≪\s*([^≪≫\[\]]+)\s*≫/
+}
+
+/**
  * Checks if a string is one of the prefixes used to identify layer types in their names
  * @param {string} prefix The string to check
  * @return {bool} True if the string is one of the predefined prefixes.
  */
 Duik.Layer.isTypePrefix = function( prefix ) {
-    for (i in Duik.Layer.Type) {
+    for (var i in Duik.Layer.Type) {
+        if (!Duik.Layer.Type.hasOwnProperty(i)) continue;
         if (prefix == Duik.Layer.Type[i]) return true;
+        if (prefix.toLowerCase() == Duik.Layer.Type[i].toLowerCase()) return true;
     }
     return false;
 }
@@ -53,7 +69,7 @@ Duik.Layer.isType = function(layer, layerType) {
 
 /**
  * Gets the type of the layer
- * @param {Layer} [layer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer} [layer] The layer. If omitted, will check the first selected layer of the current comp
  * @returns {Duik.Layer.Type} The type
  */
 Duik.Layer.type = function(layer) {
@@ -66,6 +82,7 @@ Duik.Layer.type = function(layer) {
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  */
 Duik.Layer.setType = function(type, layers) {
+
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
     if (layers.length() == 0) return;
@@ -74,10 +91,15 @@ Duik.Layer.setType = function(type, layers) {
 
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
+
         var name = Duik.Layer.sanitizeName(layer);
-
-        Duik.Layer.rename(layer, name, type);
-
+        if (name != '') {
+            var nameArr = name.split("≪");
+            nameArr[0] = type + " ";
+            name = nameArr.join("≪");
+            DuAELayer.rename(layer, name);
+        }
+        
         // Remove groups
         DuAETag.removeGroup(layer, i18n._("Controller"));
         DuAETag.removeGroup(layer, i18n._("Bone"));
@@ -256,7 +278,7 @@ Duik.Layer.setSide = function(side, layers) {
 
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
-        Duik.Layer.sanitizeName(layer);
+        var name = Duik.Layer.sanitizeName(layer);
 
         var currentSide = Duik.Layer.side(layer);
         if (currentSide == side) continue;
@@ -270,15 +292,21 @@ Duik.Layer.setSide = function(side, layers) {
         else if (side == OCO.Side.LEFT) DuAETag.addGroup(layer, i18n._("Left"));
 
         // Update name
-        var currentSideName = Duik.Layer.sideName(currentSide, currentLocation);
-        var newSideName = Duik.Layer.sideName(side, currentLocation);
-        var name = layer.name.split(' | ');
-        if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName);
-        else if (name.length == 3) name.push(newSideName);
-        // Remove the third block if it's empty
-        if (DuString.trimNumbers(name[3]) == "") name.splice(3,1);
-        // Rename
-        Duik.Layer.rename(layer, name.join(' | '));//*/
+        if (name != '') {
+
+            var newSideName = Duik.Layer.sideName(side, currentLocation);
+
+            var match = name.match(Duik.Layer.NameRegExp.LOCATION);
+            if (match) {
+                name = name.replace(match[1], newSideName);
+            }
+            else {
+                name = DuString.trimNumbers(name);
+                name += " [" + newSideName + "]";
+            }
+           
+            DuAELayer.rename(layer, name);
+        }
     }
 }
 
@@ -312,7 +340,7 @@ Duik.Layer.setLocation = function(location, layers) {
 
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
-        Duik.Layer.sanitizeName(layer);
+        var name = Duik.Layer.sanitizeName(layer);
 
         var currentLocation = Duik.Layer.location(layer);
         if (currentLocation == location) continue;
@@ -341,14 +369,20 @@ Duik.Layer.setLocation = function(location, layers) {
             DuAETag.addGroup(layer, i18n._("Under"));
 
         // Update name
-        var currentSideName = Duik.Layer.sideName(currentSide, currentLocation);
-        var newSideName = Duik.Layer.sideName(currentSide, location);
-        var name = layer.name.split(' | ');
-        if (name.length >= 4) name[3] = name[3].replace(currentSideName, newSideName);
-        else if (name.length == 3) name.push(newSideName);
-        // Remove the third block if it's empty
-        if (DuString.trimNumbers(name[3]) == "") name.splice(3,1);
-        Duik.Layer.rename(layer, name.join(' | '));//*/
+        if (name != '') {
+            var newSideName = Duik.Layer.sideName(currentSide, location);
+
+            var match = name.match(Duik.Layer.NameRegExp.LOCATION);
+            if (match) {
+                name = name.replace(match[1], newSideName);
+            }
+            else {
+                name = DuString.trimNumbers(name);
+                name += " [" + newSideName + "]";
+            }
+           
+            DuAELayer.rename(layer, name);
+        }
     }
 }
 
@@ -362,13 +396,18 @@ Duik.Layer.characterName = function(layer) {
     if (!layer) return '';
 
     // Split
-    var name = layer.name.split(' | ');
-    if (name.length <= 1) return '';
-    if (name[1] == '-') return '';
+    var name = layer.name;
+    var match = name.match( Duik.Layer.NameRegExp.MAIN_NAME );
+    if (!match) return '';
+    if (!match[1]) return '';
+
+    var group = match[1].split("|");
+    if (group.length < 2) return '';
+    group = DuString.trim(group[0]);
 
     // Must be in the corresponding group
-    if (!DuGR.inGroups(layer, [name[1]])) return '';
-    return name[1];
+    if (!DuGR.inGroups(layer, group)) return '';
+    return group;
 }
 
 /**
@@ -376,7 +415,7 @@ Duik.Layer.characterName = function(layer) {
  * @param {string} characterName The character name.
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  */
-Duik.Layer.setCharacterName = function(characterName, layers) {
+Duik.Layer.setCharacterName = function(newGroup, layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
     if (layers.length() == 0) return;
@@ -384,14 +423,23 @@ Duik.Layer.setCharacterName = function(characterName, layers) {
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
         var name = Duik.Layer.sanitizeName(layer);
+        var oldGroup = Duik.Layer.characterName(layer);
+        if (oldGroup != '') DuAETag.removeGroup(layer,oldGroup);
+        if (newGroup != '-' && newGroup != '') DuAETag.addGroup(layer, newGroup);
 
-        // Split
-        var name = name.split(' | ');
-        if (name.length <= 1) continue;
-        DuAETag.removeGroup(layer, name[1]);
-        name[1] = characterName;
-        Duik.Layer.rename(layer, name.join(' | '));
-        if (characterName != '-' && characterName != '') DuAETag.addGroup(layer, characterName);
+        if (name != '') {
+            var nArr = [newGroup];
+            var match = name.match( Duik.Layer.NameRegExp.MAIN_NAME );
+            if (match && match[1]) {
+                var n = match[1].split("|");
+                if (n.length < 2) nArr.push( DuString.trim(n[0]) );
+                else nArr.push( DuString.trim(n[1]) );
+
+                n = nArr.join(" | ")  + " ";
+                name = name.replace( match[1], n);
+                DuAELayer.rename(layer, name);
+            }
+        }
     }
 }
 
@@ -401,14 +449,19 @@ Duik.Layer.setCharacterName = function(characterName, layers) {
  * @returns {DuColor}
  */
 Duik.Layer.limbName = function(layer) {
+
     layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return '';
 
     // Split
-    var name = layer.name.split(' | ');
-    if (name.length <= 2) return '';
+    var name = layer.name;
+    var match = name.match( Duik.Layer.NameRegExp.MAIN_NAME );
+    if (!match) return name;
+    if (!match[1]) return '';
 
-    return DuString.trim( name[2] );
+    var n = match[1].split("|");
+    if (n.length < 2) return Dustring.trim( n[0] );
+    return Dustring.trim( n[1] );
 }
 
 /**
@@ -416,7 +469,7 @@ Duik.Layer.limbName = function(layer) {
  * @param {string} limbName The limb name.
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  */
-Duik.Layer.setLimbName = function(limbName, layers) {
+Duik.Layer.setLimbName = function(newName, layers) {
     layers = def(layers, DuAEComp.getSelectedLayers());
     layers = new DuList(layers);
     if (layers.length() == 0) return;
@@ -425,48 +478,19 @@ Duik.Layer.setLimbName = function(limbName, layers) {
         var layer = layers.at(i);
         var name = Duik.Layer.sanitizeName(layer);
 
-        // Split
-        var name = name.split(' | ');
-        if (name.length <= 2) continue;
-        name[2] = limbName;
-        Duik.Layer.rename(layer, name.join(' | '));
-    }
-}
-
-/**
- * Renames a layer.
- * @param {Layer} layer The layer to rename
- * @param {string} name The new name
- * @param {string} [newPrefix] If provided, will replace the prefix in the new name (or add it if there's no prefix yet)
- * @returns {string} The actual new name (a number may be added).
- */
-Duik.Layer.rename = function(layer, name, newPrefix) {
-    newPrefix = def(newPrefix, '');
-    var newName = name;
-    if (newPrefix != '') {
-        var newName = newName.split(' | ');
-        if (newName.length == 1) newName = newPrefix + ' | ' + newName[0];
-        else {
-            // the first one is a prefix
-            if (Duik.Layer.isTypePrefix(newName[0])) newName[0] = newPrefix;
-            // enough parameters, the first one should be a prefix
-            else if (newName.length >= 4) newName[0] = newPrefix;
-            // insert the new prefix
-            else newName.unshift(newPrefix);
-            // Keep side
-            newName = newName.join(' | ');
+        if (name != '') {
+            var match = name.match( Duik.Layer.NameRegExp.MAIN_NAME );
+            var nArr = [];
+            if (match && match[1]) {
+                var n = match[1].split("|");
+                if ( n.length > 1 ) nArr.push( DuString.trim(n[0]) );
+                nArr.push( newName );
+                n = nArr.join(" | ") + " ";
+                name = name.replace( match[1], n);
+                DuAELayer.rename(layer, name);
+            }
         }
     }
-
-    // Temporarily rename the layer just in case it already has the same name
-    var oldName = layer.name;
-    layer.name = '** Duik Temp Name **';
-    layer.name = DuAEComp.newUniqueLayerName(newName, layer.containingComp);
-    newName = layer.name;
-
-    app.project.autoFixExpressions(oldName, newName);
-
-    return newName;
 }
 
 /**
@@ -485,8 +509,8 @@ Duik.Layer.copyAttributes = function(to, from, type) {
 
     for (var i = 0, n = to.length(); i < n; i++) {
         var layer = to.at(i);
+        DuAELayer.rename(layer, from.name);
         Duik.Layer.setAttributes(layer, type, limbName, side, location, characterName);
-        Duik.Layer.rename(layer, from.name, type);
     }
 }
 
@@ -528,140 +552,250 @@ Duik.Layer.sanitizeName = function(layer) {
     layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return '';
 
+    if (Duik.Layer.sanitizing) return '';
+    Duik.Layer.sanitizing = true;
+
     var oldName = layer.name;
 
-    var name = layer.name.split(' | ');
-    // That's OK, but let's check the groups too
-    if (name.length >= 3) {
-        // Character / Group
-        if (name[1] != '-' && name[1] != '') DuAETag.addGroup(layer, name[1]);
-        // Adjust count
-        // Consider the last one is the side
-        while (name.length >= 5) {
-            name[2] = name[2] + '_' + name[3];
-            name.splice(3, 1);
-        }
-        layer.name = name.join(' | ');
-        // Side
-        if (name.length == 4) {
-            var n = DuString.trimNumbers(name[3]);
-            // Side group
-            if (DuString.endsWith(n, i18n._p("layer name", "L"))) /// TRANSLATORS: Short for Left, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Left"));
-            else if (DuString.endsWith(n, i18n._p("layer name", "R"))) /// TRANSLATORS: Short for Right, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Right"));
-            // Location group
-            if (DuString.startsWith(n, i18n._p("layer name", "Fr"))) /// TRANSLATORS: Short for Front, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Front"));
-            else if (DuString.startsWith(n, i18n._p("layer name", "Bk"))) /// TRANSLATORS: Short for Back, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Back"));
-            else if (DuString.startsWith(n, i18n._p("layer name", "Tl"))) /// TRANSLATORS: Short for Tail, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Tail"));
-            else if (DuString.startsWith(n, i18n._p("layer name", "Md"))) /// TRANSLATORS: Short for Middle, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Middle"));
-            else if (DuString.startsWith(n, i18n._p("layer name", "Ab"))) /// TRANSLATORS: Short for Above, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Above"));
-            else if (DuString.startsWith(n, i18n._p("layer name", "Un"))) /// TRANSLATORS: Short for Under, must be short enough to be used as a tag in layer names
-                DuAETag.addGroup(layer, i18n._("Under"));
-        }
-        // Everything should be good to go
-        return layer.name;
+    // Name : " Type ≪ Group | Name ≫ [Location] number"
+
+    // We need to get: the type, the group, the name, the location, the side, and maybe a number
+    var typeStr = '';
+    var groupStr = '';
+    var nameStr = '';
+    var locStr = '';
+    var sideStr = '';
+
+    // Match to see what we get!
+    var n = layer.name;
+    var match = n.match(Duik.Layer.NameRegExp.SIMPLE);
+
+    function checkType(testStr) {
+        var testStrL = testStr.toLowerCase();
+        
+        var t = "";
+
+        if (Duik.Layer.isTypePrefix(g1)) t = testStr;
+        // Try with common prefixes
+        else if (testStrL == "c" || testStrL == "ctrl" || testStrL == "controller") t = Duik.Layer.Type.CONTROLLER;
+        else if (testStrL == "cbg" || testStrL == "bgc") t = Duik.Layer.Type.CONTROLLER_BG;
+        else if (testStrL == "b" || testStrL == "bone") t = Duik.Layer.Type.BONE;
+        else if (testStrL == "pin") t = Duik.Layer.Type.PIN;
+        else if (testStrL == "zero") t = Duik.Layer.Type.ZERO;
+        else if (testStrL == "ik") t = Duik.Layer.Type.IK;
+        else if (testStrL == "null") t = Duik.Layer.Type.NULL;
+        else if (testStrL == "loc" || testStrL == "locator") t = Duik.Layer.Type.LOCATOR;
+        else if (testStrL == "effctr" || testStrL == "fctr" || testStrL == "effector") t = Duik.Layer.Type.EFFECTOR;
+        else if (testStrL == "aud" || testStrL == "audio") t = Duik.Layer.Type.AUDIO;
+        else if (testStrL == "mt" || testStrL == "trail") t = Duik.Layer.Type.MOTION_TRAIL;
+        else if (testStrL == "sol" || testStrL == "solid") t = Duik.Layer.Type.SOLID;
+        else if (testStrL == "fx" || testStrL == "adj" || testStrL == "adjustment") t = Duik.Layer.Type.ADJUSTMENT;
+
+        return t;
     }
 
-    // Let's rename that
-    // Type prefix
-    var type = Duik.Layer.type(layer);
-    // (Try to) Find a limb & character name
-    var limbName = '';
-    var characterName = '-';
-    if (name.length == 1) {
-        limbName = DuString.trimNumbers(name[0]);
-    } else {
-        limbName = DuString.trimNumbers(name[1]);
-        if (name[0].length > 3) characterName = DuString.trimNumbers(name[0]);
-    }
+    // It's a simple name
+    if (match) {
+        // Check the first part
+        var g1 = DuString.trim( match[1] );
+        var g2 = DuString.trim( match[2] );
 
-    // Check if there are location/side info in limbname
-    var limbArr = DuString.split(limbName, ["_","-", ".", " "]);
-    var side = "";
-    var loc = "";
-    var foundSide = false;
-    var foundLoc = false;
-    for (var i = limbArr.length-1; i >= 0; i--) {
-        var test = limbArr[i];
-        if (!foundSide) {
-            if (test == i18n._p("layer name", "L")) {
-                side = test;
-                foundSide = true;
-                DuAETag.addGroup(layer, i18n._("Left"));
-                limbArr.splice(i, 1);
-                continue;
-            }
-            if (test == i18n._p("layer name", "R")) {
-                side = test;
-                foundSide = true;
-                DuAETag.addGroup(layer, i18n._("Right"));
-                limbArr.splice(i, 1);
-                continue;
+        typeStr = checkType(g1);
+
+        // Nothing, it's the group
+        if (typeStr == "") {
+            groupStr = g1;
+            nameStr = g2;
+        }
+        // Check the second part
+        else {
+            match = g2.match(Duik.Layer.NameRegExp.SIMPLE);
+            g1 = DuString.trim( match[1] );
+            g2 = DuString.trim( match[2] );
+            if (g2 == "") nameStr = g1;
+            else {
+                nameStr = g2;
+                groupStr = g1;
             }
         }
-        if (!foundLoc) {
-            if (test == i18n._p("layer name", "Fr")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Front"));
-                limbArr.splice(i, 1);
-                continue;
+    }
+    else {
+        // Try with Duik name
+        match = n.match(Duik.Layer.NameRegExp.DUIK_NAME)
+        if (match) {
+            var g1 = DuString.trim( match[1] );
+            var g2 = DuString.trim( match[2] );
+            var g3 = DuString.trim( match[3] );
+
+            locStr = DuString.trim( match[4] );
+            numStr = DuString.trim( match[5] );
+
+            if (g3 != "") {
+                typeStr = g1;
+                groupStr = g2;
+                nameStr = g3;
             }
-            if (test == i18n._p("layer name", "Bk")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Back"));
-                limbArr.splice(i, 1);
-                continue;
+            else if (g2 != "") {
+                typeStr = g1;
+                nameStr = g2;
             }
-            if (test == i18n._p("layer name", "Tl")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Tail"));
-                limbArr.splice(i, 1);
-                continue;
-            }
-            if (test == i18n._p("layer name", "Md")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Middle"));
-                limbArr.splice(i, 1);
-                continue;
-            }
-            if (test == i18n._p("layer name", "Ab")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Above"));
-                limbArr.splice(i, 1);
-                continue;
-            }
-            if (test == i18n._p("layer name", "Un")) {
-                side = test;
-                foundLoc = true;
-                DuAETag.addGroup(layer, i18n._("Under"));
-                limbArr.splice(i, 1);
-                continue;
+            else {
+                nameStr = g1;
             }
         }
-        if (foundSide && foundLoc) break;
+        else {
+            nameStr = n;
+        }
     }
 
-    if (foundSide || foundLoc) limbName = limbArr.join(" ");
+    // Remove number from Name
+    nameStr = DuString.trimNumbers(nameStr);
 
-    // New name
-    var newName = type + ' | ' + characterName + ' | ' + limbName;
-    if (foundLoc && foundSide) newName += ' | ' + loc + "." + side;
-    else if (foundLoc) newName += ' | ' + loc;
-    else if (foundSide) newName += ' | ' + side;
-    layer.name = newName;
+    var leftSuffix = i18n._p("layer name", "L"); /// TRANSLATORS: Short for Left, must be short enough to be used as a tag in layer names
+    var rightSuffix = i18n._p("layer name", "R"); /// TRANSLATORS: Short for Right, must be short enough to be used as a tag in layer names
+    var frontSuffix = i18n._p("layer name", "Fr"); /// TRANSLATORS: Short for Front, must be short enough to be used as a tag in layer names
+    var backSuffix = i18n._p("layer name", "Bk"); /// TRANSLATORS: Short for Back, must be short enough to be used as a tag in layer names
+    var tailSuffix = i18n._p("layer name", "Tl"); /// TRANSLATORS: Short for Tail, must be short enough to be used as a tag in layer names
+    var midSuffix = i18n._p("layer name", "Md"); /// TRANSLATORS: Short for Middle, must be short enough to be used as a tag in layer names
+    var aboveSuffix = i18n._p("layer name", "Ab"); /// TRANSLATORS: Short for Above, must be short enough to be used as a tag in layer names
+    var underSuffix = i18n._p("layer name", "Un"); /// TRANSLATORS: Short for Under, must be short enough to be used as a tag in layer names
 
-    app.project.autoFixExpressions(oldName, layer.name);
+    leftSuffixTest = leftSuffix.toLowerCase();
+    rightSuffixTest = rightSuffix.toLowerCase();
+    frontSuffixTest = frontSuffix.toLowerCase();
+    backSuffixTest = backSuffix.toLowerCase();
+    tailSuffixTest = tailSuffix.toLowerCase();
+    midSuffixTest = midSuffix.toLowerCase();
+    aboveSuffixTest = aboveSuffix.toLowerCase();
+    underSuffixTest = underSuffix.toLowerCase();
+
+    // Check the location
+
+    function checkLoc(locArray) {
+        var side = "";
+        var loc = "";
+        var foundSide = false;
+        var foundLoc = false;
+
+        // Adjust the groups
+        DuAETag.removeGroup(layer, i18n._("Left"));
+        DuAETag.removeGroup(layer, i18n._("Right"));
+        DuAETag.removeGroup(layer, i18n._("Front"));
+        DuAETag.removeGroup(layer, i18n._("Back"));
+        DuAETag.removeGroup(layer, i18n._("Tail"));
+        DuAETag.removeGroup(layer, i18n._("Middle"));
+        DuAETag.removeGroup(layer, i18n._("Above"));
+        DuAETag.removeGroup(layer, i18n._("Under"));
+
+        for (var i = locArray.length-1; i >= 0; i--) {
+            var test = locArray[i].toLowerCase();
+            if (!foundSide) {
+                if (test == leftSuffixTest) { 
+                    side = leftSuffix;
+                    foundSide = true;
+                    DuAETag.addGroup(layer, i18n._("Left"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == rightSuffixTest) { 
+                    side = rightSuffix;
+                    foundSide = true;
+                    DuAETag.addGroup(layer, i18n._("Right"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+            }
+            if (!foundLoc) {
+                if (test == frontSuffixTest) { 
+                    loc = frontSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Front"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == backSuffixTest) { 
+                    loc = backSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Back"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == tailSuffixTest) { 
+                    loc = tailSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Tail"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == midSuffixTest) { 
+                    loc = midSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Middle"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == aboveSuffixTest) { 
+                    loc = aboveSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Above"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+                if (test == underSuffixTest) { 
+                    loc = underSuffix;
+                    foundLoc = true;
+                    DuAETag.addGroup(layer, i18n._("Under"));
+                    locArray.splice(i, 1);
+                    continue;
+                }
+            }
+            if (foundSide && foundLoc) break;
+        }
+        if (foundSide && foundLoc) locStr = side + '.' + loc;
+        else if (foundSide) locStr = side;
+        else if (foundLoc) locStr = loc;
+
+        return locArray.join(" ");
+    }
+
+    if (locStr == "") {
+        var nameArr = DuString.split(nameStr, ["_","-", ".", " ", "|"]);
+        var nameStr = checkLoc(nameArr);
+    }
+    else {
+        var locArr = locStr.split('.');
+        checkLoc(locArr);
+    }
+
+    // Check the type
+    if (typeStr == "") {
+        var nameArr = DuString.split(nameStr, ["_","-", ".", " ", "|"]);
+        for (var i = nameArr.length-1; i >= 0; i--) {
+            var t = checkType(nameArr[i]);
+            if (t != "") {
+                typeStr = t;
+                nameArr.splice(i, 1);
+                break;
+            }
+        }
+        nameStr = nameArr.join(" ");
+    }
+
+    // Set the group
+    if (groupStr != "") DuAETag.addGroup(layer, groupStr);
+
+    // Build the new Name
+    var newName = typeStr;
+    if (newName != "") newName += " ";
+    newName += " ≪ ";
+    if (groupStr) newName += groupStr + " | ";
+    newName += nameStr + " ≫";
+    if (locStr) newName += " [" + locStr + "]";
+
+    DuAELayer.rename(layer, newName);
+    Duik.Layer.setType(typeStr, layer, true);
+
+    Duik.Layer.sanitizing = false;
 
     return layer.name;
 }
