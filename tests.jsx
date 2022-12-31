@@ -15,7 +15,7 @@
     */
 
     for (var i = 0, ni = comp.selectedLayers.length; i < ni; i++) {
-        Duik.Layer.setCharacterName( "TEST", comp.selectedLayers[i]);
+        Duik.Layer.setGroupName( "TEST", comp.selectedLayers[i]);
     }
 
      DuAE.endUndoGroup();
