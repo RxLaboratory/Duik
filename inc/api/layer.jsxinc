@@ -566,6 +566,7 @@ Duik.Layer.sanitizeName = function(layer) {
     var n = layer.name;
     var match = n.match(Duik.Layer.NameRegExp.SIMPLE);
 
+    // returns the type prefix or an empty string
     function checkType(testStr) {
         var testStrL = testStr.toLowerCase();
         
@@ -590,84 +591,27 @@ Duik.Layer.sanitizeName = function(layer) {
         return t;
     }
 
-    // It's a simple name
-    if (match) {
-        // Check the first part
-        var g1 = DuString.trim( match[1] );
-        var g2 = DuString.trim( match[2] );
-
-        typeStr = checkType(g1);
-
-        // Nothing, it's the group
-        if (typeStr == "") {
-            groupStr = g1;
-            nameStr = g2;
-        }
-        // Check the second part
-        else {
-            match = g2.match(Duik.Layer.NameRegExp.SIMPLE);
-            g1 = DuString.trim( match[1] );
-            g2 = DuString.trim( match[2] );
-            if (g2 == "") nameStr = g1;
-            else {
-                nameStr = g2;
-                groupStr = g1;
-            }
-        }
-    }
-    else {
-        // Try with Duik name
-        match = n.match(Duik.Layer.NameRegExp.DUIK_NAME)
-        if (match) {
-            var g1 = DuString.trim( match[1] );
-            var g2 = DuString.trim( match[2] );
-            var g3 = DuString.trim( match[3] );
-
-            locStr = DuString.trim( match[4] );
-            numStr = DuString.trim( match[5] );
-
-            if (g3 != "") {
-                typeStr = g1;
-                groupStr = g2;
-                nameStr = g3;
-            }
-            else if (g2 != "") {
-                typeStr = g1;
-                nameStr = g2;
-            }
-            else {
-                nameStr = g1;
-            }
-        }
-        else {
-            nameStr = n;
-        }
-    }
-
-    // Remove number from Name
-    nameStr = DuString.trimNumbers(nameStr);
-
-    var leftSuffix = i18n._p("layer name", "L"); /// TRANSLATORS: Short for Left, must be short enough to be used as a tag in layer names
-    var rightSuffix = i18n._p("layer name", "R"); /// TRANSLATORS: Short for Right, must be short enough to be used as a tag in layer names
-    var frontSuffix = i18n._p("layer name", "Fr"); /// TRANSLATORS: Short for Front, must be short enough to be used as a tag in layer names
-    var backSuffix = i18n._p("layer name", "Bk"); /// TRANSLATORS: Short for Back, must be short enough to be used as a tag in layer names
-    var tailSuffix = i18n._p("layer name", "Tl"); /// TRANSLATORS: Short for Tail, must be short enough to be used as a tag in layer names
-    var midSuffix = i18n._p("layer name", "Md"); /// TRANSLATORS: Short for Middle, must be short enough to be used as a tag in layer names
-    var aboveSuffix = i18n._p("layer name", "Ab"); /// TRANSLATORS: Short for Above, must be short enough to be used as a tag in layer names
-    var underSuffix = i18n._p("layer name", "Un"); /// TRANSLATORS: Short for Under, must be short enough to be used as a tag in layer names
-
-    leftSuffixTest = leftSuffix.toLowerCase();
-    rightSuffixTest = rightSuffix.toLowerCase();
-    frontSuffixTest = frontSuffix.toLowerCase();
-    backSuffixTest = backSuffix.toLowerCase();
-    tailSuffixTest = tailSuffix.toLowerCase();
-    midSuffixTest = midSuffix.toLowerCase();
-    aboveSuffixTest = aboveSuffix.toLowerCase();
-    underSuffixTest = underSuffix.toLowerCase();
-
-    // Check the location
-
+    // Returns the parts of the array joined without location (which may be the name)
+    // and sets locStr
     function checkLoc(locArray) {
+        var leftSuffix = i18n._p("layer name", "L"); /// TRANSLATORS: Short for Left, must be short enough to be used as a tag in layer names
+        var rightSuffix = i18n._p("layer name", "R"); /// TRANSLATORS: Short for Right, must be short enough to be used as a tag in layer names
+        var frontSuffix = i18n._p("layer name", "Fr"); /// TRANSLATORS: Short for Front, must be short enough to be used as a tag in layer names
+        var backSuffix = i18n._p("layer name", "Bk"); /// TRANSLATORS: Short for Back, must be short enough to be used as a tag in layer names
+        var tailSuffix = i18n._p("layer name", "Tl"); /// TRANSLATORS: Short for Tail, must be short enough to be used as a tag in layer names
+        var midSuffix = i18n._p("layer name", "Md"); /// TRANSLATORS: Short for Middle, must be short enough to be used as a tag in layer names
+        var aboveSuffix = i18n._p("layer name", "Ab"); /// TRANSLATORS: Short for Above, must be short enough to be used as a tag in layer names
+        var underSuffix = i18n._p("layer name", "Un"); /// TRANSLATORS: Short for Under, must be short enough to be used as a tag in layer names
+
+        var leftSuffixTest = leftSuffix.toLowerCase();
+        var rightSuffixTest = rightSuffix.toLowerCase();
+        var frontSuffixTest = frontSuffix.toLowerCase();
+        var backSuffixTest = backSuffix.toLowerCase();
+        var tailSuffixTest = tailSuffix.toLowerCase();
+        var midSuffixTest = midSuffix.toLowerCase();
+        var aboveSuffixTest = aboveSuffix.toLowerCase();
+        var underSuffixTest = underSuffix.toLowerCase();
+        
         var side = "";
         var loc = "";
         var foundSide = false;
@@ -753,6 +697,66 @@ Duik.Layer.sanitizeName = function(layer) {
 
         return locArray.join(" ");
     }
+
+    // It's a simple name
+    if (match) {
+        // Check the first part
+        var g1 = DuString.trim( match[1] );
+        var g2 = DuString.trim( match[2] );
+
+        // g1 may be the type
+        typeStr = checkType(g1);
+        // In this case, check the second part
+        if (typeStr != "") {
+            match = g2.match(Duik.Layer.NameRegExp.SIMPLE);
+            g1 = DuString.trim( match[1] );
+            g2 = DuString.trim( match[2] ); 
+        }
+        
+        if (g2 == "") nameStr = g1;
+        else {
+            // g2 may contain the side/location
+            g2 = checkLoc( DuString.split(g2, ["_","-", ".", " ", "|"]) );
+            if (g2 == "") nameStr = g1;
+            else {
+                nameStr = g2;
+                if (typeStr == "") groupStr = g1;
+            }
+        }
+    }
+    else {
+        // Try with Duik name
+        match = n.match(Duik.Layer.NameRegExp.DUIK_NAME)
+        if (match) {
+            var g1 = DuString.trim( match[1] );
+            var g2 = DuString.trim( match[2] );
+            var g3 = DuString.trim( match[3] );
+
+            locStr = DuString.trim( match[4] );
+            numStr = DuString.trim( match[5] );
+
+            if (g3 != "") {
+                typeStr = g1;
+                groupStr = g2;
+                nameStr = g3;
+            }
+            else if (g2 != "") {
+                typeStr = g1;
+                nameStr = g2;
+            }
+            else {
+                nameStr = g1;
+            }
+        }
+        else {
+            nameStr = n;
+        }
+    }
+
+    // Remove number from Name
+    nameStr = DuString.trimNumbers(nameStr);
+
+    // Check the location
 
     if (locStr == "") {
         var nameArr = DuString.split(nameStr, ["_","-", ".", " ", "|"]);
