@@ -4049,13 +4049,22 @@ Duik.Constraint.removeLayerInExpressions = function(selectionMode) {
  * @param {float} [max=100] - The maximum value
  * @param {DuAE.Axis} [axis=DuAE.Axis.X] - The axis or channel to connect
  * @param {DuAE.Type} [type=DuAE.Type.VALUE] - The type
+ * @param {boolean} [toKeyMorph] By default, the connector will detect Key Morphs to adjust the connection on the weight of the selected keys.<br/>
+ * When set to true, it will just connect the weight of the selected key morphs (or all of them if not selected).<br/>
+ * When false, it does a standard connection even if some key morphs are selected.
  * @return {PropertyGroup} The controlling effect created
  */
-Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
+Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, toKeyMorph) {
     min = def(min, 0);
     max = def(max, 100);
     axis = def(axis, DuAE.Axis.X);
     type = def(type, DuAE.Type.VALUE);
+
+    var doKeyMorph = -1;
+    if (typeof toKeyMorph !== 'undefined') {
+        if (toKeyMorph) doKeyMorph = 1;
+        else doKeyMorph = 0;
+    }
 
     masterProp = new DuAEProperty(masterProp);
 
@@ -4288,12 +4297,30 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
     // Count key morphs
     props = new DuList(props);
     var kmProps = new DuList();
-    for (var i = props.length()-1; i >= 0; i--)
-    {
-        var kmP = keyMorphProp(new DuAEProperty(props.at(i)));
-        if (kmP) {
-            kmProps.pushUnique(undefined, kmP);
-            props.remove(i);
+    if (doKeyMorph != 0)
+        for (var i = props.length()-1; i >= 0; i--)
+        {
+            var kmP = keyMorphProp(new DuAEProperty(props.at(i)));
+            if (kmP) {
+                kmProps.pushUnique(undefined, kmP);
+                props.remove(i);
+            }
+        }
+    // Try to find key morphs on the layers
+    if (doKeyMorph == 1 && kmProps.length() == 0) {
+        var kmLayers = new DuList();
+        for (var i = props.length()-1; i >= 0; i--)
+        {
+            var p = new DuAEProperty(props.at(i));
+            var l = p.layer;
+            if ( kmLayers.contains(l), function(a, b) { return a.index == b.index; } ) continue;
+            for (var f = 1, nf = l.property("ADBE Effect Parade").numProperties; f <= nf; f++) {
+                var fx = l.property("ADBE Effect Parade").property(f);
+                var kmP = keyMorphProp(new DuAEProperty(fx));
+                if (kmP) {
+                    kmProps.pushUnique(undefined, kmP);
+                }
+            }
         }
     }
 
@@ -4305,7 +4332,7 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
     var masterComp = masterLayer.containingComp;
     var comp = 'thisComp.';
 
-    props.do(function(prop) {
+    if (doKeyMorph != 1) props.do(function(prop) {
         prop = new DuAEProperty(prop);
         if (!prop.riggable()) return;
         // check if the current comp is the same than the comp containing the masterProperty
@@ -4321,7 +4348,7 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type) {
         if (prop.matchName == "ADBE Opacity") prop.layer.enabled = true;//*/
     });
 
-    kmProps.do(function(prop) {
+    if (doKeyMorph != 0) kmProps.do(function(prop) {
         // check if the current comp is the same than the comp containing the masterProperty
         var childComp = prop.comp;
         if (masterComp !== childComp) comp = 'comp("' + masterComp.name + '").';
