@@ -55,6 +55,7 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     // Sort layers
     var bones = [];
     var customControllers = [];
+    var otherLayers = [];
     layers.do(function( layer )
     {
         // It's already rigged, ignore
@@ -66,7 +67,19 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
         // It's a controller
         else if ( Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) )
             customControllers.push(layer);
+        // It's something else
+        else otherLayers.push(layer);
     });
+
+    // No bones, standard IK
+    if (bones.length == 0) {
+        if (customControllers.length == 0) {
+            alert( i18n._("No controller found.") +
+                '\n' + i18n._("Please, add some controllers to rig custom layers. Controllers can be any layer as long as you 'tag' them, using the 'tag' button in the Duik Controllers panel."));
+            return;
+        }
+        Duik.Constraint.ik(threeLayerMode, false, otherLayers, customControllers[0], longChainMode == Duik.Constraint.IKType.BEZIER_FK );
+    }
 
     // Create OCO Doc from bones
     var ocoDoc = OCODoc.fromComp('', layers.first().containingComp, bones );
