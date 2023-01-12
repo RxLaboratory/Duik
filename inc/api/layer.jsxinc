@@ -37,10 +37,10 @@ Duik.Layer.Type = {
  * @enum {RegExp}
  */
 Duik.Layer.NameRegExp = {
-    DUIK_NAME: /^([^≪≫|\[\]]+)?(?:\s*[≪|])?\s*([^≪≫|\[\]]+)?(?:\s*[|]\s*)?([^≪≫|\[\]]+)\s*(?:\s*[≫])?\s*\[?([a-zA-Z.]+)?\]?\s*(\d*)$/,
-    SIMPLE: /^([^≪≫|\[\]\-_\/\\]+)\s*(?:[|\-_\/\\])\s*([^≪≫|\[\]]+)$/,
+    DUIK_NAME: /^([^<>|\[\]]+)?(?:\s*[<|])?\s*([^<>|\[\]]+)?(?:\s*[|]\s*)?([^<>|\[\]]+)\s*(?:\s*[>])?\s*\[?([a-zA-Z.]+)?\]?\s*(\d*)$/,
+    SIMPLE: /^([^<>|\[\]\-_\/\\]+)\s*(?:[|\-_\/\\])\s*([^<>|\[\]]+)$/,
     LOCATION:/\[(.*)\]/,
-    MAIN_NAME:/≪\s*([^≪≫\[\]]+)\s*≫/
+    MAIN_NAME:/<\s*([^<>\[\]]+)\s*>/
 }
 
 /**
@@ -87,18 +87,18 @@ Duik.Layer.setType = function(type, layers) {
     layers = new DuList(layers);
     if (layers.length() == 0) return;
 
-    DuAELayer.setType(type, layers);
-
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
 
         var name = Duik.Layer.sanitizeName(layer);
         if (name != '') {
-            var nameArr = name.split("≪");
+            var nameArr = name.split("<");
             nameArr[0] = type + " ";
-            name = nameArr.join("≪");
+            name = nameArr.join("<");
             DuAELayer.rename(layer, name);
         }
+
+        DuAELayer.setType(type, layer);
         
         // Remove groups
         DuAETag.removeGroup(layer, i18n._("Controller"));
@@ -427,7 +427,8 @@ Duik.Layer.setGroupName = function(newGroup, layers) {
         if (newGroup != '-' && newGroup != '') DuAETag.addGroup(layer, newGroup);
 
         if (name != '') {
-            var nArr = [newGroup];
+            var nArr = [];
+            if (newGroup != "") nArr = [newGroup];
             var match = name.match( Duik.Layer.NameRegExp.MAIN_NAME );
             if (match && match[1]) {
                 var n = match[1].split("|");
@@ -553,7 +554,7 @@ Duik.Layer.sanitizeName = function(layer) {
 
     var oldName = layer.name;
 
-    // Name : " Type ≪ Group | Name ≫ [Location] number"
+    // Name : " Type < Group | Name > [Location] number"
 
     // We need to get: the type, the group, the name, the location, the side, and maybe a number
     var typeStr = '';
@@ -787,9 +788,9 @@ Duik.Layer.sanitizeName = function(layer) {
     // Build the new Name
     var newName = typeStr;
     if (newName != "") newName += " ";
-    newName += " ≪ ";
+    newName += " < ";
     if (groupStr) newName += groupStr + " | ";
-    newName += nameStr + " ≫";
+    newName += nameStr + " >";
     if (locStr) newName += " [" + locStr + "]";
 
     DuAELayer.rename(layer, newName);
