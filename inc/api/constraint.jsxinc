@@ -4113,13 +4113,14 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, to
     // Check if there is one with the same settings
     for (var i = 0, num = connectorEffects.length; i < num; i++) {
         var e = connectorEffects[i];
-        if (e.prop(minId).value != min) continue;
-        if (e.prop(maxId).value != max) continue;
-        if (e.prop(modeId).value != type) continue;
+        if (e.prop(minId).value() != min) continue;
+        if (e.prop(maxId).value() != max) continue;
+        if (e.prop(modeId).value() != type) continue;
         if (dim > 1 && dim < 4) {
-            if (e.prop(axisId).value != axis) continue;
-        } else if (dim == 4) {
-            if (e.prop(axisId).value != axis - 3) continue;
+            if (e.prop(axisId).value() != axis) continue;
+        }
+        if (dim == 4) {
+            if (e.prop(axisId).value() != axis - 3) continue;
         }
         //if all tests passed, this is the one!
         effect = e;
@@ -4206,6 +4207,9 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, to
         '// Key morph values'
     ].join('\n');
 
+    if (masterProp.isDropdown()) kmExp1 += '\nvar isMenu = true;';
+    else kmExp1 += '\nvar isMenu = false;';
+
     var kmExp2 = [
         DuAEExpression.Library.get([
             'getNextKey',
@@ -4236,8 +4240,7 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, to
         kmExp2 += '\nvar cValue = linear(ctrlValue.value, ctrlMin, ctrlMax, 0, numMorphs);\n';
     }
 
-    kmExp2 += '  cValue = cValue;\n' +
-        '  if (!pK || !nK) {\n' +
+    kmExp2 += '  if (!pK || !nK) {\n' +
         '    if (Math.round(cValue) == thisIndex) return 100;\n' +
         '    else return 0;\n' +
         '  }\n' +
@@ -4277,6 +4280,10 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, to
 
     kmExp2 += '    pValue = Math.round(pValue);\n' +
         '  }\n' +
+        '\n' +
+        'if (isMenu) {\n' +
+        '    cValue = easeOut(time, pK.time, nK.time, pValue, nValue);\n' +
+        '}\n' +
         '\n' +
         '  if (pValue != thisIndex && nValue != thisIndex) return 0;\n' +
         '  if (pValue == nValue) return 100;\n' +
@@ -4324,9 +4331,9 @@ Duik.Constraint.connector = function(props, masterProp, min, max, axis, type, to
         }
     }
 
-    /*kmProps.sort(function(a, b) {
+    kmProps.sort(function(a, b) {
         return a.getProperty().parentProperty.propertyIndex - b.getProperty().parentProperty.propertyIndex;
-    });*/
+    });
 
     // Set to the props
     var masterComp = masterLayer.containingComp;
