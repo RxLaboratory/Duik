@@ -1002,6 +1002,7 @@ Duik.Bone.autoParent = function( layers, bones, useNames ) {
                 var bLimbName = Duik.Layer.name(bone);
                 if (bLimbName.toLowerCase() == limbName.toLowerCase()) foundBones.push(bone);
             });
+
             // Try again with exact synonyms of the limbname
             if (foundBones.length == 0) {
                 var synonyms = OCOBone.getNameSynonyms( limbName, false );
@@ -1099,7 +1100,7 @@ Duik.Bone.autoParent = function( layers, bones, useNames ) {
                     var bLocation = Duik.Layer.location(bone);
                     var s = 0;
                     if (bSide == side) s++;
-                    if (bLocation = loc) s++;
+                    if (bLocation == loc) s++;
                     if (s < score) continue;
                     if (s == score) {
                         foundBones.push(bone);
@@ -1109,19 +1110,42 @@ Duik.Bone.autoParent = function( layers, bones, useNames ) {
                     score = s;
                 }
             }
+
             // Still multiple, check character
             if (foundBones.length > 1) {
                 var characterName = Duik.Layer.groupName(layer);
                 score = 32000;
+                var filteredBones = [];
                 for(var i = 0, ni = foundBones.length; i < ni; i++) {
                     var bone = foundBones[i];
                     var bCharacterName = Duik.Layer.groupName(bone);
                     var s = DuString.match(bCharacterName, characterName);
                     if (s > score) continue;
-                    if (s == 0 && score == 32000)
+                    if ((s == 0 && score == 32000) || (s != 0 && s == score))
                     {
-                        b = bone;
+                        filteredBones.push(bone);
                         continue;
+                    }
+                    if (s < score) {
+                        score = s;
+                        filteredBones = [bone];
+                        continue;
+                    }
+                }
+                foundBones = filteredBones;
+            }
+
+            // Still multiple, get the closest
+            if (foundBones.length > 1)
+            {
+                score = 32000;
+                for (var i = 0, ni = foundBones.length; i < ni; i++) {
+                    var bone = foundBones[i];
+                    var s = DuAELayer.getDistance(layer, bone);
+                    if (s > score) continue;
+                    if (s == 0) {
+                        b = bone;
+                        break;
                     }
                     if (s < score) {
                         score = s;
