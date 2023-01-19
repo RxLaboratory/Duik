@@ -9,6 +9,11 @@ Duik.Layer = {};
 Duik.Layer.sanitizing = false;
 
 /**
+ * The list of layer functions
+ */
+Duik.CmdLib['Layer'] = [];
+
+/**
  * The types of layers used by Duik
  * @enum {string}
  */
@@ -359,26 +364,37 @@ Duik.Layer.setAttributes = function(layer, type, name, side, location, groupName
     }
 }
 
+Duik.CmdLib['Layer']["Auto-Rename"] = "Duik.Layer.sanitize()";
 /**
  * Sets default name to a layer so it can be correctly managed by Duik, and sets the groups, tags & other metadata
- * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected layer of the current comp
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers] The layer(s). If omitted, will check the selected layers, or all layers, of the comp
  * @returns {string[]} Parts used in the name: [type, group, name, location, side]
  */
-Duik.Layer.sanitize = function(layer) {
-    layer = def(layer, DuAEComp.getActiveLayer());
-    if (!layer) return;
-    // Sanitize the name
-    var parts = Duik.Layer.sanitizeName(layer);
-    // Updates the metadata
-    Duik.Layer.updateTypeMeta(layer, parts[0]);
-    Duik.Layer.updateGroupMeta(layer, parts[1]);
-    Duik.Layer.updateNameMeta(layer, parts[2]);
-    var loc = Duik.Layer.locationFromName(parts[3]);
-    Duik.Layer.updateLocationMeta(layer, loc);
-    var side = Duik.Layer.sideFromName(parts[4]);
-    Duik.Layer.updateSideMeta(layer, side);
+Duik.Layer.sanitize = function(layers) {
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) {
+        var comp = DuAEProject.getActiveComp();
+        if (!comp) return;
+        layers = new DuList(comp.layers);
+    }
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer) {
+        // Sanitize the name
+        var parts = Duik.Layer.sanitizeName(layer);
+        // Updates the metadata
+        Duik.Layer.updateTypeMeta(layer, parts[0]);
+        Duik.Layer.updateGroupMeta(layer, parts[1]);
+        Duik.Layer.updateNameMeta(layer, parts[2]);
+        var loc = Duik.Layer.locationFromName(parts[3]);
+        Duik.Layer.updateLocationMeta(layer, loc);
+        var side = Duik.Layer.sideFromName(parts[4]);
+        Duik.Layer.updateSideMeta(layer, side);
+    });
 }
 
+Duik.CmdLib['Layer']["Edit Mode"] = "Duik.Layer.unlink()";
 /**
  * Toggles the edit mode on selected layers
  * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
