@@ -3,7 +3,7 @@
 
     // The script name must be "Duik" to get the default Duik settings
     // Inherit the version from the API
-    DuAEF.init( "Duik", Duik.apiVersion, "RxLaboratory" );
+    DuAEF.init( "Duik", "{duikVersion}", "RxLaboratory" );
     DuAEF.enterRunTime();
 
     var comp = DuAEProject.getActiveComp();

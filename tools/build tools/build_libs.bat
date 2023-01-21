@@ -1,5 +1,8 @@
 @echo off
 
+:: The version
+SET version=17.0.0-RC3
+
 :: The repo (current dir)
 SET repoPath=%~dp0..\..
 
@@ -30,8 +33,8 @@ DuBuilder "%repoPath%\DuIO\inc\api.jsxinc" --no-banner "%repoPath%\scriptlets\li
 DuBuilder "%repoPath%\DuSan\inc\api.jsxinc" --no-banner "%repoPath%\scriptlets\libs\DuSan_api.jsxinc"
 
 :: Build API
-DuBuilder "%repoPath%\inc\api1.jsxinc" --no-banner "%repoPath%\scriptlets\libs\Duik_api_1.jsxinc"
-DuBuilder "%repoPath%\inc\api2.jsxinc" --no-banner "%repoPath%\scriptlets\libs\Duik_api_2.jsxinc"
-DuBuilder "%repoPath%\inc\api3.jsxinc" --no-banner "%repoPath%\scriptlets\libs\Duik_api_3.jsxinc"
+DuBuilder "%repoPath%\inc\api1.jsxinc" --no-banner -r "{duikVersion}:%version%" "%repoPath%\scriptlets\libs\Duik_api_1.jsxinc"
+DuBuilder "%repoPath%\inc\api2.jsxinc" --no-banner -r "{duikVersion}:%version%" "%repoPath%\scriptlets\libs\Duik_api_2.jsxinc"
+DuBuilder "%repoPath%\inc\api3.jsxinc" --no-banner -r "{duikVersion}:%version%" "%repoPath%\scriptlets\libs\Duik_api_3.jsxinc"
 
 echo Done !
