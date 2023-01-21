@@ -6255,6 +6255,7 @@ DuString.generateUnique = function(newString, stringList, increment) {
  * @return {String} The trimmed string
  */
 DuString.trim = function(str) {
+    if (typeof str === 'undefined') return "";
     return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 }
 
@@ -6403,6 +6404,21 @@ DuString.chunk = function(str, subStringLength) {
         i += end;
     }*/
     return strArr;
+}
+
+/**
+ * Checks if the string contains one of the substrings
+ * @param {string} str The string to check
+ * @param {string|string[]|DuList.<string>} subStrs The substrings to look for
+ * @return {boolean}
+ */
+DuString.contains = function(str, subStrs) {
+    subStrs = new DuList(subStrs);
+
+    for (var i = 0, ni = subStrs.length(); i < ni; i++) {
+        if ( str.indexOf( subStrs.at(i) ) >= 0 ) return true;
+    }
+    return false;
 }
 
 // ==================== |------| ====================
@@ -6972,6 +6988,27 @@ DuMath.isLocationBottom = function(location) {
     if (location == DuMath.Location.CENTER) return true;
     if (location == DuMath.Location.BOTTOM_LEFT) return true;
     return false;
+}
+
+/**
+ * Returns the location of the point relative to the origin. Works with 2D values, the first two coordinates.
+ * Considers the coordinate [0,0] to be the top left corner of the system: positive values are right, bottom
+ * @param {float[]} point The point to check
+ * @param {float[]} [origin=[0,0]] The coordinates of the origin
+ * @return {DuMath.Location} The location
+ */
+DuMath.relativeLocation = function(point, origin) {
+    var x = point[0] - origin[0];
+    var y = point[1] - origin[1];
+    if (x == 0 && y == 0) return DuMath.Location.CENTER;
+    if (x < 0 && y < 0) return DuMath.Location.TOP_LEFT;
+    if (x < 0 && y == 0) return DuMath.Location.LEFT;
+    if (x < 0 && y > 0) return DuMath.Location.BOTTOM_LEFT;
+    if (x == 0 && y > 0) return DuMath.Location.BOTTOM;
+    if (x > 0 && y > 0) return DuMath.Location.BOTTOM_RIGHT;
+    if (x > 0 && y == 0) return DuMath.Location.RIGHT;
+    if (x > 0 && y < 0) return DuMath.Location.TOP_RIGHT;
+    if (x == 0 && y < 0) return DuMath.Location.TOP;
 }
 
 /**
@@ -16608,7 +16645,7 @@ OCODoc.prototype.newWing = function( side, arm, forearm, hand, feathers, positio
     // for each part, set the location
     if ( arm )
     {
-        b.name = i18n._("Arm");
+        b.name = i18n._p("Anatomy", "Arm");
         b.type = OCO.Bone.HUMERUS;
         b.x = x + ox;
         b.y = y + oy;
@@ -16623,7 +16660,7 @@ OCODoc.prototype.newWing = function( side, arm, forearm, hand, feathers, positio
     }
     if (forearm)
     {
-        b.name = i18n._("Forearm");
+        b.name = i18n._p("Anatomy", "Forearm");
         b.type = OCO.Bone.RADIUS;
         b.x = s * u * -.22 + ox;
         b.y = u * .53 + oy;
@@ -16635,7 +16672,7 @@ OCODoc.prototype.newWing = function( side, arm, forearm, hand, feathers, positio
     }
     if (hand)
     {
-        b.name = i18n._("Hand");
+        b.name = i18n._p("Anatomy", "Hand");
         b.type = OCO.Bone.CARPUS;
         b.x = s * u * -.37 + ox;
         b.y = u * .64 + oy;
@@ -16647,8 +16684,8 @@ OCODoc.prototype.newWing = function( side, arm, forearm, hand, feathers, positio
     }
 
     // Tip
-    b.name = i18n._("Wing") +
-        '_' + i18n._("Tip");
+    b.name = i18n._p("Anatomy", "Wing") +
+        '_' + i18n._p("Anatomy", "Tip");
     b.type = OCO.Bone.TIP;
     b.x = s * u * -.53 + ox;
     b.y = u * .66 + oy;
@@ -16658,14 +16695,14 @@ OCODoc.prototype.newWing = function( side, arm, forearm, hand, feathers, positio
 
     function createFeather( xr, yr, xt, yt, p )
     {
-        var boneName = OCO._uniqueString( i18n._("Feather"), names);
+        var boneName = OCO._uniqueString( i18n._p("Anatomy", "Feather"), names);
         b = new OCOBone( boneName );
         b.type = OCO.Bone.FEATHER;
         b.x = s * u * xr + ox;
         b.y = u * yr + oy;
 
         // tip
-        var boneName = OCO._uniqueString( i18n._("Feather") +
+        var boneName = OCO._uniqueString( i18n._p("Anatomy", "Feather") +
             '_' + i18n._("Tip"), names);
         var bt = new OCOBone( boneName );
         bt.type = OCO.Bone.TIP;
@@ -16733,7 +16770,7 @@ OCODoc.prototype.newSnakeSpine = function( head, spine, position )
 
     // Create limb
     var limb = this.newLimb( OCO.Limb.SNAKE_SPINE, OCO.Side.NONE, OCO.Location.NONE );
-    var b = limb.newArmature( i18n._("Spine"), num );
+    var b = limb.newArmature( i18n._p("Anatomy", "Spine"), num );
 
     // hips position
     var ox = 0;
@@ -16752,7 +16789,7 @@ OCODoc.prototype.newSnakeSpine = function( head, spine, position )
     var spineLength = u*1.5 / spine;
     for (var i = 0; i < spine; i++)
     {
-        b.name = i18n._("Spine");
+        b.name = i18n._p("Anatomy", "Spine");
         if ( i <= (spine-1) / 3) b.type = OCO.Bone.SNAKE_SPINE_ROOT;
         else if ( i <= (spine-1)*2 / 3) b.type = OCO.Bone.SNAKE_SPINE_MID;
         else b.type = OCO.Bone.SNAKE_SPINE_END;
@@ -16762,8 +16799,8 @@ OCODoc.prototype.newSnakeSpine = function( head, spine, position )
     }
 
     // Tip
-    b.name = i18n._("Spine") +
-        '_' + i18n._("Tip");
+    b.name = i18n._p("Anatomy", "Spine") +
+        '_' + i18n._p("Anatomy", "Tip");
     b.type = OCO.Bone.TIP;
     b.x = -u *.75;
     b.y = y + oy;
@@ -16781,8 +16818,8 @@ OCODoc.prototype.newSnakeSpine = function( head, spine, position )
         limb.armature.push(b);
         b.children.push(s);
 
-        var bt = new OCOBone( i18n._("Head") +
-            '_' + i18n._("Tip") );
+        var bt = new OCOBone( i18n._p("Anatomy", "Head") +
+            '_' + i18n._p("Anatomy", "Tip") );
         bt.type = OCO.Bone.SKULL_TIP;
         bt.x = x + u*.2;
         bt.y = y;
@@ -16817,7 +16854,7 @@ OCODoc.prototype.newFishSpine = function( head, spine, position )
 
     // Create limb
     var limb = this.newLimb( OCO.Limb.FISH_SPINE, OCO.Side.NONE, OCO.Location.NONE );
-    var b = limb.newArmature( i18n._("Spine"), num );
+    var b = limb.newArmature( i18n._p("Anatomy", "Spine"), num );
 
     // hips position
     var ox = 0;
@@ -16836,7 +16873,7 @@ OCODoc.prototype.newFishSpine = function( head, spine, position )
     var spineLength = u / spine;
     for (var i = 0; i < spine; i++)
     {
-        b.name = i18n._("Spine");
+        b.name = i18n._p("Anatomy", "Spine");
         if ( i <= (spine-1) / 3) b.type = OCO.Bone.FISH_SPINE_ROOT;
         else if ( i <= (spine-1)*2 / 3) b.type = OCO.Bone.FISH_SPINE_MID;
         else b.type = OCO.Bone.FISH_SPINE_END;
@@ -16846,8 +16883,8 @@ OCODoc.prototype.newFishSpine = function( head, spine, position )
     }
 
     // Tip
-    b.name = i18n._("Spine") +
-        '_' + i18n._("Tip");
+    b.name = i18n._p("Anatomy", "Spine") +
+        '_' + i18n._p("Anatomy", "Tip");
     b.type = OCO.Bone.TIP;
     b.x = -u *.25;
     b.y = y + oy;
@@ -16855,7 +16892,7 @@ OCODoc.prototype.newFishSpine = function( head, spine, position )
     // Head
     if (head)
     {
-        var b = new OCOBone( i18n._("Head") );
+        var b = new OCOBone( i18n._p("Anatomy", "Head") );
         b.type = OCO.Bone.SKULL;
         b.x = x;
         b.y = y;
@@ -16865,8 +16902,8 @@ OCODoc.prototype.newFishSpine = function( head, spine, position )
         limb.armature.push(b);
         b.children.push(s);
 
-        var bt = new OCOBone( i18n._("Head") +
-            '_' + i18n._("Tip") );
+        var bt = new OCOBone( i18n._p("Anatomy", "Head") +
+            '_' + i18n._p("Anatomy", "Tip") );
         bt.type = OCO.Bone.SKULL_TIP;
         bt.x = x + u*.3;
         bt.y = y;
@@ -16920,14 +16957,14 @@ OCODoc.prototype.newFin = function( side, fishbones, view, position )
     }
 
     // Create root
-    var rootBone = new OCOBone( i18n._("Fin") );
+    var rootBone = new OCOBone( i18n._p("Anatomy", "Fin") );
     rootBone.type = OCO.Bone.FIN;
     rootBone.x = x + ox;
     rootBone.y = y + oy;
     limb.armature.push(rootBone);
     // Tip
-    var bt = new OCOBone( i18n._("Fin") +
-        '_' + i18n._("Tip") );
+    var bt = new OCOBone( i18n._p("Anatomy", "Fin") +
+        '_' + i18n._p("Anatomy", "Tip") );
     bt.type = OCO.Bone.TIP;
     bt.x = s * u * -.24 + ox;
     bt.y = u * .62 + oy;
@@ -16941,15 +16978,15 @@ OCODoc.prototype.newFin = function( side, fishbones, view, position )
 
     function createFishbone( xr, yr, xt, yt )
     {
-        var boneName = OCO._uniqueString( i18n._("Fishbone"), names);
+        var boneName = OCO._uniqueString( i18n._p("Anatomy", "Fishbone"), names);
         b = new OCOBone( boneName );
         b.type = OCO.Bone.FIN_FISHBONE;
         b.x = s * u * xr + ox;
         b.y = u * yr + oy;
 
         // tip
-        var boneName = OCO._uniqueString( i18n._("Fishbone") +
-            '_' + i18n._("Tip"), names);
+        var boneName = OCO._uniqueString( i18n._p("Anatomy", "Fishbone") +
+            '_' + i18n._p("Anatomy", "Tip"), names);
         var bt = new OCOBone( boneName );
         bt.type = OCO.Bone.TIP;
         bt.x = s * u * xt + ox;
@@ -18868,6 +18905,11 @@ DuAEF.enterRunTime = function()
     DuESF.enterRunTime();
 }
 
+/**
+ * A Global Object to share some Data with other scripts
+ */
+if (typeof $.global["DUAEF_DATA"] === 'undefined') $.global["DUAEF_DATA"] = {};
+
 // ==================== |----| ====================
 // ==================== | ae | ====================
 // ==================== |----| ====================
@@ -19145,6 +19187,14 @@ function DuAEPropertyExpression(property)
 		* @type {Boolean}
 		*/
 	this.changed = false;
+
+	/**
+	 * true if the expression has an error
+	 * @memberof DuAEPropertyExpression.prototype
+	 * @name inError
+	 * @type {Boolean}
+	 */
+	this.inError = property.expressionError != "";
 }
 
 /**
@@ -19167,14 +19217,19 @@ DuAEPropertyExpression.prototype.getProperty = function()
 
 /**
  * Applies the expression back to the actual properties in After Effects, if and only if it's been modified.
+ * @param {boolean} [onlyIfNoError=false] If true, applies the expression only if it doesn't generate an error
  */
-DuAEPropertyExpression.prototype.apply = function()
+DuAEPropertyExpression.prototype.apply = function( onlyIfNoError )
 {
 	if (this.layer.locked) return;
 	if (!this.changed) return;
 
+	onlyIfNoError = def(onlyIfNoError, false);
+	
 	var prop = this.getProperty();
+	var prevExpression = prop.expression;
 	prop.expression = this.expression;
+	if (prop.expressionError != "" && onlyIfNoError) prop.expression = prevExpression;
 }
 
 /**
@@ -22478,7 +22533,8 @@ DuAEProperty.prototype.setExpression = function(expr, keepValue) {
         }
 
         //restore value
-        if (duaeProp.editable() && keepValue && duaeProp.dimensions() > 0) duaeProp.setValue(2 * originalValue - prop.valueAtTime(comp.time, false));
+        if (keepValue)
+            if (duaeProp.dimensions() > 0 && duaeProp.editable()) duaeProp.setValue(2 * originalValue - prop.valueAtTime(comp.time, false));
     });
 }
 
@@ -23997,8 +24053,8 @@ var DuAEExpression = {};
 DuAEExpression.suspendCacheUpdates = false;
 
 // the expression cache is an array of DuAEPropertyExpression
-DuAEExpression.cache = [];
-DuAEExpression.lastCacheUpdateTime = 0;
+if (typeof $.global["DUAEF_DATA"].expressionCache === 'undefined') $.global["DUAEF_DATA"].expressionCache = [];
+if (typeof $.global["DUAEF_DATA"].lastExpressionCacheUpdateTime === 'undefined') $.global["DUAEF_DATA"].lastExpressionCacheUpdateTime = 0;
 
 /**
  * The different modes available to bake expressions
@@ -24030,7 +24086,7 @@ DuAEExpression.updateCache = function(selectionMode) {
     selectionMode = def(selectionMode, DuAE.SelectionMode.ALL_COMPOSITIONS);
 
     //clear cache
-    DuAEExpression.cache = [];
+    $.global["DUAEF_DATA"].expressionCache = [];
 
     var comps = [];
     if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION || selectionMode == DuAE.SelectionMode.SELECTED_LAYERS || selectionMode == DuAE.SelectionMode.SELECTED_PROPERTIES) comps = [DuAEProject.getActiveComp()];
@@ -24051,25 +24107,26 @@ DuAEExpression.updateCache = function(selectionMode) {
         });
     }
 
-    DuAEExpression.lastCacheUpdateTime = new Date().getTime();
+    $.global["DUAEF_DATA"].lastExpressionCacheUpdateTime = new Date().getTime();
 }
 
 /**
  * Runs a function on all expressions
  * @param {function} func The function to run, which takes one param, a {@link DuAEPropertyExpression} object.
- * @param {bool} [selectionMode=false] What to update
+ * @param {DuAE.SelectionMode} [selectionMode=DuAE.SelectionMode.ALL_COMPOSITIONS] What to update
  * @param {boolean} [updateCache=true] When false, the cache won't be updated before running the function. Set this to false if you already have updated the cache to improve performance.
  * @param {boolean} [apply=true] When false, the cache won't be applied back to Ae. Set this to false if you need to run other methods on expressions before applying the result to improve performance.
+ * @param {boolean} [onlyIfNoError=false] Applies the cache only if it doesn't generate an error.
  */
-DuAEExpression.doInExpresssions = function(func, selectionMode, updateCache, apply) {
+DuAEExpression.doInExpresssions = function(func, selectionMode, updateCache, apply, onlyIfNoError) {
     selectionMode = def(selectionMode, DuAE.SelectionMode.ALL_COMPOSITIONS);
     updateCache = def(updateCache, true);
     apply = def(apply, true);
 
     if (updateCache) DuAEExpression.updateCache(selectionMode);
 
-    for (var i = 0, num = DuAEExpression.cache.length; i < num; i++) {
-        func(DuAEExpression.cache[i]);
+    for (var i = 0, num = $.global["DUAEF_DATA"].expressionCache.length; i < num; i++) {
+        func($.global["DUAEF_DATA"].expressionCache[i]);
     }
 
     if (apply) DuAEExpression.applyCache();
@@ -24078,11 +24135,14 @@ DuAEExpression.doInExpresssions = function(func, selectionMode, updateCache, app
 /**
  * Applies all the expressions stored in the cache to the actual properties in After Effects, if and only if they've been modified.
  * @param {DuAEPropertyExpression[]} [cache] The cache to apply, if different from the automatic DuAEF Cache
+ * @param {boolean} [onlyIfNoError=false] Applies only if it doesn't generate an error.
  */
-DuAEExpression.applyCache = function( cache ) {
-    cache = def(cache, DuAEExpression.cache);
-    for (var i = 0, num = DuAEExpression.cache.length; i < num; i++) {
-        DuAEExpression.cache[i].apply();
+DuAEExpression.applyCache = function( cache, onlyIfNoError ) {
+    cache = def(cache, $.global["DUAEF_DATA"].expressionCache);
+    onlyIfNoError = def(onlyIfNoError, false);
+
+    for (var i = 0, num = $.global["DUAEF_DATA"].expressionCache.length; i < num; i++) {
+        $.global["DUAEF_DATA"].expressionCache[i].apply(onlyIfNoError);
     }
 }
 
@@ -27543,6 +27603,24 @@ DuAEProject.replaceInExpressions = function(oldString, newString, caseSensitive)
 }
 
 /**
+ * Reimplements <code>app.project.autoFixExpressions()</code> because it does not work with some special characters.<br/>
+ * Automatically replaces text found in broken expressions in the project, if the new text causes the expression to evaluate without errors.
+ * @param {string} oldText The text to replace.
+ * @param {string} newText The new text.
+ */
+DuAEProject.autoFixExpressions = function(oldText, newText) {
+    
+    var re = new RegExp(DuRegExp.escape(oldText),'g');
+
+    DuAEExpression.doInExpresssions(function(e) {
+        if (!e.inError) return e;
+        e.changed = re.test(e.expression);
+        if (e.changed) e.expression = e.expression.replace(re, newText);
+        return e;
+    }, DuAE.SelectionMode.ALL_COMPOSITIONS, true, true, true); // Apply cache only if it doesn't generate an error
+}
+
+/**
  * Gets the unused footages.
  * @return {FootageItem[]} The list of unused items.
  */
@@ -27649,7 +27727,7 @@ DuAEProject.bakeCompositions = function(mode, frameStep) {
  * @return {bool}
  */
 DuAEProject.containsComp = function() {
-    for (var i = 1, ni = app.project.items.length; i < ni; i++) {
+    for (var i = 1, ni = app.project.items.length; i <= ni; i++) {
         if (app.project.item(i) instanceof CompItem) return true;
     }
     return false;
@@ -28567,7 +28645,7 @@ DuAEComp.addNull = function(comp, size, layer) {
 
     var nullLayer = comp.layers.addShape();
     nullLayer.guideLayer = true;
-    nullLayer.name = i18n._("Null");
+    nullLayer.name = i18n._p("After Effects Layer", "Null");
     nullLayer.label = 1;
 
     DuAELayer.applyPreset(nullLayer, preset_null.toFile());
@@ -28596,7 +28674,7 @@ DuAEComp.addAdjustmentLayer = function(comp) {
     if (!comp) return;
 
     var layer = comp.layers.addShape();
-    layer.name = i18n._("Adjustment layer");
+    layer.name = DuAELayer.Type.ADJUSTMENT;
     layer.adjustmentLayer = true;
     layer.label = 5;
 
@@ -28627,7 +28705,7 @@ DuAEComp.addSolid = function(color, comp) {
     if (!(color instanceof DuColor)) color = new DuColor(color);
 
     var layer = comp.layers.addShape();
-    layer.name = i18n._("Solid");
+    layer.name = DuAELayer.Type.SOLID;
     layer.label = 1;
 
     var solidGroup = layer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -28941,11 +29019,25 @@ DuAEComp.updateSettings = function( settings, updatePrecomps, comps ) {
 var DuAELayer = {};
 
 DuAELayer.Type = {
-    NONE: '-',
-    NULL: 'Null',
-    SOLID: 'Solid',
-    ADJUSTMENT: 'Adjustment'
+    NONE: '-', // ✕
+    NULL: 'N',
+    SOLID: 'S',
+    ADJUSTMENT: 'FX'
 }
+
+// Lists all special character prefixes
+// needed to fix expressions
+DuAELayer.specialPrefixes = [
+    '❌',
+    '⬛',
+    '⚒',
+    '☍',
+    '⚲',
+    '✋',
+    '⛒',
+    '✜',
+    '☉'
+]
 
 /**
  * Checks if a string is one of the prefixes used to identify layer types in their names
@@ -29013,6 +29105,31 @@ DuAELayer.setType = function(type, layers) {
             layer.label = 5;
         }
     }
+}
+
+
+/**
+ * Renames a layer, appending a number if needed to keep unique names, and fixing expressions
+ * @param {Layer} layer
+ * @param {string} newName
+ * @return {string} The new name which may be different than <code>newName</code> in case the layer has been numbered.
+ */
+DuAELayer.rename = function( layer, newName ) {
+
+    var oldName = layer.name;
+    
+    layer.name = '** Duik Temp Name **';
+    layer.name = DuAEComp.newUniqueLayerName(newName, layer.containingComp);
+    newName = layer.name;
+
+    // First try with AE's method which is faster.
+    app.project.autoFixExpressions(oldName, newName);
+    // Then our own because of AE bugs.
+    // DEACTIVATED: it's too long. Needs a way to speed up this method
+    //if (DuString.contains(newName, DuAELayer.specialPrefixes))
+    //    DuAEProject.autoFixExpressions(oldName, newName);
+
+    return newName;
 }
 
 /**
@@ -30874,6 +30991,18 @@ DuAELayer.angleFromLayers = function ( angleLayer, oppositeLayerA, oppositeLayer
 
     var radians = DuMath.angleFromSides( p, pA, pB );
     return radians * ( 180 / Math.PI );
+}
+
+/**
+ * Returns the location of the layer relative to the reference.
+ * @param {Layer} point The layer to check
+ * @param {Layer} referenceLayer The reference
+ * @return {DuMath.Location} The location
+ */
+DuAELayer.relativeLocation = function( layer, referenceLayer ) {
+    var lP = DuAELayer.getWorldPos(layer);
+    var rP = DuAELayer.getWorldPos(referenceLayer);
+    return DuMath.relativeLocation(lP, rP);
 }
 
 // ==================== |--------| ====================

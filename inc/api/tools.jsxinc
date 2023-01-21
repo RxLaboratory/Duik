@@ -6,6 +6,13 @@
 Duik.Tool = {};
 
 /**
+ * The list of expressions currently being edited
+ * Associative array filename -> DuAEProperty.
+ * @type {object}
+*/
+if (typeof $.global["DUIK_DATA"].editingExpressions === 'undefined') $.global["DUIK_DATA"].editingExpressions = {};
+
+/**
  * The list of tool functions
  */
 Duik.CmdLib["Tool"] = [];
@@ -119,7 +126,8 @@ Duik.Tool.editExpression = function (prop) {
     var expressionFolder = new Folder(expressionPath);
     if (!expressionFolder.exists) expressionFolder.create();
     // Create the file
-    var expressionFile = new File(expressionPath + prop.layer.name + ' - ' + prop.name + ' - ' + prop.id + '.jsx');
+    var expName = DuPath.fixName( prop.layer.name + ' - ' + prop.name + ' - ' + prop.id );
+    var expressionFile = new File(expressionPath + expName + '.jsx');
     if (expressionFile.open('w')) {
         expressionFile.write(prop.expression());
         expressionFile.close();
@@ -131,5 +139,27 @@ Duik.Tool.editExpression = function (prop) {
     if (editorFile.exists) DuProcess.run(editorPath, [expressionFile.fsName], true);
     else expressionFile.execute();
 
+    $.global["DUIK_DATA"].editingExpressions[expressionFile.absoluteURI] = prop;
+
     return expressionFile;
+}
+
+Duik.Tool.reloadExpressions = function() {
+    DuAE.beginUndoGroup( i18n._("Edit expression"), false);
+
+    for (f in $.global["DUIK_DATA"].editingExpressions) {
+        if (!$.global["DUIK_DATA"].editingExpressions.hasOwnProperty(f)) continue;
+        var file = new File(f);
+        if (file.exists) {
+            if (file.open('r')){
+                $.global["DUIK_DATA"].editingExpressions[f].setExpression(file.read(), false);
+                file.close();
+            }
+        }
+        else {
+            delete editingExpressions[f];
+        }
+    };
+
+    DuAE.endUndoGroup( i18n._("Edit expression"));
 }

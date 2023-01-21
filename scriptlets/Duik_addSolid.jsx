@@ -1,6 +1,9 @@
 (function(){
     #include "Duik_api.jsxinc"
-    DuAEF.init( "Add Solid", "1.0.0", "RxLaboratory" );
+    
+    // The script name must be "Duik" to get the default Duik settings
+    // Inherit the version from the API
+    DuAEF.init( "Duik", Duik.apiVersion, "RxLaboratory" );
     DuAEF.enterRunTime();
 
     DuAE.beginUndoGroup( i18n._("Solid") );
