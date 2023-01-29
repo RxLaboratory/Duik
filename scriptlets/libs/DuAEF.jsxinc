@@ -80,7 +80,7 @@
  * })(this);
  * @namespace
  * @author Nicolas Dufresne and contributors
- * @copyright 2021 Nicolas Dufresne, RxLaboratory
+ * @copyright 2021-2023 Nicolas Dufresne, RxLaboratory
  * @version 1.0.0
  * @license GPL-3.0 <br />
  * This program is free software: you can redistribute it and/or modify<br />
@@ -18843,7 +18843,7 @@ DuScriptUI.selectionModeSelector = function( container, minimalMode )
  * })(this);
  * @namespace
  * @author Nicolas Dufresne and contributors
- * @copyright 2017 - 2021 Nicolas Dufresne, RxLaboratory
+ * @copyright 2017 - 2023 Nicolas Dufresne, RxLaboratory
  * @version 1.0.0
  * @license GPL-3.0 <br />
  * DuAEF is free software: you can redistribute it and/or modify<br />
@@ -21753,11 +21753,14 @@ DuAEProperty.prototype.setAnimation = function(anim, time, ignoreName, setExpres
             {
                 if (offsetTransform && (anim._matchName == 'ADBE Position' || anim._matchName == 'ADBE Rotate Z'))
                 {
-                    var offset = anim.startValue;
+                    var o = anim.startValue;
+                    offset = true;
                     for (var i = 0, ni = anim.keys.length; i < ni; i++)
                     {
-                        anim.keys[i].value -= offset;
+                        anim.keys[i].value -= o;
                     }
+                    if (anim._matchName == 'ADBE Position') anim.startValue = [0,0];
+                    else anim.startValue = 0;
                 }
                 return this.setAnim(anim, time, setExpression, replace, offset);
             }
@@ -30117,8 +30120,22 @@ DuAELayer.alignPosition = function(layer, target) {
     //TODO if 3D
 
     //set position
-    if (layer.transform.position.numKeys == 0) layer.transform.position.setValue(target.transform.anchorPoint.value);
-    else layer.transform.position.setValueAtTime(comp.time, target.transform.anchorPoint.value);
+    if (layer.transform.position.dimensionsSeparated)
+    {
+        var xpos = layer.transform.property('ADBE Position_0');
+        if (xpos.numKeys == 0) xpos.setValue(target.transform.anchorPoint.value[0])
+        else xpos.setValueAtTime(comp.time, target.transform.anchorPoint.value[0])
+
+        var ypos = layer.transform.property('ADBE Position_1');
+        if (ypos.numKeys == 0) ypos.setValue(target.transform.anchorPoint.value[1])
+        else ypos.setValueAtTime(comp.time, target.transform.anchorPoint.value[1])
+    }
+    else
+    {
+        if (layer.transform.position.numKeys == 0) layer.transform.position.setValue(target.transform.anchorPoint.value);
+        else layer.transform.position.setValueAtTime(comp.time, target.transform.anchorPoint.value);
+    }
+    
 
     //reparent
     if (layerParent != target) layer.parent = layerParent;
