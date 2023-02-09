@@ -1,7 +1,7 @@
 @echo off
 
 :: The version
-SET version=17.0.1
+SET version=17.0.2-Beta
 
 :: The repo (current dir)
 SET repoPath=%~dp0..\..
