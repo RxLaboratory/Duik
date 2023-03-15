@@ -751,6 +751,49 @@ Duik.Bone.unlink = function( comp )
     DuAE.endUndoGroup();
 }
 
+Duik.CmdLib['Bone']["Bake_Armature_Data"] = "Duik.Bone.bakeArmatureData();";
+/**
+ * Bakes the "Armature" part of the Bone Data effect
+ @param {Layer[]|DuList.<Layer>|Layer} [layers] - The layers to bake; will use selected layers from the current comp if omitted.
+ */
+Duik.Bone.bakeArmatureData = function( layers )
+{
+    layers = def(layers, DuAEComp.unselectLayers() );
+    layers = new DuList(layers);
+    if( layers.isEmpty() ) return;
+
+    DuAE.beginUndoGroup( i18n._("Bake armature data"), false);
+
+    // Progress
+    DuScriptUI.progressBar.addMax( layers.length() + 1 );
+    DuScriptUI.progressBar.hit(1, DuString.args( i18n._('Baking armature data...') ));
+
+    var boneDataPE = Duik.PseudoEffect.BONE_DATA;
+    var n = layers.length();
+    layers.do(function(layer)
+    {
+        var i = layers.current + 1;
+        DuScriptUI.progressBar.hit(1, i18n._('Baking armature data: %1', [ i + '/' + n ] ));
+        // Set the bone data to the child index
+        var boneEffect = layer.effect(boneDataPE.matchName);
+        if ( !boneEffect ) return;
+
+        var targetIndex = boneDataPE.props["Armature"]["Target"].index;
+        var childIndex = boneDataPE.props["Armature"]["Child index"].index;
+        var parentIndex = boneDataPE.props["Armature"]["Parent index"].index;
+
+        if ( boneEffect( targetIndex ).value == 0 ) {
+
+            childValue = boneEffect( childIndex ).value;
+            parentValue = boneEffect( parentIndex ).value;
+
+            boneEffect( targetIndex ).setValue( childValue );
+        }
+    });
+
+    DuAE.endUndoGroup( i18n._("Bake armature data"));
+}
+
 Duik.CmdLib['Bone']["Bake"] = "Duik.Bone.bake()";
 Duik.CmdLib['Bone']["Bake_Keep_envelops"] = "Duik.Bone.bake( false )";
 /**
@@ -775,7 +818,10 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
     // Progress
     DuScriptUI.progressBar.addMax( layers.length() + 1 );
 
-    DuScriptUI.progressBar.hit(1, DuString.args( i18n._('Resetting bone transform...') ));
+    DuScriptUI.progressBar.hit(1, i18n._('Resetting bone transform...'));
+
+    // Keep the child info in the bone effect
+    Duik.Bone.bakeArmatureData( layers );
 
     // First, set all rotation to 0!
     // 1- unparent all
@@ -830,7 +876,7 @@ Duik.Bone.bake = function ( bakeBones, bakeEnvelop, bakeNoodles, layers )
 
     layers.do(function(layer)
     {
-        DuScriptUI.progressBar.hit(1, DuString.args( i18n._('Baking bone: {#}'), [ i + '/' + n ] ));
+        DuScriptUI.progressBar.hit(1, i18n._('Baking bone: %1', [ i + '/' + n ] ));
         i++;
         // Nothing to do if this is not a shape
         if( !layer instanceof ShapeLayer) return;
