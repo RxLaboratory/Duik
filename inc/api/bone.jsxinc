@@ -1455,7 +1455,6 @@ Duik.Bone.color = function( layer )
  * Sets the color of the bone layers
  * @param {DuColor|null} [color] The color. If omitted or null, will assign a random color for each bone.
  * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
- * @returns {DuColor}
  */
 Duik.Bone.setColor = function( color, layers )
 {
@@ -1541,7 +1540,7 @@ Duik.Bone.hasEnvelop = function( layer )
 /**
  * Toggles the envelop
  * @param {bool} [enabled=true]
- * @param {Layer} [layers] The layers. If omitted, will use all selected bones
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
 Duik.Bone.setEnvelopEnabled = function( enabled, layers )
 {
@@ -1604,30 +1603,34 @@ Duik.Bone.envelopSize = function( layer )
 /**
  * Sets the size of the envelop of the bone layer
  * @param {float} size The new size
- * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.setEnvelopSize = function( size, layer )
+Duik.Bone.setEnvelopSize = function( size, layers )
 {
-    layer = def(layer, DuAEComp.getActiveLayer());
-    if (!layer) return 0;
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
 
-    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
 
-    var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
+        var sizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Size'].index;
 
-    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
-    if (!effect) {
-        // Get from the shape layer content
-        var content = layer.property('ADBE Root Vectors Group');
-        if (!content) return;
-        content = content.property('Envelop');
-        if (!content) return;
-        content = content.property('ADBE Vectors Group').property('root');
-        var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale');
-        v.setValue([size, size]);
-        return;
-    }
-    effect( sizeIndex ).setValue(size);
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return;
+            content = content.property('Envelop');
+            if (!content) return;
+            content = content.property('ADBE Vectors Group').property('root');
+            var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Scale');
+            v.setValue([size, size]);
+            return;
+        }
+        effect( sizeIndex ).setValue(size);
+    });   
 }
 
 /**
@@ -1663,30 +1666,292 @@ Duik.Bone.envelopOffset = function( layer )
 /**
  * Sets the offset of the envelop of the bone layer
  * @param {float} offset The offset
- * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.setEnvelopOffset = function( offset, layer )
+Duik.Bone.setEnvelopOffset = function( offset, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var offsetIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Offset'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return;
+            content = content.property('Envelop');
+            if (!content) return;
+            content = content.property('ADBE Vectors Group').property('root');
+            var p = content.property('ADBE Vector Transform Group').property('ADBE Vector Position');
+            p.setValue([-offset, p.value[0]]);
+            return;
+        }
+        effect( offsetIndex ).setValue(offset);
+    });
+}
+
+/**
+ * Checks the opacity of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
+ */
+Duik.Bone.envelopOpacity = function( layer )
 {
     layer = def(layer, DuAEComp.getActiveLayer());
     if (!layer) return 0;
 
     if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
 
-    var offsetIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Offset'].index;
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var opacityIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Fill']['Opacity'].index;
 
     var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
     if (!effect) {
         // Get from the shape layer content
         var content = layer.property('ADBE Root Vectors Group');
-        if (!content) return;
+        if (!content) return 0;
         content = content.property('Envelop');
-        if (!content) return;
-        content = content.property('ADBE Vectors Group').property('root');
-        var p = content.property('ADBE Vector Transform Group').property('ADBE Vector Position');
-        p.setValue([-offset, p.value[0]]);
-        return;
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('Shape');
+        return content.property('ADBE Vector Graphic - Fill').property('ADBE Vector Fill Opacity').value;
     }
-    effect( offsetIndex ).setValue(offset);
+    return effect( opacityIndex ).value;
+}
+
+/**
+ * Sets the opacity of the envelop of the bone layer
+ * @param {float} opacity The opacity
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setEnvelopOpacity = function( opacity, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var opacityIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Fill']['Opacity'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return 0;
+            content = content.property('Envelop');
+            if (!content) return 0;
+            content = content.property('ADBE Vectors Group').property('Shape');
+            var p = content.property('ADBE Vector Graphic - Fill').property('ADBE Vector Fill Opacity');
+            p.setValue( opacity );
+            return;
+        }
+        effect( opacityIndex ).setValue( opacity );
+    });
+}
+
+/**
+ * Checks the color of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Bone.envelopColor = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return new DuColor( );
+
+    if (!Duik.Bone.hasEnvelop(layer)) return new DuColor( );
+
+    var colorIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Fill']['Color'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Envelop');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('Shape');
+        var c = content.property('ADBE Vector Graphic - Fill').property('ADBE Vector Fill Color').value;
+        return new DuColor( c );
+    }
+    return new DuColor( effect( colorIndex ).value );
+}
+
+/**
+ * Sets the color of the envelop of the bone layer
+ * @param {DuColor} color The color.
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setEnvelopColor = function( color, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var colorIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Fill']['Color'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return 0;
+            content = content.property('Envelop');
+            if (!content) return 0;
+            content = content.property('ADBE Vectors Group').property('Shape');
+            var p = content.property('ADBE Vector Graphic - Fill').property('ADBE Vector Fill Color');
+            p.setValue( color.floatRGBA() );
+            return;
+        }
+        effect( colorIndex ).setValue( color.floatRGBA() );
+
+    });
+}
+
+/**
+ * Checks the stroke size of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
+ */
+Duik.Bone.envelopStrokeSize = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var strokeSizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Stroke']['Size'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Envelop');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('Shape');
+        return content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Width').value;
+    }
+    return effect( strokeSizeIndex ).value;
+}
+
+/**
+ * Sets the stroke size of the envelop of the bone layer
+ * @param {float} color The color
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setEnvelopStrokeSize = function( size, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var strokeSizeIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Stroke']['Size'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return 0;
+            content = content.property('Envelop');
+            if (!content) return 0;
+            content = content.property('ADBE Vectors Group').property('Shape');
+            var p = content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Width');
+            p.setValue( size );
+            return;
+        }
+        effect( strokeSizeIndex ).setValue( size );
+
+    });
+}
+
+/**
+ * Checks the stroke color of the envelop of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Bone.envelopStrokeColor = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var strokeColorIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Stroke']['Color'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Envelop');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group').property('Shape');
+        var c = content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Color').value;
+        return new DuColor( c );
+    }
+    return new DuColor( effect( strokeColorIndex ).value );
+}
+
+/**
+ * Sets the stroke color of the envelop of the bone layer
+ * @param {DuColor} color The color.
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setEnvelopStrokeColor = function( color, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var strokeColorIndex = Duik.PseudoEffect.BONE_ENVELOP.props['Stroke']['Color'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_ENVELOP.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return 0;
+            content = content.property('Envelop');
+            if (!content) return 0;
+            content = content.property('ADBE Vectors Group').property('Shape');
+            var p = content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Color');
+            p.setValue( color.floatRGBA() );
+            return;
+        }
+        effect( strokeColorIndex ).setValue( color.floatRGBA() );
+
+    });
 }
 
 Duik.Bone.hasNoodle = function( layer )
@@ -1706,6 +1971,71 @@ Duik.Bone.hasNoodle = function( layer )
     if (!content) return false;
     var v = content.property('ADBE Vector Transform Group').property('ADBE Vector Group Opacity').value;
     return v != 0;
+}
+
+/**
+ * Checks the color of the noodle of the bone layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Bone.noodleColor = function( layer )
+{
+    layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 0;
+
+    if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return 0;
+
+    if (!Duik.Bone.hasEnvelop(layer)) return 0;
+
+    var colorIndex = Duik.PseudoEffect.BONE_NOODLE.props['Color'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.BONE_NOODLE.matchName );
+    if (!effect) {
+        // Get from the shape layer content
+        var content = layer.property('ADBE Root Vectors Group');
+        if (!content) return 0;
+        content = content.property('Noodle');
+        if (!content) return 0;
+        content = content.property('ADBE Vectors Group');
+        var c = content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Color').value;
+        return new DuColor( c );
+    }
+    return new DuColor( effect( colorIndex ).value );
+}
+
+/**
+ * Sets the stroke color of the envelop of the bone layer
+ * @param {DuColor} color The color.
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ */
+Duik.Bone.setNoodleColor = function( color, layers )
+{
+    layers = def(layers, DuAEComp.getSelectedLayers());
+    layers = new DuList(layers);
+    if (layers.length() == 0) return;
+
+    layers.do(function(layer)
+    {
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) return;
+
+        var colorIndex = Duik.PseudoEffect.BONE_NOODLE.props['Color'].index;
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE_NOODLE.matchName );
+        if (!effect) {
+            // Get from the shape layer content
+            // Get from the shape layer content
+            var content = layer.property('ADBE Root Vectors Group');
+            if (!content) return 0;
+            content = content.property('Noodle');
+            if (!content) return 0;
+            content = content.property('ADBE Vectors Group');
+            var p = content.property('ADBE Vector Graphic - Stroke').property('ADBE Vector Stroke Color');
+            p.setValue( color.floatRGBA() );
+            return;
+        }
+        effect( colorIndex ).setValue( color.floatRGBA() );
+
+    });
 }
 
 /**
