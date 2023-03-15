@@ -1244,8 +1244,10 @@ Duik.Constraint.ik = function(type, forceBezier, layers, controller, bezierFK) {
             }
         }
     }
+
     //sort layers and parent them
     layers = DuAELayer.sortByParent(layers);
+
     //reset rotation and scale if structures
     layers = new DuList(layers);
     layers.do(Duik.Bone.resetTransform);
@@ -1716,7 +1718,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     layer2.parent = middleParent;
     controller.parent = endParent;
 
-    l2pos = layer2.transform.position.value;
+    l2pos = layer2.transform.position.value - layer2.transform.anchorPoint.value;
 
     //add effect
     var name = Duik.Layer.name(layer2);
@@ -2422,6 +2424,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
 
     var l1rot = new DuAEProperty( layer1.transform.rotation );
     l1rot.setExpression( [DuAEExpression.Id.TWO_IK,
+        '// Upper Bone',
         'var fx = null;',
         'var result = value;',
         DuAEExpression.Library.get(['dishineritRotation']),
@@ -2439,6 +2442,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
 
     var l2rot = new DuAEProperty( layer2.transform.rotation );
     l2rot.setExpression( [DuAEExpression.Id.TWO_IK,
+        '// Lower Bone',
         'var fx = null;',
         'var result = value;',
         'try { fx = effect("' + layer2Data.name + '")(1).effect("' + effect.name + '"); } catch(e) {}',
@@ -2450,10 +2454,11 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
 
     var l2pos = new DuAEProperty( layer2.transform.position );
     l2pos.setExpression( [DuAEExpression.Id.TWO_IK,
+        '// Lower Bone',
         'var fx = null;',
         'var result = value;',
         'try { fx = effect("' + layer2Data.name + '")(1).effect("' + effect.name + '"); } catch(e) {}',
-        'if (fx && fx.active) result = fx(' + lRelativeStretchedIndex + ').value;',
+        'if (fx && fx.active) result += fx(' + lRelativeStretchedIndex + ').value;',
         'result;'
 	].join('\n') );
 
@@ -2463,6 +2468,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         goalData(1).setValue(controller.index);
 
         var rotExpr = [DuAEExpression.Id.TWO_IK,
+            '// Goal',
             'var fx = null;',
             'var result = value;',
             'try { fx = effect("' + goalData.name + '")(1).effect("' + effect.name + '"); } catch(e) {}',
@@ -2477,10 +2483,11 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
 
         var gpos = new DuAEProperty(goal.transform.position);
         gpos.setExpression( [DuAEExpression.Id.TWO_IK,
+            '// Goal',
             'var fx = null;',
             'var result = value;',
             'try { fx = effect("' + goalData.name + '")(1).effect("' + effect.name + '"); } catch(e) {}',
-            'if (fx && fx.active) result = fx(' + fkGoalPosIndex + ').value;',
+            'if (fx && fx.active) result += fx(' + fkGoalPosIndex + ').value;',
             'result;'
 	    ].join('\n') );
     }
