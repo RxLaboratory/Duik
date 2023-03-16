@@ -10997,10 +10997,14 @@ DuScriptUI.button = function(container, text, image, helpTip, addOptionsPanel, o
         duButton.screenX = e.screenX - e.clientX;
         duButton.screenY = e.screenY - e.clientY;
 
+        var ctrl = false;
+        if (DuSystem.win && e.ctrlKey) ctrl = true;
+        if (DuSystem.mac && e.metaKey) ctrl = true;
+
         if (e.shiftKey) duButton.shiftClicked();
-        else if (e.altKey && e.ctrlKey) duButton.ctrlAltClicked();
+        else if (e.altKey && ctrl) duButton.ctrlAltClicked();
         else if (e.altKey) duButton.altClicked();
-        else if (e.ctrlKey) duButton.ctrlClicked();
+        else if (ctrl) duButton.ctrlClicked();
         else duButton.clicked();
     }
 
@@ -12560,7 +12564,8 @@ DuScriptUI.selector = function( container, helpTip, iconOnly )
         else
         {
             var index = selector.index;
-            if ( e.ctrlKey ) index = -1;
+            if ( e.ctrlKey && DuSystem.win ) index = -1;
+            if ( e.metaKey && DuSystem.mac ) index = -1;
             if ( index == selector.items.length - 1 ) index = 0;
             else index++;
             selector.setCurrentIndex( index );
@@ -18106,7 +18111,11 @@ DuScriptUI.layerSelector = function( container, helpTip )
     {
         selector.refresh();
 
-        if (e.ctrlKey) {
+        if (e.ctrlKey && DuSystem.win) {
+            selector.setCurrentIndex(0);
+            return;
+        }
+        if (e.metaKey && DuSystem.mac) {
             selector.setCurrentIndex(0);
             return;
         }
@@ -18404,7 +18413,12 @@ DuScriptUI.compSelector = function( container, helpTip )
     {
         selector.refresh();
 
-        if (e.ctrlKey) {
+        if (e.ctrlKey && DuSystem.win) {
+            selector.setCurrentId(0);
+            return;
+        }
+
+        if (e.metaKey && DuSystem.mac) {
             selector.setCurrentId(0);
             return;
         }
@@ -20003,15 +20017,19 @@ DuAE.executeCommand = function ( commandID, ignoreUndoGroups ) {
  */
 DuAE.openScriptUIPanel = function ( panelScriptName ) {
     if ( panelScriptName == "" ) return;
-    var scriptUIFile = new File( Folder.appPackage.absoluteURI + '/Scripts/ScriptUI Panels/' + panelScriptName );
-    if ( !scriptUIFile.exists ) {
-        scriptUIFile = new File( Folder.userData.absoluteURI + '/Adobe/After Effects/' + DuAE.version.versionString + '/Scripts/ScriptUI Panels/' + panelScriptName );
-    }
-    if ( !scriptUIFile.exists ) {
-        alert( "The panel " + panelScriptName + " is not installed." );
-        return;
-    }
-    DuAE.executeCommand( panelScriptName );
+	var scriptFolders = DuAE.scriptFolders("ScriptUI Panels");
+
+	for (var i = 0; i < scriptFolders.length; i++)
+	{
+		var scriptUIFile = new File( scriptFolders[i].absoluteURI + '/' + panelScriptName );
+		if ( scriptUIFile.exists )
+		{
+			DuAE.executeCommand( panelScriptName );
+			return;
+		}
+	}
+    
+    alert( i18n._( "The '%1' panel is not installed.", panelScriptName ) ); /// TRANSLATORS: %1 will be the name of the panel
 }
 
 /**
@@ -29790,6 +29808,8 @@ DuAELayer.firstKeyFrameTime = function(layers, selected) {
 
 /**
  * Sort the layers by their parenting (root at first index 0)
+ * Layers with a parent outside of the list are at the beginning, followed by layers without parent
+ * Note that the order of these layers is reversed
  * @param {Layer[]|Collection|DuList.<Layer>} layers - The layers to sort
  * @return {Layer[]} The sorted array
  */
@@ -29864,7 +29884,7 @@ DuAELayer.sortByIndex = function(layers) {
  */
 DuAELayer.parentChain = function(layers) {
     layers = new DuList(layers);
-    //unparent  all but the first
+    //unparent all but the first
     var layersUnparent = [];
     for (var i = 1, numL = layers.length(); i < numL; i++) {
         layersUnparent.push(layers.at(i));
