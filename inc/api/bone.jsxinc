@@ -1450,10 +1450,19 @@ Duik.Bone.color = function( layer )
     var colorIndex = Duik.PseudoEffect.BONE.props['Color'].index;
 
     var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
-    if (!effect) return new DuColor();
+    if (effect) return new DuColor( effect( colorIndex ).value );
 
-    return new DuColor( effect( colorIndex ).value );
+    var content = DuAEShapeLayer.getVectorGroupContents(
+        layer,
+        'Bone/Display'
+    );
+    if (!content) return new DuColor();
+    return new DuColor(
+        content.property("ADBE Vector Graphic - Fill").property("ADBE Vector Fill Color").value
+    );
 }
+
+    
 
 /**
  * Sets the color of the bone layers
@@ -1473,12 +1482,21 @@ Duik.Bone.setColor = function( color, layers )
         if ( !Duik.Layer.isType(layer, Duik.Layer.Type.BONE) ) continue;
 
         var colorIndex = Duik.PseudoEffect.BONE.props['Color'].index;
-        var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
-        if (!effect) continue;
         var c = [0,0,0,0];
         if (typeof color === 'undefined' || color == null) c = DuColor.random().floatRGBA();
         else c = color.floatRGBA();
-        effect( colorIndex ).setValue( c );
+
+        var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
+        if (effect) effect( colorIndex ).setValue( c );
+        else {
+            var content = DuAEShapeLayer.getVectorGroupContents(
+                layer,
+                'Bone/Display'
+            );
+            if (!content) continue;
+            content.property("ADBE Vector Graphic - Fill").property("ADBE Vector Fill Color").setValue( c );
+        }
+        
     }
 }
 
@@ -2112,9 +2130,11 @@ Duik.Bone.opacity = function( layer )
     var opacityIndex = Duik.PseudoEffect.BONE.props['Opacity'].index;
 
     var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
-    if (!effect) return 50;
+    if (effect) return effect( opacityIndex ).value;
 
-    return effect( opacityIndex ).value;
+    var content = DuAEShapeLayer.getVectorGroupTransform( layer, 'Bone/Display');
+    if (!content) return 50;
+    return content.property("ADBE Vector Group Opacity").value;
 }
 
 /**
@@ -2122,7 +2142,7 @@ Duik.Bone.opacity = function( layer )
  * @param {float} opacity The opacity in %.
  * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
  */
-Duik.Bone.setOpacity = function( opacity, layer )
+Duik.Bone.setOpacity = function( opacity, layers )
 {
     layers = def(layer, DuAEComp.getSelectedLayers());
     if (layers.length == 0) return;
@@ -2135,8 +2155,10 @@ Duik.Bone.setOpacity = function( opacity, layer )
 
         var opacityIndex = Duik.PseudoEffect.BONE.props['Opacity'].index;
         var effect = layer.effect( Duik.PseudoEffect.BONE.matchName );
-        if (!effect) continue;
-        effect( opacityIndex ).setValue( opacity );
+        if (effect) effect( opacityIndex ).setValue( opacity );
+        var content = DuAEShapeLayer.getVectorGroupTransform( layer, 'Bone/Display');
+        if (!content) continue;
+        content.property("ADBE Vector Group Opacity").setValue( opacity );
     }
 }
 
