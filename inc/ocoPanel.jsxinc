@@ -59,13 +59,11 @@ function buildOCOUI( tab, standAlone )
 
     // The Library
 
-    // Init the folder
-    var folderURI = DuESF.scriptSettings.get("ocoLibFolder", OCO.libraryPath);
-    OCO.setLibraryPath(folderURI);
-
     // Get the OCO library metadata
     // Get/create the OCO lib file
-    var ocoSettings = OCO.libraryMetaData; new DuSettings( "OCO_library", libFolder.absoluteURI + "/OCO_library.json", true );
+    var ocoLibrary = new OCOLibrary();
+    var ocoSettings = new DuSettings( "OCO_library", ocoLibrary.settingsAbsoluteURI(), true );
+    var folderURI = ocoLibrary.absoluteURI();
     // Prepare defaults
     if (typeof ocoSettings.data.metaRigs === 'undefined') ocoSettings.data.metaRigs = [];
     if (typeof ocoSettings.data.recent === 'undefined') ocoSettings.data.recent = [];
@@ -138,7 +136,7 @@ function buildOCOUI( tab, standAlone )
             var f = new File(a.absoluteURI);
             var cat = DuPath.getName( f.parent );
             if ( cat == oldCat ) {
-                var newPath = libFolder.absoluteURI + '/' + newCat + '/';
+                var newPath = ocoLibrary.absoluteURI() + '/' + newCat + '/';
                 var fName = DuPath.getName( f );
                 a.absoluteURI = newPath + fName;
                 ocoSettings.data.metaRigs[i] = a;
@@ -149,7 +147,7 @@ function buildOCOUI( tab, standAlone )
             var f = new File(a);
             var cat = DuPath.getName( f.parent );
             if ( cat == oldCat ) {
-                var newPath = libFolder.absoluteURI + '/' + newCat + '/';
+                var newPath = ocoLibrary.absoluteURI() + '/' + newCat + '/';
                 var fName = DuPath.getName( f );
                 ocoSettings.data.recent[i] = newPath + fName;
             }
@@ -214,7 +212,7 @@ function buildOCOUI( tab, standAlone )
 
         // List special categories
         if (category.data == 'rootCat') {
-            catFolder = libFolder;
+            catFolder = new Folder(ocoLibrary.absoluteURI());
 
             // Most used
             var mostUsed = {};
@@ -321,7 +319,7 @@ function buildOCOUI( tab, standAlone )
     }
 
     function listCategories( ) {
-        return DuFolder.getFiles(libFolder, DuPath.isFolder);
+        return DuFolder.getFiles(new Folder(ocoLibrary.absoluteURI()), DuPath.isFolder);
     }
 
     // UI Popups
@@ -562,26 +560,28 @@ function buildOCOUI( tab, standAlone )
             }  
         }
 
+        var libFolder = new Folder(ocoLibrary.absoluteURI());
         if (libFolder.exists) libFolder.execute();
         else alert( i18n._("Sorry, the OCO library folder can't be found."));
     }
 
     lib.onFolderEdited = function() {
-        var folder = Folder.selectDialog( i18n._("Select the folder containing the OCO library."));
-        if (folder == null) return;
-        libFolder = folder;
-        if (!libFolder.exists) libFolder.create();
-        DuESF.scriptSettings.set("ocoLibFolder",folder.absoluteURI);
+        var file = File.saveDialog( i18n._("Select the OCO.config file."), i18n._("OCO Config:*.config,YAML:*.yml;*.yaml,Text files:*.txt,All files:*.*"));
+        if (file == null) return;
+        
+        new OCOConfig(file);
+        ocoLibrary = new OCOLibrary();
+
+        DuESF.scriptSettings.set("ocoConfigPath",OCO.config.absoluteURI());
         DuESF.scriptSettings.save();
 
         // Reload metadata
-        ocoSettings = new DuSettings( "OCO_library", libFolder.absoluteURI + "/OCO_library.json", true );
+        ocoSettings = new DuSettings( "OCO_library", ocoLibrary.settingsAbsoluteURI(), true );
         // Prepare defaults
         if (typeof ocoSettings.data.metaRigs === 'undefined') ocoSettings.data.metaRigs = [];
         if (typeof ocoSettings.data.recent === 'undefined') ocoSettings.data.recent = [];
 
         // Reload categories and animations
-        lib.clear();
         lib.clear();
         refreshLib(ocoLib);
     };
@@ -670,7 +670,7 @@ function buildOCOUI( tab, standAlone )
                 }
 
                 var folder = lib.currentCategory.data;
-                if (folder == 'rootCat') folder = libFolder;
+                if (folder == 'rootCat') folder = new Folder(ocoLibrary.absoluteURI());
                 var file = new File( folder.absoluteURI + '/' + ocoNameEdit.text + ".oco" );
                 if (file.exists)
                 {
@@ -714,7 +714,7 @@ function buildOCOUI( tab, standAlone )
 
         // Get the containing folder.
         var cat = lib.currentCategory;
-        var folderPath = libFolder.absoluteURI;
+        var folderPath = ocoLibrary.absoluteURI();
         if (cat.data instanceof Folder) folderPath = cat.data.absoluteURI;
 
         // Create
@@ -749,7 +749,7 @@ function buildOCOUI( tab, standAlone )
             // Set categories
             var allCats = listCategories();
             var cat = DuPath.getName( item.data.parent );
-            if (cat == DuPath.getName(libFolder)) cat = i18n._("Uncategorized");
+            if (cat == DuPath.getName(ocoLibrary.absoluteURI())) cat = i18n._("Uncategorized");
             
             ocoEditorCatSelector.freeze = true;
 
