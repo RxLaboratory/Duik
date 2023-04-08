@@ -44,7 +44,7 @@ Duik.Pin.create = function( comp, type )
 	{
 		var iconGroup = pinLayer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
 		iconGroup.name = 'Icon';
-		iconGroup.transform.opacity.setValue(75);
+		iconGroup.transform.opacity.expression = 'effect("' + effect.name + '")(3).value;';
 		iconContent = iconGroup.property("ADBE Vectors Group");
 
 		if (type == Duik.Pin.Type.PIN)
@@ -975,6 +975,50 @@ Duik.Pin.setSize = function( size, layers )
         var effect = layer.effect( Duik.PseudoEffect.PIN.matchName );
         if (!effect) continue;
         effect( sizeIndex ).setValue( size );
+    }
+}
+
+/**
+ * Checks the opacity of the pin layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {float}
+ */
+Duik.Pin.opacity = function(layer)
+{
+	layer = def(layer, DuAEComp.getActiveLayer());
+    if (!layer) return 75;
+
+	if ( !Duik.Layer.isType(layer, Duik.Layer.Type.PIN) ) return 75;
+
+	 var opaIndex = Duik.PseudoEffect.PIN.props['Opacity'].index;
+
+    var effect = layer.effect( Duik.PseudoEffect.PIN.matchName );
+    if (!effect) return 75;
+
+    return effect( opaIndex ).value;
+}
+
+/**
+ * Sets the opacity of the pin layer
+ * @param {float} opacity The opacity in %.
+ * @param {Layer} [layer=DuAEComp.getSelectedLayers()] The layers. If omitted, will use all selected layers in the comp
+ * @returns {float}
+ */
+Duik.Pin.setOpacity = function(opacity, layers)
+{
+	layers = def(layers, DuAEComp.getSelectedLayers());
+    if (layers.length == 0) return;
+
+    for(var i = 0, n = layers.length; i < n; i++)
+    {
+        var layer = layers[i];
+
+        if ( !Duik.Layer.isType(layer, Duik.Layer.Type.PIN) ) continue;
+
+        var opaIndex = Duik.PseudoEffect.PIN.props['Opacity'].index;
+        var effect = layer.effect( Duik.PseudoEffect.PIN.matchName );
+        if (!effect) continue;
+        effect( opaIndex ).setValue( opacity );
     }
 }
 
