@@ -1727,13 +1727,17 @@ Duik.Automation.kleaner = function(props, effect) {
 }
 
 Duik.CmdLib['Automation']["Swink"] = "Duik.Automation.swink()";
+Duik.CmdLib['Automation']["Swing"] = "Duik.Automation.swink()";
+Duik.CmdLib['Automation']["Blink"] = "Duik.Automation.swink(undefined, true)";
 /**
  * Adds the <i>Swink</i> effect and expression to the properties.
  * The <i>Swink</i> (Swing and Blink) makes the property swing between two values, with optional controls on the interpolation.
  * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @param {boolean} [blink=false] Set to true to set the interpolation to hold by default.
  * @return {DuAEProperty[]} The Swink effects.
  */
-Duik.Automation.swink = function(props) {
+Duik.Automation.swink = function(props, blink) {
+    blink = def(blink, false);
     props = def(props, DuAEComp.getSelectedProps());
     props = new DuList(props);
     if (props.length() == 0) return [];
@@ -1742,98 +1746,10 @@ Duik.Automation.swink = function(props) {
 
     DuAEComp.setUniqueLayerNames(undefined, props.first().comp );
 
-    // The indices
-    var i = Duik.PseudoEffect.ONED_SWINK.props;
-
-    // The expression
-    var exp = [ 
-        'var AValue = fx(' + i['A'].index + ').value;',
-        'var BValue = fx(' + i['B'].index + ').value;',
-        'var frequencyProp = fx(' + i['Frequency'].index + ');',
-        'var interpolationValue = fx(' + i['Interpolation']['Mode'].index + ').value;',
-        'var rateValue = fx(' + i['Interpolation']['Rate'].index + ').value;',
-        'var offsetValue = fx(' + i['Cycle offset'].index + ').value;',
-        'var ratioValue = fx(' + i['A/B Ratio'].index + ').value;',
-        'var plateauValue = fx(' + i['Plateau'].index + ').value;',
-        '',
-        'var result = value;',
-        'var frequencyValue = frequencyProp.value;',
-        '',
-        DuAEExpression.Library.get([
-            'bezierInterpolation',
-            'gaussianInterpolation',
-            'logInterpolation',
-            'expInterpolation',
-            'integrateLinearKeys'
-        ]),
-        '',
-        'function blink( A, B, frequency, offset, ratio, t ) {',
-        '  if (typeof frequency === \'undefined\') frequency = 1.0;',
-        '  if (typeof offset === \'undefined\') offset = 0.0;',
-        '  if (typeof ratio === \'undefined\') ratio = 0.5;',
-        '  if (typeof t === \'undefined\') t = time;',
-        '',
-        '  var phase = 1/frequency;',
-        '  ',
-        '  var currentTime = (t+offset)%phase;',
-        '  var ADuration = phase*ratio;',
-        '  ',
-        '	if (currentTime > ADuration) return B;',
-        '	return A;',
-        '}',
-        '',
-        'function swing( A, B, frequency, offset, ratio, plateau, interpolationMethod, t ) {',
-        '  if (typeof frequency === \'undefined\') frequency = 1.0;',
-        '  if (typeof offset === \'undefined\') offset = 0.0;',
-        '  if (typeof ratio === \'undefined\') ratio = 0.5;',
-        '  if (typeof plateau === \'undefined\') plateau = 0.0;',
-        '  if (typeof interpolationMethod === \'undefined\') interpolationMethod = ease;',
-        '  if (typeof t === \'undefined\') t = time;',
-        '  ',
-        '  var phase = 1/frequency;',
-        '  ',
-        '  var currentTime = (t+offset)%phase;',
-        '  var ADuration = phase*ratio;',
-        '  var APlateau = ADuration*plateau;',
-        '  var BDuration = phase*(1-ratio);',
-        '  var BPlateau = BDuration*plateau;',
-        '  ',
-        '  // A to B',
-        '  if (currentTime < ADuration-APlateau) return interpolationMethod(currentTime, 0, ADuration-APlateau, A, B);',
-        '  // B plateau',
-        '  if (currentTime >= ADuration-APlateau && currentTime < ADuration) return B;',
-        '  // B to A',
-        '  if (currentTime >= ADuration && currentTime < phase-BPlateau) return interpolationMethod(currentTime, ADuration, phase-BPlateau, B, A);',
-        '  // A plateau ',
-        '  return A;',
-        '}',
-        '',
-        'if (frequencyValue > 0) {',
-        '  offsetValue = offsetValue/100/frequencyValue;',
-        '  ratioValue /= 100;',
-        '  plateauValue /= 100;',
-        '  var t = integrateLinearKeys( frequencyProp );',
-        '  // Hold (Blink)',
-        '  if (interpolationValue == 1) result += blink( AValue, BValue, 1, offsetValue, ratioValue, t);',
-        '  else {',
-        '    var i = linear;',
-        '    // Smooth',
-        '    if (interpolationValue == 3) i = function (t, tMin, tMax, value1, value2) { return bezierInterpolation(t, tMin, tMax, value1, value2, [rateValue/10.0, 0.0, 1-rateValue/10.0, 1.0]); };',
-        '    // Natural',
-        '    if (interpolationValue == 4) i = function (t, tMin, tMax, value1, value2) { return gaussianInterpolation(t, tMin, tMax, value1, value2, linear(rateValue, 0, 10, -1, 1)); };',
-        '    // Slow Down',
-        '    if (interpolationValue == 5) i = function (t, tMin, tMax, value1, value2) { return logInterpolation(t, tMin, tMax, value1, value2, rateValue*50*frequencyValue); };',
-        '    // Speed up',
-        '    if (interpolationValue == 6) i = function (t, tMin, tMax, value1, value2) { return expInterpolation(t, tMin, tMax, value1, value2, rateValue*frequencyValue); };',
-        '    result += swing( AValue, BValue, 1, offsetValue, ratioValue, plateauValue, i, t);',
-        '  }',
-        '}',
-        '',
-        'result;'
-	].join('\n');
-
     // Apply
     var effects = [];
+    var swinkName = ' | ' + i18n._("Swink");
+
     props.do(function(prop) {
         prop = new DuAEProperty(prop);
         if (prop.isGroup()) return;
@@ -1841,22 +1757,165 @@ Duik.Automation.swink = function(props) {
 
         // Add effect
         var d = prop.dimensions();
-        var effect = null;
-        if (d == 1) effect = Duik.PseudoEffect.ONED_SWINK.apply(layer, prop.name + " | " + i18n._("Swink"));
-        else if (d == 2) effect = Duik.PseudoEffect.TWOD_SWINK.apply(layer, prop.name + " | " + i18n._("Swink"));
-        else if (d == 3) effect = Duik.PseudoEffect.THREED_SWINK.apply(layer, prop.name + " | " + i18n._("Swink"));
-        else if (d == 4) effect = Duik.PseudoEffect.COLOR_SWINK.apply(layer, prop.name + " | " + i18n._("Swink"));
+        
+        var pe = null;
+        if (d == 1) pe = Duik.PseudoEffect.ONED_SWINK;
+        else if (d == 2) pe = Duik.PseudoEffect.TWOD_SWINK;
+        else if (d == 3) pe = Duik.PseudoEffect.THREED_SWINK;
+        else if (d == 4) pe = Duik.PseudoEffect.COLOR_SWINK;
         else return;
+
+        // The indices
+        var effect = pe.apply(layer, prop.name + swinkName);
+        var i = pe.props;
+
+        // The expression
+        var exp = [ 
+            'var AValue = fx(' + i['A'].index + ').value;',
+            'var BValue = fx(' + i['B'].index + ').value;',
+            'var frequencyProp = fx(' + i['Frequency'].index + ');',
+            'var interpolationValue = fx(' + i['Interpolation']['Mode'].index + ').value;',
+            'var rateValue = fx(' + i['Interpolation']['Rate'].index + ').value;',
+            'var offsetValue = fx(' + i['Cycle offset'].index + ').value;',
+            'var ratioValue = fx(' + i['A/B Ratio'].index + ').value;',
+            'var plateauValue = fx(' + i['Plateau'].index + ').value;'
+        ].join('\n');
+
+        if (d == 4) exp += [
+            'var colorMode = fx(' + i['Color Mode'].index + ').value;',
+            'var colorspace = fx(' + i['Interpolation']['Colorspace'].index + ').value'
+        ].join('\n');
+
+        exp += [
+            '',
+            'var result = value;',
+            'var frequencyValue = frequencyProp.value;',
+            '',
+            DuAEExpression.Library.get([
+                'bezierInterpolation',
+                'gaussianInterpolation',
+                'logInterpolation',
+                'expInterpolation',
+                'integrateLinearKeys',
+                'interpolateColor',
+                'multSets'
+            ]),
+            '',
+            'function blink( A, B, frequency, offset, ratio, t ) {',
+            '  if (typeof frequency === \'undefined\') frequency = 1.0;',
+            '  if (typeof offset === \'undefined\') offset = 0.0;',
+            '  if (typeof ratio === \'undefined\') ratio = 0.5;',
+            '  if (typeof t === \'undefined\') t = time;',
+            '',
+            '  var phase = 1/frequency;',
+            '  ',
+            '  var currentTime = (t+offset)%phase;',
+            '  var ADuration = phase*ratio;',
+            '  ',
+            '	if (currentTime > ADuration) return B;',
+            '	return A;',
+            '}',
+            '',
+            'function swing( A, B, frequency, offset, ratio, plateau, interpolationMethod, t ) {',
+            '  if (typeof frequency === \'undefined\') frequency = 1.0;',
+            '  if (typeof offset === \'undefined\') offset = 0.0;',
+            '  if (typeof ratio === \'undefined\') ratio = 0.5;',
+            '  if (typeof plateau === \'undefined\') plateau = 0.0;',
+            '  if (typeof interpolationMethod === \'undefined\') interpolationMethod = ease;',
+            '  if (typeof t === \'undefined\') t = time;',
+            '  ',
+            '  var phase = 1/frequency;',
+            '  ',
+            '  var currentTime = (t+offset)%phase;',
+            '  var ADuration = phase*ratio;',
+            '  var APlateau = ADuration*plateau;',
+            '  var BDuration = phase*(1-ratio);',
+            '  var BPlateau = BDuration*plateau;',
+            '  ',
+            '  // A to B',
+            '  if (currentTime < ADuration-APlateau) return interpolationMethod(currentTime, 0, ADuration-APlateau, A, B);',
+            '  // B plateau',
+            '  if (currentTime >= ADuration-APlateau && currentTime < ADuration) return B;',
+            '  // B to A',
+            '  if (currentTime >= ADuration && currentTime < phase-BPlateau) return interpolationMethod(currentTime, ADuration, phase-BPlateau, B, A);',
+            '  // A plateau ',
+            '  return A;',
+            '}',
+            '',
+            'if (frequencyValue > 0) {'
+        ].join('\n');
+
+        if (d == 4) exp += [
+            '// Adjust color values',
+            'result = [0,0,0,0];',
+            'if (colorMode == 2) {',
+            'AValue += value;',
+            'BValue += value;',
+            '}',
+            'else if (colorMode == 3) {',
+            'AValue = multSets(AValue, value);',
+            'BValue = multSets(BValue, value);',
+            '}',
+            'else if (colorMode == 4) {',
+            'AValue = multSets(AValue, value);',
+            'BValue += value;',
+            '}'
+        ].join('\n');
+
+        exp += [
+            '  offsetValue = offsetValue/100/frequencyValue;',
+            '  ratioValue /= 100;',
+            '  plateauValue /= 100;',
+            '  var t = integrateLinearKeys( frequencyProp );',
+            '  // Hold (Blink)',
+            '  if (interpolationValue == 1) result += blink( AValue, BValue, 1, offsetValue, ratioValue, t);',
+            '  else {',
+            '    var i = linear;',
+            '    // Smooth',
+            '    if (interpolationValue == 3) i = function (t, tMin, tMax, value1, value2) { return bezierInterpolation(t, tMin, tMax, value1, value2, [rateValue/10.0, 0.0, 1-rateValue/10.0, 1.0]); };',
+            '    // Natural',
+            '    if (interpolationValue == 4) i = function (t, tMin, tMax, value1, value2) { return gaussianInterpolation(t, tMin, tMax, value1, value2, linear(rateValue, 0, 10, -1, 1)); };',
+            '    // Slow Down',
+            '    if (interpolationValue == 5) i = function (t, tMin, tMax, value1, value2) { return logInterpolation(t, tMin, tMax, value1, value2, rateValue*50*frequencyValue); };',
+            '    // Speed up',
+            '    if (interpolationValue == 6) i = function (t, tMin, tMax, value1, value2) { return expInterpolation(t, tMin, tMax, value1, value2, rateValue*frequencyValue); };',
+        ].join('\n');
+
+        if (d== 4) exp += [
+            'var interpolator = function(t, tMin, tMax, value1, value2) {',
+            '	return interpolateColor(t, colorspace-1, tMin, tMax, value1, value2, i);',
+            '}'
+        ].join('\n');
+        else exp += 'var interpolator = i;';
+
+
+        exp += [
+            'result += swing( AValue, BValue, 1, offsetValue, ratioValue, plateauValue, interpolator, t);',
+            '  }',
+            '}',
+            '',
+            'result;'
+        ].join('\n');
 
         prop.setExpression(
             DuAEExpression.Id.SWINK + '\nvar fx = effect("' + effect.name + '");\n' + exp,
             false
         );
 
-        // Set A/B values
-        var v = prop.value( true )/4;
-        effect(i['A'].index).setValue( - v );
-        effect(i['B'].index).setValue( v );
+        // Set values
+        if (blink) effect(i['Interpolation']['Mode'].index).setValue(1);
+        if (d != 4) {
+            var v = prop.value( true )/4;
+            effect(i['A'].index).setValue( - v );
+            effect(i['B'].index).setValue( v );
+        }
+        else {
+            var v = prop.value( true );
+            effect(i['A'].index).setValue( v );
+            effect(i['B'].index).setValue( v );
+            effect(i['Color Mode'].index).setValue( 4 );
+        }
+       
 
         effects.push(new DuAEProperty(effect));
     });
