@@ -23,10 +23,13 @@ Duik.Constraint.IKType = {
 Duik.CmdLib['Constraint'] = [];
 
 Duik.CmdLib['Constraint']["List"] = "Duik.Constraint.list()";
+Duik.CmdLib['Constraint']["List_with_keyframe"] = "Duik.Constraint.list(true)";
 /**
  * List
+ * @param {Boolean} [addKeyframe=false] Set to true to automatically add a keyframe to the second slot (which makes it quicker to find in the AE Timeline using the 'U' shortcut)
  */
-Duik.Constraint.list = function() {
+Duik.Constraint.list = function(addKeyframe) {
+    addKeyframe = def(addKeyframe, false);
     var props = DuAEComp.getSelectedProps();
     if (props.length == 0) return;
 
@@ -34,7 +37,7 @@ Duik.Constraint.list = function() {
 
     var layers = DuAEComp.unselectLayers();
     for (var i = 0, n = props.length; i < n; i++) {
-        Duik.Constraint.createList(props[i]);
+        Duik.Constraint.createList(props[i], addKeyframe);
     }
     DuAEComp.selectLayers(layers);
 
@@ -44,9 +47,11 @@ Duik.Constraint.list = function() {
 /**
  * Adds a list on a property
  * @param {Property|DuAEProperty} prop - The Property
+ * @param {Boolean} [addKeyframe=false] Set to true to automatically add a keyframe to the second slot (which makes it quicker to find in the AE Timeline using the 'U' shortcut)
  * @returns {DuAEProperty} The list effect
  */
-Duik.Constraint.createList = function(prop) {
+Duik.Constraint.createList = function(prop, addKeyframe) {
+    addKeyframe = def(addKeyframe, false);
     prop = new DuAEProperty(prop);
     if (!prop.riggable()) return;
 
@@ -56,21 +61,27 @@ Duik.Constraint.createList = function(prop) {
 
     var layer = prop.layer;
 
-    var effect = null;
-    var name = prop.getProperty().name + ' List';
-    var listName = 'List';
+    var listName = i18n._("List");
+    var name = prop.getProperty().name + ' | ' + listName;
+    var pe;
     if (dim == 1) {
-        effect = Duik.PseudoEffect.ONED_LIST.apply(layer, name);
+        pe = Duik.PseudoEffect.ONED_LIST;
     }
     else if (dim == 2) {
-        listName = '2DList';
-        effect = Duik.PseudoEffect.TWOD_LIST.apply(layer, name);
+        listName = i18n._("2DList");
+        pe = Duik.PseudoEffect.TWOD_LIST;
     }
     else if (dim == 3) {
-        listName = '3DList';
-        effect = Duik.PseudoEffect.THREED_LIST.apply(layer, name);
+        listName = i18n._("3DList");
+        pe = Duik.PseudoEffect.THREED_LIST;
     }
-    else return;
+    else if (dim == 4) {
+        listName = i18n._("Color List");
+        pe = Duik.PseudoEffect.COLOR_LIST;
+    }
+    else return null;
+
+    var effect = pe.apply(layer, name);;
 
     //set animation with expression
     var anim = prop.animation(false);
@@ -80,28 +91,74 @@ Duik.Constraint.createList = function(prop) {
     }
     prop.removeAnimation();
 
-    prop.getProperty().expression = [ DuAEExpression.Id.LIST,
-        DuAEExpression.Library.get(['checkDuikEffect', 'zero']),
-        "var result = zero()",
-        "for (var i = 1, n = thisLayer(\"Effects\").numProperties; i <= n; i++) {",
-        "   var fx = thisLayer.effect(i);",
-        "   if (!checkDuikEffect(fx, \"" + listName + "\")) continue;",
-        "   if (!fx.name.indexOf(thisProperty.name) == 0) continue;",
-        "   if (!fx.active) continue;",
-        "   var v1 = fx(5);",
-        "   var w1 = fx(6);",
-        "   var v2 = fx(9);",
-        "   var w2 = fx(10);",
-        "   var v3 = fx(13);",
-        "   var w3 = fx(14);",
-        "   var v4 = fx(17);",
-        "   var w4 = fx(18);",
-        "   var v5 = fx(21);",
-        "   var w5 = fx(22);",
-        "   result += v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;",
-        "}",
-        "result;"
+    if (addKeyframe) {
+        var index2;
+        if (dim == 4) index2 = pe.props["2"]["Color 2"].index;
+        else index2 = pe.props["2"]["Value 2"].index;
+        effect(index2).setValueAtTime( 0, effect(index2).value );
+    }
+
+    var expression = DuAEExpression.Id.LIST + '\n' + DuAEExpression.Library.get(['checkDuikEffect', 'zero']) + '\n';
+        
+    if (dim == 4) expression += DuAEExpression.Library.get(['blendColor']) + '\n';
+        
+    expression += [
+        'var result = null',
+        'for (var i = 1, n = thisLayer("Effects").numProperties; i <= n; i++) {',
+        '   var fx = thisLayer.effect(i);',
+        '   if (!checkDuikEffect(fx, "' + listName + '")) continue;',
+        '   if (!fx.name.indexOf(thisProperty.name) == 0) continue;',
+        '   if (!fx.active) continue;',
+        ''
     ].join('\n');
+
+    if (dim == 4) expression += [
+        '   var v1 = fx(' + pe.props["1"]["Color 1"].index + ').value;',
+        '   var w1 = fx(' + pe.props["1"]["Opacity 1"].index + ').value;',
+        '   var b1 = fx(' + pe.props["1"]["Blending mode 1"].index + ').value;',
+        '   var v2 = fx(' + pe.props["2"]["Color 2"].index + ').value;',
+        '   var w2 = fx(' + pe.props["2"]["Opacity 2"].index + ').value;',
+        '   var b2 = fx(' + pe.props["2"]["Blending mode 2"].index + ').value;',
+        '   var v3 = fx(' + pe.props["3"]["Color 3"].index + ').value;',
+        '   var w3 = fx(' + pe.props["3"]["Opacity 3"].index + ').value;',
+        '   var b3 = fx(' + pe.props["3"]["Blending mode 3"].index + ').value;',
+        '   var v4 = fx(' + pe.props["4"]["Color 4"].index + ').value;',
+        '   var w4 = fx(' + pe.props["4"]["Opacity 4"].index + ').value;',
+        '   var b4 = fx(' + pe.props["4"]["Blending mode 4"].index + ').value;',
+        '   var v5 = fx(' + pe.props["5"]["Color 5"].index + ').value;',
+        '   var w5 = fx(' + pe.props["5"]["Opacity 5"].index + ').value;',
+        '   var b5 = fx(' + pe.props["5"]["Blending mode 5"].index + ').value;',
+        '   if (result === null) result = zero() + v1*w1/100',
+        '   else result = blendColor(result, v1, w1/100, b1-1);',
+        '   result = blendColor(result, v2, w2/100, b2-1);',
+        '   result = blendColor(result, v3, w3/100, b3-1);',
+        '   result = blendColor(result, v4, w4/100, b4-1);',
+        '   result = blendColor(result, v5, w5/100, b5-1);',
+        ''
+    ].join('\n');
+    else expression += [
+        '   var v1 = fx(' + pe.props["1"]["Value 1"].index + ').value;',
+        '   var w1 = fx(' + pe.props["1"]["Weight 1"].index + ').value;',
+        '   var v2 = fx(' + pe.props["2"]["Value 2"].index + ').value;',
+        '   var w2 = fx(' + pe.props["2"]["Weight 2"].index + ').value;',
+        '   var v3 = fx(' + pe.props["3"]["Value 3"].index + ').value;',
+        '   var w3 = fx(' + pe.props["3"]["Weight 3"].index + ').value;',
+        '   var v4 = fx(' + pe.props["4"]["Value 4"].index + ').value;',
+        '   var w4 = fx(' + pe.props["4"]["Weight 4"].index + ').value;',
+        '   var v5 = fx(' + pe.props["5"]["Value 5"].index + ').value;',
+        '   var w5 = fx(' + pe.props["5"]["Weight 5"].index + ').value;',
+        '   if (result === null) result = zero();',
+        '   result += v1*w1/100+v2*w2/100+v3*w3/100+v4*w4/100+v5*w5/100;',
+        ''
+    ].join('\n');
+
+    expression += [
+        '}',
+        'if (result === null) result = value;',
+        'result;'
+    ].join('\n');
+
+    prop.getProperty().expression = expression;
 
     DuAE.endUndoGroup( i18n._("Add list"));
 
