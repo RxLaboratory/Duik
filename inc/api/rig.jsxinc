@@ -20,19 +20,23 @@ Duik.CmdLib['Auto-rig']['Rig'] = 'Duik.Rig.auto()';
  * @param {Duik.Constraint.IKType} [longChainMode=Duik.Constraint.IKType.FK] Set to true if you prefer using Bézier IK than FK with overlap for tails and other chains consisting of more than 3 layers.
  * @param {Duik.Constraint.IKType} [threeLayerMode=Duik.Constraint.IKType.ONE_TWO] The type of IK to use with custom 3-layer chains.
  * @param {Layer[]|DuList.<Layer>} [layers] - The layers to rig. All selected layers by default.
+ * @param {Boolean} [createMaster=false] Set to true to add a master/root controller which controls all other controllers
  * @return {Layer[]} The controllers which are used in the rig
  */
-Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, threeLayerMode, layers )
+Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, threeLayerMode, layers, createMaster )
 {
     bakeBones = def( bakeBones, true );
     bakeEnvelops = def( bakeEnvelops, true );
     bakeNoodles = def( bakeNoodles, true );
     threeLayerMode = def( threeLayerMode, Duik.Constraint.IKType.ONE_TWO );
     longChainMode = def( longChainMode , Duik.Constraint.IKType.FK );
+    createMaster = def(createMaster, false);
 
     layers = def(layers, DuAEComp.unselectLayers() );
     layers = new DuList(layers);
     if( layers.isEmpty() ) return;
+
+    var comp = layers.first().containingComp;
 
     //check if there are 3D Layers
     for (var i = 0, n = layers.length(); i < n; i++)
@@ -79,13 +83,15 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     }
 
     // Create OCO Doc from bones
-    var ocoDoc = OCODoc.fromComp('', layers.first().containingComp, bones );
+    var ocoDoc = OCODoc.fromComp('', comp, bones );
 
     // Start by baking (improves perf and optionaly keeps envelops)
-    Duik.Bone.bake(bakeBones, bakeEnvelops, bakeNoodles, bones);
-
+    Duik.Bone.bake(bakeBones, bakeEnvelops, bakeNoodles, bones, false);
+    DuAEComp.unselectLayers();
+    
     // Rig all limbs
     DuScriptUI.progressBar.addMax( ocoDoc.numLimbs() * 4 ); // 4 steps per limb
+    
 
     for (var i  = 0, ni = ocoDoc.limbs.length; i < ni; i++ )
         Duik.Rig.limb( ocoDoc.limbs[i], customControllers, longChainMode, threeLayerMode );
@@ -127,6 +133,41 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     }
 
     // TODO Get/Create a master, parent orphan controllers to it
+    // Collect controllers
+    var ctrls = [];
+    var limbs = ocoDoc.getLimbs();
+    for (var i  = 0, ni = limbs.length; i < ni; i++ )
+    {
+        ctrls = ctrls.concat( limbs[i].ctrls );
+    }
+
+    var masterCtrl = null;
+    if (createMaster)
+    {
+        for (var i  = 0, ni = ctrls.length; i < ni; i++ )
+        {
+            var ctrl = ctrls[i];
+            if (ctrl.parent) continue;
+            if (!masterCtrl) {
+                DuAEComp.unselectLayers();
+                DuAEComp.selectLayers(ctrls);
+                masterCtrl = Duik.Controller.fromLayers( Duik.Controller.Type.NULL, false, true )[0];
+                break;
+            }
+        }
+    }
+
+    if (masterCtrl) {
+        masterCtrl.transform.position.setValue( [masterCtrl.transform.position.value[0], comp.height - comp.height * .05] );
+        Duik.Layer.setName(i18n._("Root"), masterCtrl); /// TRANSLATORS: The name of a controller which controls all other controllers.
+        DuAELayer.parent(ctrls, masterCtrl, true, false);
+    }
+    else {
+        // Select the controllers
+        DuAEComp.unselectLayers();
+        DuAEComp.selectLayers(ctrls);
+    }
+    
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( i18n._("Auto-rig") );
