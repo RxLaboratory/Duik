@@ -365,12 +365,57 @@ Duik.Pin.addShapePin = function ( puppetPinProp )
 		parentProp( p["Control Layers"]["In Tangent"].index ).setValue( pin.index );
 		Duik.Pin.createPathVertexControl(layer, parentProp.name, false, true);
 		Duik.Layer.setName( limbName + '_In', pin );
+		// Parent
+		var vertexLayer = parentProp( p['Control Layers']['Vertex'].index ).value;
+		if (vertexLayer > 0) {
+			vertexLayer = comp.layer(vertexLayer);
+			pin.parent = vertexLayer;
+			pin.moveAfter(vertexLayer);
+		}	
 	}
 	else if (prop.propertyIndex == p["Tangents"]["Out tangent"].index)
 	{
 		parentProp( p["Control Layers"]["Out Tangent"].index ).setValue( pin.index );
 		Duik.Pin.createPathVertexControl(layer, parentProp.name, false, false, true);
 		Duik.Layer.setName( limbName + '_Out', pin );
+		// Parent
+		var vertexLayer = parentProp( p['Control Layers']['Vertex'].index ).value;
+		if (vertexLayer > 0) {
+			vertexLayer = comp.layer(vertexLayer);
+			pin.parent = vertexLayer;
+			// Check lock effect
+			var lockEffect = null;
+			var vertexEffects = vertexLayer.property('ADBE Effect Parade');
+			for (var j = 1; j <= vertexEffects.numProperties; j++) {
+				var fx = vertexEffects.property(j);
+				if (fx.matchName == 'ADBE Checkbox Control' && fx.name.indexOf( i18n._("Lock tangents")) >= 0) {
+					lockEffect = fx;
+					break;
+				}
+			}
+			if (lockEffect)
+				pin.transform.position.expression = [ DuAEExpression.Id.PIN,
+					'var result = value;',
+					'// The parent should be the vertex',
+					'if (hasParent) {',
+					'	var locked = parent.effect("' + lockEffect.name + '")(1).value;',
+					'	// The other pin must be the layer just above',
+					'	if (locked && index > 2 && parent.index != index - 1) {',
+					'		var other = thisComp.layer(index - 1);',
+					'		if (other.hasParent && other.parent.index == parent.index)',
+					'			result = -other.transform.position;',
+					'	}',
+					'}',
+					'result;'
+					].join('\n');
+
+			// Move after the in tangent if it exists
+			var inLayer = parentProp( p['Control Layers']['In Tangent'].index ).value;
+			if (inLayer > 0)
+				pin.moveAfter( comp.layer(inLayer) );
+			else
+				pin.moveAfter(vertexLayer);
+		}
 	}
 
 	return pin;
