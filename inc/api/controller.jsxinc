@@ -1,3 +1,6 @@
+// Controller icons
+#include "ctrl_icons.jsxinc"
+
 /**
  * Controller related tools.
  * @namespace
@@ -75,7 +78,8 @@ Duik.Controller.PseudoEffect = {
 Duik.Controller.LayerMode = {
     NULL: 0,
     SHAPE: 1,
-    DRAFT_SHAPE: 2
+    DRAFT_SHAPE: 2,
+    RASTER: 3
 };
 
 /**
@@ -83,13 +87,19 @@ Duik.Controller.LayerMode = {
  * The default (<code>Duik.Controller.LayerMode.SHAPE</code>) can be changed with <code>DuESF.scriptSettings.set("controllers/layerMode" , Duik.Controller.LayerMode);</code>
  * @type {Duik.Controller.LayerMode}
  */
-Duik.Controller.layerMode = 1;
+Duik.Controller.layerMode = 3;
 
 /**
     * Some (localized) controller names
     * @enum {string[]}
 */
 Duik.Controller.Name = {};
+
+/**
+    * The PNG files to be used as raster controllers
+    * @enum {DuBinary}
+    */
+Duik.Controller.RasterIconFile = {};
 
 Duik.Controller.aeInit = function() {
     Duik.Controller.Name[Duik.Controller.Type.ROTATION] = [
@@ -270,7 +280,46 @@ Duik.Controller.aeInit = function() {
         i18n._p("controller_shape", "rib")
         ];
 
-    Duik.Controller.layerMode = DuESF.scriptSettings.get("controllers/layerMode" , 1);
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.ROTATION] = w50_rotate;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.X_POSITION] = w50_move_h;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.Y_POSITION] = w50_move_v;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.POSITION] = w50_move;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.TRANSFORM] = w50_move_rotate;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.SLIDER] = w50_slider;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.DOUBLE_SLIDER] = w50_2d_slider;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.ANGLE] = w50_angle;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.CAMERA] = w50_camera;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.HEAD] = w50_head;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.HAND] = w50_controller;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.FOOT] = w50_foot;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.CLAWS] = w50_digitigrade;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.HOOF] = w50_ungulate;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.EYE] = w50_eye;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.EYES] = w50_eye;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.FACE] = w50_head;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.SQUARE] = w50_move;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.HIPS] = w50_hips;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.BODY] = w50_body;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.SHOULDERS] = w50_shoulders;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.TAIL] = w50_tail_ctrl;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.WALK_CYCLE] = w50_walk_cycle;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.BLENDER] = w50_move_rotate;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.CONNECTOR] = w50_connector;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.EXPOSE_TRANSFORM] = w50_expose_transform;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.EAR] = w50_ear;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.HAIR] = w50_hair;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.MOUTH] = w50_mouth;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.NOSE] = w50_nose;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.EYEBROW] = w50_eyebrow;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.PONEYTAIL] = w50_hair_strand;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.PINCER] = w50_arthropod;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.WING] = w50_wing;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.FIN] = w50_fin;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.AUDIO] = w50_audio;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.VERTEBRAE] = w50_vertebrae;
+    Duik.Controller.RasterIconFile[Duik.Controller.Type.TORSO] = w50_torso;
+    
+    //Duik.Controller.layerMode = DuESF.scriptSettings.get("controllers/layerMode" , 1);
 }
 DuESF.initMethods.push(Duik.Controller.aeInit);
 
@@ -374,6 +423,8 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
     layer = def( layer, null );
     parent = def( parent, false );
 
+    // --- CREATE LAYER ---
+
     var ctrl;
     if ( type == Duik.Controller.Type.NULL ) {
         ctrl = DuAEComp.addNull();
@@ -384,7 +435,47 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
         ctrl.transform.anchorPoint.setValue([50,50]);
         ctrl.transform.position.setValue( ctrl.transform.position.value - [50,50] );    
     }
-    else ctrl = comp.layers.addShape();
+    else if (Duik.Controller.layerMode != 3 || type == Duik.Controller.Type.SLIDER || type == Duik.Controller.Type.DOUBLE_SLIDER || type == Duik.Controller.Type.ANGLE) ctrl = comp.layers.addShape();
+    else {
+
+        // Check if it's already here
+        var folderName = 'Duik::' + i18n._("Controllers");
+        var folder = DuAEProject.getItemByName( folderName );
+        var count = 1;
+        // In case there's an item with the same name which is not the folder
+        while (folder && !(folder instanceof FolderItem)) {
+            folder.name = folderName + '_' + count;
+            count++;
+            folder = DuAEProject.getItemByName( folderName );
+        }
+        if (!folder) folder = app.project.items.addFolder(folderName);
+
+        // Look for the controller
+        var ctrlName = type;
+        if (Duik.Controller.Name[type] instanceof Array) ctrlName = Duik.Controller.Name[type][0];
+        
+        var ctrlFootage = DuAEProject.getItemByName( ctrlName, folder );
+        
+        // Extract and import
+        if (!ctrlFootage) {
+            // Try to get the project path
+            var projectFile = app.project.file;
+            var path;
+            if (projectFile) path = projectFile.parent.absoluteURI;
+            else path = DuESF.scriptSettings.file.parent.absoluteURI;
+
+            path += '/Duik_assets/' + ctrlName + '.png';
+
+            var ctrlFile = Duik.Controller.RasterIconFile[type].toFile(path);
+            ctrlFootage = app.project.importFile(new ImportOptions(ctrlFile));
+            ctrlFootage.name = ctrlName;
+            ctrlFootage.parentFolder = folder;
+        }
+        
+        ctrl = comp.layers.add(ctrlFootage, comp.duration);
+    }
+
+    // --- SETUP ---
 
     // Tag
     DuAETag.setValue( ctrl, DuAETag.Key.DUIK_CONTROLLER_TYPE, type );
@@ -430,12 +521,6 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
         if ( parent && type != Duik.Controller.Type.SLIDER && type != Duik.Controller.Type.DOUBLE_SLIDER && type != Duik.Controller.Type.ANGLE ) {
             DuAELayer.parent( layer, ctrl, false, true );
         }
-    }
-
-    // Null is ready
-    if ( type == Duik.Controller.Type.NULL || type == Duik.Controller.Type.AE_NULL ) {
-        if ( !layer ) Duik.Layer.setAttributes( ctrl, Duik.Layer.Type.CONTROLLER, i18n._( "Null" ) );
-        return ctrl;
     }
 
     // Specific controllers
@@ -710,6 +795,12 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
 
         Duik.Controller.setColor( DuColor.Color.APP_HIGHLIGHT_COLOR, ctrl );
 
+        return ctrl;
+    }
+
+    // Null and raster are ready
+    if ( type == Duik.Controller.Type.NULL || type == Duik.Controller.Type.AE_NULL ||  Duik.Controller.layerMode == 3) {
+        if ( !layer ) Duik.Layer.setAttributes( ctrl, Duik.Layer.Type.CONTROLLER, i18n._( "Null" ) );
         return ctrl;
     }
 
