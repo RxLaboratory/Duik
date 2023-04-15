@@ -236,6 +236,12 @@ DuESF.HostApplication = {
     PHOTOSHOP: 'photoshop',
     INDESIGN: 'indesign'
 }
+DuESF.HostApplicationName = {
+    'aftereffects': 'After Effects',
+    'illustrator': 'Illustrator',
+    'photoshop': 'Photoshop',
+    'indesign': 'InDesign',
+}
 DuESF.hostIsBeta = false;
 /**
  * The host application
@@ -281,6 +287,7 @@ DuESF.init = function( scriptName, scriptVersion, companyName )
     }
 
     DuESF.host = host;
+    DuESF.hostApplicationName = DuESF.HostApplicationName[host];
 
     DuESF.hostVersion = new DuVersion( BridgeTalk.appVersion );
     if (DuESF.host == DuESF.HostApplication.AFTER_EFFECTS) {
@@ -1061,6 +1068,13 @@ DuDebug.safeRun = function (callback)
 	{
 		DuDebug.error(error);
 		return null;
+	}
+	finally
+	{
+		// Try to close any undo group
+		if (DuESF.host == DuESF.HostApplication.AFTER_EFFECTS) {
+			app.endUndoGroup();
+		}
 	}
 }
 
@@ -3139,7 +3153,7 @@ DuSettings.prototype.set = function( key, value )
 	var data = this.data;
 	for( var i = 0; i < numKeys -1; i++) {
 		data[keyArray[i]] = def( data[keyArray[i]], {});
-		data = data[keyArray[i]]
+		data = data[keyArray[i]];
 	}
 	data[keyArray[numKeys-1]] = value;
 }
@@ -5778,13 +5792,17 @@ DuVersion.checkUpdate = function()
 
 		// Sanitize reply (strip http headers, and parse)
 		DuDebug.log( "Version check - Reply\r\n" + reply );
-		reply = reply.substring( reply.indexOf('{'), reply.lastIndexOf('}')+1 );
+		var replyBody = reply.substring( reply.indexOf('{'), reply.lastIndexOf('}')+1 );
+		if (DuString.fullTrim(replyBody) == '') {
+			if (DuESF.debug) alert("Can't check for updates:\nThe server did not reply.");
+			return null;
+		}
 
 		try {
-			reply = JSON.parse(reply);
+			replyBody = JSON.parse(replyBody);
 			// Parse lists
-			if (reply.description) {
-				var descriptionList = reply.description.split('\n');
+			if (replyBody.description) {
+				var descriptionList = replyBody.description.split('\n');
 				for (var i = 0; i < descriptionList.length; i++) {
 					var trimmedLine = DuString.trim(descriptionList[i]);
 					if (DuString.startsWith(trimmedLine, "- ")) {
@@ -5795,7 +5813,7 @@ DuVersion.checkUpdate = function()
 			}
 		}
 		catch (e) {
-			if (DuESF.debug) alert(e);
+			if (DuESF.debug) alert("Can't check for updates:\n" + e.message + '\n\nThis is the content of the server reply:\n\n' + reply);
 		}
 		
 		return reply;
@@ -6430,6 +6448,471 @@ DuString.contains = function(str, subStrs) {
         if ( str.indexOf( subStrs.at(i) ) >= 0 ) return true;
     }
     return false;
+}
+
+/**
+ * Counts the spaces at the beginning of the line
+ * @param {string} str The string
+ * @return {int}
+ */
+DuString.indentation = function(str) {
+    var testStr = str;
+
+    var c = 0;
+    while (DuString.isIndented(testStr)) {
+        testStr = testStr.substring(1);
+        c++;
+    }
+    return c;
+}
+
+/**
+ * Checks if the string is indented (starts with a space or tab)
+ * @param {string} str The string to test
+ * @return {bool}
+ */
+DuString.isIndented = function(str) {
+    if (DuString.fullTrim(str) == '') return false;
+    return DuString.startsWith(str, ' ') || DuString.startsWith(str, '\t');
+}
+
+/**
+ * Checks if this string represents a float (strict, the string must include a ".")
+ * @param {string} str The string
+ * @return {boolean}
+ */
+DuString.isFloat = function( str ) {
+    var re = /^\d*\.\d+$/
+    return re.test( str );
+}
+
+/**
+ * Checks if this string represents an integer
+ * @param {string} str The string
+ * @return {boolean}
+ */
+DuString.isInt = function( str ) {
+    var re = /^\d+\.?$/
+    return re.test( str );
+}
+
+/**
+ * Checks if this string represents a number (int or float)
+ * @param {string} str The string
+ * @return {boolean}
+ */
+DuString.isNumber = function( str ) {
+    return (DuString.isInt(str) || DuString.isFloat(str));
+}
+
+// ==================== |------| ====================
+// ==================== | yaml | ====================
+// ==================== |------| ====================
+
+/**
+* Yaml Parser/Reader
+* @namespace
+* @category DuESF
+*/
+var YAML = {};
+
+/**
+ * Parses a string formatted in yaml.
+ * @memberof YAML
+ * @param {string} yaml_string - The yaml to parse
+ * @return {any|null} null if the yaml could not be parsed
+ */
+YAML.load = function (yaml_string) {
+    // Split by lines
+    yaml = yaml_string.split('\n');
+
+    // Check if there's a '---' line
+    var startLine = 0
+    for (var i = 0, n = yaml.length; i < n; i++) {
+        var line = yaml[i];
+        line = YAML._trim(line);
+        if (line == '---') {
+            startLine = i+1;
+            break;
+        }
+    }
+
+    return YAML._load_block( yaml, startLine )[0];
+}
+
+/**
+ * Dumps some data as a yaml string.
+ * @memberof YAML
+ * @param {any} data The data
+ * @param {int} [numIdents=2] The indentation
+ * @return {string} The Yaml
+ */
+YAML.dump = function( data, numIdents ) {
+    if (typeof numIdents === 'undefined') numIdents = 2;
+
+    var tab = '';
+    while(tab.length < numIdents) tab += ' ';
+    
+    var lines = [];
+    if (YAML._is_object(data)) lines = YAML._dump_object(data, tab);
+    else if (data instanceof Array) lines = YAML._dump_array(data, tab);
+    else lines = [YAML._dump_value(data)];
+
+    return lines.join('\n');
+}
+
+// PRIVATE METHODS //
+
+YAML._load_block = function( yaml_array, startIndex ) {
+
+    // Parse the first line to knonw what we're getting (obj or array)
+    var line = yaml_array[startIndex];
+    var indentation = YAML._indentation(line);
+    var lineData = YAML._parse_line( line );
+    var key = lineData[0];
+    var value = lineData[1];
+
+    // If the line is empty, skip, get to the next
+    if (key === '' && value === '') return YAML._load_block( yaml_array, startIndex + 1);
+
+    var obj = null;
+    if (key === '') obj = [];
+    else obj = {};
+
+    // Init
+    var currentIndentation = indentation;
+
+    for( var i = startIndex, n = yaml_array.length; i < n; i++ ) {
+
+        var line = yaml_array[i];
+        
+        if (line == '...') return [obj,n];
+
+        // Ignore empty lines
+        if (YAML._trim(line) == '') continue;
+
+        currentIndentation = YAML._indentation(line);
+        // Finished
+        if (currentIndentation < indentation) return [obj,i-1];
+
+        lineData = YAML._parse_line( line );
+        key = lineData[0];
+        value = lineData[1];
+
+        // Ignore empty lines
+        if (key === '' && value === '') continue;
+
+        // === We're filling an array ===
+        if (obj instanceof Array) {
+            // Just a value -> add it
+            if (key === '' && value !== '') {
+                obj.push(value);
+                continue;
+            }
+            // A Key and a Value -> add as a dict
+            if (key !== '' && value !== '') {
+                var v = {};
+                v[key] = value;
+                obj.push(v);
+                continue;
+            }
+        }
+        // === We're filling a dictionnary ===
+        else {
+            // No key: error
+            if (key === '')
+                throw 'YAML Key Error at line ' + i + ': Value "' + value + '" is part of a dictionnary but doesn\'t have a name.';
+
+            // Key and a value -> add
+            if (key !== '' && value !== '') {
+                obj[key] = value;
+                continue;
+            }
+        }
+
+        // We just have a key
+
+        // If this is the last line, error
+        if (i == n - 1)
+            throw 'YAML Value Error at line ' + i + ': Key "' + key + '" doesn\'t have a value.';
+
+        // Check if the next line has a higher indentation
+        for( var j = i+1; j < n; j++ ) {
+
+            var nextLine = yaml_array[j];
+            if (nextLine == '...') return [obj, n];
+
+            if (YAML._trim(nextLine) == '') continue;
+            nextIndentation = YAML._indentation(nextLine);
+
+            if (nextIndentation <= indentation) {
+                throw 'YAML Value Error at line ' + i + ': Key "' + key + '" doesn\'t have a value.';
+                break;
+            }
+
+            var subBlock = YAML._load_block(yaml_array, j);
+
+            if (obj instanceof Array) {
+                var v = {};
+                v[key] = subBlock[0];
+                obj.push(v);
+            }
+            else {
+                obj[key] = subBlock[0];
+            }
+                            
+            // We can continue after the block
+            i = subBlock[1];
+            break;
+        }
+    }
+
+    return [obj,n];
+}
+
+YAML._dump_array = function(array, tab) {
+
+    var lines = [];
+
+    for (var i = 0, n = array.length; i < n; i++) {
+        var d = array[i];
+
+        if (d instanceof Array)
+            throw "YAML Dump Error: an array can't have another array in it's items. Sub-arrays must be included as objects.";
+        if (YAML._num_keys(d) > 1)
+            throw "YAML Dump Error: an array can contain only objects with a single property, not objects with multiple properties.";
+        
+        if (YAML._is_object(d)) {
+            var objLines = YAML._dump_object(d, tab);
+
+            lines.push('- ' + objLines[0])
+
+            for (var j = 1, nj = objLines.length; j < nj; j++) {
+                lines.push(tab + objLines[j]);
+            }
+        }
+        else {
+            lines.push('- ' + YAML._dump_value(d));
+        }
+    }
+
+    return lines;
+}
+
+YAML._is_object = function(obj) {
+    if (obj instanceof Array) return false;
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key)) return true;
+    }
+    return false;
+}
+
+YAML._num_keys = function(obj) {
+    if (obj instanceof Array) return 0;
+    var i = 0;
+    for (var key in obj) {
+        if (obj.hasOwnProperty(key)) i++;
+    }
+    return i;
+}
+
+YAML._dump_object = function(obj, tab) {
+    var lines = [];
+
+    for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        
+        var d = obj[key];
+        if (typeof d === 'undefined') continue;
+
+        if (YAML._is_object(d)) {
+
+            lines.push(key + ':');
+
+            var objLines = YAML._dump_object(d, tab);
+
+            for (var i = 0, n = objLines.length; i < n; i++) {
+                lines.push(tab + objLines[i]);
+            }
+        }
+        else if (d instanceof Array) {
+            lines.push(key + ':');
+
+            var arrayLines = YAML._dump_array(d, tab);
+            
+            for (var i = 0, n = arrayLines.length; i < n; i++) {
+                lines.push(tab + arrayLines[i]);
+            }
+        }
+        else {
+            lines.push(key + ': ' + YAML._dump_value(d));
+        }
+    }
+
+    return lines;
+}
+
+YAML._dump_value = function(val) {
+    //if (typeof val === 'string' || val instanceof String)
+    //    return '"' + val + '"';
+    if (val instanceof Date) {
+        var hour = val.getHours();
+        var minute = val.getMinutes();
+        var second = val.getSeconds();
+        var day = val.getDate();
+        var month = val.getMonth();
+        var year = val.getFullYear();
+
+        return year + "-" + YAML._pad_int(month+1) + "-" + YAML._pad_int(day) + " " + YAML._pad_int(hour) + ":" + YAML._pad_int(minute) + ":" + YAML._pad_int(second);
+    }
+    return val.toString();
+}
+
+YAML._pad_int = function( val, numDigits) {
+    if (typeof numDigits === 'undefined')
+        numDigits = 2;
+    val = val.toString();
+    while(val.length < numDigits)
+        val = '0'+val;
+    return val;
+}
+
+YAML._is_comment = function( str ) {
+    str = YAML._trim(str);
+    return str.indexOf('#') == 0;
+}
+
+YAML._parse_line = function( str ) {
+
+    if (YAML._is_comment( str )) return ['',''];
+
+    str = YAML._trim(str);
+    if (str == '') return ['',''];
+
+    // Check if there's a colon
+    colonIndex = str.indexOf(':');
+
+    if (colonIndex == 0) {
+        throw "YAML Syntax Error: \"" + str + "\":Can't start an line with ':'.";
+    }
+
+    // Just a value
+    if (colonIndex < 0) {
+        if (str.indexOf('- ') != 0) {
+            throw "YAML Syntax Error: \"" + str + "\": Unknown value, it isn't a named value nor an item in a list";
+        }
+        // Remove the leading "-"
+        str = str.substring(2);
+        return ['', YAML._parse_value(str)];
+    }
+
+    // Just a key
+    if (colonIndex == str.length -1)
+        return [ YAML._parse_key(str), '' ];
+
+    colonIndex = str.indexOf(': ');
+
+    // Just a value
+    if (colonIndex < 1) {
+        return ['', YAML._parse_value(str)];
+    }
+
+    // Separate the value and the key
+    return [
+        YAML._parse_key( str.substring(0, colonIndex) ),
+        YAML._parse_value( str.substring(colonIndex + 2))
+    ];
+}
+
+YAML._parse_value = function ( str ) {
+    str = YAML._trim(str);
+
+    // if this is the start of a paragraph
+    if ( str == '>' || str == '|') {
+        // TODO
+        return str;
+    }
+
+    // Check if this is a quoted string
+    var quote = YAML._string_quote(str);
+    if ( quote != '' ) {
+        if (quote == '"') {
+            // Parse escaped stuff using JSON
+            str = JSON.parse(str);
+        }
+        else {
+            str = str.substring(1, str.length-1);
+        }
+        return str;
+    }
+
+    // Remove the comment if any
+    str = str.split('# ')[0];
+    str = YAML._trim(str);
+
+    // This may be a bool
+    if (str.toLowerCase() == 'true') return true;
+    if (str.toLowerCase() == 'false') return false;
+
+    // Is it a float?
+    if ( YAML._is_float(str) ) return parseFloat(str);
+    // Or an int?
+    if ( YAML._is_int(str) ) return parseInt(str);
+
+    // Let's keep it as a string
+    return str;
+}
+
+YAML._parse_key = function (str) {
+    str = YAML._trim(str);
+    str = str.replace(':','');
+    if (str.indexOf('- ') == 0) str = str.substring(2);
+    return str;
+}
+
+YAML._string_quote = function(str) {
+    if ( str.indexOf('"') == 0 && YAML._str_ends_with(str, '"') ) return '"';
+    if ( str.indexOf("'") == 0 && YAML._str_ends_with(str, "'") ) return "'";
+    return '';
+}
+
+YAML._trim = function(str) {
+    var newStr = str.replace(/[\s\uFEFF\xA0]+/g, ' ');
+    return newStr.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+}
+
+YAML._is_indented = function(str) {
+    if (YAML._trim(str) == '') return false;
+    return str.indexOf(' ') == 0 || str.indexOf('\t') == 0;
+}
+
+YAML._indentation = function(str) {
+    var testStr = str;
+
+    var c = 0;
+    while (YAML._is_indented(testStr)) {
+        testStr = testStr.substring(1);
+        c++;
+    }
+    return c;
+}
+
+YAML._is_float = function(str) {
+    var re = /^\d*\.\d+$/
+    return re.test( str );
+}
+
+YAML._is_int = function( str ) {
+    var re = /^\d+\.?$/
+    return re.test( str );
+}
+
+YAML._is_number = function( str ) {
+    return (YAML._is_int(str) || YAML._is_float(str));
+}
+
+YAML._str_ends_with = function (str, suffix) {
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
 // ==================== |------| ====================
@@ -10437,7 +10920,7 @@ DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, 
     panel.bottomGroup = DuScriptUI.group(bottomUberGroup, 'row');
     panel.bottomGroup.margins = 0;
 
-    if (DuESF.bugReportURL != '' || addSettingsButton || addHelpButton || DuESF.translateURL != '')
+    /*if (DuESF.bugReportURL != '' || addSettingsButton || addHelpButton || DuESF.translateURL != '')
     {
         panel.moreButton = DuScriptUI.multiButton( panel.bottomGroup,
             {
@@ -10496,6 +10979,55 @@ DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, 
             var helpButton = DuScriptUI.addHelpButton( panel.moreButton, false );
             helpButton.alignment = ['left', 'fill'];
         }
+    }*/
+
+    if (addSettingsButton) {
+        var settingsButton =  DuScriptUI.button( panel.bottomGroup, {
+            text: '',
+            image: w12_settings,
+            helpTip: i18n._("Edit settings")
+        });
+        settingsButton.alignment = ['left', 'fill'];
+
+        settingsButton.onClick = function()
+        {
+            if (!rootSettingsGroup.visible)
+            {
+                if(panel.hasCommonSettings) panel.settingsGroup.reset();
+                panel.mainGroup.visible = false;
+                rootSettingsGroup.visible = true;
+            }
+            else
+            {
+                panel.mainGroup.visible = true;
+                rootSettingsGroup.visible = false;
+            }
+        }
+
+        settingsTitle.onClose = function()
+        {
+            if( panel.hasCommonSettings ) panel.settingsGroup.reset();
+            panel.mainGroup.visible = true;
+            rootSettingsGroup.visible = false;
+        }           
+    }
+
+    if (DuESF.translateURL != '')
+    {
+        var translateButton = DuScriptUI.addTranslateButton( panel.bottomGroup );
+        translateButton.alignment = ['left', 'fill'];
+    }
+
+    if (DuESF.bugReportURL != '')
+    {
+        var bugButton = DuScriptUI.addBugButton( panel.bottomGroup );
+        bugButton.alignment = ['left', 'fill'];
+    }
+
+    if (addHelpButton)
+    {
+        var helpButton = DuScriptUI.addHelpButton( panel.bottomGroup, false );
+        helpButton.alignment = ['left', 'fill'];
     }
 
     var donateButton = DuScriptUI.addDonateButton( panel.bottomGroup, true);
@@ -15156,8 +15688,10 @@ DuScriptUI.dimControls = function( )
 // ==================== |-----| ====================
 
 /**
- * Methods to load and create OCO (Open Cut Out) Documents and armatures
+ * The Open Cut Out library
  * @namespace
+ * @requires yaml.jsxinc
+ * @requires json.jsxinc
  * @category OCO
  */
 var OCO = {};
@@ -15299,15 +15833,69 @@ OCO.ImageEncoding = {
 }
 
 /**
- * The path where the OCO Library is stored.
- * This is in the User Documents/OCO/OCO Library if the script has write access in this folder.<br/>
- * In rare cases on MacOS we can't write files in the documents folder. In this case the default library path in a temp folder.<br/>
- * You can change this path to a custom path before using the OCO API.
- * @type {string}
+ * The OCO Configuration. This is changed everytime a new OCOConfig object is instantiated.
+ * @example
+ * new OCOConfig('path/to/the/OCO.config');
+ * OCO.config === ocoConf; // This is true, OCO.config has been changed by the previous line.
+ * var configPath = OCO.config.path(); // Returns the path of the current config file.
+ * @type {OCOConfig}
  */
-OCO.libraryPath = "";
+OCO.config = null;
+
+/**
+ * Gets the boundaries of an armature (a chain of bones)
+ * @param {OCOBone[]} armature The chain of bones
+ * @returns {float[]} [left, top, right, bottom]
+ */
+OCO.getBounds = function ( armature )
+{
+    var left = 9999;
+    var right = -9999;
+    var top = 9999;
+    var bottom = -9999;
+
+    for (var i = 0, n = armature.length; i < n; i++)
+    {
+        var b = armature[i];
+        // Check current bone
+        if (b.x < left) left = b.x;
+        if (b.x > right) right = b.x;
+        if (b.y < bottom) bottom = b.y;
+        if (b.y > top) top = b.y;
+        // Check children
+        var childBounds = OCO.getBounds( b.children );
+        if (childBounds[0] < left) left = childBounds[0];
+        if (childBounds[1] < top) top = childBounds[1];
+        if (childBounds[2] < right) right = childBounds[2];
+        if (childBounds[3] < bottom) bottom = childBounds[3];
+        // Check other limbs
+        for ( var j = 0, nL = b.limbs.length; j < nL; j++ )
+        {
+            var limbBounds = b.limbs[i].bounds();
+            if (limbBounds[0] < left) left = limbBounds[0];
+            if (limbBounds[1] < top) top = limbBounds[1];
+            if (limbBounds[2] < right) right = limbBounds[2];
+            if (limbBounds[3] < bottom) bottom = limbBounds[3];
+        }
+    }
+
+    return [left, top, right, bottom];
+}
 
 // === PRIVATE ===
+
+// Initializes OCO with the default values
+OCO._init = function() 
+{
+    var hostName = BridgeTalk.appName;
+    var hostVersion = BridgeTalk.appVersion;
+    // On Ae, app.version is more precise
+    if (hostName == 'aftereffects') hostVersion = app.version;
+    OCO._host = hostName + ' (' + hostVersion + ')';
+
+    // Set the default config path
+    new OCOConfig();
+}
 
 // Gets a value or a default value if it is undefined
 OCO._d = function( val, defaultVal )
@@ -15315,6 +15903,7 @@ OCO._d = function( val, defaultVal )
 	return typeof val !== 'undefined' ? val : defaultVal;
 }
 
+// Escapes a string to be used in a regex
 OCO._escapeRegEx = function (string)
 {
 	return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
@@ -15504,46 +16093,6 @@ OCO._fromBase64 = function( b64, file )
     catch (e) { return null; }
 }
 
-/**
- * Gets the boundaries of an armature (a chain of bones)
- * @param {OCOBone[]} armature The chain of bones
- * @returns {float[]} [left, top, right, bottom]
- */
-OCO.getBounds = function ( armature )
-{
-    var left = 9999;
-    var right = -9999;
-    var top = 9999;
-    var bottom = -9999;
-
-    for (var i = 0, n = armature.length; i < n; i++)
-    {
-        var b = armature[i];
-        // Check current bone
-        if (b.x < left) left = b.x;
-        if (b.x > right) right = b.x;
-        if (b.y < bottom) bottom = b.y;
-        if (b.y > top) top = b.y;
-        // Check children
-        var childBounds = OCO.getBounds( b.children );
-        if (childBounds[0] < left) left = childBounds[0];
-        if (childBounds[1] < top) top = childBounds[1];
-        if (childBounds[2] < right) right = childBounds[2];
-        if (childBounds[3] < bottom) bottom = childBounds[3];
-        // Check other limbs
-        for ( var j = 0, nL = b.limbs.length; j < nL; j++ )
-        {
-            var limbBounds = b.limbs[i].bounds();
-            if (limbBounds[0] < left) left = limbBounds[0];
-            if (limbBounds[1] < top) top = limbBounds[1];
-            if (limbBounds[2] < right) right = limbBounds[2];
-            if (limbBounds[3] < bottom) bottom = limbBounds[3];
-        }
-    }
-
-    return [left, top, right, bottom];
-}
-
 // Makes a path relative to a file
 OCO._relativePath = function ( path, destinationFile )
 {
@@ -15579,6 +16128,10 @@ OCO._relativePath = function ( path, destinationFile )
 // Makes a path absolute
 OCO._absolutePath = function ( path, relativeTo )
 {
+    if (path.indexOf('~') == 0) {
+        path = new File(path);
+        return path.absoluteURI;
+    }
     if (!(relativeTo instanceof File)) relativeTo = new File(relativeTo);
     var absFolder = relativeTo.parent;
     while (path.indexOf("../") == 0)
@@ -15588,6 +16141,43 @@ OCO._absolutePath = function ( path, relativeTo )
     }
     var absPath = absFolder.absoluteURI + '/' + path;
     return absPath;
+}
+
+OCO._sanitize_path = function( path ) {
+    path = OCO._path_join([path]);
+    if (path.indexOf('~') == 0) {
+        path = new File(path);
+        return path.absoluteURI;
+    }
+}
+
+// Checks if a path is absolute
+OCO._is_path_absolute = function( path )
+{
+    var re = /^(?:[\/\\]|[a-zA-Z]:)/;
+    return re.test(path);
+}
+
+OCO._path_join = function( pathElements ) {
+    var path = pathElements.join('/');
+    path = path.split('/');
+    OCO._array_remove_empty_strings(path);
+    path = path.join('/').split('\\');
+    OCO._array_remove_empty_strings(path);
+    return path.join('/');
+}
+
+OCO._array_remove_empty_strings = function(arr, inplace) {
+    if(typeof inplace === 'undefined') inplace = true;
+    var newArr = [];
+    for (var i = arr.length-1; i >= 0; i--) {
+        if (arr[i] === '') {
+            if (!inplace) continue;
+            arr.splice(i,1);
+        }
+        if (!inplace) newArr.push(arr[i]);
+    }
+    if (!inplace) return newArr;
 }
 
 OCO._parseJsonFile = function (file )
@@ -15603,12 +16193,7 @@ OCO._parseJsonFile = function (file )
     return data;
 }
 
-/**
- * Measures the vector length between two points
- * @param {int[]} value1 - The first value
- * @param {int[]} value2 - The second value
- * @return {float} The length
- */
+// Measures the vector length between two points
 OCO._length = function(value1, value2) {
     if (typeof value1 !== typeof value2) {
         return null;
@@ -15670,9 +16255,188 @@ OCO._linear = function(value, min, max, targetMin, targetMax, clamp) {
     return result;
 }
 
-// === INIT ===
-if ( OCO._canWrite( Folder.myDocuments ) ) OCO.libraryPath = Folder.myDocuments.absoluteURI + "/OCO/OCO Library";
-else OCO.libraryPath = Folder.temp.absoluteURI + "/OCO/OCO Library";
+// === Classes ===
+
+/**
+ * Sets a new config file to be used by OCO
+ * @class
+ * @classdesc Handles the global configuration of OCO
+ * @param {string|File} [ocoConfigFile] The config file to be used. If not set, will use the default file in the user's documents OCO folder.
+ * @category OCO
+ */
+function OCOConfig( ocoConfigFile )
+{
+    this.setConfig(ocoConfigFile);
+}
+
+/**
+ * Sets the config file to be used by OCO
+ * @param {string|File} [ocoConfigFile] The config file to be used. If not set, will use the default file in the user's documents OCO folder.<br/>
+ * If this is a File object, it's encoding will be ignored and always be set to UTF-8, as per the OCO specifications.
+ * @return {boolean} Success.
+ */
+OCOConfig.prototype.setConfig = function( ocoConfigFile ) {
+
+    this._file = null;
+
+    // Get default path
+    if (typeof ocoConfigFile === 'undefined') {
+        ocoConfigFile = Folder.myDocuments.absoluteURI + "/OCO/";
+        if (!OCO._canWrite( ocoConfigFile )) ocoConfigFile = Folder.temp.absoluteURI + "/OCO/";
+        ocoConfigFile += 'OCO.config';
+    }
+    // Make it a File object
+    if (!(ocoConfigFile instanceof File)) ocoConfigFile = new File(ocoConfigFile);
+
+    // Create path if it doesn't exists
+    var folder = ocoConfigFile.parent;
+    if (!folder.exists) folder.create();
+
+    // Set the file.
+    this._file = ocoConfigFile;
+    this._file.encoding = 'UTF-8';
+
+    // Create file if it doesn't exists
+    if (!this._file.exists) {
+        this.set('metadata/created', new Date());
+        this.set('metadata/created by', OCO._host);
+    }
+    OCO.config = this;
+}
+
+/**
+ * Get the current config file
+ * @return {File|null} The File object representing the config file.
+ */
+OCOConfig.prototype.absoluteURI = function() {
+    return this._file.absoluteURI;
+}
+
+/**
+ * Sets a new Key/Value pair in the config.
+ * The key 
+ * @param {string} key The key. It can be a path-like string (i.e. 'after effects/bone type').
+ * @param {*} value The value to set
+ */
+OCOConfig.prototype.set = function( key, value ) {
+    // Checks
+    if (typeof key === 'undefined') 
+        throw "OCOConfig: ArgError: missing key.";
+    if (typeof value === 'undefined')
+        throw "OCOConfig: ArgError: missing value.";
+    if (typeof key !== 'string' && !(key instanceof String))
+        throw "OCOConfig: TypeError: key must be a string."
+    if (key === '')
+        throw "OCO: ValueError: can't use an empty string as a key.";
+
+    // Update data
+    var root = this._load();
+    var data = root;
+    var keyArray = key.split('/');
+    var numKeys = keyArray.length;
+    for( var i = 0; i < numKeys -1; i++) {
+		data[keyArray[i]] = OCO._d( data[keyArray[i]], {});
+		data = data[keyArray[i]];
+	}
+
+    // Sanitize data
+    var key = keyArray[numKeys-1];
+    if (key == 'path') value = OCO._sanitize_path(value);
+
+    // Already the same value, return
+	if (data[keyArray[numKeys-1]] === value) return;
+
+    data[keyArray[numKeys-1]] = value;
+
+    root['metadata'] = OCO._d( root['metadata'], {});
+    root['metadata']['modified'] = new Date();
+    root['metadata']['modified by'] = OCO._host;
+
+    var fileContent = [
+        "---",
+        "# This is an Open Cut-Out Config file.",
+        ''
+    ].join('\n');
+
+    fileContent += YAML.dump(root, 2);
+
+    if (!this._file.open('w'))
+        throw "OCOConfig: IOError: The config file '" + this._file.absoluteURI + "' can't be opened in writing mode.";
+    this._file.write(fileContent);
+    this._file.close();
+}
+
+/**
+ * Gets a value from the config. The key can be a path separated by /
+ * @property {string} key The setting to get
+ * @property {*} [defaultValue=null] The default value if the key is not set in the settings
+ * @return {*} The value
+ */
+OCOConfig.prototype.get = function( key, defaultValue ) {
+    // Checks
+    if (typeof key === 'undefined') 
+        throw "OCOConfig: ArgError: missing key.";
+    if (typeof key !== 'string' && !(key instanceof String))
+        throw "OCOConfig: TypeError: key must be a string."
+    if (key === '')
+        throw "OCO: ValueError: can't use an empty string as a key.";
+
+    defaultValue = OCO._d(defaultValue, null);
+
+    var data = this._load();
+	var keyArray = key.split("/")
+	var numKeys = keyArray.length;
+	for( var i = 0; i < numKeys -1; i++) {
+		data = OCO._d( data[keyArray[i]], {});
+	}
+	return OCO._d( data[keyArray[numKeys-1]], defaultValue);
+}
+
+// === Private ===
+
+// Loads the config file
+OCOConfig.prototype._load = function() {
+    if (!this._file.exists) return {};
+    if (!this._file.open('r')) return {};
+    var data = this._file.read();
+    this._file.close();
+    data = YAML.load(data);
+    if (!data) data = {};
+    return data;
+}
+
+/**
+ * Creates a new OCO Library
+ * @class
+ * @classdesc A library is used to store and get metarigs
+ * @param {string|Folder} [path] The path of the library. If omitted, it will use the current path as saved in the current OCO.config; else it will be saved in the current OCO.config.
+ * @category OCO
+ */
+function OCOLibrary( path ) {
+    if(typeof path === 'undefined') path = this.absoluteURI();
+    this.setPath(path);
+}
+
+OCOLibrary.prototype.setPath = function( path ) {
+    OCO.config.set("library/path", path);
+    if (!OCO._is_path_absolute(path))
+        path = OCO._absolutePath(path, OCO.config._file );
+    var folder = new Folder(path);
+    if (!folder.exists) folder.create();
+}
+
+OCOLibrary.prototype.absoluteURI = function() {
+    var libPath = OCO.config.get("library/path", "OCO Library");
+    if (OCO._is_path_absolute(libPath)) return libPath;
+    return OCO._absolutePath(libPath, OCO.config._file);
+}
+
+OCOLibrary.prototype.settingsAbsoluteURI = function() {
+    return OCO._path_join([
+        this.absoluteURI(),
+        "OCO_library.json"
+        ]);
+}
 
 /**
  * Creates a new OCO Document.
@@ -15781,6 +16545,20 @@ OCODoc.prototype.getSpine = function()
             return limb;
     }
     return null;
+}
+
+/**
+ * Recursively gets all the limbs contained in the doc
+ * @return {OCOLimb[]} The array of all limbs
+ */
+OCODoc.prototype.getLimbs = function()
+{
+    var limbs = this.limbs;
+    for (var i = 0, n = this.limbs.length; i < n; i++) 
+    {
+        limbs = limbs.concat( this.limbs[i].getLimbs() );
+    }
+    return limbs;
 }
 
 /**
@@ -17346,6 +18124,20 @@ OCOLimb.prototype.numLimbs = function ()
 }
 
 /**
+ * Recursively gets all the children limbs of this limb
+ * @return {OCOLimb[]} The array of all limbs
+ */
+OCOLimb.prototype.getLimbs = function()
+{
+    var limbs = [];
+    for (var i = 0, n = this.armature.length; i < n; i++) 
+    {
+        limbs = limbs.concat( this.armature[i].getLimbs() );
+    }
+    return limbs;
+}
+
+/**
  * Gets the boundaries of the limb
  * @returns {float[]} [left, top, right, bottom]
  */
@@ -17645,6 +18437,20 @@ OCOBone.prototype.numLimbs = function ()
 }
 
 /**
+ * Recursively gets all the children limbs of this bone
+ * @return {OCOLimb[]} The array of all limbs
+ */
+OCOBone.prototype.getLimbs = function()
+{
+    var limbs = this.limbs;
+    for (var i = 0, n = this.children.length; i < n; i++) 
+    {
+        limbs = limbs.concat( this.children[i].getLimbs() );
+    }
+    return limbs;
+}
+
+/**
  * Translates the bone by [x, y] pixels
  * @param {int} [x=0] The horizontal offset
  * @param {int} [y=0] The vertical offset
@@ -17831,6 +18637,10 @@ OCOBone._zSorter = function (ba, bb)
 {
     return ba.zIndex - bb.zIndex;
 }
+
+// === INIT OCO on Include ===
+
+OCO._init();
 //*/
 
 
@@ -20796,12 +21606,20 @@ DuAEProperty.prototype.valueAtTime = function(time, preExpression) {
 
 /**
  * Reimplements the <code>Property.selectedKeys</code> attribute for convenience.
+ * @param {Boolean} [asObject=false] If true, returns {@link DuAEKeyframe} objects instead of key indices
  * @return {int[]} The list of selected keyframe indices.
  */
-DuAEProperty.prototype.selectedKeys = function() {
+DuAEProperty.prototype.selectedKeys = function( asObject ) {
     if (this.isGroup()) return [];
+    asObject = def(asObject, false);
     var prop = this.getProperty();
-    return prop.selectedKeys;
+    var ks = prop.selectedKeys;
+    if (!asObject) return ks;
+    var keys = [];
+    for(var k = 0, nk = ks.length; k < nk; k++) {
+        keys.push( this.keyAtIndex(ks[k] ));
+    }
+    return keys;
 }
 
 /**
@@ -21018,6 +21836,18 @@ DuAEProperty.prototype.numProperties = function() {
     var prop = this.getProperty();
     if (prop.propertyType === PropertyType.PROPERTY) return 0;
     else return prop.numProperties;
+}
+
+/**
+ * Reimplements the <code>PropertyGroup.setSelectedAtKey</code> method.
+ * @param {int|DuAEKeyframe} key The key to (un)select
+ * @param {Boolean} [selected=true] Whether to select or unselect
+ */
+DuAEProperty.prototype.setSelectedAtKey = function(key, selected) {
+    if (this.isGroup()) return;
+    if (key instanceof DuAEKeyframe) key = key._index;
+    var prop = this.getProperty();
+    prop.setSelectedAtKey(key, def(selected, true));
 }
 
 /**
@@ -21473,19 +22303,20 @@ DuAEProperty.prototype.lastKeyTime = function(selected) {
  * Sets a {@linkcode DuAEKeyframe} on a property
  * @param {DuAEKeyframe}	key	- The DuAEKeyframe.
  * @param {float}	[timeOffset=comp.time]	- The time offset (added to DuAEKeyframe._time) where to add the key frame.
+ * @return {Boolean} Success
  */
 DuAEProperty.prototype.setKey = function(key, timeOffset) {
     var prop = this.getProperty();
 
-    if (prop.elided) return;
+    if (prop.elided) return false;
 
     if (!prop.propertyType === PropertyType.PROPERTY) {
         DuDebug.throwError("Can not set a key on a group property", 'DuAEProperty.setKey');
-        return;
+        return false;
     }
-    if (!prop.canVaryOverTime) return;
+    if (!prop.canVaryOverTime) return false;
     if (prop.isSeparationLeader)
-        if (prop.dimensionsSeparated) return;
+        if (prop.dimensionsSeparated) return false;
 
     timeOffset = def(timeOffset, this.comp.time);
     var time = key._time + timeOffset;
@@ -21494,7 +22325,7 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
 
     this.setValueAtTime(val, time);
 
-    if (prop.numKeys == 0) return;
+    if (prop.numKeys == 0) return false;
 
     //get the index of the created key
     var index = prop.nearestKeyIndex(time);
@@ -21523,6 +22354,11 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
     } catch (err) {
         if (DuESF.debug) alert(err.description);
     }
+
+    // Select it
+    prop.setSelectedAtKey(index, true);
+
+    return true;
 
 }
 
@@ -24335,6 +25171,81 @@ if (typeof DuAEExpression === "undefined") DuAEExpression = {};
 */
 if (typeof DuAEExpression.Library === "undefined") DuAEExpression.Library = [];
 /**
+ * Blends two colors together
+ * @function
+ * @param {float[]} colorA The first color
+ * @param {float[]} colorB The second color
+ * @param {float} [opacity] The opacity of the second color, overrides colorB[3].
+ * @param {int} [blendlingMode=0] The blending mode, one of:<br/>
+ * 0: Normal<br/>
+ * 1: Add<br/>
+ * 2: Lighter color<br/>
+ * 3: Multiply<br/>
+ * 4: Darker color<br/>
+ * @return {float[]} The new color
+ * @requires blendColorValue
+ * @category ExpressionLibrary
+ */
+DuAEExpression.Library["blendColor"] = {};
+DuAEExpression.Library["blendColor"].expression = ['function blendColor(colorA, colorB, alpha, blendingMode) {',
+	'if (typeof alpha === \'undefined\') alpha = colorB[3];',
+	'if (typeof blendingMode === \'undefined\') blendingMode = 0;',
+	'if (alpha == 0) return colorA;',
+	'if (alpha == 1 && blendingMode == 0) return colorB;',
+	'if (blendingMode == 0 || blendingMode == 1 || blendingMode == 3) {',
+	'var r = blendColorValue(colorA[0], colorB[0], alpha, blendingMode);',
+	'var g = blendColorValue(colorA[1], colorB[1], alpha, blendingMode);',
+	'var b = blendColorValue(colorA[2], colorB[2], alpha, blendingMode);',
+	'var a = blendColorValue(colorA[3], colorB[3], alpha, 0);',
+	'return [r,g,b,a];',
+	'}',
+	'var lA = colorA[0] + colorA[1] + colorA[2];',
+	'var lB = colorB[0] + colorB[1] + colorB[2];',
+	'if (blendingMode == 2) {',
+	'if (lA >= lB) return colorA;',
+	'return blendColor( colorA, colorB, alpha, 0);',
+	'}',
+	'if (blendingMode == 4) {',
+	'if (lA <= lB) return colorA;',
+	'return blendColor( colorA, colorB, alpha, 0);',
+	'}',
+	'}'
+	].join('\n');
+DuAEExpression.Library["blendColor"].requirements = ["blendColorValue"];
+
+/**
+ * Blends two colors together
+ * @function
+ * @param {float} colorA The first color
+ * @param {float} colorB The second color
+ * @param {float} [opacity=1] The opacity
+ * @param {int} [blendlingMode=0] The blending mode, one of:<br/>
+ * 0: Normal<br/>
+ * 1: Add<br/>
+ * 3: Multiply<br/>
+ * @return {float} The new value
+ * @category ExpressionLibrary
+ */
+DuAEExpression.Library["blendColorValue"] = {};
+DuAEExpression.Library["blendColorValue"].expression = ['function blendColorValue(colorA, colorB, alpha, blendingMode) {',
+	'if (typeof alpha === \'undefined\') alpha = 1;',
+	'if (typeof blendingMode === \'undefined\') blendingMode = 0;',
+	'if (alpha == 0) return colorA;',
+	'if (blendingMode == 0) {',
+	'if (alpha == 1) return colorB;',
+	'return (1-alpha)*colorA + alpha*colorB;',
+	'}',
+	'if (blendingMode == 1) {',
+	'return colorA + colorB*alpha;',
+	'}',
+	'if (blendingMode == 3) {',
+	'return blendColorValue( colorA, colorA * colorB, alpha, 0 );',
+	'}',
+	'}'
+	].join('\n');
+DuAEExpression.Library["blendColorValue"].requirements = [];
+
+/**
   * Fuzzy Logics for expressions. See {@link https://github.com/Nico-Duduf/DuFuzzyLogic} for more explanations
   * @class
   * @classdesc Fuzzy Logics for expressions. See {@link https://github.com/Nico-Duduf/DuFuzzyLogic} for more explanations
@@ -25071,6 +25982,69 @@ DuAEExpression.Library["integrateLinearKeys"].expression = ['function integrateL
 	'}'
 	].join('\n');
 DuAEExpression.Library["integrateLinearKeys"].requirements = [];
+
+/**
+ * Fixes interpolation of colors by using HSL or a smart HSL taking the smallest path
+ * @function
+ * @param {number} [t=time] The value to interpolate and extrapolate
+ * @param {int} [mode=2] How to interpolate the colors, one of: 0 for 'RGB', 1 for 'HSL', or 2 for 'shortest-path HSL', 3 for 'longest-path HSL', or 4 for 'combined-RGB SL'
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number[]} [colorA=[0,0,0,0]] The first color
+ * @param {number[]} [colorB=[1,1,1,1]] The second color
+ * @param {function} [interpolationMethod=ease] The interpolation function, like linear(), easeIn(), easeOut(), etc.<br/>
+ * Or any other method taking the same five arguments.
+ * @category ExpressionLibrary
+ */
+DuAEExpression.Library["interpolateColor"] = {};
+DuAEExpression.Library["interpolateColor"].expression = ['function interpolateColor(t, colorspace, tMin, tMax, colorA, colorB, interpolationMethod) {',
+	'if (typeof t === \'undefined\') t = time;',
+	'if (typeof colorspace === \'undefined\') colorspace = 2;',
+	'if (typeof tMin === \'undefined\') tMin = 0;',
+	'if (typeof tMax === \'undefined\') tMax = 1;',
+	'if (typeof colorA === \'undefined\') colorA = [0, 0, 0, 0];',
+	'if (typeof colorB === \'undefined\') colorB = [1, 1, 1, 1];',
+	'if (typeof interpolationMethod === \'undefined\') interpolationMethod = ease;',
+	'var result = [0, 0, 0, 0];',
+	'if (colorspace > 0 && colorspace < 4) {',
+	'var a = rgbToHsl(colorA);',
+	'var b = rgbToHsl(colorB);',
+	'var dist = Math.abs(a[0] - b[0]);',
+	'result = interpolationMethod(t, tMin, tMax, a, b);',
+	'if ((dist > 0.5 && colorspace == 2) || (dist < 0.5 && colorspace == 3)) {',
+	'var hA = a[0];',
+	'var hB = b[0];',
+	'var h = hA;',
+	'dist = 1 - dist;',
+	'if (hA < hB) {',
+	'var limit = hA / dist * tMax;',
+	'if (t < limit) h = interpolationMethod(t, tMin, limit, hA, 0);',
+	'else h = interpolationMethod(t, limit, tMax, 1, hB);',
+	'} else {',
+	'var limit = (1 - hA) / dist * tMax;',
+	'if (t < limit) h = interpolationMethod(t, tMin, limit, hA, 1);',
+	'else h = interpolationMethod(t, limit, tMax, 0, hB);',
+	'}',
+	'result = [h, result[1], result[2], result[3]];',
+	'}',
+	'result = hslToRgb(result);',
+	'}',
+	'else {',
+	'var rgbResult = interpolationMethod(t, tMin, tMax, colorA, colorB);',
+	'if (colorspace == 0) result = rgbResult;',
+	'else {',
+	'var a = rgbToHsl(colorA);',
+	'var b = rgbToHsl(colorB);',
+	'var hslResult = interpolationMethod(t, tMin, tMax, a, b);',
+	'var h = rgbToHsl(rgbResult)[0];',
+	'result = [h, hslResult[1], hslResult[2], hslResult[3]];',
+	'result = hslToRgb(result);',
+	'}',
+	'}',
+	'return result;',
+	'}'
+	].join('\n');
+DuAEExpression.Library["interpolateColor"].requirements = [];
 
 /**
  * Clamps a value, but with a smooth interpolation according to a softness parameter
@@ -25830,7 +26804,7 @@ DuAEExpression.Library["inverseLogistic"].requirements = [];
 DuAEExpression.Library["isZero"] = {};
 DuAEExpression.Library["isZero"].expression = ['function isZero(a)',
 	'{',
-	'if (a.length)',
+	'if (a instanceof Array)',
 	'{',
 	'for ( var i = 0; i < a.length; i++ )',
 	'{',
@@ -25907,6 +26881,29 @@ DuAEExpression.Library["multPoints"].expression = ['function multPoints(p, w) {'
 	'}'
 	].join('\n');
 DuAEExpression.Library["multPoints"].requirements = [];
+
+/**
+ * Multiplies two sets of values, one with each other. If the lists are not the same length, additional values will be ignored
+ * @function
+ * @param {float[]} setA The first list
+ * @param {float[]} setB The other list
+ * @returns {float[]} The new values
+ * @category ExpressionLibrary
+ */
+DuAEExpression.Library["multSets"] = {};
+DuAEExpression.Library["multSets"].expression = ['function multSets(setA, setB) {',
+	'var r = [];',
+	'var countA = setA.length;',
+	'var countB = setB.length;',
+	'var count = countA;',
+	'if (countB < countA) count = countB;',
+	'for (var i = 0; i < count; i++) {',
+	'r.push(setA[i] * setB[i]);',
+	'}',
+	'return r;',
+	'}'
+	].join('\n');
+DuAEExpression.Library["multSets"].requirements = [];
 
 /**
  * Normalizes a list of weights so their sum equals 1.0
@@ -27378,10 +28375,14 @@ DuAEProject.getItemById = function(id) {
 
 /**
  * Retrieves the first item with the given name
+ * @param {string} name The name to search
+ * @param {FolderItem} [folder] A subfolder to search in
  * @return {Item|null} The item
  */
-DuAEProject.getItemByName = function(name) {
-    var it = new DuList(app.project.items);
+DuAEProject.getItemByName = function(name, folder) {
+    var it;
+    if (typeof folder !== 'undefined') it = new DuList( folder.items );
+    else it = new DuList(app.project.items);
     while (item = it.next()) {
         if (item.name == name) return item;
     }
@@ -28715,7 +29716,7 @@ DuAEComp.addNull = function(comp, size, layer) {
 
     var nullLayer = comp.layers.addShape();
     nullLayer.guideLayer = true;
-    nullLayer.name = i18n._p("After Effects Layer", "Null");
+    nullLayer.name = DuAEComp.newUniqueLayerName( i18n._p("After Effects Layer", "Null") );
     nullLayer.label = 1;
 
     DuAELayer.applyPreset(nullLayer, preset_null.toFile());
@@ -28744,7 +29745,7 @@ DuAEComp.addAdjustmentLayer = function(comp) {
     if (!comp) return;
 
     var layer = comp.layers.addShape();
-    layer.name = DuAELayer.Type.ADJUSTMENT;
+    layer.name = DuAEComp.newUniqueLayerName( DuAELayer.Type.ADJUSTMENT );
     layer.adjustmentLayer = true;
     layer.label = 5;
 
@@ -28775,7 +29776,7 @@ DuAEComp.addSolid = function(color, comp) {
     if (!(color instanceof DuColor)) color = new DuColor(color);
 
     var layer = comp.layers.addShape();
-    layer.name = DuAELayer.Type.SOLID;
+    layer.name = DuAEComp.newUniqueLayerName( DuAELayer.Type.SOLID );
     layer.label = 1;
 
     var solidGroup = layer("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
@@ -28806,7 +29807,7 @@ DuAEComp.addShape = function(shape, color, comp) {
     color = def(color, DuColor.Color.RAINBOX_RED);
 
     var layer = comp.layers.addShape();
-    layer.name = i18n._("Shape");
+    layer.name = DuAEComp.newUniqueLayerName( i18n._p("After Effects Layer", "Shape") );
 
     if (shape == DuAEShapeLayer.Primitive.NONE) return layer;
 
@@ -28817,29 +29818,29 @@ DuAEComp.addShape = function(shape, color, comp) {
 
     if (shape == DuAEShapeLayer.Primitive.SQUARE) {
         solidGroup.name = i18n._("Rectangle");
-        layer.name = i18n._("Rectangle");
+        layer.name = DuAEComp.newUniqueLayerName( i18n._("Rectangle") );
         var solid = solidContent.addProperty("ADBE Vector Shape - Rect");
         solid('ADBE Vector Rect Size').setValue([size, size]);
     } else if (shape == DuAEShapeLayer.Primitive.ROUNDED_SQUARE) {
         solidGroup.name = i18n._("Rounded rectangle");
-        layer.name = i18n._("Rounded rectangle");
+        layer.name = DuAEComp.newUniqueLayerName( i18n._("Rounded rectangle") );
         var solid = solidContent.addProperty("ADBE Vector Shape - Rect");
         solid('ADBE Vector Rect Size').setValue([size, size]);
         solid('ADBE Vector Rect Roundness').setValue(size / 10);
     } else if (shape == DuAEShapeLayer.Primitive.CIRCLE) {
         solidGroup.name = i18n._("Circle");
-        layer.name = i18n._("Circle");
+        layer.name = DuAEComp.newUniqueLayerName( i18n._("Circle") );
         var solid = solidContent.addProperty("ADBE Vector Shape - Ellipse");
         solid('ADBE Vector Ellipse Size').setValue([size, size]);
     } else if (shape == DuAEShapeLayer.Primitive.POLYGON) {
         solidGroup.name = i18n._("Polygon");
-        layer.name = i18n._("Polygon");
+        layer.name = DuAEComp.newUniqueLayerName( i18n._("Polygon") );
         var solid = solidContent.addProperty("ADBE Vector Shape - Star");
         solid('ADBE Vector Star Type').setValue(2);
         solid('ADBE Vector Star Outer Radius').setValue(size);
     } else if (shape == DuAEShapeLayer.Primitive.STAR) {
         solidGroup.name = i18n._("Star");
-        layer.name = i18n._("Star");
+        layer.name = DuAEComp.newUniqueLayerName( i18n._("Star") );
         var solid = solidContent.addProperty("ADBE Vector Shape - Star");
         solid('ADBE Vector Star Inner Radius').setValue(size * .385);
         solid('ADBE Vector Star Outer Radius').setValue(size);
@@ -29177,7 +30178,6 @@ DuAELayer.setType = function(type, layers) {
         }
     }
 }
-
 
 /**
  * Renames a layer, appending a number if needed to keep unique names, and fixing expressions
@@ -29652,32 +30652,25 @@ DuAELayer.getWorldPos = function(layer, point, time) {
     time = def(time, layer.containingComp.time);
 
     if (layer instanceof CameraLayer || layer instanceof LightLayer) {
-        var parent = layer.parent;
-        layer.parent = null;
-        var pos = layer.transform.position.valueAtTime(time, false);
         point = def(point, [0,0,0]);
-        pos = pos + point;
-        layer.parent = parent;
-        return pos;
+    }
+    else {
+        point = def(point, layer.transform.anchorPoint.valueAtTime(time, false));
     }
 
-    // Without parent, just return the position
-    if (layer.parent == null)
-    {
-        var pos = layer.transform.position.valueAtTime(time, false);
-        var ap = layer.transform.anchorPoint.valueAtTime(time, false);
-        point = def(point, ap);
-        return pos + (point - ap);
-    }
+    if (layer instanceof CameraLayer || layer instanceof LightLayer || layer.threeDLayer) {
 
-    if (layer.threeDLayer) {
-        var parent = layer.parent;
-        layer.parent = null;
-        var pos = layer.transform.position.valueAtTime(time, false);
-        var ap = layer.transform.anchorPoint.valueAtTime(time, false);
-        point = def(point, ap);
-        pos = pos + (point - ap);
-        layer.parent = parent;
+        // Add null
+        var comp = layer.containingComp;
+        var nullLayer = comp.layers.addNull();
+        nullLayer.threeDLayer = true;
+        var p = nullLayer.transform.position;
+
+        p.expression = 'thisComp.layer(' + layer.index + ').toWorld(' + point.toSource() + ');';
+        var pos = p.value;
+
+        nullLayer.remove();
+
         return pos;
     }
 
@@ -30549,7 +31542,7 @@ DuAELayer.repositionAnchorPoint = function(layer, value) {
     // Get future position for each position keyframe
 
     // New positions, one per keyframe
-    var newPositions = [];
+    /*var newPositions = [];
     var newXPositions = [];
     var newYPositions = [];
     var newZPositions = [];
@@ -30604,11 +31597,16 @@ DuAELayer.repositionAnchorPoint = function(layer, value) {
             var newPos = DuAELayer.getWorldPos(layer, value);
             newPositions.push(newPos);
         }
-    }
-    
+    }*/
+
+    // Keep the current position of the layer
+    var position = DuAELayer.getWorldPos(layer, [0,0,0]);
 
     // Set anchor point
     layer.transform.anchorPoint.setValue(value);
+
+    // Get the position offset
+    var offset = DuAELayer.getWorldPos(layer, [0,0,0]) - position;
 
     // Adjust position for keyframes
     if (layer.transform.position.dimensionsSeparated) {
@@ -30616,34 +31614,34 @@ DuAELayer.repositionAnchorPoint = function(layer, value) {
         var nK = p.numKeys;
         if (nK > 0) {
             for (var i = 1; i <= nK; i++)
-                p.setValueAtKey(i, newXPositions[i - 1]);
+                p.setValueAtKey(i, p.keyValue(i) - offset[0]);
         }
-        else p.setValue(newXPositions[0]);
+        else p.setValue( p.value - offset[0] );
         
         p = layer.transform.property('ADBE Position_1');
         nK = p.numKeys;
         if (nK > 0) {
             for (var i = 1; i <= nK; i++)
-                p.setValueAtKey(i, newYPositions[i - 1]);
+                p.setValueAtKey(i, p.keyValue(i) - offset[1]);
         }
-        else p.setValue(newYPositions[0]);
+        else p.setValue( p.value - offset[1] );
 
         p = layer.transform.property('ADBE Position_2');
         nK = p.numKeys;
         if (nK > 0) {
             for (var i = 1; i <= nK; i++)
-                p.setValueAtKey(i, newZPositions[i - 1]);
+                p.setValueAtKey(i, p.keyValue(i) - offset[2]);
         }
-        else if (layer.threeDLayer) p.setValue(newZPositions[0]);
+        else if (layer.threeDLayer) p.setValue( p.value - offset[2] );
     }
     else {
         var p = layer.transform.position;
         nK = p.numKeys;
         if (nK > 0) {
             for (var i = 1; i <= nK; i++)
-                p.setValueAtKey(i, newPositions[i - 1]);
+                p.setValueAtKey(i, p.keyValue(i) - offset);
         }
-        else p.setValue(newPositions[0]);
+        else p.setValue( p.value - offset );
     }
     
     // Reparent
@@ -31254,6 +32252,45 @@ DuAEShapeLayer.isSingleShape = function ( layer ) {
     if ( fill.matchName != "ADBE Vector Graphic - Fill" ) return false;
 
     return true;
+}
+
+/**
+ * Gets the content of a specific group in the shape layer
+ * @param {ShapeLayer} layer The layer
+ * @param {string} path The path, using group names. e.g. <code>'Group 1/Subgroup'</code>
+ * @return {PropertyGroup|null} The contents of the vector group, or null if it can't be found.
+ */
+DuAEShapeLayer.getVectorGroupContents = function( layer, path ) {
+    path = path.split("/");
+    var content = layer.property("ADBE Root Vectors Group");
+    if (!content) return null;
+    for (var i = 0, n = path.length; i < n; i++) {
+        subgroup = path[i];
+        content = content.property(subgroup);
+        if (!content) return null;
+        content = content.property('ADBE Vectors Group');
+    }
+    return content;
+}
+
+/**
+ * Gets the transform of a specific group in the shape layer
+ * @param {ShapeLayer} layer The layer
+ * @param {string} path The path, using group names. e.g. <code>'Group 1/Subgroup'</code>
+ * @return {PropertyGroup|null} The contents of the vector group, or null if it can't be found.
+ */
+DuAEShapeLayer.getVectorGroupTransform = function( layer, path ) {
+    path = path.split("/");
+    var content = layer.property("ADBE Root Vectors Group");
+    if (!content) return null;
+    for (var i = 0, n = path.length; i < n; i++) {
+        subgroup = path[i];
+        content = content.property(subgroup);
+        if (!content) return null;
+        if (i != n - 1) content = content.property('ADBE Vectors Group');
+        else content = content.property("ADBE Vector Transform Group");
+    }
+    return content;
 }
 
 // ==================== |--------------| ====================
