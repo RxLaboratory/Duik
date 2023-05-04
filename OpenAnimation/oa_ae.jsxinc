@@ -1,0 +1,465 @@
+// === OAInterpolation ===
+
+/**
+ * Gets the AE interpolation type corresponding to the current mode.
+ * @return {KeyframeInterpolationType} The AE Type
+ */
+OAInterpolation.prototype.aeInterpolationType = function() {
+    if (this.mode == OA.InterpolationMode.LINEAR) return KeyframeInterpolationType.LINEAR;
+    if (this.mode == OA.InterpolationMode.BEZIER) return KeyframeInterpolationType.BEZIER;
+    if (this.mode == OA.InterpolationMode.HOLD) return KeyframeInterpolationType.HOLD;
+    return KeyframeInterpolationType.BEZIER;
+}
+
+/**
+ * Gets the AE ease influence.
+ * @return {float} The influence in the range [0.1 ... 100]
+ */
+OAInterpolation.prototype.aeInfluence = function() {
+    var influence = this.x * 100;
+    return OA._clamp(influence, 0.1, 100);
+}
+
+/**
+ * Gets the OAInterpolation mode corresponding to the AE Type
+ * @param {KeyframeInterpolationType} [aeInterpolationType] The interpolation type in AE
+ * @return {OA.InterpolationMode} The OA Mode
+ */
+OAInterpolation.modeFromAE = function( aeInterpolationType) {
+    if (aeInterpolationType == KeyframeInterpolationType.LINEAR)
+        return OA.InterpolationMode.LINEAR;
+    if (aeInterpolationType == KeyframeInterpolationType.BEZIER)
+        return OA.InterpolationMode.BEZIER;
+    if (aeInterpolationType == KeyframeInterpolationType.HOLD)
+        return OA.InterpolationMode.HOLD;
+    return  OA.InterpolationMode.AUTO;
+}
+
+// === OAKeyframe ===
+
+/**
+ * Gets the AE in interpolation type corresponding to the current mode.
+ * @return {KeyframeInterpolationType} The AE Type
+ */
+OAKeyframe.prototype.aeInInterpolationType = function() {
+    return this.inInterpolation.aeInterpolationType();
+}
+
+/**
+ * Gets the AE out interpolation type corresponding to the current mode.
+ * @return {KeyframeInterpolationType} The AE Type
+ */
+OAKeyframe.prototype.aeOutInterpolationType = function() {
+    return this.outInterpolation.aeInterpolationType();
+}
+
+/**
+ * Gets the AE in KeyframeEase
+ * @param {float} [previousTime] The time of the previous keyframe. Needed to compute the speed.
+ * @return {KeyframeEase} The AE Type
+ */
+OAKeyframe.prototype.aeInEase = function(previousTime) {
+    if (this.inInterpolation.mode != OA.InterpolationMode.BEZIER) return [new KeyframeEase(0, 1/3)];
+
+    previousTime = OA._d(previousTime, this.time);
+    var speed = 0;
+    if (previousTime < this.time) {
+        var time = (this.time-previousTime) * this.inInterpolation.x;
+        var speed = this.inInterpolation.y / time;
+    }
+
+    return [new KeyframeEase(speed, this.inInterpolation.aeInfluence())];
+}
+
+/**
+ * Gets the AE out KeyframeEase
+ * @param {float} [previousTime] The time of the previous keyframe. Needed to compute the speed.
+ * @return {KeyframeEase} The AE Type
+ */
+OAKeyframe.prototype.aeOutEase = function(nextTime) {
+    if (this.outInterpolation.mode != OA.InterpolationMode.BEZIER) return [new KeyframeEase(0, 1/3)];
+
+    nextTime = OA._d(nextTime, this.time);
+    var speed = 0;
+    if (nextTime > this.time) {
+        var time = (nextTime-this.time) * this.outInterpolation.x;
+        var speed = this.outInterpolation.y / time;
+    }
+
+    return [new KeyframeEase(speed, this.outInterpolation.aeInfluence())];
+}
+
+/**
+ * Creates an {@link OAKeyframe} from an After Effects keyframe
+ * @param {Property} keyIndex The After Effects keyframe index
+ * @param {Property} property The After Effects Property
+ * @return {OAKeyframe|OAKeyframe[]} The keyframe, or an array of keyframes if the property is multidimensionnal.
+ */
+OAKeyframe.fromAE = function(keyIndex, property, comp) {
+    if (!(property instanceof Property)) throw "OAProperty.fromAE() {TypeError}: The property must be a Property, but a "+OA._jstype(property)+" was given.";
+
+    // Check the value type
+    var valueType = property.propertyValueType;
+    if (valueType == PropertyValueType.NO_VALUE) throw "OAProperty.fromAE() {ValueError}: Value type NO_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.CUSTOM_VALUE) throw "OAProperty.fromAE() {ValueError}: Value type CUSTOM_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.MARKER) throw "OAProperty.fromAE() {ValueError}: Value type MARKER is not implemented (yet).";
+    if (valueType == PropertyValueType.SHAPE) throw "OAProperty.fromAE() {ValueError}: Value type SHAPE is not implemented (yet).";
+    if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAProperty.fromAE() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+
+    // We need the comp
+    var prop = property;
+    while (prop.parentProperty !== null) prop = prop.parentProperty;
+    var comp = prop.containingComp;
+    var frameDuration = comp.frameDuration;
+
+    var dimensions = 1;
+    var value = property.value;
+    if (valueType != PropertyValueType.OneD) dimensions = value.length;
+
+    value = property.keyValue(keyIndex);
+    time = property.keyTime(keyIndex);
+
+    // get interpolation
+    var inInterpolation = [];
+    var outInterpolation = [];
+
+    var inAeType = property.keyInInterpolationType(keyIndex);
+    var inEase = property.keyInTemporalEase(keyIndex);
+    var outAeType = property.keyOutInterpolationType(keyIndex);
+    var outEase = property.keyOutTemporalEase(keyIndex);
+
+    for (var i = 0; i < dimensions; i++) {
+        var inI = new OAInterpolation( OAInterpolation.modeFromAE(inAeType) );
+        var outI = new OAInterpolation( OAInterpolation.modeFromAE(outAeType) );
+        var val = value;
+        if (dimensions > 1) val = value[i];
+        
+        // For Bézier, get the tangents
+        if (inAeType == KeyframeInterpolationType.BEZIER && keyIndex > 1) {
+            var ease = inEase[0];  
+            if (valueType == PropertyValueType.TwoD || valueType == PropertyValueType.ThreeD) {
+                ease = inEase[i];
+            }
+
+            // X is easy
+            inI.x = ease.influence / 100;
+
+            // Y: we first need to get the speed (that's how AE defines the Y value for tangents)
+            var speed = 0;
+            if (!property.isSpatial) speed = ease.speed;
+            else {
+                var precision = frameDuration/50;
+                var prevVal = property.valueAtTime(time-precision, true);
+                if (dimensions > 1) prevVal = prevVal[i];
+                speed = (val - prevVal) / precision;
+            }
+
+            // Speed: get the previous time
+            var prevTime = property.keyTime(keyIndex - 1);
+            var duration = time-prevTime;
+            inI.y = speed * inI.x * duration;
+            
+        }        
+
+        if (outAeType == KeyframeInterpolationType.BEZIER && keyIndex < property.numKeys) {
+            ease = outEase[0];
+            if (valueType == PropertyValueType.TwoD || valueType == PropertyValueType.ThreeD) {
+                ease = outEase[i];
+            }
+
+            // X is easy
+            outI.x = ease.influence / 100;
+
+            // Y: we first need to get the speed
+            var speed = 0;
+            if (!property.isSpatial) speed = ease.speed;
+            else {
+                var precision = frameDuration/50;
+                var nextVal = property.valueAtTime(time+precision, true);
+                if (dimensions > 1) nextVal = nextVal[i];
+                speed = (nextVal - val) / precision;
+            }
+
+            // Spped: get the next time
+            var nextTime = property.keyTime(keyIndex + 1);
+            var duration = nextTime-time;
+            outI.y = ease.speed * duration * outI.x * 1.45;
+        }
+
+        inInterpolation.push( inI );
+        outInterpolation.push(outI );
+    }
+
+    // TODO set metadata with actual AE values
+
+    if (dimensions == 1)
+        return new OAKeyframe(value, time, inInterpolation[0], outInterpolation[0]);
+
+    var keys = [];
+    for(var i = 0; i < dimensions; i++) {
+        keys.push(new OAKeyframe(value[i], time, inInterpolation[1], outInterpolation[1]));
+    }
+    return keys;
+}
+
+// === OAProperty ===
+
+/**
+ * Creates an {@link OAGroup} or {@link OAProperty} from an After Effects Property
+ * @param {Property} property The After Effects Property
+ * @param {Boolean} [preExpression=true] Set to false to get the post expression values. In this case, creates one (linear) keyframe per comp frame.
+ * @param {float} [frameDuration] If preExpression is false, the duration of a frame to bake the expression. Uses the comp frame duration by default
+ * @return {OAProperty|OAGroup} The animated property. It's a group if this was a multi-dimensional property.<br>
+ * The ID is generated the same way an expression link is generated in AE, from comp("name") to the property, using matchnames when applicable to make it the same no matter the language.
+ */
+OAProperty.fromAEProperty = function(property, preExpression, frameDuration) {
+    if (!(property instanceof Property)) throw "OAProperty.fromAE() {TypeError}: The property must be a Property, but a "+OA._jstype(property)+" was given.";
+
+    // Check the value type
+    var valueType = property.propertyValueType;
+    if (valueType == PropertyValueType.NO_VALUE) throw "OAProperty.fromAE() {ValueError}: Value type NO_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.CUSTOM_VALUE) throw "OAProperty.fromAE() {ValueError}: Value type CUSTOM_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.MARKER) throw "OAProperty.fromAE() {ValueError}: Value type MARKER is not implemented (yet).";
+    if (valueType == PropertyValueType.SHAPE) throw "OAProperty.fromAE() {ValueError}: Value type SHAPE is not implemented (yet).";
+    if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAProperty.fromAE() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+
+    var name = property.name;
+
+    // Generate id
+    var ids = [];
+    var prop = property;
+    while (prop.parentProperty !== null) {
+        //do not translate essential properties
+        if (prop.parentProperty.matchName == "ADBE Layer Overrides") {
+            ids.unshift( "essential|"+prop.name );
+        }
+        else if (prop.propertyType == PropertyType.PROPERTY) {
+            ids.unshift( "property|"+prop.propertyIndex );
+        }
+        else if (prop.parentProperty.propertyType == PropertyType.INDEXED_GROUP) {
+            ids.unshift( "indexed_group|"+prop.name );
+        }
+        else ids.unshift( "named_group|"+prop.matchName );
+
+        // Traverse up the property tree
+        prop = prop.parentProperty;
+    }
+
+    var comp = prop.containingComp;
+    frameDuration = OA._d(frameDuration, comp.frameDuration);
+    preExpression = OA._d(preExpression, true);
+
+    ids.unshift("layer|"+prop.name);
+    ids.unshift("comp|"+comp.name);
+
+    var id = ids.join("/");
+
+    // Get keyframes
+
+    var keys = [];
+    var dimensions = 1;
+    var baseValue = property.valueAtTime(0, true);
+    if (valueType != PropertyValueType.OneD) dimensions = baseValue.length;
+    else baseValue = [baseValue];
+
+    for (var i = 0; i < dimensions; i++) {
+        keys[i] = [];
+    }
+
+    if (!preExpression && property.expression != '') {
+        for (var time = 0; time <= comp.duration; time += frameDuration) {
+            var value = property.valueAtTime(time, false);
+            for (var i = 0; i < dimensions; i++) {
+                keys[i].push( new OAKeyframe(value[i], time));
+            }
+        }
+    }
+
+    if (property.numKeys > 0 && !(!preExpression && property.expression == '')) {
+        for(var k = 1; k <= property.numKeys; k++) {
+            var key = OAKeyframe.fromAE(k, property);
+            for (var i = 0; i < dimensions; i++) {
+                keys[i].push( key[i] );
+            }
+        }
+    }
+
+    // Some Metadata
+    var aeVersion = app.version;
+    var aeName = "After Effects";
+
+    var oaProperties = [];
+    for (var i = 0; i < dimensions; i++) {
+        var oaName = name;
+        var oaId = id;
+        if (i==0 && dimensions < 4 && dimensions > 1) {
+            oaName += '-X';
+            oaId += '/X';
+        }
+        else if (i==1 && dimensions < 4) {
+            oaName += '-Y';
+            oaId += '/Y';
+        }
+        else if (i==2 && dimensions < 4) {
+            oaName += '-Z';
+            oaId += '/Z';
+        }
+        else if (i==0 && dimensions == 4) {
+            oaName += '-R';
+            oaId += '/R';
+        }
+        else if (i==1 && dimensions == 4) {
+            oaName += '-G';
+            oaId += '/G';
+        }
+        else if (i==2 && dimensions == 4) {
+            oaName += '-B';
+            oaId += '/B';
+        }
+        else if (i==3 && dimensions == 4) {
+            oaName += '-A';
+            oaId += '/A';
+        }
+
+        var oaProperty = new OAProperty(oaName, keys[i], oaId, baseValue[i]);
+        oaProperty.setMeta('application/name', aeName);
+        oaProperty.setMeta('application/version', aeVersion);
+        oaProperties.push( oaProperty );
+    }
+
+    if (dimensions == 1) return oaProperties[0];
+
+    var group = new OAGroup(name, id);
+    group.properties = oaProperties;
+    group.setMeta('application/name', aeName);
+    group.setMeta('application/version', aeVersion);
+    return group;
+}
+
+/**
+ * Applies the animation on the given AE Property. The property must have one dimension.
+ * @param {Property} property The After Effects property.
+ * @param {Boolean} [replace=true] Whether to replace the existing jeyframes or just add the new ones.
+ */
+OAProperty.prototype.toAEProperty = function( property, replace ) {
+    if (!(property instanceof Property)) throw "OAProperty.fromAE() {TypeError}: The property must be a Property, but a "+OA._jstype(property)+" was given.";
+    // Check the value type
+    var valueType = property.propertyValueType;
+    if (valueType == PropertyValueType.NO_VALUE) throw "OAProperty.toAEProperty() {ValueError}: Value type NO_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.CUSTOM_VALUE) throw "OAProperty.toAEProperty() {ValueError}: Value type CUSTOM_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.MARKER) throw "OAProperty.toAEProperty() {ValueError}: Value type MARKER is not implemented (yet).";
+    if (valueType == PropertyValueType.SHAPE) throw "OAProperty.toAEProperty() {ValueError}: Value type SHAPE is not implemented (yet).";
+    if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAProperty.toAEProperty() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+    if (valueType == PropertyValueType.ThreeD_SPATIAL) throw "OAProperty.toAEProperty() {ValueError}: Can't apply a single value to a ThreeD_SPATIAL property.";
+    if (valueType == PropertyValueType.ThreeD) throw "OAProperty.toAEProperty() {ValueError}: Can't apply a single value to a ThreeD property.";
+    if (valueType == PropertyValueType.TwoD_SPATIAL) throw "OAProperty.toAEProperty() {ValueError}: Can't apply a single value to a TwoD_SPATIAL property.";
+    if (valueType == PropertyValueType.MARKER) throw "OAProperty.toAEProperty() {ValueError}: Can't apply a single value to a MARKER property.";
+
+    // Remove existing keyframes
+    if (OA._d(replace, true)) {
+        while (property.numKeys > 0) property.removeKey(property.numKeys);
+    }
+
+    // Set the new keyframes, all at once (this is faster)
+    var times = [];
+    var values = [];
+    for (var k = 0; k < this.keys.length; k++) {
+        var key = this.keys[k];
+        times.push(key.time);
+        values.push(key.value);
+    }
+    property.setValuesAtTimes(times, values);
+
+    // Set the interpolations
+    for (var k = 0; k < this.keys.length; k++) {
+        var key = this.keys[k];
+        var keyIndex = property.nearestKeyIndex( key.time );
+
+        var inInterpolationType = key;
+        var outInterpolationType = key.outInterpolation.aeInterpolationType();
+
+        // Set temporal ease
+        var prevTime = key.time;
+        if (k > 0) prevTime = this.keys[k-1].time;
+        var nextTime = key.time;
+        if (k < this.keys.length-1) nextTime = this.keys[this.keys.length-1].time;
+        property.setTemporalEaseAtKey(keyIndex, key.aeInEase(prevTime), key.aeOutEase(nextTime));
+
+        property.setInterpolationTypeAtKey(keyIndex, key.aeInInterpolationType(), key.aeOutInterpolationType());
+    }
+}
+
+// === OAGroup ===
+
+/**
+ * Applies the animation on the given AE Property. The property must have one dimension for each property of this group.
+ * @param {Property} property The After Effects property.
+ * @param {Boolean} [replace=true] Whether to replace the existing jeyframes or just add the new ones.
+ * @param {Boolean} [separateDimensions] The result may be more accurate if the dimensions are separated first, because OpenAnimation uses only uni-dimensional properties.<br>
+ * Note that if the animation was exported from After Effects using this API, the spatial tangents are saved too so the dimensions can be kept unified, this matters only for animations coming from another application.<br>
+ * Default: separate if the incoming animation hasn't been exported from After Effects.
+ */
+OAGroup.prototype.toAEProperty = function( property, replace, separateDimensions ) {
+    if (!(property instanceof Property)) throw "OAProperty.fromAE() {TypeError}: The property must be a Property, but a "+OA._jstype(property)+" was given.";
+    // Check the value type
+    var valueType = property.propertyValueType;
+    if (valueType == PropertyValueType.NO_VALUE) throw "OAGroup.toAEProperty() {ValueError}: Value type NO_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.CUSTOM_VALUE) throw "OAGroup.toAEProperty() {ValueError}: Value type CUSTOM_VALUE is not implemented (yet).";
+    if (valueType == PropertyValueType.MARKER) throw "OAGroup.toAEProperty() {ValueError}: Value type MARKER is not implemented (yet).";
+    if (valueType == PropertyValueType.SHAPE) throw "OAGroup.toAEProperty() {ValueError}: Value type SHAPE is not implemented (yet).";
+    if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAGroup.toAEProperty() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+
+    var dimensions = 1;
+    var value = property.value;
+    if (valueType != PropertyValueType.OneD) dimensions = value.length;
+
+    if (dimensions != this.properties.length) throw "OAGroup.toAEProperty() {ValueError}: The property has "+dimensions+" dimensions but the OAGroup has "+this.properties.length+" dimensions.";
+
+    separateDimensions = OA._d(separateDimensions, this.getMeta('application/name', "") != "After Effects");
+
+    var numKeys = this.properties[0].keys.length;
+    if (!separateDimensions) {
+        for (var i = 1; i < this.properties.length; i++) {
+            if (this.properties[i].keys.length != numKeys) throw "OAGroup.toAEProperty() {ValueError}: Can't apply this animation on an After Effects multi-dimensional property without separating the dimensions. All dimensions must have the same number of keyframes.";
+        }
+    }
+
+    // Easy one
+    if (dimensions == 1) this.properties[0].toAEProperty(property);
+
+    if (OA._d(replace, true)) {
+        while (property.numKeys > 0) property.removeKey(property.numKeys);
+    }
+
+    // TODO
+    if (separateDimensions && dimensions > 1) {
+        // Separate,
+        // And use properties.toAEProperty
+    }
+
+    for (var k = 0; k < numKeys; k++) {
+        var mainKeys = this.properties[0].keys;
+        var mainKey = mainKeys[k];
+
+        // get the time & value
+        var time = mainKey.time;
+        var value = mainKey.value;
+
+        if (dimensions > 1) {
+            value = [value];
+            for (var i = 1; i < dimensions; i++) {
+                value.push(this.properties[i].keys[k].value);
+            }
+        }
+
+        // Set the new keyframe and get its index
+        property.setValueAtTime( time, value );
+        var keyIndex = property.nearestKeyIndex( time );
+
+        // TODO set temporal ease
+
+        property.setInterpolationTypeAtKey(keyIndex, mainKey.aeInInterpolationType(), mainKey.aeOutInterpolationType());
+
+        // TODO set spatial tangents
+    }
+}

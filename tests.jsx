@@ -1,11 +1,19 @@
 ﻿(function() {
 
-    //#include "inc/api_all.jsxinc"
-    //DuAEF.init("Duik tests", "RxLaboratory", "0.0.0");
-    //DuAEF.enterRunTime();
+    
+    #include "OpenAnimation/oa.jsxinc"
+    #include "OpenAnimation/oa_ae.jsxinc"
 
-    //Duik.Tool.editExpression();
-    //Duik.Tool.reloadExpressions();
+    app.beginUndoGroup("OA Test");
 
-    alert($.os);
+    var p = app.project.activeItem.layer(1).transform.position;
+
+    var group = OAProperty.fromAEProperty(p);
+    //alert(group.toJson());
+    
+    var p2 = app.project.activeItem.layer(2).transform.position; 
+    group.toAEProperty(p2);
+
+    app.endUndoGroup();
+
 })();

@@ -1,7 +1,7 @@
 @echo off
 
 :: The path to ScriptUI Panels
-SET "aePath=C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\Scripts\ScriptUI Panels"
+SET "aePath=C:\Program Files\Adobe\Adobe After Effects 2022\Support Files\Scripts\ScriptUI Panels"
 
 :: The repo (current dir)
 SET repoPath=%~dp0..
@@ -29,6 +29,7 @@ rd /s /q "%aePath%\DuAEF"
 rd /s /q "%aePath%\DuGR"
 rd /s /q "%aePath%\DuIO"
 rd /s /q "%aePath%\DuSan"
+rd /s /q "%aePath%\OpenAnimation"
 
 :: link the main files
 mklink "%aePath%\DuCop.jsx" "%repoPath%\DuCop.jsx"
@@ -61,5 +62,7 @@ mklink /D "%aePath%\DuIO" "%repoPath%\DuIO"
 echo Linked DuIO
 mklink /D "%aePath%\DuSan" "%repoPath%\DuSan"
 echo Linked DuSan
+mklink /D "%aePath%\OpenAnimation" "%repoPath%\OpenAnimation"
+echo Linked OpenAnimation
 
 pause

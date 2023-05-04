@@ -1,0 +1,920 @@
+/**
+ * The Open Animation library
+ * @namespace
+ * @requires yaml.jsxinc
+ * @requires json.jsxinc
+ * @category OA
+ */
+var OA = {};
+
+// === PRIVATE ===
+
+OA._d = function(val, defaultVal) {
+    return typeof val !== 'undefined' ? val : defaultVal;
+}
+
+OA._jstype = function( value ) {
+    var type = typeof value;
+    type = type.toLowerCase();
+
+    if (type == 'object') {
+        try {
+            type = value === null ? 'null' : Object.prototype.toString.call(value).match(/^\[object (.*)\]$/)[1];
+        } catch (e) {}
+    }
+
+    return type;
+}
+
+OA._keyframeSorter = function(kA, kB) {
+    return kA.time - kB.time;
+}
+
+OA._g = function(data, key, defaultValue) {
+    defaultValue = OA._d(defaultValue, null);
+    var keys = key.split('/');
+    var val = data;
+    for (var i = 0; i < keys.length; i++) {
+        if (typeof data[keys[i]] === 'undefined') return defaultValue;
+        val = data[keys[i]];
+    }
+    return val;
+}
+
+OA._s = function(data, key, value) {
+    var keys = key.split('/');
+    var numKeys = keys.length;
+    var v = data;
+    for (var i = 0; i < numKeys-1; i++) {
+        v[keys[i]] = OA._d(v[keys[i]], {});
+        v = v[keys[i]];
+    }
+    v[keys[numKeys-1]] = value;
+    return data;
+}
+
+OA._clamp = function(values, min, max) {
+    min = OA._d(min, 0);
+    max = OA._d(max, 0);
+    if (max < min) {
+        var t = max;
+        max = min;
+        min = t;
+    }
+
+    var isArray = true;
+    var result = [];
+    if (!(values instanceof Array)) {
+        isArray = false;
+        values = [values];
+    }
+    for (var i = 0, num = values.length; i < num; i++) {
+        var v = values[i];
+        if (v < min) v = min;
+        if (v > max) v = max;
+        result.push(v);
+    }
+    if (isArray) return result;
+    else return result[0];
+}
+
+// === PUBLIC ===
+
+/**
+ * Interpolation modes
+ * @enum {string}
+ */
+OA.InterpolationMode = {
+    AUTO: 'auto',
+    HOLD: 'hold',
+    LINEAR: 'linear',
+    BEZIER: 'bezier',
+    EXPONENTIAL: 'exp',
+    GAUSSIAN: 'gaussian',
+    LOGARITHMIC: 'logarithmic',
+    LOGISTIC: 'logistic'
+}
+
+/**
+ * Functions to interpolate values
+ * @namespace
+ */
+OA.Interpolation = {}
+
+/**
+ * Linear (extra/inter)polation
+ * @param {Number} value The variable
+ * @param {Number} [min=0] The minimum input value
+ * @param {Number} [max=1] The maximum input value
+ * @param {Number} [targetMin=0] The minimum output value
+ * @param {Number} [targetMax=1] The maximum output value
+ * @param {Boolean} [extrapolate=true] Whether to extrapolate outside the target.
+ * @returns {Number}
+ */
+OA.Interpolation.linear = function(value, min, max, targetMin, targetMax, extrapolate) { 
+    extrapolate = def(extrapolate, true);
+    min = def(min, 0);
+    max = def(max, 1);
+    targetMin = def(targetMin, 0);
+    targetMax = def(targetMax, 1);
+    extrapolate = def(extrapolate, true);
+
+    // Handle stupid values
+    if (min == targetMin && max == targetMax) return value;
+    if (min == max) return value;
+    if (targetMin == targetMax) return targetMin;
+    if (value == min) return targetMin;
+    if (value == max) return targetMax;
+
+    var result = targetMin + (value - min) / (max - min) * (targetMax - targetMin);
+    if (!extrapolate) result = OA._clamp(value, targetMin, targetMax);
+    return result;
+};
+
+/**
+ * Interpolates a value with a bezier curve.
+ * @param {number} t The value to interpolate
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number} [value1=0] The minimum value of the interpolated result
+ * @param {number} [value2=1] The maximum value of the interpolated result
+ * @param {number[]} [bezierPoints=[0.33,0.0,0.66,1.0]] an Array of 4 coordinates wihtin the [0.0, 1.0] range which describes the Bézier interpolation.<br />
+ * [ outTangentX, outTangentY, inTangentX, inTangentY ]
+ * @return {number} the value.
+ */
+OA.Interpolation.bezier = function(t, tMin, tMax, value1, value2, bezierPoints) {
+    tMin = def(tMin, 0);
+    tMax = def(tMax, 1);
+    value1 = def(value1, 0);
+    value2 = def(value2, 1);
+    bezierPoints = def(bezierPoints, [0.33,0.0,0.66,1.0]);
+
+    if (arguments.length !== 5 && arguments.length !== 6) return (value1+value2)/2;
+    var a = value2 - value1;
+    var b = tMax - tMin;
+    if (b == 0) return (value1+value2)/2;
+    var c = OA._clamp((t - tMin) / b, 0, 1);
+    if (!(bezierPoints instanceof Array) || bezierPoints.length !== 4) bezierPoints = [0.33,0.0,0.66,1];
+    return a * h(c, bezierPoints) + value1;
+
+    function h(f, g) {
+        var x = 3 * g[0];
+        var j = 3 * (g[2] - g[0]) - x;
+        var k = 1 - x - j;
+        var l = 3 * g[1];
+        var m = 3 * (g[3] - g[1]) - l;
+        var n = 1 - l - m;
+        var d = f;
+        for (var i = 0; i < 5; i++) {
+            var z = d * (x + d * (j + d * k)) - f;
+            if (Math.abs(z) < 1e-3) break;
+            d -= z / (x + d * (2 * j + 3 * k * d));
+        }
+        return d * (l + d * (m + d * n));
+    }
+}
+
+/**
+ * Interpolates and extrapolates a value with an exponential function.
+ * @param {number} t The value to interpolate
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number} [value1=0] The minimum value of the interpolated result
+ * @param {number} [value2=1] The maximum value of the interpolated result
+ * @param {number} [rate=1] The raising speed in the range [0, inf].
+ * @return {number} the value.
+ */
+OA.Interpolation.exponential = function(t, tMin, tMax, vMin, vMax, rate) {
+	tMin = def(tMin, 0);
+    tMax = def(tMax, 1);
+    vMin = def(vMin, 0);
+    vMax = def(vMax, 1);
+    rate = def(rate, 1);
+   
+    if (rate == 0) return OA.Interpolation.linear(t, tMin, tMax, vMin, vMax);
+
+    // handle tMax < tMin
+    var rev = false;
+    if (tMax < tMin) {
+        var temp = tMax;
+        tMax = tMin;
+        tMin = temp;
+        rev = true;
+    }
+
+	// Offset t to be in the range 0-Max
+	tMax = ( tMax - tMin ) * rate;
+	t = ( t - tMin ) * rate;
+	// Compute the max
+	var m = Math.exp(tMax);
+	// Compute current value
+	t = Math.exp(t);
+	var result = OA.Interpolation.linear(t, 1, m, vMin, vMax);
+    if (rev) result = OA.Interpolation.linear(result, vMin, vMax, vMax, vMin);
+    return result;
+}
+
+/**
+ * Interpolates a value with a gaussian function.
+ * @function
+ * @param {number} t The value to interpolate
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number} [value1=0] The minimum value of the interpolated result
+ * @param {number} [value2=1] The maximum value of the interpolated result
+ * @param {number} [rate=0] The raising speed in the range [-1.0, 1.0].
+ * @return {number} the value.
+ */
+OA.Interpolation.gaussian = function( t, tMin, tMax, value1, value2, rate ) {
+    tMin = def(tMin, 0);
+    tMax = def(tMax, 1);
+    value1 = def(value1, 0);
+    value2 = def(value2, 1);
+    rate = def(rate, 0);
+
+    // handle tMax < tMin
+    var rev = false;
+    if (tMax < tMin) {
+        var temp = tMax;
+        tMax = tMin;
+        tMin = temp;
+        rev = true;
+    }
+
+    // fix small bump at first value
+    if (t != tMin)
+    {
+        var newValue1 = OA.Interpolation.gaussian( tMin, tMin, tMax, value1, value2, rate );
+        var offset = newValue1 - value1;
+        value1 = value1 - offset;
+    }
+	if (rate < 0) rate = rate*10;
+	rate = OA.Interpolation.linear(t, tMin, tMax, 0.25, rate);
+	var r = ( 1 - rate );
+    var fwhm = (tMax-tMin) * r;
+    var center = tMax;
+	if (t >= tMax) {
+        if (rev) return value1;
+        return value2;
+    }
+    if (fwhm === 0 && t == center) {
+        if (rev) return value1;
+        return value2;
+    }
+    else if (fwhm === 0) {
+        if (rev) return value2;
+        return value1;
+    }
+	
+    var exp = -4 * Math.LN2;
+    exp *= Math.pow((t - center),2);
+    exp *= 1/ Math.pow(fwhm, 2);
+    var result = Math.pow(Math.E, exp);
+	result = result * (value2-value1) + value1;
+
+    if (rev) result = OA.Interpolation.linear( result, value1, value2, value2, value1);
+
+    return result;
+}
+
+/**
+ * Interpolates and extrapolates a value with a logarithmic function.
+ * @function
+ * @param {number} t The value to interpolate
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number} [value1=0] The minimum value of the interpolated result
+ * @param {number} [value2=1] The maximum value of the interpolated result
+ * @param {number} [rate=1] The raising speed in the range [0, inf].
+ * @return {number} the value.
+ */
+OA.Interpolation.logarithmic = function(t, tMin, tMax, vMin, vMax, rate) {
+    tMin = def(tMin, 0);
+    tMax = def(tMax, 1);
+    vMin = def(vMin, 0);
+    vMax = def(vMax, 1);
+    rate = def(rate, 1);
+    
+    if (rate == 0) return OA.Interpolation.linear(t, tMin, tMax, vMin, vMax);
+
+    // handle tMax < tMin
+    var rev = false;
+    if (tMax < tMin) {
+        var temp = tMax;
+        tMax = tMin;
+        tMin = temp;
+        rev = true;
+    }
+
+    // Offset t to be in the range 0-Max
+    tMax = ( tMax - tMin ) * rate + 1;
+    t = ( t - tMin ) * rate + 1;
+    if (t <= 1) {
+        if (rev) return vMax;
+        return vMin;
+    } 
+    // Compute the max
+    var m = Math.log(tMax);
+    // Compute current value
+    var v = Math.log(t);
+    var result = OA.Interpolation.linear(v, 0, m, vMin, vMax);
+    if (rev) result = OA.Interpolation.linear(result, vMin, vMax, vMax, vMin);
+    return result;
+}
+
+/**
+ * Interpolates and extrapolates a value with a logistic (sigmoid) function.
+ * @function
+ * @param {number} t The value to interpolate
+ * @param {number} [tMin=0] The minimum value of the initial range
+ * @param {number} [tMax=1] The maximum value of the initial range
+ * @param {number} [value1=0] The minimum value of the interpolated result
+ * @param {number} [value2=1] The maximum value of the interpolated result
+ * @param {number} [rate=1] The raising speed in the range [0, inf].
+ * @param {number} [tMid] The t value at which the interpolated value should be half way. By default, (tMin+tMax)/2
+ * @return {number} the value
+ */
+OA.Interpolation.logistic = function( t, tMin, tMax, value1, value2, rate, tMid ) {
+    tMin = def(tMin, 0);
+    tMax = def(tMax, 1);
+    value1 = def(value1, 0);
+    value2 = def(value2, 1);
+    rate = def(rate, 1);
+    tMid = def(tMid, (tMin+tMax)/2);
+
+    if (rate == 0) return OA.Interpolation.linear(t, tMin, tMax, value1, value2);
+    t = DuMath.logistic( t, tMid, tMin, tMax, rate);
+    
+    // Scale to actual min/max
+    var m = DuMath.logistic( tMin, tMid, tMin, tMax, rate);
+    var M = DuMath.logistic( tMax, tMid, tMin, tMax, rate);
+
+    return OA.Interpolation.linear( t, m, M, value1, value2);
+}
+
+/**
+ * Math related methods
+ * @namespace
+ */
+OA.Math = {}
+
+/**
+ * The logistic function (sigmoid)
+ * @param {Number} value The value
+ * @param {Number} [midValue=0] The midpoint value, at which the function returns max/2
+ * @param {Number} [min=0] The minimum return value
+ * @param {Number} [max=1] The maximum return value
+ * @param {Number} [rate=1] The logistic growth rate or steepness of the function
+ * @return {Number} The result in the range [min, max] (excluding min and max)
+ */
+OA.Math.logistic = function(value, midValue, min, max, rate) {
+    if (!isdef( midValue )) midValue = 0;
+    if (!isdef( min )) min = 0;
+    if (!isdef( max )) max = 1;
+    if (!isdef( rate )) rate = 1;
+    var exp = -rate * (value - midValue);
+    var result = 1 / (1 + Math.pow(Math.E, exp));
+    return result * (max - min) + min;
+}
+
+// === OAInterpolation ===
+
+/**
+ * Creates an interpolation.
+ * @class
+ * @classdesc The description of an interpolation to be used between two keyframes.
+ * @param {OA.InterpolationMode} [mode=OA.InterpolationMode.LINEAR] The mode/function to be used.
+ * @param {float} [influence=0] The influence (X Coordinate) relative to the associated Keyframe time, a positive float.<br>
+ * @category OA
+ */
+function OAInterpolation(mode) {
+    /**
+     * The mode.
+     * @name mode
+     * @memberof OAInterpolation
+     * @type {OA.InterpolationMode}
+     */
+    this.mode = OA._d( mode, OA.InterpolationMode.LINEAR );
+    /**
+     * The rate/influence, according to the interpolation mode.<br>
+     * With Bézier interpolation, this is the X coordinate of the control point.
+     * @name x
+     * @memberof OAInterpolation
+     * @type {float}
+     */
+    this.x = 0;
+    if (this.mode == OA.InterpolationMode.EXPONENTIAL) this.influence = 1;
+    if (this.mode == OA.InterpolationMode.GAUSSIAN) this.influence = 0;
+    if (this.mode == OA.InterpolationMode.LOGARITHMIC) this.influence = 1;
+    if (this.mode == OA.InterpolationMode.LOGISTIC) this.influence = 1;
+    /**
+     * The additionnal value, used with Logistic (in this case it's the medium time) and Bézier (Y coordinate of the control point) interpolations.
+     * @name y
+     * @memberof OAInterpolation
+     * @type {float}
+     */
+    this.y = 0;
+    if (this.mode == OA.InterpolationMode.LOGISTIC) this.y = 0.5;
+    /**
+     * Any other Data.<br>
+     * This may be useful to store other information from any application.<br>
+     * Be careful, for this data to be saved to OA files it needs to be serializable as a JSON string.<br>
+     * You should only use <code>getMeta()</code> and <code>setMeta</code> to change these values.
+     * @name meta
+     * @memberof OAInterpolation
+     * @type {object}
+     */
+    this.meta = {};
+}
+
+/**
+ * Creates a js object containing this interpolation data.<br/>
+ * This object could then be exported to JSON for example.
+ * @return {Object} the JS Object
+ */
+OAInterpolation.prototype.toObject = function() {
+    var data = {
+        'mode': this.mode,
+        'x': this.x,
+        'y': this.y,
+        'meta': this.meta
+    };
+
+    return data;
+}
+
+/**
+ * Gets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} [defaultValue=null] A default value to be returned if the key is not found
+ */
+OAInterpolation.prototype.getMeta = function( key, defaultValue ) {
+    return OA._g(this.meta, key, defaultValue);
+}
+
+/**
+ * Sets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} value The new value. The value must be serializable as a JSON string.
+ */
+OAInterpolation.prototype.setMeta = function( key, value ) {
+    this.meta = OA._s(this.meta, key, value);
+}
+
+// === OAKeyframe ===
+
+/**
+ * Creates a keyframe.
+ * @class
+ * @classdesc An animation Keyframe.
+ * @param {float} [value=0] The value.
+ * @param {float} [time=0] The time.
+ * @param {OAInterpolation} [inInterpolation] The in Interplation. Linear by default.
+ * @param {OAInterpolation} [outInterpolation] The out Interplation. Auto by default.
+ * @category OA
+ */
+function OAKeyframe(value, time, inInterpolation, outInterpolation) {
+    /**
+     * The time.
+     * @name time
+     * @memberof OAKeyframe
+     * @type {float}
+     */
+    this.time = OA._d(time, 0);
+    /**
+     * The value.
+     * @name value
+     * @memberof OAKeyframe
+     * @type {float}
+     */
+    this.value = OA._d(value, 0);
+    /**
+     * The in interpolation. Can only be "AUTO", "LINEAR" or "BEZIER"
+     * @name inInterpolation
+     * @memberof OAKeyframe
+     * @type {OAInterpolation}
+     */
+    this.inInterpolation = OA._d(inInterpolation, new OAInterpolation(OA.InterpolationMode.AUTO));
+    /**
+     * The otu interpolation.
+     * @name outInterpolation
+     * @memberof OAKeyframe
+     * @type {OAInterpolation}
+     */
+    this.outInterpolation =  OA._d(outInterpolation, new OAInterpolation());
+    /**
+     * Any other Data.<br>
+     * This may be useful to store other information from any application.<br>
+     * Be careful, for this data to be saved to OA files it needs to be serializable as a JSON string.<br>
+     * You should only use <code>getMeta()</code> and <code>setMeta</code> to change these values.
+     * @name meta
+     * @memberof OAInterpolation
+     * @type {object}
+     */
+    this.meta = {};
+}
+
+/**
+ * Interpolates the value towards the other key
+ * @param {float} time The time
+ * @param {OAKeyframe} otherKey The other keyframe
+ * @return {float} The interpolated value
+ */
+OAKeyframe.prototype.interpolate = function(time, otherKey) {
+    var minTime = this.time;
+    var maxTime = otherKey.time;
+    var valueA = this.value;
+    var valueB = otherKey.value;
+
+    // Interpolation always go forward in time
+    if (maxTime < minTime) return otherKey.interpolate(time, this);
+    // Handle stupid values
+    if (maxTime == minTime) return valueA;
+    if (time >= maxTime) return valueB;
+    if (time <= minTime) return valueA;
+
+    var outI = this.outInterpolation;
+    var inI = otherKey.inInterpolation;
+
+    // Hold is easy
+    if (outI.mode == OA.InterpolationMode.HOLD) return valueA;
+
+    // Adjustments
+    if (inI.mode != OA.InterpolationMode.AUTO || inI.mode != OA.InterpolationMode.LINEAR || inI.mode != OA.InterpolationMode.BEZIER) {
+        inI.mode = OA.InterpolationMode.AUTO;
+    }
+    if (inI.mode == OA.InterpolationMode.AUTO) {
+        inI.mode = outI.mode;
+    }
+    if (outI.mode == OA.InterpolationMode.LINEAR && inI.mode == OA.InterpolationMode.BEZIER) {
+        outI.mode = OA.Interpolation.BEZIER;
+        outI.x = 0;
+        outI.y = 0;
+    }
+    if (outI.mode == OA.InterpolationMode.BEZIER && inI.mode == OA.InterpolationMode.LINEAR) {
+        inI.mode = OA.Interpolation.BEZIER;
+        inI.x = 0;
+        inI.y = 0;
+    }
+
+    // Compute
+    if (outI.mode == OA.InterpolationMode.LINEAR) {
+        return OA.Interpolation.linear(time, minTime, maxTime, valueA, valueB, false);
+    }
+
+    if (outI.mode == OA.InterpolationMode.BEZIER) {
+        // Get Bézier control points
+        return OA.Interpolation.bezier(time, minTime, maxTime, valueA, valueB, [
+            outI.x, outI.y,
+            1-inI.x, inI.y
+        ]);
+    }
+
+    if (outI.mode == OA.InterpolationMode.EXPONENTIAL) {
+        return OA.Interpolation.exponential(time, minTime, maxTime, valueA, valueB, outI.x);
+    }
+
+    if (outI.mode == OA.InterpolationMode.GAUSSIAN) {
+        return OA.Interpolation.gaussian(time, minTime, maxTime, valueA, valueB, outI.x);
+    }
+
+    if (outI.mode == OA.InterpolationMode.LOGARITHMIC) {
+        return OA.Interpolation.logarithmic(time, minTime, maxTime, valueA, valueB, outI.x);
+    }
+
+    if (outI.mode == OA.InterpolationMode.LOGISTIC) {
+        return OA.Interpolation.logistic(time, minTime, maxTime, valueA, valueB, outI.x, outI.y);
+    }
+
+    return valueA; 
+}
+
+/**
+ * Creates a js object containing this keyframe data.<br/>
+ * This object could then be exported to JSON for example.
+ * @return {Object} the JS Object
+ */
+OAKeyframe.prototype.toObject = function() {
+    var data = {
+        'time': this.time,
+        'value': this.value,
+        'inInterpolation': this.inInterpolation.toObject(),
+        'outInterpolation': this.outInterpolation.toObject(),
+        'meta': this.meta
+    };
+
+    return data;
+}
+
+/**
+ * Gets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} [defaultValue=null] A default value to be returned if the key is not found
+ */
+OAKeyframe.prototype.getMeta = function( key, defaultValue ) {
+    return OA._g(this.meta, key, defaultValue);
+}
+
+/**
+ * Sets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} value The new value. The value must be serializable as a JSON string.
+ */
+OAKeyframe.prototype.setMeta = function( key, value ) {
+    this.meta = OA._s(this.meta, key, value);
+}
+
+// === OAProperty ===
+
+/**
+ * Creates an animated property. In OpenAnimation, all properties are single-dimension properties. Multi-dimensionnal properties are {@link OAGroup}.
+ * @class
+ * @classdesc An animated property.
+ * @param {string} [name=""] A name for the property.
+ * @param {OAKeyframe[]} [keys=[]] The keyframes.
+ * @param {string} [id] A unique identifier, useful when saving the animation and load it later for example. If omitted, a new ID will be automatically generated.
+ * @param {float} [value=0] The value to be used if there is no keyframe
+ * @category OA
+ */
+function OAProperty(name, keys, id, value) {
+    /**
+     * The name of the property
+     * @name name
+     * @memberof OAProperty
+     * @type {string}
+     */
+    this.name = OA._d(name, "");
+    /**
+     * A Unique identifier
+     * @name id
+     * @memberof OAProperty
+     * @type {string}
+     */
+    this.id = OA._d(id, new Date().getTime());
+    /**
+     * The keyframes
+     * @name keys
+     * @memberof OAProperty
+     * @type {OAKeyframe[]}
+     */
+    this.keys = OA._d(keys, []).sort(OA._keyframeSorter);
+    /**
+     * The duration of the animation. Times and durations are expressed in seconds.
+     * @name duration
+     * @memberof OAProperty
+     * @type {float}
+     */
+    this.duration = 0;
+    if (this.keys.length > 0) this.duration = this.keys[this.keys.length-1].time;
+    /**
+     * The value to be used if there is no keyframe
+     * @name value
+     * @memberof OAProperty
+     * @type {float}
+     */
+    this.value = OA._d(value, 0);
+    /**
+     * Any other Data.<br>
+     * This may be useful to store other information from any application.<br>
+     * Be careful, for this data to be saved to OA files it needs to be serializable as a JSON string.<br>
+     * You should only use <code>getMeta()</code> and <code>setMeta</code> to change these values.
+     * @example
+     * {
+     *      "application": {
+     *           "name": "After Effects",
+     *           "version": "23.3"
+     *       } 
+     * }
+     * @name meta
+     * @memberof OAInterpolation
+     * @type {object}
+     */
+    this.meta = {};
+}
+
+/**
+ * Creates a new OAProperty with a linear keyframe per frame.
+ * @param {float} [frameDuration=0.04] The duration of a single frame.
+ * @param {string} [name] The name of the new OAProperty. If omitted, will be the same as the current property.
+ * @param {string} [id] The id of the new OAProperty. If omitted, will be the same as the current property.
+ * @return {OAProperty} The new OAProperty.
+ */
+OAProperty.prototype.bake = function(frameDuration, name, id) {
+    id = OA._d(id, this.id);
+    name = OA._d(name, this.name);
+    
+    var keys = [];
+    for (var time = 0; time <= this.duration; time += frameDuration) {
+        var key = new OAKeyframe(
+            this.value(time),
+            time
+        );
+        keys.push(key);
+    }
+
+    return new OAProperty(name, keys, id);
+}
+
+/**
+ * Creates a new OAProperty with less keyframes (but the animation may be a bit different, depending on the options)
+ * @return {OAProperty} The new OAProperty.
+ */
+OAProperty.prototype.reduce = function() {
+
+}
+
+/**
+ * Creates a js object containing this property data.<br/>
+ * This object could then be exported to JSON for example.
+ * @return {Object} the JS Object
+ */
+OAProperty.prototype.toObject = function() {
+    var data = {
+        'id': this.id,
+        'name': this.name,
+        'keys': [],
+        'duration': this.duration,
+        'type': 'property',
+        'meta': this.meta
+    };
+
+    for(var i = 0; i < this.keys.length; i++ ) {
+        data['keys'].push( this.keys[i].toObject() );
+    }
+
+    return data;
+}
+
+/**
+ * Creates a JSON string representing this property
+ * @return {string} the JSON document
+ */
+OAProperty.prototype.toJson = function( ) {
+    var data  = this.toObject();
+    return JSON.stringify(data, null, 4);
+}
+
+
+/**
+ * Gets the value at a given time
+ * @param {float} time The time
+ * @return {float} The value
+ */
+OAProperty.prototype.value = function(time) {
+    // No keyframes
+    if (this.keys.length == 0) return this.value;
+    // Single keyframe
+    if (this.keys.length == 1) return this.keys[0].value;
+    
+    //Extrapolation
+    // After duration or last frame
+    if (time > this.duration || time >= this.keys[this.keys.length-1].time) return this.keys[this.keys.length-1].value;
+    // Before first frame
+    if (time <= this.keys[0].time) return this.keys[0].value;
+    
+    // Interpolation
+    for (var k = 0; k < this.keys.length; k++) {
+        var key = this.keys[k];
+        if (time == key.time) return key.value;
+        if (time < key.time) continue;
+
+        return key.interpolate(time,  this.keys[k+1]);
+    }
+
+    // For safety - We should not arrive here!
+    return this.value;
+}
+
+/**
+ * Gets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} [defaultValue=null] A default value to be returned if the key is not found
+ */
+OAProperty.prototype.getMeta = function( key, defaultValue ) {
+    return OA._g(this.meta, key, defaultValue);
+}
+
+/**
+ * Sets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} value The new value. The value must be serializable as a JSON string.
+ */
+OAProperty.prototype.setMeta = function( key, value ) {
+    this.meta = OA._s(this.meta, key, value);
+}
+
+// === OAGroup ===
+
+/**
+ * Creates a group of properties.
+ * @class
+ * @classdesc A group of properties.
+ * @param {string} [name=""] A name for the property.
+ * @param {string} [id] A unique identifier, useful when saving the animation and load it later for example. If omitted, a new ID will be automatically generated.
+ * @category OA
+ */
+function OAGroup(name, id) {
+    /**
+     * The name of the property
+     * @name name
+     * @memberof OAProperty
+     * @type {string}
+     */
+    this.name = OA._d(name, "");
+    /**
+     * The child properties.
+     * @name properties
+     * @memberof OAGroup
+     * @type {OAProperty[]}
+     */
+    this.properties = [];
+    /**
+     * A Unique identifier
+     * @name id
+     * @memberof OAProperty
+     * @type {string}
+     */
+    this.id = OA._d(id, new Date().getTime());
+    /**
+     * Any other Data.<br>
+     * This may be useful to store other information from any application.<br>
+     * Be careful, for this data to be saved to OA files it needs to be serializable as a JSON string.<br>
+     * You should only use <code>getMeta()</code> and <code>setMeta</code> to change these values.
+     * @example
+     * {
+     *      "application": {
+     *           "name": "After Effects",
+     *           "version": "23.3"
+     *       } 
+     * }
+     * @name meta
+     * @memberof OAInterpolation
+     * @type {object}
+     */
+    this.meta = {};
+}
+
+/**
+ * Creates a js object containing this group data.<br/>
+ * This object could then be exported to JSON for example.
+ * @return {Object} the JS Object
+ */
+OAGroup.prototype.toObject = function() {
+    var data = {
+        'properties': [],
+        'id': this.id,
+        'name': this.name,
+        'type': 'group',
+        'meta': this.meta
+    };
+
+    for(var i = 0; i < this.properties.length; i++ ) {
+        data['properties'].push( this.properties[i].toObject() );
+    }
+
+    return data;
+}
+
+/**
+ * Creates a JSON string representing this group
+ * @return {string} the JSON document
+ */
+OAGroup.prototype.toJson = function( ) {
+    var data  = this.toObject();
+    return JSON.stringify(data, null, 4);
+}
+
+/**
+ * Exports the current group to an oa file
+ * @param {File|string} file The file.
+ * @return {File} the file.
+ */
+OAGroup.prototype.toFile = function ( file ) {
+    if (!(file instanceof File)) file = new File(file);
+    file.encoding = 'UTF-8';
+    var data = this.toJson( );
+
+    if (!file.open('w')) return file;
+    file.write(data);
+    file.close();
+
+    return file;
+}
+
+/**
+ * Gets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} [defaultValue=null] A default value to be returned if the key is not found
+ */
+OAGroup.prototype.getMeta = function( key, defaultValue ) {
+    return OA._g(this.meta, key, defaultValue);
+}
+
+/**
+ * Sets some metadata
+ * @param {string} key The key. It can be an URL-like string to get subkeys
+ * @param {*} value The new value. The value must be serializable as a JSON string.
+ */
+OAGroup.prototype.setMeta = function( key, value ) {
+    this.meta = OA._s(this.meta, key, value);
+}
