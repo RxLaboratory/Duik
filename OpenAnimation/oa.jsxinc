@@ -425,6 +425,81 @@ OA.Math.equals = function(value1, value2, floatPrecision) {
     return true;
 }
 
+/**
+ * Checks if the direction changes (if the point is at an extreme value). If the values have multiple dimensions, checks each axis individually.
+ * @param {Number|Number[]} previousValue The value just before the point.
+ * @param {Number|Number[]} point The point to check.
+ * @param {Number|Number[]} nextValue The value just after the point.
+ * @param {int} [precision=1] The precision for floating point comparisons; number of decimals.
+ * @return {Boolean} 
+ */
+OA.Math.isExtremePoint = function(previousValue, point, nextValue, precision) {
+    precision = OA._d(precision);
+    if (OA._jstype(previousValue) !== 'array') previousValue = [previousValue];
+    if (OA._jstype(point) !== 'array') point = [point];
+    if (OA._jstype(nextValue) !== 'array') nextValue = [nextValue];
+
+    for (var i = 0, n = point.length; i < n; i++) {
+		var p = point[i];
+		var pv = previousValue[i];
+		var nx = nextValue[i];
+		if (OA.Math.equals(p, pv, precision) && OA.Math.equals(p, nx, precision)) continue;
+        // Get the dif
+        var pDif = p-pv;
+        var nDif = p-nx;
+        // If the sign is the same, this is an extreme
+        if (pDif >= 0 && nDif >= 0) return true;
+        if (pDif <= 0 && nDif <= 0) return true;
+		// If one of the two is 0, this is an extreme
+        if (OA.Math.equals(pDif, 0.0, precision)) return true;
+        if (OA.Math.equals(nDif, 0.0, precision)) return true;
+    }
+	return false;
+}
+
+/**
+ * Checks if the point is an inflexion point.
+ * @param {Number|Number[]} previousVelocity The derivative (speed) of a point just before the point.
+ * @param {Number|Number[]} pointVelocity The derivative (speed) at the point to check.
+ * @param {Number|Number[]} nextVelocity The derivative (speed) of a point just after the point.
+ * @return {Boolean} 
+ */
+OA.Math.isInflexionPoint = function(previousVelocity, pointVelocity, nextVelocity) {
+    if (OA._jstype(previousVelocity) !== 'array') previousVelocity = [previousVelocity];
+    if (OA._jstype(pointVelocity) !== 'array') pointVelocity = [pointVelocity];
+    if (OA._jstype(nextVelocity) !== 'array') nextVelocity = [nextVelocity];
+
+    for (var i = 0, n = pointVelocity.length; i < n; i++) {
+		var p = pointVelocity[i];
+		var pv = previousVelocity[i];
+		var nx = nextVelocity[i];
+		if (p == pv && p == nx) continue;
+		if ( p >= pv && p >= nx) return true;
+		if ( p <= pv && p <= nx) return true;
+    }
+	return false;
+}
+
+/**
+ * Measures the vector length between two points
+ * @param {int[]} value1 - The first value
+ * @param {int[]} value2 - The second value
+ * @return {float} The length
+ */
+OA.Math.length = function(value1, value2) {
+    if (typeof value1 !== typeof value2) {
+        return null;
+    }
+    if (value1.length > 0) {
+        var result = 0;
+        for (var dim = 0; dim < value1.length; dim++) {
+            result += (value1[dim] - value2[dim]) * (value1[dim] - value2[dim]);
+        }
+        result = Math.sqrt(result);
+        return result;
+    } else return Math.abs(value1 - value2);
+}
+
 // === OAInterpolation ===
 
 /**
@@ -451,10 +526,11 @@ function OAInterpolation(mode) {
      * @type {float}
      */
     this.x = 0;
-    if (this.mode == OA.InterpolationMode.EXPONENTIAL) this.influence = 1;
-    if (this.mode == OA.InterpolationMode.GAUSSIAN) this.influence = 0;
-    if (this.mode == OA.InterpolationMode.LOGARITHMIC) this.influence = 1;
-    if (this.mode == OA.InterpolationMode.LOGISTIC) this.influence = 1;
+    if (this.mode == OA.InterpolationMode.EXPONENTIAL) this.x = 1;
+    if (this.mode == OA.InterpolationMode.GAUSSIAN) this.x = 0;
+    if (this.mode == OA.InterpolationMode.LOGARITHMIC) this.x = 1;
+    if (this.mode == OA.InterpolationMode.LOGISTIC) this.x = 1;
+    if (this.mode == OA.InterpolationMode.BEZIER) this.x = 1/3;
     /**
      * The additionnal value, used with Logistic (in this case it's the medium time) and Bézier (Y coordinate of the control point) interpolations.
      * @name y
@@ -622,9 +698,11 @@ OAKeyframe.prototype.interpolate = function(time, otherKey) {
 
     if (outI.mode == OA.InterpolationMode.BEZIER) {
         // Get Bézier control points
+        outY = OA.Interpolation.linear(valueA+outI.y, valueA, valueB, 0, 1);
+        inY = OA.Interpolation.linear(valueB-inI.y, valueA, valueB, 0, 1);
         return OA.Interpolation.bezier(time, minTime, maxTime, valueA, valueB, [
-            outI.x, outI.y,
-            1-inI.x, 1-inI.y
+            outI.x, outY,
+            1-inI.x, inY
         ]);
     }
 
@@ -761,10 +839,29 @@ function OAProperty(name, keys, id, value) {
 }
 
 /**
+ * Inserts a new keyframe in the animation. If a key with the same time exists it is replaced.
+ * @param {OAKeyframe} newKey
+ * @return {int} the index of the new key
+ */
+OAProperty.prototype.addKey = function( newKey ) {
+    for (var k = 0; k < this.keys.length; k++) {
+        var key = this.keys[k];
+        if (key.time == newKey.time) {
+            this.keys[k] = newKey;
+            return k;
+        }
+        if (key.time > newKey.time) break;
+    }
+    this.keys.splice(k, 0, newKey);
+    return k;
+}
+
+/**
  * Sets a linear keyframe per frame.
  * @param {float} [frameDuration=0.04] The duration of a single frame.
  * @param {string} [name] The name of the new OAProperty. If omitted, will be the same as the current property.
  * @param {string} [id] The id of the new OAProperty. If omitted, will be the same as the current property.
+ * @return {OAProperty} The new OAProperty.
  */
 OAProperty.prototype.bake = function(frameDuration, name, id) {
     frameDuration = OA._d(frameDuration, .04);
@@ -782,17 +879,231 @@ OAProperty.prototype.bake = function(frameDuration, name, id) {
     }
 
     var result = new OAProperty(name, keys, id);
-    result.clean();
+    sresult.clean();
     return result; 
 }
 
 /**
  * Creates a new OAProperty with less keyframes (but the animation may be a bit different, depending on the options) <br>
  * @param {float} [frameDuration=0.04] The duration of a single frame. Lower values increase the precision of the analysis of the motion.
+ * @param {string} [name] The name of the new OAProperty. If omitted, will be the same as the current property.
+ * @param {string} [id] The id of the new OAProperty. If omitted, will be the same as the current property.
  * @return {OAProperty} The new OAProperty.
  */
-OAProperty.prototype.reduce = function(frameDuration) {
+OAProperty.prototype.simplify = function(frameDuration, name, id) {
+    frameDuration = OA._d(frameDuration, .04);
+    id = OA._d(id, this.id);
+    name = OA._d(name, this.name);
 
+    // Get the values and times
+    // The extremes
+    var extremeKeys = [];
+    var extremeValuesAround = [];
+    var maxVelocity = 0;
+
+    // The inflexions
+    var inflexionKeys = [];
+    var inflexionSpeeds = [];
+
+    // First and last points if they're not extremes
+    var startValue = null;
+    var endValue = null;
+
+    // Max amplitude of the values (to adjust precision later)
+    var amplitude = 0;
+
+    var startTime = this.keys[0].time;
+    var endTime = this.keys[this.keys.length-1].time;
+
+    for (var time = startTime; time <= endTime; time += frameDuration) {
+        var currentValue = this.getValue(time);
+        var nextValue = this.getValue(time + frameDuration);
+        var prevValue = this.getValue(time - frameDuration);
+        var currentVelocity = this.getVelocity(time);
+        var nextVelocity = this.getVelocity(time + frameDuration);
+        var prevVelocity = this.getVelocity(time - frameDuration);
+
+        if (currentVelocity > maxVelocity) maxVelocity = currentVelocity;
+
+        // Get values and times
+        // Extremes
+        if (OA.Math.isExtremePoint(prevValue, currentValue, nextValue, 2 )) {
+            // Get amplitude
+            for (var i = 0, n = extremeKeys.length; i < n; i++) {
+                var length = OA.Math.length(currentValue, extremeKeys[i].value);
+                if (length > amplitude) amplitude = length;
+            }
+            // Add to extremes
+            var oaKey = new OAKeyframe(currentValue, time, new OAInterpolation(OA.InterpolationMode.BEZIER), new OAInterpolation(OA.InterpolationMode.BEZIER));
+            extremeKeys.push(oaKey);
+            extremeValuesAround.push([prevValue, nextValue]);
+        }
+        // Inflexions
+        else if (OA.Math.isInflexionPoint(prevVelocity, currentVelocity, nextVelocity)) {
+            var oaKey = new OAKeyframe(currentValue, time, new OAInterpolation(OA.InterpolationMode.BEZIER), new OAInterpolation(OA.InterpolationMode.BEZIER));
+            inflexionKeys.push(oaKey);
+            speed = currentVelocity;
+            inflexionSpeeds.push(speed);
+        }
+        // Start value
+        else if (time == startTime) startValue = currentValue;
+        // End value
+        else if (time >= endTime) {
+            endValue = currentValue;
+            break;
+        }
+    }
+
+    // Adjust the precision for comparisons
+    var comparisonPrecision = amplitude / 50;
+
+    // Add extreme keyframes
+    var result = new OAProperty(name, extremeKeys, id);
+    result.clean();
+
+    // Reset original interpolation if there are keyframes at the same time (+- a half frameDuration)
+    for (var i = 0; i < result.keys.length; i++) {
+        var newKey = result.keys[i];
+        var time = newKey.time;
+        for (var k = 0; k < this.keys.length; k++) {
+            /*var originalkey = this.keys[i];
+            if ( Math.abs(originalkey.time - time) > frameDuration/2 ) continue;
+
+            // Check the current offsets
+            var prevOffset = OA.Math.length( result.getValue(time-frameDuration), extremeValuesAround[i][0] );
+            var nextOffset = OA.Math.length( result.getValue(time+frameDuration), extremeValuesAround[i][1] );
+
+            // Reset original interpolation
+            newKey.inInterpolation = originalkey.inInterpolation;
+            newKey.outInterpolation = originalkey.outInterpolation;
+            this.keys[i] = newKey;
+
+            // Check if it's better!
+            var newPrevOffset = OA.Math.length( result.getValue(time-frameDuration), extremeValuesAround[i][0] );
+            var newNextOffset = OA.Math.length( result.getValue(time+frameDuration), extremeValuesAround[i][1] );
+
+            // Nope, restore to default bezier
+            if (newPrevOffset > prevOffset) {
+                newKey.inInterpolation = new OAInterpolation(OA.InterpolationMode.BEZIER);
+            }
+            if (newNextOffset > nextOffset) {
+                newKey.outInterpolation = new OAInterpolation(OA.InterpolationMode.BEZIER);
+            }
+            this.keys[i] = newKey;
+
+            // Play with the Bezier tangents to improve
+            // IN
+            if (newKey.inInterpolation.mode == OA.InterpolationMode.BEZIER) {
+                var currentTangent = newKey.inInterpolation.x;
+                var prevOffset = OA.Math.length( result.getValue(time-frameDuration), extremeValuesAround[i][0] );
+                var prevTestOffset = Number.POSITIVE_INFINITY;
+
+                if (prevOffset > comparisonPrecision) {
+                    var prevTangent = 0;
+                    newKey.inInterpolation.x = 0;
+                    while( newKey.inInterpolation.x <= 100 ) {
+                        // Test
+                        this.keys[i] = newKey;
+                        var testPrevOffset = OA.Math.length( result.getValue(time-frameDuration), extremeValuesAround[i][0] );
+                        // Restore previous if we've gone too far
+                        if (testPrevOffset > prevTestOffset) {
+                            newKey.inInterpolation.x = prevTangent;
+                            break;
+                        }
+                        prevTestOffset = testPrevOffset;
+                        prevTangent = newKey.inInterpolation.x;
+                        newKey.inInterpolation.x += .1;
+                    }
+
+                    // Check the new offset
+                    this.keys[i] = newKey;
+                    var testPrevOffset = OA.Math.length( result.getValue(time-frameDuration), extremeValuesAround[i][0] );
+                    // If it's not better, restore
+                    if (testPrevOffset > prevOffset) {
+                        newKey.inInterpolation.x = currentTangent;
+                    }
+                }
+
+                this.keys[i] = newKey;
+            }
+            // OUT
+            if (newKey.outInterpolation.mode == OA.InterpolationMode.BEZIER) {
+                var currentTangent = newKey.outInterpolation.x;
+                var nextOffset = OA.Math.length( result.getValue(time+frameDuration), extremeValuesAround[i][1] );
+                var prevTestOffset = Number.POSITIVE_INFINITY;
+
+                if (nextOffset > comparisonPrecision) {
+                    var prevTangent = 0;
+                    newKey.outInterpolation.x = 0;
+                    while( newKey.outInterpolation.x <= 100 ) {
+                        // Test
+                        this.keys[i] = newKey;
+                        var testNextOffset = OA.Math.length( result.getValue(time+frameDuration), extremeValuesAround[i][1] );
+                        // Restore previous if we've gone too far
+                        if (testNextOffset > prevTestOffset) {
+                            newKey.outInterpolation.x = prevTangent;
+                            break;
+                        }
+                        prevTestOffset = testNextOffset;
+                        prevTangent = newKey.outInterpolation.x;
+                        newKey.outInterpolation.x += .1;
+                    }
+
+                    // Check the new offset
+                    this.keys[i] = newKey;
+                    var testNextOffset = OA.Math.length( result.getValue(time+frameDuration), extremeValuesAround[i][1] );
+                    // If it's not better, restore
+                    if (testNextOffset > nextOffset) {
+                        newKey.outInterpolation.x = currentTangent;
+                    }
+                }
+
+                this.keys[i] = newKey;
+            }*/
+        }
+    }
+
+    // Set inflexion values
+    /*for (var i = 0, n = inflexionKeys.length; i < n; i++) {
+        var key = inflexionKeys[i];
+        var time = key.time;
+        var value = key.value;
+        // Compare value to set the key frame
+        var currentValue = result.getValue(time);
+        // Already close to the current curve, no need to add a keyframe
+        if (OA.Math.length(value, currentValue) <= comparisonPrecision) continue;
+        // Set the new keyframe
+        var keyIndex = this.addKey(key);
+        // set speed
+        if (keyIndex > 0) {
+            var prevTime = this.keys[keyIndex-1].time;
+            var duration = time-prevTime;
+            key.inInterpolation.y = inflexionSpeeds[i] * key.inInterpolation.x * duration;
+        }
+        if (keyIndex < this.keys.length-1) {
+            var nextTime = this.keys[keyIndex+1].time;
+            var duration = nextTime-time;
+            key.outInterpolation.y = inflexionSpeeds[i] * key.outInterpolation.x * duration;
+        }
+        this.keys[keyIndex] = key;
+    }*/
+
+    if (startValue !== null) {
+        result.addKey(new OAKeyframe(
+            startValue,
+            startTime
+        ));
+    }
+    if (endValue !== null) {
+        result.addKey(new OAKeyframe(
+            endValue,
+            endTime
+        ));
+    }
+
+    // Clean
+    result.clean();
+    return result;
 }
 
 /**
@@ -854,6 +1165,23 @@ OAProperty.prototype.toJson = function( ) {
 }
 
 /**
+ * Exports the current property to an oa file
+ * @param {File|string} file The file.
+ * @return {File} the file.
+ */
+OAProperty.prototype.toFile = function ( file ) {
+    if (!(file instanceof File)) file = new File(file);
+    file.encoding = 'UTF-8';
+    var data = this.toJson( );
+
+    if (!file.open('w')) return file;
+    file.write(data);
+    file.close();
+
+    return file;
+}
+
+/**
  * Gets the value at a given time
  * @param {float} time The time
  * @return {float} The value
@@ -881,6 +1209,17 @@ OAProperty.prototype.getValue = function(time) {
 
     // For safety - We should not arrive here!
     return this.value;
+}
+
+/**
+ * Gets the velocity at a given time
+ * @param {float} time The time
+ * @return {float} The velocity
+ */
+OAProperty.prototype.getVelocity = function(time) {
+    var v1 = this.getValue(time-.005);
+    var v2 = this.getValue(time+.005);
+    return (v2-v1)*100;
 }
 
 /**
