@@ -59,16 +59,21 @@ OAKeyframe.prototype.aeOutInterpolationType = function() {
  * @return {KeyframeEase} The AE Type
  */
 OAKeyframe.prototype.aeInEase = function(previousTime) {
-    if (this.inInterpolation.mode != OA.InterpolationMode.BEZIER) return [new KeyframeEase(0, 1/3)];
+    if (this.inInterpolation.mode != OA.InterpolationMode.BEZIER) return new KeyframeEase(0, 1/3);
 
     previousTime = OA._d(previousTime, this.time);
+    // First check if the actual AE speed is in the meta
     var speed = 0;
-    if (previousTime < this.time) {
+    if (this.inInterpolation.hasMeta('after-effects/speed')){
+        speed = this.inInterpolation.getMeta('after-effects/speed', 0);
+    } 
+    // Convert OA y tangent to AE speed
+    else if (previousTime < this.time) {
         var time = (this.time-previousTime) * this.inInterpolation.x;
-        var speed = this.inInterpolation.y / time;
+        speed = this.inInterpolation.y / time;
     }
 
-    return [new KeyframeEase(speed, this.inInterpolation.aeInfluence())];
+    return new KeyframeEase(speed, this.inInterpolation.aeInfluence());
 }
 
 /**
@@ -77,16 +82,20 @@ OAKeyframe.prototype.aeInEase = function(previousTime) {
  * @return {KeyframeEase} The AE Type
  */
 OAKeyframe.prototype.aeOutEase = function(nextTime) {
-    if (this.outInterpolation.mode != OA.InterpolationMode.BEZIER) return [new KeyframeEase(0, 1/3)];
+    if (this.outInterpolation.mode != OA.InterpolationMode.BEZIER) return new KeyframeEase(0, 1/3);
 
     nextTime = OA._d(nextTime, this.time);
+    // First check if the actual AE speed is in the meta
     var speed = 0;
+    if (this.outInterpolation.hasMeta('after-effects/speed')){
+        speed = this.outInterpolation.getMeta('after-effects/speed', 0);
+    } 
     if (nextTime > this.time) {
         var time = (nextTime-this.time) * this.outInterpolation.x;
         var speed = this.outInterpolation.y / time;
     }
 
-    return [new KeyframeEase(speed, this.outInterpolation.aeInfluence())];
+    return new KeyframeEase(speed, this.outInterpolation.aeInfluence());
 }
 
 /**
@@ -105,6 +114,8 @@ OAKeyframe.fromAE = function(keyIndex, property, comp) {
     if (valueType == PropertyValueType.MARKER) throw "OAProperty.fromAE() {ValueError}: Value type MARKER is not implemented (yet).";
     if (valueType == PropertyValueType.SHAPE) throw "OAProperty.fromAE() {ValueError}: Value type SHAPE is not implemented (yet).";
     if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAProperty.fromAE() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+    
+    var isSpatial = valueType == PropertyValueType.TwoD_SPATIAL || valueType == PropertyValueType.ThreeD_SPATIAL;
 
     // We need the comp
     var prop = property;
@@ -127,7 +138,20 @@ OAKeyframe.fromAE = function(keyIndex, property, comp) {
     var inEase = property.keyInTemporalEase(keyIndex);
     var outAeType = property.keyOutInterpolationType(keyIndex);
     var outEase = property.keyOutTemporalEase(keyIndex);
-
+    // Other stuff for metadata
+    var temporalAuto = property.keyTemporalAutoBezier(keyIndex);
+    var temporalContinuous = property.keyTemporalContinuous(keyIndex);
+    // Spatial stuff (saved in the metadata)
+    var outSpatialTangent = 0;
+    var inSpatialTangent = 0;
+    var roving = false;
+    if (isSpatial) {
+        outSpatialTangent = property.keyOutSpatialTangent(keyIndex);
+        inSpatialTangent = property.keyInSpatialTangent(keyIndex);
+        roving = property.keyRoving(keyIndex);
+        spatialAuto = property.keySpatialAutoBezier(keyIndex);
+        spatialContinuous = property.keySpatialContinuous(keyIndex);
+    }
     for (var i = 0; i < dimensions; i++) {
         var inI = new OAInterpolation( OAInterpolation.modeFromAE(inAeType) );
         var outI = new OAInterpolation( OAInterpolation.modeFromAE(outAeType) );
@@ -158,8 +182,10 @@ OAKeyframe.fromAE = function(keyIndex, property, comp) {
             var prevTime = property.keyTime(keyIndex - 1);
             var duration = time-prevTime;
             inI.y = speed * inI.x * duration;
-            
-        }        
+
+            // keep the AE speed as a metadata
+            inI.setMeta('after-effects/speed', ease.speed);
+        }
 
         if (outAeType == KeyframeInterpolationType.BEZIER && keyIndex < property.numKeys) {
             ease = outEase[0];
@@ -184,20 +210,42 @@ OAKeyframe.fromAE = function(keyIndex, property, comp) {
             var nextTime = property.keyTime(keyIndex + 1);
             var duration = nextTime-time;
             outI.y = ease.speed * duration * outI.x * 1.45;
+
+            // keep the AE speed as a metadata
+            outI.setMeta('after-effects/speed', ease.speed);
+        }
+
+        // Keep the AE Spatial interpolation too
+        if (isSpatial) {
+            inI.setMeta('after-effects/spatial/tangent', inSpatialTangent[i]);
+            outI.setMeta('after-effects/spatial/tangent', outSpatialTangent[i]);
         }
 
         inInterpolation.push( inI );
-        outInterpolation.push(outI );
+        outInterpolation.push( outI );
     }
+    
 
-    // TODO set metadata with actual AE values
-
-    if (dimensions == 1)
-        return new OAKeyframe(value, time, inInterpolation[0], outInterpolation[0]);
+    if (dimensions == 1) {
+        var oaKey = new OAKeyframe(value, time, inInterpolation[0], outInterpolation[0]);
+        oaKey.setMeta('after-effects/temporal/auto', temporalAuto);
+        oaKey.setMeta('after-effects/temporal/continuous', temporalContinuous);
+        return oaKey;
+    }
+        
 
     var keys = [];
-    for(var i = 0; i < dimensions; i++) {
-        keys.push(new OAKeyframe(value[i], time, inInterpolation[1], outInterpolation[1]));
+    for (var i = 0; i < dimensions; i++) {
+        var oaKey = new OAKeyframe(value[i], time, inInterpolation[i], outInterpolation[i]);
+        oaKey.setMeta('after-effects/temporal/auto', temporalAuto);
+        oaKey.setMeta('after-effects/temporal/continuous', temporalContinuous);
+        // Keep some AE values
+        if (isSpatial) {
+            oaKey.setMeta('after-effects/spatial/roving', roving);
+            oaKey.setMeta('after-effects/spatial/auto', spatialAuto);
+            oaKey.setMeta('after-effects/spatial/continuous', spatialContinuous);
+        }
+        keys.push(oaKey);
     }
     return keys;
 }
@@ -222,6 +270,8 @@ OAProperty.fromAEProperty = function(property, preExpression, frameDuration) {
     if (valueType == PropertyValueType.MARKER) throw "OAProperty.fromAE() {ValueError}: Value type MARKER is not implemented (yet).";
     if (valueType == PropertyValueType.SHAPE) throw "OAProperty.fromAE() {ValueError}: Value type SHAPE is not implemented (yet).";
     if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAProperty.fromAE() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
+
+    var isSpatial = valueType == PropertyValueType.TwoD_SPATIAL || valueType == PropertyValueType.ThreeD_SPATIAL;
 
     var name = property.name;
 
@@ -278,7 +328,8 @@ OAProperty.fromAEProperty = function(property, preExpression, frameDuration) {
     if (property.numKeys > 0 && !(!preExpression && property.expression == '')) {
         for(var k = 1; k <= property.numKeys; k++) {
             var key = OAKeyframe.fromAE(k, property);
-            for (var i = 0; i < dimensions; i++) {
+            if (dimensions == 1) keys[0].push(key);
+            else for (var i = 0; i < dimensions; i++) {
                 keys[i].push( key[i] );
             }
         }
@@ -327,12 +378,19 @@ OAProperty.fromAEProperty = function(property, preExpression, frameDuration) {
         oaProperties.push( oaProperty );
     }
 
-    if (dimensions == 1) return oaProperties[0];
+    if (dimensions == 1) {
+        oaProperty = oaProperties[0];
+        oaProperty.setMeta('application/name', aeName);
+        oaProperty.setMeta('application/version', aeVersion);
+        oaProperty.setMeta('after-effects/isSpatial', false);
+        return oaProperty;
+    }
 
     var group = new OAGroup(name, id);
     group.properties = oaProperties;
     group.setMeta('application/name', aeName);
     group.setMeta('application/version', aeVersion);
+    group.setMeta('after-effects/isSpatial', isSpatial);
     return group;
 }
 
@@ -383,9 +441,13 @@ OAProperty.prototype.toAEProperty = function( property, replace ) {
         if (k > 0) prevTime = this.keys[k-1].time;
         var nextTime = key.time;
         if (k < this.keys.length-1) nextTime = this.keys[this.keys.length-1].time;
-        property.setTemporalEaseAtKey(keyIndex, key.aeInEase(prevTime), key.aeOutEase(nextTime));
-
+        
+        property.setTemporalEaseAtKey(keyIndex, [key.aeInEase(prevTime)], [key.aeOutEase(nextTime)]);
         property.setInterpolationTypeAtKey(keyIndex, key.aeInInterpolationType(), key.aeOutInterpolationType());
+
+        // Other specific AE Stuff
+        property.setTemporalContinuousAtKey( keyIndex, key.getMeta('after-effects/temporal/continuous', false));
+        property.setTemporalAutoBezierAtKey( keyIndex, key.getMeta('after-effects/temporal/auto', false));
     }
 }
 
@@ -409,6 +471,9 @@ OAGroup.prototype.toAEProperty = function( property, replace, separateDimensions
     if (valueType == PropertyValueType.SHAPE) throw "OAGroup.toAEProperty() {ValueError}: Value type SHAPE is not implemented (yet).";
     if (valueType == PropertyValueType.TEXT_DOCUMENT) throw "OAGroup.toAEProperty() {ValueError}: Value type TEXT_DOCUMENT is not implemented (yet).";
 
+    var propSpatial = valueType == PropertyValueType.TwoD_SPATIAL || valueType == PropertyValueType.ThreeD_SPATIAL;
+    var isSpatial = propSpatial && this.getMeta('after-effects/isSpatial', false);
+
     var dimensions = 1;
     var value = property.value;
     if (valueType != PropertyValueType.OneD) dimensions = value.length;
@@ -425,7 +490,10 @@ OAGroup.prototype.toAEProperty = function( property, replace, separateDimensions
     }
 
     // Easy one
-    if (dimensions == 1) this.properties[0].toAEProperty(property);
+    if (dimensions == 1) {
+        this.properties[0].toAEProperty(property);
+        return
+    }
 
     if (OA._d(replace, true)) {
         while (property.numKeys > 0) property.removeKey(property.numKeys);
@@ -437,29 +505,72 @@ OAGroup.prototype.toAEProperty = function( property, replace, separateDimensions
         // And use properties.toAEProperty
     }
 
+    // Set the new keyframes, all at once (this is faster)
+    var times = [];
+    var values = [];
     for (var k = 0; k < numKeys; k++) {
         var mainKeys = this.properties[0].keys;
         var mainKey = mainKeys[k];
 
-        // get the time & value
+        // get the time & values
         var time = mainKey.time;
-        var value = mainKey.value;
+        var value = [mainKey.value];
+        for (var i = 1; i < dimensions; i++) {
+            value.push(this.properties[i].keys[k].value);
+        }
 
-        if (dimensions > 1) {
-            value = [value];
-            for (var i = 1; i < dimensions; i++) {
-                value.push(this.properties[i].keys[k].value);
+        times.push(time);
+        values.push(value);
+    }
+
+    property.setValuesAtTimes(times, values);
+
+    // Set the interpolations
+    for (var k = 0; k < numKeys; k++) {
+        var mainKeys = this.properties[0].keys;
+        var mainKey = mainKeys[k];
+
+        // get the time & values
+        var time = mainKey.time;
+
+        // Needed times for the interpolation
+        var prevTime = mainKey.time;
+        if (k > 0) prevTime = mainKeys[k-1].time;
+        var nextTime = mainKey.time;
+        if (k < mainKeys.length-1) nextTime = mainKeys[mainKeys.length-1].time;
+
+        var inEase = [];
+        var outEase = [];
+        var inSpatialTangent = [];
+        var outSpatialTangent = [];
+        for (var i = 0; i < dimensions; i++) {
+            var key = this.properties[i].keys[k];
+            if (isSpatial) {
+                inSpatialTangent.push( key.inInterpolation.getMeta('after-effects/spatial/tangent', 0) );
+                outSpatialTangent.push( key.outInterpolation.getMeta('after-effects/spatial/tangent', 0) );
+            }
+            if (!propSpatial || i == 0) {
+                inEase.push(key.aeInEase(prevTime));
+                outEase.push(key.aeOutEase(nextTime));
             }
         }
 
         // Set the new keyframe and get its index
-        property.setValueAtTime( time, value );
         var keyIndex = property.nearestKeyIndex( time );
 
-        // TODO set temporal ease
-
+        // set temporal ease
+        property.setTemporalEaseAtKey(keyIndex, inEase, outEase);
         property.setInterpolationTypeAtKey(keyIndex, mainKey.aeInInterpolationType(), mainKey.aeOutInterpolationType());
 
-        // TODO set spatial tangents
+        // Other specific AE Stuff
+        property.setTemporalContinuousAtKey( keyIndex, mainKey.getMeta('after-effects/temporal/continuous', false));
+        property.setTemporalAutoBezierAtKey( keyIndex, mainKey.getMeta('after-effects/temporal/auto', false));
+        // Spatial
+        if (isSpatial) {
+            property.setSpatialTangentsAtKey( keyIndex, inSpatialTangent, outSpatialTangent);
+            property.setSpatialContinuousAtKey( keyIndex, mainKey.getMeta('after-effects/spatial/continuous', true));
+            property.setSpatialAutoBezierAtKey( keyIndex, mainKey.getMeta('after-effects/spatial/auto', true));
+            property.setRovingAtKey( keyIndex, mainKey.getMeta('after-effects/spatial/roving', false));
+        }
     }
 }
