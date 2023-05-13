@@ -9,7 +9,7 @@
     var p = app.project.activeItem.layer(1).transform.rotation;
 
     var group = OAProperty.fromAEProperty(p);
-    group.clean();
+    group = group.bake();
     //alert(group.toJson());
 
     //group.toFile('X:/test.oa.json');

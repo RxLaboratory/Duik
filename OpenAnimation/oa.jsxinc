@@ -137,7 +137,7 @@ OA.Interpolation.linear = function(value, min, max, targetMin, targetMax, extrap
     if (value == max) return targetMax;
 
     var result = targetMin + (value - min) / (max - min) * (targetMax - targetMin);
-    if (!extrapolate) result = OA._clamp(value, targetMin, targetMax);
+    if (!extrapolate) result = OA._clamp(result, targetMin, targetMax);
     return result;
 };
 
@@ -527,8 +527,8 @@ OAInterpolation.prototype.hasMeta = function( key ) {
  * @classdesc An animation Keyframe.
  * @param {float} [value=0] The value.
  * @param {float} [time=0] The time.
- * @param {OAInterpolation} [inInterpolation] The in Interplation. Linear by default.
- * @param {OAInterpolation} [outInterpolation] The out Interplation. Auto by default.
+ * @param {OAInterpolation} [inInterpolation] The in Interplation. Auto by default.
+ * @param {OAInterpolation} [outInterpolation] The out Interplation. Linear by default.
  * @category OA
  */
 function OAKeyframe(value, time, inInterpolation, outInterpolation) {
@@ -624,7 +624,7 @@ OAKeyframe.prototype.interpolate = function(time, otherKey) {
         // Get Bézier control points
         return OA.Interpolation.bezier(time, minTime, maxTime, valueA, valueB, [
             outI.x, outI.y,
-            1-inI.x, inI.y
+            1-inI.x, 1-inI.y
         ]);
     }
 
@@ -761,26 +761,29 @@ function OAProperty(name, keys, id, value) {
 }
 
 /**
- * Creates a new OAProperty with a linear keyframe per frame.
+ * Sets a linear keyframe per frame.
  * @param {float} [frameDuration=0.04] The duration of a single frame.
  * @param {string} [name] The name of the new OAProperty. If omitted, will be the same as the current property.
  * @param {string} [id] The id of the new OAProperty. If omitted, will be the same as the current property.
- * @return {OAProperty} The new OAProperty.
  */
 OAProperty.prototype.bake = function(frameDuration, name, id) {
+    frameDuration = OA._d(frameDuration, .04);
     id = OA._d(id, this.id);
     name = OA._d(name, this.name);
     
     var keys = [];
-    for (var time = 0; time <= this.duration; time += frameDuration) {
+    for (var time = this.keys[0].time; time <= this.duration; time += frameDuration) {
         var key = new OAKeyframe(
-            this.value(time),
-            time
+            this.getValue(time),
+            time,
+            new OAInterpolation()
         );
         keys.push(key);
     }
 
-    return new OAProperty(name, keys, id);
+    var result = new OAProperty(name, keys, id);
+    result.clean();
+    return result; 
 }
 
 /**
@@ -811,10 +814,6 @@ OAProperty.prototype.clean = function(precision) {
         var key = this.keys[k];
         var cV = key.value;
         var pV = this.getValue(key.time - .05);
-        alert('next');
-        alert(cV);
-        alert(pV);
-        alert(OA.Math.equals(cV, pV, precision));
         if (!OA.Math.equals(cV, pV, precision)) continue;
         var nV = this.getValue(key.time + .05);
         if (!OA.Math.equals(cV, nV, precision)) continue;
@@ -865,14 +864,14 @@ OAProperty.prototype.getValue = function(time) {
     // Single keyframe
     if (this.keys.length == 1) return this.keys[0].value;
     
-    //Extrapolation
+    // Extrapolation
     // After duration or last frame
     if (time > this.duration || time >= this.keys[this.keys.length-1].time) return this.keys[this.keys.length-1].value;
     // Before first frame
     if (time <= this.keys[0].time) return this.keys[0].value;
     
     // Interpolation
-    for (var k = 0; k < this.keys.length; k++) {
+    for (var k = this.keys.length-1; k >= 0; k--) {
         var key = this.keys[k];
         if (time == key.time) return key.value;
         if (time < key.time) continue;
