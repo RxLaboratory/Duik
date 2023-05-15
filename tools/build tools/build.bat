@@ -1,8 +1,8 @@
 @echo off
 
 :: The version
-SET version=17.1.0
-SET isPrerelease=true
+SET version=17.1.1
+SET isPrerelease=false
 
 :: The repo (current dir)
 SET repoPath=%~dp0..\..

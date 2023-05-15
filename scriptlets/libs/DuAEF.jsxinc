@@ -5793,29 +5793,32 @@ DuVersion.checkUpdate = function()
 		// Sanitize reply (strip http headers, and parse)
 		DuDebug.log( "Version check - Reply\r\n" + reply );
 		var replyBody = reply.substring( reply.indexOf('{'), reply.lastIndexOf('}')+1 );
+
 		if (DuString.fullTrim(replyBody) == '') {
 			if (DuESF.debug) alert("Can't check for updates:\nThe server did not reply.");
 			return null;
 		}
 
 		try {
-			replyBody = JSON.parse(replyBody);
-			// Parse lists
-			if (replyBody.description) {
-				var descriptionList = replyBody.description.split('\n');
-				for (var i = 0; i < descriptionList.length; i++) {
-					var trimmedLine = DuString.trim(descriptionList[i]);
-					if (DuString.startsWith(trimmedLine, "- ")) {
-						descriptionList[i] = descriptionList[i].replace("- ", "• ");
-					}
-				}
-				reply.description = descriptionList.join("\n");
-			}
+			reply = JSON.parse(replyBody);
 		}
 		catch (e) {
 			if (DuESF.debug) alert("Can't check for updates:\n" + e.message + '\n\nThis is the content of the server reply:\n\n' + reply);
+			return null;
 		}
-		
+
+		// Parse lists
+		if (reply['description']) {
+			var descriptionList = reply['description'].split('\n');
+			for (var i = 0; i < descriptionList.length; i++) {
+				var trimmedLine = DuString.trim(descriptionList[i]);
+				if (DuString.startsWith(trimmedLine, "- ")) {
+					descriptionList[i] = descriptionList[i].replace("- ", "• ");
+				}
+			}
+			reply.description = descriptionList.join("\n");
+		}
+
 		return reply;
     }
 
@@ -19802,6 +19805,15 @@ DuAEKeySpatialProperties.prototype._clone = function() {
 }
 
 /**
+ * Reverses all the influences (swaps in and out)
+ */
+DuAEKeySpatialProperties.prototype.reverse = function() {
+	var inTangent = this.inTangent;
+	this.inTangent = this.outTangent;
+	this.outTangent = inTangent;
+}
+
+/**
 	 Constructs a new DuAEKeyframe
 	* @class DuAEKeyframe
 	* @classdesc Properties of an After Effects Keyframe, as returned by {@linkcode DuAEProperty.keys} or {@linkcode DuAEProperty.keyAtIndex} or {@linkcode DuAEProperty.keyAtTime}.
@@ -19855,6 +19867,39 @@ function DuAEKeyframe( other ){
  */
 DuAEKeyframe.prototype._clone = function() {
 	return new DuAEKeyframe( this );
+}
+
+/**
+ * Reverses all the influences (swaps in and out)
+ */
+DuAEKeyframe.prototype.reverse = function() {
+	var inType = this._inInterpolationType;
+	this._inInterpolationType = this._outInterpolationType;
+	this._outInterpolationType = inType;
+
+	var inEase = this.inEase;
+	this.inEase = this.outEase;
+	this.outEase = inEase;
+
+	this.spatialProperties.reverse();
+}
+
+/**
+ * Checks if all speed eases are 0
+ * @return {Boolean}
+ */
+DuAEKeyframe.prototype.stops = function() {
+	if (key.inEase)
+		for (var i =0; i < this.inEase.length; i++) {
+			if (Math.abs(this.inEase[i].speed) > 0) return false;
+		}
+
+	if (key.outEase)
+		for (var i =0; i < this.outEase.length; i++) {
+			if (Math.abs(this.outEase[i].speed) > 0) return false;
+		}
+
+	return true;
 }
 
 /**
@@ -22393,19 +22438,13 @@ DuAEProperty.prototype.setValue = function(value, defaultTime) {
         if (prop.dimensionsSeparated) {
             var group = prop.parentProperty;
             var index = prop.propertyIndex;
-            var i = 0;
-            var ok = false;
-            // The sepearation followers should be the next properties in the group
-            while (true) {
-                var p = group.property(index++);
-                if (!p) { ok = false; break; }
-                if (!p.isSeparationFollower) break;
-                if (value.length == i) break;
+            var ok = true;
+            for(var i = 1; i <= value.length; i++) {
+                var p = group.property(index+i);
+                alert(p.name);
                 p = new DuAEProperty(p);
-                var test = p.setValue( value [i] );
-                if (i == 0) ok = test;
-                else if (!test) ok = false;
-                i++;
+                var test = p.setValue( value[i-1] );
+                if (ok) ok = test;
             }
             return ok;
         }
@@ -22672,10 +22711,10 @@ DuAEProperty.prototype.setAnimation = function(anim, time, ignoreName, setExpres
 /**
  * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
  * Removes the animation from the property
- * @param {Property|DuAEProperty} prop -The property
  * @param {boolean} [removeExpression=false] - Set to true to remove the expression too
+ * @return {DuAEPropertyGroupAnimation|DuAEPropertyAnimation}	The animations. A DuAEPropertyAnimation if prop is a Property, a PopertyGroupAnim if it is a PropertyGroup
  */
-DuAEProperty.prototype.removeAnimation = function(prop, removeExpression) {
+DuAEProperty.prototype.removeAnimation = function(removeExpression) {
     removeExpression = def(removeExpression, false);
     this.do(function(prop) {
         prop = prop.getProperty();
@@ -22686,6 +22725,18 @@ DuAEProperty.prototype.removeAnimation = function(prop, removeExpression) {
             prop.expression = '';
         }
     });
+}
+
+/**
+ * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
+ * Removes the animation from the property and returns it
+ * @param {Property|DuAEProperty} prop -The property
+ * @param {boolean} [removeExpression=false] - Set to true to remove the expression too
+ */
+DuAEProperty.prototype.takeAnimation = function(removeExpression) {
+    var anim = this.animation();
+    this.removeAnimation(removeExpression);
+    return anim;
 }
 
 /**
@@ -24237,11 +24288,12 @@ DuAEProperty.prototype.quickBakeExpression = DuAEProperty.prototype.quickBakeExp
 /**
  * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
  * Uses a smarter algorithm to bake the expression to keyframes
- * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise. Minimum: 0.1
  */
 DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
     // Defaults
     frameStep = def(frameStep, 1.0);
+    if (frameStep < 0.1) frameStep = 0.1;
     range = [0, this.comp.duration];
     var step = this.comp.frameDuration;
     // Run
@@ -24267,7 +24319,9 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
         // Get the values and times
         // The extremes
         var extremeValues = [];
+        var extremeValuesAround = [];
         var extremeTimes = [];
+        var maxVelocity = 0;
         // The inflexions
         var inflexionValues = [];
         var inflexionSpeeds = [];
@@ -24285,6 +24339,8 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
             var nextVelocity = propInfo.velocityAtTime(time + step, false);
             var prevVelocity = propInfo.velocityAtTime(time - step, false);
 
+            if (currentVelocity > maxVelocity) maxVelocity = currentVelocity;
+
             // Get values and times
             // Extremes
             if (DuMath.isExtremePoint(prevValue, currentValue, nextValue, Math.round(1/frameStep) )) {
@@ -24296,6 +24352,7 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
                 // Add to extremes
                 extremeTimes.push(time);
                 extremeValues.push(currentValue);
+                extremeValuesAround.push([prevValue, nextValue]);
             }
             // Inflexions
             else if (DuMath.isInflexionPoint(prevVelocity, currentVelocity, nextVelocity)) {
@@ -24315,10 +24372,14 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
                 break;
             }
         }
+
+        // Adjust the precision for comparisons
+        var comparisonPrecision = amplitude / 50 * frameStep;
         // Disable expression
         prop.expressionEnabled = false;
-        // Remove current keyframes
-        propInfo.removeAnimation();
+        // Collect interpolations/influences and remove animation
+        // The result can be better if we reset them after baking the expression.
+        propAnim = propInfo.takeAnimation();
         // Set extreme values
         if (extremeValues.length > 0) {
             // For some reason, there are still properties here which can't receive keyframes
@@ -24328,13 +24389,187 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
                 propInfo.cleanKeyframes();
                 // Set to default Bézier
                 propInfo.setInterpolation(KeyframeInterpolationType.BEZIER);
+
+                // Temp workaround because we need to wait for AE!
+                var slowDown = 200;
+                var timeOffset = 0;
+
+                // Reset original interpolation if there are keyframes at the same time (+- a half step)
+                // AND velocity was 0 AND prev and next values are closer after that
+                for (var t = 0; t < extremeTimes.length; t++) {
+                    var time = extremeTimes[t];
+                    var keyIndex = prop.nearestKeyIndex(time);
+                    //alert(keyIndex);
+                    for (var k = 0; k < propAnim.keys.length; k++) {
+                        var key = propAnim.keys[k];
+                        if ( Math.abs(key._time - time) > step*frameStep/2 ) continue;
+
+                        // Check the current offsets
+                        $.sleep(slowDown);
+                        var prevOffset = DuMath.length( prop.valueAtTime(time-step, false), extremeValuesAround[t][0] );
+                        var nextOffset = DuMath.length( prop.valueAtTime(time+step, false), extremeValuesAround[t][1] );
+
+                        // Set interpolation
+                        prop.setInterpolationTypeAtKey(keyIndex, key._inInterpolationType, key._outInterpolationType);
+                        // Set influences
+                        if (key.inEase && key.outEase) prop.setTemporalEaseAtKey(keyIndex, key.inEase, key.outEase);
+
+                        // Check if it's better!
+                        $.sleep(slowDown);
+                        propInfo.comp.time += step;
+                        timeOffset += step;
+                        $.sleep(slowDown);
+                        var newPrevOffset = DuMath.length( prop.valueAtTime(time-step, false), extremeValuesAround[t][0] );
+                        var newNextOffset = DuMath.length( prop.valueAtTime(time+step, false), extremeValuesAround[t][1] );
+
+                        // Nope, restore
+                        if (newPrevOffset > prevOffset) {
+                            prop.setInterpolationTypeAtKey(keyIndex, KeyframeInterpolationType.BEZIER, prop.keyOutInterpolationType(keyIndex));
+                            var ke = new KeyframeEase(0, 33);
+                            var ease = [ke];
+                            if (prop.propertyValueType == PropertyValueType.TwoD || prop.propertyValueType == PropertyValueType.ThreeD) ease.push(ke);
+                            if (prop.propertyValueType == PropertyValueType.ThreeD) ease.push(ke);
+                            prop.setTemporalEaseAtKey(keyIndex, ease, prop.keyOutTemporalEase(keyIndex));
+                        }
+                        if (newNextOffset > nextOffset) {
+                            prop.setInterpolationTypeAtKey(keyIndex, prop.keyInInterpolationType(keyIndex), KeyframeInterpolationType.BEZIER);
+                            var ke = new KeyframeEase(0, 33);
+                            var ease = [ke];
+                            if (prop.propertyValueType == PropertyValueType.TwoD || prop.propertyValueType == PropertyValueType.ThreeD) ease.push(ke);
+                            if (prop.propertyValueType == PropertyValueType.ThreeD) ease.push(ke);
+                            prop.setTemporalEaseAtKey(keyIndex, prop.keyInTemporalEase(keyIndex), ease);
+                        }
+
+                        break;
+                    }
+
+                    // Play with the tangents to improve if there's no speed
+                    /*var inEase = prop.keyInTemporalEase(keyIndex);
+                    var inSpeed = true;
+                    for (var i =0; i < inEase.length; i++) {
+                        if (Math.abs(inEase[i].speed) > 0) {
+                            inSpeed = false;
+                            break;
+                        }
+                    }*/
+
+                    //$.sleep(slowDown);
+                   /* propInfo.comp.time += step;
+                    timeOffset += step;
+                    var currentPrevOffset = DuMath.length( prop.valueAtTime(time-step, false), extremeValuesAround[t][0] );
+                    //alert('current offset before: ' + currentPrevOffset);
+                    var prevTestOffset = Number.POSITIVE_INFINITY;
+
+                    if (currentPrevOffset > comparisonPrecision) {
+                        var ease = prop.keyInTemporalEase(keyIndex);
+                        for (var i = 0; i < ease.length; i++) {
+                            var testKeyframeEase = new KeyframeEase(ease[i].speed, 0.1);
+                            var previousInfluence = 0.1;
+
+                            var testEase = ease;
+                            
+                            while (testEase.influence <= 100) {
+
+                                // Set a new influence
+                                testEase[i] = testKeyframeEase;
+                                prop.setTemporalEaseAtKey(keyIndex, testEase, prop.keyOutTemporalEase(keyIndex));
+
+                                // Check the new offset
+                                //$.sleep(slowDown);
+                                propInfo.comp.time += step;
+                                timeOffset += step;
+                                var testPrevOffset = DuMath.length( prop.valueAtTime(time-step, false), extremeValuesAround[t][0] );
+                                //alert('test offset before: ' + testPrevOffset);
+                                // Restore previous if we've gone too far
+                                if (testPrevOffset > prevTestOffset) {
+                                    testKeyframeEase.influence = previousInfluence;
+                                    testEase[i] = testKeyframeEase;
+                                    prop.setTemporalEaseAtKey(keyIndex, testEase, prop.keyOutTemporalEase(keyIndex));
+                                    break;
+                                }
+                                prevTestOffset = testPrevOffset;
+                                previousInfluence = testKeyframeEase.influence;
+                                var newInfluence = Math.floor(testKeyframeEase.influence + frameStep*10);
+                                if (newInfluence > 100) break;
+                                testKeyframeEase.influence = newInfluence;
+                            }
+
+                            // Check the new offset
+                            var testPrevOffset = DuMath.length( prop.valueAtTime(time-step, false), extremeValuesAround[t][0] );
+                            // If it's not better, restore
+                            if (testPrevOffset > currentPrevOffset) {
+                                prop.setTemporalEaseAtKey(keyIndex, ease, prop.keyOutTemporalEase(keyIndex));
+                            }
+                        }
+                    }*/
+
+                    /*var outEase = prop.keyOutTemporalEase(keyIndex);
+                    var outSpeed = true;
+                    for (var i = 0; i < outEase.length; i++) {
+                        if (Math.abs(outEase[i].speed) > 0) {
+                            outSpeed = false;
+                            break;
+                        }
+                    }*/
+
+                    //$.sleep(slowDown);
+                    /*propInfo.comp.time += step;
+                    timeOffset += step;
+                    var currentNextOffset = DuMath.length( prop.valueAtTime(time+step, false), extremeValuesAround[t][1] );
+                    //alert('current offset after: ' + currentNextOffset);
+                    prevTestOffset = Number.POSITIVE_INFINITY;
+
+                    if (currentNextOffset > comparisonPrecision) {
+                        var ease = prop.keyOutTemporalEase(keyIndex);
+                        for (var i = 0; i < ease.length; i++) {
+                            var testKeyframeEase = new KeyframeEase(ease[i].speed, 0.1);
+                            var previousInfluence = 0.1;
+
+                            var testEase = ease;
+                            
+                            while (testEase.influence <= 100) {
+
+                                // Set a new influence
+                                testEase[i] = testKeyframeEase;
+                                prop.setTemporalEaseAtKey(keyIndex, prop.keyInTemporalEase(keyIndex), testEase);
+
+                                // Check the new offset
+                                //$.sleep(slowDown);
+                                propInfo.comp.time += step;
+                                timeOffset += step;
+                                var testNextOffset = DuMath.length( prop.valueAtTime(time+step, true), extremeValuesAround[t][1] );
+                                //alert('test offset after: ' + testNextOffset);
+                                // Restore previous if we've gone too far
+                                if (testNextOffset > prevTestOffset) {
+                                    testKeyframeEase.influence = previousInfluence;
+                                    testEase[i] = testKeyframeEase;
+                                    prop.setTemporalEaseAtKey(keyIndex, prop.keyInTemporalEase(keyIndex), testEase);
+                                    break;
+                                }
+                                prevTestOffset = testNextOffset;
+                                previousInfluence = testKeyframeEase.influence;
+                                var newInfluence = Math.floor(testKeyframeEase.influence + frameStep*10);
+                                if (newInfluence > 100) break;
+                                testKeyframeEase.influence = newInfluence;
+                            }
+
+                            // Check the new offset
+                            var testNextOffset = DuMath.length( prop.valueAtTime(time+step, false), extremeValuesAround[t][1] );
+                            // If it's not better, restore
+                            if (testNextOffset > currentNextOffset) {
+                                prop.setTemporalEaseAtKey(keyIndex, prop.keyInTemporalEase(keyIndex), ease);
+                            }
+                        }
+                    }*/
+                }
+
+                // Reset the comp CTI
+                propInfo.comp.time -= timeOffset;
             }
-            catch (e) {}
+            catch (e) { if (DuESF.debug) alert("Line: " + e.line + "\n" + e.message); }
         }
         // Set inflexion values
-        if (inflexionValues.length > 0) {
-            // Adjust the precision for comparison
-            var comparisonPrecision = amplitude / 10 * frameStep;
+        if (inflexionValues.length > 0 && false) {
             // Set inflexion values and speeds
             for (var i = 0, n = inflexionValues.length; i < n; i++) {
                 var inflexionTime = inflexionTimes[i];
@@ -24348,7 +24583,7 @@ DuAEProperty.prototype.smartBakeExpressions = function(frameStep) {
                     prop.setValueAtTime(inflexionTime, inflexionValue);
                     var inflexionKey = prop.nearestKeyIndex(inflexionTime);
                     // Spatial, set to continuous
-                    if (orop.isSpatial) propInfo.setKeyInterpolation(inflexionKey, 'continuous');
+                    if (prop.isSpatial) propInfo.setKeyInterpolation(inflexionKey, 'continuous');
                     // other, set speed
                     else propInfo.setKeySpeed(inflexionKey, inflexionSpeeds[i]);
                 }
@@ -30517,14 +30752,16 @@ DuAELayer.reverseAnims = function(anims) {
         if (anim.type == 'anim') {
             //reverse the array
             anim.keys = anim.keys.reverse();
-            //set the new times
+            //set the new times and reverse influences
             for (var i = 0, num = anim.keys.length; i < num; i++) {
                 var ratio = 1 - ((anim.keys[i]._time - startTime) / duration);
                 anim.keys[i]._time = ratio * duration + startTime;
-                var sV = anim.endValue;
-                anim.endValue = anim.startValue;
-                anim.startValue = sV;
+                anim.keys[i].reverse();                
             }
+            //reverse start and endvalues
+            var sV = anim.endValue;
+            anim.endValue = anim.startValue;
+            anim.startValue = sV;
         } else if (anim.anims) {
             for (var i = 0, num = anim.anims.length; i < num; i++) {
                 reverse(anim.anims[i]);
