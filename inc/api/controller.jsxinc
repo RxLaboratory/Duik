@@ -991,16 +991,21 @@ Duik.Controller.getCreate = function ( layer, type, controllers ) {
 }
 
 // low-level undocumented method to get a prop from a controller effect
-Duik.Controller.getEffectProp = function ( layer, prop ) {
+Duik.Controller.getEffectProp = function ( layer, prop, anchor ) {
+    anchor = def(anchor, false);
     // Test all pseudo effects
     var pe = Duik.PseudoEffect.CONTROLLER;
     var index = -1;
     var effect = layer.effect( pe.matchName );
-    if ( effect ) index = pe.props[ 'Icon' ][ prop ].index;
+
+    if ( effect && anchor) index = pe.props[ 'Anchor' ][ prop ].index;
+    else if (effect) index = pe.props[ 'Icon' ][prop].index;
+    else if (anchor) return null;
+
     if ( !effect ) {
         pe = Duik.PseudoEffect.CONTROLLER_SLIDER;
         effect = layer.effect( pe.matchName );
-        if ( effect ) index = pe.props[ 'Handle' ][ prop ].index;
+        if ( effect) index = pe.props[ 'Handle' ][ prop ].index;
     }
     if ( !effect ) {
         pe = Duik.PseudoEffect.CONTROLLER_2DSLIDER;
@@ -1434,7 +1439,7 @@ Duik.Controller.opacity = function ( layer ) {
 
 /**
  * Sets the opacity of the controller layers
- * @param {float} opacity The size
+ * @param {float} opacity The opacity
  * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
  * @returns {DuColor}
  */
@@ -1449,6 +1454,128 @@ Duik.Controller.setOpacity = function ( opacity, layers ) {
         if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) continue;
 
         var opa = Duik.Controller.getEffectProp( layer, 'Opacity' );
+        if ( !opa ) continue;
+        opa.setValue( opacity );
+    }
+}
+
+/**
+ * Checks the color of the anchor of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.anchorColor = function ( layer ) {
+    layer = def( layer, DuAEComp.getActiveLayer() );
+    if ( !layer ) return new DuColor();
+
+    if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) return new DuColor();
+
+    var col = Duik.Controller.getEffectProp( layer, 'Color', true );
+    if ( !col ) return new DuColor();
+
+    return new DuColor( col.value );
+}
+
+/**
+ * Sets the color of the anchor of the controller layers
+ * @param {DuColor|null} [color] The color. If omitted or null, will assign a random color for each bone.
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @returns {DuColor}
+ */
+Duik.Controller.setAnchorColor = function ( color, layers ) {
+    layers = def( layer, DuAEComp.getSelectedLayers() );
+    layers = new DuList( layers );
+    if ( layers.length() == 0 ) return;
+
+    for ( var i = 0, n = layers.length(); i < n; i++ ) {
+        var layer = layers.at( i );
+
+        if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) continue;
+
+        var col = Duik.Controller.getEffectProp( layer, 'Color', true );
+        if ( !col ) continue;
+        var c = [ 0, 0, 0, 0 ];
+        if ( typeof color === 'undefined' || color == null ) c = DuColor.random().floatRGBA();
+        else c = color.floatRGBA();
+        col.setValue( c );
+    }
+}
+
+/**
+ * Checks the size of the anchor of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.anchorSize = function ( layer ) {
+    layer = def( layer, DuAEComp.getActiveLayer() );
+    if ( !layer ) return 100;
+
+    if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) return 100;
+
+    var s = Duik.Controller.getEffectProp( layer, 'Size', true );
+    if ( !s ) return 100;
+
+    s = new DuAEProperty( s );
+
+    return s.value( true );
+}
+
+/**
+ * Sets the size of the anchor of the controller layers
+ * @param {float} size The size
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @returns {DuColor}
+ */
+Duik.Controller.setAnchorSize = function ( size, layers ) {
+    layers = def( layer, DuAEComp.getSelectedLayers() );
+    layers = new DuList( layers );
+    if ( layers.length() == 0 ) return;
+
+    for ( var i = 0, n = layers.length(); i < n; i++ ) {
+        var layer = layers.at( i );
+
+        if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) continue;
+
+        var s = Duik.Controller.getEffectProp( layer, 'Size', true );
+        if ( !s ) continue;
+        s.setValue( size );
+    }
+}
+
+/**
+ * Checks the opacity of the anchor of the controller layer
+ * @param {Layer} [layer=DuAEComp.getActiveLayer] The layer. If omitted, will check the first selected bone of the current comp
+ * @returns {DuColor}
+ */
+Duik.Controller.anchorOpacity = function ( layer ) {
+    layer = def( layer, DuAEComp.getActiveLayer() );
+    if ( !layer ) return 100;
+
+    if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) return 100;
+
+    var opa = Duik.Controller.getEffectProp( layer, 'Opacity', true );
+    if ( !opa ) return 100;
+
+    return opa.value;
+}
+
+/**
+ * Sets the opacity of the anchor of the controller layers
+ * @param {float} opacity The opacity
+ * @param {Layer|LayerCollection|Layer[]|DuList.<Layer>} [layers=DuAEComp.getSelectedLayers()] The layer(s). If omitted, will use all selected layers in the comp
+ * @returns {DuColor}
+ */
+Duik.Controller.setAnchorOpacity = function ( opacity, layers ) {
+    layers = def( layer, DuAEComp.getSelectedLayers() );
+    layers = new DuList( layers );
+    if ( layers.length() == 0 ) return;
+
+    for ( var i = 0, n = layers.length(); i < n; i++ ) {
+        var layer = layers.at( i );
+
+        if ( !Duik.Layer.isType( layer, Duik.Layer.Type.CONTROLLER ) ) continue;
+
+        var opa = Duik.Controller.getEffectProp( layer, 'Opacity', true );
         if ( !opa ) continue;
         opa.setValue( opacity );
     }
