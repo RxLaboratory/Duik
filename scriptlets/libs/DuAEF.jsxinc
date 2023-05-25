@@ -21620,7 +21620,6 @@ DuAEProperty.prototype.value = function( preExpression ) {
     if (this.isGroup()) return null;
     preExpression = def(preExpression, false);
 
-    var d = this.dimensions();
     var v;
     if (preExpression)
         v = this.getProperty().valueAtTime(this.comp.time, true);
@@ -21630,6 +21629,17 @@ DuAEProperty.prototype.value = function( preExpression ) {
     v = this.fixValue(v);
 
     return v;
+}
+
+/**
+ * Reimplements the <code>Property.expressionEnabled</code> attribute for convenience.
+ * @return {boolean} When true, the named property uses its associated expression to generate a value.<br>
+ * When false, the keyframe information or static value of the property is used. This attribute can be set to true only if canSetExpression for the named property is true and expression contains a valid expression string.
+ */
+DuAEProperty.prototype.expressionEnabled = function( preExpression ) {
+    if (this.isGroup()) return false;
+
+    return this.getProperty().expressionEnabled;
 }
 
 /**
@@ -22752,6 +22762,7 @@ DuAEProperty.prototype.selectKeys = function(inTime, outTime) {
     outTime = def(outTime, inTime);
     // Run
     this.do(function(propInfo) {
+        if (propInfo.matchName == 'ADBE Marker') return;
         prop = propInfo.getProperty();
         if (prop.elided) return;
         if (prop.isSeparationLeader)
@@ -22910,20 +22921,8 @@ DuAEProperty.prototype.setEase = function( easeInValue, easeOutValue, velocityIn
         for (var k = 0, numK = prop.selectedKeys.length; k < numK; k++) {
             var key = prop.selectedKeys[k];
 
-            if (isdef( easeInValue )) {
-                if (!isdef( velocityInValue ) && prop.keyInInterpolationType(key) == KeyframeInterpolationType.LINEAR) {
-                    vInValue = 0;
-                }
-            }
-
-            if (isdef( easeOutValue )) {
-                if (!isdef( velocityOutValue ) && prop.keyOutInterpolationType(key) == KeyframeInterpolationType.LINEAR) {
-                    vOutValue = 0;
-                }
-            }
-
             //compute the velocity
-            if (velocityAsPercent) {
+            if (velocityAsPercent && (isdef(velocityInValue) || isdef(velocityOutValue))) {
                 //get speed just before and after as if it was linear
                 var prevSpeed;
                 var nextSpeed;
@@ -22960,16 +22959,14 @@ DuAEProperty.prototype.setEase = function( easeInValue, easeOutValue, velocityIn
                     if (valAfter < val) signAfter = -1;
                 }
 
-                if (velocityInValue == velocityOutValue) {
+                if (isdef(velocityInValue) && isdef(velocityOutValue) && velocityInValue == velocityOutValue) {
                     //select average speed
                     var speed = (prevSpeed + nextSpeed) / 2;
-
                     vInValue = velocityInValue * speed / 100 * signBefore;
                     vOutValue = velocityOutValue * speed / 100 * signBefore;
                 } else {
-
-                    vInValue = velocityInValue * prevSpeed / 100 * signBefore;
-                    vOutValue = velocityOutValue * nextSpeed / 100 * signAfter;
+                    if (isdef(velocityInValue)) vInValue = velocityInValue * prevSpeed / 100 * signBefore;
+                    if (isdef(velocityOutValue)) vOutValue = velocityOutValue * nextSpeed / 100 * signAfter;
                 }
 
             }
@@ -23674,6 +23671,28 @@ DuAEProperty.prototype.removeExpressions = function(filter, keepPostExpressionVa
         if (propInfo.riggable()) {
             if (keepPostExpressionValue) propInfo.setValue(prop.value);
             prop.expression = '';
+        }
+    });
+}
+
+/**
+ * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
+ * Enables or disables all expressions found in the property.
+ * @param {Boolean} [enable=true] Set to false to disable expressions
+ */
+DuAEProperty.prototype.enableExpressions = function(enable) {
+    // Defaults
+    enable = def(enable, true);
+
+    // Run
+    this.do(function(propInfo) {
+        prop = propInfo.getProperty();
+        var expression = prop.expression;
+
+        if (expression == '') return;
+
+        if (propInfo.riggable()) {
+            prop.expressionEnabled = enable;
         }
     });
 }

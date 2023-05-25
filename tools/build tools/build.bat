@@ -1,7 +1,7 @@
 @echo off
 
 :: The version
-SET version=17.1.1
+SET version=17.1.2
 SET isPrerelease=false
 
 :: The repo (current dir)
