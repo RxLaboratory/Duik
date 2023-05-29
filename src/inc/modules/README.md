@@ -2,4 +2,4 @@
 
 You have to copy or symlink some dependencies here:
 
-- [`DuESF.jsxinc`](https://github.com/RxLaboratory/DuESF/tree/main/dist)
+- [`DuAEF.jsxinc`](https://github.com/RxLaboratory/DuAEF/tree/main/dist)
