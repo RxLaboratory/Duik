@@ -1,6 +1,5 @@
 ﻿(function() {
 
-    
     #include "OpenAnimation/oa.jsxinc"
     #include "OpenAnimation/oa_ae.jsxinc"
 
