@@ -1732,8 +1732,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
     var comp = layer1.containingComp;
 
-    showGuides = def(showGuides, 1);
-    if (!showGuides) showGuides = 0;
+    showGuides = def(showGuides, true);
 
     //Create controller
     if (controller == null) {
@@ -1759,9 +1758,12 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     var l2pos = layer2.transform.position.value;
     var cpos = controller.transform.position.value;
     var upperLength = DuMath.length(l1pos, l2pos);
-    var lowerLength = DuMath.length(l2pos, );
+    var lowerLength = DuMath.length(l2pos );
+    /// @ts-ignore
     var endPos = cpos - l1pos;
+    /// @ts-ignore
     var middlePos = l2pos - l1pos;
+    /// @ts-ignore
     var gpos = cpos - l2pos;
     if (endPos[0] == 0 && endPos[1] > 0 && middlePos[0] > 0) clockwise = true;
     else if (endPos[0] == 0 && endPos[1] < 0 && middlePos[0] < 0) clockwise = true;
@@ -1772,6 +1774,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     }
 
     // Get l2 relative position
+    /// @ts-ignore
     l2pos = l2pos - l1pos;
 
     //reparent
@@ -1841,65 +1844,73 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     var guidesIndex = pe.props["Display"]["Draw guides"].index;
 
     // Default values
-    effect(guidesIndex).setValue(showGuides);
+    /// @ts-ignore
+    effect(guidesIndex).setValue(showGuides ? 1 : 0);
 
+    /// @ts-ignore
     if (clockwise) effect(sideIndex).setValue(-100);
+    /// @ts-ignore
     else effect(sideIndex).setValue(100);
 
     //set layers
+    /// @ts-ignore
     effect(uLayerIndex).setValue(layer1.index);
+    /// @ts-ignore
     effect(lLayerIndex).setValue(layer2.index);
+    /// @ts-ignore
     if (goal != null) effect(gLayerIndex).setValue(goal.index);
 
     //set initial position
+    /// @ts-ignore
     effect(lRelativePosIndex).setValue([l2pos[0],l2pos[1]]);
+    /// @ts-ignore
     effect(goalRelativePosIndex).setValue([gpos[0], gpos[1]]);
     DuAEProperty.lock([effect(lRelativePosIndex),  effect(goalRelativePosIndex)]);
 
     //add expressions
 
+    /// @ts-ignore
     effect(sideIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var auto = fx(' + swingIndex + ').value;',
         'var result = value;',
         'if (auto)',
         '{',
-        '	var upperLayer = null;',
-        '	try { upperLayer = fx(' + uLayerIndex + '); } catch (e) {}',
-        '	if (upperLayer != null) {',
-        '		var reversed = fx(' + swingRevIndex + ').value;',
-        '        var sftnss = fx(' + swingSftnssIndex + ').value;',
-        '        var limitAngle = fx(' + swingLimitIndex + ').value;',
-        '		var ctrlPos = fx(' + ctrlWorldPosIndex + ').value;',
-        '		var upperPos = fx(' + uWorldPosIndex + ').value;',
-        '		',
-        '		var lowerLimit = limitAngle - sftnss;',
-        '		var upperLimit = limitAngle + sftnss;',
-        '		',
-        '		var vec = ctrlPos - upperPos;',
-        '		var angle = Math.atan2(vec[1], vec[0]);',
-        '		angle = radiansToDegrees(angle);',
-        '		angle = linear(angle, lowerLimit, upperLimit, -100, 100);',
-        '		if(reversed) angle = -angle;',
-        '		result = angle;',
-        '	}',
+        '	var reversed = fx(' + swingRevIndex + ').value;',
+        '   var sftnss = fx(' + swingSftnssIndex + ').value;',
+        '   var limitAngle = fx(' + swingLimitIndex + ').value;',
+        '	var ctrlPos = fx(' + ctrlWorldPosIndex + ').value;',
+        '	var upperPos = fx(' + uWorldPosIndex + ').value;',
+        '	',
+        '	var lowerLimit = limitAngle - sftnss;',
+        '	var upperLimit = limitAngle + sftnss;',
+        '	',
+        '	var vec = ctrlPos - upperPos;',
+        '	var angle = Math.atan2(vec[1], vec[0]);',
+        '	angle = radiansToDegrees(angle);',
+        '	angle = linear(angle, lowerLimit, upperLimit, -100, 100);',
+        '	if(reversed) angle = -angle;',
+        '	result = angle;',
         '}',
         '',
         'result;'
     ].join('\n');
 
+    /// @ts-ignore
     effect(uLengthIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var lowerPos = fx(' + lRelativePosIndex + ').value;',
         'length(lowerPos);'
 	].join('\n');
 
+    /// @ts-ignore
     effect(lLengthIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var lowerPos = fx(' + goalRelativePosIndex + ').value;',
         'length(lowerPos);'
 	].join('\n');
 
+    /// @ts-ignore
     effect(limbLengthIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var upperLength = fx(' + uLengthIndex + ').value;',
@@ -1907,6 +1918,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'upperLength + lowerLength;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(uWorldPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var upperLayer = null;',
@@ -1924,6 +1936,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'result;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(ctrlWorldPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'function getLayerWorldPos(t, l) {',
@@ -1935,6 +1948,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'getLayerWorldPos();'
 	].join('\n');
 
+    /// @ts-ignore
     effect(ctrlDistanceIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var upperPos = fx(' + uWorldPosIndex + ').value;',
@@ -1942,6 +1956,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'length(ctrlPos, upperPos);'
 	].join('\n');
 
+    /// @ts-ignore
     effect(uStretchIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var stretch = fx(' + stretchIndex + ').value;',
@@ -1972,6 +1987,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'else value;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(uScaleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var upperLength = fx(' + uLengthIndex + ').value;',
@@ -1981,6 +1997,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'c*100;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(lStretchIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var stretch = fx(' + stretchIndex + ').value;',
@@ -2012,6 +2029,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         ''
 	].join('\n');
 
+    /// @ts-ignore
     effect(lScaleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var lowerLength = fx(' + lLengthIndex + ').value;',
@@ -2021,6 +2039,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'c*100;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(limbStretchedIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var upperStretchedLength = fx(' + uStretchIndex + ').value;',
@@ -2028,6 +2047,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'upperStretchedLength + lowerStretchedLength;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(lRelativeStretchedIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var lowerPos = fx(' + lRelativePosIndex + ').value;',
@@ -2036,6 +2056,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'lowerPos * upperScale;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(ikGoalPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var ctrlDistance = fx('  + ctrlDistanceIndex + ').value;',
@@ -2055,6 +2076,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'result;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(fkGoalPosIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var lowerVec = fx(' + goalRelativePosIndex + ').value;',
@@ -2062,6 +2084,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'lowerVec * lowerScale / 100;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(ikGoalDistanceIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var goal = null;',
@@ -2073,6 +2096,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         '} else value;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(straightIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var limbLength = fx(' + limbStretchedIndex + ').value;',
@@ -2081,6 +2105,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'else 0;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(uAngleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var ikfk = fx(' + ikIndex + ').value;',
@@ -2128,6 +2153,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'result;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(lAngleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var ikfk = fx(' + ikIndex + ').value;',
@@ -2185,6 +2211,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         'result;'
 	].join('\n');
 
+    /// @ts-ignore
     effect(gAngleIndex).expression = [DuAEExpression.Id.TWO_IK,
         'var fx = thisProperty.propertyGroup();',
         'var ikfk = fx(' + ikIndex + ').value;',
@@ -2250,6 +2277,7 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         var colorExp = '';
         if (ctrlEffect) colorExp = DuAEExpression.Id.CONTROLLER + '\neffect("' + ctrlEffect.name + '")(' + iconColorIndex + ')-[0.2,0.2,0.2,0]';
 
+        /// @ts-ignore
         var ikGroup = controller("ADBE Root Vectors Group").addProperty("ADBE Vector Group");
         ikGroup.name = 'IK';
         var ikContent = ikGroup.property("ADBE Vectors Group");
