@@ -24,7 +24,7 @@ Duik.CmdLib['Animation']["Select Keyframes"] = "Duik.Animation.selectKeyframes()
  * @param {Boolean} [selectedLayers=false] Set to true to get the keyframes only on the selected layers instead of all the layers.
  * @param {Boolean} [controllersOnly=true] Set to false to get the keyframes from all types of layers instead of just the controllers.
  * @param {Number[]} [range] The time range to select the keyframes, [in, out]. If omitted, will use the work area of the composition.
- * @param {string[]} [propertyMatchNames=[]] The list of matchnames to select only keyframes of a specific type. If empty, will select all types of keyframes.
+ * @param {string[]|DuList} [propertyMatchNames=[]] The list of matchnames to select only keyframes of a specific type. If empty, will select all types of keyframes.
  */
 Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly, range, propertyMatchNames )
 {
@@ -51,13 +51,13 @@ Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly
         'ADBE Mask Parade',
         'ADBE Effect Parade'
     ]);
-    propertyMatchNames = new DuList(propertyMatchNames);
+    var propertyMatchNameList = new DuList(propertyMatchNames);
 
     DuAE.beginUndoGroup( i18n._("Select Keyframes"), false);
     DuAEProject.setProgressMode(true);
 
     //get layers
-    var layers = [];
+    var layers;
     if ( !selectedLayers )
     {
         if ( !controllersOnly ) layers = comp.layers;
@@ -82,8 +82,8 @@ Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly
     // A filter to get properties
     function filterProps( prop )
     {
-        if ( propertyMatchNames.length() == 0) return true;
-        return propertyMatchNames.indexOf( prop.matchName ) >= 0;
+        if ( propertyMatchNameList.length() == 0) return true;
+        return propertyMatchNameList.indexOf( prop.matchName ) >= 0;
     }
 
     //get all properties
@@ -91,8 +91,8 @@ Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly
     layers.do(function (layer)
     {
         var props = DuAEProperty.getProps(layer,filterProps);
-        props = new DuList(props);
-        props.do(function(prop)
+        var propList = new DuList(props);
+        propList.do(function(prop)
         {
             prop.selectKeys( range[0], range[1]);
         });
@@ -116,13 +116,14 @@ Duik.Animation.copy = function( comp )
     var layers = comp.selectedLayers;
     if (layers.length == 0) return;
 
-    copiedAnim = [];
+    var copiedAnim = [];
 
     for (var i = 0 ; i < layers.length ; i++)
     {
         copiedAnim.push(DuAELayer.getAnim( layers[i],true ));
     }
     //get the first keyframe time to offset when pasting
+    /// @ts-ignore We're adding the prop on the Array, sorry
     copiedAnim.firstKeyFrameTime = DuAELayer.firstKeyFrameTime(layers, true);
 
     $.global["DUIK_DATA"].copiedAnimation = copiedAnim;
@@ -170,27 +171,27 @@ Duik.CmdLib['Animation']["Paste Replace"] = "Duik.Animation.paste( undefined, tr
  * @param {Boolean} [replace=false] - Whether to completely erase and replace the current animation
  * @param {Boolean} [offset=false] - Whether to offset the animation from the current value
  * @param {Boolean} [reverse=false] - Whether to reverse the animation
- * @param {string[]} [matchNames=[]] A filter to apply only on specific property types
  */
 Duik.Animation.paste = function( comp, replace, offset, reverse )
 {
+    /// @ts-ignore DuIO is not included in the types yet
     DuIO.Animation.paste( comp, $.global["DUIK_DATA"].copiedAnimation, replace, offset, reverse );
 };
 
 Duik.CmdLib['Animation']["Interpolator"] = "Duik.Animation.interpolator()";
 /**
  * Control the selected keyframes with advanced but easy-to-use keyframe interpolation driven by an effect.
- * @param {PropertyBase[]|DuList.<PropertyBase>|PropertyBase} [props] The properties to interpolate. The selected properties in the active comp if omitted.
+ * @param {PropertyBase[]|DuList|PropertyBase} [props] The properties to interpolate. The selected properties in the active comp if omitted.
  * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
  * @returns {PropertyGroup} The pseudo-effect
  */
 Duik.Animation.interpolator = function( props, effect )
 {
     props = def(props, DuAEComp.getSelectedProps() );
-    props = new DuList(props);
-    if (props.length() == 0) return null;
+    var propList = new DuList(props);
+    if (propList.length() == 0) return null;
 
-    var p = props.at(0);
+    var p = propList.at(0);
     p = new DuAEProperty(p);
     var ctrlLayer = p.layer;
 
@@ -208,6 +209,7 @@ Duik.Animation.interpolator = function( props, effect )
     var i = Duik.PseudoEffect.INTERPOLATOR.props;
 
     // Defaults
+    /// @ts-ignore This is a Property
     effect( i['Type'].index ).setValue(4);
 
     // The Expression
