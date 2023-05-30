@@ -2,11 +2,11 @@
 
 var mainScriptFile = new File($.fileName);
 
-#include "inc/core.jsxinc"
+#include "inc/core.jsx"
 
-#include "inc/scriptEditorPanel.jsxinc"
+#include "inc/scriptEditorPanel.jsx"
 buildScriptEditorUI( ui.mainGroup );
 
-#include "inc/ui_show.jsxinc"
+#include "inc/ui_show.jsx"
 
 })(this);

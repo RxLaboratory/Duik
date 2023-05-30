@@ -1,14 +1,14 @@
 function buildUI()
 {       
-    #include "icons.jsxinc"
+    #include "icons.jsx"
 
-    #include "utils.jsxinc"
+    #include "utils.jsx"
 
     var ui = DuScriptUI.scriptPanel( thisObj, true, true, mainScriptFile );
     ui.addCommonSettings();
 
     // Settings
-    #include "settings.jsxinc"
+    #include "settings.jsx"
     buildSettingsUI( ui.settingsGroup );
 
     // Get the UI mode

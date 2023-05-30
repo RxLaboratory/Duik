@@ -2,11 +2,11 @@
 
 var mainScriptFile = new File($.fileName);
 
-#include "inc/core.jsxinc"
+#include "inc/core.jsx"
 
-#include "inc/animationPanel.jsxinc"
+#include "inc/animationPanel.jsx"
 buildAnimationPanelUI( ui.mainGroup, true );
 
-#include "inc/ui_show.jsxinc"
+#include "inc/ui_show.jsx"
 
 })(this);

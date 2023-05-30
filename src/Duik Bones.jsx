@@ -2,11 +2,11 @@
 
 var mainScriptFile = new File($.fileName);
 
-#include "inc/core.jsxinc"
+#include "inc/core.jsx"
 
-#include "inc/bonesPanel.jsxinc"
+#include "inc/bonesPanel.jsx"
 buildBonesUI( ui.mainGroup, true );
 
-#include "inc/ui_show.jsxinc"
+#include "inc/ui_show.jsx"
 
 })(this);

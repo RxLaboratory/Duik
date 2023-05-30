@@ -3,6 +3,6 @@
 #include "modules/DuIO_api.jsxinc"
 #include "modules/DuSan_api.jsxinc"
 
-#include "api1.jsxinc"
-#include "api2.jsxinc"
-#include "api3.jsxinc"
+#include "api1.jsx"
+#include "api2.jsx"
+#include "api3.jsx"

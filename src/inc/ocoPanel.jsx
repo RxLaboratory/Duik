@@ -3,7 +3,7 @@ function buildOCOUI( tab, standAlone )
     standAlone = def(standAlone, false);
 
     // The predefined metarigs
-    #include "metarigs.jsxinc"
+    #include "metarigs.jsx"
 
     // The category icons
     // English names

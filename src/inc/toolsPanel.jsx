@@ -65,7 +65,7 @@ function buildToolsPanelUI(tab) {
                     false
                 );
 
-                #include "compSettingsPanel.jsxinc"
+                #include "compSettingsPanel.jsx"
                 buildCompSettingsPanel( compSettingsGroup );
 
                 DuScriptUI.showUI(compSettingsGroup);
@@ -609,7 +609,7 @@ function buildToolsPanelUI(tab) {
                     false
                 );
 
-                #include "scriptLibPanel.jsxinc"
+                #include "scriptLibPanel.jsx"
                 buildScriptLibPanel( scriptLibGroup, scriptEditorGroup );
 
                 DuScriptUI.showUI(scriptLibGroup);
@@ -685,7 +685,7 @@ function buildToolsPanelUI(tab) {
                     false
                 );
 
-                #include "scriptEditorPanel.jsxinc"
+                #include "scriptEditorPanel.jsx"
                 buildScriptEditorUI( scriptEditorGroup );
             }
             hideAllGroups();
@@ -748,7 +748,7 @@ function buildToolsPanelUI(tab) {
         };
     };
 
-    #include "layerManager.jsxinc"
+    #include "layerManager.jsx"
     layerTab.build = buildLayerManagerUI;
 
     toolsTabPanel.buttonsGroup.alignment = ['center', 'top'];

@@ -1027,7 +1027,7 @@
                 false
             );
 
-            #include "animationLibPanel.jsxinc"
+            #include "animationLibPanel.jsx"
             buildAnimationLibPanel( animationLibGroup );
 
             DuScriptUI.showUI(animationLibGroup);

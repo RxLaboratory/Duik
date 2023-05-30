@@ -105,38 +105,38 @@ function buildMainPanelUI( tab )
 
     // Include panels
 
-    #include "notePanel.jsxinc"
+    #include "notePanel.jsx"
     var notePanel = buildNotePanelUI();
     notePanel.tieTo(notesButton);
 
-    #include "homePanel.jsxinc"
+    #include "homePanel.jsx"
     var homePanel = buildHomePanelUI( mainTabPanel.mainGroup );
 
-    #include "ocoPanel.jsxinc"
+    #include "ocoPanel.jsx"
     ocoTab.build = buildOCOUI;
 
-    #include "bonesPanel.jsxinc"
+    #include "bonesPanel.jsx"
     bonesTab.build = buildBonesUI;
 
-    #include "constraintsPanel.jsxinc"
+    #include "constraintsPanel.jsx"
     constraintsTab.build = buildConstraintsUI;
 
-    #include "controllersPanel.jsxinc"
+    #include "controllersPanel.jsx"
     controllersTab.build = buildControllersUI;
 
-    #include "automationPanel.jsxinc"
+    #include "automationPanel.jsx"
     automationTab.build = buildAutomationPanelUI;
 
-    #include "animationPanel.jsxinc"
+    #include "animationPanel.jsx"
     animationTab.build = buildAnimationPanelUI;
 
-    #include "cameraPanel.jsxinc"
+    #include "cameraPanel.jsx"
     cameraTab.build = buildCameraPanelUI;
 
-    #include "toolsPanel.jsxinc"
+    #include "toolsPanel.jsx"
     toolsTab.build = buildToolsPanelUI;
 
-    #include "cmdPanel.jsxinc"
+    #include "cmdPanel.jsx"
     cmdTab.build = buildCmdPanel;//*/
     
     // Keep current panel

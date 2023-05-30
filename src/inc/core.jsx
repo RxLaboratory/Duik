@@ -1,13 +1,13 @@
 // Metadata
 #include "config/license.jsxinc"
 // Setup script
-#include "setup.jsxinc"
+#include "setup.jsx"
 // Load API
-#include "api_all.jsxinc"
+#include "api_all.jsx"
 
 // Init everything
-#include "init.jsxinc"
+#include "init.jsx"
 
 // Build UI
-#include "ui.jsxinc"
+#include "ui.jsx"
 //*/

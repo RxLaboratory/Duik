@@ -1,5 +1,5 @@
 // Controller icons
-#include "ctrl_icons.jsxinc"
+#include "ctrl_icons.jsx"
 
 /**
  * Controller related tools.

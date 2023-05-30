@@ -42,16 +42,16 @@ function buildRiggingPanelUI( tab )
         DuESF.scriptSettings.save();
     }
 
-    /*#include "ocoPanel.jsxinc"
+    /*#include "ocoPanel.jsx"
     ocoTab.build = buildOCOUI;*/
 
-    #include "bonesPanel.jsxinc"
+    #include "bonesPanel.jsx"
     bonesTab.build = buildBonesUI;
 
-    #include "constraintsPanel.jsxinc"
+    #include "constraintsPanel.jsx"
     constraintsTab.build = buildConstraintsUI;
 
-    #include "controllersPanel.jsxinc"
+    #include "controllersPanel.jsx"
     controllersTab.build = buildControllersUI;
 
     // Restore current panel

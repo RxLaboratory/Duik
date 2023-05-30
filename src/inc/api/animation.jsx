@@ -11,8 +11,11 @@ if (typeof $.global["DUIK_DATA"].copiedAnimation === 'undefined') $.global["DUIK
 
 /**
  * The list of animation functions
+ * @namespace
+ * @memberof Duik.CmdLib
+ * @category Duik
  */
-Duik.CmdLib['Animation'] = [];
+Duik.CmdLib['Animation'] = {};
 
 Duik.CmdLib['Animation']["Select Keyframes"] = "Duik.Animation.selectKeyframes()";
 /**
@@ -20,7 +23,7 @@ Duik.CmdLib['Animation']["Select Keyframes"] = "Duik.Animation.selectKeyframes()
  * @param {CompItem} [comp=DuAEProject.getActiveComp] The composition
  * @param {Boolean} [selectedLayers=false] Set to true to get the keyframes only on the selected layers instead of all the layers.
  * @param {Boolean} [controllersOnly=true] Set to false to get the keyframes from all types of layers instead of just the controllers.
- * @param {float[]} [range] The time range to select the keyframes, [in, out]. If omitted, will use the work area of the composition.
+ * @param {Number[]} [range] The time range to select the keyframes, [in, out]. If omitted, will use the work area of the composition.
  * @param {string[]} [propertyMatchNames=[]] The list of matchnames to select only keyframes of a specific type. If empty, will select all types of keyframes.
  */
 Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly, range, propertyMatchNames )

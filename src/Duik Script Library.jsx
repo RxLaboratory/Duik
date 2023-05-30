@@ -2,7 +2,7 @@
 
 var mainScriptFile = new File($.fileName);
 
-#include "inc/core.jsxinc"
+#include "inc/core.jsx"
 
 var mainStack = DuScriptUI.group(ui.mainGroup, 'stacked' );
 mainStack.alignment = ['fill','fill'];
@@ -12,10 +12,10 @@ var editorGroup = DuScriptUI.group(mainStack, 'column');
 editorGroup.alignment = ['fill','fill'];
 editorGroup.visible = false;
 
-#include "inc/scriptLibPanel.jsxinc"
+#include "inc/scriptLibPanel.jsx"
 buildScriptLibPanel( libGroup, editorGroup );
 
-#include "inc/scriptEditorPanel.jsxinc"
+#include "inc/scriptEditorPanel.jsx"
 createSubPanel(
     editorGroup,
     DuScriptUI.String.SCRIPT_LIB,
@@ -29,6 +29,6 @@ editorGroup.edit = function(content) {
     editorGroup.visible = true;
 };
 
-#include "inc/ui_show.jsxinc"
+#include "inc/ui_show.jsx"
 
 })(this);
