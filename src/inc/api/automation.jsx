@@ -7,9 +7,9 @@ Duik.Automation = {};
 
 /**
  * The types of the comps in an NLA
- * @enum {int}
+ * @enum {number}
  * @readonly
- */
+ * @ts-ignore */
 Duik.Automation.NLACompType = {
     NONE: 0,
     ORIGINAL: 1,
@@ -23,7 +23,7 @@ Duik.Automation.NLACompType = {
  * These may be localized, don't use the actual strings!
  * @enum {string}
  * @readonly
- */
+ * @ts-ignore */
 Duik.Automation.NLAPrefixes = {
     FOLDER: "NLA" + '::',
     ORIGINAL: "NLA" + '.Original::',
@@ -90,7 +90,7 @@ Duik.Automation.getNLAComps = function(nlaFolder) {
 /**
  * The list of automation functions
  */
-Duik.CmdLib['Automation'] = [];
+Duik.CmdLib['Automation'] = {};
 
 Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
 /**
@@ -1775,7 +1775,7 @@ Duik.CmdLib['Automation']["Blink"] = "Duik.Automation.swink(undefined, true)";
 /**
  * Adds the <i>Swink</i> effect and expression to the properties.
  * The <i>Swink</i> (Swing and Blink) makes the property swing between two values, with optional controls on the interpolation.
- * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @param {PropertyBase[]|DuAEProperty[]|DuList|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
  * @param {boolean} [blink=false] Set to true to set the interpolation to hold by default.
  * @return {DuAEProperty[]} The Swink effects.
  */
@@ -1933,7 +1933,8 @@ Duik.Automation.swink = function(props, blink) {
 
 
         exp += [
-            'result += swing( AValue, BValue, 1, offsetValue, ratioValue, plateauValue, interpolator, t);',
+            '',
+            '  result += swing( AValue, BValue, 1, offsetValue, ratioValue, plateauValue, interpolator, t);',
             '  }',
             '}',
             '',
