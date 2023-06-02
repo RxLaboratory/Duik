@@ -15,12 +15,12 @@ if (typeof $.global["DUIK_DATA"].editingExpressions === 'undefined') $.global["D
 /**
  * The list of tool functions
  */
-Duik.CmdLib["Tool"] = [];
+Duik.CmdLib["Tool"] = {};
 
 Duik.CmdLib["Tool"]["Crop Precompositions"] = 'Duik.Tool.cropPrecompositions()';
 /**
  * Crops the precompositions without moving them, using the bounds of their masks
- * @param {QVLayer[]|LayerCollection|DuList.<AVLayer>|AVLayer} [precomps] The precompositions to crop. The selected layers by default.
+ * @param {AVLayer[]|LayerCollection|DuList|AVLayer} [precomps] The precompositions to crop. The selected layers by default.
  */
 Duik.Tool.cropPrecompositions = function(precomps) {
     precomps = def(precomps, DuAEComp.getSelectedLayers());

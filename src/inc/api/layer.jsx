@@ -11,7 +11,7 @@ Duik.Layer.sanitizing = false;
 /**
  * The list of layer functions
  */
-Duik.CmdLib['Layer'] = [];
+Duik.CmdLib['Layer'] = {};
 
 /**
  * The types of layers used by Duik

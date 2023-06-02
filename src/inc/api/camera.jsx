@@ -18,7 +18,7 @@ Duik.Camera.Presets =
 /**
  * The list of camera functions
  */
-Duik.CmdLib['Camera'] = [];
+Duik.CmdLib['Camera'] = {};
 
 Duik.CmdLib['Camera']["Framing guides"] = "Duik.Camera.frame()";
 /**
