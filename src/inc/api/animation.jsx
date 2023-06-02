@@ -601,7 +601,7 @@ Duik.Animation.interpolator = function( props, effect )
         ].join('\n');
 
     // Add expressions
-    props.do(function (prop)
+    propList.do(function (prop)
     {
         prop = new DuAEProperty(prop);
         // Only for riggable props (no recursion)
