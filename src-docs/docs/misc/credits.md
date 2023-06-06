@@ -66,14 +66,22 @@ Public Domain
 
 ### Pictures, icons and Media Files
 
-- Nicolas Dufresne
+Unless stated otherwise, for all pictures, icons, videos, and other materials contained in this document, all rights are reserved by their respective owners.
+
+- Nicolas Dufresne  
+  Pictures,  
+  GNU Free Documentation License
 - Thomas Fourniret
 - Nicolas Liguori
 - Sébastien Périer
 - Clémentine Robach
-- Font Awesome (icons)   
-[fontawesome.com/](https://fontawesome.com/){target="_blank"}  
-Licensed under the Creative Commons CC BY 4.0 License
+- W. Ramsay Smith and J S Newell  
+  *Wing bones and feathers of a bird*,  
+  1889, public domain
+- Font Awesome,  
+  Some of the icons,  
+  [fontawesome.com](https://fontawesome.com/){target="_blank"},  
+  Creative Commons CC BY 4.0 License
 
 ### Composition
 

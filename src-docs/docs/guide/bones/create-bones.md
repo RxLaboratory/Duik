@@ -19,7 +19,7 @@ As there are many different types of animals, these limbs are sorted in categori
 
 | Type | Description | Examples | Notes |
 | ---- | ----------- | -------- | ----- |
-| ![](../../img/duik/icons/hominoid.svg){style="width:16px;"} Hominoid[^1] | Human-like tetrapods[^2]: biped humans and apes without tails | Human, Chimpanzee, Gorilla... | Humans and their equals |
+| ![](../../img/duik/icons/hominoid.svg){style="width:16px;"} Hominoid[^1] | Human-like tetrapods[^2]: biped humans and apes without tails | Human, Chimpanzee, Gorilla... | Humans and their equals. |
 | ![](../../img/duik/icons/bunny.svg){style="width:16px;"} Plantigrade | Tetrapods which put the whole foot on the ground, with the heel touching the ground when they walk. | Primates, bears, rabbits… | The ones nearly equal to humans. |
 | ![](../../img/duik/icons/cat.svg){style="width:16px;"} Digitigrade | Tetrapods which walk on their fingers. | Dogs and all canines, cats and other felines, dinosaurs, walking birds… | Human friends. |
 | ![](../../img/duik/icons/horse.svg){style="width:16px;"} Ungulate | Tetrapods which walk on the tip of their fingers, who usually have hoofs. | Horses, cattle, girafes, pigs, deers, camels, hippopotamuses… | Food for humans. |
@@ -86,9 +86,9 @@ If **layers** are selected, without any other property, **one armature will be c
 
     Internal unique identifiers are associated with the armatures, which won’t be updated when you copy or duplicate the armatures in After Effects. The Auto-rig and other rigging tools in Duik need these identifiers to work correctly and may fail if they are not set properly. The Duplicate tool does this.
 
-[^1]: [Hominoids](https://en.wikipedia.org/wiki/Ape) (Hominoidea) are a branch of tailless anthropoid primates native to Africa and Southeast Asia. They are distinguished from other primates by a wider degree of freedom of motion at the shoulder joint. There are two extant branches of the superfamily Hominoidea: the gibbons, or lesser apes; and the hominids, or great apes (orangutans, gorillas, chimpanzees, humans).
+[^1]: [***Hominoids***](https://en.wikipedia.org/wiki/Ape) (Hominoidea) are a branch of tailless anthropoid primates native to Africa and Southeast Asia. They are distinguished from other primates by a wider degree of freedom of motion at the shoulder joint. There are two extant branches of the superfamily Hominoidea: the gibbons, or lesser apes; and the hominids, or great apes (orangutans, gorillas, chimpanzees, humans).
 
-[^2]: [Tetrapods](https://en.wikipedia.org/wiki/Tetrapod) are four-limbed vertebrate animals.
+[^2]: [***Tetrapods***](https://en.wikipedia.org/wiki/Tetrapod) are four-limbed vertebrate animals constituting the superclass Tetrapoda. It includes amphibians, reptiles, dinosaurs, birds, mammals and other extinct classes.
 
 [^3]: Read the section entitled [*Meta-rigs and OCO*](../oco/index.md)
 
