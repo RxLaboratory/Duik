@@ -1,6 +1,6 @@
 # Bone noodles
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_C05_Noodles_EN.mp4)  
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_C05_Noodles__EN_720.mp4)  
 *This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
 A bit like envelops, noodles are content added in the bone layers and can be used to quickly design a vector limb or character. They draw a smooth shape going through all the joints of the limb, to create a kind of cartoony, smooth, rubber limb.

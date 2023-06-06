@@ -6,13 +6,13 @@ Using the *Non-Linear Animation* tool, abreviated as ***NLA***, you can edit ani
 
 Not only the *NLA* can edit your animations together, but it also can actually *transition* between animations as simply as a crossfade effect, by animating simple opacity values.
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_M01_Intro_EN.mp4)
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_M01_Intro__EN_720.mp4)
 
 ## Usage
 
 To use the *NLA*, you need to start from a base composition, containing what you wish to animate, which can be anything: simple layers, rigged character, props, using or not using Duik [*Controllers*](../controllers/index.md).
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_M02_Usage_EN.mp4)
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_M02_Usage__EN_720.mp4)
 
 ### Creation
 

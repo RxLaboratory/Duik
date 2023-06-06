@@ -27,14 +27,14 @@ Then, you're ready to animate:
 
 ## [![](../img/duik/icons/bones.svg){style="width:32px;"} Armatures and bones](bones/index.md)
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_A01-Bones_EN.mp4)  
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_A01-Bones__EN_720.mp4)  
 
 
 ***[Bones](bones/index.md)*** are layers you can add in your composition which will drive the animations, like the rig of a real puppet. The process is very simple: create or import your artwork in After Effects, add Bones and move them to the right spots (the joints of the limbs). Then you can rig those Bones and link the design layers to the corresponding Bone layers.
 
 This way, the rig you create is independant from the design. This means it’s easier to adjust the design even after the rig has been made, or even to re-use the same rig with other designs. Also, this rigging process is easier to fix or change if you ever need to adjust it even when you’re already in the animation process.
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_A02-Parent_EN.mp4)  
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_A02-Parent__EN_720.mp4)  
 
 ## [![](../img/duik/icons/controller.svg){style="width:32px;"} Controllers](controllers/index.md)
 
@@ -48,7 +48,7 @@ There is also a whole set of constraints to automate even more movements and mak
 
 ## [![](../img/duik/icons/autorig.svg){style="width:32px;"} Auto-rig](bones/autorig/index.md)
 
-![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/Duik17_A03-Autorig_EN.mp4)  
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_A03-Autorig__EN_720.mp4)  
 
 Let’s face it, most of the time you only need to rig standard animals, with legs, arms, spine, maybe a tail… All what differs are the hair, some props and cloth.
 
