@@ -2,9 +2,12 @@
 
 ![](../../../img/duik/bones/leg_armatures.png)
 
-For both tetrapods and arthropods (i.e. all legged animals), the rig for arms, front legs and back legs is similar; the only difference is that for tetrapods, there may be a shoulder bone at the root of the limb, and of course the side of the elbow on the front leg and the knee on the back leg are reversed.
+![](../../../img/illustration/armslegs.png)
 
-For all these legs, Duik creates a control at the end (on the foot or hand), and depending on the bones available in the armature (thus depending on how you've designed the limb)[^1], some controls for specific joints of the limb are available in the effects of the controller layer.
+
+For both [tetrapods](https://en.wikipedia.org/wiki/Tetrapod)[^1] and [arthropods](https://en.wikipedia.org/wiki/Arthropod)[^2] (i.e. all legged animals), the rig for arms, front legs and back legs is similar; the only difference is that for tetrapods, there may be a shoulder bone at the root of the limb, and of course the side of the elbow on the front leg and the knee on the back leg are reversed.
+
+For all these legs, Duik creates a control at the end (on the foot or hand), and depending on the bones available in the armature (thus depending on how you've designed the limb)[^3], some controls for specific joints of the limb are available in the effects of the controller layer.
 
 ![](../../../img/duik/bones/front_legs.png)  
 *Front legs*
@@ -141,5 +144,8 @@ Use the *Position* value to manually adjust or animate the position of the shoul
 
 The arthropod rig, in the current version of Duik, is actually similar to the ungulate rig, and has the same controls and effects. Only the initial locations of the joints and length ratios of the different parts of the limbs differ.
 
-[^1]: *cf.* [*Bones / Create bones*](../create-bones.md)
+[^1]: [***Tetrapods***](https://en.wikipedia.org/wiki/Tetrapod) are four-limbed vertebrate animals constituting the superclass Tetrapoda. It includes amphibians, reptiles, dinosaurs, birds, mammals and other extinct classes.
 
+[^2]: [***Arthropods***](https://en.wikipedia.org/wiki/Arthropod) are invertebrates with segmented bodies and jointed limbs. It includes arachnids (spiders, scorpions, ticks, mites...), myriapods (millipedes...), crustaceans (shrimps, crabs, lobsters...), and hexapods (insects).
+
+[^3]: *cf.* [*Bones / Create bones*](../create-bones.md)
