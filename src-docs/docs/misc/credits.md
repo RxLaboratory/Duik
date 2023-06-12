@@ -75,9 +75,15 @@ Unless stated otherwise, for all pictures, icons, videos, and other materials co
 - Nicolas Liguori
 - Sébastien Périer
 - Clémentine Robach
+- Hugh McCormick Smith
+  *Mud-Fish*,
+  1907, public domain
 - W. Ramsay Smith and J S Newell  
   *Wing bones and feathers of a bird*,  
   1889, public domain
+- "Rodentia," Encyclopædia Britannica
+  *Common Rorqual (Balaenoptera musculus)*
+  1911, public domain
 - Font Awesome,  
   Some of the icons,  
   [fontawesome.com](https://fontawesome.com/){target="_blank"},  

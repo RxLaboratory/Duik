@@ -50,7 +50,7 @@ Use the *Rotation* property to control the rotation of each feather individually
 The *Settings* section is to be used only during the rigging process and should not be changed afterwards (read above).
 
 !!! note
-    Duik Wing rigs can be used for all view axis, whether the character is viewed from the top, the face or the side.
+    Duik Wing rigs can be used for all view axis, the character being viewed either from the top, the face or the side.
 
 [^1]: *cf.* [*Constraints / Transform constraints*](../../constraints/transform.md).
 

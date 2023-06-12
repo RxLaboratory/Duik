@@ -14,6 +14,16 @@ The bones come with their envelops, which are references to help you design perf
 
 ![](../../img/duik/bones/bones_panel.png)
 
+The bones panel consists essentially of a toolbar, and categories to create predefined or custom armatures to be rigged later with the Auto-rig feature.
+
+You can set a *Character Name* in the top field to automatically add the name to all new bones in the composition and keeps things organized easily.
+
+![](../../img/duik/bones/toolbar.png)
+
+The toolbar at the top of the bones panel gives a quick access to several secondary but useful tools.
+
+### Contents
+
 - [Create bones](create-bones.md)
 - [Bone envelops](envelops.md)
 - [Bone noodles](noodles.md)
