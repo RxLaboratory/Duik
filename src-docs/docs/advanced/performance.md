@@ -8,12 +8,9 @@ These last two decades, a lot of third-party tools were built on top of these fe
 
 It is important to always keep in mind what is going to slow down After Effects when animating characters and props, to be able to organize your projects in a way to limit these performance issues, and adjust the settings of your tools accordingly.
 
-!!! tip
-    Most of these explanations are valid for other ***scripts*** too, as they’re all built on top of After Effects features. On the contrary, this is not always true for ***plugins*** which add new features to After Effects instead of automating the use of existing features.
-
 ## Choose the right tool
 
-Honnestly, if you’re in some kind of very advanced rigging and animation, if you’re in top-level quality and need both performance and versatility, After Effects may not be the right choice. Did you know [*South Park*](https://en.wikipedia.org/wiki/South_Park){target="_blank"} [^1] was made with [*Maya*](https://en.wikipedia.org/wiki/Autodesk_Maya){target="_blank"} [^2]? Why don’t you animate in [*Blender*](https://blender.org){target="_blank"} [^3] with a nice rig? You can rig 2D characters in 3D software, and you won’t have performance issues there.
+Honnestly, if you’re in some kind of very advanced rigging and animation project, if you’re in top-level quality and need both performance and versatility, After Effects may not be the right choice. Did you know [*South Park*](https://en.wikipedia.org/wiki/South_Park){target="_blank"} [^1] was made with [*Maya*](https://en.wikipedia.org/wiki/Autodesk_Maya){target="_blank"} [^2]? Why don’t you animate in [*Blender*](https://blender.org){target="_blank"} [^3] with a nice rig? You can rig 2D characters in 3D software, and you won’t have performance issues there.
 
 But let's agree that sometimes, it’s easier and quicker to use less applications, to not have to render animations between different applications and to animate in the same software which will be used for compositing. In this case, Duik is the tool you need for character animation in After Effects.
 
@@ -35,6 +32,8 @@ Here's a checklist of what you can do to improve the performance in After Effect
 - Don't use essential properties.
 - Use image sequences;&nbsp;Render to *openEXR* instead than *PNG*.
 - Avoid the puppet tool.
+- Restart After Effects every hour.
+- Keep the After Effects project as small as possible.
 
 Some tools are more compute-intensive than others. You have to know which ones to avoid or to optimize to fix performance issues in your rigs.  
 You must know that Duik only uses native After Effects features, it automates things you could do by yourself (provided you have a lot of time to spend at it). This means it is not Duik by itself which causes performance issues, it is how native After Effects features are used together and how many of them at the same time.
@@ -153,7 +152,7 @@ Duik can also help you with that:&nbsp;the [*bake expression*](../guide/automati
 - A *smart mode* creates an animation as close as possible to the result of the expression, using just a few Bézier keyframes, and keeps the animation easy to edit later.
 - A *precise mode* creates an animation  with as much keyframes as needed for a perfect match (which is still less than the After Effects native tool).
 
-## Composition complexity
+## Compositions
 
 The more complex a composition becomes, the slower it is to render; complex compositions with too many layers also have a really bad impact on the user interface of After Effects.
 
@@ -206,30 +205,129 @@ This helps to improve the performance in two ways:
 !!! note
     [Rafael Arame](https://www.artstation.com/rafaelarame/blog){target="_blank"} [^5] explains this very well in a [nice article](https://www.artstation.com/blogs/rafaelarame/YVZr/layer-management-a-solution-for-complex-rigs-in-after-effects){target="_blank"} about how he uses [DuGR](https://rxlaboratory.org/tools/dugr){target="_blank"} [^4] to improve the performance of his complex rigs, which you can read on [rxlab.info/rafael-dugr](http://rxlab.info/rafael-dugr){target="_blank"}.
 
+## Project
+
+Big projects can lead to a lot of issues. The number of items displayed in the project panel influences the performance of the user interface (try to keep the project panel as small as possible, and close folders). Big files are longer to read and write, and raise the probability of sync issues or corrupt files.
+
+It is a good habit to animate a single shot per project; do not store everything into a single After Effects project! Try to keep the project files as small as possible, and regularly reduce the project to remove unused items.
+
+The [sanity tests](../guide/sanity.md) included in Duik keep track of your project size and the number of items in it to help you keep it small.
+
+### Project Settings
+
+A few settings ![](../img/ae/project-settings.png) can be tweaked per project to improve a bit the performance.
+
+- `Video Rendering and Effects`  
+  If you have a compatible GPU, you should always leave this option to use *Mercury GPU Acceleration*, unless you have rendering issues or GPU driver issues.
+- `Expressions`  
+   It is *said* that the new *JavaScript* engine is faster than the *Legacy ExtendScript* engine, but if that's true, it doesn't seem to be measurable. What's true is that some expressions may not work on both engines: some expressions may work only on the legacy engine whle others only on the JavaScript engine. All expressions used by Duik should be compatible with both engines, but sometimes switching the engine may fix some bugs. In doubt, always use the new JavaScript engine.
+
 ## Formats
 
 Not all formats are equal. If you’ve understood what we wrote just above, you may be beginning to use more image formats and less shapes, whether it’s for proxies or final render. What formats should be used?
 
 -  When rendering animations, most of the time it’s better and easier to use image sequences than video files. There is at least one very good and simple reason for it: if the render fails, you won’t have to start it all again, but just the remaining frames. If you want to change something in the animation, you will only have to render the corresponding frames.
 
-- You should use a format which suits your needs (color depth, alpha channel), but also a format which is fast to read and write by After Effects! Our advice is to use OpenEXR (with PIZ or DWA compression): it’s lossless, it handles 32bpc, and has an alpha channel. It is also way faster to read/write than PNG in After Effects, and files are usually smaller with EXR. It’s better than the RAW format of your camera, it’s great for storing HDRi. Premiere and other editting software, as well as Photoshop, can read them; as specified in the name, they’re open and widely compatible. What more could one ask for?
+- You should use a format which suits your needs (color depth, alpha channel), but also a format which is fast to read and write by After Effects! Our advice is to use *OpenEXR* (with *PIZ* (lossless) or *DWA* (slightly lossy) compression) which handles 32bpc, and has an alpha channel. It is also way faster to read/write than *PNG* in After Effects, and files are usually smaller with *EXR*. It’s better than the *RAW* format of your camera, it’s great for storing HDRi. Premiere and other editting software, as well as Photoshop, can read them; as specified in the name, they’re open and widely compatible. What more could you ask for?
 
 !!! tip
-    You can render the audio to a simple `.wav` file stored next to the image sequence.
+    You can render the audio to a simple `*.wav` file stored next to the image sequence.
 
-If you still prefer to use video files, you should choose a format which is also as fast as possible to read and write. Avoid *H.264* and *H.265* (*mp4*,etc.) and prefer *intra-frame* codecs like *Apple ProRes*, *Avid DnxHD*, or *Quicktime Animation*. Note that, although it's widely used, *ProRes* (and *DnxHD*/*DnxHR*) is a lossy codec which outputs huge files. *OpenEXR* sequences or *Quicktime Animation* are lossless (or optionally very slightly lossy if you which even smaller files with *EXR*) and usually output much smaller files.
-
-## Project complexity
-
-
+If you still prefer to use video files, you should choose a format which is also as fast as possible to read and write. Avoid *H.264* and *H.265* (*mp4*,etc.) and prefer *intra-frame* codecs like *Apple ProRes*, *Avid DnxHD*, or *Quicktime Animation*. Note that, although it's widely used, *ProRes* (and *DnxHD*/*DnxHR*) is a lossy codec which outputs huge files. *OpenEXR* sequences or *Quicktime Animation* are lossless (or optionally very slightly lossy if you wish even smaller files with *EXR*) and usually output much smaller files.
 
 ## After Effects
 
+### Memory leaks
+
+The most important thing to know about After Effects is that there are memory leaks. This means that the longer you use it, the more memory it will use, and part of this memory is completely wasted. This is especially true when using scripts, it is a known issue in After Effects that scripts are never freed from memory even if they're closed and have finished everything they're doing (the technical term is *garbage collection*, and this garbage collection just doesn't work for scripts). This clearly slows down After Effects after a certain amount of time and use. Until this kind of issues are all fixed, the only way to keep your app as fast as possible is to restart it regularly to completely free the memory. Even the `Edit ▶ Purge` menu is of no use about this issue.
+
+### Preferences
+
+Sometimes, changing a few options in After Effects can improve the performance or fix issues. In most cases, leaving the default values should work well, but it may be useful to have a look at these specific preferences:
+
+- `Previews ▶ Viewer Quality`:  
+    - Set the *Zoom Quality* to *Faster* or *More Accurate Except Cached Preview* to improve a bit the performance when the viewer zoom is not set at 100%. Note that the difference is hardly noticeable, but sometimes, every little improvement is good to have.
+    - You can do the same for the *Color Management Quality* for color-managed projects.
+- `Previews ▶ Cache Frames When Idle`:  
+  This can also be toggled per composition in the `Composition ▶ Preview` menu.  
+  Caching frames when After Effects is idle does improve the performance, as sometimes frames will already be cached when you start working on a composition. But with very long compositions this can cause lots of issues by filling your computer's memory. In this case, all your programs may start to behave erratically or even crash after everything begins to lag a lot.
+- `Display ▶ Motion Path`:  
+  Displaying too long motion paths can be very laggy, especially if the motion path is the result of complex expressions. Be careful with that;&nbsp;it may be better to deactivate completely the motion paths and enable them only when needed. Unfortunately, there's no shortcut for that, but Duik may include a button for that in the future.
+- `Display ▶ Disable Thumbnails in Project Panel`:  
+  This option doesn't really improve the performance, but again, sometimes with very big projects, every little improvement helps.
+- `Media & Disk Cache ▶ Disk Cache`:  
+  When the disk cache is enabled, After Effects will save rendered frames to a temporary location on a specified disk. This is needed if your system runs with low *RAM* memory. If you have a lot of available memory (more that 32 or even 64GB) when working with After Effects, it may improve performance to disable the disk cache: in this case, After Effects saves the frames only into RAM, which is much faster than any disk. But in this case, you'll lose all the cache when closing After Effects or restarting your computer, to the contrary of the disk cache.  
+  A way to benefit from both worlds is to create a *Ram Disk*, read below for more information.
+  No matter what, you should always choose a location on the fastest (SSD) possible disk on your system, separate from the disk containing your footage if possible.
+- `Memory & Performance ▶ Memory`:
+  Be careful with this option: due to the memory leaks explained in the previous section, the memory limit is not actually respected! It is easy to show that After Effects memory can be much higher than the limit set here, by just running a complex script (like Duik) a few times.
+- `Memory & Performance ▶ Performance`:
+  Using Multi-Frame Rendering usually improves performance, but in specific cases it may be better to deactivate this option: if you work with complex compositions, lots of expressions, or non-compatible effects, multi-frame rendering may actually slow down the rendering process:
+    - It takes more time to start the rendering process when using multi-frame rendering. This can be a problem for previews:&nbsp;if you notice a long delay between requesting the preview and the render of the first frame, it may be because of multi-frame rendering and it's worth trying without it, then maybe enable it again just before the final render.
+    - It may sometimes be actually slower to render than standard rendering, but that depends on what you're rendering. You'll have to test with your own project if you suspect it to slow down your renders, but that shouldn't be the case in tha majority of projects. In doubt, leave it enabled.
+
+## Hardware
+
+> What's the best hardware to use with After Effects?
+
+If you ask this question around, everyone will have a different opinion. Here's what we've measured when developing Duik and other tools, and tested them on film productions.
+
+### Disks
+
+There are three important locations for your data when working with After Effects: 
+
+1. The system, where After Effects is installed. These files are mostly read when After Effects is launched, and then used just very little.
+2. The Disk Cache which stores the temporary rendered frames. This is the most used location.
+3. Your media files (footages). These files are read regularly to render your compositions.
+
+It doesn't really matter where you store the project files themselves (`*.aep`) as they're read/written only when loading and saving the files, and should not be very big files anyway.
+
+The best case scenario is to have at least three big different physical disks, as fast as possible (SSD), for each of the aforementionned locations, but if you can't afford it, you can perfectly use just two disks:
+
+- A disk as fast as possible for both the system and the disk cache: the system files are not used so often, so it's fine to store the disk cache on the same disk.
+- Another disk to store your footage, which may be read at the same time the disk cache is read and written, so that will improve the performance to separate the footages. Note that the speed of this second disk is a bit less important, as the footages are mostly read and not written: it's always faster to read than write, and they're used a bit less than the disk cache.
+
+Both disks needs to be quite big:&nbsp;the system disk will store your operating system and all applications, and it's more comfortable to have a large disk cache. The disk storing your footages (and rendered files) needs to be able to store a potentially large amount of medias.
+
+It is not recommended to use a single disk, unless it's very fast (and big...).
+
+!!! note
+    Dividing a physical disk into several partitions does not improve performance, and may even slow things down.
+
+### Memory (RAM)
+
+The more, the better. Simple.
+
+It's not the RAM which matters most, we've been able to use After Effects correctly with computers with only 8&nbsp;GB or even small laptops with 4&nbsp;GB (just remember you need to restart After Effects regularly to free memory). This being said, although everything will work well with as few as 8 GB, more RAM will always be useful if you can afford it.
+
+With a lot of RAM (at least 32&nbsp;GB) you may even be able to disable the After Effects Disk Cache if you'd like, which may improve the performance, and protect your disks by limiting the number of write access to them.
+
+#### RAM Disk
+
+A RAM disk[^6] is a block of random-access memory (RAM, i.e. volatile memory) that a computer's software is treating as if the memory were a disk drive (secondary storage). RAM disks provide high-performance temporary storage for demanding tasks and protect non-volatile storage devices from wearing down, since RAM is not prone to wear from writing, unlike non-volatile flash memory.
+
+The performance of a RAM disk is generally orders of magnitude faster than other forms of digital storage, such as SSD or hard disk. This performance gain is due to multiple factors, including access time, maximum throughput, and file system characteristics.
+
+With more than 32 or 64&nbsp;GB, you could create a small *Ram Disk* to store temporary files or test projects which will be automatically erased when restarting the computer. This has proven very useful in our experience, even with RAM Disks as small as 2&nbsp;GB.
+
+With at least 64&nbsp;GB RAM, you could create a *RAM Disk* of a few dozens of gigabytes to be used as the After Effects Disk cache. In this case, you'll keep the cache between After Effects sessions, as long as you don't restart the computer, and it will be as fast as possible, while protecting your physical disks by limiting the number of write access to them. But to do that you'll need at least 64&nbsp;GB of memory to keep enough standard RAM.
+
+!!! note
+    The RAM Disk can be activated only when you need it, and deactivated when you need your full amount of RAM.
+
+#### Central Processing Unit (CPU)
+
+That's the most important part for After Effects: it is used a lot when working and rendering the compositions. The faster, the better.
+
+It seems that, given the choice, it's better to have less threads with a higher frequency than more slower threads (i.e. prefer *GHz* over *Cores*).
+
+Note that the relation between the CPU capabilities and After Effects performance doesn't feel linear: a CPU twice faster will not result in After Effects being twice faster, but just *a bit* faster. Anyway, After Effects is always too slow, so if you plan to work in After Effects, try to spend your mooney mostly on the CPU.
+
+#### Graphical Processing Unit (GPU)
+
+After Effects does use the GPU more and more to render the effects and compositions, so it's a good idea to use a good GPU. Of course, if you're working with 3D, you'll need a high-end GPU anyway, but if you're only working with After Effects, 2D, and video, it's not useful to have the best GPU, a mid-level GPU is enough.
+
 ## Duik features impacting performance
-
-
-
-
 
 [^1]: *South Park* is an American animated sitcom. The series revolves around four boys—Stan Marsh, Kyle Broflovski, Eric Cartman, and Kenny McCormick—and their exploits in and around the titular Colorado town. It became infamous for its profanity and dark, surreal humor that satirizes a large range of subject matter. *cf.* [en.wikipedia.org/wiki/South_Park](https://en.wikipedia.org/wiki/South_Park){target="_blank"}
 
@@ -240,3 +338,5 @@ If you still prefer to use video files, you should choose a format which is also
 [^4]: *DuGR* lets you group layers in After Effects, and isolate the display of these groups. It is an essential tool to simplify the management of compositions with lots of layers, without any need to precompose! *cf.* [rxlaboratory.org/tools/dugr](https://rxlaboratory.org/tools/dugr){target="_blank"}
 
 [^5]: Rafael Arame is a recognized After Effects rigging expert. You can have a look at his blog on [www.artstation.com/rafaelarame/blog](https://www.artstation.com/rafaelarame/blog){target="_blank"}.
+
+[^6]: A quick search will let you find several utilities to easily create RAM disks both on *Windows* or *MacOS*. [Read this *Wikipedia* article](https://en.wikipedia.org/wiki/RAM_drive){target="_blank"} for more information about RAM Disks: [en.wikipedia.org/wiki/RAM_drive](https://en.wikipedia.org/wiki/RAM_drive){target="_blank"}.
