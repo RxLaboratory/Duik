@@ -560,7 +560,7 @@ Duik.CmdLib['Constraint']["Expose Transform"] = "Duik.Constraint.exposeTransform
 /**
  * Expose Transform
  * @param {CompItem} [comp] The composition where to create the expose transform controller. The active composition by default.
- * @param {Layer[]} [layers] The layer with the transformation to expose. The selected layers by default. Can be an empty list too, in this case the Expose Transform controller is not set to measure any layer.
+ * @param {Layer[]|DuList} [layers] The layer with the transformation to expose. The selected layers by default. Can be an empty list too, in this case the Expose Transform controller is not set to measure any layer.
  * @return {ShapeLayer[]} The list of the new Expose Transform controllers. One per given layer.
  */
 Duik.Constraint.exposeTransform = function(comp, layers) {
@@ -580,6 +580,10 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
     DuAEProject.setProgressMode(true);
 
     var ctrls = [];
+
+    // ETMs must be shape layers
+    var previousCtrlLayerMode = OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE);
+    OCO.config.set('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE);
 
     function createETM(layer) {
         var ctrl = Duik.Controller.create(comp, Duik.Controller.Type.EXPOSE_TRANSFORM, layer);
@@ -616,7 +620,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
 
         var refOrientationGroup = refGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
         refOrientationGroup.name = 'Orientation';
-        refOrientation = refOrientationGroup("ADBE Vectors Group");
+        var refOrientation = refOrientationGroup("ADBE Vectors Group");
 
         var path = refOrientation.addProperty("ADBE Vector Shape - Group");
         path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -649,7 +653,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
         stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
-        refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
+        var refOrientationTransform = refOrientationGroup('ADBE Vector Transform Group');
         refOrientationTransform('ADBE Vector Position').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
             'var fx = effect("' + effect.name + '");',
             'var P = fx(' + pos2DAbsIndex + ');',
@@ -663,7 +667,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
 
         var targetOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
         targetOrientationGroup.name = 'Orientation';
-        targetOrientation = targetOrientationGroup("ADBE Vectors Group");
+        var targetOrientation = targetOrientationGroup("ADBE Vectors Group");
 
         path = targetOrientation.addProperty("ADBE Vector Shape - Group");
         path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -696,7 +700,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
         stroke("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
-        var refOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
+        refOrientationGroup = targetGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
         refOrientationGroup.name = 'Reference Orientation';
         refOrientation = refOrientationGroup("ADBE Vectors Group");
 
@@ -730,7 +734,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
             '-fx(' + rotRelIndex + ');'
         ].join('\n');
 
-        targetTransform = targetGroup('ADBE Vector Transform Group');
+        var targetTransform = targetGroup('ADBE Vector Transform Group');
         targetTransform('ADBE Vector Position').expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
             'var fx = effect("' + effect.name + '");',
             'if (fx(' + guideIndex + ').value)',
@@ -759,7 +763,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
         angleGroup.name = 'Angle';
 
         var angleGroup1 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-        angle1 = angleGroup1("ADBE Vectors Group");
+        var angle1 = angleGroup1("ADBE Vectors Group");
 
         path = angle1.addProperty("ADBE Vector Shape - Group");
         path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -785,7 +789,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
         stroke("ADBE Vector Stroke Dashes").property('ADBE Vector Stroke Gap 1').expression = DuAEExpression.Id.EXPOSE_TRANSFORM + '\nthisComp.height/500;';
 
         var angleGroup2 = angleGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
-        angle2 = angleGroup2("ADBE Vectors Group");
+        var angle2 = angleGroup2("ADBE Vectors Group");
 
         path = angle2.addProperty("ADBE Vector Shape - Group");
         path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -835,7 +839,7 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
 
         var distanceGroup = guidesGroup("ADBE Vectors Group").addProperty("ADBE Vector Group");
         distanceGroup.name = 'Distance';
-        distance = distanceGroup("ADBE Vectors Group");
+        var distance = distanceGroup("ADBE Vectors Group");
 
         path = distance.addProperty("ADBE Vector Shape - Group");
         path("ADBE Vector Shape").expression = [DuAEExpression.Id.EXPOSE_TRANSFORM,
@@ -1037,6 +1041,9 @@ Duik.Constraint.exposeTransform = function(comp, layers) {
             ctrls.push(ctrl);
         }
     }
+
+    // Reset original controller mode
+    OCO.config.set('after effects/controller layer type', previousCtrlLayerMode);
 
     DuAEComp.selectLayers(ctrls);
     DuAEProject.setProgressMode(false);
