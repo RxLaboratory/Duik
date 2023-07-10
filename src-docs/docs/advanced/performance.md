@@ -25,6 +25,7 @@ Here's a checklist of what you can do to improve the performance in After Effect
 - Lower the preview resolution if you can (to *Half* or *Third*). Don't leave it to *Auto*.
 - Hide, and shy, unnneeded layers.
 - Hide the layer controls (`Ctrl + Shift + H`).
+- Cut/hide all layers as soon as they're outside of the frame of the composition.
 - Render or precompose (with a proxy!) the Shape Layers.
 - Always precompose layers before duplicating them, if what you need is an exact copy.
 - Bake expressions whenever you can, remove or deactivate unnneeded expressions (the ones which don't actually animate anything).
@@ -82,6 +83,14 @@ As you can see in this table, there are two ways to improve the performance of t
   The option is available in the `View ▶ View Options...` menu in After Effects, and they can be quickly toggled with the `Ctrl + Shift + H` shortcut. You may have to do this quite regularly as its a per-composition option.
 2. Always prefer **raster layers**.  
   A raster layer will almost always be **faster to render** than a shape layer. If you don't need to animate the contents of a shape layer, you could precompose it, or, even better, render it to an openEXR file and replace the shape with the rendered image.
+
+### Cut/hide invisible layers
+
+Quite often, when animating some layers position, they may be (temporarily) outside of the frame of the composition. In this case, performance may be improved if you hide/cut them as soon as they get out, to be sure to prevent any rendering and evaluation of the expressions which are not needed as long as the layer can't be seen.
+
+This is also true if for some time a layer is hidden beneath other layers, cutting it may improve performance.
+
+![](../img/ae/cut-layers.png)
 
 ### Render the Shape Layers
 
@@ -266,11 +275,78 @@ Sometimes, changing a few options in After Effects can improve the performance o
     - It takes more time to start the rendering process when using multi-frame rendering. This can be a problem for previews:&nbsp;if you notice a long delay between requesting the preview and the render of the first frame, it may be because of multi-frame rendering and it's worth trying without it, then maybe enable it again just before the final render.
     - It may sometimes be actually slower to render than standard rendering, but that depends on what you're rendering. You'll have to test with your own project if you suspect it to slow down your renders, but that shouldn't be the case in tha majority of projects. In doubt, leave it enabled.
 
+## Duik features impacting performance
+
+Some features in Duik are especially slowing down After Effects, it's best to know them and what you can do to improve performance with these specific features (or try to avoid them).
+
+!!! tip
+    Always have a look in the effects of the layers: in the effects created by Duik, there may be some performance options to adjust the balance between performance and quality (especially the quality of motion blurs).
+
+!!! tip
+    Some effects created by Duik have an option to adjust the precision of the motion blur. If you don't need motion blur on the layer, keep this to the lowest value, as it usually make the performance drop a lot. If you need motion blur, keep the value as low as possible to hide motion blur artifacts on fast movements.
+
+    ![](../img/duik/effect-moblur-precision.png)
+
+!!! tip
+    Cut the layers when they're hidden or out of the frame of the composition to make sure the expressions aren't evaluated when they're not needed.
+
+### Parent constraint
+
+The [Parent constraint](../guide/constraints/parent.md) is a great tool but… It can be very computer-intensive. To be able to compute the location of a layer, it has to compute the previous movement of all its parents for all the previous frames of the composition. This means the longer the composition is, the slower it will be. Avoid using it in very long compositions, and try to use it only when necessary. Often, it is easier and quickier to just split the layer when its parent must change.
+
+The other constraint are much lighter, it's better to try to use the orientation or position constraint whenever possible instead of the parent constraint.
+
+### IK
+
+The IK used in a character like the ones created by the [Auto-rigger](../guide/bones/index.md) will not be a problem unless you have a lot of them, but there are a few tips to make them even lighter.
+
+- When using shape layers as controllers, you can disable the guides on the controllers (the dashed lines representing the IK) in the effects of the controller. It's better to use raster controllers though (and in this case, there are no guides at all).
+
+- When you deactivate the IK and animate in FK, the performance is usually better, and FK animation is actually easier than IK.
+
+Wheel (curved motion)
+
+The default Wheel automation is very light won’t be any problem. But be careful with the curve mode, as it needs to compute the trajectory of the wheel on all the previous frames of the composition. At the end of a long composition, this can be very heavy.
+
+### Kleaner (simulated)
+
+!!! warning
+    Beware of the simulation
+
+The default [Kleaner](../guide/automation/kleaner.md) automation should not be an issue most of the time. But beware of the simulation! As every simulations, it involves a lot more computation and can quickly become a reason why your rig won’t work anymore. Try to use simulations as few as possible, and keep in mind that most of the time, animating hanging hairs or the antenna of a car is quick and easy with a few keyframes without even using the Kleaner.
+
+Simulation in the Kleaner happen only in multi-dimensionnal properties. You can completely disable simulations in the *Performance* section of the effect created by the Kleaner, as long as some other adjustment to further improve the performance according to your needs.
+
+![](../img/duik/automation/kleaner-effect-performance.png)
+
+### Wheel (curved motion)
+
+The default [*Wheel*](../guide/automation/wheel.md) automation is very light and won’t be any problem. But be careful with the *curved* mode, as it needs to compute the trajectory of the wheel on all the previous frames of the composition. At the end of a long composition, this can be very heavy.
+
+### Motion Trails
+
+As [motion trails](../guide/automation/motion-trail.md) have to generate bezier paths according to the movement of layers, if you have a lot of layers and parenting, this can lead to very poor performance, as a lot of calculations are needed. You can’t do much about it, except in some cases you can animate the trails by hand: copy the position keyframes into a bezier path, and use the “trim paths” tool in a shape layer.
+
+If you don’t need variable width on the motion trail, make sure to keep the mode to *simple* instead of *advanced*. The simple mode is much lighter.
+
+There are a few sampling option to adjust the balance between smoothness and performance.
+
+![](../img/duik/automation/motion-trail-effect-sampling.png)
+
+The *Method* should be kept on automatic, except if for some unknown reason it fails to generate a smooth path.  
+Try to keep the number of samples as low as possible, on the lowest value you need for the trail to be smooth.
+
+### Other automations and expressions added by Duik
+
+The other automations are not particularly heavy. Just be careful with automations like the [*Effector*](../guide/automation/effector.md) which is often used to drive a lot of layers together, which means it's a lot of expressions.
+
 ## Hardware
 
 > What's the best hardware to use with After Effects?
 
 If you ask this question around, everyone will have a different opinion. Here's what we've measured when developing Duik and other tools, and tested them on film productions.
+
+![](../img/illustration/1024px-Computer_Circuit_Board_MOD_45153624.jpg)
 
 ### Disks
 
@@ -326,8 +402,6 @@ Note that the relation between the CPU capabilities and After Effects performanc
 #### Graphical Processing Unit (GPU)
 
 After Effects does use the GPU more and more to render the effects and compositions, so it's a good idea to use a good GPU. Of course, if you're working with 3D, you'll need a high-end GPU anyway, but if you're only working with After Effects, 2D, and video, it's not useful to have the best GPU, a mid-level GPU is enough.
-
-## Duik features impacting performance
 
 [^1]: *South Park* is an American animated sitcom. The series revolves around four boys—Stan Marsh, Kyle Broflovski, Eric Cartman, and Kenny McCormick—and their exploits in and around the titular Colorado town. It became infamous for its profanity and dark, surreal humor that satirizes a large range of subject matter. *cf.* [en.wikipedia.org/wiki/South_Park](https://en.wikipedia.org/wiki/South_Park){target="_blank"}
 

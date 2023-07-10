@@ -84,6 +84,9 @@ Unless stated otherwise, for all pictures, icons, videos, and other materials co
 - "Rodentia," Encyclopædia Britannica
   *Common Rorqual (Balaenoptera musculus)*
   1911, public domain
+- Harland Quarrington/MOD
+  *Computer Circuit Board*
+  2012, Open Government Licence version 1.0 (OGL v1.0).
 - Font Awesome,  
   Some of the icons,  
   [fontawesome.com](https://fontawesome.com/){target="_blank"},  
