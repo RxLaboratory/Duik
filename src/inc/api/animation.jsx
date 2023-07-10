@@ -90,6 +90,7 @@ Duik.Animation.selectKeyframes = function( comp, selectedLayers, controllersOnly
     layers = new DuList(layers);
     layers.do(function (layer)
     {
+        if (layer.locked) return;
         var props = DuAEProperty.getProps(layer,filterProps);
         var propList = new DuList(props);
         propList.do(function(prop)
@@ -962,12 +963,12 @@ Duik.Animation.setHold = function() {
  */
 Duik.Animation.setEase = function( easeIn, easeOut ) {
     var props = DuAEComp.getSelectedProps();
-    props = new DuList(props);
-    if (props.length == 0) return;
+    var propList = new DuList(props);
+    if (propList.length() == 0) return;
 
     DuAE.beginUndoGroup( i18n._("Set ease"), false);
 
-    props.do(function(prop) {
+    propList.do(function(prop) {
         if (prop.isGroup()) return;
         prop.setEase(easeIn, easeOut);
     });
