@@ -2703,15 +2703,17 @@ Duik.Automation.randomizeKeyTimes = function (min, max, offset, gaussian, props)
 
     //array to list keys to be removed
 	var krKeys = [];
+    //array  to list keys to be added
+    var newKeys = [];
 
     props.do(function(prop) {
         prop = new DuAEProperty(prop);
         if (prop.isGroup()) return;
 
         var krK = [];
+        var newK = [];
 
         var comp = prop.comp;
-        var dim = prop.dimensions();
 
         //loop through selected keyframes
         var selectedKeys = prop.selectedKeys();
@@ -2720,15 +2722,17 @@ Duik.Automation.randomizeKeyTimes = function (min, max, offset, gaussian, props)
             var key = selectedKeys[j];
             var t = rnd(min,max)*comp.frameDuration;
             // SET VALUE
-            if (!offset) t -= prop.keyTime(key);
             var oldKey = prop.keyAtIndex(key);
             krK.push(prop.keyTime(key));
-            prop.setKey(oldKey,t);
+            if (offset) oldKey._time += t;
+            else oldKey._time = t;
+            newK.push(oldKey);
         }
         krKeys.push(krK);
+        newKeys.push(newK);
     });
 
-    // Delete keyframes
+    // Delete and set keyframes
     props.do(function(prop) {
         prop = new DuAEProperty(prop);
         if (prop.isGroup()) return;
@@ -2737,6 +2741,21 @@ Duik.Automation.randomizeKeyTimes = function (min, max, offset, gaussian, props)
 		{
 			prop.removeKey(prop.nearestKeyIndex(krKeys[props.current][j]));
 		}
+
+        for (var j = 0; j < newKeys[props.current].length; j++)
+        {
+            prop.setKey(newKeys[props.current][j], 0);
+        }
+    });
+
+    // Re-Select
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+
+        for (var j = 0; j < newKeys[props.current].length; j++)
+        {
+            prop.setSelectedAtKey( newKeys[props.current][j] );
+        }
     });
 
     DuAEProject.setProgressMode(false);
