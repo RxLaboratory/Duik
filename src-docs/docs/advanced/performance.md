@@ -273,7 +273,7 @@ Sometimes, changing a few options in After Effects can improve the performance o
 - `Memory & Performance ▶ Performance`:
   Using Multi-Frame Rendering usually improves performance, but in specific cases it may be better to deactivate this option: if you work with complex compositions, lots of expressions, or non-compatible effects, multi-frame rendering may actually slow down the rendering process:
     - It takes more time to start the rendering process when using multi-frame rendering. This can be a problem for previews:&nbsp;if you notice a long delay between requesting the preview and the render of the first frame, it may be because of multi-frame rendering and it's worth trying without it, then maybe enable it again just before the final render.
-    - It may sometimes be actually slower to render than standard rendering, but that depends on what you're rendering. You'll have to test with your own project if you suspect it to slow down your renders, but that shouldn't be the case in tha majority of projects. In doubt, leave it enabled.
+    - It may sometimes be actually slower to render than standard rendering, but that depends on what you're rendering. You'll have to test with your own project if you suspect it to slow down your renders, but that shouldn't be the case in the majority of projects. In doubt, leave it enabled.
 
 ## Duik features impacting performance
 
@@ -303,10 +303,6 @@ The IK used in a character like the ones created by the [Auto-rigger](../guide/b
 - When using shape layers as controllers, you can disable the guides on the controllers (the dashed lines representing the IK) in the effects of the controller. It's better to use raster controllers though (and in this case, there are no guides at all).
 
 - When you deactivate the IK and animate in FK, the performance is usually better, and FK animation is actually easier than IK.
-
-Wheel (curved motion)
-
-The default Wheel automation is very light won’t be any problem. But be careful with the curve mode, as it needs to compute the trajectory of the wheel on all the previous frames of the composition. At the end of a long composition, this can be very heavy.
 
 ### Kleaner (simulated)
 
@@ -397,7 +393,7 @@ That's the most important part for After Effects: it is used a lot when working 
 
 It seems that, given the choice, it's better to have less threads with a higher frequency than more slower threads (i.e. prefer *GHz* over *Cores*).
 
-Note that the relation between the CPU capabilities and After Effects performance doesn't feel linear: a CPU twice faster will not result in After Effects being twice faster, but just *a bit* faster. Anyway, After Effects is always too slow, so if you plan to work in After Effects, try to spend your mooney mostly on the CPU.
+Note that the relation between the CPU capabilities and After Effects performance doesn't feel linear: a CPU twice faster will not result in After Effects being twice faster, but just *a bit* faster. Anyway, After Effects is always too slow, so if you plan to work in After Effects, try to spend your money mostly on the CPU.
 
 #### Graphical Processing Unit (GPU)
 
