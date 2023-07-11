@@ -1547,31 +1547,31 @@ Duik.CmdLib['Animation']["Snap keys"] = "Duik.Animation.snapKeys()";
  */
 Duik.Animation.snapKeys = function() {
     var props = DuAEComp.getSelectedProps();
-    props = new DuList(props);
+    var propList = new DuList(props);
     var selected = true;
-    if (props.length() == 0) {
+    if (propList.length() == 0) {
         var comp = DuAEProject.getActiveComp();
         if (!comp) return;
-        if (comp.selectedLayers.length > 0) props = new DuList(comp.selectedLayers);
-        else props = new DuList(comp.layers);
+        if (comp.selectedLayers.length > 0) propList = new DuList(comp.selectedLayers);
+        else propList = new DuList(comp.layers);
         selected = false;
     }
 
-    if (props.length() == 0) return;
+    if (propList.length() == 0) return;
 
     DuAE.beginUndoGroup( i18n._("Snap keys"), false);
 
     // When modifying properties, keys are deselected. Let's keep the list.
     var selectedKeys = [];
     if (selected) {
-        props.do(function(prop) {
+        propList.do(function(prop) {
             selectedKeys.push(prop.selectedKeys());
         });
     }
 
-    props.do(function(prop) {
+    propList.do(function(prop) {
         prop = new DuAEProperty(prop);
-        prop.snapKeys(selectedKeys[props.current]);
+        prop.snapKeys(selectedKeys[propList.current]);
     });
 
     DuAE.endUndoGroup( i18n._("Snap keys"));
