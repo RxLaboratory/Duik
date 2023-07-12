@@ -777,11 +777,12 @@
     easePickButton.alignment = ['right', 'fill'];
     easePickButton.onClick = function() {
         var props = DuAEComp.getSelectedProps();
-        props = new DuList(props);
+        var propList = new DuList(props);
         if (props.length == 0) return;
 
         var propInfo;
-        while(propInfo = props.next()) {
+        while(propInfo = propList.next()) {
+            if (propInfo.isGroup()) continue;
             var prop = propInfo.getProperty();
 			if (prop.selectedKeys.length == 0) continue;
 			var speed = propInfo.velocityToPercent(prop.selectedKeys[0]);
