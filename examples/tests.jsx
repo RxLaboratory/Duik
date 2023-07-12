@@ -1,22 +1,13 @@
 ﻿(function() {
 
-    #include "OpenAnimation/oa.jsxinc"
-    #include "OpenAnimation/oa_ae.jsxinc"
+    #include "../src/inc/api_all.jsx"
 
-    app.beginUndoGroup("OA Test");
+    var props = DuAEComp.getSelectedProps();
+    var propList = new DuList(props);
+    propList.do(function(p) { alert(p.name);} );
 
-    var p = app.project.activeItem.layer(1).transform.rotation;
-
-    var group = OAProperty.fromAEProperty(p);
-    group = group.bake();
-    //group = group.simplify();
-    //alert(group.toJson());
-
-    group.toFile('X:/test.oa.json');
-    
-    var p2 = app.project.activeItem.layer(2).transform.rotation; 
-    group.toAEProperty(p2);
-
-    app.endUndoGroup();
+    var props = app.project.activeItem.layer(1).selectedProperties;
+    var propList = new DuList(props);
+    propList.do(function(p) { alert(p.name);} );
 
 })();

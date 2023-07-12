@@ -1680,16 +1680,16 @@ Duik.CmdLib['Animation']["Sequence keys"] = "Duik.Animation.sequenceKeys()";
  */
 Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
     var props = DuAEComp.getSelectedProps();
-    props = new DuList(props);
-    if (props.length() == 0) return;
+    var propList = new DuList(props);
+    if (propList.length() == 0) return;
 
     DuAE.beginUndoGroup( i18n._("Sequence"), false);
 
-    var comp = props.at(0).comp;
+    var comp = propList.at(0).comp;
 
     // Get animations
     var selectedKeys = [];
-    props.do(function(prop) {
+    propList.do(function(prop) {
         var keys = prop.selectedKeys();
         if (keys.length == 0) return;
         var p = {};
@@ -1710,7 +1710,7 @@ Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
         var e = reverse ? n-1 : 0;
 
         // New time
-        newTime = interpolation(i, s, e, startTime, endTime);
+        var newTime = interpolation(i, s, e, startTime, endTime);
         var offset = newTime - anim.startTime;
 
         // remove keyframes
