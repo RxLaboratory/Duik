@@ -10,9 +10,9 @@ Duik.Controller = {};
 
 /**
  * The shapes/type/icon of the controllers
- * @enum {int}
+ * @enum {Number}
  * @readonly
- */
+ * @ts-ignore */
 Duik.Controller.Type = {
     ROTATION: 1,
     X_POSITION: 2,
@@ -62,7 +62,7 @@ Duik.Controller.Type = {
  * The pre-rigged pseudo effects
  * @enum {File}
  * @readonly
- */
+ * @ts-ignore */
 Duik.Controller.PseudoEffect = {
     EYES: preset_eyes.toFile(),
     FINGERS: preset_fingers.toFile(),
@@ -72,9 +72,9 @@ Duik.Controller.PseudoEffect = {
 
 /**
  * The type of layers to use for controllers
- * @enum {int}
+ * @enum {Number}
  * @readonly
- */
+ * @ts-ignore */
 Duik.Controller.LayerMode = {
     NULL: 0,
     SHAPE: 1,
@@ -317,7 +317,7 @@ DuESF.initMethods.push(Duik.Controller.aeInit);
 /**
  * The list of controller functions
  */
-Duik.CmdLib[ 'Controller' ] = [];
+Duik.CmdLib[ 'Controller' ] = {};
 Duik.CmdLib[ 'Controller' ][ "Rotation" ] = "Duik.Controller.fromLayers( Duik.Controller.Type.ROTATION )";
 Duik.CmdLib[ 'Controller' ][ "X Position" ] = "Duik.Controller.fromLayers( Duik.Controller.Type.X_POSITION )";
 Duik.CmdLib[ 'Controller' ][ "Y Position" ] = "Duik.Controller.fromLayers( Duik.Controller.Type.Y_POSITION )";

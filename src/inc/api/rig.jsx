@@ -8,7 +8,7 @@ Duik.Rig = {};
 /**
  * The list of (auto)rigging functions
  */
-Duik.CmdLib['Auto-rig'] = [];
+Duik.CmdLib['Auto-rig'] = {};
 
 
 Duik.CmdLib['Auto-rig']['Rig'] = 'Duik.Rig.auto()';
@@ -158,6 +158,7 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     }
 
     if (masterCtrl) {
+        /* @ts-ignore */
         masterCtrl.transform.position.setValue( [masterCtrl.transform.position.value[0], comp.height - comp.height * .05] );
         Duik.Layer.setName(i18n._("Root"), masterCtrl); /// TRANSLATORS: The name of a controller which controls all other controllers.
         DuAELayer.parent(ctrls, masterCtrl, true, false);
@@ -167,6 +168,11 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
         DuAEComp.unselectLayers();
         DuAEComp.selectLayers(ctrls);
     }
+
+    // If controllers are nulls, move them to the top of the comp
+    if ( OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE) == Duik.Controller.LayerMode.NULL) {
+        for (var i = 0; i < ctrls.length; i++) { ctrls[i].moveBefore( comp.layer(1) ); };
+    };
     
 
     DuAEProject.setProgressMode( false );
