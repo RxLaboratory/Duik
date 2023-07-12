@@ -137,7 +137,7 @@ function createBoneTypeSelector(container) {
 
 function buildMoveAnchorPointGroup(moveAnchorPointGroup, mainGroup) {
 
-    var titleBar = createSubPanel(
+    createSubPanel(
         moveAnchorPointGroup,
         i18n._("Move anchor points"),
         mainGroup,

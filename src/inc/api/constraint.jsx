@@ -7,7 +7,7 @@ Duik.Constraint = {};
 
 /**
  * The types of IK for three-layer chains.
- * @enum {int}
+ * @enum {Number}
  */
 Duik.Constraint.IKType = {
     ONE_TWO: 1,
@@ -20,7 +20,7 @@ Duik.Constraint.IKType = {
 /**
  * The list of constraint functions
  */
-Duik.CmdLib['Constraint'] = [];
+Duik.CmdLib['Constraint'] = {};
 
 Duik.CmdLib['Constraint']["List"] = "Duik.Constraint.list()";
 Duik.CmdLib['Constraint']["List_with_keyframe"] = "Duik.Constraint.list(true)";
@@ -415,9 +415,9 @@ Duik.CmdLib['Constraint']["Move Anchor Point Center"] = "Duik.Constraint.moveAnc
 /**
  * Repositions the anchor points of the layers
  * @param {DuMath.Location} location The new location of the anchor points relative to the layer bounds.
- * @param {float} [margin=0.0] A margin, in pixels.
+ * @param {Number} [m=0.0] A margin, in pixels.
  * @param {Boolean} [includeMasks=false] Use masks to compute the bounds.
- * @param {Layer[]|LayerCollection|DuList.<Layer>|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ * @param {Layer[]|LayerCollection|DuList|Layer} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
  */
 Duik.Constraint.moveAnchorPoint = function(location, m, includeMasks, layers) {
     layers = def(layers, DuAEComp.unselectLayers());
