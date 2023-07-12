@@ -171,7 +171,10 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
 
     // If controllers are nulls, move them to the top of the comp
     if ( OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE) == Duik.Controller.LayerMode.NULL) {
-        for (var i = 0; i < ctrls.length; i++) { ctrls[i].moveBefore( comp.layer(1) ); };
+        for (var i = 0; i < ctrls.length; i++) {
+            alert(ctrls[i]);
+            ctrls[i].moveBefore( comp.layer(1)
+        ); };
     };
     
 
@@ -290,7 +293,7 @@ Duik.Rig.limb = function (limb, customControllers, longChainMode, threeLayerMode
     }
     else if (limb.limb == OCO.Limb.CUSTOM)
     {
-        limb.ctrls = [ Duik.Rig.custom( layers, longChainMode, threeLayerMode, customControllers ) ];
+        limb.ctrls = Duik.Rig.custom( layers, longChainMode, threeLayerMode, customControllers );
     }
 
     // Rig child limbs (and parent them)
