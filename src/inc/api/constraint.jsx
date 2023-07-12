@@ -2715,6 +2715,9 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     DuAE.beginUndoGroup( i18n._("B\u00e9zier IK"), false);
 
     layers = new DuList(layers);
+
+    if (layers.length() == 0) return [];
+    //layers = new DuList( DuAELayer.sortByParent(layers) );
     var comp = layers.first().containingComp;
 
     //create controllers
@@ -2743,9 +2746,17 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
             child.parent = null;
         }
     });
+
     // Parent them together to ease the alignment
+    // And keep original positions and rotations to restore them later
+    var originalPositions = [];
+    var originalRotations = [];
     for(var i = 1, ni = layers.length(); i < ni; i++) {
-        layers.at(i).parent = layers.at(i-1);
+        var layer = layers.at(i);
+        layer.parent = null;
+        originalPositions.push( layer.transform.position.value );
+        originalRotations.push( layer.transform.rotation.value );
+        layer.parent = layers.at(i-1);
     }
     // and the controller
     var ctrlRot = controller.transform.rotation.value;    
@@ -2931,7 +2942,7 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
 
     layers.first().parent = rootController;
 
-    var lPe = Duik.PseudoEffect.BEZIER_IK_LAYER
+    var lPe = Duik.PseudoEffect.BEZIER_IK_LAYER;
 
     for (var i = 0, n = layers.length(); i < n; i++) {
         var layer = layers.at(i);
@@ -2953,10 +2964,10 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
                 'var end = null;',
                 'var root = null;',
                 'var curve = null;',
-                'var result = [0,0];',
+                'var result = value;',
                 'var thisFx = effect("' + layerEffect.name + '");',
                 'try { end = thisFx(' + lPe.props["Layers"]["End"].index + '); curve = thisFx(' + lPe.props["Layers"]["Curve"].index + '); root = thisFx(' + lPe.props["Layers"]["Root"].index + '); }catch (e) {};',
-                'if ( root !=null )',
+                'if ( root != null && thisFx.active )',
                 '{',
                 '   var ind = ' + index + ';',
                 '   var fx = end.effect("' + effect.name + '");',
@@ -2972,11 +2983,16 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
                 '   var a = rootPosition - endPosition - c - b;',
                 '   result += ((a*t +b )*t + c)*t + endPosition ;',
                 '}',
+                'else',
+                '{',
+                '   result += ' + originalPositions[i-1].toSource() + ';',
+                '}',
                 'result;'
             ].join('\n');
 
             var posProp = new DuAEProperty(layer.transform.position);
-            posProp.setExpression(expression);
+            posProp.setValue([0,0]);
+            posProp.setExpression(expression, false);
         }
 
         //rotation
@@ -2985,7 +3001,7 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
             'var result = value;',
             'var thisFx = effect("' + layerEffect.name + '");',
             'try{ c = thisFx(' + lPe.props["Layers"]["End"].index + ') }catch (e) {}',
-            'if ( c!=null )',
+            'if ( c != null && thisFx.active )',
             '{',
             '   var n = c;',
             '   try { n = thisFx(' + lPe.props["Layers"]["Next"].index + '); if (n.index == index) n = c; } catch (e) {}',
@@ -3021,6 +3037,23 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     curveController.transform.position.setValue(
         curveController.transform.position.value + controllerOffset / 3
     );
+
+    // Restore the position and rotation
+    for (var i = layers.length() - 1; i > 0; i--) {
+        var layer = layers.at(i);
+        var newPosition = layer.transform.position.value;
+        var originalPosition = originalPositions[i-1];
+        if (newPosition != originalPosition) {
+            var offset = newPosition - originalPosition;
+            layer.transform.position.setValue( layer.transform.position.valueAtTime(comp.time, true) - offset );
+        }
+        var newRotation = layer.transform.rotation.value;
+        var originalRotation = originalRotations[i-1];
+        if (newRotation != originalRotation) {
+            var offset = newRotation - originalRotation;
+            layer.transform.rotation.setValue( layer.transform.rotation.valueAtTime(comp.time, true) - offset );
+        }
+    }
 
     // Re-parent children
     layers.do(function(layer)
