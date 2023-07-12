@@ -1173,22 +1173,18 @@ Duik.Animation.splitKeys = function( duration, alignment ) {
 
                 nKey = key._clone();
                 nKey._time += nD;
-                nKey._index++;
 
                 prop.setKey(nKey, 0);
             }
             else if (alignment == DuAE.TimeAlignment.IN_POINT) {
                 nKey = key._clone();
                 nKey._time += d;
-                nKey._index++;
                 prop.setKey(nKey, 0);
 
                 pKey = key._clone();
             }
             else {
                 nKey = key._clone();
-                nKey._index++;
-
                 pKey = key._clone();
                 pKey._time -= d;
                 prop.setKey(pKey, 0);
@@ -1219,12 +1215,13 @@ Duik.Animation.freezePose = function(animatedProps, selectedLayers, useNextPose)
     if (animatedProps) props = DuAEComp.getAnimatedProps(undefined, undefined, undefined, selectedLayers);
     else props = DuAEComp.getSelectedProps();
     props = new DuList(props);
-    if (props.length == 0) return;
+    if (props.length() == 0) return;
 
     DuAE.beginUndoGroup( i18n._("Freeze"), false);
 
     props.do(function(prop) {
         if (prop.isGroup()) return;
+        if (prop.dimensionsSeparated()) return;
         // Get the previous keyframe (or next)
         var time = prop.comp.time;
         var key = prop.nearestKeyAtTime( time );
@@ -1240,11 +1237,19 @@ Duik.Animation.freezePose = function(animatedProps, selectedLayers, useNextPose)
         key._time = 0;
         // Select the key (needed to fix spatial interpolation, and better for user feedback)
         prop.setSelectedAtKey(key);
+        var copiedIndex = key._index;
         // Set new key
         if (!prop.setKey(key, time)) return;
+        var newIndex = key._index;
         // Adjust spatial interpolation
-        prop.setSpatialTangentsAtKey( key._index, prop.keyInSpatialTangent(key._index), [0,0]);
-        prop.setSpatialTangentsAtKey( key._index + 1, [0,0], prop.keyOutSpatialTangent(key._index + 1));
+        if (useNextPose) {
+            prop.setSpatialTangentsAtKey( newIndex, prop.keyInSpatialTangent(newIndex), [0,0]);
+            prop.setSpatialTangentsAtKey( copiedIndex, [0,0], prop.keyOutSpatialTangent(copiedIndex));
+        }
+        else {
+            prop.setSpatialTangentsAtKey( copiedIndex, prop.keyInSpatialTangent(copiedIndex), [0,0]);
+            prop.setSpatialTangentsAtKey( newIndex, [0,0], prop.keyOutSpatialTangent(newIndex));
+        }
 
         // Fix spatial tangents
         if (prop.isSpatial()) {
