@@ -172,7 +172,6 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     // If controllers are nulls, move them to the top of the comp
     if ( OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE) == Duik.Controller.LayerMode.NULL) {
         for (var i = 0; i < ctrls.length; i++) {
-            alert(ctrls[i]);
             ctrls[i].moveBefore( comp.layer(1)
         ); };
     };
