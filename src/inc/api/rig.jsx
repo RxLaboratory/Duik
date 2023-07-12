@@ -822,6 +822,7 @@ Duik.Rig.leg = function ( layers, customControllers )
     if (heel) Duik.Bone.resetTransform(heel);
 
     //adjust/fix what we got! We're very friendly...
+    /* @ts-ignore */
     if (type == OCO.LimbType.UNGULATE)
     {
         // We need toes (hoof)
@@ -881,6 +882,7 @@ Duik.Rig.leg = function ( layers, customControllers )
     //add nulls and controllers for the footRoll
     var toesNull, footNull;
     //the foot roll needs all parts
+    /* @ts-ignore */
     if ((toes || tip) && foot && tibia && femur && type != OCO.LimbType.UNGULATE)
     {
         if (!toes)
@@ -929,11 +931,15 @@ Duik.Rig.leg = function ( layers, customControllers )
 
     //Controller for the leg
     var ctrlType = Duik.Controller.Type.FOOT;
+    /* @ts-ignore */
     if (type == OCO.LimbType.DIGITIGRADE) ctrlType = Duik.Controller.Type.CLAWS;
+    /* @ts-ignore */
     if (type == OCO.LimbType.UNGULATE) ctrlType = Duik.Controller.Type.HOOF;
 	
     var ctrl = null;
+    /* @ts-ignore */
     if (type == OCO.LimbType.UNGULATE) ctrl = Duik.Controller.getCreate(toes, ctrlType, customControllers);
+    /* @ts-ignore */
     else if (type == OCO.LimbType.DIGITIGRADE)
     {
         if (foot && ((femur || tibia) || (!toes && !tip))) ctrl = Duik.Controller.getCreate(toes, ctrlType, customControllers);
@@ -1032,6 +1038,7 @@ Duik.Rig.leg = function ( layers, customControllers )
     // Rig!
     DuScriptUI.progressBar.hit(1, 'Rigging...');
 
+    /* @ts-ignore */
     if (type == OCO.LimbType.UNGULATE)
     {
         if (femur && tibia && foot)
@@ -1057,7 +1064,6 @@ Duik.Rig.leg = function ( layers, customControllers )
 
         //add an IK effect on the controller
         var pe2 = Duik.PseudoEffect.TWO_LAYER_IK;
-        var pe1 = Duik.PseudoEffect.ONE_LAYER_IK;
         var ikCtrl = pe2.apply(ctrl);
         //the effect on the null of the foot
         var ikEffect = footNull.effect(pe2.matchName);

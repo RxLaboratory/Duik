@@ -1749,6 +1749,16 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
         goal.parent = layer2;
     }
 
+    // We do need a goal
+    var lockGoal = false;
+    if (goal == null) {
+        goal = DuAEComp.addNull(comp, 20, controller);
+        Duik.Layer.copyAttributes( goal, controller, Duik.Layer.Type.IK );
+        goal.parent = layer2;
+        goal.enabled = false;
+        lockGoal = true;
+    }
+
     //Check if clockwise and lengths
 
     //unparent
@@ -1764,8 +1774,6 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     var l1pos = layer1.transform.position.value;
     var l2pos = layer2.transform.position.value;
     var cpos = controller.transform.position.value;
-    var upperLength = DuMath.length(l1pos, l2pos);
-    var lowerLength = DuMath.length(l2pos );
     /// @ts-ignore
     var endPos = cpos - l1pos;
     /// @ts-ignore
@@ -1806,7 +1814,6 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
     var swingRevIndex = pe.props["Auto swing"]["Reverse"].index;
 
     var pRotationIndex = pe.props["FK"]["Parent rotation"].index;
-    var uFKIndex = pe.props["FK"]["Upper"].index;
     var lFKIndex = pe.props["FK"]["Lower"].index;
     var endFKIndex = pe.props["FK"]["End"].index;
 
@@ -2584,6 +2591,8 @@ Duik.Constraint.twoLayerIK = function(layer1, layer2, goal, controller, showGuid
             'if (fx && fx.active) result += fx(' + fkGoalPosIndex + ').value;',
             'result;'
 	    ].join('\n') );
+
+        if (lockGoal) goal.locked = true;
     }
 
     return controller;
