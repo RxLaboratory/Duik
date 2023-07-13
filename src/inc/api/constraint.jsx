@@ -3952,6 +3952,7 @@ Duik.CmdLib['Constraint']["Constraint"] = "Duik.Constraint.constraint()";
  * @returns {Boolean} true if a constraint could be created
  */
 Duik.Constraint.path = function(path, layers, moveToPath) {
+
     moveToPath = def(moveToPath, false);
     layers = def(layers, DuAEComp.unselectLayers());
     layers = new DuList(layers);
@@ -3965,21 +3966,31 @@ Duik.Constraint.path = function(path, layers, moveToPath) {
         path = pathProps.pop();
     }
 
+    // Prepare the path
+    path = new DuAEProperty(path);
+    path = path.pathProperty();
+    if (!path) return;
+
     DuAE.beginUndoGroup( i18n._("Path constraint"), false);
 
+    var l = path.layer;
+    var pathExpr = path.expressionLink(true);
+
     var pe = Duik.PseudoEffect.PATH;
+    var p = pe.props;
+
+    // Get the position of the path (let's take the first group into account)
+    var pathPosition = [0,0,0];
+    if (path.matchName == 'ADBE Vector Shape') {
+        // Get the containing group
+        var matrix = DuAEShapeLayer.getTransformMatrix(path, false);
+        pathPosition = matrix.applyToPoint(pathPosition);
+    }
 
     layers.do(function(layer) {
-        path = new DuAEProperty(path);
-        path = path.pathProperty();
-        if (!path) return;
 
         var effect = pe.apply(layer);
-        var p = pe.props;
-
-        var l = path.layer;
-        var pathExpr = path.expressionLink(true);
-
+        
         var expr = [DuAEExpression.Id.PATH_CONSTRAINT,
             'var fx = effect("' + effect.name + '");',
             'var l = thisComp.layer("' + l.name + '");',
@@ -4019,7 +4030,7 @@ Duik.Constraint.path = function(path, layers, moveToPath) {
         rotProp.setExpression(expr);
 
         if (moveToPath) {
-            DuAELayer.setPosition( layer, [0, 0, 0]);
+            DuAELayer.setPosition( layer, pathPosition);
             layer.transform.rotation.setValue(0);
         }
     });
