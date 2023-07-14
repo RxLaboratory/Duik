@@ -2679,7 +2679,7 @@ DuColor.prototype.adjusted = function( )
 	* @readonly
 	* @static
 	* @enum {DuColor}
-	*/
+	* @ts-ignore */
 DuColor.Color =
 {
 	TRANSPARENT: new DuColor([0,0,0,0]),
@@ -14876,10 +14876,33 @@ DuESF.initMethods.push( DuProgressBar.init );
 // ==================== |---------| ====================
 
 /**
+ * @class
+ * @name DuToolBar
+ * @classdesc For use with {@link DuScriptUI}.<br />
+ * A Tool Bar.<br />
+ * This is not a real class, and cannot be instanciated.<br />
+ * Use {@link DuScriptUI.toolBar} to create a Tool Bar.<br />
+ * The DuToolBar inherits the <code>Group</code> object from ScriptUI and has all of its properties and methods.
+ * @category DuScriptUI
+ */
+
+/**
+ * Changes the background color of the button.
+ * @method
+ * @memberof DuToolBar
+ * @name addutton
+ * @param {string} text The button text.
+ * @param {string} [icon] The path to the icon
+ * @param {string} [helpTip] The button help tip
+ * @param {Boolean} [addOptions=false] Whether to add more options
+ * @param {Boolean} [optionsWithoutPanel=false] Whether the options need a dedicated panel
+ */
+
+/**
  * Creates a toolbar with a lighter background
  * @param {Panel|Window|Group} container The ScriptUI Object which will contain and display the toolbar.
- * @param {int} [numCols] The number of columns to use when adding the buttons.
- * @returns {Group} The toolbar, a ScriptUI Group
+ * @param {Number} [numCols] The number of columns to use when adding the buttons.
+ * @returns {DuToolBar} The toolbar
  */
 DuScriptUI.toolBar = function( container, numCols )
 {
@@ -16464,8 +16487,8 @@ OCOConfig.prototype.set = function( key, value ) {
 
 /**
  * Gets a value from the config. The key can be a path separated by /
- * @property {string} key The setting to get
- * @property {*} [defaultValue=null] The default value if the key is not set in the settings
+ * @param {string} key The setting to get
+ * @param {*} [defaultValue=null] The default value if the key is not set in the settings
  * @return {*} The value
  */
 OCOConfig.prototype.get = function( key, defaultValue ) {
@@ -21695,7 +21718,7 @@ DuAEProperty.prototype.isSeparationLeader = function() {
 DuAEProperty.prototype.dimensionsSeparated = function() {
     if (this.isGroup()) return false;
     if (!this.isSeparationLeader()) return false;
-    return this.getProperty().isSeparationLeader;
+    return this.getProperty().dimensionsSeparated;
 }
 
 /**
@@ -21812,11 +21835,14 @@ DuAEProperty.prototype.keyLabel = function(index) {
  * Reimplements the <code>Property.removeKey</code> method for convenience.
  * @param {int|DuAEKeyframe} key The index or the keyframe.
  */
-DuAEProperty.prototype.removeKey = function(key) {
+DuAEProperty.prototype.removeKey = function(key ) {
     if (this.isGroup()) return;
+
     if (key instanceof DuAEKeyframe) key = key._index;
+    
     var prop = this.getProperty();
     prop.removeKey(key);
+
 }
 
 /**
@@ -21827,6 +21853,33 @@ DuAEProperty.prototype.nearestKeyIndex = function(t) {
     if (this.isGroup()) return 0;
     var prop = this.getProperty();
     return prop.nearestKeyIndex(t);
+}
+
+/**
+ * Gets the index of the key just before the given time
+ * @param {float} t The time of the keyframe.
+ */
+DuAEProperty.prototype.keyIndexBefore = function(t) {
+    if (this.isGroup()) return 0;
+    var prop = this.getProperty();
+    if (prop.numKeys == 0) return 0;
+    var keyIndex = prop.nearestKeyIndex(t);
+    if (prop.keyTime(keyIndex) < t ) return keyIndex;
+    return keyIndex-1;
+}
+
+/**
+ * Gets the index of the key just after the given time
+ * @param {float} t The time of the keyframe.
+ */
+DuAEProperty.prototype.keyIndexAfter = function(t) {
+    if (this.isGroup()) return 0;
+    var prop = this.getProperty();
+    if (prop.numKeys == 0) return 0;
+    var keyIndex = prop.nearestKeyIndex(t);
+    if (prop.keyTime(keyIndex) > t ) return keyIndex;
+    if (keyIndex == prop.numKeys) return 0;
+    return keyIndex+1;
 }
 
 /**
@@ -22471,8 +22524,15 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
 
     timeOffset = def(timeOffset, this.comp.time);
     var time = key._time + timeOffset;
-    var propDimensions = this.dimensions();
     var val = key.value;
+
+    // For some reason?? Influences change on the key before/after, restore them
+    var prevEase = null;
+    var nextEase = null;
+    var prevIndex = this.keyIndexBefore(time);
+    var nextIndex = this.keyIndexAfter(time);
+    if (prevIndex > 0) prevEase = prop.keyOutTemporalEase( prevIndex );
+    if (nextIndex > 0) nextEase = prop.keyInTemporalEase( nextIndex );
 
     this.setValueAtTime(val, time);
 
@@ -22480,6 +22540,7 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
 
     //get the index of the created key
     var index = prop.nearestKeyIndex(time);
+    key._index = index;
 
     //set label
     // Doesn't exist in all versions
@@ -22502,6 +22563,13 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
         prop.setTemporalAutoBezierAtKey(index, key._autoBezier);
         prop.setTemporalEaseAtKey(index, key.inEase, key.outEase);
         prop.setInterpolationTypeAtKey(index, key._inInterpolationType, key._outInterpolationType);
+
+        if (prevEase) {
+            prop.setTemporalEaseAtKey(index-1, prop.keyInTemporalEase( index-1 ), prevEase);
+        }
+        if (nextEase) {
+            prop.setTemporalEaseAtKey(index+1, nextEase, prop.keyOutTemporalEase( index+1 ));
+        }
     } catch (err) {
         if (DuESF.debug) alert(err.description);
     }
@@ -22547,7 +22615,6 @@ DuAEProperty.prototype.setValue = function(value, defaultTime) {
             var ok = true;
             for(var i = 1; i <= value.length; i++) {
                 var p = group.property(index+i);
-                alert(p.name);
                 p = new DuAEProperty(p);
                 var test = p.setValue( value[i-1] );
                 if (ok) ok = test;
@@ -23006,7 +23073,6 @@ DuAEProperty.prototype.setEase = function( easeInValue, easeOutValue, velocityIn
     if (isNaN(velocityInValue) && isdef( velocityInValue )) velocityInValue = 0;
     if (isNaN(velocityOutValue) && isdef( velocityOutValue )) velocityOutValue = 0;
 
-    var comp = this.comp;
     var prop = this.getProperty();
 
     if (prop.canVaryOverTime) {
@@ -23065,6 +23131,14 @@ DuAEProperty.prototype.setEase = function( easeInValue, easeOutValue, velocityIn
                     if (isdef(velocityOutValue)) vOutValue = velocityOutValue * nextSpeed / 100 * signAfter;
                 }
 
+            }
+
+            // When setting ease on a linear keyframe, set the velocity to 0 by default
+            if (prop.keyInInterpolationType(key) == KeyframeInterpolationType.LINEAR && isdef( easeInValue ) && !isdef( velocityInValue)) {
+                vInValue = 0;
+            }
+            if (prop.keyOutInterpolationType(key) == KeyframeInterpolationType.LINEAR && isdef( easeOutValue ) && !isdef( velocityOutValue)) {
+                vOutValue = 0;
             }
 
             //set interpolation 
@@ -23539,7 +23613,7 @@ DuAEProperty.prototype.velocityAtTime = function(time, preExpression) {
 DuAEProperty.prototype.setExpression = function(expr, keepValue) {
     keepValue = def(keepValue, true);
 
-    this.do(function(duaeProp) {
+    this.do(function(duaeProp) {       
         prop = duaeProp.getProperty();
 
         if (!duaeProp.riggable()) return;
@@ -23558,6 +23632,7 @@ DuAEProperty.prototype.setExpression = function(expr, keepValue) {
             if (DuESF.debug) alert(e.description);
             return;
         }
+
         //set new expression
         try {
             prop.expression = expr;
@@ -23567,7 +23642,7 @@ DuAEProperty.prototype.setExpression = function(expr, keepValue) {
 
         //restore value
         if (keepVal)
-            if (duaeProp.dimensions() > 0 && duaeProp.editable()) duaeProp.setValue(2 * originalValue - prop.valueAtTime(comp.time, false));
+            if (duaeProp.dimensions() > 0) duaeProp.setValue(2 * originalValue - prop.valueAtTime(comp.time, false));
     });
 }
 
@@ -24838,9 +24913,9 @@ DuAEProperty.prototype.snapKeys = function(keys) {
             var key = prop.keyAtIndex(ks[k]);
             var mod = key._time % frameDuration;
             if (mod != 0 ) {
+                prop.removeKey(key);
                 if (mod < halfFrame) key._time -= mod;
                 else key._time += frameDuration - mod;
-                prop.removeKey(key);
                 prop.setKey(key, 0);
             }
         }
@@ -26731,8 +26806,8 @@ DuAEExpression.Library["bounce"].expression = ['function bounce(t, elasticity, d
 	'var startValue = valueAtTime(bounceStart);',
 	'if (value instanceof Array) {',
 	'for (var i = 0; i < prevValue.length; i++) {',
-	'if (prevValue[i] > startValue[i]) bounceValue[i] = Math.abs(fThrough[i]);',
-	'if (prevValue[i] < startValue[i]) bounceValue[i] = -Math.abs(fThrough[i]);',
+	'if (prevValue[i] > startValue[i]) bounceValue[i] = Math.abs(bounceValue[i]);',
+	'if (prevValue[i] < startValue[i]) bounceValue[i] = -Math.abs(bounceValue[i]);',
 	'}',
 	'} else {',
 	'if (prevValue > startValue) bounceValue = Math.abs(bounceValue);',
@@ -31007,9 +31082,9 @@ DuAELayer.getMaxDistance = function(layers) {
 /**
  * Gets the world coordinates of the point of a layer
  * @param {Layer} layer - The layer
- * @param {float[]} [point=layer.transform.anchorPoint.value] - the point
- * @param {float} [time] - the time at which to get the coordinates. Current time by default.
- * @return {float[]} The world coordinates of the layer
+ * @param {Number[]} [point=layer.transform.anchorPoint.value] - the point
+ * @param {Number} [time] - the time at which to get the coordinates. Current time by default.
+ * @return {Number[]} The world coordinates of the layer
  */
 DuAELayer.getWorldPos = function(layer, point, time) {
     time = def(time, layer.containingComp.time);
@@ -31660,7 +31735,7 @@ DuAELayer.align = function(layers, target, position, rotation, scale, opacity) {
 /**
  * Gets the transformation matrix of the layer from the compostion.<br />
  * Use Matrix.applyToPoint(point) to transform any coordinate with the matrix returned by this method.
- * @param {Layer[]} layer - the layer
+ * @param {Layer} layer - the layer
  * @param {float} [time] - the time at which to get the coordinates. Current time by default.
  * @return {Matrix} The coordinates.
  */
@@ -31895,7 +31970,7 @@ DuAELayer.lastEffect = function(layer, name, skip) {
 /**
  * Changes the coordinates of the anchor point without moving the layer
  * @param {Layer} layer The layer
- * @param {float[]} value The new coordinates
+ * @param {Number[]} value The new coordinates
  */
 DuAELayer.repositionAnchorPoint = function(layer, value) {
     // Unparent
@@ -31966,9 +32041,14 @@ DuAELayer.repositionAnchorPoint = function(layer, value) {
     var position = DuAELayer.getWorldPos(layer, [0,0,0]);
 
     // Set anchor point
-    layer.transform.anchorPoint.setValue(value);
+    var ap = layer.transform.anchorPoint;
+    /* @ts-ignore */
+    if (ap.numKeys > 0) ap.setValueAtTime(layer.containingComp.time, value);
+    /* @ts-ignore */
+    else layer.transform.anchorPoint.setValue(value);
 
     // Get the position offset
+    /* @ts-ignore // Yes, we can do arithmetics with array/vectors */
     var offset = DuAELayer.getWorldPos(layer, [0,0,0]) - position;
 
     // Adjust position for keyframes
@@ -32233,7 +32313,7 @@ DuAELayer.isRenderable = function(layer) {
  * Bakes the expressions to keyframes and removes all non-renderable layers.
  * @param {Layer} layer The layer to bake.
  * @param {DuAEExpression.BakeAlgorithm} [mode=DuAEExpression.BakeAlgorithm.SMART] The algorithm to use for baking the expressions.
- * @param {float} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
+ * @param {Number} [frameStep=1.0] By default, checks one value per keyframe. A lower value increases the precision and allows for sub-frame sampling. A higher value is faster but less precise.
  */
 DuAELayer.bake = function (mode, frameStep, layer) {
     // First, check transform properties.
@@ -32560,13 +32640,18 @@ DuAEShapeLayer.Primitive = {
 
 /**
  * Gets the transformation matrix for all the parent groups of a given property
- * @param {Property|DuAEProperty} prop - The property
+ * @param {PropertyBase|DuAEProperty} prop - The property
+ * @param {Boolean} [includeLayerTransform=true] - Whether to include the layer transformation in the matrix
  * @return {Matrix} The transformation matrix.
  */
-DuAEShapeLayer.getTransformMatrix = function ( prop ) {
+DuAEShapeLayer.getTransformMatrix = function ( prop, includeLayerTransform ) {
+    includeLayerTransform = def(includeLayerTransform, true);
+
     var propInfo = new DuAEProperty( prop );
     prop = propInfo.getProperty();
-    var matrix = DuAELayer.getTransformMatrix( propInfo.layer );
+
+    var matrix = new Matrix();
+    if (includeLayerTransform) matrix = DuAELayer.getTransformMatrix( propInfo.layer );
 
     var props = [];
 
@@ -32583,7 +32668,7 @@ DuAEShapeLayer.getTransformMatrix = function ( prop ) {
     //apply transforms from the ancestor
     for ( var i = props.length - 1; i >= 0; i-- ) {
         var p = props[ i ].property( "ADBE Vector Transform Group" );
-        matrix.translate( -p.property( "ADBE Vector Anchor" ).value );
+        matrix.translate( - p.property( "ADBE Vector Anchor" ).value );
         matrix.translate( p.property( "ADBE Vector Position" ).value );
         matrix.rotate( p.property( "ADBE Vector Rotation" ).value );
         matrix.scale( p.property( "ADBE Vector Scale" ).value / 100 );
