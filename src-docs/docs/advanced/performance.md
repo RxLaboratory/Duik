@@ -84,6 +84,9 @@ As you can see in this table, there are two ways to improve the performance of t
 2. Always prefer **raster layers**.  
   A raster layer will almost always be **faster to render** than a shape layer. If you don't need to animate the contents of a shape layer, you could precompose it, or, even better, render it to an openEXR file and replace the shape with the rendered image.
 
+!!! tip
+    It seems the performance is a bit better (approximately 10&nbsp;%) with a shape layer containing many shapes than with everything exploded in several layers.
+
 ### Cut/hide invisible layers
 
 Quite often, when animating some layers position, they may be (temporarily) outside of the frame of the composition. In this case, performance may be improved if you hide/cut them as soon as they get out, to be sure to prevent any rendering and evaluation of the expressions which are not needed as long as the layer can't be seen.
@@ -144,7 +147,7 @@ Shape layer controllers are automatically baked by default when *extracting* con
 ## Expressions
 
 **Expressions in After Effects are all evaluated (computed) when rendering each frame of the composition**. This won’t be an issue if they are simple, with basic calculations like the vast majority of expressions you may write by yourself.  
-Now, imagine an expression, which, when it is evaluated (i.e. at each frame of the composition), needs to compute previous movements of some other layers - this is what simulations do. This means it also needs to compute everything which influences the layers in previous frames of the composition, including other expressions, which might be complex too… This is a nasty situation where performance will drop dramatically. You’ll have to take care of what needs to be computed, and what the hierarchy of the expressions and layers is.
+Now, imagine an expression, which, when it is evaluated (i.e. at each frame of the composition), needs to compute previous movements of some other layers - this is what simulations do. This means it also needs to compute everything which influences the layers in previous frames of the composition, including other expressions, which might be complex too… This is a nasty situation where performance will drop dramatically. You’ll have to take care of what needs to be computed, and what the hierarchy of the expressions and layers is
 
 **Some features of Duik use very complex expressions**, and compute-intensive calculations, like the IK which involves more maths than simple additions and multiplications, or simulations like the kleaner's follow-through which have to compute previous movements. Even if we’ve been hard at work to fix performance issues, in some cases combining a lot of expressions (i.e. Duik features) can lead to poorer performance when animating, or even so much lag that the rig cannot be correctly manipulated anymore.
 
@@ -160,6 +163,10 @@ Duik can also help you with that:&nbsp;the [*bake expression*](../guide/automati
 
 - A *smart mode* creates an animation as close as possible to the result of the expression, using just a few Bézier keyframes, and keeps the animation easy to edit later.
 - A *precise mode* creates an animation  with as much keyframes as needed for a perfect match (which is still less than the After Effects native tool).
+
+### Bézier paths and expressions
+
+For some reason, **using an expression to control the Bézier path of a mask is much slower than the same expression in a shape layer**: if you need to use expressions with Bézier path, try to always use shape layers instead of masks! We've measure the same expression to be twice faster in shape layers.
 
 ## Compositions
 
