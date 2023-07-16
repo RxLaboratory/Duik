@@ -1,6 +1,6 @@
 # ![](../../img/duik/icons/connector.svg){style="width:1em;"} Connector
 
-The connector is a simple yet very powerful tool to automate all kind of cause-consequence link between properties. Every time you need the value of any property react to the change of any other property, you should be able to use the connector to build the automation.
+The connector is a simple yet very powerful tool to automate all kind of cause-and-consequence link between properties. Every time you need the value of any property react to the change of any other property, you should be able to use the connector to build the automation.
 
 It simply drives a *slave*[^1] property (or several slave properties) according to the values of a master property, a bit like what parenting does with the transformation of layers.
 
@@ -50,7 +50,7 @@ Read further to learn how to do more advanced stuff with the connector, using th
 ## Advanced Connector
 
 If you need more advanced connections, you can choose one of the many other ways to connect properties and select or create a master controller.  
-The first step is to get to the settings panel of the connector: either click the ![](../../img/duik/icons/options.svg){style="width:1em;"} *settings* button or `Shift + Click` the connector button.  
+The first step is to get to the settings panel of the connector: either click the ![](../../img/duik/icons/options.svg){style="width:1em;"} *settings* button or `[Shift] + [Click]` the connector button.  
 This opens the advanced Connector panel.
 
 ![](../../img/duik/constraints/advanced-connector.png)
@@ -265,7 +265,7 @@ Depending on the slave property type, there are several ways to connect it to mu
 In the specific case of transform properties, the easiest way to have multiple connections is to use parenting. Just add a null layer as a parent of the slave layer, and make new connections in the transform properties of this parent layer.
 
 !!! tip
-    From the [controllers panel](../controllers/index.md)&nbsp;[^2], you can quickly insert a null layer in the hierarchy by selecting the controlled layer and `Ctrl + Click` on the ![](../../img/duik/icons/ae_null.svg){style="width:1em;"} *Null* button (or any other controller shape).
+    From the [controllers panel](../controllers/index.md)&nbsp;[^2], you can quickly insert a null layer in the hierarchy by selecting the controlled layer and `[Ctrl] + [Click]` on the ![](../../img/duik/icons/ae_null.svg){style="width:1em;"} *Null* button (or any other controller shape).
 
 ### Bézier shapes (masks or shape layers)
 
@@ -356,7 +356,7 @@ To arrange the available shapes in a grid, the process is almost the same as for
     3. **Repeat** for all columns.
 
 
-[^1]: In some cultures, using the *master* and *slave* metaphor 
+[^1]: In some cultures, using the *master* and *slave* metaphor may seem offending; that's not the case in France where this is written and developped, and this is the best semantics we've found to explain what the connector does, without using the parent-child metaphor which is something different in After Effects. We won't harm anything else than keyframes.
 
 [^2]: *cf.* [*Controllers*](../controllers/index.md).
 
