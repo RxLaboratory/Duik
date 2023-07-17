@@ -45,7 +45,9 @@ With three bones you can use one of these methods:
 - ***Bézier IK*** is a kind of IK controlled by Bézier functions, similar to Bézier paths in After Effects; this is espacially useful for tails or spines for example, when you want to achieve a smooth curve.
 - ***Bézier FK*** combines a Bézier IK with FK controls, to be able to animate the IK use the rotation properties of the controllers at each end.
 
-You can also set your preference for longer chains, made of more than three bones. In this case, the choice is limited to: *FK*, *Bézier IK*, *Bézier FK*.
+You can also set your preference for longer chains made of more than three bones, tails and hair strands. In this case, the choice is limited to: *FK*, *Bézier IK*, *Bézier FK*.
+
+▷ Read the [*Constraints / Kinematics*](../../constraints/kinematics.md) section for more details about these options.
 
 If you **check the *Create a root controller* box**, the Auto-rig will **add a root, master controller** which can be used to translate and rotate the whole rig at once.
 

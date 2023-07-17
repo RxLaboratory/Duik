@@ -45,6 +45,9 @@ To re-create a pin for an already rigged Bézier path, select the corresponding 
 ![](../../img/duik/constraints/pin-path-effects.png)  
 *The effects on the layer containing a rigged path allow you to easily re-create missing pins to control the path, or manually adjust the values.*
 
+!!! warning
+    It seems that expressions in the Bézier path properties of masks are much slower than in path properties of shape layers. If you plan to add pins on a Bézier path, prefer using shape layers whenever possible.
+
 ## Edit pins
 
 An effect on each pin can be used to adjust their appearance.

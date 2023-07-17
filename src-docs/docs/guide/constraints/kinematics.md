@@ -68,7 +68,8 @@ When used on a single layer, the rigged layer just automatically rotates to alwa
 
 ![](../../img/duik/constraints/1l-ik_00000.png)
 
-With this type of IK/FK, you can animate either the position of the controller and the position of the rigged layer (or its parent), or the rotation of the layer itself. This means you can animate both using IK or FK as you wish.
+With this type of IK/FK, you can animate either the position of the controller and the position of the rigged layer (or its parent), or the rotation of the layer itself. This means you can animate both using IK or FK as you wish.  
+If there was a tip layer (e.g. hand, foot...) when rigging the layers, it can be rotated using the controller's rotation property.
 
 The effect on the controller allows you to customize the control.
 
@@ -96,11 +97,95 @@ The effect on the controller allows you to customize the control.
 
 ### 2-layer chain
 
+With two layers, both layer rotations are automated to form a triangle between the two joints and the controller; this is very natural for arms and legs.
+
+![](../../img/duik/constraints/2l-ik_00000.png)
+
+When animating the position of the controller or the position of the first layer (or any of its parents), the limb rotates and bends automatically. With this IK setup, Duik also controls the position of the limbs to be able to stretch (or shrink) them, and allow for fore-shortening effects for example.  
+If there was a tip layer (e.g. hand, foot...) when rigging the layers, it can be rotated using the controller's rotation property.
+
+Duik also includes nice automations to help the animation using FK and make it even simpler and quicker, although it's already much simpler than IK animation.
+
+All this can be configured and animated in the effect of the controller.
+
+![](../../img/duik/constraints/2l-ik-effect.png)
+
+- ***IK / FK***: you can disable the IK if you need to animate using FK; this is animatable.
+- ***Weight***: this blends the IK and FK animation, allowing for a smooth transition between the two.  
+    Setting `0 %` actually deactivates the IK.
+- ***Side***: the side of the joint (e.g. elbow or knee) can be controlled with this value.  
+    `100 %` is on one side, `-100 %` is the other side. Values in between allow for a smooth transition, to animate a foreshortening or fake 3D rotation of the limb.
+- ***Auto swing*** changes the side automatically according to a specific angle.  
+    To help you set the limit precisely, you can use the guides to visualize it.
+- ***FK***:  
+    To animate using FK, you need to disable the IK (or set the weight to `0 %`) first.  
+    You can then animate these rotation values to animate the limb using FK.  
+    - ***Parent rotation***: if this is checked, the limb will rotate with its parent rotation.  
+        Disabling it makes sure the limb always keep its own orientation no matter the rotation of its ancestors.
+    - ***Upper*** is the rotation of the first layer (the root, e.g. the thigh)
+    - ***Lower*** is the rotation of the second lauyer (e.g. the calf)
+    - ***End*** is the rotation of the layer at the end (e.g. the foot), if any.  
+        This layer is not actually a part of the IK/FK setup, but it's useful to be able to animate it right from this effect.
+- ***FK Overlap***:
+    Instead of animating the two or three FK rotation values manually, this FK with automatic overlapping animation[^4] may help you animate the whole limb with a single value.
+    - ***Overlap***: check this to enable the automatic overlapping animation.
+    - ***Animation*** is the property you can animate to automatically animate the whole limb.  
+        This works espacially well to animate the arm swinging during a walk cycle for example.
+    - ***Flexibility*** adjusts the quantity of overlapping animation. It is an arbitrary value.
+    - ***Resistance*** adjusts the delay between the rotation of each part of the limb. It is an arbitrary value.
+- ***Stretch***:
+    - ***Auto-Stretch*** makes the limb stretch if it's too short to reach the location of the controller.
+    - ***Stretch*** stretches both the first and second layer of the limb, keeping their relative lengths.
+    - ***Upper stretch*** stretches the first layer (e.g. the thigh).
+    - ***Lower stretch*** stretches the second layer (e.g. the calf).
+- The ***Data*** section contains some data needed by Duik to compute the Kinematics.
+- ***Display***:  
+    - ***Draw guides***: check this if the controller is a shape layer to show some useful guides to setup the IK.
+        The Auto swing limit will be shown to help you adjust its values.
+
+!!! tip
+    The data section of the effect exposes useful values to write your own expressions or to be used with the connector for an advanced and more customized rig.
+
+!!! tip
+    You can easily switch between IK and FK animation using the [IK/FK Switch](../animation/tools/ik-fk-switch.md)&nbsp;[^5] tool in the [animation panel](../animation/index.md).
+
+![](../../img/duik/constraints/2l-ik-guides_00000.png)  
+*The IK Controller with the guides, showing the auto swing limit.*
+
 ### 3-layer chain
 
+Rigging a limb with three joints (and more) is more complicated than it seems. In two dimensions with only two joints, there are only two solutions to the equation defining the rotations of each part (the middle joint, the elbow or knee, can only be on one of the two sides of the line passing through the first joint and the controller). But with three joints, there's an infinity of solutions.
+
+Apart from this difficulty, if we'd use standard IK for the three joints without more details, that'd mean the animator would not be able to manually adjust each joint if needed. Rigging should ease the life of animators, but never restrain their job.
+
+These are the reason why Duik does not include true 3-layer IK, but is able to rig 3-layer chains with better controls and accuracy, combining standard 1-layer and 2-layer IK.
+
+There are two possibilities: rigging the first layer with a 1-layer IK and the next two layers with a standard 2-layer IK, or the opposite, starting with the 2-layer IK for the first two layers. With both methods, Duik creates a single controller for both the IK controls, allowing for a very simple animation with just the position of the controller, and all detailed controls gathered in the effects of the controller.  
+You can choose between the two in the additional panel of the *![](../../img/duik/icons/ik.svg){style="width:1em;"} IK* button.
+
+![](../../img/duik/constraints/3l-ik-options.png)
+
+- ***2+1-layer IK*** creates a single-layer IK on the first layer and 2-layer IK on second and third layers.  
+    ![](../../img/duik/constraints/2+1l-ik_00000.png)  
+    This mode works best with crab legs for example, when the rotation of the last layer must be controlled precisely.  
+    Animate the position of the controller to animate the whole limb, and its rotation to control the orientation of the last layer (in blue).
+- ***1+2-layer IK*** creates a 2-layer IK on the first and second layers and a single-layer IK on the third.  
+    ![](../../img/duik/constraints/1+2l-ik_00000.png)  
+    This mode works best with arms and their shoulders for example, where the rotation of the first layer must be controlled separately from the other layers, but can be automated with the 1-layer IK weight.  
+    Animate the position of the controller to animate the whole limb, and use the single-layer IK weight to adjust the automatic rotation of the first layer (in blue), or animate its FK value to rotate it manually.
+
+## Bézier IK
+
+## FK with overlapping animation
+
+## Bézier FK
 
 [^1]: As the movement of the hand or the foot are actually the result of the rotation of the elbow and shoulder or the knee and hip, they naturally move following smooth curves. That's not the case by default when animating positions in After Effects, where the trajectory will be a straight line. When animating with IK you'll have to use the pen tool to adjust the spatial Bézier interpolation of the position keyframes if you don't separate the dimensions and handle manually the individual interpolations for each axis.
 
 [^2]: *cf.* *[Bones and Auto-Rig](../bones/index.md)*
 
 [^3]: *cf.* *[Controllers](../controllers/index.md)*
+
+[^4]: Overlapping animation is one of the most important animation principles. It is the tendency for parts of the body to move at different rates, for example when the hand rotates *after* the forearm which itself rotates *after* the arm. (*cf.* Wikipedia, [*Follow through and overlapping action*](https://en.wikipedia.org/wiki/Follow_through_and_overlapping_action){target="_blank"}: *[en.wikipedia.org/wiki/Follow_through_and_overlapping_action](https://en.wikipedia.org/wiki/Follow_through_and_overlapping_action){target="_blank"}* )
+
+[^5]: *cf.* *[Animation / Tools / IK/FK Switch](../animation/tools/ik-fk-switch.md)*
