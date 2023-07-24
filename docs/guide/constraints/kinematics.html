@@ -1890,10 +1890,14 @@
 
 <h1 id="inverse-and-forward-kinematics-ik-fk"><img alt="" src="../../img/duik/icons/ik.svg" style="width:1em;" /> Inverse and Forward Kinematics (IK / FK)</h1>
 <p>Kinematics are several methods to control and animate the rotation of the joints of limbs.</p>
+<p><img alt="" src="../../img/illustration/Ambroise_Pare_prosthetics_mechanical_arm_Wellcome_L0043497.jpg" style="max-height:720px;" /><br />
+<em>Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae, Ambroise Paré, 1564 <br />
+<a href="http://wellcomeimages.org/">Wellcome Library</a>, London.</em></p>
 <p>Usually, the most basic rig for any kind of limb is to parent the layers together, from the tip (child, e.g. hand or foot) to the root (parent, e.g. shoulder or hip) of the limb.<br />
 In this simple case, that&rsquo;s called <strong><em>Forward Kinematics (FK)</em></strong>: you just need to animate the rotation of each joint from the root to the tip to animate the whole limb.<br />
 This is the easiest way to animate a limb, as rotation are simple values, and you just have a single value per joint to animate. This works as long as there is no interaction and constraint between the tip (e.g. hand or foot) with something else which moves differently (or is just static, like the floor in the case of a foot).</p>
 <p>But if you need to constrain the tip of the limb, or just keep it static while animating the root (e.g. keep the foot still on the ground while moving the hips around), you&rsquo;ll need another method where you can animate both ends of the limb using their position instead of their rotation. That&rsquo;s called <strong><em>Inverse Kinematics (IK)</em></strong>, because to the contrary of the FK, you have to animate the end of the limb and the position value is then automatically converted to rotation values in the reversed order, from the tip to the root of the limb. This makes it a bit more difficult to achieve a nice animation, as you&rsquo;ll have to take care of the trajectories of the end of the limb, and handle position properties which are multi-dimensional and more complex than simple rotations.</p>
+<p><img alt="" src="../../img/examples/IK.gif" /></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>When animating using IK, you have to set the values of the position keyframe and their temporal interpolation, as you would with FK and rotations, but you also have to manage the spatial interpolation and make sure the limb always follows a curved trajectory (and not straight lines)<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>.</p>
@@ -2047,7 +2051,65 @@ You can choose between the two in the additional panel of the <em><img alt="" sr
     Animate the position of the controller to animate the whole limb, and use the single-layer IK weight to adjust the automatic rotation of the first layer (in blue), or animate its FK value to rotate it manually.</li>
 </ul>
 <h2 id="bezier-ik">Bézier IK</h2>
+<p>Bone chains with more than two or three bones are usually used to rig flexible limbs, like tails, spines, long necks or hair strands. In this case, the chain is not animated with separated joints, but all at once as a long curve. There are two options to animate this:</p>
+<ul>
+<li>Using <strong>FK</strong>, which is best if the limb is something just hanging (like hair strands or cloth, and tails), attached only on one side.</li>
+<li><strong>Bézier IK</strong>, which is a special kind of IK you can control with several controllers to define the curve of the limb, as you would for a Bézier path using points and tangents.<br />
+  This is best if the chain is interacting with something else (attached) on both sides, like the spine, the neck, or the tail of the dog stucked in a door. Ouch.</li>
+</ul>
+<p><img alt="" src="../../img/duik/constraints/bezier-ik_00000.png" /><br />
+<em>Four layers controlled with Bézier IK</em></p>
+<p>Three controllers are available to animate the limb with Bézier IK:</p>
+<ul>
+<li>A <em>Root</em> position controller can be used to move the root of the limb.<br />
+  It is usually parented to the rest of the body (the hips for a tail, the head for hairs, etc.)</li>
+<li>At the middle, a <em>Curve</em> controller helps you animate the curvature of the limb, using its position value.</li>
+<li>At the end, the actual IK controller, to move the tip of the limb.</li>
+</ul>
+<p>There are two effects to adjust some details:</p>
+<ul>
+<li>On the controller of the end of the limb (the main controller):<br />
+<img alt="" src="../../img/duik/constraints/bezier-ik-effect.png" />  <ul>
+<li>By default, the layers are aligned on the virtual curve (tangent to the curve). You can uncheck the <strong><em>Auto orient</em></strong> option to animate their rotation manually.</li>
+<li>Use the <strong><em>Offset</em></strong> to move the layers along the virtual curve. Note that this option is also <strong>availabe on each layer individually</strong>.</li>
+</ul>
+</li>
+<li>On the <em>Curve</em> controller:<br />
+<img alt="" src="../../img/duik/constraints/bezier-ik-curveeffect.png" />   <ul>
+<li>Uncheck the <strong><em>Draw guides</em></strong> option to hide the dashed line representing the IK.</li>
+<li>You can check the <strong><em>Show handles</em></strong> option to display secondary controls to adjust the virtual curve more precisely.</li>
+</ul>
+</li>
+</ul>
+<p><img alt="" src="../../img/duik/constraints/bezier-ik-curve_00000.png" /><br />
+<em>When showning the curve handles, you can adjust the virtual Bézier curve very precisely.<br />
+Double click on the handle to move it around.</em></p>
+<p>The optional Bézier handles are actually groups in the shape layer content of the <em>Curve</em> controller; to animate them, animate the position of these groups.</p>
 <h2 id="fk-with-overlapping-animation">FK with overlapping animation</h2>
+<p>The FK rig is a very simple controller to control all the rotations of a long (or short) chain of bones, either individually or all at once. It was especially made to easily animate tails, cloth, hair strands, scarfs, etc.</p>
+<p>When animating the whole limb at once with a single value, Duik can automatically handle the detailed animation for you, with an automatic overlapping animation, completely customizable.</p>
+<p><img alt="" src="../../img/examples/carpes-structures.gif" /><br />
+<em>Fish tails are rigged with the FK controls and automatic overlapping animation.</em></p>
+<p><img alt="" src="../../img/duik/constraints/fk_00000.png" /><br />
+<em>Four layers controlled at once with the FK control.</em></p>
+<p>To animate the limb, you can just <strong>animate the rotation of the controller</strong>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>When adjusting the <strong>start pose of the animation</strong>, <strong>adding the first keyframe on the rotation</strong> of the controller, <strong>you&rsquo;ll also need to adjust the <em>Angle</em> value of the second layer</strong> of the chain (in the controller&rsquo;s effects), to fix the pose. That&rsquo;s because of the automatic overlapping animation, which can&rsquo;t control the first pose as it needs animation data to process the angles, and there&rsquo;s no animation before the first keyframe.</p>
+<p>For performance reasons, Duik also ignores all keyframes hidden before the start of the composition.</p>
+</div>
+<p>To adjust the settings of the automatic overlapping animation, an <em>FK Overlap</em> effect is available on the controller.</p>
+<p><img alt="" src="../../img/duik/constraints/fk-overlap-effect.png" /></p>
+<ul>
+<li>The <strong><em>Flexibility</em></strong> adjusts the amplitude of the movement of each individual layer in the chain.</li>
+<li>The <strong><em>Resistance</em></strong> adjusts the time of the overlap. For example, the value will be higher in the water than in the air.</li>
+<li>You can use the <strong><em>Stretch</em></strong> to adjust the length of the limb. This works well if the layers are linked to puppet pins (using <a href="../bones/index.html">bones</a> and/or Duik <a href="pins.html">pins</a>).</li>
+<li>Use the <strong><em>Curve</em></strong> value to adjust the global curvature of the limb. This value should not be animated (use the rotation of the controller for the animation).</li>
+<li>If the <strong><em>Parent rotation</em></strong> is checked, the limb will rotate with its parent rotation. Use this for a tail for example.<br />
+    Disabling it makes sure the limb always keep its own orientation no matter the rotation of its ancestors. You can use this for a scarf or hair strand for example, so it stays vertical no matter the rotation of the head.</li>
+<li>You can set <strong><em>limits</em></strong> to bound the rotation of each individual part. This is useful for limbs with a high flexibility or resistance.</li>
+</ul>
+<p>Finally, one angle control is added for each layer of the controlled chain to allow you to adjust and animate each part individually, like in all standard FK rig.</p>
 <h2 id="bezier-fk">Bézier FK</h2>
 <div class="footnote">
 <hr />
