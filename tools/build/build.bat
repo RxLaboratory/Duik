@@ -1,8 +1,8 @@
-@echo off
+:: @echo off
 
 :: The version
 IF "%~1"=="" (
-    SET version=17.1.4
+    SET version=17.1.5
 ) ELSE (
     SET version=%~1
 )
@@ -109,8 +109,6 @@ cmd /c jsdoc -c jsdoc_ts_conf.json
 xcopy /S /I /Y "%repo_path%\types\duik\.." "%build_path%\Duik_API\types"
 
 del "%build_path%\Duik_API\Duik_api_fordoc.jsxinc"
-
-
 
 :: Copy files where they need to be ::
 echo __Finishing...
