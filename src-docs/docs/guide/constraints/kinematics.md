@@ -2,6 +2,10 @@
 
 Kinematics are several methods to control and animate the rotation of the joints of limbs.
 
+![](../../img/illustration/Ambroise_Pare_prosthetics_mechanical_arm_Wellcome_L0043497.jpg){style="max-height:720px;"}  
+*Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae, Ambroise Paré, 1564   
+[Wellcome Library](http://wellcomeimages.org/), London.*
+
 Usually, the most basic rig for any kind of limb is to parent the layers together, from the tip (child, e.g. hand or foot) to the root (parent, e.g. shoulder or hip) of the limb.  
 In this simple case, that's called ***Forward Kinematics (FK)***: you just need to animate the rotation of each joint from the root to the tip to animate the whole limb.  
 This is the easiest way to animate a limb, as rotation are simple values, and you just have a single value per joint to animate. This works as long as there is no interaction and constraint between the tip (e.g. hand or foot) with something else which moves differently (or is just static, like the floor in the case of a foot).
