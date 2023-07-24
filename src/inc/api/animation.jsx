@@ -1694,14 +1694,66 @@ Duik.Animation.sequenceKeys = function(duration, reverse, interpolation) {
 
     // Get animations
     var selectedKeys = [];
+    // To fix order, group by category
+    var contentKeys = [];
+    var maskKeys = [];
+    var effectKeys = [];
+    var transformKeys = [];
+    var geoKeys = [];
+    var matKeys = [];
+    var styleKeys = [];
+
+    var currentLayerIndex = propList.first().layer.index;
+
     propList.do(function(prop) {
+
+        // New layer
+        if (currentLayerIndex != prop.layer.index) {
+            // Concat in the right order
+            selectedKeys = selectedKeys.concat(contentKeys);
+            selectedKeys = selectedKeys.concat(maskKeys);
+            selectedKeys = selectedKeys.concat(effectKeys);
+            selectedKeys = selectedKeys.concat(transformKeys);
+            selectedKeys = selectedKeys.concat(geoKeys);
+            selectedKeys = selectedKeys.concat(matKeys);
+            selectedKeys = selectedKeys.concat(styleKeys);
+
+            contentKeys = [];
+            maskKeys = [];
+            effectKeys = [];
+            transformKeys = [];
+            geoKeys = [];
+            matKeys = [];
+            styleKeys = [];
+
+            currentLayerIndex = prop.layer.index;
+        }
+        
         var keys = prop.selectedKeys();
         if (keys.length == 0) return;
         var p = {};
         p.prop = prop;
         p.anim = prop.animation(true);
-        selectedKeys.push(p);
+
+        var root = prop.rootPropertyGroup();
+        if (root.matchName == 'ADBE Root Vectors Group') contentKeys.push(p);
+        else if (root.matchName == 'ADBE Mask Parade') maskKeys.push(p);
+        else if (root.matchName == 'ADBE Effect Parade') effectKeys.push(p);
+        else if (root.matchName == 'ADBE Transform Group') transformKeys.push(p);
+        else if (root.matchName == 'ADBE Extrsn Options Group') geoKeys.push(p);
+        else if (root.matchName == 'ADBE Material Options Group') matKeys.push(p);
+        else if (root.matchName == 'ADBE Layer Styles') styleKeys.push(p);
+        else selectedKeys.push(p);
     });
+
+    // Concat in the right order
+    selectedKeys = selectedKeys.concat(contentKeys);
+    selectedKeys = selectedKeys.concat(maskKeys);
+    selectedKeys = selectedKeys.concat(effectKeys);
+    selectedKeys = selectedKeys.concat(transformKeys);
+    selectedKeys = selectedKeys.concat(geoKeys);
+    selectedKeys = selectedKeys.concat(matKeys);
+    selectedKeys = selectedKeys.concat(styleKeys);
 
     var n = selectedKeys.length;
     var startTime = comp.time;
