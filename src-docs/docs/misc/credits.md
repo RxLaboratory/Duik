@@ -69,32 +69,38 @@ Public Domain
 Unless stated otherwise, for all pictures, icons, videos, and other materials contained in this document, all rights are reserved by their respective owners.
 
 - Nicolas Dufresne  
-  Pictures,  
-  GNU Free Documentation License
+  Pictures and video tutorials,  
+  [GNU Free Documentation License](doc-license.md)
+- Claude Autret "Jissse"  
+  *Mechanical Arm*, *Trouts*  
+  All rights reserved
 - Thomas Fourniret
 - Nicolas Liguori
 - Sébastien Périer
 - Clémentine Robach
-- Hugh McCormick Smith
-  *Mud-Fish*,
-  1907, public domain
+- Hugh McCormick Smith  
+  *Mud-Fish*, 1907  
+  Public domain
 - W. Ramsay Smith and J S Newell  
-  *Wing bones and feathers of a bird*,  
-  1889, public domain
-- "Rodentia," Encyclopædia Britannica
-  *Common Rorqual (Balaenoptera musculus)*
-  1911, public domain
-- Harland Quarrington/MOD
-  *Computer Circuit Board*
-  2012, Open Government Licence version 1.0 (OGL v1.0).
+  *Wing bones and feathers of a bird*, 1889  
+  Public domain
+- "Rodentia," Encyclopædia Britannica  
+  *Common Rorqual (Balaenoptera musculus)*, 1911  
+  Public domain
+- Harland Quarrington/MOD  
+  *Computer Circuit Board*, 2012  
+  Open Government Licence version 1.0 (OGL v1.0).
+- Ambroise Paré  
+  *Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae*, 1564   
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"}, [Wellcome Library](http://wellcomeimages.org/), London.  
 - Font Awesome,  
   Some of the icons,  
-  [fontawesome.com](https://fontawesome.com/){target="_blank"},  
-  Creative Commons CC BY 4.0 License
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"}, [fontawesome.com](https://fontawesome.com/){target="_blank"}
 
 ### Composition
 
-- Nicolas Dufresne  
+- Assia Chioukh
+- Nicolas Dufresne
 
 ## Special Thanks
 

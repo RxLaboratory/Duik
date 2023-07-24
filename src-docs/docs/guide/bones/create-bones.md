@@ -11,7 +11,7 @@ As there are many different types of animals, these limbs are sorted in categori
 
 ![](../../img/duik/bones/bone_categories.png)
 
-![](../../img/illustration/pattes-demo.jpg)  
+![](../../img/illustration/pattes-demo.png)  
 *Tetrapod legs*
 
 ![](../../img/illustration/hominoid.png)  

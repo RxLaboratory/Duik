@@ -1,18 +1,21 @@
 # ![](../../img/duik/icons/ik.svg){style="width:1em;"} Inverse and Forward Kinematics (IK / FK)
 
-Kinematics are several methods to control and animate the rotation of the joints of limbs.
+*Kinematics*[*](../../misc/glossary.md) in rigging and animation describe several methods to control and animate the rotation and location of the joints of limbs (i.e. Kinematic Chains[*](../../misc/glossary.md)).
 
-![](../../img/illustration/Ambroise_Pare_prosthetics_mechanical_arm_Wellcome_L0043497.jpg){style="max-height:720px;"}  
-*Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae, Ambroise Paré, 1564   
-[Wellcome Library](http://wellcomeimages.org/), London.*
+![](../../img/illustration/Ambroise_Pare_prosthetics_mechanical_arm_Wellcome_L0043497.png){style="max-height:720px;"}  
+*Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae  
+Ambroise Paré, 1564  
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"}, [Wellcome Library](http://wellcomeimages.org/), London.*{style="font-size:0.8em;"}
 
 Usually, the most basic rig for any kind of limb is to parent the layers together, from the tip (child, e.g. hand or foot) to the root (parent, e.g. shoulder or hip) of the limb.  
-In this simple case, that's called ***Forward Kinematics (FK)***: you just need to animate the rotation of each joint from the root to the tip to animate the whole limb.  
+In this simple case, that's called ***Forward Kinematics (FK)***[*](../../misc/glossary.md): you just need to animate the rotation of each joint from the root to the tip to animate the whole limb.  
 This is the easiest way to animate a limb, as rotation are simple values, and you just have a single value per joint to animate. This works as long as there is no interaction and constraint between the tip (e.g. hand or foot) with something else which moves differently (or is just static, like the floor in the case of a foot).
 
-But if you need to constrain the tip of the limb, or just keep it static while animating the root (e.g. keep the foot still on the ground while moving the hips around), you'll need another method where you can animate both ends of the limb using their position instead of their rotation. That's called ***Inverse Kinematics (IK)***, because to the contrary of the FK, you have to animate the end of the limb and the position value is then automatically converted to rotation values in the reversed order, from the tip to the root of the limb. This makes it a bit more difficult to achieve a nice animation, as you'll have to take care of the trajectories of the end of the limb, and handle position properties which are multi-dimensional and more complex than simple rotations.
+But if you need to constrain the tip of the limb, or just keep it static while animating the root (e.g. keep the foot still on the ground while moving the hips around), you'll need another method where you can animate both ends of the limb using their position instead of their rotation. That's called ***Inverse Kinematics (IK)***[*](../../misc/glossary.md), because to the contrary of the FK, you have to animate the end of the limb and the position value is then automatically converted to rotation values in the reversed order, from the tip to the root of the limb. This makes it a bit more difficult to achieve a nice animation, as you'll have to take care of the trajectories of the end of the limb, and handle position properties which are multi-dimensional and more complex than simple rotations.
 
-![](../../img/examples/IK.gif)
+![](../../img/examples/IK.gif)  
+*Claude Autret "Jissse"  
+All rights reserved*{style="font-size:0.8em;"}
 
 !!! note
     When animating using IK, you have to set the values of the position keyframe and their temporal interpolation, as you would with FK and rotations, but you also have to manage the spatial interpolation and make sure the limb always follows a curved trajectory (and not straight lines)[^1].
@@ -133,14 +136,14 @@ All this can be configured and animated in the effect of the controller.
     - ***End*** is the rotation of the layer at the end (e.g. the foot), if any.  
         This layer is not actually a part of the IK/FK setup, but it's useful to be able to animate it right from this effect.
 - ***FK Overlap***:
-    Instead of animating the two or three FK rotation values manually, this FK with automatic overlapping animation[^4] may help you animate the whole limb with a single value.
+    Instead of animating the two or three FK rotation values manually, this FK with automatic overlapping animation[*](../../misc/glossary.md) may help you animate the whole limb with a single value.
     - ***Overlap***: check this to enable the automatic overlapping animation.
     - ***Animation*** is the property you can animate to automatically animate the whole limb.  
         This works espacially well to animate the arm swinging during a walk cycle for example.
     - ***Flexibility*** adjusts the quantity of overlapping animation. It is an arbitrary value.
     - ***Resistance*** adjusts the delay between the rotation of each part of the limb. It is an arbitrary value.
 - ***Stretch***:
-    - ***Auto-Stretch*** makes the limb stretch if it's too short to reach the location of the controller.
+    - ***Auto-Stretch*** makes the limb stretch[*](../../misc/glossary.md) if it's too short to reach the location of the controller.
     - ***Stretch*** stretches both the first and second layer of the limb, keeping their relative lengths.
     - ***Upper stretch*** stretches the first layer (e.g. the thigh).
     - ***Lower stretch*** stretches the second layer (e.g. the calf).
@@ -153,7 +156,7 @@ All this can be configured and animated in the effect of the controller.
     The data section of the effect exposes useful values to write your own expressions or to be used with the connector for an advanced and more customized rig.
 
 !!! tip
-    You can easily switch between IK and FK animation using the [IK/FK Switch](../animation/tools/ik-fk-switch.md)&nbsp;[^5] tool in the [animation panel](../animation/index.md).
+    You can easily switch between IK and FK animation using the [IK/FK Switch](../animation/tools/ik-fk-switch.md)&nbsp;[^4] tool in the [animation panel](../animation/index.md).
 
 ![](../../img/duik/constraints/2l-ik-guides_00000.png)  
 *The IK Controller with the guides, showing the auto swing limit.*
@@ -179,6 +182,11 @@ You can choose between the two in the additional panel of the *![](../../img/dui
     ![](../../img/duik/constraints/1+2l-ik_00000.png)  
     This mode works best with arms and their shoulders for example, where the rotation of the first layer must be controlled separately from the other layers, but can be automated with the 1-layer IK weight.  
     Animate the position of the controller to animate the whole limb, and use the single-layer IK weight to adjust the automatic rotation of the first layer (in blue), or animate its FK value to rotate it manually.
+
+![](../../img/illustration/Kinematics_of_Machinery_-_Figure_21.svg){style="max-height:720px;"}  
+*Figure 21 from The Kinematics of Machinery.  
+Franz Reuleaux, 1876  
+Public domain*{style="font-size:0.8em;"}
 
 ## Bézier IK
 
@@ -222,6 +230,8 @@ The FK rig is a very simple controller to control all the rotations of a long (o
 When animating the whole limb at once with a single value, Duik can automatically handle the detailed animation for you, with an automatic overlapping animation, completely customizable.
 
 ![](../../img/examples/carpes-structures.gif)  
+*Claude Autret "Jissse"  
+All rights reserved*{style="font-size:0.8em;"}  
 *Fish tails are rigged with the FK controls and automatic overlapping animation.*
 
 ![](../../img/duik/constraints/fk_00000.png)  
@@ -250,12 +260,18 @@ Finally, one angle control is added for each layer of the controlled chain to al
 
 ## Bézier FK
 
+The Bézier FK is a specific setup using the standard Bézier IK as a base and some simple expressions and parenting to be able to animate both using *fake* FK and Bézier IK at the same time. This is very useful to animate spines or necks, or any chain which itself has children (like the head for the neck) and when you may need both FK for most of the animation and IK in specific cases.
+
+![](../../img/duik/constraints/bezier-fk_00000.png)  
+*Four layers controlled using Bézier FK*
+
+With this Bézier FK, you have **the exact same controls as with Bézier IK** (animate the position of the controllers, controlling the curvature with the controller at the center of the chain), but **you can also animate the rotation of the controllers**, as you would when using standard FK.  
+In this case, Duik moves the *curve* controller automatically, and you can adjust this automation using the ***Auto-Curve*** effect on the controller at the end of the limb.
+
 [^1]: As the movement of the hand or the foot are actually the result of the rotation of the elbow and shoulder or the knee and hip, they naturally move following smooth curves. That's not the case by default when animating positions in After Effects, where the trajectory will be a straight line. When animating with IK you'll have to use the pen tool to adjust the spatial Bézier interpolation of the position keyframes if you don't separate the dimensions and handle manually the individual interpolations for each axis.
 
 [^2]: *cf.* *[Bones and Auto-Rig](../bones/index.md)*
 
 [^3]: *cf.* *[Controllers](../controllers/index.md)*
 
-[^4]: Overlapping animation is one of the most important animation principles. It is the tendency for parts of the body to move at different rates, for example when the hand rotates *after* the forearm which itself rotates *after* the arm. (*cf.* Wikipedia, [*Follow through and overlapping action*](https://en.wikipedia.org/wiki/Follow_through_and_overlapping_action){target="_blank"}: *[en.wikipedia.org/wiki/Follow_through_and_overlapping_action](https://en.wikipedia.org/wiki/Follow_through_and_overlapping_action){target="_blank"}* )
-
-[^5]: *cf.* *[Animation / Tools / IK/FK Switch](../animation/tools/ik-fk-switch.md)*
+[^4]: *cf.* *[Animation / Tools / IK/FK Switch](../animation/tools/ik-fk-switch.md)*
