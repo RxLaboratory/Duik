@@ -46,7 +46,7 @@ You can also use this constraint to link the orientation of a controller to the 
 You can use the effect to adjust and animate the orientation constraint.
 
 ![](../../img/duik/constraints/orientation-constraint-effect.png)
-
+pins
 Just select the layer to constrain to, and set or animate its weight. To constrain to multiple layers, you can duplicate the effect.
 
 !!! tip
@@ -86,4 +86,4 @@ You can use the effect to adjust and animate the path constraint.
 Joseph Depierre, 1889  
 Public domain.*{style="font-size:0.8em;"}
 
-[^1]: *cf.* *[Constraints](index.md) / [Pins](pîns.md)*.
+[^1]: *cf.* *[Constraints](index.md) / [Pins](pins.md)*.

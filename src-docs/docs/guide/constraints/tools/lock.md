@@ -1,3 +1,9 @@
-To be written...
+# ![](../../../img/duik/icons/lock.svg){style="width:1em;"} Lock Property
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+To prevent a property from being edited or animated, you can lock it.  
+Select the property, then click the ***![](../../../img/duik/icons/lock.svg){style="width:1em;"} Lock Property*** button.
+
+Just remove the expression to unlock the property.
+
+!!! note
+    The expression which is created only consists in the current value of the property, effectively locking it to this value.
