@@ -1,9 +1,6 @@
 function buildAutomationPanelUI(tab, standAlone ) {
     standAlone = def(standAlone, false);
 
-    // Some strings
-    var precisionFactorTip = i18n._("A higher factor → a higher precision.\n\n• Smart mode: lower the factor to keep keyframes only for extreme values. Increasing the factor helps to get a more precise curve with inflexion keyframes.\n\n• Precise mode: A factor higher than 1.0 increases the precision to sub-frame sampling (2 → two samples per frame).\nA factor lower than 1.0 decreases the precision so that less frames are sampled (0.5 → half of the frames are sampled).\nDecrease the precision to make the process faster, increase it if you need a more precise motion-blur, for example.");
-
     // Useful methods
     function hideAllGroups() {
         automationGroup.visible = false;
@@ -594,90 +591,9 @@ function buildAutomationPanelUI(tab, standAlone ) {
         randomizeGroup.visible = true;
     };
 
-    var bakeExpButton = toolsGroup.addButton(
-        i18n._("Bake expressions"),
-        w12_expression_baker,
-        i18n._("Replace expressions by keyframes.\nUse a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
-        true
-    );
-    bakeExpButton.optionsPopup.build = function() {
-        var selectionModeSelector = DuScriptUI.selectionModeSelector(bakeExpButton.optionsPanel);
-        selectionModeSelector.setCurrentIndex(0);
-
-        var bakeMethodSelector = DuScriptUI.selector(
-            bakeExpButton.optionsPanel
-        );
-        bakeMethodSelector.addButton(
-            i18n._("Smart mode"),
-            w16_autorig,
-            i18n._("Use a smarter algorithm which produces less keyframes.\nThe result may be easier to edit afterwards but a bit less precise than other modes")
-        );
-        bakeMethodSelector.addButton(
-            i18n._("Precise mode"),
-            w16_quick,
-            i18n._("Add new keyframes for all frames.\nThis mode produces more keyframes but the result may be closer to the original animation.")
-        );
-        bakeMethodSelector.setCurrentIndex(0);
-
-        var stepEdit = DuScriptUI.editText(
-            bakeExpButton.optionsPanel,
-            '1',
-            i18n._("Precision factor") + ': ',
-            '',
-            "",
-            precisionFactorTip
-        );
-
-        bakeExpButton.onClick = function() {
-            var step = parseFloat(stepEdit.text);
-            if (isNaN(step)) step = 1;
-            step = 1 / step;
-            Duik.Automation.bakeExpressions(bakeMethodSelector.index, step, selectionModeSelector.index);
-        };
-    }
-
-    var bakeCompButton = toolsGroup.addButton(
-        i18n._("Bake composition"),
-        w12_comp_baker,
-        i18n._("Replaces all expressions of the composition by keyframes,\nand removes all non-renderable layers.\n\nUses a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
-        true
-    );
-    bakeCompButton.optionsPopup.build = function() {
-        var selectionModeSelector = DuScriptUI.selectionModeSelector(bakeCompButton.optionsPanel, DuAE.SelectionMode.SELECTED_LAYERS);
-        selectionModeSelector.setCurrentIndex(1);
-
-        var bakeMethodSelector = DuScriptUI.selector(
-            bakeCompButton.optionsPanel
-        );
-        bakeMethodSelector.addButton(
-            i18n._("Smart mode"),
-            w16_autorig,
-            i18n._("Use a smarter algorithm which produces less keyframes.\nThe result may be easier to edit afterwards but a bit less precise than other modes")
-        );
-        bakeMethodSelector.addButton(
-            i18n._("Precise mode"),
-            w16_quick,
-            i18n._("Add new keyframes for all frames.\nThis mode produces more keyframes but the result may be closer to the original animation.")
-        );
-        bakeMethodSelector.setCurrentIndex(0);
-
-        var stepEdit = DuScriptUI.editText(
-            bakeCompButton.optionsPanel,
-            '1',
-            i18n._("Precision factor") + ': ',
-            '',
-            "",
-            precisionFactorTip,
-            false
-        );
-
-        bakeCompButton.onClick = function() {
-            var step = parseFloat(stepEdit.text);
-            if (isNaN(step)) step = 1;
-            step = 1 / step;
-            Duik.Automation.bakeComposition(bakeMethodSelector.index, step, selectionModeSelector.index + 1);
-        };
-    }
+    createBakeExpTool( toolsGroup );
+    
+    createBakeCompTool( toolsGroup );
 
     var timeRemapButton = toolsGroup.addButton(
         i18n._("Time remap"),

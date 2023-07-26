@@ -67,31 +67,7 @@ function buildBonesUI( tab, standAlone )
     );
     unlinkButton.onClick = Duik.Bone.unlink;
 
-    var bakeButton = toolsGroup.addButton(
-        i18n._("Bake bones"),
-        w12_bake,
-        i18n._("Bake bone appearances.\n\n[Alt]: Keep envelops.\n[Ctrl]: Keep deactivated noodles."),
-    );
-    bakeButton.onClick = function() {
-        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
-        Duik.Bone.bake();
-        DuAEProject.setProgressMode(false);
-    }
-    bakeButton.onAltClick = function () {
-        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
-        Duik.Bone.bake(true, false);
-        DuAEProject.setProgressMode(false);
-    };
-    bakeButton.onCtrlClick = function () {
-        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
-        Duik.Bone.bake(true, true, false);
-        DuAEProject.setProgressMode(false);
-    };
-    bakeButton.onCtrlAltClick = function () {
-        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
-        Duik.Bone.bake(true, false, false);
-        DuAEProject.setProgressMode(false);
-    };
+    createBakeBonesTool(toolsGroup);
 
     var editButton = toolsGroup.addButton(
         i18n._("Bone settings"),
@@ -190,7 +166,7 @@ function buildBonesUI( tab, standAlone )
                 false
             );
 
-            var boneTypeSelector = createBoneTypeSelector(editGroup);
+            createBoneTypeSelector(editGroup);
 
             DuScriptUI.separator( editGroup, uiMode <= 1 ? i18n._("Current Selection") : '' );
 

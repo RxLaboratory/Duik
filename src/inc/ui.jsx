@@ -14,6 +14,9 @@ function buildUI()
     // Get the UI mode
     var uiMode = DuESF.scriptSettings.get("common/uiMode", 0);
 
+    // The performance button
+    #include "performance.jsx"
+
     // Add Sanity status without label
     var sanityIcon = DuSanity.UI.button( ui.bottomGroup, false );
     sanityIcon.alignment = ['right', 'fill'];
@@ -23,4 +26,4 @@ function buildUI()
     sanityPopup.content.minimumSize = [400,-1];
     DuSanity.UI.panel( sanityPopup.content );
     sanityPopup.tieTo( sanityIcon );
-    sanityPopup.pin();//*/
+    sanityPopup.pin();

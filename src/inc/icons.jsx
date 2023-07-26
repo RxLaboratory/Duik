@@ -283,6 +283,10 @@
 #include "icons/w16/w16_ae_null.png.jsxinc"
 #include "icons/w16/w16_controller_draft.png.jsxinc"
 #include "icons/w16/w16_controller_raster.png.jsxinc"
+#include "icons/w16/w16_performance.png.jsxinc"
+#include "icons/w16/w16_bake_controller.png.jsxinc"
+#include "icons/w16/w16_expression_baker.png.jsxinc"
+#include "icons/w16/w16_comp_baker.png.jsxinc"
 
 #include "icons/w128/w128_arthropod_arm.png.jsxinc"
 #include "icons/w128/w128_arthropod_leg.png.jsxinc"

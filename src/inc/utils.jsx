@@ -1,5 +1,8 @@
 // UTILS
 
+// Some strings
+var precisionFactorTip = i18n._("A higher factor → a higher precision.\n\n• Smart mode: lower the factor to keep keyframes only for extreme values. Increasing the factor helps to get a more precise curve with inflexion keyframes.\n\n• Precise mode: A factor higher than 1.0 increases the precision to sub-frame sampling (2 → two samples per frame).\nA factor lower than 1.0 decreases the precision so that less frames are sampled (0.5 → half of the frames are sampled).\nDecrease the precision to make the process faster, increase it if you need a more precise motion-blur, for example.");
+
 function addSetting( c, t ) {
     var settingGroup = DuScriptUI.group(c, 'row');
     settingGroup.margin = 0;
@@ -721,4 +724,217 @@ function createListButton( toolbar ) {
     );
     listButton.onClick = Duik.Constraint.list;
     listButton.onAltClick = function() { Duik.Constraint.list(true); };
+}
+
+function createSettingsHomeButton( container ) {
+    var b = DuScriptUI.checkBox(
+        container,
+        i18n._("Home panel disabled"),
+        w16_no_home,
+        i18n._("The home panel helps Duik to launch much faster.\nDisabling it may make the launch time of Duik much slower."),
+        i18n._("Home panel enabled"),
+        w16_home
+    );
+
+    b.setChecked( !DuESF.scriptSettings.get("homeScreenDisabled", false ) );
+
+    return b;
+}
+
+function createSettingsLayerControlsButton( container ) {
+    var b = DuScriptUI.checkBox(
+        container,
+        i18n._("Layer controls alert disabled"),
+        w16_no_dialog,
+        i18n._("You can disable the \"Layer controls\" alert dialog which is shown before long operations."),
+        i18n._("Layer controls alert enabled"),
+        w16_dialog
+    );
+
+    b.setChecked( !DuESF.scriptSettings.get("layerControlsDialogDisabled", false ) );
+
+    return b;
+}
+
+function createCtrlTypeSelector( container ) {
+    var ctrlTypeSelector = DuScriptUI.selector( container );
+    ctrlTypeSelector.addButton( { text: i18n._("Use AE Null Controllers"), image: w16_ae_null } );
+    ctrlTypeSelector.addButton( { text: i18n._("Use Shape Controllers"), image: w16_controller } );
+    ctrlTypeSelector.addButton( { text: i18n._("Use Shape Controllers (Draft)"), image: w16_controller_draft } );
+    ctrlTypeSelector.addButton( { text: i18n._("Use Raster Controllers (PNG)"), image: w16_controller_raster } );
+    ctrlTypeSelector.onChange = function() {
+        var index = ctrlTypeSelector.index;
+        OCO.config.set('after effects/controller layer type', index);
+    };
+    ctrlTypeSelector.setCurrentIndex( OCO.config.get('after effects/controller layer type', 1) );
+    return ctrlTypeSelector;
+}
+
+function createBakeBonesTool( toolBar ) {
+    var bakeButton = toolBar.addButton(
+        i18n._("Bake bones"),
+        w12_bake,
+        i18n._("Bake bone appearances.\n\n[Alt]: Keep envelops.\n[Ctrl]: Keep deactivated noodles."),
+    );
+
+    setupBakeBonesButton( bakeButton );
+    
+    return bakeButton;
+}
+
+function createBakeBonesButton( container ) {
+    var bakeButton = DuScriptUI.button(
+        container,
+        i18n._("Bake bones"),
+        w16_bake_bone,
+        i18n._("Bake bone appearances.\n\n[Alt]: Keep envelops.\n[Ctrl]: Keep deactivated noodles."),
+    );
+
+    setupBakeBonesButton( bakeButton );
+    
+    return bakeButton;
+}
+
+function setupBakeBonesButton( bakeButton ) {
+    bakeButton.onClick = function() {
+        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
+        Duik.Bone.bake();
+        DuAEProject.setProgressMode(false);
+    }
+    bakeButton.onAltClick = function () {
+        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
+        Duik.Bone.bake(true, false);
+        DuAEProject.setProgressMode(false);
+    };
+    bakeButton.onCtrlClick = function () {
+        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
+        Duik.Bone.bake(true, true, false);
+        DuAEProject.setProgressMode(false);
+    };
+    bakeButton.onCtrlAltClick = function () {
+        if (!DuAEProject.setProgressMode(true, true, true, [bakeButton.screenX, bakeButton.screenY] )) return;
+        Duik.Bone.bake(true, false, false);
+        DuAEProject.setProgressMode(false);
+    };
+}
+
+function createBakeExpTool( toolbar ) {
+    var bakeExpButton = toolbar.addButton(
+        i18n._("Bake expressions"),
+        w12_expression_baker,
+        i18n._("Replace expressions by keyframes.\nUse a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
+        true
+    );
+    setupBakeExpButton( bakeExpButton );
+    return bakeExpButton;
+}
+
+function createBakeExpButton( container ) {
+    var bakeExpButton = DuScriptUI.button( container, {
+        text: i18n._("Bake expressions"),
+        image: w16_expression_baker,
+        helpTip: i18n._("Replace expressions by keyframes.\nUse a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
+        options: true
+    } );
+    setupBakeExpButton( bakeExpButton );
+    return bakeExpButton;
+}
+
+function setupBakeExpButton( bakeExpButton ) {
+    bakeExpButton.optionsPopup.build = function() {
+        var selectionModeSelector = DuScriptUI.selectionModeSelector(bakeExpButton.optionsPanel);
+        selectionModeSelector.setCurrentIndex(0);
+
+        var bakeMethodSelector = DuScriptUI.selector(
+            bakeExpButton.optionsPanel
+        );
+        bakeMethodSelector.addButton(
+            i18n._("Smart mode"),
+            w16_autorig,
+            i18n._("Use a smarter algorithm which produces less keyframes.\nThe result may be easier to edit afterwards but a bit less precise than other modes")
+        );
+        bakeMethodSelector.addButton(
+            i18n._("Precise mode"),
+            w16_quick,
+            i18n._("Add new keyframes for all frames.\nThis mode produces more keyframes but the result may be closer to the original animation.")
+        );
+        bakeMethodSelector.setCurrentIndex(0);
+
+        var stepEdit = DuScriptUI.editText(
+            bakeExpButton.optionsPanel,
+            '1',
+            i18n._("Precision factor") + ': ',
+            '',
+            "",
+            precisionFactorTip
+        );
+
+        bakeExpButton.onClick = function() {
+            var step = parseFloat(stepEdit.text);
+            if (isNaN(step)) step = 1;
+            step = 1 / step;
+            Duik.Automation.bakeExpressions(bakeMethodSelector.index, step, selectionModeSelector.index);
+        };
+    }
+}
+
+function createBakeCompTool( toolbar ) {
+    var bakeCompButton = toolbar.addButton(
+        i18n._("Bake composition"),
+        w12_comp_baker,
+        i18n._("Replaces all expressions of the composition by keyframes,\nand removes all non-renderable layers.\n\nUses a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
+        true
+    );
+    setupBakeCompButton(bakeCompButton);
+    return bakeCompButton;
+}
+
+function createBakeCompButton( container ) {
+    var bakeCompButton = DuScriptUI.button( container, {
+        text: i18n._("Bake composition"),
+        image: w16_comp_baker,
+        helpTip: i18n._("Replaces all expressions of the composition by keyframes,\nand removes all non-renderable layers.\n\nUses a smart algorithm to have as less keyframes as possible, and keep them easy to edit afterwards."),
+        options: true
+    });
+    setupBakeCompButton(bakeCompButton);
+    return bakeCompButton;
+}
+
+function setupBakeCompButton( bakeCompButton ) {
+    bakeCompButton.optionsPopup.build = function() {
+        var selectionModeSelector = DuScriptUI.selectionModeSelector(bakeCompButton.optionsPanel, DuAE.SelectionMode.SELECTED_LAYERS);
+        selectionModeSelector.setCurrentIndex(1);
+
+        var bakeMethodSelector = DuScriptUI.selector(
+            bakeCompButton.optionsPanel
+        );
+        bakeMethodSelector.addButton(
+            i18n._("Smart mode"),
+            w16_autorig,
+            i18n._("Use a smarter algorithm which produces less keyframes.\nThe result may be easier to edit afterwards but a bit less precise than other modes")
+        );
+        bakeMethodSelector.addButton(
+            i18n._("Precise mode"),
+            w16_quick,
+            i18n._("Add new keyframes for all frames.\nThis mode produces more keyframes but the result may be closer to the original animation.")
+        );
+        bakeMethodSelector.setCurrentIndex(0);
+
+        var stepEdit = DuScriptUI.editText(
+            bakeCompButton.optionsPanel,
+            '1',
+            i18n._("Precision factor") + ': ',
+            '',
+            "",
+            precisionFactorTip,
+            false
+        );
+
+        bakeCompButton.onClick = function() {
+            var step = parseFloat(stepEdit.text);
+            if (isNaN(step)) step = 1;
+            step = 1 / step;
+            Duik.Automation.bakeComposition(bakeMethodSelector.index, step, selectionModeSelector.index + 1);
+        };
+    }
 }

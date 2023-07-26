@@ -123,16 +123,7 @@ function buildControllersUI(tab, standAlone)
                 false
             )
 
-            var ctrlTypeSelector = DuScriptUI.selector( editGroup );
-            ctrlTypeSelector.addButton( { text: i18n._("Use AE Null Objects"), image: w16_ae_null } );
-            ctrlTypeSelector.addButton( { text: i18n._("Use Shape Layers"), image: w16_controller } );
-            ctrlTypeSelector.addButton( { text: i18n._("Use Shape Layers (Draft mode)"), image: w16_controller_draft } );
-            ctrlTypeSelector.addButton( { text: i18n._("Use Raster Layers (PNG)"), image: w16_controller_raster } );
-            ctrlTypeSelector.onChange = function() {
-                var index = ctrlTypeSelector.index;
-                OCO.config.set('after effects/controller layer type', index);
-            };
-            ctrlTypeSelector.setCurrentIndex( OCO.config.get('after effects/controller layer type', 1) );
+            var ctrlTypeSelector = createCtrlTypeSelector(editGroup);
 
             var scaleButton = DuScriptUI.checkBox( editGroup, {
                 text: i18n._("Don't lock scale of null controllers."),
