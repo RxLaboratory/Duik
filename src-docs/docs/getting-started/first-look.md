@@ -55,16 +55,16 @@ These categories are always available on the top bar.
 
 Each panel can be displayed by clicking on one of these top buttons. 
 
-- ![](../img/duik/icons/bone.svg){style="width:24px;"} [***Bones***](../guide/bones/index.md)
-- ![](../img/duik/icons/constraints.svg){style="width:24px;"} [***Links and constraints***](../guide/constraints/index.md)
-- ![](../img/duik/icons/controller.svg){style="width:24px;"} [***Controllers***](../guide/controllers/index.md)
-- ![](../img/duik/icons/automation.svg){style="width:24px;"} [***Automation & expressions***](../guide/automation/index.md)
-- ![](../img/duik/icons/animation.svg){style="width:24px;"} [***Animation***](../guide/animation/index.md)
-- ![](../img/duik/icons/camera.svg){style="width:24px;"} [***Camera***](../guide/camera/index.md)
-- ![](../img/duik/icons/tools.svg){style="width:24px;"} [***Tools***](../guide/tools/index.md)
-- ![](../img/duik/icons/cmd.svg){style="width:24px;"} [***Command Line and Feature Library***](../guide/cmd.md)
+- ![](../img/duik/icons/bone.svg){style="width:1em;"} [***Bones***](../guide/bones/index.md)
+- ![](../img/duik/icons/constraints.svg){style="width:1em;"} [***Links and constraints***](../guide/constraints/index.md)
+- ![](../img/duik/icons/controller.svg){style="width:1em;"} [***Controllers***](../guide/controllers/index.md)
+- ![](../img/duik/icons/automation.svg){style="width:1em;"} [***Automation & expressions***](../guide/automation/index.md)
+- ![](../img/duik/icons/animation.svg){style="width:1em;"} [***Animation***](../guide/animation/index.md)
+- ![](../img/duik/icons/camera.svg){style="width:1em;"} [***Camera***](../guide/camera/index.md)
+- ![](../img/duik/icons/tools.svg){style="width:1em;"} [***Tools***](../guide/tools/index.md)
+- ![](../img/duik/icons/cmd.svg){style="width:1em;"} [***Command Line and Feature Library***](../guide/cmd.md)
 
-The ![](../img/duik/icons/file.svg){style="width:16px;"} button on the right hand side opens a simple [note editor](../guide/notes.md).
+The ![](../img/duik/icons/file.svg){style="width:1em;"} ***notes*** button on the right hand side opens a simple [note editor](../guide/notes.md).
 
 On the bottom bar, you'll find some other useful buttons:
 
@@ -72,18 +72,20 @@ On the bottom bar, you'll find some other useful buttons:
 
 The progress bar (here in purple) shows how much money we got in donations for the current month. When it's filled (it takes the whole width), we've reached our monthly goal; if it's not, it's time for you to join the [RxLab. Membership](http://membership.rxlab.info)[^membership] or [donate](http://donate.rxlab.info)[^donate]!
 
-The ![](../img/duik/icons/heart.svg){style="width:16px;"} ***Donate*** button opens the donation page, to help us continue to develop free software. Thanks!
+The ![](../img/duik/icons/heart.svg){style="width:1em;"} ***Donate*** button opens the donation page, to help us continue to develop free software. Thanks!
 
 The percent shows the money we got in donations for the current month, like the progress bar just above.
 
 The text on the right hand side shows the current version of Duik. You can click it to get to the official website for Duik.
 
+The ![](../img/duik/icons/performance.svg){style="width:1em;"} ***performance*** button opens the [Performance Panel](../guide/performance.md)&nbsp;[^perfpanel].
+
 The icon on the right hand side shows the current result of the [sanity tests](../guide/sanity.md) run by Duik to check everything works smoothly in After Effects.
 
-- ![](../img/duik/icons/bug.svg){style="width:24px;"} ***Bug report and feature request***: click this button to let us know what's on your mind.
-- ![](../img/duik/icons/settings.svg){style="width:24px;"} [***Settings***](../guide/settings.md)
-- ![](../img/duik/icons/language_small.svg){style="width:24px;"} ***Translate Duik***: opens the website where you can [contribute to the translation of Duik](http://translate-duik.rxlab.io)[^tr].
-- ![](../img/duik/icons/help.svg){style="width:24px;"} ***Help***: opens the online help (this documentation you're reading), kept up-to-date.
+- ![](../img/duik/icons/bug.svg){style="width:1em;"} ***Bug report and feature request***: click this button to let us know what's on your mind.
+- ![](../img/duik/icons/settings.svg){style="width:1em;"} [***Settings***](../guide/settings.md)
+- ![](../img/duik/icons/language_small.svg){style="width:1em;"} ***Translate Duik***: opens the website where you can [contribute to the translation of Duik](http://translate-duik.rxlab.io)&nbsp;[^tr].
+- ![](../img/duik/icons/help.svg){style="width:1em;"} ***Help***: opens the online help (this documentation you're reading), kept up-to-date.
 
 ### Individual panels
 
@@ -179,6 +181,8 @@ This can sometimes be a bit tedious, but future versions of Duik will include to
 [^membership]: Visit [membership.rxlab.info](http://membership.rxlab.info) to join us!
 
 [^donate]: Visit [donate.rxlab.info](http://donate.rxlab.info) to make a donation.
+
+[^perfpanel]: *cf.* *Miscellaneous tools / [Performance Panel](../guide/performance.md)*
 
 [^tr]: Visit [translate-duik.rxlab.io](http://translate-duik.rxlab.io) to help translate Duik to any language.
 

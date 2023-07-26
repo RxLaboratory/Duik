@@ -21,6 +21,7 @@ But let's agree that sometimes, it’s easier and quicker to use less applicatio
 
 Here's a checklist of what you can do to improve the performance in After Effects, from most to less important. Read the next sections for detailed explanations about these suggestions.
 
+- Use the [Duik optimizer](../guide/performance.md)&nbsp;[^perfpanel] in the Performance panel.
 - Set the preview quality to *Off&nbsp;(Final&nbsp;Quality)*. Don't leave it to *Adaptive&nbsp;Resolution*.
 - Lower the preview resolution if you can (to *Half* or *Third*). Don't leave it to *Auto*.
 - Hide, and shy, unnneeded layers.
@@ -40,6 +41,12 @@ Some tools are more compute-intensive than others. You have to know which ones t
 You must know that Duik only uses native After Effects features, it automates things you could do by yourself (provided you have a lot of time to spend at it). This means it is not Duik by itself which causes performance issues, it is how native After Effects features are used together and how many of them at the same time.
 
 Next is a non-exhaustive list of features you have to be careful with.
+
+## Duik Optimizer
+
+To quickly optimize some of these parameters, Duik has a smart ![](../img/duik/icons/performance.svg){style="width:1em;"} **optimizer** which will adjust the preview quality and some settings of After Effects, Duik, the current composition and its layers.
+
+▷ Read the section about the Duik [*Performance Panel*](../guide/performance.md) to learn more about this optimizer.
 
 ## Preview quantity and quality
 
@@ -117,6 +124,15 @@ Before working your animation, you should always draw a storyboard; this way you
 When you see only a close up on the torso and the head, do you really need the rig of the legs? When the character is far away, do you really need complex facial expressions? Will you even draw the character the same way?
 
 If you’re using vectors only for scaling purposes, you can rasterize them (at a higher resolution if really needed) and greatly improve performance.
+
+### Sampling quality
+
+The sampling quality settings of the layers are little known, but the default value (bilinear) is the fastest one anyway.  
+If too many layers are set to bicubic, it may improve the performance to set it back to bilinear.
+
+This sampling quality changes the interpolatioon algorithm used when translating, rotating and scaling the layer; bicubic may improve the result, especially when the layer is scaled up, but the default bilinear setting is usually enough in most cases.
+
+This setting is available in the `Layer > Quality` menu in After Effects, or in the `Quality` section of the layers context menu.
 
 ### Duik Bones
 
@@ -411,6 +427,8 @@ After Effects does use the GPU more and more to render the effects and compositi
 [^2]: *Autodesk Maya*, commonly shortened to just *Maya*, is a 3D computer graphics application. It is used to create assets for interactive 3D applications (including video games), animated films, TV series, and visual effects. *cf.* [en.wikipedia.org/wiki/Autodesk_Maya](https://en.wikipedia.org/wiki/Autodesk_Maya){target="_blank"}
 
 [^3]: *Blender* is a free and open-source 3D computer graphics software tool set used for creating animated films, visual effects, art, 3D-printed models, motion graphics, interactive 3D applications and virtual reality. *cf.* [blender.org](https://blender.org){target="_blank"}
+
+[^perfpanel]: *cf.* *Miscellaneous tools / [Performance Panel](../guide/performance.md)*
 
 [^4]: *DuGR* lets you group layers in After Effects, and isolate the display of these groups. It is an essential tool to simplify the management of compositions with lots of layers, without any need to precompose! *cf.* [rxlaboratory.org/tools/dugr](https://rxlaboratory.org/tools/dugr){target="_blank"}
 

@@ -4,6 +4,10 @@ This is the list of what has changed since the previous major version of Duik ([
 
 ► [The detailed list of changes of minor versions of Duik is available here](https://github.com/RxLaboratory/Duik/releases).
 
+## 17.2
+
+- Added a new [*Performance Panel*](../guide/performance.md).
+
 ## 17.1
 
 This new version of Duik Ángela introduces important features to help color animation, which may be extended later into more features or tools in another dedicated tool set.

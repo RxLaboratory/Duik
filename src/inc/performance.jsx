@@ -128,9 +128,6 @@
             boneTypeSelector.setCurrentIndex(1);
             controllerTypeSelector.setCurrentIndex(3);
 
-            // Draft bones & conntrollers & pins
-
-
             // AE Stuff
             if (activeViewer.type === ViewerType.VIEWER_COMPOSITION) {
                 for(var i = 0; i < activeViewer.views.length; i++) {
@@ -163,17 +160,8 @@
                     // Draft
                     l.samplingQuality = LayerSamplingQuality.BILINEAR;
 
-                    // Duik specific layers or guide layers
-                    if (!Duik.Layer.isType(l, Duik.Layer.Type.BONE ) && 
-                        !Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.NULL ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.IK ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER_BG ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.ZERO ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.LOCATOR ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.EFFECTOR ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.PIN) &&
-                        !l.guideLayer )
+                    // guide layers
+                    if (!l.guideLayer )
                     {
                         l.locked = locked;
                         continue;
@@ -231,16 +219,7 @@
                     l.locked = false;
 
                     // Duik specific layers or guide layers
-                    if (!Duik.Layer.isType(l, Duik.Layer.Type.BONE ) && 
-                        !Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.NULL ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.IK ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.CONTROLLER_BG ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.ZERO ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.LOCATOR ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.EFFECTOR ) &&
-                        !Duik.Layer.isType(l, Duik.Layer.Type.PIN) &&
-                        !l.guideLayer )
+                    if ( !l.guideLayer )
                     {
                         l.locked = locked;
                         continue;
@@ -248,7 +227,7 @@
 
                     // no frame blending
                     l.frameBlendingType = FrameBlendingType.NO_FRAME_BLEND;
-                    if (l.guideLayer) l.motionBlur = false;
+                    l.motionBlur = false;
                     
                     l.locked = locked;
                 }
@@ -266,7 +245,7 @@
             layerControlsButton.onClick();
 
             boneTypeSelector.setCurrentIndex(0);
-            controllerTypeSelector.setCurrentIndex(1);
+            controllerTypeSelector.setCurrentIndex(2);
 
             // AE Stuff
             if (activeViewer.type === ViewerType.VIEWER_COMPOSITION) {
