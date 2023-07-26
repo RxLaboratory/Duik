@@ -2,13 +2,13 @@
 
 Duik bones are standard After Effects shape layers, with a bunch of expressions and simple effects to control them. The bone appearance, the [envelops](../envelops.md)[^1] and the [noodles](../noodles.md)[^2] are all controlled by these effects and expressions, and this reduces the performance, to the point it can be a big issue in complex projects.
 
-*Baking* the selected bones removes all these expressions (and deactivates this dynamic display) to improve the performance.
+*Baking*[*](../../../misc/glossary.md) the selected bones removes all these expressions (and deactivates this dynamic display) to improve the performance.
 
 !!! tip
     Hidden bones, even if they're not baked, should not have a big impact on performance.
 
 !!! note
-    The Auto-Rig automatically deactivate rigged bones. This can optionally be changed in the Auto-Rig settings though.
+    The Auto-Rig automatically bakes rigged bones. This can optionally be changed in the Auto-Rig settings though.
 
 ▷ Read the [*Advanced / Performance*](../../../advanced/performance.md) section for more tips about how to improve performance in After Effects and using Duik.
 

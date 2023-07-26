@@ -1,3 +1,5 @@
-To be written...
+# ![](../../../img/duik/icons/eye.svg){style="width:1em;"} Show/Hide controllers
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+Click this button to quickly show or hide all the controllers of the current composition, even if they're not selected.
+
+Holding the `[Alt]` key, you can show or hide only the controllers which are not selected, keeping the current visibility of the selected controllers.

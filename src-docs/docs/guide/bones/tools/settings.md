@@ -18,6 +18,6 @@ There are two types of bones in Duik, which can be chosen on top of this panel.
 
 Apart from their appearance and the presence of envelops and bones, both bone types have the exact same features and work the same way with the Auto-Rig.
 
-You can use the other bone settings to change the appearance of the selected bones. The *Pick selected layer* button will pick all values from the selected bone to easily apply the same settings to other bones.
+You can use the other bone settings to change the appearance of the selected bones. The *![](../../../img/duik/icons/eye_dropper.svg){style="width:1em;"} Pick selected layer* button will pick all values from the selected bone to easily apply the same settings to other bones.
 
 [^1]: Read the [*Advanced / Performance*](../../../advanced/performance.md) section for more tips about how to improve performance in After Effects and using Duik.

@@ -3,6 +3,7 @@
 - ***Armature***
 - ***Auto-rig***
 - ***Bake***
+- ***Barycenter***
 - ***Bone***
 - ***Chain***: see *Kinematic Chain*.
 - ***Controller***

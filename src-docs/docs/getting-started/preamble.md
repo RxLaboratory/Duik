@@ -21,6 +21,23 @@ Duik’s comprehensiveness and ease of use have made it [a script used in numero
 ![](../img/examples/preamble-comp.png)  
 *1. Parler le fracas, Thomas Fourniret, Jérémy Couturier / 2.The wind in the Reeds, Nicolas Liguori / 3.La Soupe au Caillou, Clémentine Robach*
 
+## Using this guide
+
+Throughout this document, some conventions are used to highlight useful or specific information, or reference and define specific terms.
+
+Terms followed with an **asterisk *** are defined in the [**glossary**](../misc/glossary.md).
+
+!!! note
+    Notes provide more details or secondary information.
+
+!!! tip
+    Tips are advices or ideas to improve your work with Duik or After Effects.
+
+!!! warning
+    Warnings highlight important information you shouldn't miss.
+
+Although **the sections of the guide follow the order of the panels** in Duik's User Interface, it also makes sense to read them in this specific order, as **it's the usual workflow** when rigging and animating characters and props.
+
 [^1]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more information about the community and RxLab. memeberships.
 
 [^2]: Visit [showcase.rxlab.info](http://showcase.rxlab.info) to have a look at a selection of films and projects animated with RxLaboratory's tools.

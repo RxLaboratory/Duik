@@ -1,3 +1,3 @@
-To be written...
+# ![](../../../img/duik/icons/select.svg){style="width:1em;"} Select controllers
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+Click this button to quickly select all the controllers of the current composition.
