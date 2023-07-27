@@ -1,3 +1,3 @@
-To be written...
+# ![](../../../img/duik/icons/separate_dimensions.svg){style="width:1em;"} Split Values
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Constraints](../../constraints/index.md) / Tools / [Split Values](../../constraints/tools/split.md)*.
