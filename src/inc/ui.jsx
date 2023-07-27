@@ -15,7 +15,7 @@ function buildUI()
     var uiMode = DuESF.scriptSettings.get("common/uiMode", 0);
 
     // The performance button
-    #include "performance.jsx"
+    #include "performancePopup.jsx"
 
     // Add Sanity status without label
     var sanityIcon = DuSanity.UI.button( ui.bottomGroup, false );

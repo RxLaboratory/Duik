@@ -75,6 +75,8 @@ function buildToolsPanelUI(tab) {
             compSettingsGroup.visible = true;
         };
 
+        createPerformanceButton( compGroup, true, Duik.Performace.optimize );
+
         var compSettingsGroup = DuScriptUI.group(mainGroup, 'column');
         compSettingsGroup.visible = false;
         compSettingsGroup.built = false;

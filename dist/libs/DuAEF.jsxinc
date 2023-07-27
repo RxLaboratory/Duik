@@ -10500,9 +10500,15 @@ DuScriptUI.showUI = function( ui, enterRunTime )
 /**
  * Creates the main panel of a script
  * @param {Panel|null} container - The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
- * @param {bool} [addSettingsButton=true] - Whether to create a button to open the settings or not
- * @param {bool} [addHelpButton=false] - Whether to create a button to open the help panel or not
+ * @param {Boolean} [addSettingsButton=true] - Whether to create a button to open the settings or not
+ * @param {Boolean} [addHelpButton=false] - Whether to create a button to open the help panel or not
  * @param {File} [scriptFile] - The main script file, needed for the refresh button in debug mode
+ * @param {object[]} [bottomButtons=[]] - A list of objects to add buttons on the bottom bar. Each object must have these attributes:<br>
+ * <ul>
+ * <li><code>image</code>: the icon (a path or string encoded PNG)
+ * <li><code>helpTip</code>: the helpTip text
+ * <li><code>onClick</code>: a callback function
+ * </ul>
  * @return {DuScriptPanel} The panel created, either a ScriptUI Panel or a ScriptUI Window.
  * @example
  * var ui = DuScriptUI.mainPanel(this,"Test Script");
@@ -10510,13 +10516,15 @@ DuScriptUI.showUI = function( ui, enterRunTime )
  * refreshButton.onClick = function() { ui.refreshUI( new File($.fileName) ); }; //reloads the current script
  * DuScriptUI.showUI(ui);
  */
-DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, scriptFile )
+DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, scriptFile, bottomButtons )
 {
     function testGroup( group )
     {
         group.add('statictext', undefined, "test");
         DuScriptUI.setBackgroundColor( group, DuColor.Color.BLACK );
     }
+
+    bottomButtons = def(bottomButtons, []);
 
     addSettingsButton = def(addSettingsButton, true);
     addHelpButton = def(addHelpButton, false);
@@ -10947,6 +10955,21 @@ DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, 
             helpButton.alignment = ['left', 'fill'];
         }
     }*/
+
+    // Add custom left buttons
+    for (var i = 0; i < bottomButtons.length; i++ ) {
+        var b = bottomButtons[i];
+        b.location = def(b.location, 'left');
+        if (b.location != 'left') continue;
+        b.helpTip = def(b.helpTip, '');
+        var c = DuScriptUI.button( panel.bottomGroup, {
+            text: '',
+            image: b.image,
+            helpTip: b.helpTip
+        });
+        c.alignment = ['left', 'fill'];
+        c.onClick = b.onClick;
+    }
 
     if (addSettingsButton) {
         var settingsButton =  DuScriptUI.button( panel.bottomGroup, {
@@ -18780,6 +18803,7 @@ DuScriptUI.String.RANGE = "Range";
 DuScriptUI.String.RENDER = "Render";
 DuScriptUI.String.SECONDARY_NAME = "Secondary name";
 DuScriptUI.String.SELECTED_COMPOSITIONS = "Selected compositions";
+DuScriptUI.String.SELECTED_LAYERS = "Selected layers";
 DuScriptUI.String.SELECTED_PROPERTIES = "Selected properties";
 DuScriptUI.String.SET_FRAME_BLENDING = "Set frame blending mode";
 DuScriptUI.String.SHAPE_LAYER = "Shape";
@@ -19593,23 +19617,23 @@ DuScriptUI.selectionModeSelector = function( container, minimalMode )
     minimalMode = def(minimalMode, DuAE.SelectionMode.SELECTED_PROPERTIES);
     var selector = DuScriptUI.selector( container );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_PROPERTIES) selector.addButton(
-        DuScriptUI.String.SELECTED_PROPERTIES,
+        i18n._("Selected properties"),
         w16_selected_props
     );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_LAYERS) selector.addButton(
-        DuScriptUI.String.SELECTED_LAYERS,
+        i18n._("Selected layers"),
         w16_selected_layers
     );
     if (minimalMode <= DuAE.SelectionMode.ACTIVE_COMPOSITION) selector.addButton(
-        DuScriptUI.String.ACTIVE_COMPOSITION,
+        i18n._("Active composition"),
         w16_layers
     );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_COMPOSITIONS) selector.addButton(
-        DuScriptUI.String.SELECTED_COMPOSITIONS,
+        i18n._("Selected compositions"),
         w16_selected_compositions
     );
     if (minimalMode <= DuAE.SelectionMode.ALL_COMPOSITIONS) selector.addButton(
-        DuScriptUI.String.ALL_COMPOSITIONS,
+        i18n._("All compositions"),
         w16_compositions
     );
 

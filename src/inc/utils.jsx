@@ -938,3 +938,37 @@ function setupBakeCompButton( bakeCompButton ) {
         };
     }
 }
+
+function createPerformanceButton( container, withOptions, callBack) {
+
+    var optimizeButton = DuScriptUI.button( container, {
+        text: i18n._("Optimize!"),
+        image: w16_performance,
+        helpTip: i18n._("Optimizes the balance between features and performance.\nThis will change some Duik and After Effects settings, and optimize the current composition preview.\nRead the doc for more details!"),
+        options: withOptions
+    });
+
+    if (withOptions) {
+        optimizeButton.optionsPopup.build = function() {
+            var presetSelector = presetSelector = createPerformancePresetSelector( optimizeButton.optionsPanel );
+            optimizeButton.onClick = function() { callBack( presetSelector.currentData ) };
+        }
+    }
+    else {
+        optimizeButton.onClick = function() { callBack( Duik.Performace.Level.BETTER ) };
+    }
+}
+
+function createPerformancePresetSelector( container ) {
+    var presetSelector = DuScriptUI.selector( container );
+    presetSelector.addButton(i18n._("Best performance"), '', '', Duik.Performace.Level.BEST);
+    presetSelector.addButton(i18n._("Better performance"), '', '', Duik.Performace.Level.BETTER);
+    presetSelector.addButton(i18n._("Balanced"), '', '', Duik.Performace.Level.BALANCED);
+    presetSelector.addButton(i18n._("More features"), '', '', Duik.Performace.Level.FEATURES);
+    presetSelector.setCurrentIndex( DuESF.scriptSettings.get("optimizerMode", DuESF.scriptSettings.get("optimizerMode", 1)));
+    presetSelector.onChange = function() {
+        DuESF.scriptSettings.set("optimizerMode", presetSelector.index);
+        DuESF.scriptSettings.save();
+    }
+    return presetSelector;
+}

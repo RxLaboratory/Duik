@@ -2,12 +2,12 @@
 
 :: The version
 IF "%~1"=="" (
-    SET version=17.1.5
+    SET version=17.2.0
 ) ELSE (
     SET version=%~1
 )
 
-SET isPrerelease=false
+SET isPrerelease=true
 
 :: The repo (current dir)
 SET repo_path=%~dp0..\..
@@ -66,6 +66,7 @@ DuBuilder "%repo_path%\src\Duik Controllers.jsx" --no-banner -r "{duikVersion}:%
 DuBuilder "%repo_path%\src\Duik Layer Manager.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Layer Manager.jsx"
 DuBuilder "%repo_path%\src\Duik Notes.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Notes.jsx"
 DuBuilder "%repo_path%\src\Duik OCO.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik OCO.jsx"
+DuBuilder "%repo_path%\src\Duik Optimizer.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Optimizer.jsx"
 DuBuilder "%repo_path%\src\Duik Rigging.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Rigging.jsx"
 DuBuilder "%repo_path%\src\Duik Script Editor.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Script Editor.jsx"
 DuBuilder "%repo_path%\src\Duik Script Library.jsx" --no-banner -r "{duikVersion}:%version%" -r "var isPreRelease = false:var isPreRelease = %isPrerelease%" "%build_path%\Duik\Scripts\ScriptUI Panels\Duik Script Library.jsx"

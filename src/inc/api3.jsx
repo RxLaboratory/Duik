@@ -21,3 +21,4 @@
 #include "api/animation.jsx"
 #include "api/camera.jsx"
 #include "api/tools.jsx"
+#include "api/performance.jsx"
