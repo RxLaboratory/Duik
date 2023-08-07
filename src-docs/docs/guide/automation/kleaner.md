@@ -104,7 +104,7 @@ Once you've set these values as best as you can, you can further improve and cus
 
 ![](../../img/examples/kleaner-friction.gif)
 
-![](../../img/examples/kleaner-randoomness.gif)
+![](../../img/examples/kleaner-randomness.gif)
 
 ## Fine Tune
 
