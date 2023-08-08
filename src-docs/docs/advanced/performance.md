@@ -147,7 +147,7 @@ Shape layer controllers are automatically baked by default when *extracting* con
 ## Expressions
 
 **Expressions in After Effects are all evaluated (computed) when rendering each frame of the composition**. This won’t be an issue if they are simple, with basic calculations like the vast majority of expressions you may write by yourself.  
-Now, imagine an expression, which, when it is evaluated (i.e. at each frame of the composition), needs to compute previous movements of some other layers - this is what simulations do. This means it also needs to compute everything which influences the layers in previous frames of the composition, including other expressions, which might be complex too… This is a nasty situation where performance will drop dramatically. You’ll have to take care of what needs to be computed, and what the hierarchy of the expressions and layers is
+Now, imagine an expression, which, when it is evaluated (i.e. at each frame of the composition), needs to compute previous movements of some other layers - this is what simulations do. This means it also needs to compute everything which influences the layers in previous frames of the composition, including other expressions, which might be complex too… This is a nasty situation where performance will drop dramatically[^cumulative].
 
 **Some features of Duik use very complex expressions**, and compute-intensive calculations, like the IK which involves more maths than simple additions and multiplications, or simulations like the kleaner's follow-through which have to compute previous movements. Even if we’ve been hard at work to fix performance issues, in some cases combining a lot of expressions (i.e. Duik features) can lead to poorer performance when animating, or even so much lag that the rig cannot be correctly manipulated anymore.
 
@@ -413,6 +413,8 @@ After Effects does use the GPU more and more to render the effects and compositi
 [^3]: *Blender* is a free and open-source 3D computer graphics software tool set used for creating animated films, visual effects, art, 3D-printed models, motion graphics, interactive 3D applications and virtual reality. *cf.* [blender.org](https://blender.org){target="_blank"}
 
 [^4]: *DuGR* lets you group layers in After Effects, and isolate the display of these groups. It is an essential tool to simplify the management of compositions with lots of layers, without any need to precompose! *cf.* [rxlaboratory.org/tools/dugr](https://rxlaboratory.org/tools/dugr){target="_blank"}
+
+[^cumulative]: Because there's no way to reliably store any data with expressions in After Effects, expressions depending on previous values of the same property (cumulating the values) actually have to re-compute everything for each frame of the composition. This means that for each frame, they need to add up all previous values. The total number of values to be computed for a given composition is a [*triangular number*](http://en.wikipedia.org/wiki/Triangular_number) (see [en.wikipedia.org/wiki/Triangular_number](http://en.wikipedia.org/wiki/Triangular_number)) given by the formula `(f² + f) / 2` where `f` is the number of frames in the composition. Because of the `f²` in the formula, this number grows very fast with the duration of the composition.
 
 [^5]: Rafael Arame is a recognized After Effects rigging expert. You can have a look at his blog on [www.artstation.com/rafaelarame/blog](https://www.artstation.com/rafaelarame/blog){target="_blank"}.
 
