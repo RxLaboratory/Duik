@@ -69,6 +69,7 @@
 #include "../pe/pe_bone_data.ffx.jsxinc"
 #include "../pe/pe_bone_data_light.ffx.jsxinc"
 #include "../pe/pe_bone_noodle.ffx.jsxinc"
+#include "../pe/pe_color_wiggle.ffx.jsxinc"
 
 /**
 * The pseudo effects used by Duik.
@@ -133,6 +134,7 @@ Duik.PseudoEffect = {
     TWOD_WIGGLE: new DuAEPseudoEffect(pe_2d_wiggle),
     THREED_WIGGLE: new DuAEPseudoEffect(pe_3d_wiggle),
     MULTI_WIGGLE: new DuAEPseudoEffect(pe_multi_wiggle),
+    COLOR_WIGGLE: new DuAEPseudoEffect(pe_color_wiggle),
     WHEEL: new DuAEPseudoEffect(pe_wheel),
     ONED_RANDOM: new DuAEPseudoEffect(pe_1d_random),
     TWOD_RANDOM: new DuAEPseudoEffect(pe_2d_random),
