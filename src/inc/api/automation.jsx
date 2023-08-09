@@ -2063,7 +2063,67 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
 				'result = [];\n' +
 				'if(linked) while (result.length < value.length) result.push(w[0]);\n' +
 				'else result = w;\n' +
-				'result += value - valueAtTime(0);' +
+				'result += value - valueAtTime(0);\n' +
+                '}\n' +
+                'result;';
+        }
+        else if (dimensions == 4)
+        {
+            prop.getProperty().expression = DuAEExpression.Id.WIGGLE + '\n' + effectLink + '\n' +
+				'var freq = fx(' + i['Frequency'].index + ');\n' +
+				'var amp = fx(' + i['Amplitude'].index + ').value;\n' +
+				'var loop = fx(' + i['Loop duration (s)'].index + ').value;\n' +
+				'var complexity = fx(' + i['Details']['Complexity (octaves)'].index + ').value;\n' +
+				'var multiplier = fx(' + i['Details']['Multiplier'].index + ').value;\n' +
+				'var seed = fx(' + i['Details']['Random Seed'].index + ').value;\n' +
+                'var layerSeed = fx(' + i['Details']['One seed per layer'].index + ').value;\n' +
+                'var channel = fx(' + i['Channel'].index + ').value;\n' +
+                '\n' +
+                DuAEExpression.Library.get(['integrateLinearKeys']) + '\n' + 
+                '\n' +
+                'var result = value;\n' +
+                'if (fx.active) {\n' + 
+                'if (layerSeed) seed += index;\n' + 
+                'seedRandom(seed);\n' + 
+                'var doLoop = freq.numKeys < 2;\n' + 
+                'if (loop == 0) loop = thisComp.duration;\n' + 
+                'var t = time;\n' + 
+                'var f = 1;\n' + 
+                'if (doLoop) {\n' + 
+                '    t = (time % loop)-loop;\n' + 
+                '    f = freq.value;\n' + 
+                '}\n' + 
+                'else {\n' + 
+                '    t = integrateLinearKeys( freq );\n' + 
+                '}\n' + 
+				'var w1 = wiggle(f, amp, complexity, multiplier, t);\n' +
+				'var w2 = wiggle(f, amp, complexity, multiplier, t - loop);\n' +
+				'var w = w1;\n' +
+                'if (doLoop) w = ease(t, -loop,  0, w1, w2);\n' +
+				'result = value;\n' +
+				'if (channel >= 5) {\n' +
+                '    result = rgbToHsl(result);\n' +
+                '    w = rgbToHsl(w);\n' +
+                '}\n' +
+                '// R\n' +
+                'if (channel == 1) result = [w[0], result[1], result[2], result[3]];\n' +
+                '// G\n' +
+                'else if (channel == 2) result = [result[0], w[1], result[2], result[3]];\n' +
+                '// B\n' +
+                'else if (channel == 3) result = [result[0], result[1], w[2], result[3]];\n' +
+                '// A\n' +
+                'else if (channel == 4) result = [result[0], result[1], result[2], w[3]];\n' +
+                '// H\n' +
+                'else if (channel == 5) result = [w[0], result[1], result[2], result[3]];\n' +
+                '// S\n' +
+                'else if (channel == 6) result = [result[0], w[1], result[2], result[3]];\n' +
+                '// L\n' +
+                'else if (channel == 7) result = [result[0], result[1], w[2], result[3]];\n' +
+                'if (channel >= 5) {\n' +
+                '    result = hslToRgb(result);\n' +
+                '    w = hslToRgb(w);\n' +
+                '}\n' +
+				'result += value - valueAtTime(0);\n' +
                 '}\n' +
                 'result;';
         }
@@ -2117,7 +2177,7 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
                     'var w2 = [X2[0],Y2[1],Z2[2]];\n' +
                     'var w = w1;\n' +
                     'if (doLoop)  w = ease(tX, -loop,  0, w1, w2);\n' +
-                    'result = w + value - valueAtTime(0)' +
+                    'result = w + value - valueAtTime(0);\n' +
                     '}\n' +
                     'result;';
         }
@@ -2163,7 +2223,7 @@ Duik.Automation.wiggle = function(separateDimensions, individualControls, props)
                     'var w2 = [X2[0],Y2[1]];\n' +
                     'var w = w1;\n' +
                     'if (doLoop)  w = ease(tX, -loop,  0, w1, w2);\n' +
-                    'result = w + value - valueAtTime(0)' +
+                    'result = w + value - valueAtTime(0);\n' +
                     '}\n' +
                     'result;';
         }
