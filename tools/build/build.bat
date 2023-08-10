@@ -2,7 +2,7 @@
 
 :: The version
 IF "%~1"=="" (
-    SET version=17.2.1
+    SET version=17.2.0
 ) ELSE (
     SET version=%~1
 )
