@@ -2697,7 +2697,7 @@ Duik.Constraint.twoOneLayerIK = function(layer1, layer2, layer3, goal, controlle
 
 /**
  * Creates a bezier ik on the layers
- * @param {Layer[]|DuList.<Layer>} layers - The layers, ordered from root to end
+ * @param {Layer[]|DuList} layers - The layers, ordered from root to end
  * @param {Layer|null} [goal] - The goal layer, at the end of the IK
  * @param {Layer|null} [controller] - The layer to use as controller, can be automatically created.<br />
  * Must be provided if goal is undefined.
@@ -2709,8 +2709,8 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     controller = def(controller, null);
     if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
 
-    showGuides = def(showGuides, 1);
-    if (!showGuides) showGuides = 0;
+    showGuides = def(showGuides, true);
+    if (!showGuides) showGuides = false;
 
     DuAE.beginUndoGroup( i18n._("B\u00e9zier IK"), false);
 
@@ -2777,7 +2777,7 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     controller.parent = null;
     // Reset controller rotation
     controller.transform.rotation.setValue(ctrlRot);
-    
+
     //add effect
     var name = Duik.Layer.name(layers.first());
     var pe = Duik.PseudoEffect.BEZIER_IK;
@@ -2809,7 +2809,7 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     curveEffect(cPe.props["Controllers"]["Root"].index).setValue(rootController.index);
     curveEffect(cPe.props["Controllers"]["Curve"].index).setValue(curveController.index);
     curveEffect(cPe.props["Controllers"]["End"].index).setValue(controller.index);
-    curveEffect(cPe.props["Draw guides"].index).setValue(showGuides);
+    curveEffect(cPe.props["Draw guides"].index).setValue(showGuides ? 1 : 0);
 
     //useful positions
     var endPosition = DuAELayer.getWorldPos(controller);
@@ -3087,6 +3087,7 @@ Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     DuAE.endUndoGroup( i18n._("B\u00e9zier IK"));
 
     return [curveController, controller, rootController];
+    //*/
 }
 
 /**
