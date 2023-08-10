@@ -7351,6 +7351,261 @@ DuMath.Location = {
     CENTER: 0
 }
 
+// === VECTOR CLASS === //
+
+/**
+ * Constructs a new Vector
+ * @class DuVector
+ * @classdesc A class to manipulate vectors
+ * @param {Number[]} components The components of the vector, one number per dimension
+ */
+function DuVector( components ) {
+    this.c = components;
+}
+
+/**
+ * Creates a vector from two points
+ * @param {Number[]} pointA The origin of the vector
+ * @param {Number[]} pointB The end of the vector
+ * @return {DuVector}
+ */
+DuVector.fromPoints = function( pointA, pointB) {
+    var result = new Array(pointA.length);
+
+    for(var i = 0; i < pointA.length; i++) {
+        var b = 0;
+        if (i < pointB.length) b = pointB[i];
+        result[i] = b - pointA[i];
+    }
+
+    return new DuVector(result);
+}
+
+/**
+ * Creates a unit vector
+ * @param {Number} axis The unit axis
+ * @param {Number} dimensions The number of dimensions
+ * @return {DuVector}
+ */
+DuVector.unit = function( axis, dimensions) {
+    var result = new Array(dimensions);
+    for(var i = 0; i < dimensions; i++) result[i] = 0;
+    result[axis] = 1;
+    return new DuVector(result);
+}
+
+/**
+ * Addition
+ * @param {DuVector} other The vector to add
+ * @returns {DuVector} The result
+ */
+DuVector.prototype.add = function(other) {
+    
+    var result = new Array( this.c.length );
+    
+    for (var i = 0; i < this.c.length; i++)  {
+        var o = 0;
+        if (i < other.c.length) o = other.c[i];
+        result[i] = this.c[i] + o;
+    }
+
+    return new DuVector(result);
+}
+
+/**
+ * Subtraction
+ * @param {DuVector} other The vector to subtract
+ * @returns {DuVector} The result
+ */
+DuVector.prototype.subtract = function(other) {
+    
+    var result = new Array( this.c.length );
+    
+    for (var i = 0; i < this.c.length; i++)  {
+        var o = 0;
+        if (i < other.c.length) o = other.c[i];
+        result[i] = this.c[i] - o;
+    }
+
+    return new DuVector(result);
+}
+
+/**
+ * Scale
+ * @param {Number} factor The scale factor
+ * @returns {DuVector} The result
+ */
+DuVector.prototype.scale = function(factor) {
+    
+    var result = new Array( this.c.length );
+    
+    for (var i = 0; i < this.c.length; i++)  {
+        result[i] = this.c[i] * factor;
+    }
+
+    return new DuVector(result);
+}
+
+/**+
+ * The length of the vector
+ * @return {Number} The length
+ */
+DuVector.prototype.length = function() {
+    return DuMath.length( this.c );
+}
+
+/**
+ * Dot Product
+ * @param {DuVector} other The other vector
+ * @return {Number}
+ */
+DuVector.prototype.dot = function(other) {
+    var result = 0;
+
+    for (var i = 0; i < this.c.length; i++)  {
+        var o = 0;
+        if (i < other.c.length) o = other.c[i];
+        result += this.c[i] * o;
+    }
+
+    return result;
+}
+
+/**
+ * Create a normalized vector (with length equal to 1)
+ * @return {DuVector} The normalized vector
+ */
+DuVector.prototype.normalize = function() {
+    return this.scale( 1 / this.length() );
+}
+
+/**
+ * Checks if the two vectors have the same direction
+ * @param {DuVector} other 
+ * @returns {Boolean}
+ */
+DuVector.prototype.hasSameDirection = function(other) {
+    var d = this.normalize().dot(other.normalize());
+    if (Math.abs(d - 1) <= 0.000000001 ) return true;
+    return false;
+}
+
+/**
+ * Checks if the two vectors have an opposite direction
+ * @param {DuVector} other 
+ * @returns {Boolean}
+ */
+DuVector.prototype.hasOppositeDirection = function(other) {
+    var d = this.normalize().dot(other.normalize());
+    if (Math.abs(d + 1) <= 0.000000001 ) return true;
+    return false;
+}
+
+/**
+ * Checks if the two vectors are perpendicular
+ * @param {DuVector} other 
+ * @returns {Boolean}
+ */
+DuVector.prototype.isPerpendicular = function(other) {
+    var d = this.normalize().dot(other.normalize());
+    if (Math.abs(d) <= 0.000000001 ) return true;
+    return false;
+}
+
+/**
+ * Cross Product
+ * @param {DuVector} other 
+ * @returns {DuVector}
+ */
+DuVector.prototype.cross = function(other) {
+
+    var a = this.c;
+    var b = other.c;
+    while (a.length < 3) a.push(0);
+    while (b.length < 3) b.push(0);
+
+    return new DuVector([
+        a[1]*b[2] - a[2]*b[1],
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0],
+    ]);
+}
+
+/**
+ * Gets the angle between the two vectors
+ * @param {DuVector} other 
+ * @returns {Number} The angle in degrees
+ */
+DuVector.prototype.angle = function(other) {
+    return DuMath.toDegrees(
+        Math.acos(
+            this.dot(other) / ( this.length() * other.length() )
+        )
+    );
+}
+
+/**
+ * Creates the same vector in the opposite direction (scale -1)
+ * @returns {DuVector}
+ */
+DuVector.prototype.negate = function() {
+    return this.scale(-1);
+}
+
+/**
+ * Projects the vector on another vector
+ * @param {DuVector} other 
+ * @returns {DuVector}
+ */
+DuVector.prototype.projectOn = function(other) {
+    var n = other.normalize();
+    return n.scale( this.dot(n) );
+}
+
+/**
+ * Sets a new length for the vector
+ * @param {Number} newLength 
+ * @returns {DuVector}
+ */
+DuVector.prototype.setLength = function( newLength ) {
+    return this.normalize().scale( newLength );
+}
+
+DuVector.prototype.equal = function( other ) {
+    for (var i = 0; i < this.c.length; i++)  {
+        var o = 0;
+        if (i < other.c.length) o = other.c[i];
+        if (Math.abs(this.c[i] - o) > 0.00000001 ) return false;
+    }
+    return true;
+}
+
+/**
+ * Checks the orientation of the angle between 2D vectors
+ * @param {DuVector} other
+ * @return {Number} <code>1</code>: counter-clockwiser, <code>-1</code>: clockwise, <code>0</code>: aligned
+ */
+DuVector.prototype.orientation2D = function( other ) {
+    var result = this.c[0]*other.c[1] - this.c[1]*other.c[0];
+    if (Math.abs(result) <= 0.00000001) return 0;
+    if (result > 0) return 1;
+    if (result < 0) return -1;
+}
+
+/**
+ * Gets the angle between the two 2D vectors
+ * @param {DuVector} other 
+ * @returns {Number}
+ */
+DuVector.prototype.orientedAngle = function(other) {
+    var a = this.angle(other);
+    var s = this.orientation2D(other);
+    if (s == 0) return a;
+    return a*s;
+}
+
+// === MATH === //
+
 /**
  * Checks if the given location is on the right side
  * @param {DuMath.Location} location The location
@@ -7516,7 +7771,7 @@ DuMath.length = function(value1, value2) {
     }
 
     if (typeof value1 !== typeof value2) {
-        throw "DuMath.length(): TypeError: value1 and value2 must be the same time but value is " + typeof value1 + " and value2 is " + typeof value2 + ".";
+        throw "DuMath.length(): TypeError: value1 and value2 must be the same type but value is " + typeof value1 + " and value2 is " + typeof value2 + ".";
     }
 
     if (!(value1 instanceof Array)) {
@@ -7542,11 +7797,11 @@ DuMath.length = function(value1, value2) {
  * @memberof DuMath
  * @param {Number|Number[]} value1 - The first value
  * @param {Number|Number[]} value2 - The second value
- * @param {int} [floatPrecision=-1] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
+ * @param {Number} [floatPrecision=9] - The precision for (float) number comparison, number of decimals. Set to -1 to not use.
  * @return {boolean} true if the two values are equal
  */
-DuMath.equals = function(value1, value2, floatPrecision, test) {
-    floatPrecision = def(floatPrecision, -1);
+DuMath.equals = function(value1, value2, floatPrecision) {
+    floatPrecision = def(floatPrecision, 9);
     value1 = new DuList(value1);
     value2 = new DuList(value2);
 
@@ -7915,10 +8170,10 @@ DuMath.isInflexionPoint = function(previousVelocity, pointVelocity, nextVelocity
 
 /**
  * Finds the angle formed by three points
- * @param {float[]} anglePoint The point at which to measure the angle
- * @param {float[]} oppositePointA One of the opposite points
- * @param {float[]} oppositePointB The other opposite point
- * @return {float} The angle in radians.
+ * @param {Number[]} anglePoint The point at which to measure the angle
+ * @param {Number[]} oppositePointA One of the opposite points
+ * @param {Number[]} oppositePointB The other opposite point
+ * @return {Number} The angle in radians.
  */
 DuMath.angleFromSides = function( anglePoint, oppositePointA, oppositePointB ) {
     var sideA = DuMath.length(anglePoint, oppositePointA);
@@ -10500,9 +10755,15 @@ DuScriptUI.showUI = function( ui, enterRunTime )
 /**
  * Creates the main panel of a script
  * @param {Panel|null} container - The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
- * @param {bool} [addSettingsButton=true] - Whether to create a button to open the settings or not
- * @param {bool} [addHelpButton=false] - Whether to create a button to open the help panel or not
+ * @param {Boolean} [addSettingsButton=true] - Whether to create a button to open the settings or not
+ * @param {Boolean} [addHelpButton=false] - Whether to create a button to open the help panel or not
  * @param {File} [scriptFile] - The main script file, needed for the refresh button in debug mode
+ * @param {object[]} [bottomButtons=[]] - A list of objects to add buttons on the bottom bar. Each object must have these attributes:<br>
+ * <ul>
+ * <li><code>image</code>: the icon (a path or string encoded PNG)
+ * <li><code>helpTip</code>: the helpTip text
+ * <li><code>onClick</code>: a callback function
+ * </ul>
  * @return {DuScriptPanel} The panel created, either a ScriptUI Panel or a ScriptUI Window.
  * @example
  * var ui = DuScriptUI.mainPanel(this,"Test Script");
@@ -10510,13 +10771,15 @@ DuScriptUI.showUI = function( ui, enterRunTime )
  * refreshButton.onClick = function() { ui.refreshUI( new File($.fileName) ); }; //reloads the current script
  * DuScriptUI.showUI(ui);
  */
-DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, scriptFile )
+DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, scriptFile, bottomButtons )
 {
     function testGroup( group )
     {
         group.add('statictext', undefined, "test");
         DuScriptUI.setBackgroundColor( group, DuColor.Color.BLACK );
     }
+
+    bottomButtons = def(bottomButtons, []);
 
     addSettingsButton = def(addSettingsButton, true);
     addHelpButton = def(addHelpButton, false);
@@ -10947,6 +11210,21 @@ DuScriptUI.scriptPanel = function( container, addSettingsButton, addHelpButton, 
             helpButton.alignment = ['left', 'fill'];
         }
     }*/
+
+    // Add custom left buttons
+    for (var i = 0; i < bottomButtons.length; i++ ) {
+        var b = bottomButtons[i];
+        b.location = def(b.location, 'left');
+        if (b.location != 'left') continue;
+        b.helpTip = def(b.helpTip, '');
+        var c = DuScriptUI.button( panel.bottomGroup, {
+            text: '',
+            image: b.image,
+            helpTip: b.helpTip
+        });
+        c.alignment = ['left', 'fill'];
+        c.onClick = b.onClick;
+    }
 
     if (addSettingsButton) {
         var settingsButton =  DuScriptUI.button( panel.bottomGroup, {
@@ -18780,6 +19058,7 @@ DuScriptUI.String.RANGE = "Range";
 DuScriptUI.String.RENDER = "Render";
 DuScriptUI.String.SECONDARY_NAME = "Secondary name";
 DuScriptUI.String.SELECTED_COMPOSITIONS = "Selected compositions";
+DuScriptUI.String.SELECTED_LAYERS = "Selected layers";
 DuScriptUI.String.SELECTED_PROPERTIES = "Selected properties";
 DuScriptUI.String.SET_FRAME_BLENDING = "Set frame blending mode";
 DuScriptUI.String.SHAPE_LAYER = "Shape";
@@ -19593,23 +19872,23 @@ DuScriptUI.selectionModeSelector = function( container, minimalMode )
     minimalMode = def(minimalMode, DuAE.SelectionMode.SELECTED_PROPERTIES);
     var selector = DuScriptUI.selector( container );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_PROPERTIES) selector.addButton(
-        DuScriptUI.String.SELECTED_PROPERTIES,
+        i18n._("Selected properties"),
         w16_selected_props
     );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_LAYERS) selector.addButton(
-        DuScriptUI.String.SELECTED_LAYERS,
+        i18n._("Selected layers"),
         w16_selected_layers
     );
     if (minimalMode <= DuAE.SelectionMode.ACTIVE_COMPOSITION) selector.addButton(
-        DuScriptUI.String.ACTIVE_COMPOSITION,
+        i18n._("Active composition"),
         w16_layers
     );
     if (minimalMode <= DuAE.SelectionMode.SELECTED_COMPOSITIONS) selector.addButton(
-        DuScriptUI.String.SELECTED_COMPOSITIONS,
+        i18n._("Selected compositions"),
         w16_selected_compositions
     );
     if (minimalMode <= DuAE.SelectionMode.ALL_COMPOSITIONS) selector.addButton(
-        DuScriptUI.String.ALL_COMPOSITIONS,
+        i18n._("All compositions"),
         w16_compositions
     );
 
@@ -22416,12 +22695,25 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
     var val = key.value;
 
     // For some reason?? Influences change on the key before/after, restore them
-    var prevEase = null;
-    var nextEase = null;
+    var prevInfluences = null;
+    var nextInfluences = null;
     var prevIndex = this.keyIndexBefore(time);
     var nextIndex = this.keyIndexAfter(time);
-    if (prevIndex > 0 && prop.keyOutInterpolationType(prevIndex) == KeyframeInterpolationType.BEZIER) prevEase = prop.keyOutTemporalEase( prevIndex );
-    if (nextIndex > 0 && prop.keyInInterpolationType(nextIndex) == KeyframeInterpolationType.BEZIER) nextEase = prop.keyInTemporalEase( nextIndex );
+    if (prevIndex > 0 && prop.keyOutInterpolationType(prevIndex) == KeyframeInterpolationType.BEZIER) {
+        var prevEase = prop.keyOutTemporalEase( prevIndex );
+        prevInfluences = [];
+        for(var i = 0, n = prevEase.length; i < n; i++) {
+            prevInfluences.push(prevEase[i].influence);
+        }
+    }
+    if (nextIndex > 0 && prop.keyInInterpolationType(nextIndex) == KeyframeInterpolationType.BEZIER) {
+        var nextEase = prop.keyInTemporalEase( nextIndex );
+        nextInfluences = [];
+        for(var i = 0, n = nextEase.length; i < n; i++) {
+            nextInfluences.push(nextEase[i].influence);
+        }
+    }
+        
 
     this.setValueAtTime(val, time);
 
@@ -22447,20 +22739,36 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
         };
     }
 
+    // Adjust ease dimensions
+    var inEase = key.inEase;
+    var outEase = key.outEase;
+    if (prop.isSpatial) {
+        if (inEase.length != 1) inEase = [inEase[0]];
+        if (outEase.length != 1) outEase = [outEase[0]];
+    }
+
     try {
+        prop.setInterpolationTypeAtKey(index, key._inInterpolationType, key._outInterpolationType);
         prop.setTemporalContinuousAtKey(index, key._continuous);
         prop.setTemporalAutoBezierAtKey(index, key._autoBezier);
-        prop.setTemporalEaseAtKey(index, key.inEase, key.outEase);
-        prop.setInterpolationTypeAtKey(index, key._inInterpolationType, key._outInterpolationType);
+        prop.setTemporalEaseAtKey(index, inEase, outEase);
 
-        if (prevEase) {
-            prop.setTemporalEaseAtKey(index-1, prop.keyInTemporalEase( index-1 ), prevEase);
+        if (prevInfluences) {
+            var ease = prop.keyOutTemporalEase( index-1 );
+            for (var i = 0, n = ease.length; i < n; i++) {
+                ease[i].influence = prevInfluences[i];
+            }
+            prop.setTemporalEaseAtKey(index-1, prop.keyInTemporalEase( index-1 ), ease);
         }
-        if (nextEase) {
-            prop.setTemporalEaseAtKey(index+1, nextEase, prop.keyOutTemporalEase( index+1 ));
+        if (nextInfluences) {
+            var ease = prop.keyInTemporalEase( index+1 );
+            for (var i = 0, n = ease.length; i < n; i++) {
+                ease[i].influence = nextInfluences[i];
+            }
+            prop.setTemporalEaseAtKey(index+1, ease, prop.keyOutTemporalEase( index+1 ));
         }
     } catch (err) {
-        if (DuESF.debug) alert(err.description);
+        if (DuESF.debug) alert("DuAEProperty.prototype.setKey:\n" + err.description);
     }
 
     // Select it
@@ -22940,7 +23248,7 @@ DuAEProperty.prototype.setKeyInterpolation = function(key, typeIn, typeOut, ease
             prop.setTemporalContinuousAtKey(key, false);
         }
     } catch (e) {
-
+        if (DuESF.debug) alert("DuAEProperty.prototype.setKeyInterpolation\n" + e.description);
     }
 }
 
@@ -23095,7 +23403,7 @@ DuAEProperty.prototype.setKeySpeed = function(key, speed) {
 
     // Some properties can't set interpolation type
     try { prop.setTemporalEaseAtKey(key, inEase, outEase); }
-    catch (e) {};
+    catch (e) { if (DuESF.debug) alert("DuAEProperty.prototype.setKeySpeed\n" + e.description); };
 }
 
 /**
@@ -24801,7 +25109,7 @@ DuAEProperty.prototype.snapKeys = function(keys) {
         for (var k = 0; k < ks.length; k++) {
             var key = prop.keyAtIndex(ks[k]);
             var mod = key._time % frameDuration;
-            if (mod != 0 ) {
+            if (mod != 0) {
                 prop.removeKey(key);
                 if (mod < halfFrame) key._time -= mod;
                 else key._time += frameDuration - mod;
@@ -32399,15 +32707,17 @@ DuAELayer.isAdjustment = function ( layer ) {
  * @param {Layer} angleLayer The layer at which to measure the angle
  * @param {Layer} oppositeLayerA One of the opposite layers
  * @param {Layer} oppositeLayerB The other opposite layer
- * @return {float} The angle in degrees.
+ * @return {Number} The angle in degrees. This is an oriented angle (the value can be negative).
  */
 DuAELayer.angleFromLayers = function ( angleLayer, oppositeLayerA, oppositeLayerB ) {
     var p = DuAELayer.getWorldPos( angleLayer );
     var pA = DuAELayer.getWorldPos( oppositeLayerA );
     var pB = DuAELayer.getWorldPos( oppositeLayerB );
 
-    var radians = DuMath.angleFromSides( p, pA, pB );
-    return radians * ( 180 / Math.PI );
+    var vecA = DuVector.fromPoints(p, pA);
+    var vecB = DuVector.fromPoints(p, pB);
+
+    return vecA.orientedAngle(vecB);
 }
 
 /**
