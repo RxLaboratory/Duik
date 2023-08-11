@@ -2,6 +2,11 @@
 
 *Swink* stands for *swing or blink*[^pun]. It can be used to make a property oscillate between two values, with many options to control the interpolation between these values. For example, it makes it easy to animate a pendulum or a light blinking.
 
+![](../../img/illustration/Huygens_first_pendulum_clock.png)  
+*The first pendulum clock, drawing from Horologium,  
+Christiaan Huygens, 1658   
+Public domain.*{style="font-size:0.8em;"}
+
 1. **Select** the properties
 2. Click the ![](../../img/duik/icons/swink.svg){style="width:1em;"} ***Swink*** button  
     ![](../../img/duik/automation/swink-select.png)
