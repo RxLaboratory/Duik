@@ -2,6 +2,11 @@
 
 The *Wheel* automates the rotation of layers according to their translation[^formula].
 
+![](../../img/illustration/Design_for_Four_Wheel_Dog_Cart,_no._3928_MET_DP882482.jpg)  
+*Design for Four Wheel Dog Cart, no. 3928,  
+Brewster & Co., Herman Stahmer, 1884   
+Public domain.*{style="font-size:0.8em;"}
+
 1. **Select** the layers.
 2. Click the ![](../../img/duik/icons/wheel.svg){style="width:1em;"} ***Wheel*** button
 
