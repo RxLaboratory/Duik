@@ -13,7 +13,7 @@ Unfortunately, due to Adobe policy about older versions of their software, Duik 
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_B01_Install__EN_720.mp4)  
 *This video is part of __the official comprehensive video course about Duik Ángela__*
 
-### **1 - Download** Duik from the [official website](https://rainboxprod.coop/en/tools/duik/).
+### **1 - Download** Duik from the [official website](https://rxlaboratory.org/tools/duik-angela/).
 
 ### **2 - Unzip** the files you have downloaded.
 

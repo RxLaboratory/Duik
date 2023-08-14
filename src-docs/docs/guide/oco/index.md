@@ -61,7 +61,7 @@ Duik will collect all information from the bones in the current composition and 
 
 When creating the meta-rig, you can include an icon which should be a small PNG file.
 
-Set the approximative character height (from its lowest bone to the highest) so that information can be used when creating multiple characters in the same scene and automatically have them approximately at the right size. This height is in centimeters to be independant from the resolution.
+Set the approximative character height (from its lowest bone to the highest) so that information can be used when creating multiple characters in the same scene and automatically have them approximately at the right size. This height is in centimeters to be independent from the resolution.
 
 ### OCO Files
 
@@ -69,6 +69,9 @@ The library is actually just a folder structure containing OCO files, which is b
 
 !!! tip
     You can share this library (just send the files) or even synchronize it accross multiple devices using any syncing service or application like [*Syncthing*](https://syncthing.net/)[^2], *Dropbox*, *OneDrive*, etc.
+
+!!! note
+    If you think your shiny brand new OCO Metarig deserves to be officially included in Duik, just send it to us with a friendly message on [contact.rxlab.info](http://contact.rxlab.info)!
 
 [^1]: See the following section entitled [*Bones and Auto-Rig*](../bones/index.md).
 

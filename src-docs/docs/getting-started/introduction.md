@@ -10,7 +10,7 @@ Duik is a **professional** tool set aimed at **skilled riggers and animators**. 
 
 Although **its goal is to ease the rigging and animation process** and it comes with a lot of automated tools, it always **lets you customize the way it works** and gives you **access to all low-level tools** used within higher level features like auto-rigs. That means you can do anything you'd like with Duik, as it is very comprehensive. **You're not limited to the use of automatic processes and auto-rigs**.
 
-Most of the tools are very similar to what you can find in any advanced rigged character animation software, mostly in 3D, like *Blender*, *Maxon Cinema 4D* or *Autodesk Maya*. A skilled 3D rigger will quickly learn how to use Duik. A beginner learning Duik will know also the basics of 3D rigging. Duik can be a good start to learn character rigging and animation, as 2D is a bit easier than 3D, before learning advanced 3D rigging in *Blender*, *Maya* or *Cinema 4D*.
+Most of the tools are very similar to what you can find in any advanced rigged character animation software, mostly in 3D, like *Blender*, *Maxon Cinema 4D* or *Autodesk Maya*. A skilled 3D rigger will quickly learn how to use Duik. A beginner learning Duik will know also the basics of 3D rigging. Duik can be a good start to learn character rigging and animation, as 2D is a bit less complex than 3D, before learning advanced 3D rigging in *Blender*, *Maya* or *Cinema 4D*.
 
 Duik is not meant to be quick to learn; it's meant to be efficient and quick for the people who know how to rig or animate a character.
 
@@ -39,4 +39,4 @@ Before using Duik to create and animate character rigs, you should master:
 **Do NOT try to learn both After Effects and Duik together**. For example, it is NOT a good idea to try to rig a character with a combination of Duik and the puppet tool if you do not perfectly understand how the puppet tool itself works.
 
 !!! hint
-    A complete book about all these subjects is being written by Duduf and will be available... One day or another.
+    A complete book about animation and rigging techniques in general is being written by Duduf and will be available... One day or another.

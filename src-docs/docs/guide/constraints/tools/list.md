@@ -2,7 +2,7 @@
 
 The *List* is a simple tool to combine different animations and expressions in the same property.
 
-To create a list,** select the property** and click on the **![](../../../img/duik/icons/list.svg){style="width:1em;"} *List*** button.
+To create a list, **select the property** and click on the **![](../../../img/duik/icons/list.svg){style="width:1em;"} *List*** button.
 
 If an expression was already assigned to the property, it is automatically copied into the first slot of the list, along with the existing keyframes.
 
@@ -18,7 +18,7 @@ The list is added in the effects of the layer. You can combine up to five animat
 You can use the list with **any numerical property[*](../../../misc/glossary.md), including colors**.
 
 !!! tip
-    To use it with Bézier path properties, you can add [Duik pins](../pins.md)*&nbsp;[^1] to control the path first, then use the list on the position (and rotation) properties of the pins.
+    To use it with Bézier path properties, you can add [Duik pins](../pins.md)&nbsp;[^1] to control the path first, then use the list on the position (and rotation) properties of the pins.
 
 When used with colors, the effect is a bit different:
 

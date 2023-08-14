@@ -10,7 +10,7 @@ The spatial effector is an easy way to control (lots of) properties according to
 3. Click the ![](../../img/duik/icons/effector.svg){style="width:1em;"} ***Effector*** button.
 
 ![](../../img/duik/automation/effector_00000.png)  
-*An effector controling layer colors and rotation.*
+*An effector controlling layer colors and rotation.*
 
 The effector is a simple shape layer Duik creates in the composition; you can move it around or parent it to another layer, the absolute position of the effector layer (and its shape) controls the slave properties.
 

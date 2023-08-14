@@ -46,7 +46,7 @@ You can also use this constraint to link the orientation of a controller to the 
 You can use the effect to adjust and animate the orientation constraint.
 
 ![](../../img/duik/constraints/orientation-constraint-effect.png)
-pins
+
 Just select the layer to constrain to, and set or animate its weight. To constrain to multiple layers, you can duplicate the effect.
 
 !!! tip
@@ -54,7 +54,7 @@ Just select the layer to constrain to, and set or animate its weight. To constra
 
 ## ![](../../img/duik/icons/bezier.svg){style="width:1em;"} Path Constraint
 
-To make a layer folloow a Bézier path (and stay aligned with it), you can use the path constraint. It constrains both the position and the rotation of the layer.
+To make a layer follow a Bézier path (and stay aligned with it), you can use the path constraint. It constrains both the position and the rotation of the layer.
 
 ![](../../img/illustration/Elementary_treatise_on_the_finishing_of_white,_dyed,_and_printed_cotton_goods_(1889)_(14597187638)_2.png){style="max-height:720px;"}  
 *Elementary treatise on the finishing of white, dyed, and printed cotton goods  

@@ -74,7 +74,7 @@ Properties to be used as master controllers with the connector can be:
 - A dropdown menu (except layer dropdown lists)
 
 !!! note
-    All these properties are actually al values: a color is a 4-dimensional value (consisting of the red, green, blue and alpha channels), and dropdown menu values are the indices of the items, which are simple integers.
+    All these properties are actually numerical values: a color is a 4-dimensional numerical value (consisting of the red, green, blue and alpha channels), and dropdown menu values are the indices of the items, which are simple integers.
 
 There are also special cases handled automatically; you can also select these:
 
@@ -102,7 +102,7 @@ There you can set a few parameters before finishing the connection.
 - The **minimum** and **maximum** values define the range in which the master property is going to be animated. Note that the motion of the slave properties is not extrapolated outside of these values.
 
 !!! tip
-    If there's an animation (using keyframes or an existing expression) on the master property at the time you select it before opening the connection settings, Duik automatically picks the minimum and maximum values of the existing animation. This makes it very quick to set up the connection: just add a couple of keyframes on the master property to quickly define the minimum and maximum values to be used, and only then click on the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick control* button. You'll be able to remove these keyframes after the connection's been made.
+    If there's an animation (using keyframes or an existing expression) on the master property at the time you select it, before opening the connection settings, Duik automatically picks the minimum and maximum values of the existing animation. This makes it very quick to set up the connection: just add a couple of keyframes on the master property to quickly define the minimum and maximum values to be used, and only then click on the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick control* button. You'll be able to remove these keyframes after the connection's been made.
 
 Once you're done with these settings, you can finish the connection by clicking one of the three bottom buttons:
 
@@ -116,10 +116,10 @@ A Connector effect is added on the master layer, to let you change the settings 
 
 ![](../../img/duik/constraints/connector-effect.png)
 
-After the connection, you can still adjust the keyframes and interpolation of any slave property. To ease these adjustment, you can disable this connector effect to temporarilly disable the expressions and adjust the keyframes on the slave properties.
+After the connection, you can still adjust the keyframes and interpolation of any slave property. To ease these adjustments, you can disable this connector effect to temporarilly disable the expressions and adjust the keyframes on the slave properties.
 
 !!! warning
-    Unfortunately, because of After Effects, disabling the connector effect is not enough to be able to adjust the keyframes on slave Bézier path properties, you need to actually deactivate the expression.
+    Unfortunately, because of After Effects, disabling the connector effect is not enough in order to be able to adjust the keyframes on slave Bézier path properties, you actually need to deactivate the expression.
 
 ### Slider, 2D slider, Angle control
 
@@ -180,7 +180,7 @@ The dropdown now controls the display of the slave layers (using an expression i
 - Select the shape of the hands
 - Select the shape of the mouth for lipsync or expressions
 - Select the shape of the eyes, to animate a blink or change the expression
-- ...
+- Etc.
 
 Duik automatically populates the dropdown menu using the slave layer names, but you can edit the content later if you wish.
 
@@ -301,7 +301,7 @@ You can then select the animated slave properties and make the connection.
 2. **Animate the head turn** either horizontally or vertically.
 3. In the additional panel of the connector, either **create a ![](../../img/duik/icons/slider.svg){style="width:1em;"} slider**, a ![](../../img/duik/icons/2d_slider.svg){style="width:1em;"} 2D slider (if you plan to connect the other axis), or ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} pick an existing property you'd like to use to animate the head turn.
 4. **Select the slave properties** you've just animated.
-5. **![](../../img/duik/icons/props.svg){style="width:1em;"} **Connect**.
+5. ![](../../img/duik/icons/props.svg){style="width:1em;"} **Connect**.
 
 If you'd like to also connect the other axis for a complete fake 3D turn, these are the additionnal steps:
 

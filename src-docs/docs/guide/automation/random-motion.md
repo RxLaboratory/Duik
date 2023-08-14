@@ -5,7 +5,7 @@ You can use this tool to generate an **animated random value** for some properti
 To the contrary of the [*Wiggle*](wiggle.md), this random motion is not interpolated: each value is completely random and does not evolve from the previous value. This makes the value jump from one value to the other without interpolation; this is very useful for faking traditionnal animation for example, to make cels jump around a bit like if they weren't perfectly aligned when scanned, or to generate very nervous random movements.
 
 !!! warning
-    This tool is not to be confused with the [*Randomize*](tools/randomize.md) [^randomize] tool which generates random values which are not animated, and which can be used for all kind of attributes, and not only properties.
+    This tool is not to be confused with the [*Randomize*](tools/randomize.md) [^randomize] tool: it generates random values which are not animated, and it can be used for all kind of attributes, and not only properties.
 
 1. **Select** the properties
 2. Click the ![](../../img/duik/icons/random.svg){style="width:1em;"} ***Random motion*** button

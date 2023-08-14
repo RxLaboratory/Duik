@@ -132,14 +132,14 @@ All this can be configured and animated in the effect of the controller.
     - ***Parent rotation***: if this is checked, the limb will rotate with its parent rotation.  
         Disabling it makes sure the limb always keep its own orientation no matter the rotation of its ancestors.
     - ***Upper*** is the rotation of the first layer (the root, e.g. the thigh)
-    - ***Lower*** is the rotation of the second lauyer (e.g. the calf)
+    - ***Lower*** is the rotation of the second layer (e.g. the calf)
     - ***End*** is the rotation of the layer at the end (e.g. the foot), if any.  
         This layer is not actually a part of the IK/FK setup, but it's useful to be able to animate it right from this effect.
 - ***FK Overlap***:
     Instead of animating the two or three FK rotation values manually, this FK with automatic overlapping animation[*](../../misc/glossary.md) may help you animate the whole limb with a single value.
     - ***Overlap***: check this to enable the automatic overlapping animation.
     - ***Animation*** is the property you can animate to automatically animate the whole limb.  
-        This works espacially well to animate the arm swinging during a walk cycle for example.
+        This works especially well to animate the arm swinging during a walk cycle for example.
     - ***Flexibility*** adjusts the quantity of overlapping animation. It is an arbitrary value.
     - ***Resistance*** adjusts the delay between the rotation of each part of the limb. It is an arbitrary value.
 - ***Stretch***:

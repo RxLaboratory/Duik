@@ -16,10 +16,10 @@ As a smart tool, it will guess what you are trying to do, depending on the layer
 1. Select some layers in the composition
 2. Click the Auto-rig button.
     - **If there are bones** in the selection:
-        - If there are predefined armatures (arm, leg, spine, tail...), the Auto-rig will rig everything for you so you can start to animate rught afterwards.
+        - If there are predefined armatures (arm, leg, spine, tail...), the Auto-rig will rig everything for you so you can start to animate right afterwards.
         - If the bones are custom armatures, the Auto-rig will add [IK](../../constraints/kinematics.md)[^1] to rig them, determining which type of IK would be best according to the number and location of the layers, and the auto-rig settings.
     - **If there are Controller layers** in the selection:  
-    The Auto-rig will use them when possible, depending on their location, instead of creating new controllers. This is an easy way to use your own cuystom controllers (you just have to make sure they're [tagged](../../controllers/tools/tag.md)).[^2]
+    The Auto-rig will use them when possible, depending on their location, instead of creating new controllers. This is an easy way to use your own custom controllers (you just have to make sure they're [tagged](../../controllers/tools/tag.md)).[^2]
     - **If the selection is made only of standard layers**, the Auto-rig will add IK to rig them, trying to guess how they need to be rigged using their parenting and the location of their anchor points. If the layers are not parented yet, the Auto-rig is able to parent them automatically, but it’s better in this case to select the layers in the right order: from the tip to the root of the limb (from hand to shoulder, or from foot to hip…).
 
 ## Controllers
@@ -42,7 +42,7 @@ With three bones you can use one of these methods:
 - ***1+2-layer IK*** creates a single-layer IK on the root, and a two-layer IK on the remaining two parts of the limb. Both are controlled with the same controller. This is the default way of rigging arthropod legs for example.
 - ***2+1-layer IK*** creates a two-layer IK on the first two parts of the limb, and a single-layer IK to control the last part. Both are controlled with the same controller.
 - ***FK*** creates an FK controller, which has automatic overlapping animation options.
-- ***Bézier IK*** is a kind of IK controlled by Bézier functions, similar to Bézier paths in After Effects; this is espacially useful for tails or spines for example, when you want to achieve a smooth curve.
+- ***Bézier IK*** is a kind of IK controlled by Bézier functions, similar to Bézier paths in After Effects; this is especially useful for tails or spines for example, when you want to achieve a smooth curve.
 - ***Bézier FK*** combines a Bézier IK with FK controls, to be able to animate the IK use the rotation properties of the controllers at each end.
 
 You can also set your preference for longer chains made of more than three bones, tails and hair strands. In this case, the choice is limited to: *FK*, *Bézier IK*, *Bézier FK*.
