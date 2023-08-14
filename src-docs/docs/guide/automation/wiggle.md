@@ -8,7 +8,7 @@ The *Wiggle* makes the properties… wiggle.
 All Rights Reserved.*{style="font-size:0.8em;"}  
 *In this example, the animation is made without any keyframe, using only the Wiggle automation of Duik.*
 
-This automation works like the standard wiggle available via the expressions of After Effects, but with more options and abilities: it can **loop** and has options to **control multiplpe axis** and **color channels**. The **frequency** may be **animated** too.
+This automation works like the standard wiggle available via the expressions of After Effects, but with more options and abilities: it can **loop** and has options to **control multiple axis** and **color channels**. The **frequency** may be **animated** too.
 
 1. **Select** the properties
 2. Click the ![](../../img/duik/icons/wiggle.svg){style="width:1em;"} ***Wiggle*** button

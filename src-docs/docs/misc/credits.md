@@ -6,7 +6,7 @@ Duik - which is and stays free - could not exist without [**your support**](http
 
 Copyright © 2008 - 2023 Nicolas Dufresne, RxLaboratory and Contributors. All Rights Reserved - https://rxlaboratory.org
 
-Special thanks to [all the supporters of Duduf on Patreon](https://patreon.com/duduf), and the backers of the [RxOT crowdfunding campaign](http://igg.me/at/rxot).
+Special thanks to all the supporters of Duduf on *Patreon*, the [Silver and Gold RxLab members](http://membership.rxlab.info), the backers of the [RxOT crowdfunding campaign](http://igg.me/at/rxot){target="_blank"}, and all our generous [donators](http://donate.rxlab.info).
 
 ## Development
 

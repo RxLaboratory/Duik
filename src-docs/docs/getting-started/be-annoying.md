@@ -92,11 +92,6 @@ There are a lot of concrete ways to contribute more and consume less, even witho
 
 ![](../img/contribute.png)
 
----
-
-!!! todo
-    Transparent background on the last image (contribute.png)
-
 [^1]: Rent, pay, give away all one's personal data, be overwhelmed by ads...; when we don't have the choice, we're accepting all of this without protesting.
 
 [^2]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more details about RxLab. membership.

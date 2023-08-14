@@ -1,6 +1,6 @@
 # ![](../../../img/duik/icons/move_anchor_point.svg){style="width:1em;"} Move Anchor Points
 
-Moving (and prefectly aligning) anchor points can be a big pain in After Effects, especially if they've been animated or when moving multiple anchor points at once.
+Moving (and perfectly aligning) anchor points can be a big pain in After Effects, especially if they've been animated or when moving multiple anchor points at once.
 
 Use this tool to easily reposition the anchor points, even if there's an animation or on multiple layers at once.
 

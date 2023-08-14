@@ -12,11 +12,11 @@ Duik’s **comprehensiveness**, **ease of use**, **14 years of continuous develo
 **It provides the main rigging tools**, found in any 3D software, like IK, controllers, and bones, but adapts them to 2D animation in After Effects. With Duik you can rig complex characters and use advanced animation techniques usually used in 3D softwares.
 If you do not know what *rigging* means, it may be because it is a bit too soon for you to use those tools. Please refer to the section entitled [_Should I use Duik?_](getting-started/introduction.md#should-i-use-duik) 
 
-**Duik has plenty of animation tools too** - managing keyframes and interpolations, traditional animation, animation exposure, etc. - and **automations** too, like wiggle, spring, swing, wheel, etc. which allow you to animate more quickly and easily.
+**Duik has plenty of animation tools too** - managing keyframes and interpolations, traditional animation, animation exposure, etc. - and many **automations**, like wiggle, spring, swing, wheel, etc. which allow you to animate more quickly and easily.
 
 Duik also has some other useful tools, such as **camera controls**, that are not solely tied to animation but can be really useful for animators, riggers and even compositors.
 
-It's now [a script used in numerous movies across the world](http://showcase.rxlab.info)[^2].
+Duik’s comprehensiveness and ease of use have made it [a script used in numerous movies across the world](http://showcase.rxlab.info)[^2]. It has an international success; it is used to create **TV series, advertising, motion design, video games, music videos, short movies and feature films**. It's available in 7 different languages, and it's downloaded more than 16.000 times a month on average.
 
 ____
 
@@ -67,9 +67,9 @@ A copy of the license is included in the section entitled "[Documentation Licens
 
 ### Icons and other graphical elements
 
-All illustrations and images rights are reserved by their respective owners. See the [credits](misc/credits.md) section for more information.
+All illustration and image rights are reserved by their respective owners. See the [credits](misc/credits.md) section for more information.
 
-All other graphical elements, especially icons, are from [***RxUI***](http://rxui.rxlab.io) by [Nicolas Dufresne](http://duduf.com) and [RxLaboratory](https://rxlaboratory.org) are licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+All other graphical elements, especially icons, are from [***RxUI***](http://rxui.rxlab.io) by [Nicolas Dufresne](http://duduf.com) and [RxLaboratory](https://rxlaboratory.org) and are licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 <span style="font-size:0.75em;">**Copyright © 2021-2022 Nicolas Dufresne and Contributors.**
 

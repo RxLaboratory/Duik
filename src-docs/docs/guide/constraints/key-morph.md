@@ -60,7 +60,7 @@ For example, using a dropdown menu is very handy in most cases
 1. Create a Dropdown menu control  
     Edit it to list the poses.  
     ![](../../img/duik/constraints/keymorph-create-dropdown.png)
-2. Connect it to the key poses using the *![](../../img/duik/icons/connector.svg){style="width:1em;"} [Connector](connector.md)*[^2]  
+2. Connect it to the key poses using the *![](../../img/duik/icons/connector.svg){style="width:1em;"} [Connector](connector.md)*&nbsp;[^2]  
     1. Select the new dropdown effect (the property in the timeline, not the effect itself).  
     2. In the connector additional panel, click the *![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} Pick Property* button.  
     3. Select the *Key* effects to be connected, on the layer with the key morph setup.  
@@ -94,4 +94,6 @@ After the Key Morph creation, you can still edit, add or remove key poses.
 3. If you've removed some key poses, delete some *Key* effects so there's the same count as the poses.  
     If you've created new key poses, duplicate the last *Key* effect to have the same count as the poses.
 
-[^1]: This is a very common technique in 3D software. It's called *Shape Keys* in *Blender*, *Pose Morph* in *Cinema 4D*, *Blend Shapes* in *Maya*, *Morpher* in *3DS Max*... 
+[^1]: This is a very common technique in 3D software. It's called *Shape Keys* in *Blender*, *Pose Morph* in *Cinema 4D*, *Blend Shapes* in *Maya*, *Morpher* in *3DS Max*...
+
+[^2]: *cf. [Links & Constraints](index.md) / [Connector](connector.md)*.

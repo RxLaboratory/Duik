@@ -13,4 +13,4 @@ When the edit mode is toggled, the bone name changes and it turns red to warn yo
 *The forarm bone has been toggled to the edit mode.*
 
 !!! warning
-    In current versions of Duik, the edit mode does not work if the bones have already rigged with the Auto-rig or other constraints.
+    In current versions of Duik, the edit mode does not work if the bones have already been rigged with the Auto-rig or other constraints.

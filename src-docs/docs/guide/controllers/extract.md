@@ -50,8 +50,12 @@ Making sure that composition names are unique and that you always keep a copy of
 
 This is the process to follow if you need to update a rig and replace a precomposition which controllers have already been extracted.
 
-1. [*__Copy__ the animation*](/guide/animation/tools/copy.md), or [*__save__ it in the animation library*](/guide/animation/anim-library.md).
+1. [__Copy__ the animation](../animation/tools/copy.md)&nbsp;[^1], or [__save__ it in the animation library](../animation/anim-library.md)&nbsp;[^2].
 2. __Remove__ the old precomposition and all its controllers.
 3. __Add__ the new precomposition.
 4. __Extract__ its controllers.
-5. [*__Paste__*](/guide/animation/tools/copy.md) or [*__apply__*](/guide/animation/anim-library.md) the animation you've copied or saved.
+5. [__Paste__](../animation/tools/copy.md) or [__apply__](../animation/anim-library.md) the animation you've copied or saved.
+
+[^1]: *cf. [Animation](../animation/index.md) / Tools / [Animation Library](../animation/tools/copy.md)*.
+
+[^2]: *cf. [Animation](../animation/index.md) / [Animation Library](../animation/anim-library.md)*.

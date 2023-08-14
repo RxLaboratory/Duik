@@ -18,7 +18,7 @@ Duik *Pins* are the easiest way to rig a character using the After Effects Puppe
 You can control any spatial (multi-dimensional) property with pins, and all types of puppet pins.
 
 ![](../../img/duik/constraints/pins-spatial_00000.png)  
-*Pins to control: standard spatial property, Puppet position pin, Puppat Advanced pin, Puppet bend pin.*
+*Pins to control: standard spatial property, Puppet position pin, Puppet Advanced pin, Puppet bend pin.*
 
 Standard pins and Puppet position pins control the location of the property they're linked to; Puppet bend pins control the rotation; Puppet advanced pins also control the rotation and the scale of the After Effects puppet pin.
 

@@ -62,7 +62,7 @@ To make it easier to use and discover, the settings are divided in three parts:
 When you click the ***![](../../img/duik/icons/kleaner.svg){style="width:1em;"} Kleaner*** button, you have to choose one of these settings:
 
 - **Alive** (anticipation + interpolation + follow through)  
-    Use this preset with any character (or object, or part of a charactert) which moves voluntarily (i.e. the movement doesn't have an external cause, like gravity or a hit).  
+    Use this preset with any character (or object, or part of a character) which moves voluntarily (i.e. the movement doesn't have an external cause, like gravity or a hit).  
     With this preset, the Kleaner applies an anticipation[*](../../misc/glossary.md) to the movement, then interpolates accordingly to the general parameters you'll choose, and ends the movement with a follow through[*](../../misc/glossary.md) animation. It also adds overlap[*](../../misc/glossary.md) and drag[*](../../misc/glossary.md) to spatial properties.
 - **Inanimate** (interpolation  + follow through)  
     This is almost the same as the *Alive* preset, except the anticipation is disabled[^anticipate].

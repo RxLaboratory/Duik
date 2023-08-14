@@ -61,4 +61,4 @@ All you have to do is to create the Bones, the Auto-rig will do the rest, adding
 As soon as your character is rigged, you can begin the animation, being helped by a lot of ***Automations***.
 These ***[Automations](automation/index.md)*** are procedural animations and dynamics to quickly set up the most common animations and then focus on the characterization of your character. You can automate wiggles, springs, wheels, etc. with customizable and advanced controls for example to loop the effects, and access each and every detail quickly and easily.
 
-The [***Kleaner***](automation/kleaner.md) helps you quickly and semia-automagically apply the most important animation principles: anticipation, spacing, follow-through and overlapping animation.
+The [***Kleaner***](automation/kleaner.md) helps you quickly and semi-automagically apply the most important animation principles: anticipation, spacing, follow-through and overlapping animation.

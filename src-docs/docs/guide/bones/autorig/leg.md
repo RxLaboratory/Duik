@@ -98,7 +98,7 @@ As the *Tiptoe* and *Foot roll* values rotate (part of) the foot using different
 !!! note
     To the contrrary of plantigrades, the rotation of the controller itself, which rotates the whole foot around the toe joint, may not be very useful in this rig.
 
-For a precise control of the foot, make sure each joints and bones are perfectly located, especially the toe bone and the tip, as shown on the picture above.
+For a precise control of the foot, make sure all joints and bones are perfectly located, especially the toe bone and the tip, as shown on the picture above.
 
 !!! tip
     The *Tiptoe* and *Foot roll* values both move the knee when they're animated, and make it difficult to control precisely the movement of the knee and the leg. You should avoid animating them when possible.
@@ -128,7 +128,7 @@ This single-layer IK controls the orientation of the whole foot (including the h
 
 This simple angle controls the rotation of the hoof. It is to be used when the leg is not standing and in contact with the ground.
 
-The rotation of the controller itself rotate the foot around the hoof joint, a bit like what the *Foot Roll* values do with the plantigrade and digitigrade rigs.
+The rotation of the controller itself rotates the foot around the hoof joint, a bit like what the *Foot Roll* values do with the plantigrade and digitigrade rigs.
 
 ### Shoulder controls
 

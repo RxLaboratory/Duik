@@ -35,7 +35,7 @@ The *Fold wing* property in the effect can be used to animate the folding and un
 
 The *General parameters* section contains a few properties to adjust the settings of the wing:
 
-- *Forearm orientation* controls whether the forearm shoudl rotate with the arm or keep its own orientation. The choice depends on the animation you're working on, and your personal preference.
+- *Forearm orientation* controls whether the forearm should rotate with the arm or keep its own orientation. The choice depends on the animation you're working on, and your personal preference.
 - *Wing flexibility* and *Air resistance* are the two usual settings which come with the automatic overlapping animation Duik generates with FK controls[^2].
 
 Finally, you can control how the wings attached to the *hand* part of the arm should rotate with the *Hand rotation multiplicator* in the *Feather parameters* section of the effect; changing this ratio adjusts the amplitude of the movement of the feathers when the wing flaps.

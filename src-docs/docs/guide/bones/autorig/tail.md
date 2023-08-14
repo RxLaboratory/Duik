@@ -13,7 +13,7 @@ The only difference between hair and tail rigs is that a hair rig doesn't inheri
 
 By default, hair and tails are rigged using [FK controls](../../constraints/kinematics.md); that means they're controlled by a single controller at the root of the limb, which can be animated in rotation, with a lot of options in the effects of the controller[^1].
 
-Although most of the time it's muc easier to animate these limbs with FK, you may need IK instead in very specific cases (e.g. when the dog's tail gets caught in the door. Ouch!). In this case, you can switch the *Long Chain rig* option in the settings of the auto-rig[^2].
+Although most of the time it's much easier to animate these limbs with FK, you may need IK instead in very specific cases (e.g. when the dog's tail gets caught in the door. Ouch!). In this case, you can switch the *Long Chain rig* option in the settings of the auto-rig[^2].
 
 ![](../../../img/duik/bones/autorig_options.png)
 

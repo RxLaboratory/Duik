@@ -85,7 +85,7 @@ With this *Parent across compositions* feature, you can now parent a child layer
         You can click the ![](../../img/duik/icons/eye_dropper.svg){style="width:1em;"} eye dropper button to pick the current composition.
     2. ***Select the parent layer***, contained in the composition chosen before.  
         You can click the ![](../../img/duik/icons/eye_dropper.svg){style="width:1em;"} eye dropper button to pick the selected layer.
-3. Click the ![](../../img/duik/icons/check.svg){style="width:1em;"} ***Parent  acrosse comps*** button.
+3. Click the ![](../../img/duik/icons/check.svg){style="width:1em;"} ***Parent  across comps*** button.
 
 !!! tip
     Duik lets you parent only from and to precompositions directly contained in another composition, without intermediate precompositions. If there are intermediate compositions, there may be different *paths* (different *chains* of precompositions) ending with the same containing comp and precomp. In this case, Duik can't know which path to take, and this is important because of nested transformations which may be different.

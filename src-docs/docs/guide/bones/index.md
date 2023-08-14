@@ -4,7 +4,7 @@
 
 ![](../../img/duik/bones/bones_demo.gif)
 
-The bones are the core of the rigging process in Duik, both for characters and props. They're After Effects Shape layers used to drive the artwork layers. Instead of working directly on the art layers, one can work on these bones, so that the artwork won't have any expression. This allows to easily modify or replace the artwork even if it's aleady been rigged, to re-use an existing rig for multiple characters, and helps the Duik [Auto-rig](autorig/index.md) know what it has to do to build the best rig according to your type of character and limbs.
+The bones are the core of the rigging process in Duik, both for characters and props. They're After Effects Shape layers used to drive the artwork layers. Instead of working directly on the art layers, one can work on these bones, so that the artwork won't have any expression. This allows to easily modify or replace the artwork even if it's already been rigged, to re-use an existing rig for multiple characters, and helps the Duik [Auto-rig](autorig/index.md) know what it has to do to build the best rig according to your type of character and limbs.
 
 ![](../../img/duik/bones/bones_example.png)
 
@@ -16,7 +16,7 @@ The bones come with their envelops, which are references to help you design perf
 
 The bones panel consists essentially of a toolbar, and categories to create predefined or custom armatures to be rigged later with the Auto-rig feature.
 
-You can set a *Character Name* in the top field to automatically add the name to all new bones in the composition and keeps things organized easily.
+You can set a *Character Name* in the top field to automatically add the name to all new bones in the composition and keep things organized easily.
 
 ![](../../img/duik/bones/toolbar.png)
 

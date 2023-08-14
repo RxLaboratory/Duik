@@ -38,7 +38,7 @@ Layer names are analysed by a smart algorithm to find the corresponding bone. Du
     The limb names, sides and location will vary according to the language of the user interface of Duik, so the artwork layers and *Duik Pins* must use the same language for this feature to work correctly.
 
 ![](../../../img/duik/bones/fuzzy_autolink.gif)
-*Duik understaands synonyms, and performs a* fuzzy *search to find the corresponding bones*
+*Duik understands synonyms, and performs a* fuzzy *search to find the corresponding bones*
 
 ### By distance
 

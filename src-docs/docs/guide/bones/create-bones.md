@@ -31,7 +31,7 @@ When using the [auto-rig](autorig/index.md) later, Duik will adjust the controls
 
 ![](../../img/duik/bones/limbs.png)
 
-In these categories, for each limbs you can asjust some ![](../../img/duik/icons/options.svg){style="width:1em;"} options before the creation, to adapt them to your design, which makes the armatures and the auto-rig extremely versatile in Duik.
+In these categories, for each limb you can adjust some ![](../../img/duik/icons/options.svg){style="width:1em;"} options before the creation, to adapt them to your design, which makes the armatures and the auto-rig extremely versatile in Duik.
 
 ![](../../img/duik/bones/limb_options.png)
 
