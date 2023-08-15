@@ -20147,6 +20147,11 @@ DuAEKeyframe.prototype.reverse = function() {
 	var inEase = this.inEase;
 	this.inEase = this.outEase;
 	this.outEase = inEase;
+	
+	for (var i = 0; i < this.inEase.length; i++) {
+		this.inEase[i].speed = -this.inEase[i].speed;
+		this.outEase[i].speed = -this.outEase[i].speed;
+	}
 
 	this.spatialProperties.reverse();
 }
@@ -22748,10 +22753,10 @@ DuAEProperty.prototype.setKey = function(key, timeOffset) {
     }
 
     try {
-        prop.setInterpolationTypeAtKey(index, key._inInterpolationType, key._outInterpolationType);
         prop.setTemporalContinuousAtKey(index, key._continuous);
         prop.setTemporalAutoBezierAtKey(index, key._autoBezier);
         prop.setTemporalEaseAtKey(index, inEase, outEase);
+        prop.setInterpolationTypeAtKey(index, key._inInterpolationType, key._outInterpolationType);
 
         if (prevInfluences) {
             var ease = prop.keyOutTemporalEase( index-1 );
@@ -31084,7 +31089,7 @@ DuAELayer.setAllAnims = function(layers, anims, time, ignoreName, setExpression,
  * To set all animations on all layers, not checking their names or indices, use {@link DuAELayer.setAllAnims}.
  * @param {Layer[]|LayerCollection}	layers	- The layers.
  * @param {DuAELayerAnimation[]} anims	- The layer animations
- * @param {float}	[time=comp.time]	- The time where to begin the animation
+ * @param {Number}	[time=comp.time]	- The time where to begin the animation
  * @param {Boolean}	[ignoreName=false]	- true to set the anim even if name of the property do not match the name animation.<br />
  * This way, only the type of property (i.e. matchName) is checked.
  * @param {Boolean}	[setExpression=false]	- Set the expression on the property
@@ -31143,7 +31148,11 @@ DuAELayer.reverseAnims = function(anims) {
         else if (endTime < anim.endTime) endTime = anim.endTime;
     });
 
+    if (startTime === null) startTime = 0;
+    if (endTime === null) endTime = 0;
+
     var duration = endTime - startTime;
+    if (duration == 0) return;
 
     //recursive function to reverse keyframes in anim
     function reverse(anim) {
