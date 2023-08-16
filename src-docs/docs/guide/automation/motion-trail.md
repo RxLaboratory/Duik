@@ -29,6 +29,8 @@ A *Motion Trail* layer is added to the comp. It's a shape layer used to draw the
 - The ***Motion source*** is the layer used to draw the trail.
 - You can set the ***start*** and ***end*** (in frames relative to the current time) to adjust the length of the trail. Note: long trails can make the performance drop (a lot).
 
+▷ Read the *[Automation](index.md) / [Move Away](move-away.md)* section for a nice example of using this Motion Trail in combination with the *Move Away* and *[Swink](swink.md)* tool.
+
 ## Basic Parameters
 
 In the *basic* section, you can change and animate basic appearance settings. Keep in mind that Motion trails are standard shape layers and you can do much more with them by modifying the content by yourself.

@@ -1,3 +1,3 @@
-To be written...
+# ![](../../../img/duik/icons/h_align.svg){style="width:1em;"} Align Layers
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Links & Constraints](../../constraints/index.md) / Tools / [Align  Layers](../../constraints/tools/align.md)*.
