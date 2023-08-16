@@ -47,6 +47,14 @@ If you need to have the controller in another composition, you can either use th
 
 Read further to learn how to do more advanced stuff with the connector, using the additionnal panel.
 
+## Edit already connected properties
+
+If you need to edit the slave properties after they've been connected, here's what you can do:
+
+1. Deactivate the expressions in the properties you need to edit.
+2. Edit the keyframes; you can also add or remove keyframes or adjust the interpolation.
+3. Reactivate the expressions.
+
 ## Advanced Connector
 
 If you need more advanced connections, you can choose one of the many other ways to connect properties and select or create a master controller.  

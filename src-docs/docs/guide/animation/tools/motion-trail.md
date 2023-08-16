@@ -1,3 +1,8 @@
-To be written...
+# ![](../../../img/duik/icons/motion_trail.svg){style="width:1em;"} Motion Trail
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Automation](../../automation/index.md) / [Motion Trail](../../automation/motion-trail.md)*.
+
+!!! tip
+    The *Motion Trail* can be very useful for animators, to view the actual trajectory of any layer (like the knee, when animating a leg with IK), to the contrary of After Effects' trajectories which are transformed with the parent layer...
+
+    Just set the motion trail layer to *Guide Layer* to be sure it is not rendered in the end.

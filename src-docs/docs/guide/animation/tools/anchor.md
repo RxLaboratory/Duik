@@ -1,3 +1,3 @@
-To be written...
+# ![](../../../img/duik/icons/move_anchor_point.svg){style="width:1em;"} Move Anchor Points
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Links & Constraints](../../constraints/index.md) / Tools / [Move Anchor Point](../../constraints/tools/anchor.md)*.

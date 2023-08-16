@@ -1,3 +1,3 @@
-To be written...
+# ![](../../img/duik/icons/x_sheet.svg){style="width:1em;"} X-Sheet
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Automation](../automation/index.md) / [X-Sheet](../automation/x-sheet.md)*.

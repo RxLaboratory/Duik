@@ -6,10 +6,12 @@
 - ***Barycenter***
 - ***Bone***
 - ***Chain***: see *Kinematic Chain*.
+- ***Cel*** (animation)
 - ***Controller***
 - ***Constraint***
 - ***Drag*** (animation principle)
 - ***Extrapolation***
+- ***Exposure*** (animation)
 - ***FK*** (*Forward Kineamtics*)
 - ***Follow through*** (animation principle)
 - ***IK*** (*Inverse Kineamtics*)
