@@ -4,6 +4,8 @@
 - ***Auto-rig***
 - ***Bake***
 - ***Barycenter***
+- ***Breakdown*** (animation)
+- ***Blocking*** (animation)
 - ***Bone***
 - ***Chain***: see *Kinematic Chain*.
 - ***Cel*** (animation)
@@ -29,6 +31,7 @@
 - ***Simulation***
 - ***Squash***
 - ***Stretch***
+- (Inbe)***Tweening***
 - ***Weight***
 
 Some of these definitions are sourced from *[Wikipedia](https://wikipedia.org)*.
