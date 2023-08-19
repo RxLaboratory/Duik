@@ -18,8 +18,8 @@ SET build_path="%~dp0output"
 :: The dist path to copy the result
 SET dist_path="%repo_path%\dist"
 :: The docs path
-SET docs_path="%repo_path%\docs"
-SET docsapi_path="%repo_path%\docs\api"
+SET docs_path="%build_path%\docs"
+SET docsapi_path="%build_path%\docs\api"
 :: The types path
 SET types_path="%repo_path%\types\duik"
 :: The scriptlets path
