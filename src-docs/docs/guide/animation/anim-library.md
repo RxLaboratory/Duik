@@ -1,3 +1,3 @@
-To be written...
+# ![](../../img/duik/icons/library.svg){style="width:1em;"} Animation library
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+
