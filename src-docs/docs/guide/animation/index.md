@@ -19,7 +19,6 @@ The main tools on the second part of the panel are all the animation tools avail
 ## Contents
 
 - [Tweening](tweening.md)
-- [Add / Edit Keyframes](keyframes.md)
 - [Temporal interpolation](interpolation.md)
 - [Spatial interpolation](spatial-interpolation.md)
 - [Animation Library](anim-library.md)
