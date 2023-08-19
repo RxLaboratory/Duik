@@ -38,6 +38,6 @@ Terms followed with an **asterisk *** are defined in the [**glossary**](../misc/
 
 Although **the sections of the guide follow the order of the panels** in Duik's User Interface, it also makes sense to read them in this specific order, as **it's the usual workflow** when rigging and animating characters and props.
 
-[^1]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more information about the community and RxLab. memeberships.
+[^1]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more information about the community and RxLab. memberships.
 
 [^2]: Visit [showcase.rxlab.info](http://showcase.rxlab.info) to have a look at a selection of films and projects animated with RxLaboratory's tools.
