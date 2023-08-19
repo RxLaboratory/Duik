@@ -273,6 +273,14 @@ If you still prefer to use video files, you should choose a format which is also
 
 The most important thing to know about After Effects is that there are memory leaks. This means that the longer you use it, the more memory it will use, and part of this memory is completely wasted. This is especially true when using scripts, it is a known issue in After Effects that scripts are never freed from memory even if they're closed and have finished everything they're doing (the technical term is *garbage collection*, and this garbage collection just doesn't work for scripts). This clearly slows down After Effects after a certain amount of time and use. Until this kind of issues are all fixed, the only way to keep your app as fast as possible is to restart it regularly to completely free the memory. Even the `Edit ▶ Purge` menu is of no use about this issue.
 
+### User Interface
+
+It is a well-known fact that the user interface of After Effects, is, to say the least, sluggish... If there aren't too many items to be shown, it's usually okayish, but it quickly becomes a pain to navigate panels with a lot of items... Which is usually the case of the most important one, the timeline panel, with a lot of layers and keyframes. There's nothing we can do about that, and it's one of the main reason why you should learn animation in another application (like Blender) if you can.
+
+This problem has another less-known implication: scripts are (very) slow. In After Effects, scripts run in the same thread as the user interface. This itself could be seen as a design flaw, although at the time this was designed, multi-threading was not the thing it is today. But the real problem is that when a script is running, there's no way to stop the user interface to *try to* follow. Each operation a script does, the user interface tries to reflect it. And the script has to wait for the user interface to finish this (slow) operation to continue onto its next step (because it lives in the same thread). Although the actual operation the script does could be very fast, it is slowed down by the user interface of After Effects. For example, a script creating a few dozens of new keyframes on some properties will be slowed down *for each keyframe creation* by the user interface actually showing the new keyframe (instead of waiting for the script to finish and draw them all at once). This would not be so much of an issue if the user interface wasn't so slow...
+
+There's no solution here, except that now you know it, you can talk about it with Adobe.
+
 ### Preferences
 
 Sometimes, changing a few options in After Effects can improve the performance or fix issues. In most cases, leaving the default values should work well, but it may be useful to have a look at these specific preferences:
