@@ -2,12 +2,28 @@
 
 *Kleaner* stands for ***Keyframe Cleaner***[^pun]. It's a very poowerful tool to help you achieve the best animation with very little work; for any simple enough animation, it's able to do all the tedious interpolation[*](../../misc/glossary.md) and some extrapolation[*](../../misc/glossary.md) work for you, adding all the details needed in the animation using only simple linear keyframes.
 
+[^pun]: We've had a hard time translating this term in other languages, but we've found *Clettoyeur* for the "Nettoyeur de clefs" in French, and *Climpiador* for the "Limpiador de clave" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!
+
 ![](../../img/illustration/A_cat_running_Photogravure_after_Eadweard_Muybridge_1887_Wellcome_V0048771.jpg){style="max-height:720px"}  
 *A cat running,  
 Eadweard Muybridge, 1887   
 Public domain.*{style="font-size:0.8em;"}
 
 It's a smart tool which takes a lot of parameters into account to generate the best animation. To achieve this result, we've used advanced coding techniques, like *Fuzzy Logics*[^fuzzy]; everything uses **analytical methods** though, there's **no simulation nor A.I.** or machine learning: this is **a tool for animators made by animators**. It's not physically accurate; **every generated motion has been designed** and fine tuned to be the best according to the animator's view, not to mimic perfectly the real world. Like any true animation.
+
+[^fuzzy]: Fuzzy Logic is a way to replace Boolean logic when values may not be completely true or false, e.g. a temperature can be hot, but more precisely it can be just a bit hot or very hot.
+    
+    Using Fuzzy Logic is a way to test the veracity of a statement, and get a nuanced result, which can then be used to set nuanced values according to the truthness, the veracity, obtained from the statement.
+
+    For example, if one wants to adjust the power of a fan, one needs to check the temperature and adjust the fan accordingly.
+
+    With boolean logic, the statement `IF the temperature IS hot THEN SET the fan on` will either turn the fan on at full power or completely off, according to a predefined limit value.
+
+    With Fuzzy Logic, both the veracity and the result being fuzzy and more nuanced, the same statement will adjust precisely the power of the fan according to the hotness. With a single simple rule like this, it is like a conversion (interpolation) of the temperature value into a power value.
+
+    But like Boolean logic, Fuzzy Logic becomes very interesting when combining veracity and rules. For example, it becomes easy to code a program with these rules: `IF the temperature IS low OR humidity IS high THEN SET the fan on AND SET the heater on`
+
+    You can read our [guide about Fuzzy Logic](http://fuzzylogic.rxlab.guide){target="_blank"} and use our libraries in your scripts and expressions on [fuzzylogic.rxlab.guide](http://fuzzylogic.rxlab.guide){target="_blank"}
 
 !!! note
     The term *simulation* is actually used in the Kleaner properties and this document, but it really refers to a *fake* simulation, tweaked to generate a better animation and not physically accurate nor using any actual physical law or formula.
@@ -81,6 +97,8 @@ When you click the ***![](../../img/duik/icons/kleaner.svg){style="width:1em;"} 
 - **Limits**  
     Use this preset if all you need is to bound the values of the property inside some predefined (but animatable) limits.
 
+[^anticipate]: Anticipation is an animation principle invented to show the *will*. You should never have anticipation if the movement is not voluntary, but an object *can* have an anticipation, if it is manipulated by a character for example.
+
 ## General parameters
 
 ![](../../img/duik/automation/kleaner-effect-general.png)
@@ -122,6 +140,8 @@ The Kleaner does a lot of things for you, effectively applying some general anim
 - Duik is able to simulate ***Soft bodies*** if the Kleaner is applied on **spatial properties**. In this case, these spatial properties will lag a bit behind the main motion of the layer itself (similarly to the *overlap*), thus creating this *soft body* simulation. This works especially well on After Effects puppet pins, or any other effect deforming the layer.
 - You can use the ***Limits*** to bound the values and make sure they don't go above or under specific values.
 
+[^principles]: Disney's twelve basic principles of animation were introduced by the Disney animators Ollie Johnston and Frank Thomas in their 1981 book *The Illusion of Life: Disney Animation*. The principles are based on the work of Disney animators from the 1930s onwards, in their quest to produce more realistic animation. The main purpose of these principles was to produce an illusion that cartoon characters adhered to the basic laws of physics, but they also dealt with more abstract issues, such as emotional timing and character appeal. *cf.* [*Wikipedia*](https://en.wikipedia.org/wiki/Twelve_basic_principles_of_animation): [en.wikipedia.org/wiki/Twelve_basic_principles_of_animation](https://en.wikipedia.org/wiki/Twelve_basic_principles_of_animation)
+
 ### Anticipation
 
 Anticipation[*](../../misc/glossary.md) is used to prepare the audience for an action, and to make the action appear more realistic. A dancer jumping off the floor has to bend the knees first; a golfer making a swing has to swing the club back first.
@@ -142,7 +162,9 @@ First, the anticipation is computed according to the general parameters. You can
 
 The Kleaner automatically interpolates[*](../../misc/glossary.md) the motion between keyframes, according to the general parameters.
 
-For a more dynamic and realistic interpolation, it uses a function based on the Gauss function which generates nice, asymetrical and dynamic curves, where the acceleration is faster than the deceleration, which better mimics a natural movement than what can be achieved with Bézier curves.
+For a more dynamic and realistic interpolation, it uses a function based on the [Gaussian function](../../advanced/interpolation.md) which generates nice, asymetrical and dynamic curves, where the acceleration is faster than the deceleration, which better mimics a natural movement than what can be achieved with Bézier curves[^interpo].
+
+[^interpo]: *cf Advanced / [Interpolation](../../advanced/interpolation.md)*.
 
 ![](../../img/duik/automation/kleaner-interpolation.png)  
 *Interpolation generated by the Kleaner between two linear keyframes*
@@ -229,23 +251,3 @@ As a complete and complex tool, the Kleaner may reduce the performance of After 
 You can use these settings to improve the performance by disabling the simulations or the general parameters if you don't need them.
 
 If you notice artifacts in the motion blur or imprecision with some interpolations and follow through, you can raise a bit the  ***Time precision*** or ***Value precision***, but be careful as this may slow down the evaluation of the expressions.
-
-[^pun]: We've had a hard time translating this term in other languages, but we've found *Clettoyeur* for the "Nettoyeur de clefs" in French, and *Climpiador* for the "Limpiador de clave" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!
-
-[^fuzzy]: Fuzzy Logic is a way to replace Boolean logic when values may not be completely true or false, e.g. a temperature can be hot, but more precisely it can be just a bit hot or very hot.
-    
-    Using Fuzzy Logic is a way to test the veracity of a statement, and get a nuanced result, which can then be used to set nuanced values according to the truthness, the veracity, obtained from the statement.
-
-    For example, if one wants to adjust the power of a fan, one needs to check the temperature and adjust the fan accordingly.
-
-    With boolean logic, the statement `IF the temperature IS hot THEN SET the fan on` will either turn the fan on at full power or completely off, according to a predefined limit value.
-
-    With Fuzzy Logic, both the veracity and the result being fuzzy and more nuanced, the same statement will adjust precisely the power of the fan according to the hotness. With a single simple rule like this, it is like a conversion (interpolation) of the temperature value into a power value.
-
-    But like Boolean logic, Fuzzy Logic becomes very interesting when combining veracity and rules. For example, it becomes easy to code a program with these rules: `IF the temperature IS low OR humidity IS high THEN SET the fan on AND SET the heater on`
-
-    You can read our [guide about Fuzzy Logic](http://fuzzylogic.rxlab.guide){target="_blank"} and use our libraries in your scripts and expressions on [fuzzylogic.rxlab.guide](http://fuzzylogic.rxlab.guide){target="_blank"}
-
-[^anticipate]: Anticipation is an animation principle invented to show the *will*. You should never have anticipation if the movement is not voluntary, but an object *can* have an anticipation, if it is manipulated by a character for example.
-
-[^principles]: Disney's twelve basic principles of animation were introduced by the Disney animators Ollie Johnston and Frank Thomas in their 1981 book *The Illusion of Life: Disney Animation*. The principles are based on the work of Disney animators from the 1930s onwards, in their quest to produce more realistic animation. The main purpose of these principles was to produce an illusion that cartoon characters adhered to the basic laws of physics, but they also dealt with more abstract issues, such as emotional timing and character appeal. *cf.* [*Wikipedia*](https://en.wikipedia.org/wiki/Twelve_basic_principles_of_animation): [en.wikipedia.org/wiki/Twelve_basic_principles_of_animation](https://en.wikipedia.org/wiki/Twelve_basic_principles_of_animation)

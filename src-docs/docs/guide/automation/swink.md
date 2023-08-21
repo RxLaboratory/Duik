@@ -1,6 +1,8 @@
 # ![](../../img/duik/icons/swink.svg){style="width:1em;"} Swink
 
-*Swink* stands for *swing or blink*[^pun]. It can be used to make a property oscillate between two values, with many options to control the interpolation between these values. For example, it makes it easy to animate a pendulum or a light blinking.
+*Swink* stands for *swing or blink*[^pun]. It can be used to make a property oscillate between two values, with many options to control the interpolation[*](../../misc/glossary.md) between these values. For example, it makes it easy to animate a pendulum or a light blinking.
+
+[^pun]: We've had a hard time translating this term in other languages, but we've found *Clignancement* for "Clignottement ou balancement" in French, and *Parpalancear* for "Parpadear o balancear" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!
 
 ![](../../img/illustration/Huygens_first_pendulum_clock.png)  
 *The first pendulum clock, drawing from Horologium,  
@@ -31,7 +33,9 @@ You can use the ***A/B ratio*** to let the oscillation spend more time on one or
 
 When the ***Plateau*** is set to `0 %`, the oscillation never stops; with a higher value, the oscillation will stop some time on both values.
 
-Finally, you can adjust the ***interpolation*** between the *A* and *B* values:
+Finally, you can adjust the[ ***interpolation***](../../advanced/interpolation.md)&nbsp;[^interpo] between the *A* and *B* values:
+
+[^interpo]: *cf. Advanced / [Interpolation](../../advanced/interpolation.md)*.
 
 - *Hold (square)* disables interpolation. The value will *blink*.
 - *Linear* will result in a very simple interpoation without easing (a triangle).
@@ -42,5 +46,3 @@ Finally, you can adjust the ***interpolation*** between the *A* and *B* values:
 - *Speed up (exponential)*  does the opposite of *Slow down*, making the motion start very slowly and speeding up as much as possible.
 
 With the *Smooth*, *Natural*, *Slow down* and *Speed up* interpolations, you can use the ***Rate*** value to adjust the easing (acceleration and deceleration rate) of the motion.
-
-[^pun]: We've had a hard time translating this term in other languages, but we've found *Clignancement* for "Clignottement ou balancement" in French, and *Parpalancear* for "Parpadear o balancear" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!

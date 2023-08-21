@@ -146,7 +146,7 @@ The *After Effects* features mainly used by Duik are:
 
 ### Expressions
 
-Every time Duik adds an expression to a property, the expression begins with a comment to let you know what the expression is and does[^expressions].
+Every time Duik adds an expression to a property, the expression begins with a comment to let you know what the expression is and does.
 
 ![](../img/duik/expression.png)
 
@@ -187,8 +187,6 @@ This can sometimes be a bit tedious, but future versions of Duik will include to
 [^tr]: Visit [translate-duik.rxlab.io](http://translate-duik.rxlab.io) to help translate Duik to any language.
 
 [^perf]: To learn more about the performance of After Effects and Duik, read the section entitled [*Advanced / Performance*](../advanced/performance.md).
-
-[^expressions]: To learn more about the expressions used by Duik and modify them, read the section entitled [*Advanced / Expressions*](../advanced/expressions.md).
 
 [^dugr]: Duik works hand in hand with another tool called ***DuGR***, which groups layers. You can get it on [rxlaboratory.org/tools/dugr](http://rxlaboratory.org/tools/dugr) and read its complete documentation on [dugr.rxlab.guide](http://dugr.rxlab.guide).
 
