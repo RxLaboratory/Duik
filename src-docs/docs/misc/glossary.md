@@ -18,7 +18,7 @@
 - ***Follow through*** (animation principle)
 - ***IK*** (*Inverse Kineamtics*)
 - ***Inheritance*** (parenting)
-- ***Interpolation***
+- ***Interpolation***: blabla. *cf. Advanced / [Interpolation](../advanced/interpolation.md)*.
 - ***Kinematic Chain***: in mechanical engineering, a kinematic chain is an assembly of rigid bodies connected by joints to provide constrained motion that is the mathematical model for a mechanical system.
 - ***Kinematics***: subfield of physics, developed in classical mechanics, that describes the motion of points, bodies (objects), and systems of bodies (groups of objects) without considering the forces that cause them to move. Kinematics, as a field of study, is often referred to as the "geometry of motion" and is occasionally seen as a branch of mathematics.
 - ***Locator***

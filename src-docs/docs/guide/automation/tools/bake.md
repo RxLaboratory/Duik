@@ -9,7 +9,7 @@ You can `[Shift] + [Click]` the ![](../../../img/duik/icons/expression_baker.svg
 
 ![](../../../img/duik/automation/bake-expressions.png)
 
-- The ![](../../../img/duik/icons/autorig.svg){style="width:1em;"} ***Smart Mode*** creates less keyframes and uses Bézier interpolation to generate an animation as close as possible of the original animation as computed by the expression.  
+- The ![](../../../img/duik/icons/autorig.svg){style="width:1em;"} ***Smart Mode*** creates less keyframes and uses Bézier interpolation[*](../../../misc/glossary.md) to generate an animation as close as possible of the original animation as computed by the expression.  
     The resulting animation may be a bit different compared to the expression, but its much easier to edit and customize later. It's also much lighter once exported to HTML/JS/CSS animation, like Lottie/Bodymovin for example.
 - The ![](../../../img/duik/icons/quick.svg){style="width:1em;"} ***Precise Mode*** (a.k.a. *dumb mode*) creates much more keyframes, up to one per frame, but generates the exact same animation as the original one as computed by the expression.
 

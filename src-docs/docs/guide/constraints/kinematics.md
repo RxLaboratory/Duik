@@ -18,7 +18,7 @@ But if you need to constrain the tip of the limb, or just keep it static while a
 All rights reserved*{style="font-size:0.8em;"}
 
 !!! note
-    When animating using IK, you have to set the values of the position keyframe and their temporal interpolation, as you would with FK and rotations, but you also have to manage the spatial interpolation and make sure the limb always follows a curved trajectory (and not straight lines)[^1].
+    When animating using IK, you have to set the values of the position keyframe and their temporal interpolation[*](../../misc/glossary.md), as you would with FK and rotations, but you also have to manage the spatial interpolation and make sure the limb always follows a curved trajectory (and not straight lines)[^1].
 
 With Duik (and the Auto-rig) you can rig limbs in a way to be able to switch at any time between IK and FK according to your needs at the time you're animating. There are also specific types of IK to ease the animations of longer limbs like horse legs, ant and crab legs or even like hair strands, tails or even spines and long necks.
 

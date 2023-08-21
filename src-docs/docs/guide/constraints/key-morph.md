@@ -3,7 +3,7 @@
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_H01_KeyMorph01__EN_720.mp4)  
 *This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
-The key morph is simple yet very powerful and versatile interpolation tool. It is able to morph between key poses or blend them together[^1] using any property in After Effects (as long as it can be controlled by an expression). This is especially useful to control facial expressions (emotions and expressions, head turn, lipsync...), or any other animation based on specific poses (e.g. complex hand shapes).
+The key morph is simple yet very powerful and versatile interpolation[*](../../misc/glossary.md) tool. It is able to morph between key poses or blend them together[^1] using any property in After Effects (as long as it can be controlled by an expression). This is especially useful to control facial expressions (emotions and expressions, head turn, lipsync...), or any other animation based on specific poses (e.g. complex hand shapes).
 
 ![](../../img/illustration/keymorph.gif)
 

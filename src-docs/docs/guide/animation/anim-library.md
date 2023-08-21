@@ -51,7 +51,7 @@ Click the ![](../../img/duik/icons/add.svg){style="width:1em;"} *add* button to 
 
 When adding a new animation, you have the option to automatically bake all expressions to keyframes. For more options on the baking process, you could instead use the [Bake Expressions](../automation/tools/bake.md)&nbsp;[^bake] tool beforehand.
 
-[^bake]: *cf. [Automation and Expressions](../automation/index.md3) / Tools / [Bake Expressions](../automation/tools/bake.md)*.
+[^bake]: *cf. [Automation and Expressions](../automation/index.md) / Tools / [Bake Expressions](../automation/tools/bake.md)*.
 
 Duik renders the current frame of the composition to use it as a thumbnail.
 
