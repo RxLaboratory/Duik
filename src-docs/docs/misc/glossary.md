@@ -31,7 +31,7 @@
 - ***Simulation***
 - ***Squash***
 - ***Stretch***
-- (Inbe)***Tweening***
+- _Inbe**Tweening**_
 - ***Weight***
 
 Some of these definitions are sourced from *[Wikipedia](https://wikipedia.org)*.
