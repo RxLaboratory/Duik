@@ -1,6 +1,6 @@
 # ![](../../img/duik/icons/cel_animation.svg){style="width:1em;"} Cel Animation
 
-The ***Cel Animation*** tool is used in conjunction with After Effects’ paint effect to create traditional hand drawn animations.
+The *Cel Animation*[*](../../misc/glossary.md) tool is used in conjunction with After Effects’ paint effect to create traditional hand drawn animations.
 
 ![](../../img/illustration/Winsor_McCay_1911_Little_Nemo_film_still.jpg)  
 *Still from Little Nemo,  
