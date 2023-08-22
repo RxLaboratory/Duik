@@ -18,7 +18,7 @@ The top toolbar of the Links and Constraints panel contains a few useful tools r
 ![](../../img/duik/constraints/toolbar.png)  
 *The Links and Constraints toolbar*
 
-### Contents
+### Content
 
 - [Auto-rig](../bones/autorig/index.md)
 - [Connector](connector.md)

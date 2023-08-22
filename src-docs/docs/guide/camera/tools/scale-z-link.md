@@ -1,3 +1,7 @@
-To be written...
+# ![](../../../img/duik/icons/scale_z_link.svg){style="width:1em;"} Scale Z-Link
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+When setting up a 3D set, it can be useful to be able to move a layer away from the camera without changing its apparent size, compensating the distance with the scale value.
+
+That’s what the *Scale Z-Link* does.
+
+This tool works as a toggle, enabling and disabling the effect on the selected layers.

@@ -17,7 +17,7 @@ The tools in the top tool bar help the management of properties and their values
 
 The main tools on the main part of the panel are all the procedural animation tools available in Duik, to help you animate all kind of props and even characters procedurally and automatically.
 
-## Contents
+## Content
 
 - [Kleaner](kleaner.md)
 - [Effector](effector.md)
