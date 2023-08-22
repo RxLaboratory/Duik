@@ -22,7 +22,7 @@ You can set a *Character Name* in the top field to automatically add the name to
 
 The toolbar at the top of the bones panel gives a quick access to several secondary but useful tools.
 
-### Contents
+### Content
 
 - [Create bones](create-bones.md)
 - [Bone envelops](envelops.md)

@@ -18,7 +18,7 @@ The tools in the top tool bar are quick tools you may need when animating.
 
 The main tools on the second part of the panel are all the animation tools available in Duik, to keep at hand while you're struggling with keyframes.
 
-## Contents
+## Content
 
 - [Tweening](tweening.md)
 - [Temporal interpolation](interpolation.md)
