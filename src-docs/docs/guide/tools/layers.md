@@ -1,4 +1,4 @@
-# ![](../../../img/duik/icons/composition_settings.svg){style="width:1em;"} Layer Manager
+# ![](../../img/duik/icons/composition_settings.svg){style="width:1em;"} Layer Manager
 
 The layer manager is there to help you create, rename, and tag layers.
 

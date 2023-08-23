@@ -27,8 +27,6 @@ For all presets, the Duik [*Home Panel*](settings.md) is enabled, as long as the
 
 With this preset, Duik tries to improve the performance as much as possible, without changing the final render.
 
-- Duik [Bones](bones/index.md) are set to be light bones instead of full bones with envelops and noodles.
-- Duik [Controllers](controllers/index.md) are set to use raster layers.
 - The composition preview mode is set to `Off (final quality)`.
 - The `Draft 3D` mode is enabled.
 - The preview resolution of the current composition is reduced by a factor of the composition width divided by 480 (that means a quarter for 1920 pixel wide compositions).
@@ -41,8 +39,6 @@ With this preset, Duik tries to improve the performance as much as possible, wit
 
 This preset is a bit more permissive than the *Best Performance* preset; it's the default preset as it should be the more useful in most cases.
 
-- Duik [Bones](bones/index.md) are set to be light bones instead of full bones with envelops and noodles.
-- Duik [Controllers](controllers/index.md) are set to use raster layers.
 - The composition preview mode is set to `Off (final quality)`.
 - The `Draft 3D` mode is enabled.
 - The preview resolution of the current composition is reduced by a factor of the composition width divided by 640 (that means a third for 1920 pixel wide compositions).
@@ -55,8 +51,6 @@ This preset is a bit more permissive than the *Best Performance* preset; it's th
 
 This preset is optimized for those who need to have more features (and a fast computer) and a better preview.
 
-- Duik [Bones](bones/index.md) are set to be full bones with their envelops and noodles.
-- Duik [Controllers](controllers/index.md) are set to use raster layers.
 - The composition preview mode is set to `Off (final quality)`.
 - The `Draft 3D` mode is enabled.
 - The preview resolution of the current composition is reduced by a factor of the composition width divided by 960 (that means a half for 1920 pixel wide compositions).
@@ -67,8 +61,6 @@ This preset is optimized for those who need to have more features (and a fast co
 
 This preset only change what doesn't limit any actual feature.
 
-- Duik [Bones](bones/index.md) are set to be full bones with their envelops and noodles.
-- Duik [Controllers](controllers/index.md) are set to use shape layers in draft mode.
 - The composition preview mode is set to `Off (final quality)`.
 
 ## Duik settings
