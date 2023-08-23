@@ -6,9 +6,7 @@
 Public domain.*{style="font-size:0.8em;"}
 
 Once you've rigged your characters and props, setup useful procedural animation and automation, comes the time to actually animate everything and work with keyframes.  
-After Effects is a bit limited when it comes to manipulating keyframes, interpolations and animations, especially if compared with 3D apps. Duik fills the gap with many animation and [interpolation](../../advanced/interpolation.md)&nbsp;[^înterpo] tools.
-
-[^înterpo]: *cf. Advanced / [Interpolation](../../advanced/interpolation.md)*.
+After Effects is a bit limited when it comes to manipulating keyframes, interpolations and animations, especially if compared with 3D apps. Duik fills the gap with many animation and interpolation[*](../../misc/glossary.md) tools.
 
 ## The Animation panel
 

@@ -29,7 +29,7 @@ There are several ways to create controllers:
 - **Without any selection**, click one of the buttons to just create a new controller, centered in the current composition.
 - **With some layers selected**:  
     - Click one of the buttons to create one controller per layer, at the same location than the corresponding layer.
-    - `[Alt] + [Click]` to create a single controller for all the layers. It's created at the barycenter[*](../../misc/glossary.md) of the layer coordinates.
+    - `[Alt] + [Click]` to create a single controller for all the layers. It's created at the center of mass of the layer coordinates.
     - `[Ctrl] + [Click]` to automatically parent the layers to the new controllers. Hierarchy is kept and controllers are inserted in it; i.e. the previous parents of the layers will be the parents of the controllers.
     - `[Ctrl] + [Alt] + [Click]` to create a single controller and parent all the selected layers to it.
 

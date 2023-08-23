@@ -14,9 +14,7 @@ You can sequence either the selected **layers** or the selected **keyframes**.
 
 When sequencing the layers, you can choose to either **move** them (***Times***) or **cut** them (***In points*** or ***Out points***).
 
-There are several [interpolations](../../advanced/interpolation.md)&nbsp;[^interpo]&nbsp;[*](../../misc/glossary.md) algorithms available, which define the shape of the sequenced layers or keyframes.
-
-[^interpo]: *cf. Advanced / [Interpolation](../../advanced/interpolation.md)*.
+There are several interpolation[*](../../misc/glossary.md) algorithms available, which define the shape of the sequenced layers or keyframes.
 
 - **Linear**
 
