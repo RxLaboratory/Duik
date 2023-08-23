@@ -1,3 +1,3 @@
-To be written...
+# ![](../../../img/duik/icons/expression_file.svg){style="width:1em;"} Edit Expression
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+▷ *cf [Automation](../../automation/index.md) / Tools / [Edit Expression](../../automation/tools/edit.md)*.
