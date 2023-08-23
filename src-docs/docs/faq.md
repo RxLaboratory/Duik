@@ -12,6 +12,14 @@ This being said, a nice habit to have is to always **precompose all footages** a
 
 Of course, you can only change *details* on the character this way; if the location of the joints change, it's usually easier and faster to just redo the rig. Don't forget you can remove just a single limb to re-rig it, you don't need to re-rig the whole character.
 
+## Can I use the same rig for multiple characters?
+
+Yes, if the characters all have the same proportions (if the length of their limbs, the distance between the joints are all the same).
+
+No in all other cases, sorry. This being said, it's quite quick to create a bunch of bones and run the Auto-Rig, not much longer than having to reposition existing bones (it may even be faster due to performance issues with rigged characters).
+
+We could implement a tool to reposition already rigged bones, that'd be a great new feature in Duik, but it's too complicated for now and all the other great new features we have to add first.
+
 ## How can I scale a rigged character in Duik?
 
 It is not possible to scale the rig itself yet without adjusting some expressions, but:
