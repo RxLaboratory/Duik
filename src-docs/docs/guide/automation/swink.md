@@ -33,9 +33,7 @@ You can use the ***A/B ratio*** to let the oscillation spend more time on one or
 
 When the ***Plateau*** is set to `0 %`, the oscillation never stops; with a higher value, the oscillation will stop some time on both values.
 
-Finally, you can adjust the[ ***interpolation***](../../advanced/interpolation.md)&nbsp;[^interpo] between the *A* and *B* values:
-
-[^interpo]: *cf. Advanced / [Interpolation](../../advanced/interpolation.md)*.
+Finally, you can adjust the ***interpolation***[*](../../misc/glossary.md) between the *A* and *B* values:
 
 - *Hold (square)* disables interpolation. The value will *blink*.
 - *Linear* will result in a very simple interpoation without easing (a triangle).

@@ -21,7 +21,7 @@ Select the layers to constrain then click the **![](../../img/duik/icons/constra
 # ![](../../img/duik/icons/move.svg){style="width:1em;"} Position Constraint
 
 You can constrain the position of a layer to the location of other layers; that means the constrained layer will translate according to the absolute location of the other layers, taking all parent translations into account. The weight[*](../../misc/glossary.md) acts as a multiplier of the constraint and can be animated.  
-For example, if a layer is constrained to two other layers with both weights at `50 %`, it stays in the center of the segment joining the two other layers. That also works with three layers and `33.3 %`, to attach the layer to the barycenter[*](../../misc/glossary.md) (center of mass) of the layers. Of course you can adjust the weights to change the "*mass*" of the master layers.
+For example, if a layer is constrained to two other layers with both weights at `50 %`, it stays in the center of the segment joining the two other layers. That also works with three layers and `33.3 %`, to attach the layer to the center of mass of the layers. Of course you can adjust the weights to change the "*mass*" of the master layers.
 
 You can use the effect to adjust and animate the position constraint.
 

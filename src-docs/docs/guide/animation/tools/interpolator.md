@@ -9,9 +9,7 @@ Public domain.*{style="font-size:0.8em;"}
 
 In After Effects, like in almost all animation software, interpolation between keyframes is either linear or using a Bézier function. Although using a Bézier function to interpolate keyframes is very powerful, it can take a lot of time to precisely adjust, as between two keyframes there are four parameters to set (two coordinates per Bézier control point, a.k.a. tangent).
 
-Duik can help you with the process, either by controlling the Bézier interpolation with less parameters and some automation, or by introducing completely different [interpolation functions](../../../advanced/interpolation.md)&nbsp;[^interp].
-
-[^interp]: *cf. Advanced / [Interpolation](../../../advanced/interpolation.md)*.
+Duik can help you with the process, either by controlling the Bézier interpolation with less parameters and some automation, or by introducing completely different interpolation functions[*](../../../misc/glossary.md).
 
 1. **Select** some properties
 2. Click the ![](../../../img/duik/icons/interpolator.svg){style="width:1em;"} ***Interpolator*** button.
