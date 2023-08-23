@@ -51,12 +51,20 @@ Licensed under the GNU General Public License, Version 3.0
 
 - [gettext.jsxinc](https://github.com/Nico-Duduf/gettext.jsxinc)  
 Copyright © 2022-2023 Nicolas Dufresne  
-Forked from gettext.jsx  
+Forked from gettext.js by Guillaume Potier,  
 Licensed under the GNU General Public License, Version 3.0
 
 - [JSON](https://github.com/douglascrockford/JSON-js)  
 Duglas Crockford  
 Public Domain
+
+- OCO Open Cut-out  
+Copyright © 2022-2023 Nicolas Dufresne  
+Licensed under the GNU General Public License, Version 3.0
+
+- OKA Open Keyframe Animation  
+Copyright © 2023 Nicolas Dufresne  
+Licensed under the GNU General Public License, Version 3.0
 
 ## Documentation
 
@@ -68,38 +76,14 @@ Public Domain
 
 Unless stated otherwise, for all pictures, icons, videos, and other materials contained in this document, all rights are reserved by their respective owners.
 
-- Nicolas Dufresne  
-  Pictures and video tutorials,  
-  [GNU Free Documentation License](doc-license.md)
-- Claude Autret "Jissse"  
-  *Mechanical Arm*, *Trouts*  
-  All rights reserved
-- Thomas Fourniret
-- Nicolas Liguori
-- Sébastien Périer
-- Clémentine Robach
-- Hugh McCormick Smith  
-  *Mud-Fish*, 1907  
-  Public domain
-- W. Ramsay Smith and J S Newell  
-  *Wing bones and feathers of a bird*, 1889  
-  Public domain
-- "Rodentia," Encyclopædia Britannica  
-  *Common Rorqual (Balaenoptera musculus)*, 1911  
-  Public domain
-- Harland Quarrington/MOD  
-  *Computer Circuit Board*, 2012  
-  Open Government Licence version 1.0 (OGL v1.0).
-- Ambroise Paré  
-  *Illustration of mechanical arm; Instrumenta chyrurgiae et icones anathomicae*, 1564   
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"}, [Wellcome Library](http://wellcomeimages.org/), London.  
-- Font Awesome,  
-  Some of the icons,  
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"}, [fontawesome.com](https://fontawesome.com/){target="_blank"}
+All pictures and medias without their credits on the same page are by Nicolas Dufresne and licensed under the [GNU Free Documentation License](doc-license.md).
+
+This document also include some icons by Font Awesome, released under the Create Commons Attribution 4.0 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.en){target="_blank"} license, [fontawesome.com](https://fontawesome.com/){target="_blank"}
 
 ### Composition
 
 - Assia Chioukh
+- Ana Arce
 - Nicolas Dufresne
 
 ## Special Thanks
