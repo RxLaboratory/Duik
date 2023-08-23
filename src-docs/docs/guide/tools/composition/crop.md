@@ -1,3 +1,11 @@
-To be written...
+# ![](../../../img/duik/icons/crop.svg){style="width:1em;"} Crop precompositions
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+After Effects lacks the ability to change the size of a precomposition without moving it in the composition where it is used.
+
+Duik provides a quick and easy way to crop precompositions while keeping them at the location they are in the containing compositions.
+
+1. **Draw a mask** with the pen tool to define the area to keep on the precomposition.  
+    It doesn't have to be a rectangular mask but you should avoid curves and Bézier tangents.
+2. Keep the precomposition selected, and click the ![](../../../img/duik/icons/crop.svg){style="width:1em;"} ***Crop precompositions*** button.  
+    Duik crops the composition to the bounds of the mask.
+3. You may **remove the mask** if you don't need it anymore.
