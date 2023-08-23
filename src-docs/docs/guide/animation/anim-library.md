@@ -18,7 +18,7 @@ You can `[Shift] + [Click]` the button to access additional options.
 You can click the ![](../../img/duik/icons/folder.svg){style="width:1em;"} folder icon to open the folder where the library is stored, or `[Alt] + [Click]` it to tell Duik to use another folder. If a library is already available in the new folder, it will be automatically loaded; this is an easy way to keep multiple libraries on the same system.  
 By default, the library is in the `Duik` subfolder of your documents folder, which is where settings, notes, and translations are also stored by default.
 
-Wuth the next buttons, you can change how the items are sorted in the panel, and refresh the library if you've manually added new files or if something is missing in the list.
+With the next buttons, you can change how the items are sorted in the panel, and refresh the library if you've manually added new files or if something is missing in the list.
 
 !!! note
     For now (2023) the animations are applied *as is*, which makes it necessary to manually adjust the position and other spatial values when transfering an animation from a character to another with different proportions. Other properties should work fine though.
@@ -78,7 +78,6 @@ Some metadata, like the favorites and history, is stored in the `Duik_animation_
 
 !!! note
     For now (2023), animations are stored using a `duio` format which is specific to Duik and [DuIO](https://rxlaboratory.org/tools/duio)&nbsp;[^duio], but this is going to change soon when ***OKA***, the ***Open Keyframe Animation*** format RxLaboratory is developing will be available.
-
 
 [^duio]: *DuIO* is a collection of tools for exporting and importing stuff in After Effects. It is available at [rxlaboratory.org/tools/duio](https://rxlaboratory.org/tools/duio)
 

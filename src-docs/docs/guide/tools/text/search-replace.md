@@ -1,3 +1,5 @@
-To be written...
+# ![](../../../img/duik/icons/search_replace.svg){style="width:1em;"} Search and Replace
 
-Please come back later, or [make a donation](http://donate.rxlab.info) to help us work better and faster.
+You can Search and Replace text in layer names, project item names, expressions or source texts of text layers.
+
+![](../../../img/duik/tools/search-replace.png)
