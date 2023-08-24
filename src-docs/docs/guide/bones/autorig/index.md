@@ -75,3 +75,6 @@ Although the type of limbs are sorted into categories corresponding to different
 [^3]: *cf.* [*Bones / Tools / Bake bones*](../tools/bake.md).
 
 [^4]: *cf.* [*Meta-rigs and OCO*](../../oco/index.md).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

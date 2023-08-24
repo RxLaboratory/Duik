@@ -62,3 +62,6 @@ You can also animate the amplitude of the camera shake to make the camera shake 
     You shouldn't have to change much the frequency values which should be the same for almost all cameras.
 
 As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure mutliple controllers use the same seed to generate the same motion).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

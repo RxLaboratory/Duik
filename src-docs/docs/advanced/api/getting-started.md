@@ -287,3 +287,6 @@ It also includes a lot of lower level objects and methods. Here are some example
     DuFile.saveJSON(obj, "C:/a/path/file.json" );
 ```
 
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

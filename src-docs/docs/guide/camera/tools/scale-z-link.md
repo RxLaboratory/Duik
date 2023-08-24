@@ -5,3 +5,6 @@ When setting up a 3D set, it can be useful to be able to move a layer away from 
 That’s what the *Scale Z-Link* does.
 
 This tool works as a toggle, enabling and disabling the effect on the selected layers.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

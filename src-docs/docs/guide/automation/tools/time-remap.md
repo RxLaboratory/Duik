@@ -7,3 +7,6 @@ It automatically adjusts the keyframes in the time remap property to make it wor
 It then adds a [*Looper*](../looper.md)&nbsp;[^loop] to the time-remap property.
 
 [^loop]: *cf. [Automation](../index.md) / [Looper](../looper.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)

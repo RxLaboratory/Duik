@@ -84,3 +84,5 @@ All other graphical elements, especially icons, are from [***RxUI***](http://rxu
 [^5]: You can donate on [donate.rxlab.info](http://donate.rxlab.info){: target="_blank" }
 
 [^6]: The Duik API reference is available at [duik.rxlab.io](http://duik.rxlab.io){target="_blank"}
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

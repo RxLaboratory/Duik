@@ -28,3 +28,6 @@ He was not particularly politically involved, but his voice, and his foreign con
 He was arrested in 2012, first imprisoned in a military prison, where he was tortured, and he disappeared in 2015. It was only in August 2017 that the Syrian government acknowledged that he died in prison, at the age of 36.
 
 *Duik* will be named after him.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-02)

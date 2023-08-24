@@ -42,3 +42,6 @@ Before adding the random motion to the selected properties, you can set some opt
     - ![](../../img/duik/icons/individual_control.svg){style="width:1em;"} ***Individual controls***: create an effect for each selected property.
 
 [^randomize]: *cf. [Automation](index.md) / Tools / [Randomize](tools/randomize.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-21)

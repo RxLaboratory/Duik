@@ -24,3 +24,6 @@ The main tools on the second part can be used to rig 3D cameras or create Duik 2
 - Tools  
     - [Framing Guides](tools/frame.md)
     - [Scale Z-Link](tools/scale-z-link.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

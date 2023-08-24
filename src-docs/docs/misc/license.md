@@ -45,3 +45,6 @@ More info is available at the [Free Software Foundation](http://www.fsf.org). A 
 All the contributors of Duik, friends, and all the people who helped the creation of Duik are listed [here](credits.md). **You may thank all of them for their commitment to greatly improving animation for everyone and for free**.
 
 ![](/img/logos/gnu.png)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

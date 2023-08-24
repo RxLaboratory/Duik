@@ -18,3 +18,6 @@ By default, Duik opens the expression with the default application associated wi
 
     Its default installation path on Windows is  
     `C:\Users\YourNamme\AppData\Local\Programs\Microsoft VS Code\Code.exe`
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)

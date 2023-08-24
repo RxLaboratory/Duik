@@ -107,3 +107,6 @@ First, **open** the ***NLA.Render::*** composition. Then, you can either:
 You can use either the *NLA.Edit::* or the ***NLA.Render::*** compositions to include the edited animation inside other compositions or to render it.
 
 ![](../../img/duik/animation/nla_render.png)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -427,3 +427,5 @@ After Effects does use the GPU more and more to render the effects and compositi
 [^5]: Rafael Arame is a recognized After Effects rigging expert. You can have a look at his blog on [www.artstation.com/rafaelarame/blog](https://www.artstation.com/rafaelarame/blog){target="_blank"}.
 
 [^6]: A quick search will let you find several utilities to easily create RAM disks both on *Windows* or *MacOS*. [Read this *Wikipedia* article](https://en.wikipedia.org/wiki/RAM_drive){target="_blank"} for more information about RAM Disks: [en.wikipedia.org/wiki/RAM_drive](https://en.wikipedia.org/wiki/RAM_drive){target="_blank"}.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-19)

@@ -11,3 +11,6 @@ You can copy or cut and paste animations from multiple layers at once, and from 
     - `[Ctrl] + [Click]` to offset the animation from the current values (instead of replacing the current values).
 
 A few other options are available when pasting the animation, `[Shift] + [Click]` the ![](../../../img/duik/icons/paste.svg){style="width:1em;"} *Paste animation* button to access them.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

@@ -36,3 +36,6 @@ All the **Mode** actually do the same thing but change the way you can control t
     A fake traditional animation look is better using variable animation exposure than just setting the composition framerate to 12 frames per second. In actual traditional animation (except *Disney*[^williams]), very often the exposure varies: it is higher (less frames, smaller frame rate) on slow movements and lower on fast movements, to give the necessary fluidity when the motion needs it, but save work otherwise. This is still a great way to emphasize emotions vs dynamic actions.
 
 [^williams]: If you read *The Animator's Survival Kit* (and you must read it if you're interested in character animation) by Richard Williams (former Disney animator) you'll see that at Disney, there's no better animation than *at least* 24 frames per second animation, with the smoothest and most fluid motion possible. You have the right to disagree, that's a very cultural point of view, and on the opposite side one can argue that Japanese animation does an awesome work on emotions with very few frames.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)

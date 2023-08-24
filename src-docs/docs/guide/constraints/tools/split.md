@@ -11,3 +11,6 @@ This works on colors too! You can separate to RVB channels or HSL, and animate e
 ![](../../../img/duik/constraints/split-colors.png)
 
 
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-25)

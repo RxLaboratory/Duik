@@ -6,3 +6,5 @@ Click this button to quickly select all the bones of the current composition.
     Duik knows which layers are bones using the marker on the layer (at the first frame of the comp by default). You can easily exclude bones by removing this marker, or using the [Layer Manager](../../tools/layers.md)[^1], with which you can also tag other layers as bones.
 
 [^1]: *cf.* [*Tools / Layer Manager*](../../tools/layers.md).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-12)

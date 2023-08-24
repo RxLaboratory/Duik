@@ -28,3 +28,6 @@ She was particularly involved in the defense of women rights and was member and 
 [^2]: The name was chosen in tandem with [the *Duik* community and supporters](https://membership.rxlab.info).
 
 [^3]: *The Commission for the Clarification of Truth, Coexistence and Non-Repetition* is an autonomous entity of the Colombian State that seeks clarification of the patterns and explanatory causes of the civil armed conflict, fulfils the right of the victims and the society to the truth, promotes the recognition of what happened, coexistence in the territories and contributes to laying the foundations for non-repetition, through a process of broad and plural participation for the construction of a stable and lasting peace.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

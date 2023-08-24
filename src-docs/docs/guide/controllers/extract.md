@@ -57,3 +57,5 @@ This is the process to follow if you need to update a rig and replace a precompo
 [^1]: *cf. [Animation](../animation/index.md) / Tools / [Animation Library](../animation/tools/copy.md)*.
 
 [^2]: *cf. [Animation](../animation/index.md) / [Animation Library](../animation/anim-library.md)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

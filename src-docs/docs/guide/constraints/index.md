@@ -38,3 +38,6 @@ The top toolbar of the Links and Constraints panel contains a few useful tools r
     - [Measure distance](tools/measure.md)
     - [Property info](tools/prop-info.md)
     - [Locator](tools/locator.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -149,3 +149,6 @@ The arthropod rig, in the current version of Duik, is actually similar to the un
 [^2]: [***Arthropods***](https://en.wikipedia.org/wiki/Arthropod) are invertebrates with segmented bodies and jointed limbs. It includes arachnids (spiders, scorpions, ticks, mites...), myriapods (millipedes...), crustaceans (shrimps, crabs, lobsters...), and hexapods (insects).
 
 [^3]: *cf.* [*Bones / Create bones*](../create-bones.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

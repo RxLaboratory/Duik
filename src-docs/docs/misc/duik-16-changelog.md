@@ -866,3 +866,6 @@ This is the list of what has changed since the previous major version of Duik (D
 ## 16.0.0-Alpha-1
 
 Initial Release
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-02)

@@ -97,3 +97,6 @@ There are a lot of concrete ways to contribute more and consume less, even witho
 [^3]: Visit [patreon.com/duduf](http://patreon.com/duduf) to become a patron.
 
 [^4]: Visit [donate.rxlab.info](http://donate.rxlab.info) to make a donation right now.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -9,3 +9,6 @@ Duik provides a quick and easy way to crop precompositions while keeping them at
 2. Keep the precomposition selected, and click the ![](../../../img/duik/icons/crop.svg){style="width:1em;"} ***Crop precompositions*** button.  
     Duik crops the composition to the bounds of the mask.
 3. You may **remove the mask** if you don't need it anymore.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

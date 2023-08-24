@@ -39,3 +39,6 @@ Although **the sections of the guide follow the order of the panels** in Duik's 
 [^1]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more information about the community and RxLab. memberships.
 
 [^2]: Visit [showcase.rxlab.info](http://showcase.rxlab.info) to have a look at a selection of films and projects animated with RxLaboratory's tools.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

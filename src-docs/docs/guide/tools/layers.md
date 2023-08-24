@@ -45,3 +45,5 @@ The ![](../../img/duik/icons/autorig.svg){style="width:1em;"} ***Auto-Rename and
     That's what the [*Link art*](../bones/tools/link-art.md)&nbsp;[^link] tool does, when set to use the layer names.
 
 You can use the last section of the panel to set specific attributes to the selected layers, or copy the attributes from one layer to others using the ![](../../img/duik/icons/eye_dropper.svg){style="width:1em;"} *Pick selected layer* button.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

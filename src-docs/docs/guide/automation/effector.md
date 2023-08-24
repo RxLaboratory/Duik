@@ -32,3 +32,5 @@ When using a *custom shape*, you can change the shape by modifying the correspon
 
 ![](../../img/duik/automation/effector-content.png)  
 *The path property to edit to adjust the custom shape of the effector.*
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

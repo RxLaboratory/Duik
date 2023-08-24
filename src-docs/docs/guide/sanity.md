@@ -32,3 +32,6 @@ You can also adjust each test settings with the ![](../img/duik/icons/options.sv
 - ***Up time***: For performance reasons, and because of memory leaks, it is important to restart After Effects (and your computer!) regularly.
 
 When possible, the ![](../img/dusan/fix.svg){style="width:1em;"} *Fix Now* button automatically fix the issues in a single click.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

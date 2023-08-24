@@ -62,3 +62,6 @@ As soon as your character is rigged, you can begin the animation, being helped b
 These ***[Automations](automation/index.md)*** are procedural animations and dynamics to quickly set up the most common animations and then focus on the characterization of your character. You can automate wiggles, springs, wheels, etc. with customizable and advanced controls for example to loop the effects, and access each and every detail quickly and easily.
 
 The [***Kleaner***](automation/kleaner.md) helps you quickly and semi-automagically apply the most important animation principles: anticipation, spacing, follow-through and overlapping animation.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

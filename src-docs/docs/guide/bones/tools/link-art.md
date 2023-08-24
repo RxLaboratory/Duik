@@ -53,3 +53,5 @@ Distance between the layers and bones is measured, using the anchor points. Laye
 ![](../../../img/duik/bones/link_art_distance3.png)  
 *__Wrong__: The anchor point is too far from the anchor point of the bone*  
 *(the distance is higher than the evelop size parameter).*
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

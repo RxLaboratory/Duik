@@ -38,3 +38,6 @@ Before using Duik to create and animate character rigs, you should master:
 
 !!! hint
     A complete book about animation and rigging techniques in general is being written by Duduf and will be available... One day or another.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

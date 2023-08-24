@@ -14,3 +14,5 @@ By default, when controllers are nulls, their scale is locked. This is optionnal
 You can use the other controller settings to change the appearance of the selected controllers. The *![](../../../img/duik/icons/eye_dropper.svg){style="width:1em;"} Pick selected layer* button will pick all values from the selected controller to easily apply the same settings to other controllers.
 
 [^1]: Read the [*Advanced / Performance*](../../../advanced/performance.md) section for more tips about how to improve performance in After Effects and using Duik.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-26)

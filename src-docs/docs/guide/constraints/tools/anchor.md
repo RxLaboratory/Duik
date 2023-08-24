@@ -19,3 +19,6 @@ Set a margin to offset the anchor point from the exact bounds.
 *Appletons' cyclopaedia of applied mechanics  
 D. Appleton and Company, Benjamin, Park, 1880  
 Public domain.*{style="font-size:0.8em;"}
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

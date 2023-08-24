@@ -40,3 +40,6 @@ The toolbar at the top of the bones panel gives a quick access to several second
     - [Edit mode](tools/edit.md)
     - [Bake bones](tools/bake.md)
     - [Bone settings](tools/settings.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

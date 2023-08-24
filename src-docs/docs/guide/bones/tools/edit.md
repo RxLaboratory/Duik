@@ -14,3 +14,6 @@ When the edit mode is toggled, the bone name changes and it turns red to warn yo
 
 !!! warning
     In current versions of Duik, the edit mode does not work if the bones have already been rigged with the Auto-rig or other constraints.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

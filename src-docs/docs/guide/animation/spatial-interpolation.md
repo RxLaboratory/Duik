@@ -14,3 +14,6 @@ The ![](../../img/duik/icons/autorig.svg){style="width:1em;"} ***Fix*** button a
 *Galileo spacecraft trajectory and key mission events,  
 NASA, 2003  
 Public domain.*{style="font-size:0.8em;"}
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-19)

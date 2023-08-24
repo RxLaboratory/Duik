@@ -76,3 +76,5 @@ The library is actually just a folder structure containing OCO files, which is b
 [^1]: See the following section entitled [*Bones and Auto-Rig*](../bones/index.md).
 
 [^2]: Syncthing is a great free and open source continuous file synchronization program. Read more on [syncthing.net](https://syncthing.net/).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)

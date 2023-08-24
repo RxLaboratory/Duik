@@ -43,3 +43,5 @@
 - ***Weight*** (parameter): A mathematical function to give some elements more influence on the result than other elements in the same set. The result of this application of a weight function is a weighted sum or weighted average. Usually given in percent in animation parameters to "weigh" some values.
 
 Some of these definitions are sourced from *[Wikipedia](https://wikipedia.org)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

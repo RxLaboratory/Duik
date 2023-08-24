@@ -18,3 +18,5 @@ Another useful thing is that using zeros makes it easy to recover the original p
 
 !!! warning
     When a zero layer has been added, if you want to change the parent of the layer you're working with, be careful to change the parent of the zero layer and not the actual parent of the layer itself, to keep the zero layer in the hierarchy.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-25)

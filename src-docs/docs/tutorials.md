@@ -34,3 +34,5 @@ Every aspect of Duik is covered in a comprehensive series of free tutorials you 
 ### Tutoriels gratuits
 
 Toutes les fonctionnalités de Duik sont expliquées dans une série complète de tutoriels gratuits que vous pouvez trouver sur [tutorials.rxlab.guide](http://tutorials.rxlab.guide)!
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

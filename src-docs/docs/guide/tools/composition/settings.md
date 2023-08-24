@@ -10,3 +10,6 @@ Use this panel to change the parameters of multiple compositions at once; it is 
 
 !!! note
     When changing the duration of the compositions, all layers ending with the composition (not the layers cut before the end) have their duration automatically updated too if possible (i.e. still images, solids, shapes, footage with enough duration, etc.).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)

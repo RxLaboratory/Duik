@@ -59,3 +59,6 @@ For both modes, you can adjust the number of samples, which directly controls th
 
 !!! warning
     This is a sensitive value, use with care!
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)

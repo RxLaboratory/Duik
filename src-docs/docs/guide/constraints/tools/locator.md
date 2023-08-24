@@ -10,3 +10,6 @@ When extracting locators, you have the option to use either expressions or essen
     Do not modify the expressions / add keyframes on the transform properties of the locators, as this may break some other Duik tools. If you need to rig locators, just insert another null layer in the hirerachy: as a child of the locator, and parent the initial children of the locator.
 
 [^1]: *cf.* [*Constraints*](../index.md) / [*Parent Constraints*](../parent.md).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-25)

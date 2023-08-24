@@ -42,3 +42,5 @@ These are a few links you may always keep at hand when writing scripts for *Afte
 - **[Headless scripts](headless-scripts.md)**: build your first script using Duik.
 - **[Keyboard Shortcuts for Duik](shortcuts.md)**: use the API to add keyboard shortcuts to Duik features.
 - **[Reference](http://duik.rxlab.io)**: the comprehensive *Duik API reference*. Keep it under your pillow.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

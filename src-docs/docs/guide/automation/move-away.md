@@ -35,3 +35,6 @@ Public domain.*{style="font-size:0.8em;"}
 [^trail]: *cf. [Automation](index.md) / [Motion Trail](motion-trail.md)*.
 
 [^swink]: *cf. [Automation](index.md) / [Swink](motion-trail.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-11)

@@ -78,3 +78,6 @@ The toolbar at the top of the bones panel gives a quick access to several second
 [^4]: *cf.* *Controllers* / *Tools* / *[Bake controllers](tools/bake.md)*.
 
 [^5]: *cf.* *[Constraints](../constraints/index.md)* / *[Connector](../constraints/connector.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
