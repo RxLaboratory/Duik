@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/11/07)
-
 # Duik Ángela (v17)
 
 __Duik is *the* comprehensive animation and rigging tool set for Adobe After Effects.__

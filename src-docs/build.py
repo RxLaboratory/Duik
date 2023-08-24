@@ -57,7 +57,9 @@ def update_meta( path ):
             elif key == license:
                 the_license = value
             elif key == 'copyright':
-                the_copyright = value
+                value = value.split("-")
+                start = value[0]
+                the_copyright = start + "-" + copyright_to
         
         modified_date = datetime.fromtimestamp(
             os.path.getmtime(subfile)
@@ -72,11 +74,20 @@ def update_meta( path ):
             ]) + ')'
         
         print(">> " + subfile)
+        print(">>> " + str(i))
+        print(">>> " + str(len(lines)))
         print(">>> " + meta)
 
-        lines[i] = meta
+        if i >= len(lines):
+            lines.append("")
+            lines.append(meta)
+        else:
+            lines[i] = meta
         with open(subfile, "w", encoding="UTF8") as file:
             file.writelines(lines)
 
-print("Updating metadata")
+print("Updating metadata...")
 update_meta(folder)
+print("Building...")
+os.chdir(folder)
+os.system("mkdocs build")

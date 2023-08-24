@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Add keyboard shortcuts to Duik functions
 
 Using the API, you can quickly write just a few lines to create [*headless scripts*](headless-scripts.md). These scripts can then easily be assigned keyboard shortcuts in *After Effects*.

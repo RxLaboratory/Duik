@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Create a headless script with Duik
 
 Using the Duik API, it is very easy to create simple headless scripts, which don't use any user interface, to automate your workflow, or to[ **assign keyboard shortcuts**](shortcuts.md) to Duik features or your own automations for example.

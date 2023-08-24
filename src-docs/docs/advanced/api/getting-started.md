@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Getting started
 
 ## Download the API

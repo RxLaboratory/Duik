@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Duik API - Character rigging and animation for *After Effects*
 
 > **The Application Programming Interface of the comprehensive rigging and animation tool set.**

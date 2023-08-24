@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/21)
-
 *An article by Nicolas "Duduf" Dufresne, lead developer of* Duik *.*
 
 ![](../img/logos/free-as-freedom.png)

@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/12/11)
-
 # ![](../../img/duik/icons/bones.svg) Bones
 
 ![](../../img/duik/bones/bones_demo.gif)

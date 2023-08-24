@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/12/11)
-
 # ![](../../img/duik/icons/nla.svg) Non-Linear Animation
 
 Using the *Non-Linear Animation* tool, abreviated as ***NLA***, you can edit animation clips the same way you would edit video clips in a non-linear editing sotware (*NLE*) like *Adobe Premiere* or *Avid Media Composer* for example, but right into *After Effects*, keeping all your animation editable at any time.

@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/20)
-
 With the previous version of *Duik*, the 16<sup>th</sup>, we decided to not only use a version number but also to give major versions an actual name.
 
 This was the opportunity to say something, to choose a name with an important meaning. [We decided to name *Duik 16* in tribute to **Bassel Khartabil Safadi**](bassel.md)[^1].

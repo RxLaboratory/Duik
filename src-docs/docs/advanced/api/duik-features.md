@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Duik features in the API
 
 Almost all features of Duik are available as very simple functions in the API.

@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/12/07)
-
 # ![](../../img/duik/icons/extract.svg) Controllers ▹ Extract
 
 Extracts all controllers from the selected precomposition, to allow the animator to manipulate the rig directly from the containing composition.

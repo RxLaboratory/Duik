@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2023;updated:2023/01/28)
-
 # Credits
 
 Duik - which is and stays free - could not exist without [**your support**](http://donate.rxlab.info) and contributions. **Many thanks to all people who made this possible**.

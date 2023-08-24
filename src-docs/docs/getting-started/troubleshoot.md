@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/22)
-
 # Troubleshooting
 
 If you run into any problem with Duik, here are a few tips to help you fix your issues by yourself.

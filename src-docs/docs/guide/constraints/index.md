@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2023)
-
 # ![](../../img/duik/icons/constraints.svg) Links and Constraints
 
 The core of a rig are the links and constraints between the bones, the layers or the properties. You can view the constraints as the strings and mechanisms which drive a puppet; the [bones](../bones/index.md) are the armature, the handles are the animation [controllers](../controllers/index.md).
