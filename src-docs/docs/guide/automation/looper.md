@@ -15,3 +15,6 @@ All interpolations are deactivated to keep only the extrapolation, set to a *Cyc
 ![](../../img/duik/automation/looper-effect.png)
 
 ▷ Read the *[Animation](../animation/index.md) / Tools / [Interpolator](../animation/tools/interpolator.md)* for more information.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

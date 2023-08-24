@@ -18,3 +18,5 @@
 - Before running complex processes, by default Duik asks you to **hide the layer handles** to make things (much) faster. If you find this annoying, or if you just never enable the layer handles, like a true pro, you can disable these alerts.
 
 Don't forget to update Duik! We release updates quite regularly to fix bugs and improve the performance, while also adding new stuff.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

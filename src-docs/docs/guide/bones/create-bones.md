@@ -86,6 +86,9 @@ If **layers** are selected, without any other property, **one armature will be c
 
     Internal unique identifiers are associated with the armatures, which won’t be updated when you copy or duplicate the armatures in After Effects. The Auto-rig and other rigging tools in Duik need these identifiers to work correctly and may fail if they are not set properly. The Duplicate tool does this.
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_C03_boneEffect__EN_720.mp4)  
+*This video is part of __the official comprehensive video course about Duik Ángela__*
+
 [^1]: [***Hominoids***](https://en.wikipedia.org/wiki/Ape) (Hominoidea) are a branch of tailless anthropoid primates native to Africa and Southeast Asia. They are distinguished from other primates by a wider degree of freedom of motion at the shoulder joint. There are two extant branches of the superfamily Hominoidea: the gibbons, or lesser apes; and the hominids, or great apes (orangutans, gorillas, chimpanzees, humans).
 
 [^2]: [***Tetrapods***](https://en.wikipedia.org/wiki/Tetrapod) are four-limbed vertebrate animals constituting the superclass Tetrapoda. It includes amphibians, reptiles, dinosaurs, birds, mammals and other extinct classes.
@@ -93,3 +96,5 @@ If **layers** are selected, without any other property, **one armature will be c
 [^3]: Read the section entitled [*Meta-rigs and OCO*](../oco/index.md)
 
 [^4]: Read the section [*Constraints / Pins*](../constraints/pins.md)
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

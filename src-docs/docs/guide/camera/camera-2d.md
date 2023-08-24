@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/2d_camera.svg){style="width:1em;"} 2D Camera
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_N03_2DCam__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 With 2D animation, it is usually easier to animate the positions of 2D layers than to set up a 3D space using cameras to create camera movements.
 
 The 2D camera tool creates virtual 2D multiplane cameras to easily animate all types of camera movements, using only 2D layers[^multiplane].
@@ -117,3 +120,6 @@ You can also animate the amplitude of the camera shake to make the camera shake 
     You shouldn't have to change much the frequency values which should be the same for almost all cameras.
 
 As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure mutliple controllers use the same seed to generate the same motion).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

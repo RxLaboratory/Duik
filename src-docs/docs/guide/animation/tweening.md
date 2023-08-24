@@ -1,5 +1,8 @@
 # Tweening
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J04_Tweening__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The first part of the animation panel is made of some tweening tools, especially, but not only, useful during the usual first steps of the animation process, blocking[*](../../misc/glossary.md), when animating with *hold* keyframes[^process].
 
 ![](../../img/illustration/Winsor_McCay_(1918)_The_Sinking_of_the_Lusitania_cel_(Lusitania_rolling_over).png)  
@@ -123,3 +126,5 @@ By default, Duik works only with **selected layers**, but you can tell it to use
 
     - Animate in blocks, with keyframes on hold, where the emotion is more important; this eases the creation of expressive and detailed posing of the character. The shape is more important than the movement in this case.
     - Animate with curves when the movement is more important, for dynamic actions, like waling, fighting, falling, running... In this case, you want to focus on the timing and rythm first, and this is easier with a curve editor.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

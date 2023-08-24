@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/camera_rig.svg){style="width:1em;"} Camera Rig
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_N02_3DCam__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 If you need to use 3D cameras, you can rig them in a simple way using Duik’s Camera Rig. This rig also includes camera behaviors to easily simulate real cameras and the way they're manipulated (hand, shoulder, tripod, etc.).
 
 ![](../../img/illustration/Cinematograf-Project3.jpg)  
@@ -62,3 +65,6 @@ You can also animate the amplitude of the camera shake to make the camera shake 
     You shouldn't have to change much the frequency values which should be the same for almost all cameras.
 
 As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure mutliple controllers use the same seed to generate the same motion).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

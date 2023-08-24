@@ -24,3 +24,5 @@ Use the *Curve parameters* section to adjust how they curve, on the root or the 
 Just like the envelops, you can further customize these noodles by just modifying and adding contents in the bone shape layer.
 
 ![](../../img/duik/bones/noodle_content.png)
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

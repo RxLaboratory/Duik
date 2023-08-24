@@ -5,3 +5,5 @@ Select one property and click on the ![](../../../img/duik/icons/help.svg){style
 ![](../../../img/duik/constraints/propinfo.png)
 
 Check the **Hi-precision** checkbox to sample the values and velocities more precisely, but be careful as this can be quite long in very long compositions.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -8,3 +8,5 @@
 
 !!! warning
     This tool works well even if the layers are parented to other layers, but if there is non-uniform scale on the parents, they can not be properly aligned in scale, as the induced deformation can not be reproduced using only After Effects transformations.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

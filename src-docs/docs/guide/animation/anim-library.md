@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/library.svg){style="width:1em;"} Animation library
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J07_AnimLib__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The animation library is a quick and easy way to store, manage and share reusable animations.
 
 It's both a panel in Duik, and a folder on your disk, so that it can easily be synchronized[^sync] and shared.
@@ -84,3 +87,6 @@ Some metadata, like the favorites and history, is stored in the `Duik_animation_
 Thumbnails are stored as `.png` files named after the animation `.duio` file.
 
 
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

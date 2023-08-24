@@ -26,3 +26,6 @@ A higher value will create more keyframes (adding keyframes in between actual fr
 
 !!! tip
     With the *Precise* mode, a value lower than `1.0` will create less keyframes than one per frame.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

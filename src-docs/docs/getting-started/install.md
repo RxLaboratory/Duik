@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/21)
-
 # Install Duik
 
 ## Supported versions of After Effects
@@ -91,3 +89,5 @@ Select the language of your choice and click the *Apply* button.
 
 [^2]: *Esperanto* is the world's most widely spoken constructed international auxiliary language. Created by Warsaw-based ophthalmologist L. L. Zamenhof in 1887, it was intended to be a universal second language for international communication, or "the international language" (la lingvo internacia).  
     Read more on Wikipedia: [en.wikipedia.org/wiki/Esperanto](https://en.wikipedia.org/wiki/Esperanto)
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

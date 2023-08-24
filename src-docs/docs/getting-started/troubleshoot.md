@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/22)
-
 # Troubleshooting
 
 If you run into any problem with Duik, here are a few tips to help you fix your issues by yourself.
@@ -53,3 +51,5 @@ If Duik still does not work correctly, follow the next steps.
 Feel free to [come and have a chat](http://chat.rxlab.info)[^1] with us, so we can easily talk about the issue. This is the only place where you'll get a response for your issues, we do not provide support on any other platform.
 
 [^1]: Here's the link to use to contact us: [chat.rxlab.info](http://chat.rxlab.info)
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

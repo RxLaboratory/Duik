@@ -22,3 +22,5 @@ As usual, it's much easier to animate the rotation of the available controllers 
 
 !!! tip
     When rigging insects, it's better to rig the abdomen as a tail, and use a simple spine rigging for just the thorax and the head; that makes more sense in terms of animation.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -111,3 +111,5 @@ Public domain.*{style="font-size:0.8em;"}
 [^ik]: *cf. [Links and Constraints](../constraints/index.md) / [Kinematics](../constraints/kinematics.md)*.
 
 [^tags]: You can use the [Layer Manager](../tools/layers.md) or the [Controller Settings](../controllers/tools/settings.md).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

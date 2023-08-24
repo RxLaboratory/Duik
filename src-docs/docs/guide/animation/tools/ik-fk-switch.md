@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/ik_fk_switch.svg){style="width:1em;"} IK / FK Switch
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J03_AnimTools02__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *IK/FK Switch* is an easy way to switch between IK and FK during the animation, if the layers have been rigged by Duik.
 
 1. **Select** the controller of an IK made with Duik
@@ -16,3 +19,6 @@ You can `[Shift] + [Click]` the ![](../../../img/duik/icons/ik_fk_switch.svg){st
 ![](../../../img/duik/animation/ikfk.png)
 
 There you can manually snap the FK values on the IK or the opposite, without actually switching between IK and FK, if you should need it.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

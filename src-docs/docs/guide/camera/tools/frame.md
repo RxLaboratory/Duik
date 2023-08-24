@@ -1,8 +1,14 @@
 # ![](../../../img/duik/icons/frame.svg){style="width:1em;"} Framing grids and guides.
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_N01_FramingGuides__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 This very simple tool creates different types of grids and guides on a Shape Layer, which you can extensively configure, to help the composition of the image.
 
-![](../../../img/illustration/frame.gif)
+![](../../../img/examples/lidl.png)  
+*The Carefree Dragonfly,  
+Nicolas Dufresne, 2022   
+All Rights Reserved.*{style="font-size:0.8em;"}
 
 ![](../../../img/duik/cameras/defaultFrameGuide.PNG)  
 *These are the default frame and guides added when you apply the preset.*
@@ -47,3 +53,6 @@ You can temporarily hide a specific grid or guide by disabling the corresponding
 ![](../../../img/duik/cameras/isometricGrid.PNG)
 
 ![](../../../img/duik/cameras/goldenRectangle.PNG)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

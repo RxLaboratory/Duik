@@ -35,3 +35,5 @@ Each value in the list is blended in the previous slot according to the opacity 
 [^1]: *cf.* *[Constraints / Connector](../connector.md)*.
 
 [^2]: *cf.* *[Constraints / Pins](../pins.md)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

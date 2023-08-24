@@ -43,3 +43,6 @@ The main tools on the main part of the panel are all the procedural animation to
     - [Bake expressions](tools/bake.md)
     - [Bake composition](tools/bake-comp.md)
     - [Time remap](tools/time-remap.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

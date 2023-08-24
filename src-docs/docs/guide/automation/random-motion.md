@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/random.svg){style="width:1em;"} Random motion
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F08_Random__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 You can use this tool to generate an **animated random value** for some properties.
 
 To the contrary of the [*Wiggle*](wiggle.md), this random motion is not interpolated: each value is completely random and does not evolve from the previous value. This makes the value jump from one value to the other without interpolation[*](../../misc/glossary.md); this is very useful for faking traditionnal animation for example, to make cels jump around a bit like if they weren't perfectly aligned when scanned, or to generate very nervous random movements.
@@ -42,3 +45,6 @@ Before adding the random motion to the selected properties, you can set some opt
     - ![](../../img/duik/icons/individual_control.svg){style="width:1em;"} ***Individual controls***: create an effect for each selected property.
 
 [^randomize]: *cf. [Automation](index.md) / Tools / [Randomize](tools/randomize.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

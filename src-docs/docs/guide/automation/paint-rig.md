@@ -22,3 +22,6 @@ The ***Start***, ***End***, ***Color*** and ***Diameter*** paramaters work like 
 You can change how this ramp works in the ***Interpolation*** section.
 
 The order of the strokes can be changed at any time by reordering them in the layer stack.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

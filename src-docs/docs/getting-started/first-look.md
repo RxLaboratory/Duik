@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/07/21)
-
 # First Look
 
 ## How Duik works
@@ -191,3 +189,5 @@ This can sometimes be a bit tedious, but future versions of Duik will include to
 [^dugr]: Duik works hand in hand with another tool called ***DuGR***, which groups layers. You can get it on [rxlaboratory.org/tools/dugr](http://rxlaboratory.org/tools/dugr) and read its complete documentation on [dugr.rxlab.guide](http://dugr.rxlab.guide).
 
 [^aescripts]: Available on [aescripts.com](https://aescripts.com).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/wiggle.svg){style="width:1em;"} Wiggle
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F04_Wiggle__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *Wiggle* makes the properties… wiggle.
 
 ![](../../img/examples/carpes.gif)  
@@ -49,3 +52,6 @@ Before adding the wiggle to the selected properties, you can set some options in
 - Controls  
     - ![](../../img/duik/icons/unified_control.svg){style="width:1em;"} ***Unified control***: create a single effect for all selected properties.
     - ![](../../img/duik/icons/individual_control.svg){style="width:1em;"} ***Individual controls***: create an effect for each selected property.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

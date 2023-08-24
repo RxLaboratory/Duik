@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/interpolator.svg){style="width:1em;"} Interpolator
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J02_Interpolator__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *Interpolate* help you interpolate[*](../../../misc/glossary.md) (and extrapolate[*](../../../misc/glossary.md)) your keyframe values with handy methods other than the usual Bézier and linear functions, or `loopIn()` and `loopOut()` expressions.
 
 ![](../../../img/illustration/Carl_Friedrich_Gauss_Notizblatt_mit_der_Zeichnung_einer_unbekannten_Frau_1804.jpg)  
@@ -193,3 +196,6 @@ With After Effects by default, colors are interpolated in an RGB colorspace, and
 - **Combined RGB SL**: this mode interpolates the Saturation and Luminosity separately, and uses an RGB interpolation to generate the interpolated Hue, then converts back everything to RGB. The result is slightly different from the *Shortest-path HSL* and depending on the colors to be interpolated may be a bit better or feel more dynamic.
 
 The result depends a lot on the colors to be interpolated and how different they are. The best is to try all the different modes to see which fits better to your needs.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

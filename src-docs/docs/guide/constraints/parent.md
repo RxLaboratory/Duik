@@ -73,6 +73,9 @@ Most of the time, it's also easier to animate the weight using the *Hold* interp
 
 ## ![](../../img/duik/icons/parent_across_comp.svg){style="width:1em;"} Parent across compositions
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_G07_CnnctrArmPAC__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 Pre-compositions are great! They improve performance, they help you keep the compositions and timeline tidy by limiting the number of layers in the same composition. But using them when rigging characters, or for any complex setup can become really complicated especially because of parenting. In After Effects, you can't precompose layers without losing parenting if the parent or child is not included in the new precomp.
 
 With this *Parent across compositions* feature, you can now parent a child layer from a precomposition to a parent layer in the containing composition, and vice versa.
@@ -101,3 +104,5 @@ Duik creates a *Locator*[*](../../misc/glossary.md)&nbsp;[^4] in each compositio
 [^3]: *cf.* *[Automation / Toools / Bake expressions](../automation/tools/bake.md)*
 
 [^4]: *cf.* *[Constraints / Tools / Locator](tools/locator.md)*
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Create a headless script with Duik
 
 Using the Duik API, it is very easy to create simple headless scripts, which don't use any user interface, to automate your workflow, or to[ **assign keyboard shortcuts**](shortcuts.md) to Duik features or your own automations for example.
@@ -112,3 +110,5 @@ You can now use this script to assign a **[keyboard shortcut](shortcuts.md)** fo
 
 [^3]:
     In After Effects scripts, comments start with `//`. You can also create a comment block: start it with `/*`, write the comment which can span on several lines, and close it with `*/`.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

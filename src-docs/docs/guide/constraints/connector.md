@@ -371,3 +371,5 @@ To arrange the available shapes in a grid, the process is almost the same as for
 [^3]: *cf.* [*Constraints / Pins*](pins.md).
 
 [^4]: *cf.* [*Automation / Tools / List*](../automation/tools/list.md).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

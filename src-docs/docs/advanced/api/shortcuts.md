@@ -1,6 +1,7 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Add keyboard shortcuts to Duik functions
+
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_B04_Shortcuts__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
 Using the API, you can quickly write just a few lines to create [*headless scripts*](headless-scripts.md). These scripts can then easily be assigned keyboard shortcuts in *After Effects*.
 
@@ -43,3 +44,5 @@ Then type the name of the script in the search field to locate it, and just clic
 
 [^1]:
     Once you've copied the API in the folder, you can add as many scripts using it as you wish, they will all share the same file. Be careful though, if different scripts need different versions of the API, you may have to rename the API file to store the different versions in the same folder, and update the `#include` line accordingly.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

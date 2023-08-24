@@ -87,3 +87,5 @@ Joseph Depierre, 1889
 Public domain.*{style="font-size:0.8em;"}
 
 [^1]: *cf.* *[Constraints](index.md) / [Pins](pins.md)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

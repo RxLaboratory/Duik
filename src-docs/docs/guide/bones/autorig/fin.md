@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/fin.svg){style="width:1em;"} Fins
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E09_Fish__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 ![](../../../img/illustration/fish_whale_00000.png)
 
 ![](../../../img/illustration/fish_bones_00000.png)
@@ -24,3 +27,5 @@ The curve property can be used to adjust the general shape of the fin, but shoul
 The *Overlap* section of the effect can be used to adjust the fin parameters, especially its flexibility and the resistance of the water. Duik will adjust the flexibility of each fishbone according to its position relatively to the main bone of the fin. Some randomness can be added to these parameters so the animation feels more natural.
 
 [^1]: *cf.* [*Constraints / Kinematics (IK and FK)*](../../constraints/kinematics.md).
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

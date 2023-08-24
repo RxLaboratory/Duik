@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/swink.svg){style="width:1em;"} Swink
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F05_Swink__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 *Swink* stands for *swing or blink*[^pun]. It can be used to make a property oscillate between two values, with many options to control the interpolation[*](../../misc/glossary.md) between these values. For example, it makes it easy to animate a pendulum or a light blinking.
 
 [^pun]: We've had a hard time translating this term in other languages, but we've found *Clignancement* for "Clignottement ou balancement" in French, and *Parpalancear* for "Parpadear o balancear" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!
@@ -44,3 +47,6 @@ Finally, you can adjust the ***interpolation***[*](../../misc/glossary.md) betwe
 - *Speed up (exponential)*  does the opposite of *Slow down*, making the motion start very slowly and speeding up as much as possible.
 
 With the *Smooth*, *Natural*, *Slow down* and *Speed up* interpolations, you can use the ***Rate*** value to adjust the easing (acceleration and deceleration rate) of the motion.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

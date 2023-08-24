@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/wheel.svg){style="width:1em;"} Wheel
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F06_Wheel__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *Wheel* automates the rotation of layers according to their translation[^formula].
 
 ![](../../img/illustration/Design_for_Four_Wheel_Dog_Cart,_no._3928_MET_DP882482.jpg)  
@@ -41,3 +44,6 @@ When using the *curved* mode and you need motion blur, you may increase a bit th
 [^slow]: Because there's no way to reliably store any data with expressions in After Effects, Duik actually has to re-compute everything for each frame of the composition. This means that for each frame, it needs to add up all previous frame values. The total number of values to be computed for a given composition is a [*triangular number*](http://en.wikipedia.org/wiki/Triangular_number) (see [en.wikipedia.org/wiki/Triangular_number](http://en.wikipedia.org/wiki/Triangular_number)) given by the formula `(f² + f) / 2` where `f` is the number of frames in the composition. Because of the `f²` in the formula, this number grows very fast with the duration of the composition.
 
 [^slow2]: As stated above, the number of values to compute with a cumulative expression like the curved-trajectory wheel is a triangular number which grows fast with the number of frames in the composition. When you change the *Motion Blur Precision*, it's the same as doubling, tripling, etc. the number of frames of the composition (the expression has to sub-sample the frames). When set to `2`, that means the total number of values to be computed is `( (2f)² + 2f ) / 2` which is more than the double, `3`, `( (3f)² + 3f ) / 2` is even worse, etc.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

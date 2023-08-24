@@ -21,3 +21,5 @@ Apart from their appearance and the presence of envelops and bones, both bone ty
 You can use the other bone settings to change the appearance of the selected bones. The *![](../../../img/duik/icons/eye_dropper.svg){style="width:1em;"} Pick selected layer* button will pick all values from the selected bone to easily apply the same settings to other bones.
 
 [^1]: Read the [*Advanced / Performance*](../../../advanced/performance.md) section for more tips about how to improve performance in After Effects and using Duik.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

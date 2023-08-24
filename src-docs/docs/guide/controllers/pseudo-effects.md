@@ -47,3 +47,6 @@ People usually use a *Slider* or *2D Slider* controller to rig and conntrol head
 Just connect the angles as you would connect the slider controllers, to the animation of the head turn.
 
 [^1]: *cf.* *[Constraints](../constraints/index.md)* / *[Connector](../constraints/connector.md)*.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

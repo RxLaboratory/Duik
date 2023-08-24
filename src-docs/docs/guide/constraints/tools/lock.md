@@ -7,3 +7,6 @@ Just remove the expression to unlock the property.
 
 !!! note
     The expression which is created only consists in the current value of the property, effectively locking it to this value.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

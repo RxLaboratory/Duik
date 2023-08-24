@@ -85,3 +85,6 @@ This being said, it's not actually mandatory to make a financial contribution. Y
 ## Do you even have the right to sell a program released under the GNU General Public License?
 
 Yes, the right to sell copies is part of the definition of free software, and the GNU General Public License.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

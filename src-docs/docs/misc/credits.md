@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2023;updated:2023/01/28)
-
 # Credits
 
 Duik - which is and stays free - could not exist without [**your support**](http://donate.rxlab.info) and contributions. **Many thanks to all people who made this possible**.
@@ -117,3 +115,6 @@ Adam Aguirre, Adam Buritsch, Adam Knight, Adrien Boutin, Adrien du Repaire, aemb
 - 261 Duik 16 indiegogo backers
 
 > Thank you! Without your generous support, *Duik* would not exist.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

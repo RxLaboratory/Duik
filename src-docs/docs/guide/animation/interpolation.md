@@ -1,5 +1,8 @@
 # Temporal Interpolation
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J06_Interpo__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The second part of the animation panel contains several temporal interpolation tools. It's where you can quickly add or edit keyframe types, and quickly set the *easing* values or even copy and paste them.
 
 ![](../../img/illustration/Lanature1882_praxinoscope_projection_reynaud.png)  
@@ -96,3 +99,6 @@ To remove a preset, select it in the list and click the ![](../../img/duik/icons
 [^inandout]: To the contrary of other animation software, in After Effects the interpolation is set on a single keyframe, around it, and "*in*" means *arriving in the keyframe*, *before* it, "*out*" means *getting out of the keyframe*, *after* it. That's what's called the *keyframe ease*.  
 In other animation software, the interpolation is defined between two keyframes (which is more logical and makes more sense mathematically speaking: there can't be any interpolation for a single keyframe, one always needs *at least two* keyframes to interpolate).  
 In this latter case, "*in*" means *getting in the interpolation*, that is *after* the first keyframe, what After Effects would call "*ease out*", and "*out*" is the opposite, what After Effects would call "*ease in*". ¯\\_(ツ)_/¯
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

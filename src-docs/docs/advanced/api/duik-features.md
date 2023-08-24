@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/06/25)
-
 # Duik features in the API
 
 Almost all features of Duik are available as very simple functions in the API.
@@ -46,3 +44,5 @@ The `wiggle` method is in the `Automation` namespace of `Duik`:
     // 3. An array of properties to setup
     Duik.Automation.wiggle( true, true, someProperties );
 ```
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

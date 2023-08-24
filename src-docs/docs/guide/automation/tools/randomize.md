@@ -43,3 +43,6 @@ If you **split** the multi-dimensional values, three axis are shown; you can jus
 With keyframes, you can either randomize their **times** (and move them in the timeline) or their **values**.
 
 If you **split** the multi-dimensional values, three axis are shown; you can just ignore the third axis if you're randomizing a 2D value. In case of colors, the three axis represent the Red, Green and Blue channels, and are ranging from `0.0` to `1.0` (or more in case of 32-bits-per-channel projects).
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

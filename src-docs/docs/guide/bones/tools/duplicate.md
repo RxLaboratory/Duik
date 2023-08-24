@@ -12,3 +12,6 @@ Using this tool also keeps your timeline tidy as Duik will keep armatures groupe
 
 ![](../../../img/duik/bones/duik_duplicate.png)  
 *Duplicating with Duik keeps the timeline tidy.*
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

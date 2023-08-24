@@ -36,3 +36,5 @@ Don't forget that bones are just standard shape layers (with a few expressions) 
 ![](../../img/duik/bones/envelop_content.png)
 
 [^1]: Read the section [*Bones / Bone Tools / Settings*](tools/settings.md)
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

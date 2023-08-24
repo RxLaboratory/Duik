@@ -1,9 +1,11 @@
 # ![](../../../img/duik/icons/arm.svg){style="width:1em;"} ![](../../../img/duik/icons/leg.svg){style="width:1em;"} Arms and legs
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E06_Leg__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 ![](../../../img/duik/bones/leg_armatures.png)
 
 ![](../../../img/illustration/armslegs.png)
-
 
 For both [tetrapods](https://en.wikipedia.org/wiki/Tetrapod)[^1] and [arthropods](https://en.wikipedia.org/wiki/Arthropod)[^2] (i.e. all legged animals), the rig for arms, front legs and back legs is similar; the only difference is that for tetrapods, there may be a shoulder bone at the root of the limb, and of course the side of the elbow on the front leg and the knee on the back leg are reversed.
 
@@ -149,3 +151,6 @@ The arthropod rig, in the current version of Duik, is actually similar to the un
 [^2]: [***Arthropods***](https://en.wikipedia.org/wiki/Arthropod) are invertebrates with segmented bodies and jointed limbs. It includes arachnids (spiders, scorpions, ticks, mites...), myriapods (millipedes...), crustaceans (shrimps, crabs, lobsters...), and hexapods (insects).
 
 [^3]: *cf.* [*Bones / Create bones*](../create-bones.md)
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

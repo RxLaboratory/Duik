@@ -13,3 +13,6 @@ Duik controllers may be standard After Effects shape layers, with a bunch of exp
 ▷ Read the [*Advanced / Performance*](../../../advanced/performance.md) section for more tips about how to improve performance in After Effects and using Duik.
 
 [^1]: *cf. [Controllers](../index.md) / [Extract Controllers](../extract.md)*
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

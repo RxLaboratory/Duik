@@ -17,3 +17,5 @@ You can tweak the effector with the effect on the texture layer.
 ![](../../img/duik/automation/effector-map-effect.png)
 
 [^effctr]: *cf. [Automation](index.md) / [Effector](effector.md)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -1,5 +1,8 @@
 # ![](../img/dusan/check.svg){style="width:1em;"} Sanity Tests
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_O05_DuSan__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 Duik displays the project Sanity level through the bottom right icon. It runs a few tests regularly and changes the color of the icon depending on the results.
 
 - ![](../img/dusan/check.svg){style="width:1em;"} OK
@@ -32,3 +35,6 @@ You can also adjust each test settings with the ![](../img/duik/icons/options.sv
 - ***Up time***: For performance reasons, and because of memory leaks, it is important to restart After Effects (and your computer!) regularly.
 
 When possible, the ![](../img/dusan/fix.svg){style="width:1em;"} *Fix Now* button automatically fix the issues in a single click.
+
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

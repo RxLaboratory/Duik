@@ -1,5 +1,3 @@
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022;updated:2022/12/02)
-
 # ![](../../../img/duik/icons/link_to_bone.svg) Bone tools ▹ Link Art
 
 The *Link Art* tool tries to automagically __parent the artwork layers and [*Duik Pins*](../../constraints/pins.md) to the bones__.
@@ -55,3 +53,5 @@ Distance between the layers and bones is measured, using the anchor points. Laye
 ![](../../../img/duik/bones/link_art_distance3.png)  
 *__Wrong__: The anchor point is too far from the anchor point of the bone*  
 *(the distance is higher than the evelop size parameter).*
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

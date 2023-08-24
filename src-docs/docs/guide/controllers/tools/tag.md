@@ -8,3 +8,5 @@ Duik will add a new layer marker on the first frame of the layer, named *Control
 [^1]: *cf.* *[Controllers](../index.md) / [Extract Controllers](../extract.md)*.
 
 [^2]: *cf.* *[Bones and Auto-Rig](../../bones/index.md) / [Auto-Rig](../../bones/autorig/index.md)*.
+
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)
