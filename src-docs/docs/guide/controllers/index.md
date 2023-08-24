@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/controller.svg){style="width:1em;"} Controllers
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E03_Ctrls__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 Using the [Auto-rig](../bones/autorig/index.md)&nbsp;[^1], and a set of [constraints](../constraints/index.md)[*](../../misc/glossary.md), what you end up with are *controllers*[*](../../misc/glossary.md) to drive the animation. You animate the controllers, they drive the [bones](../bones/index.md)[*](../../misc/glossary.md) through the constraints, et voilà! Your character moves.
 
 ![](../../img/illustration/Ambroise_Pare_prosthetics_mechanical_hand_Wellcome_L0023364.png){style="max-height:720px"}  

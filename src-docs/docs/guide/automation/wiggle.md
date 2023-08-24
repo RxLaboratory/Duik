@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/wiggle.svg){style="width:1em;"} Wiggle
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F04_Wiggle__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *Wiggle* makes the properties… wiggle.
 
 ![](../../img/examples/carpes.gif)  

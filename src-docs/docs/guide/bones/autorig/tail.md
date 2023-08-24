@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/tail.svg){style="width:1em;"} ![](../../../img/duik/icons/hair_strand.svg){style="width:1em;"} Tails and hair
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E08_Tails__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 ![](../../../img/illustration/tail_00000.png)
 
 ![](../../../img/illustration/tail_bones_00000.png)

@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/copy.svg){style="width:1em;"} ![](../../../img/duik/icons/paste.svg){style="width:1em;"} Copy, cut and paste animation
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J01_AnimTools01__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 You can copy or cut and paste animations from multiple layers at once, and from one composition to another.
 
 - **Select** some keyframes

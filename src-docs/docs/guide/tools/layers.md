@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/composition_settings.svg){style="width:1em;"} Layer Manager
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_O02_LayerTools__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The layer manager is there to help you create, rename, and tag layers.
 
 The layer tags set by Duik are actually markers on the first frame of the layer, showing the type of the layer and other useful information. They also contain more data hidden from the user but needed by some tools like the auto-rig.

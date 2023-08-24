@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/select.svg){style="width:1em;"} Select Keyframes
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J01_AnimTools01__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 *Select keyframes* is a very useful tool to quickly select a lot of keyframes together in the timeline.
 
 You can `[Shift] + [Click]` the button to access some options.

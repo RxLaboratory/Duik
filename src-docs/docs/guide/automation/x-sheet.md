@@ -1,5 +1,8 @@
 # ![](../../img/duik/icons/x_sheet.svg){style="width:1em;"} X-Sheet
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J10_XSheet__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The *X-Sheet* (read *cross sheet*), a.k.a. *exposure sheet* or *dope sheet* is a tool to control the animation exposure[*](../../misc/glossary.md) over time. It is a very useful tool when compositing traditional (cel[*](../../misc/glossary.md)) animation or to fake traditional animation. It can change the framerate of the composition or of the properties at any time, mixing framerates in the same composition, for different layers or at different times.
 
 ![](../../img/illustration/Winsor_McCay_(1918)_The_Sinking_of_the_Lusitania_-_signed_cel_(shadow_of_U-Boat).jpg)  

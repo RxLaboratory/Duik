@@ -1,5 +1,8 @@
 # Temporal Interpolation
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J06_Interpo__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The second part of the animation panel contains several temporal interpolation tools. It's where you can quickly add or edit keyframe types, and quickly set the *easing* values or even copy and paste them.
 
 ![](../../img/illustration/Lanature1882_praxinoscope_projection_reynaud.png)  

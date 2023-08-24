@@ -106,6 +106,9 @@ The effect on the controller allows you to customize the control.
 
 ### 2-layer chain
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E04_Arm__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 With two layers, both layer rotations are automated to form a triangle between the two joints and the controller; this is very natural for arms and legs.
 
 ![](../../img/duik/constraints/2l-ik_00000.png)

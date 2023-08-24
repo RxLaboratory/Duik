@@ -10,6 +10,9 @@ With the support of OCO, Duik now also includes a lot of Meta-rigs, predefined a
 
 ## The Meta-rig Library
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_C08_OCO__EN_720.mp4)  
+*This video is part of __the official comprehensive video course about Duik Ángela__*
+
 The OCO Panel in Duik is a **library of meta-rigs**, to help you create armatures for all kind of animals in a single click.
 
 These meta-rigs are sorted into categories, corresponding to the type of animals.

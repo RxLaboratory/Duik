@@ -144,6 +144,9 @@ The Kleaner does a lot of things for you, effectively applying some general anim
 
 ### Anticipation
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_F10_Kleaner__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 Anticipation[*](../../misc/glossary.md) is used to prepare the audience for an action, and to make the action appear more realistic. A dancer jumping off the floor has to bend the knees first; a golfer making a swing has to swing the club back first.
 
 In a more technical way, it's the fact that *before* the actual movement, the object takes the opposite direction to get momentum.

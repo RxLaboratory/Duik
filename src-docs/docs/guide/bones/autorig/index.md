@@ -1,5 +1,8 @@
 # ![](../../../img/duik/icons/autorig.svg){style="width:1em;"} Auto-rig
 
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E01_Autorig__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
+
 The Auto-rig in Duik Ángela is a versatile and smart tool which adapts to a lot of different situations. This makes it the cornerstone of the rigging process in Duik, which can be summarized to:
 
 1. Create Bones
@@ -32,6 +35,9 @@ This being said, if you need or want to add and use a specific controller, you j
     Always have a look in the effects of the Controllers after having run the Auto-rig! Depending on what has been rigged, there may be a lot of options there.
 
 ## Auto-rig options
+
+![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E02_RigOptions__EN_720.mp4)  
+*This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
 ![](../../../img/duik/bones/autorig_options.png)
 
