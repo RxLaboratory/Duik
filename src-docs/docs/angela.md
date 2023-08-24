@@ -15,9 +15,9 @@ __*María Ángela Salazar Murillo* was a Colombian activist of African descent, 
 
 Her work was primarily focused on improving the rights of small-scale banana producers in Urabá, Colombia. This included making the city's child workers literate.
 
-She also worked with the demobilization of the Guerrillas and *Paramilitary Forces* in the region, helping former combatants to commit to the peace process.
+She also worked with the demobilization of the guerrillas and paramilitary forces in the region, helping former combatants to commit to the peace process.
 
-She was particularly involved in the defense of women rights and was member and co-founder of many organizations dedicated to peace and women rights through the 1990's and 2000's, working to seek peace and justice, directly documenting 550 cases, mainly of women victims of the *Paramilitary Forces* in Urabá, Córdoba and Chocó.
+She was particularly involved in the defense of women rights and was member and co-founder of many organizations dedicated to peace and women rights through the 1990's and 2000's, working to seek peace and justice, directly documenting 550 cases, mainly of women victims of the paramilitary forces in Urabá, Córdoba and Chocó.
 
 Ángela was nominated three times for the *Antioqueña de Oro* Award. Recognizing the importance of her work, the Mayor of Apartadó gave her the *Bacota Dorada* in recognition of her work and civic leadership in 2017.
 

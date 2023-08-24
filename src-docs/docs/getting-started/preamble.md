@@ -1,7 +1,9 @@
 # Preamble
 
 ![](../img/examples/mytho01.jpg)  
-*Mythomen, Sébastien Périer*
+*Mythomen,  
+Sébastien Périer, Anthony Ménard, 2018   
+All rights reserved.*{style="font-size:0.8em;"}
 
 Duik is *the* comprehensive animation and rigging tool set for Adobe After Effects.
 
@@ -17,7 +19,10 @@ Duik also has some other useful tools, such as **camera controls**, that are not
 Duik’s comprehensiveness and ease of use have made it [a script used in numerous movies across the world](http://showcase.rxlab.info)[^2]. It has an international success; it is used to create **TV series, advertising, motion design, video games, music videos, short movies and feature films**. It's available in 7 different languages, and it's downloaded more than 16.000 times a month on average.
 
 ![](../img/examples/preamble-comp.png)  
-*1. Parler le fracas, Thomas Fourniret, Jérémy Couturier / 2.The wind in the Reeds, Nicolas Liguori / 3.La Soupe au Caillou, Clémentine Robach*
+*1. Parler le Fracas, Thomas Fourniret, Jérémy Couturier, 2012,  
+2. The Wind in the Reeds, Nicolas Liguori, 2016   
+3. La Soupe au Caillou, Clémentine Robach, 2015  
+All rights reserved.*{style="font-size:0.8em;"}
 
 ## Using this guide
 

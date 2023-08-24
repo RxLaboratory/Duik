@@ -3,7 +3,9 @@
 __Duik is *the* comprehensive animation and rigging tool set for Adobe After Effects.__
 
 ![](img/examples/mytho01.jpg)  
-*Mythomen, Sébastien Périer*
+*Mythomen,  
+Sébastien Périer, Anthony Ménard, 2018   
+All rights reserved.*{style="font-size:0.8em;"}
 
 Duik’s **comprehensiveness**, **ease of use**, **14 years of continuous development** and [**awesome community**](http://membership.rxlab.info)[^1] have made it the leading and the industry standard tool for character animation with After Effects.
 
@@ -23,7 +25,10 @@ ____
 ____
 
 ![](img/examples/preamble-comp.png)  
-*1. Parler le fracas, Thomas Fourniret, Jérémy Couturier / 2.The wind in the Reeds, Nicolas Liguori / 3.La Soupe au Caillou, Clémentine Robach*
+*1. Parler le Fracas, Thomas Fourniret, Jérémy Couturier, 2012,  
+2. The Wind in the Reeds, Nicolas Liguori, 2016   
+3. La Soupe au Caillou, Clémentine Robach, 2015  
+All rights reserved.*{style="font-size:0.8em;"}
 
 ____
 
