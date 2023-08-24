@@ -14,4 +14,4 @@ The result is a composition without any extra layer, without any parenting, and 
 The *Bake Composition* tool has the same options as the *Bake Expressions* tool.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -49,4 +49,4 @@ You can temporarily hide a specific grid or guide by disabling the corresponding
 ![](../../../img/duik/cameras/goldenRectangle.PNG)
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

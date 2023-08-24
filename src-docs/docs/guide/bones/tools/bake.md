@@ -30,4 +30,4 @@ If you plan to use all noodles, including deactivated ones, you can hold the `[C
 [^2]: *cf. [Bones and Auto-Rig / Noodles](../noodles.md)*
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-26)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -151,4 +151,4 @@ The arthropod rig, in the current version of Duik, is actually similar to the un
 [^3]: *cf.* [*Bones / Create bones*](../create-bones.md)
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

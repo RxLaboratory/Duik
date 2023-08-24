@@ -11,4 +11,4 @@ Duik provides a quick and easy way to crop precompositions while keeping them at
 3. You may **remove the mask** if you don't need it anymore.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

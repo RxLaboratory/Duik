@@ -98,4 +98,4 @@ In other animation software, the interpolation is defined between two keyframes 
 In this latter case, "*in*" means *getting in the interpolation*, that is *after* the first keyframe, what After Effects would call "*ease out*", and "*out*" is the opposite, what After Effects would call "*ease in*". ¯\\_(ツ)_/¯
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-19)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

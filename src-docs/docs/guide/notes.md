@@ -28,4 +28,4 @@ Any text typed in the *Composition* mode are saved as a comment on the active co
 General notes are automatically saved in a simple `.txt` file which is located in your `Documents` folder by default. You can open and save any other text file. Duik automatically reloads the previously opened file when you restart After Effects, and there's no need for a *save* button as the text is automatically saved as you type it, to prevent any loss in case of a failure (or if you forget to save...).
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

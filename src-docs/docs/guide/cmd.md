@@ -19,4 +19,4 @@ This panel can effectively replace the whole Duik interface, and is available as
 
 [^individual]: *cf. Introduction / [First Look](../getting-started/first-look.md) / [Individual panels](../getting-started/first-look.md#individual-panels).
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

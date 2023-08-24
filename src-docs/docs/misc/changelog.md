@@ -209,4 +209,4 @@ Finally, new OCO metarigs were included:
 - *Controller extraction* is now faster and more reliable on *After Effects* > 22.0.
 - *Pins* now work better with 3D layers.
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-02)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

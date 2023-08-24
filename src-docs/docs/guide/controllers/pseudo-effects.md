@@ -49,4 +49,4 @@ Just connect the angles as you would connect the slider controllers, to the anim
 [^1]: *cf.* *[Constraints](../constraints/index.md)* / *[Connector](../constraints/connector.md)*.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-26)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

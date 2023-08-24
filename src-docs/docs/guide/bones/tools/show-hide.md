@@ -4,4 +4,4 @@ Click this button to quickly show or hide all the bones of the current compositi
 
 Holding the `[Alt]` key, you can show or hide only the bones which are not selected, keeping the current visibility of the selected bones.
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-12)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

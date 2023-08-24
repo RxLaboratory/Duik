@@ -56,4 +56,4 @@ The *Settings* section is to be used only during the rigging process and should 
 
 [^2]: *cf.* [*Constraints / Kinematics (IK and FK)*](../../constraints/kinematics.md).
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

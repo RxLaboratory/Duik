@@ -40,4 +40,4 @@ For all but the *linear* interpolations, you can adjust the shape with the ***ra
 
 Of course, you can also set the duration of the sequence, in frames.
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

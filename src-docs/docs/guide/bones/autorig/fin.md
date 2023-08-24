@@ -25,4 +25,4 @@ The *Overlap* section of the effect can be used to adjust the fin parameters, es
 
 [^1]: *cf.* [*Constraints / Kinematics (IK and FK)*](../../constraints/kinematics.md).
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-12)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

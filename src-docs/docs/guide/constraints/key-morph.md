@@ -98,4 +98,4 @@ After the Key Morph creation, you can still edit, add or remove key poses.
 
 [^2]: *cf. [Links & Constraints](index.md) / [Connector](connector.md)*.
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-21)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

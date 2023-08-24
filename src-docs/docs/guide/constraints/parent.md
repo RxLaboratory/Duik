@@ -102,4 +102,4 @@ Duik creates a *Locator*[*](../../misc/glossary.md)&nbsp;[^4] in each compositio
 
 [^4]: *cf.* *[Constraints / Tools / Locator](tools/locator.md)*
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

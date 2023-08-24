@@ -3,4 +3,4 @@
 ▷ *cf [Automation](../automation/index.md) / [X-Sheet](../automation/x-sheet.md)*.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

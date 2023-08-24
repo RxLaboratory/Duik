@@ -45,4 +45,4 @@ The main tools on the main part of the panel are all the procedural animation to
     - [Time remap](tools/time-remap.md)
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

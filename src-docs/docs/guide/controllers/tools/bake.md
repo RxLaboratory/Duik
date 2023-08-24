@@ -15,4 +15,4 @@ Duik controllers may be standard After Effects shape layers, with a bunch of exp
 [^1]: *cf. [Controllers](../index.md) / [Extract Controllers](../extract.md)*
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-26)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

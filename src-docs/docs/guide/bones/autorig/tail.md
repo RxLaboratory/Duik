@@ -26,4 +26,4 @@ This way the tail can be rigged using *Bézier IK* or *Bézier FK*. In this case
 
 [^2]: Read the [*Bones and Auto-Rig / Autorig / Introduction*](index.md#auto-rig-options) section for more information about the options of the Auto-rig.
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

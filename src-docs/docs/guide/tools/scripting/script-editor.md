@@ -10,4 +10,4 @@ From this editor, the complete [Duik API](../../../advanced/api/index.md) is alr
 ▷ Read the Avanced / [Duik API](../../../advanced/api/index.md) section for more information and examples about how to use the API to write your own scripts.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

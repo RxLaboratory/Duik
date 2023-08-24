@@ -25,4 +25,4 @@ Just like the envelops, you can further customize these noodles by just modifyin
 
 ![](../../img/duik/bones/noodle_content.png)
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-06)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

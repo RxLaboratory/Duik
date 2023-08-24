@@ -24,4 +24,4 @@ Of course, this `propertyNameExp` variable will actually be named after the real
 The string is first created as an array of lines, which is then joined with the new line character, to make it easier to read and edit in the source code of your script. That's the best way we've found yet to include expressions in scripts. Note that the `join()` function is fast enough so that's never an issue for the performance (Duik does that with hundreds of lines per expressions without any issue). Especially compared to the slowness of After Effects when actually applying the expression in some properties.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -7,4 +7,4 @@ That’s what the *Scale Z-Link* does.
 This tool works as a toggle, enabling and disabling the effect on the selected layers.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

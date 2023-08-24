@@ -7,4 +7,4 @@ Click this button to quickly select all the bones of the current composition.
 
 [^1]: *cf.* [*Tools / Layer Manager*](../../tools/layers.md).
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-12)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

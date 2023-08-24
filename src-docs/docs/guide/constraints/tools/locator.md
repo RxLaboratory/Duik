@@ -12,4 +12,4 @@ When extracting locators, you have the option to use either expressions or essen
 [^1]: *cf.* [*Constraints*](../index.md) / [*Parent Constraints*](../parent.md).
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-25)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

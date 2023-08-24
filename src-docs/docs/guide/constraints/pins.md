@@ -61,4 +61,4 @@ You can also change the settings of multiple pins together using the additional 
 *Edit multiple pins using the additional panel.*
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

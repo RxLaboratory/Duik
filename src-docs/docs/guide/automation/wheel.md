@@ -43,4 +43,4 @@ When using the *curved* mode and you need motion blur, you may increase a bit th
 [^slow2]: As stated above, the number of values to compute with a cumulative expression like the curved-trajectory wheel is a triangular number which grows fast with the number of frames in the composition. When you change the *Motion Blur Precision*, it's the same as doubling, tripling, etc. the number of frames of the composition (the expression has to sub-sample the frames). When set to `2`, that means the total number of values to be computed is `( (2f)² + 2f ) / 2` which is more than the double, `3`, `( (3f)² + 3f ) / 2` is even worse, etc.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-11)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

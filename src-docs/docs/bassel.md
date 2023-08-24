@@ -30,4 +30,4 @@ He was arrested in 2012, first imprisoned in a military prison, where he was tor
 *Duik* will be named after him.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-06-02)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

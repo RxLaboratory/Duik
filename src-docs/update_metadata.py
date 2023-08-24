@@ -55,6 +55,13 @@ def update_meta( repository, path='' ):
         the_license = license
         the_copyright = copyright_from + "-" + copyright_to
 
+        commit = next(repository.iter_commits(paths=blob.path, max_count=1))
+        modified_date = datetime.fromtimestamp(
+            commit.committed_date
+            ).date()
+        modified_date = modified_date.strftime("%Y-%m-%d")
+
+        ok = True
         for item in items:
             item_list = item.split(":")
             if len(item_list) != 2:
@@ -69,18 +76,19 @@ def update_meta( repository, path='' ):
                 value = value.split("-")
                 start = value[0]
                 the_copyright = start + "-" + copyright_to
-        
-        commit = next(repository.iter_commits(paths=blob.path, max_count=1))
-        modified_date = datetime.fromtimestamp(
-            commit.committed_date
-            ).date()
+            elif key == 'updated':
+                if modified_date == value:
+                    ok = False
+                    break
+        if not ok:
+            continue
 
         # Build the new string
         meta = '![META](' + ";".join([
             "authors:" + the_authors,
             "license:" + the_license,
             "copyright:" + the_copyright,
-            "updated:" + modified_date.strftime("%Y-%m-%d")
+            "updated:" + modified_date
             ]) + ')\n'
         
         print(">> " + subfile)
@@ -97,5 +105,3 @@ def update_meta( repository, path='' ):
 
 print("Updating metadata...")
 update_meta(repo, 'src-docs')
-print("Building...")
-#os.system("mkdocs build")

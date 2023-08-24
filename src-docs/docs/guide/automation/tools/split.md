@@ -3,4 +3,4 @@
 ▷ *cf [Constraints](../../constraints/index.md) / Tools / [Split Values](../../constraints/tools/split.md)*.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-27)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

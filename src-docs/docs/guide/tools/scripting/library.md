@@ -34,4 +34,4 @@ Select a script and click the ![](../../../img/duik/icons/edit.svg){style="width
 Select a category or a script and click the ![](../../../img/duik/icons/remove.svg){style="width:1em;"} *remove* button to remove it. Scripts are just removed from the library, but they're not actually removed from disk.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

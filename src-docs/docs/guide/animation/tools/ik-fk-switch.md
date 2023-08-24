@@ -18,4 +18,4 @@ You can `[Shift] + [Click]` the ![](../../../img/duik/icons/ik_fk_switch.svg){st
 There you can manually snap the FK values on the IK or the opposite, without actually switching between IK and FK, if you should need it.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

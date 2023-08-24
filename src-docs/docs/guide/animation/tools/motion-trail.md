@@ -8,4 +8,4 @@
     Just set the motion trail layer to *Guide Layer* to be sure it is not rendered in the end.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

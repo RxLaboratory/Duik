@@ -34,4 +34,4 @@ You can also adjust each test settings with the ![](../img/duik/icons/options.sv
 When possible, the ![](../img/dusan/fix.svg){style="width:1em;"} *Fix Now* button automatically fix the issues in a single click.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

@@ -38,4 +38,4 @@ The main tools on the second part of the panel are all the animation tools avail
     - [IK / FK Switch](tools/ik-fk-switch.md)
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-23)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

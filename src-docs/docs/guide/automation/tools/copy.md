@@ -7,4 +7,4 @@ Click the ![](../../../img/duik/icons/paste_expression.svg){style="width:1em;"} 
 !!! note
     If you `[Right Click]` a property in After Effects, you already have the option to copy only the expression... But you can't paste it in multiple properties!
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

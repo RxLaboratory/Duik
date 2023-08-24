@@ -38,4 +38,4 @@ All the **Mode** actually do the same thing but change the way you can control t
 [^williams]: If you read *The Animator's Survival Kit* (and you must read it if you're interested in character animation) by Richard Williams (former Disney animator) you'll see that at Disney, there's no better animation than *at least* 24 frames per second animation, with the smoothest and most fluid motion possible. You have the right to disagree, that's a very cultural point of view, and on the opposite side one can argue that Japanese animation does an awesome work on emotions with very few frames.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-16)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

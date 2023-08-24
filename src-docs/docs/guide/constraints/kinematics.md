@@ -277,4 +277,4 @@ In this case, Duik moves the *curve* controller automatically, and you can adjus
 [^4]: *cf.* *[Animation / Tools / IK/FK Switch](../animation/tools/ik-fk-switch.md)*
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-21)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

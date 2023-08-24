@@ -64,4 +64,4 @@ These ***[Automations](automation/index.md)*** are procedural animations and dyn
 The [***Kleaner***](automation/kleaner.md) helps you quickly and semi-automagically apply the most important animation principles: anticipation, spacing, follow-through and overlapping animation.
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

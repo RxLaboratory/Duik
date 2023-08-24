@@ -7,4 +7,4 @@ When two layers are selected, click on the ![](../../../img/duik/icons/measure.s
 Public domain.*{style="font-size:0.8em;"}
 
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-07-25)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

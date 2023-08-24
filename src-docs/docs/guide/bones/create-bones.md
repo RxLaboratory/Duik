@@ -94,4 +94,4 @@ If **layers** are selected, without any other property, **one armature will be c
 
 [^4]: Read the section [*Constraints / Pins*](../constraints/pins.md)
 
-![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-14)
+![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)
