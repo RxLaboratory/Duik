@@ -762,6 +762,14 @@ function buildAutomationPanelUI(tab, standAlone ) {
         };
     };
 
+    var shiftsButton = DuScriptUI.button(
+        line2,
+        i18n._("Shifts"),
+        w16_shifts,
+        i18n._("(Quasi) regularly shifts the values.")
+    );
+    shiftsButton.onClick = Duik.Automation.shifts;
+
     var wheelButton = DuScriptUI.button(
             line2,
             i18n._("Wheel"),
@@ -786,16 +794,16 @@ function buildAutomationPanelUI(tab, standAlone ) {
     );
     looperButton.onClick = Duik.Automation.looper;
 
+    var line3 = DuScriptUI.group(automationGroup, uiMode >= 2 ? 'row' : 'column');
+
     var motionTrailButton = DuScriptUI.button(
-        line2,
+        line3,
         i18n._("Motion trail"),
         w16_motion_trail,
         i18n._("Draws a trail following the selected layers.\n\n[Alt]: Creates a new shape layer for each trail.")
     );
     motionTrailButton.onClick = Duik.Automation.motionTrail;
     motionTrailButton.onAltClick = function() { Duik.Automation.motionTrail(true) };
-
-    var line3 = DuScriptUI.group(automationGroup, uiMode >= 2 ? 'row' : 'column');
 
     var walkButton = DuScriptUI.button( line3, {
         text: i18n._("Walk/Run cycle"),
