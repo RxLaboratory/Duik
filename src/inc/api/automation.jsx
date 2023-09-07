@@ -1969,6 +1969,235 @@ Duik.Automation.swink = function(props, blink) {
     return effects;
 }
 
+Duik.CmdLib['Automation']["Shifts"] = "Duik.Automation.shifts()";
+/**
+ * Adds the <i>Shifts</i> effect and expression to the properties.
+ * The <i>Shifts</i> tool makes the property shift value at random (or regular, or quasi-regular) intervals
+ * @param {PropertyBase[]|DuAEProperty[]|DuList|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted.
+ * @return {DuAEProperty|null} The Swink effect.
+ */
+Duik.Automation.shifts = function(props) {
+    props = def(props, DuAEComp.getSelectedProps());
+    props = new DuList(props);
+    if (props.length() == 0) return null;
+
+    DuAE.beginUndoGroup( i18n._("Shifts"), false);
+
+    DuAEComp.setUniqueLayerNames(undefined, props.first().comp );
+
+    // Apply
+    var effect = null;
+    var pe = Duik.PseudoEffect.SHIFTS;
+    var p = pe.props;
+    var shiftsName = ' | ' + i18n._("Shifts");
+
+    var exp = [
+        'var minPause = fx(' + p["Min. pause duration"].index  + ').value;',
+        'var maxPause = fx(' + p["Max. pause duration"].index  + ').value;',
+        'var minDuration = fx(' + p["Min. shift duration"].index  + ').value;',
+        'var maxDuration = fx(' + p["Max. shift duration"].index  + ').value;',
+        'var minDistance = fx(' + p["Minimum distance"].index  + ').value;',
+        'var maxDistance = fx(' + p["Maximum distance"].index  + ').value;',
+        'var rateValue = fx(' + p["Interpolation"]["Rate"].index  + ').value;',
+        'var rndSeed = fx(' + p["Advanced"]["Random seed"].index  + ').value;',
+        'var rndPerLayer = fx(' + p["Advanced"]["One seed per layer"].index  + ').value;',
+        'var loop = fx(' + p["Loop"]["Loop"].index  + ').value;',
+        'var loopDuration = fx(' + p["Loop"]["duration"].index  + ').value;',
+        'var interpMode = fx(' + p["Interpolation"]["Mode"].index  + ').value',
+        'var allowDiagonal = fx(' + p["Axis / Channels"]["Diagonals"].index  + ').value;',
+        'var xWeight = fx(' + p["Axis / Channels"]["X / R / H weight"].index  + ').value;',
+        'var yWeight = fx(' + p["Axis / Channels"]["Y / G / S weight"].index  + ').value;',
+        'var zWeight = fx(' + p["Axis / Channels"]["Z / B / L weight"].index  + ').value;',
+        'var colorspace = fx(' + p["Axis / Channels"]["Color space"].index  + ').value;',
+        '',
+        DuAEExpression.Library.get([
+            'bezierInterpolation',
+            'gaussianInterpolation',
+            'logInterpolation',
+            'expInterpolation',
+            'randomUnitVector',
+            'unitVector',
+            'alea'
+        ]),
+        '',
+        '// Generate the random values',
+        'if (rndPerLayer) rndSeed += thisLayer.index;',
+        'var rng = new alea(rndSeed);',
+        '',
+        '// Durations and vectors',
+        'var duration = 0;',
+        'var durations = [];',
+        'var vectors = [];',
+        'var speedRatio = 1;',
+        'var weights = [ xWeight/100, yWeight/100, zWeight/100, 1 ];',
+        'var dimensions = 1;',
+        'if (value instanceof Array) dimensions = value.length;',
+        'var vecDim = dimensions;',
+        'if (vecDim == 4) vecDim = 3;',
+        '',
+        '// Generate vectors and durations for half the loop',
+        'var max = thisComp.duration;',
+        'if (loop) max = loopDuration / 2;',
+        '',
+        'function generateVectorSet( ) {',
+        '    // start with a pause',
+        '    duration = rng(0, maxPause);',
+        '    // Durations and vectors',
+        '    durations = [ duration ];',
+        '    vectors = [];',
+        '',
+        '    while (duration <= max) {',
+        '        // Durations',
+        '        // Add a Move and a Pause',
+        '        var move = rng(minDuration, maxDuration);',
+        '        var pause = rng(minPause, maxPause);',
+        '        durations.push(move);',
+        '        durations.push(pause);',
+        '        duration += move + pause;',
+        '        // Vectors',
+        '        var distance = rng(minDistance, maxDistance);',
+        '		if (rng() < .5) distance = -distance;',
+        '       if (dimensions == 4) distance /= 256;',
+        '		var vector = distance;',
+        '		if (dimensions > 1) {',
+        '			if (allowDiagonal) vector = randomUnitVector(vecDim, rng) * distance;',
+        '			else {',
+        '				var axis = Math.floor( rng(0, vecDim) );',
+        '				vector = unitVector(vecDim, axis) * distance;',
+        '			}',
+        '			// Add alpha',
+        '			if (dimensions == 4) vector.push(1);',
+        '			// Weights',
+        '			for (var i = 0, n = vector.length; i < n; i++) {',
+        '				vector[i] *= weights[i];',
+        '			}',
+        '		}',
+        '		else {',
+		'	        // To keep in sync, we need another random number generation',
+		'	        rng();',
+		'	        vector *= weights[0];',
+		'       }',
+        '',
+        '        // Store movement',
+        '        vectors.push(vector);',
+        '    }',
+        '',
+        '    // Compress the duration so it fills exactly half the loop',
+        '    if (loop) {',
+        '        speedRatio = (duration*2) / loopDuration;',
+        '        duration = loopDuration / 2;',
+        '    }',
+        '}',
+        '',
+        'function interpolateVectors( startValue, startTime, shuffle, invertVectors, speedMultiplier, interpolationMethod) {',
+        '    if (typeof speedMultiplier === \'undefined\') speedMultiplier = 1.0;',
+        '    if (typeof shuffle === \'undefined\') shuffle = false;',
+        '	if (typeof invertVectors === \'undefined\' ) invertVectors = false;',
+        '	if (vectors.length == 0) return startValue;',
+        '	',
+        '    var r = startValue;',
+        '    // Copy the vectors array to modify it',
+        '    var vecs = vectors.concat();',
+        '    var i = 0;',
+        '    while (vecs.length > 0) {',
+        '        var vecIndex = 0;',
+        '        if (shuffle) vecIndex = rng()*vecs.length;',
+        '        var vector = vecs.splice(vecIndex, 1)[0];',
+        '		if (invertVectors) vector = -vector;',
+        '        var pauseDuration = durations[i*2] / speedMultiplier;',
+        '        var moveDuration = durations[i*2+1] / speedMultiplier;',
+        '        i++;',
+        '       ',
+        '        // Add the pause',
+        '        startTime += pauseDuration;',
+        '        var endTime = startTime + moveDuration;',
+        '    ',
+        '        // Just add the vector',
+        '        if (endTime < time) {',
+        '            r += vector;',
+        '            startTime = endTime;',
+        '            continue;',
+        '        }',
+        '',
+        '        if (time < startTime) {',
+        '            continue;',
+        '        }',
+        '',
+        '        // Interpolate',
+        '        r = interpolationMethod(',
+        '                time,',
+        '                startTime,',
+        '                endTime,',
+        '                r,',
+        '                r + vector',
+        '            );',
+        '		break;',
+        '    }',
+        '	return r;',
+        '}',
+        '',
+        '// Interpolate',
+        'var result = value;',
+        '',
+        'if (fx.enabled) {',
+        '    // Select inteprolation',
+        '    var i = linear;',
+        '    if (interpMode == 1) i = function(t, tMin, tMax, value1, valiue2) { return t < tMax ? value1 : value2; };',
+        '    else if (interpMode == 3) i = function (t, tMin, tMax, value1, value2) { return bezierInterpolation(t, tMin, tMax, value1, value2, [rateValue/10.0, 0.0, 1-rateValue/10.0, 1.0]); };',
+        '    else if (interpMode == 4) i = function (t, tMin, tMax, value1, value2) { return gaussianInterpolation(t, tMin, tMax, value1, value2, linear(rateValue, 0, 10, -1, 1)); };',
+        '    else if (interpMode == 5) i = function (t, tMin, tMax, value1, value2) { return logInterpolation(t, tMin, tMax, value1, value2, rateValue*50); };',
+        '    else if (interpMode == 6) i = function (t, tMin, tMax, value1, value2) { return expInterpolation(t, tMin, tMax, value1, value2, rateValue); };',
+        '    var interpolator = i;',
+        '',
+        '    // Interpolate',
+        '   if (dimensions == 4 && colorspace == 2) result = rgbToHsl(result);',
+        '    // Build the loops',
+        '    var loopEnd = 0;',
+        '    var backwards = false;',
+        '    while (time > loopEnd) {',
+        '        // Regenerate the vector set for true random "loops"',
+        '        if (!backwards) generateVectorSet();',
+        '        if (duration <= 0) break;',
+        '        result = interpolateVectors( result, loopEnd, true, backwards, speedRatio, interpolator);',
+        '        loopEnd += duration;',
+        '        backwards = !backwards;',
+        '    }',
+        '   if (dimensions == 4 && colorspace == 2) result = hslToRgb(result);',
+        '}',
+        '',
+        'result;'
+        ].join('\n');
+
+    props.do(function(prop) {
+        prop = new DuAEProperty(prop);
+        if (prop.isGroup()) return;
+        
+        if (!effect) {
+            var effectLayer = prop.layer;
+            effect = pe.apply(effectLayer, prop.name + shiftsName);
+
+            // Set default values
+            /* @ts-ignore Yes, this is a Property */
+            effect(p["Loop"]["duration"].index).setValue( effectLayer.containingComp.duration );
+            /* @ts-ignore Yes, this is a Property */
+            effect(p["Advanced"]["Random seed"].index).setValue( effectLayer.index*1000 );
+
+            effect = new DuAEProperty(effect);
+        }
+
+        var sameComp = effect.comp.name == prop.comp.name;
+        var fxLink = "var fx = " + effect.expressionLink(sameComp);
+
+        var expression = DuAEExpression.Id.SHIFTS + '\n' + fxLink + ';\n' + exp;
+        prop.setExpression( expression, false );
+
+    });
+
+    DuAE.endUndoGroup( i18n._("Shifts"));
+
+    return effect;
+}
+
 Duik.CmdLib['Automation']["Wiggle"] = "Duik.Automation.wiggle()";
 /**
  * Adds a random but smooth animation to the selected properties.

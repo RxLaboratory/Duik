@@ -48,3 +48,4 @@ DuAEExpression.Id.WING = "/*== Duik: Wing ==*/";
 DuAEExpression.Id.WALK_RUN_CYCLE = "/*== Duik: walk-run cycle ==*/";
 DuAEExpression.Id.BONE_DATA = "/*== Duik: bone data ==*/";
 DuAEExpression.Id.BONE_NOODLE = "/*== Duik: bone noodle ==*/";
+DuAEExpression.Id.SHIFTS = "/*== Duik: shifts ==*/";
