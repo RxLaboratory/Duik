@@ -45,7 +45,7 @@ To use the quick connector, follow these simple steps:
 
 If you need to have the controller in another composition, you can either use the [*Extract controllers*](../controllers/extract.md) tool from the parent composition, or just copy and paste the controller to the new composition, and link the percentage with an expression, simply using the pickwhip.
 
-Read further to learn how to do more advanced stuff with the connector, using the additionnal panel.
+Read further to learn how to do more advanced stuff with the connector, using the additional panel.
 
 ## Edit already connected properties
 
@@ -63,7 +63,7 @@ This opens the advanced Connector panel.
 
 ![](../../img/duik/constraints/advanced-connector.png)
 
-The bottom line of buttons, ![](../../img/duik/icons/pick_texture.svg){style="width:1em;"} *Pick texture*, ![](../../img/duik/icons/pick_audio.svg){style="width:1em;"} *Pick audio*, ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick control* lets you select an existing layer or property to be used as a master controller for your connection, which you'll connect to all slave properties you'd like to animate together.
+The bottom line of buttons, ![](../../img/duik/icons/pick_texture.svg){style="width:1em;"} *Pick texture*, ![](../../img/duik/icons/pick_audio.svg){style="width:1em;"} *Pick audio*, ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick control*, lets you select an existing layer or property to be used as a master controller for your connection, which you'll connect to all slave properties you'd like to animate together.
 
 All other buttons automatically create different types of controllers to be used to control the slave properties.
 
@@ -124,7 +124,7 @@ A Connector effect is added on the master layer, to let you change the settings 
 
 ![](../../img/duik/constraints/connector-effect.png)
 
-After the connection, you can still adjust the keyframes and interpolation of any slave property. To ease these adjustments, you can disable this connector effect to temporarilly disable the expressions and adjust the keyframes on the slave properties.
+After the connection, you can still adjust the keyframes and interpolation of any slave property. To ease these adjustments, you can disable this connector effect to temporarily disable the expressions and adjust the keyframes on the slave properties.
 
 !!! warning
     Unfortunately, because of After Effects, disabling the connector effect is not enough in order to be able to adjust the keyframes on slave Bézier path properties, you actually need to deactivate the expression.
@@ -311,7 +311,7 @@ You can then select the animated slave properties and make the connection.
 4. **Select the slave properties** you've just animated.
 5. ![](../../img/duik/icons/props.svg){style="width:1em;"} **Connect**.
 
-If you'd like to also connect the other axis for a complete fake 3D turn, these are the additionnal steps:
+If you'd like to also connect the other axis for a complete fake 3D turn, these are the additional steps:
 
 1. **Animate the other axis** of the turn in the head precomposition. Be careful: **do not** add or replace keyframes on already animated and connected properties. If you need to animate an already connected property, the easiest way is to first **add a [*List*](../automation/tools/list.md)&nbsp;[^4]**.  
    Read the section above about multiple connections for more details.
@@ -352,11 +352,11 @@ To arrange the available shapes in a grid, the process is almost the same as for
 3. **Create a controller**, which will be moved above the background layer created at the previous step. It can be a border, or a solid color with a reduced opacity or a nice blending mode for example. Make sure the anchor point is centered in this layer.
 4. **Animate the controller**'s X position, to make its anchor point go from just before the leftmost cell to just before the rightmost cell.
 5. **Select the position property** of the controller layer.
-6. **Click the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick property* button** in the additionnal panel of the connector. **Select the X axis** in the panel.
+6. **Click the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick property* button** in the additional panel of the connector. **Select the X axis** in the panel.
 7. **Select the column precompositions**.
 8. **![](../../img/duik/icons/layers.svg){style="width:1em;"} Connect to opacities**. The selector now selects all the shapes from the same column when you move it horizontally. Let's now make the connection to show the right line when you move it vertically.
 9. **Animate the controller**'s Y position, to make its anchor point go from just before the topmost cell to just before the last cell.
-10. If you've closed the additiionnal panel of the connector, **select again the position property** of the controller layer and **Click the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick property* button**.
+10. If you've closed the additional panel of the connector, **select again the position property** of the controller layer and **Click the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick property* button**.
 11. **Select the Y axis** in the additional panel of the connector.
 12. **For each column** precomposition:  
     1. **Select all the layers** inside the precomposition

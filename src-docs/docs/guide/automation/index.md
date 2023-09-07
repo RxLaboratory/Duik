@@ -25,6 +25,7 @@ The main tools on the main part of the panel are all the procedural animation to
 - [Wiggle](wiggle.md)
 - [Random motion](random-motion.md)
 - [Swink](swink.md)
+- [Shifts](shifts.md)
 - [Wheel](wheel.md)
 - [Move away](move-away.md)
 - [Looper](looper.md)

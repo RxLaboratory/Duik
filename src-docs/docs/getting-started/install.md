@@ -37,7 +37,7 @@ You can choose one of these three options to use Duik:
 #### Copy the files
 
 - **Copy** the files of your choice from the *ScriptUI Panels* folder to:
-    - Windows: `C:/Program Files/Adobe/Adobe After Effects XXXX/Support Files/Scripts/ScriptUI Panels/`  
+    - Windows: `C:\Program Files\Adobe\Adobe After Effects XXXX\Support Files\Scripts\ScriptUI Panels`  
     - Mac OS: `/Applications/Adobe After Effects XXXX/Scripts/ScriptUI Panels`
 
 You'll need administrator privileges to install Duik this way. If you don't have them, see the other ways below.
@@ -47,7 +47,7 @@ You'll need administrator privileges to install Duik this way. If you don't have
 #### Install from within After Effects
 
 - **Open** After Effects
-- Use the `File/Scritps/Install ScriptUI Panel...` **menu** to select and install the panels of your choice from the *ScriptUI Panels* folder.
+- Use the `File ▷ Scritps ▷ Install ScriptUI Panel...` **menu** to select and install the panels of your choice from the *ScriptUI Panels* folder.
 - **Restart** After Effects
 
 #### Use without installing
@@ -55,7 +55,7 @@ You'll need administrator privileges to install Duik this way. If you don't have
 You'll always be able to run Duik without even installing it.
 
 - **Open** After Effects
-- Use the `File/Scritps/Run script file...` **menu** to select and run the panel of your choice from the *ScriptUI Panels* folder.
+- Use the `File ▷ Scritps ▷ Run script file...` **menu** to select and run the panel of your choice from the *ScriptUI Panels* folder.
 
 ### **4 - First Run**
 

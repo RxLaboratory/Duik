@@ -35,7 +35,7 @@ In these categories, for each limb you can adjust some ![](../../img/duik/icons/
 
 ![](../../img/duik/bones/limb_options.png)
 
-The choices you can make in these options depends on the design of your character, and especially which joints are available and where they are located.
+The choices you can make in these options depend on the design of your character, and especially which joints are available and where they are located.
 
 To learn how each kind of limb may be designed and how the corresponding bones have to be located, read the [*Bones / Auto-rig*](autorig/index.md) section.
 

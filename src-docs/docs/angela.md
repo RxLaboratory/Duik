@@ -7,7 +7,7 @@ Now that *Duik 17* is available, we've chosen a new name for the new version[^2]
 ## Duik 17 will be called Ángela
 
 ![*María Ángela Salazar Murillo*](img/angela.jpeg)  
-María Ángela Salazar Murillo, *find credits of the photo*
+María Ángela Salazar Murillo
 
 *Ángela* has been chosen after *Ángela Salazar*.
 

@@ -24,7 +24,7 @@ For all these legs, Duik creates a control at the end (on the foot or hand), and
 
 When rigging legs, Duik creates a single controller with all the detailed controls in its effects. For all legs, there is *at least* one IK Effect which controls the main part of the limb, and according to the type of animal, the available bones in the limbs, or what was selected when running the auto-rig, there may be other effects to control other joints of the limb.
 
-Read the [*Constraints / Kinematics*](../../constraints/kinematics.md) section for more details about the IK and FK effects.
+▷ Read the [*Constraints / Kinematics*](../../constraints/kinematics.md) section for more details about the IK and FK effects.
 
 ## ![](../../../img/duik/icons/hominoid.svg){style="width:1em;"} ![](../../../img/duik/icons/bunny.svg){style="width:1em;"} Hominoids and plantigrades
 
@@ -98,7 +98,7 @@ Use this effect to control all possible rotations of the foot, using different a
 As the *Tiptoe* and *Foot roll* values rotate (part of) the foot using different pivots, they should never be used at the same time. When one of these values is set, the other value should always be 0&nbsp;° (the foot can't rotate using multiple pivots at the same time).
 
 !!! note
-    To the contrrary of plantigrades, the rotation of the controller itself, which rotates the whole foot around the toe joint, may not be very useful in this rig.
+    To the contrary of plantigrades, the rotation of the controller itself, which rotates the whole foot around the toe joint, may not be very useful in this rig.
 
 For a precise control of the foot, make sure all joints and bones are perfectly located, especially the toe bone and the tip, as shown on the picture above.
 
