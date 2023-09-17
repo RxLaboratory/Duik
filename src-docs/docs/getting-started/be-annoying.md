@@ -17,7 +17,9 @@ What was I going to do? I had a new product, I could just sell it like almost ev
 
 I chose to do things in a less common way, maybe even a rare way: I chose to give away my tools. I chose not to earn money with them, or at least, **I chose to let people choose if it was worth paying for**. I chose freedom, for myself, and for the rest of the world. I chose to let my tools open source, I chose to let people get, use, and modify them freely, instead of being worried of stealers and pirates. I chose to make my stuff available even for the poorest human being on earth. Because I think my choices can have an impact. Because I think that if I work outside of and against capitalism and consumerism, **if I show a different path, the path may be followed**, and maybe, maybe it’s a step to what I think is a better world. Politics, that’s just politics.
 
-One is ready to accept a lot of compromises[^1] to be able to consume the easy way. But if one's been given the choice either to consume freely, or to donate time or money, one just consumes and nothing else. It's too easy to just download and use if it's "free", so much easier than making a donation first, or to contribute in any way.
+One is ready to accept a lot of compromises[^compromises] to be able to consume the easy way. But if one's been given the choice either to consume freely, or to donate time or money, one just consumes and nothing else. It's too easy to just download and use if it's "free", so much easier than making a donation first, or to contribute in any way.
+
+[^compromises]: Rent, pay, give away all one's personal data, be overwhelmed by ads...; when we don't have the choice, we're accepting all of this without protesting.
 
 It would have been easy to sell my tools. It would have been easy not to give any choice to the users. **But I chose a difficult path**. I know that most people won't understand it, **but I don't regret my choice**, and I would do it again - **even if I know I could be richer than I could ever have imagined** - because it's more important for me to show that another world is possible, where people are **free from property**, where **economy is subordoned to the well-being of all**, where **happiness comes from equality** of all the people. This better world already exists and just need to be extended, that's what I'm trying to show; you just have to join us.
 
@@ -28,7 +30,7 @@ It would have been easy to sell my tools. It would have been easy not to give an
 
 Duik is a big success. **Millions of downloads** so far, an average of **1000 downloads per day**, thousands of daily users.
 
-It’s a big success, with very few supporters. 250 backers during each of the crowd-funding campaigns, 300 [monthly or annual subscribers](http://membership.rxlab.info)[^2] and [patrons](https://patreon.com/duduf)[^3] (and those groups are overlapping, we can’t even add the numbers).
+It’s a big success, with very few supporters. 250 backers during each of the crowd-funding campaigns, and 300 [monthly or annual subscribers](http://membership.rxlab.info)[^2] (and these groups are overlapping, we can’t even add the numbers).
 
 It’s a big success, with even fewer contributors. There are less than 10 meaningful contributors (to the code, the translations, the documentation...).
 
@@ -85,18 +87,13 @@ There are a lot of concrete ways to contribute more and consume less, even witho
 ## Help Duik
 
 - [**Subscribe** to the RxLab. membership](http://membership.rxlab.info)[^2] and benefit from nice perks like an early access to the tools.
-- [Make a **donation**](http://donate.rxlab.info)[^4] to help the development according to your means.
+- [Make a **donation**](http://donate.rxlab.info)[^3] to help the development according to your means.
 - [Contribute](http://contribute.rxlab.info)! Code, translate, report bugs, request features, update the doc, donate... There's a lot to do, check on [contribute.rxlab.info](http://contribute.rxlab.info)
 
 ![](../img/contribute.png)
 
-[^1]: Rent, pay, give away all one's personal data, be overwhelmed by ads...; when we don't have the choice, we're accepting all of this without protesting.
-
 [^2]: Visit [membership.rxlab.info](http://membership.rxlab.info) for more details about RxLab. membership.
 
-[^3]: Visit [patreon.com/duduf](http://patreon.com/duduf) to become a patron.
-
-[^4]: Visit [donate.rxlab.info](http://donate.rxlab.info) to make a donation right now.
-
+[^3]: Visit [donate.rxlab.info](http://donate.rxlab.info) to make a donation right now.
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

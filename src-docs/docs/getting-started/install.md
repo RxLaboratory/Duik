@@ -20,7 +20,7 @@ You'll find several folders and files.
 - *README.txt* contains a lot of information to help you get started with Duik.
 - The *Help* folder contains these help pages. Double click on the file *index.html* to open it.
 - The *Tools* folder may contain some useful tools.
-- The *ScriptUI Panels* folder contains the actual *Duik Bassel* script you need to install.  
+- The *ScriptUI Panels* folder contains the actual *Duik Ángela* script you need to install.  
   There are many available panels. The main Duik panel, containing the complete tool set is the file called `Duik Angela.jsx`; if you install only this one you'll have all the features in a single panel. Other files are individual panel providing subsets of the Duik tool set, to give you more options to customize your After Effects workspace. You can install as many of them as you need.
 
 ### **3 - Install**
@@ -50,7 +50,7 @@ You'll need administrator privileges to install Duik this way. If you don't have
 - Use the `File ▷ Scritps ▷ Install ScriptUI Panel...` **menu** to select and install the panels of your choice from the *ScriptUI Panels* folder.
 - **Restart** After Effects
 
-#### Use without installing
+#### Use it without installing
 
 You'll always be able to run Duik without even installing it.
 
