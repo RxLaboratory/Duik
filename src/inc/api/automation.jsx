@@ -99,8 +99,8 @@ Duik.CmdLib['Automation']["NLA"] = "Duik.Automation.setupNLA()";
  * @param {Boolean} [selectedProps=true] Use only currently selected properties if true, all properties (according to the other options) if false.
  * @param {Boolean} [transformProps] If true, filters only properties in the transform group of the layers. Ignored if selectedProps is true.
  * @param {Boolean} [effectProps] If true, filters only properties in effects. Ignored if selectedProps is true.
- * @param {Boolean} [layerTypes=[Duik.Layer.Type.CONTROLLER]] The types of layer to setup if there's no selected layer; if empty, will setup all layers.
- * @param {PropertyBase[]|DuList.<PropertyBase>} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
+ * @param {Duik.Layer.Type[]} [layerTypes=[Duik.Layer.Type.CONTROLLER]] The types of layer to setup if there's no selected layer; if empty, will setup all layers.
+ * @param {PropertyBase[]|DuList|DuAEProperty[]} [props] A list of properties to set up. In case this parameter is provided, all other parameters are ignored.
  */
 Duik.Automation.setupNLA = function(comp, selectedProps, transformProps, effectProps, layerTypes, props) {
     comp = def(comp, DuAEProject.getActiveComp());
