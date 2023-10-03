@@ -151,6 +151,10 @@ Duik.Camera.rig = function( camera )
 
     camera.locked = false;
 
+	// Position must not be separated
+	if (camera.transform.position.dimensionsSeparated)
+		camera.transform.position.dimensionsSeparated = false;
+
     var comp = camera.containingComp;
 
     //create target
