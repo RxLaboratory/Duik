@@ -2,7 +2,7 @@
 
 :: The version
 IF "%~1"=="" (
-    SET version=17.1.7
+    SET version=17.1.8
 ) ELSE (
     SET version=%~1
 )
@@ -95,7 +95,7 @@ echo __Generating Duik API reference
 
 DuBuilder "%build_path%\Duik_API\Duik_api.jsxinc" --no-banner -r "{duikVersion}:%version%" "%build_path%\Duik_API\Duik_api_fordoc.jsxinc"
 cmd /c jsdoc -c jsdoc_conf.json
-echo " " > "%repo_path%\docs\api\jsdoc.css"
+echo " " > "%build_path%\docs\api\jsdoc.css"
 xcopy /Y assets\jsdoc.css "%build_path%\docs\api\jsdoc.css"
 xcopy /Y "%build_path%\docs\api\Duik.html" "%build_path%\docs\api\index.html"
 xcopy /S /I /Y "%build_path%\docs\api" "%build_path%\Duik_API\docs"

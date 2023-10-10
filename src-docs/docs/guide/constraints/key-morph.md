@@ -3,7 +3,9 @@
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_H01_KeyMorph01__EN_720.mp4)  
 *This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
-The key morph is simple yet very powerful and versatile interpolation[*](../../misc/glossary.md) tool. It is able to morph between key poses or blend them together[^1] using any property in After Effects (as long as it can be controlled by an expression). This is especially useful to control facial expressions (emotions and expressions, head turn, lipsync...), or any other animation based on specific poses (e.g. complex hand shapes).
+The key morph is simple yet very powerful and versatile interpolation[*](../../misc/glossary.md) tool. It is able to morph between key poses or blend them together[^3d] using any property in After Effects (as long as it can be controlled by an expression). This is especially useful to control facial expressions (emotions and expressions, head turn, lipsync...), or any other animation based on specific poses (e.g. complex hand shapes).
+
+[^3d]: This is a very common technique in 3D software. It's called *Shape Keys* in *Blender*, *Pose Morph* in *Cinema 4D*, *Blend Shapes* in *Maya*, *Morpher* in *3DS Max*...
 
 ![](../../img/illustration/keymorph.gif)
 
@@ -55,20 +57,34 @@ To add a marker, select the layer and press the `[*]` key. You can then double c
 
 ### Use the connector to control the key morph with a better controller
 
-For example, using a dropdown menu is very handy in most cases
+#### With a menu
+
+Using a dropdown menu is very handy in most cases.
 
 1. Create a Dropdown menu control  
     Edit it to list the poses.  
     ![](../../img/duik/constraints/keymorph-create-dropdown.png)
-2. Connect it to the key poses using the *![](../../img/duik/icons/connector.svg){style="width:1em;"} [Connector](connector.md)*&nbsp;[^2]  
+2. Connect it to the key poses using the *![](../../img/duik/icons/connector.svg){style="width:1em;"} [Connector](connector.md)*&nbsp;[^cnctr]  
     1. Select the new dropdown effect (the property in the timeline, not the effect itself).  
-    2. In the connector additional panel, click the *![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} Pick Property* button.  
+    2. In the connector additional panel, click the *![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} __Pick Property__* button.  
     3. Select the *Key* effects to be connected, on the layer with the key morph setup.  
-    4. In the connector additional panel, click the *![](../../img/duik/icons/shape_key.svg){style="width:1em;"} Pick Property* button.
+    4. In the connector additional panel, click the *![](../../img/duik/icons/shape_key.svg){style="width:1em;"} __Key Morph__* button.
 
 ![](../../img/duik/constraints/keymorph-dropdown.png)
 
 You can now simply animate this effect to interpolate between the key poses.
+
+#### With a slider
+
+You could also create a slider in the viewport for example.
+
+1. Create a slider, using the *![](../../img/duik/icons/connector.svg){style="width:1em;"} [Connector](connector.md)*&nbsp;[^cnctr] or the *[Controllers](index.md)*[^ctrls] panel.
+2. Select the *Key* effects to be connected, on the layer with the key morph setup.
+3. In the connector panel, click the *![](../../img/duik/icons/shape_key.svg){style="width:1em;"} __Key Morph__* button.
+
+[^cnctr]: *cf. [Links & Constraints](index.md) / [Connector](connector.md)*.
+
+[^ctrls]: *cf. [Controllers](index.md)*.
 
 ## Blend multiple key poses
 
@@ -94,8 +110,5 @@ After the Key Morph creation, you can still edit, add or remove key poses.
 3. If you've removed some key poses, delete some *Key* effects so there's the same count as the poses.  
     If you've created new key poses, duplicate the last *Key* effect to have the same count as the poses.
 
-[^1]: This is a very common technique in 3D software. It's called *Shape Keys* in *Blender*, *Pose Morph* in *Cinema 4D*, *Blend Shapes* in *Maya*, *Morpher* in *3DS Max*...
-
-[^2]: *cf. [Links & Constraints](index.md) / [Connector](connector.md)*.
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

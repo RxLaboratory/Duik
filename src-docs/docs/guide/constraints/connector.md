@@ -71,6 +71,24 @@ It is advised to add the needed keyframes on the slave properties first, althoug
 
 You can then select or create the master property and configure the connection.
 
+### Connection modes
+
+With this advanced Connector, there will be three ways to connect three different kinds of slave properties you can control using the Connector.
+
+![](../../img/duik/constraints/connector-settings-connect.png)
+
+- ![](../../img/duik/icons/layers.svg){style="width:1em;"} ***Layer opacities***:  
+    Lets you "select" the layers with the master property, i.e. switch their opacities.  
+    A few keyframes will be added in the opacity of the **selected layers** to let the master property "select and show" the layers, one by one. This is a quick and easy way to set up a selector for a bunch of layers.
+- ![](../../img/duik/icons/props.svg){style="width:1em;"} ***Properties***:  
+    Like the *quick connector*, lets you control any kind of property.  
+    It simply connects all the **selected properties**. The movement of these properties will be controlled by their own keyframes, and can still be adjusted after the connection if needed.
+- ![](../../img/duik/icons/shape_key.svg){style="width:1em;"} ***Key Morph***:  
+    Lets you control specific *Key Morph* keys, and interpolate between them.
+    It automatically sets up the **selected Key Morph key effects** to control them from the master property. Read the *[Key Morph](key-morph.md)* section for more details.
+
+For each mode, the selection you have to make is different: it's either some layers, some properties, or some *Key* effects created by the *[Key Morph](key-morph.md)*.
+
 ### Pick control
 
 To use an existing property or layer as a master controller, first select it and then click on the ![](../../img/duik/icons/pick_prop.svg){style="width:1em;"} *Pick control* button.
