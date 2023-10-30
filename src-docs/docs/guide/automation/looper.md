@@ -10,7 +10,7 @@ Public domain.*{style="font-size:0.8em;"}
 1. **Select** the properties.
 2. Click the ![](../../img/duik/icons/looper.svg){style="width:1em;"} ***Looper*** button
 
-All interpolations are deactivated to keep only the extrapolation, set to a *Cycle* loop foor the in and out extrapolation.
+All interpolations are deactivated to keep only the extrapolation, set to a *Cycle* loop for the in and out extrapolation.
 
 ![](../../img/duik/automation/looper-effect.png)
 

@@ -19,7 +19,7 @@ The Wheel can be adjusted in the effects of the layer.
 
 ![](../../img/duik/automation/wheel-effect.png)
 
-The ***Radius*** is automatically set by Duik, but in some specific cases Duik may not be able to measure it accurately. In this case, you'll have to set te correct value for the wheel to rotate at the right speed.
+The ***Radius*** is automatically set by Duik, but in some specific cases Duik may not be able to measure it accurately. In this case, you'll have to set the correct value for the wheel to rotate at the right speed.
 
 !!! tip
     You can use the [*Measure Distance*](../constraints/tools/measure.md) [^measure] tool to measure the distance between the anchor points of two layers. Use a null layer to measure the radius of the wheel.

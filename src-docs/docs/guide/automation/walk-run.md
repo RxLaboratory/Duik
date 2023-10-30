@@ -57,7 +57,7 @@ The Walk / Run Cycle can be adjusted in the effects of the Walk / Run cycle cont
     - The **General motion** controls both the walk and run cycles.
     - The **Walk** and **Run** values  control the two cycles; you can easily animate the transition from one to the other by cross-fading these values.
 
-- The **Main parameters** are the general settings to globally customize andcharacterize the animation.
+- The **Main parameters** are the general settings to globally customize and characterize the animation.
 - You can use the **Individual limb adjustments** to further customize the cycle.
 - The **Advanced parameters** can be used to tweak the cycle on a lower level.
 - Some **Useful data** is exposed at the bottom of the effect.

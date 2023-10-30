@@ -40,7 +40,7 @@ To keep the best performance possible, it's better to always extract controllers
 
 You should always keep your rigs in their own After Effects project files, and then import them in the projects where you're animating.
 
-As soon as you import a specific rig, you should rename its main composition and all precompositions it uses; this is the best way to make sure all composition names are unique and avoid expression errors if you need to import several times the same rig in the same After Effects projet.
+As soon as you import a specific rig, you should rename its main composition and all precompositions it uses; this is the best way to make sure all composition names are unique and avoid expression errors if you need to import several times the same rig in the same After Effects project.
 
 Making sure that composition names are unique and that you always keep a copy of your rigs in their own projects allows you to easily and safely extract controllers using expressions. This way you won't need to use essential properties, as you could always import the rig as many times as you need it.
 

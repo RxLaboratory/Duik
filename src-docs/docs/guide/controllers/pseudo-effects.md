@@ -40,7 +40,7 @@ Thanks to the expressions, the fist will automatically rotate all the fingers.
 
 ## ![](../../img/duik/icons/head.svg){style="width:1em;"} Head
 
-People usually use a *Slider* or *2D Slider* controller to rig and conntrol head turns. Using this effect instead of these shape layer controllers will improve the performance.
+People usually use a *Slider* or *2D Slider* controller to rig and control head turns. Using this effect instead of these shape layer controllers will improve the performance.
 
 ![](../../img/duik/controllers/head-pe.png)
 

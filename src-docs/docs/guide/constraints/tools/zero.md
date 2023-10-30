@@ -4,9 +4,9 @@ In After Effects, as in any animation software using parenting between objects, 
 
 **Select a layer** and then click the ***![](../../../img/duik/icons/zero.svg){style="width:1em;"} Add Zero*** button to zero out all of its transform properties.  
 `[Alt] + [Click]` to reset the transform properties of the selected layer to `0`,  
-`[Ctrl] + [Alt] + [Click]` to also reset the opacity to `100 %`.
+`[Ctrl] + [Alt] + [Click]` to also reset the opacity *to `100 %`.
 
-The *Zero* makes use of this behaviour to ease linking with expressions between layer transforms, even from a composition to another.
+The *Zero* makes use of this behavior to ease linking with expressions between layer transforms, even from a composition to another.
 
 A Zero is a standard null object, which has exactly the same transform values as the layer it works with, and it is inserted in the hierarchy, between the layer and its former parent.
 

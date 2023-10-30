@@ -107,7 +107,7 @@ You can tweak the way the tweening slider works in the additional panel, click t
 
 ![](../../img/duik/animation/tween-options.png)
 
-By default, Duik freezes all **animated properties** it'll find, but you can set it to only freeze explicitely **selected properties** if you prefer.
+By default, Duik freezes all **animated properties** it'll find, but you can set it to only freeze explicitly **selected properties** if you prefer.
 
 By default, Duik works only with **selected layers**, but you can tell it to use **all layers**; in this case it'll freeze all animations in the composition, no matter the selection. Be careful, this may be a bit long if there are a lot of animated properties.
 
@@ -125,6 +125,6 @@ By default, Duik works only with **selected layers**, but you can tell it to use
     In an nutshell, our advice is:
 
     - Animate in blocks, with keyframes on hold, where the emotion is more important; this eases the creation of expressive and detailed posing of the character. The shape is more important than the movement in this case.
-    - Animate with curves when the movement is more important, for dynamic actions, like waling, fighting, falling, running... In this case, you want to focus on the timing and rythm first, and this is easier with a curve editor.
+    - Animate with curves when the movement is more important, for dynamic actions, like waling, fighting, falling, running... In this case, you want to focus on the timing and rhythm first, and this is easier with a curve editor.
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

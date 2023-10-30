@@ -66,7 +66,7 @@ This menu shows the different types of IK and FK Control:
 
 ## Standard IK/FK
 
-The standard IK and FK control can be used with chains consisiting of one to three layers (plus the tip, like the hand or the foot). It can be used for almost all kind of legs and arms.
+The standard IK and FK control can be used with chains consisting of one to three layers (plus the tip, like the hand or the foot). It can be used for almost all kind of legs and arms.
 
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_E04_Arm__EN_720.mp4)  
 *This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
@@ -197,7 +197,7 @@ Bone chains with more than two or three bones are usually used to rig flexible l
 
 - Using **FK**, which is best if the limb is something just hanging (like hair strands or cloth, and tails), attached only on one side.
 - **Bézier IK**, which is a special kind of IK you can control with several controllers to define the curve of the limb, as you would for a Bézier path using points and tangents.  
-  This is best if the chain is interacting with something else (attached) on both sides, like the spine, the neck, or the tail of the dog stucked in a door. Ouch.
+  This is best if the chain is interacting with something else (attached) on both sides, like the spine, the neck, or the tail of the dog stuck in a door. Ouch.
 
 ![](../../img/duik/constraints/bezier-ik_00000.png)  
 *Four layers controlled with Bézier IK*
@@ -214,14 +214,14 @@ There are two effects to adjust some details:
 - On the controller of the end of the limb (the main controller):  
   ![](../../img/duik/constraints/bezier-ik-effect.png)  
     - By default, the layers are aligned on the virtual curve (tangent to the curve). You can uncheck the ***Auto orient*** option to animate their rotation manually.
-    - Use the ***Offset*** to move the layers along the virtual curve. Note that this option is also **availabe on each layer individually**.
+    - Use the ***Offset*** to move the layers along the virtual curve. Note that this option is also **available on each layer individually**.
 - On the *Curve* controller:  
   ![](../../img/duik/constraints/bezier-ik-curveeffect.png)   
     - Uncheck the ***Draw guides*** option to hide the dashed line representing the IK.
     - You can check the ***Show handles*** option to display secondary controls to adjust the virtual curve more precisely.
 
 ![](../../img/duik/constraints/bezier-ik-curve_00000.png)  
-*When showning the curve handles, you can adjust the virtual Bézier curve very precisely.  
+*When showing the curve handles, you can adjust the virtual Bézier curve very precisely.  
 Double click on the handle to move it around.*
 
 The optional Bézier handles are actually groups in the shape layer content of the *Curve* controller; to animate them, animate the position of these groups.

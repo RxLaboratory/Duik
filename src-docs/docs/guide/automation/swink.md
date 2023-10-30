@@ -39,7 +39,7 @@ When the ***Plateau*** is set to `0 %`, the oscillation never stops; with a high
 Finally, you can adjust the ***interpolation***[*](../../misc/glossary.md) between the *A* and *B* values:
 
 - *Hold (square)* disables interpolation. The value will *blink*.
-- *Linear* will result in a very simple interpoation without easing (a triangle).
+- *Linear* will result in a very simple interpolation without easing (a triangle).
 - *Smooth (sigmoid)* is the smoothest interpolation, similar to a sine function but with the ability to change the *easing* with the *Rate* value.  
     This interpolation is symetrical, like a sine function.
 - *Natural (gaussian)* interpolates the value using the gaussian (*bell*) function, which results in an asymetrical acceleration and deceleration. With this interpolation, the motion is more dynamic, and the object looks alive; it is great for the arms swinging during a walk cycle for example.

@@ -31,7 +31,7 @@ All the **Mode** actually do the same thing but change the way you can control t
 
 - **`Frame duration`** lets you set the duration of the frames.  
     With this mode, you can set, and animate, the **Frame duration** property, to change the exposure. If you set it to `2` for example, the property will be animated ***on twos***. This means that each frame of the animation lasts two actual frames of the composition.
-- **`X-Sheet`**, **`Layer markers`**, **`Comp markers`** let you manuall set the exact time where the frame has to change.  
+- **`X-Sheet`**, **`Layer markers`**, **`Comp markers`** let you manually set the exact time where the frame has to change.  
     With  this mode, you set all the times at which you'd like the animation to go a step further, using either the **X-Sheet** property (setting keyframes on it), or markers on the layer or the composition.  
     At each keyframe or marker, the frame (cel) will change. For example, to animate on twos, you'd add a keyframe or marker every two frames of the composition.
 

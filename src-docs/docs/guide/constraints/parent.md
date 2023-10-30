@@ -15,7 +15,7 @@ Select the layers, then click the ![](../../img/duik/icons/parent.svg){style="wi
 
 ## ![](../../img/duik/icons/auto_parent.svg){style="width:1em;"} Auto-Parent
 
-Auto-parent is a quick way to parent the selected layers. It is very handy with compositions with a lot of layers; instead of using the After Effects pickwhip or scrolling through a too-long list of layers, click this button to parent all selected layers to the last-selected one.
+Auto-parent is a quick way to parent th*e selected layers. It is very handy with compositions with a lot of layers; instead of using the After Effects pickwhip or scrolling through a too-long list of layers, click this button to parent all selected layers to the last-selected one.
 
 1. **Select the child layers**.
 2. **Add the parent** to the selection.
@@ -28,7 +28,7 @@ Auto-parent is a quick way to parent the selected layers. It is very handy with 
 
 ## ![](../../img/duik/icons/parent.svg){style="width:1em;"} Parent Constraint
 
-The Parent Constraint works like standard After Effects parenting, except that the parenting can be animated, so that a child layer can change its parent (or combine multiple parents) at any time. This is very useful to temporarilly parent an object to the hand of a character for example.
+The Parent Constraint works like standard After Effects parenting, except that the parenting can be animated, so that a child layer can change its parent (or combine multiple parents) at any time. This is very useful to temporarily parent an object to the hand of a character for example.
 
 1. **Select the child** layer.
 2. Click the ![](../../img/duik/icons/parent.svg){style="width:1em;"} ***Parent Constraint*** button.

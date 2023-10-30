@@ -12,7 +12,7 @@ Public domain.*{style="font-size:0.8em;"}
 You can choose to randomize:
 
 - The Current values: randomizes the selected properties, adding a keyframe at the current time if the property is animated.
-- The Layers: randomizes the layers times, or locatioon in the layer stack.
+- The Layers: randomizes the layers times, or location in the layer stack.
 - The Keyframes: randomizes the selected keyframes values or times.
 
 For all modes, you can select the mode:

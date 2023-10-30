@@ -252,7 +252,7 @@ With the connector, you can also use the audio channel of any layer to control s
 3. Select the slave properties.
 4. Connect.
 
-The connector creates precomposition containing the audio layer to let you configure precisely how the audio will control the slave properties.
+The connector creates a precomposition containing the audio layer to let you configure precisely how the audio will control the slave properties.
 
 ![](../../img/duik/constraints/connector-audio.png)  
 *An audio connector precomposition.*

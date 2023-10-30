@@ -1,6 +1,6 @@
 # ![](../../img/duik/icons/kleaner.svg){style="width:1em;"} Kleaner
 
-*Kleaner* stands for ***Keyframe Cleaner***[^pun]. It's a very poowerful tool to help you achieve the best animation with very little work; for any simple enough animation, it's able to do all the tedious interpolation[*](../../misc/glossary.md) and some extrapolation[*](../../misc/glossary.md) work for you, adding all the details needed in the animation using only simple linear keyframes.
+*Kleaner* stands for ***Keyframe Cleaner***[^pun]. It's a very powerful tool to help you achieve the best animation with very little work; for any simple enough animation, it's able to do all the tedious interpolation[*](../../misc/glossary.md) and some extrapolation[*](../../misc/glossary.md) work for you, adding all the details needed in the animation using only simple linear keyframes.
 
 [^pun]: We've had a hard time translating this term in other languages, but we've found *Clettoyeur* for the "Nettoyeur de clefs" in French, and *Climpiador* for the "Limpiador de clave" in Spanish. If you'd like to play with us and help translate Duik, come to  [translate.rxlab.io](http://translate.rxlab.io){target="_blank"}!
 
@@ -11,7 +11,7 @@ Public domain.*{style="font-size:0.8em;"}
 
 It's a smart tool which takes a lot of parameters into account to generate the best animation. To achieve this result, we've used advanced coding techniques, like *Fuzzy Logics*[^fuzzy]; everything uses **analytical methods** though, there's **no simulation nor A.I.** or machine learning: this is **a tool for animators made by animators**. It's not physically accurate; **every generated motion has been designed** and fine tuned to be the best according to the animator's view, not to mimic perfectly the real world. Like any true animation.
 
-[^fuzzy]: Fuzzy Logic is a way to replace Boolean logic when values may not be completely true or false, e.g. a temperature can be hot, but more precisely it can be just a bit hot or very hot.
+[^fuzzy]: Fuzzy Logic is a way to replace boolean logic when values may not be completely true or false, e.g. a temperature can be hot, but more precisely it can be just a bit hot or very hot.
     
     Using Fuzzy Logic is a way to test the veracity of a statement, and get a nuanced result, which can then be used to set nuanced values according to the truthness, the veracity, obtained from the statement.
 
@@ -82,13 +82,13 @@ When you click the ***![](../../img/duik/icons/kleaner.svg){style="width:1em;"} 
     With this preset, the Kleaner applies an anticipation[*](../../misc/glossary.md) to the movement, then interpolates accordingly to the general parameters you'll choose, and ends the movement with a follow through[*](../../misc/glossary.md) animation. It also adds overlap[*](../../misc/glossary.md) and drag[*](../../misc/glossary.md) to spatial properties.
 - **Inanimate** (interpolation  + follow through)  
     This is almost the same as the *Alive* preset, except the anticipation is disabled[^anticipate].
-- **True stop** (anticipation + interpolation) 
+- **True stop** (anticipation + interpolation)  
     This is the same preset as the *Alive* preset, except there's no follow through at the end of the animation, to let you manually animate it.
 - **Exact keyframes** (interpolation only)  
     With this preset, the Kleaner only interpolates between the keyframes, without anticipation nor follow through animation. With this setup, the resulting animation actually goes through the exact values of the keyframes, which may not be the case with the previous presets.
 - **Spring** (follow through only)  
     Use this preset if you want to animate manually, but have an automatic follow through at the end of the animation. The Kleaner also adds some overlapping and dragging animation on spatial properties.
-- **Spring** (no simulation)
+- **Spring** (no simulation)  
     This is the same preset as the previous one, except all simulations are disabled. This improves the performance a lot, but there won't be any overlapping and dragging animation on spatial properties anymore.
 - **Bounce**  (follow through only)  
     This is the same as the *Spring* preset, but for objects bouncing on a surface instead of turning around the end value.
@@ -134,7 +134,7 @@ Public domain.*{style="font-size:0.8em;"}
 The Kleaner does a lot of things for you, effectively applying some general animation principles. What it does exactly also depends on the type of property being animated.
 
 - ***Anticipation*** is what happens before the actual movement, to get momentum before moving the object. It's one of the 12 Disney's animation principles[^principles]. The *Will* is shown with the anticipation.
-- The ***Motion Interpolation*** is what happens between the keyframes, it describes how the Kleaner *smoothes* the animation and makes it more dynamic. It's mostly with this interpolation that the *Weight* of the object is shown, and the *Will* of the character, but almost all other general parameters are also used to tweak it.
+- The ***Motion Interpolation*** is what happens between the keyframes, it describes how the Kleaner *smooths* the animation and makes it more dynamic. It's mostly with this interpolation that the *Weight* of the object is shown, and the *Will* of the character, but almost all other general parameters are also used to tweak it.
 - The ***Overlap***, or *drag*, is what makes objects *lag behind* their parents, the other objects they're attached to. The Kleaner is able to add overlapping animation and drag to **spatial properties**.
 - The ***Follow through*** is what happens after the keyframes and the main animation. It is how the object oscillates or bounces on a surface before coming to a full stop.
 - Duik is able to simulate ***Soft bodies*** if the Kleaner is applied on **spatial properties**. In this case, these spatial properties will lag a bit behind the main motion of the layer itself (similarly to the *overlap*), thus creating this *soft body* simulation. This works especially well on After Effects puppet pins, or any other effect deforming the layer.
@@ -208,7 +208,7 @@ You can adjust the overlap by changing this value; set it to `0 %` to completely
 *An oscillating follow through generated by the Kleaner.*
 
 ![](../../img/duik/automation/kleaner-bounce.png)  
-*An bouncing follow through generated by the Kleaner.*
+*A bouncing follow through generated by the Kleaner.*
 
 !!! note
     When oscillating, the frequency is stable and doesn't change until the object stops. When bouncing, the frequency raises (the bounces get shorter and shorter).

@@ -36,7 +36,7 @@ You can use Duik pins to control all Bézier paths (masks or shape layers).
 *A Bézier path controlled with Duik pins.*
 
 By default, Duik won't create pins to control the tangents, but **the tangents can still be controlled by rotating and scaling the pins** for the main points.  
-You can hold the `[Alt]` key when click the *![](../../img/duik/icons/pin.svg){style="width:1em;"} Add Pins* button to force Duik to create layers for the tagents instead. These layers are still parented to the main points, so rotating and scaling them still works.  
+You can hold the `[Alt]` key when click the *![](../../img/duik/icons/pin.svg){style="width:1em;"} Add Pins* button to force Duik to create layers for the tangents instead. These layers are still parented to the main points, so rotating and scaling them still works.  
 By default, these tangents are locked together, but they can be unlocked with a checkbox control in the main point effects.
 
 Bézier path pins and tangent pins can be removed or re-created at any time; this is a way to make the composition lighter with less layers, by using only the needed pins and tangent pins.  

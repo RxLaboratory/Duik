@@ -36,9 +36,17 @@ We think this is a good workaround, you just have to take care of the resolution
 
 Use a [List](guide/constraints/tools/list.md)!
 
+And if the slave property is a Bézier path, add [pins](guide/constraints/pins.md) first, then connect the position and rotation of the pin layers, where you can also use a [list](guide/constraints/tools/list.md).
+
 ## The hominoid (or other meta-rigs) is facing left. I’d like it to face right.
 
 The direction the hominoid is facing doesn’t really matter, as the Auto-Rig will adjust to the locations of the armatures at the time you’ll run it. Just move each bone to the corresponding limb of your character, one by one, and then run the Auto-Rig. Don’t forget the [Edit Mode](guide/bones/tools/edit.md) to help you move a Structure without moving its children if you need.
+
+## When disabling the IK on legs (to animate using FK) the rig is broken (the foot is detached from the leg).
+
+For now, it is not possible to animate a leg with a *footroll* in FK with Duik. To rig a simple leg, without details on the foot, you can instead use an arm, which can be safely switch to FK at any time (and you could just parent the toes to the foot to rotate them in FK).
+
+As for any other parts of the rig where you may need to combine different ways of controlling the limb, don't hesitate to duplicate the leg to have one to be animated in IK and the other in FK. You'll just have to switch their visibility to animate with one or the other. In this case, you shouldn't even need any specific rig for the FK version, just animate the rotation of the bones (or add some simple controllers); this is the lightest and simplest way to have both IK and FK on legs.
 
 ## When applying the walk cycle, the controllers of the hands seem to be deactivated, why’s that?
 

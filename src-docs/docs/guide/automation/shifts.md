@@ -30,7 +30,7 @@ The duration is of each shift is set with the same principle, between a **minimu
 
 For multi-dimensional properties (position, scale, colors...) you can tweak how each axis is offset during each shift:
 
-- You can disallow **diagonals**; in this case, only a single  axis (or channel) can move at once, e.g. effectively constraining the moovements horizontally or vertically for spatial properties.
+- You can disallow **diagonals**; in this case, only a single  axis (or channel) can move at once, e.g. effectively constraining the movements horizontally or vertically for spatial properties.
 - You can also **weigh**[*](../../misc/glossary.md) each axis individually.
 - For colors, you can choose between **RGB** or **HSL** to interpolate the movement and weigh channels accordingly.
 
