@@ -1,8 +1,8 @@
-:: @echo off
+@echo off
 
 :: The version
 IF "%~1"=="" (
-    SET version=17.1.8
+    SET version=17.1.9
 ) ELSE (
     SET version=%~1
 )
