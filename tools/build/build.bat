@@ -2,11 +2,7 @@
 
 :: The version
 IF "%~1"=="" (
-<<<<<<< HEAD
-    SET version=17.2.0-alpha5
-=======
-    SET version=17.1.9
->>>>>>> master
+    SET version=17.2.0-alpha6
 ) ELSE (
     SET version=%~1
 )
