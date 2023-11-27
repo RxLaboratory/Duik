@@ -106,7 +106,7 @@ Duik.Constraint.createList = function(prop, addKeyframe) {
         'var result = null',
         'for (var i = 1, n = thisLayer("Effects").numProperties; i <= n; i++) {',
         '   var fx = thisLayer.effect(i);',
-        '   if (!checkDuikEffect(fx, "' + listName + '")) continue;',
+        '   if (!checkDuikEffect(fx, "List")) continue;',
         '   if (!fx.name.indexOf(thisProperty.name) == 0) continue;',
         '   if (!fx.active) continue;',
         ''
