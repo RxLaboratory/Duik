@@ -1,7 +1,7 @@
 @echo off
 
 :: Edit these variables with the correct paths on your system
-SET aeVersion=2023
+SET aeVersion=2024
 SET "aePath=C:\Program Files\Adobe\Adobe After Effects %aeVersion%\Support Files\Scripts\ScriptUI Panels"
 :: The repo is the current dir by default
 SET repoPath=%~dp0..\..
