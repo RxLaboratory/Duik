@@ -7,6 +7,8 @@ The animation library is a quick and easy way to store, manage and share reusabl
 
 It's both a panel in Duik, and a folder on your disk, so that it can easily be synchronized[^sync] and shared.
 
+[^sync]: Files can easily be synced between computers using tools like *DropBox*, *OneDrive*, etc. But we strongly recommend using the [free and open source Syncthing](https://syncthing.net/): [syncthing.net](https://syncthing.net/)
+
 ## Panel
 
 ![](../../img/duik/animation/anim-library.png)
@@ -85,8 +87,5 @@ Some metadata, like the favorites and history, is stored in the `Duik_animation_
 [^duio]: *DuIO* is a collection of tools for exporting and importing stuff in After Effects. It is available at [rxlaboratory.org/tools/duio](https://rxlaboratory.org/tools/duio)
 
 Thumbnails are stored as `.png` files named after the animation `.duio` file.
-
-
-
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

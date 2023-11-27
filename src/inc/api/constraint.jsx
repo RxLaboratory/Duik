@@ -106,7 +106,7 @@ Duik.Constraint.createList = function(prop, addKeyframe) {
         'var result = null',
         'for (var i = 1, n = thisLayer("Effects").numProperties; i <= n; i++) {',
         '   var fx = thisLayer.effect(i);',
-        '   if (!checkDuikEffect(fx, "' + listName + '")) continue;',
+        '   if (!checkDuikEffect(fx, "List")) continue;',
         '   if (!fx.name.indexOf(thisProperty.name) == 0) continue;',
         '   if (!fx.active) continue;',
         ''
@@ -3228,7 +3228,7 @@ Duik.Constraint.fk = function(layers, controller) {
 
         //add FK control
         var fkControl = controller('ADBE Effect Parade').addProperty('ADBE Angle Control');
-        fkControl.name = i18n._("FK") + ' | ' + Duik.Layer.name(layer);
+        fkControl.name = DuAELayer.newUniqueEffectName( i18n._("FK") + ' | ' + Duik.Layer.name(layer), controller);
 
         //add expression and move away for the stretch
         if (layers.current == 0) {
