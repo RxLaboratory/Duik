@@ -1,12 +1,12 @@
-(function() {
+(function () {
 
     #include "../src/inc/api_all.jsx"
 
-    DuAEF.init( "Duik", "0.0.0", "RxLaboratory");
+    DuAEF.init("Duik", "0.0.0", "RxLaboratory");
     DuAEF.enterRunTime();
 
     // Functions
-    
+
     /**
      * 
      * @param {string} path 
@@ -18,7 +18,7 @@
         //open and parse file
         if (!trfFile.open('r')) return [];
 
-        if (getVSVersion(trfFile.readln()) < 1 ) {
+        if (getVSVersion(trfFile.readln()) < 1) {
             alert("Sorry, version is too old or unknown.");
             return [];
         }
@@ -26,16 +26,16 @@
         var numFrames = 0;
         var frames = {};
         frames.frames = [];
-        frames.size = [0,0];
-        frames.center = [0,0];
+        frames.size = [0, 0];
+        frames.center = [0, 0];
 
-        while(!trfFile.eof) {
+        while (!trfFile.eof) {
 
             var line = trfFile.readln();
 
             // Ignore comments
             if (line[0] == "#") continue;
-            if (line.substring(0,5) != "Frame") {
+            if (line.substring(0, 5) != "Frame") {
                 alert("Invalid or corrupt file, sorry");
                 break;
             }
@@ -57,15 +57,14 @@
         ];
 
         // Compute the angles
-        for (var i = 0; i < numFrames; i++)
-        {
+        for (var i = 0; i < numFrames; i++) {
             var frame = frames.frames[i];
             var a = 0;
             var s = 0;
             var numFields = frame.fields.motionData.length;
-            for(var j = 0; j < numFields; j++) {
+            for (var j = 0; j < numFields; j++) {
                 var field = frame.fields.motionData[j];
-                var angle = calcVSFieldAngle( field, frames.center )*field.match;
+                var angle = calcVSFieldAngle(field, frames.center) * field.match;
                 if (angle === null) continue;
                 a += angle;
                 s += field.match;
@@ -73,7 +72,7 @@
             if (s > 0)
                 frame.angle = a / s;
         }
-        
+
         trfFile.close();
 
         return frames;
@@ -85,7 +84,7 @@
      * @returns {int}
      */
     function getVSVersion(str) {
-        if (str.substring(0,8) != "VID.STAB") return -1;
+        if (str.substring(0, 8) != "VID.STAB") return -1;
         var arr = str.split(" ");
         if (arr.length != 2) return 0;
         return parseInt(arr[1]);
@@ -103,14 +102,14 @@
 
         frame.number = -1;
         frame.fields = [];
-        frame.maxDist = [0,0];
+        frame.maxDist = [0, 0];
         frame.angle = 0;
-        frame.vector = [0,0];
+        frame.vector = [0, 0];
 
         var fieldsBegin = str.indexOf("(") + 1;
 
         // Get the frame number
-        frame.number = parseInt( str.substring(6, fieldsBegin - 2 ));
+        frame.number = parseInt(str.substring(6, fieldsBegin - 2));
         if (isNaN(frame.number) || frame.number < 0) {
             frame.number = -1;
             return frame;
@@ -119,7 +118,7 @@
         var fieldsEnd = str.lastIndexOf(")");
         frame.fields = parseVSFields(str.substring(fieldsBegin, fieldsEnd));
         frame.vector = frame.fields.vector;
-        
+
         return frame;
     }
 
@@ -136,9 +135,9 @@
     function parseVSFields(str) {
         var fields = {}
         fields.motionData = [];
-        fields.size = [0,0];
-        fields.center = [0,0];
-        fields.vector = [0,0];
+        fields.size = [0, 0];
+        fields.center = [0, 0];
+        fields.vector = [0, 0];
 
         var x = 0;
         var y = 0;
@@ -150,13 +149,13 @@
         var fieldsArr = fieldsStr.split(",");
         var numFields = fieldsArr.length;
         for (var i = 0; i < numFields; i++) {
-            var field = parseVSField( fieldsArr[i] )
+            var field = parseVSField(fieldsArr[i])
 
             x += field.vector[0] * field.match;
             y += field.vector[1] * field.match;
             s += field.match;
 
-            fields.motionData.push( field );
+            fields.motionData.push(field);
             if (field.position[0] > fields.size[0])
                 fields.size[0] = field.position[0];
             if (field.position[1] > fields.size[1])
@@ -183,19 +182,19 @@
      */
     function parseVSField(str) {
         var field = {};
-        field.vector = [0,0];
-        field.position = [-1,-1];
+        field.vector = [0, 0];
+        field.position = [-1, -1];
         field.size = 0;
         field.contrast = 0;
         field.match = 0;
 
-        var fieldBegin = str.indexOf("(")+1;
+        var fieldBegin = str.indexOf("(") + 1;
         var fieldEnd = str.indexOf(")");
         var fieldStr = str.substring(fieldBegin, fieldEnd);
         var fieldArr = fieldStr.split(" ");
         if (fieldArr[0] != "LM") return field;
         if (fieldArr.length != 8) return field;
-        
+
         var vx = parseInt(fieldArr[1]);
         var vy = parseInt(fieldArr[2]);
         var fx = parseInt(fieldArr[3]);
@@ -218,7 +217,7 @@
         return field;
     }
 
-    function calcVSFieldAngle(field, center){
+    function calcVSFieldAngle(field, center) {
         var px = field.position[0];
         var py = field.position[1];
         var cx = center[0];
@@ -226,22 +225,22 @@
         var vx = field.vector[0];
         var vy = field.vector[1];
         // we better ignore fields that are to close to the rotation center
-        if (Math.abs(px - cx) + Math.abs(py - cy) < field.size*2) {
-          return null;
+        if (Math.abs(px - cx) + Math.abs(py - cy) < field.size * 2) {
+            return null;
         } else {
-          var a1 = Math.atan2(py - cy, px - cx);
-          var a2 = Math.atan2(py - cy + vy, px - cx + vx);
-          var diff = a2 - a1;
-          if  (diff > Math.PI)
-            return diff - 2 * Math.PI
-          else if (diff < -Math.PI)
-            return diff + 2 * Math.PI
-          else
-            return diff;
+            var a1 = Math.atan2(py - cy, px - cx);
+            var a2 = Math.atan2(py - cy + vy, px - cx + vx);
+            var diff = a2 - a1;
+            if (diff > Math.PI)
+                return diff - 2 * Math.PI
+            else if (diff < -Math.PI)
+                return diff + 2 * Math.PI
+            else
+                return diff;
         }
-      }
+    }
 
-    function vsFramesToAEKeyframes( frames, layer ) {
+    function vsFramesToAEKeyframes(frames, layer) {
         var posvalues = [];
         var rotvalues = [];
         var times = [];
@@ -256,12 +255,12 @@
         var numFrames = frames.frames.length;
         for (var i = 0; i < numFrames; i++) {
             var frame = frames.frames[i];
-            posvalues.push( frame.vector * scale + origin);
-            rotvalues.push( frame.angle * 180 / Math.PI + angle );
-            times.push( (frame.number-1)*frameDuration);
+            posvalues.push(frame.vector * scale + origin);
+            rotvalues.push(frame.angle * 180 / Math.PI + angle);
+            times.push((frame.number - 1) * frameDuration);
         }
 
-        layer.transform.position.setValuesAtTimes(times, posvalues);   
+        layer.transform.position.setValuesAtTimes(times, posvalues);
         layer.transform.rotation.setValuesAtTimes(times, rotvalues);
     }
 
@@ -275,5 +274,5 @@
     var frames = parseTRFFile(thisPath + "/test.trf");
 
     var nullLayer = DuAEComp.addNull(comp);
-    vsFramesToAEKeyframes( frames, nullLayer );    
+    vsFramesToAEKeyframes(frames, nullLayer);
 })();
