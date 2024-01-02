@@ -130,9 +130,10 @@ Duik.CmdLib['Camera']["Camera rig"] = "Duik.Camera.rig()";
 /**
  * Rigs a camera to make it easier to animate
  * @param {CameraLayer} [camera] The camera to rig. If omitted, will try to find it in selected layers or the active comp.
+ * @param {Boolean} [separateDimensions] Whether to separate the position dimensions on the controllers. If the option is not set, Duik will check if the current camera has its dimensions separated first
  * @return {ShapeLayer[]} An array of controllers: [target, cam, main], which may be empty if no camera was found or if it was a one-node camera.
  */
-Duik.Camera.rig = function( camera )
+Duik.Camera.rig = function( camera, separateDimensions )
 {
     camera = def(camera, DuAEComp.camera());
     if (!camera) return [];
@@ -151,6 +152,8 @@ Duik.Camera.rig = function( camera )
 
     camera.locked = false;
 
+	separateDimensions = def(separateDimensions, camera.transform.position.dimensionsSeparated);
+
 	// Position must not be separated
 	if (camera.transform.position.dimensionsSeparated)
 		camera.transform.position.dimensionsSeparated = false;
@@ -163,6 +166,7 @@ Duik.Camera.rig = function( camera )
     Duik.Controller.setLimbName( i18n._("Target"), targetCtrl );
 	targetCtrl.threeDLayer = true;
 	targetCtrl.position.setValue(camera.transform.pointOfInterest.value);
+	targetCtrl.position.dimensionsSeparated = separateDimensions;
 
     //create cam
 	var camCtrl = Duik.Controller.create(comp, Duik.Controller.Type.POSITION );
@@ -170,6 +174,7 @@ Duik.Camera.rig = function( camera )
     Duik.Controller.setLimbName( i18n._("Cam"), camCtrl ); /// TRANSLATORS: Short for 'Camera'
 	camCtrl.threeDLayer = true;
 	camCtrl.position.setValue(camera.transform.position.value);
+	camCtrl.position.dimensionsSeparated = separateDimensions;
 
     //create main
 	var mainCtrl = Duik.Controller.create(comp, Duik.Controller.Type.CAMERA);
@@ -177,6 +182,7 @@ Duik.Camera.rig = function( camera )
     Duik.Controller.setLimbName( camera.name, mainCtrl );
 	mainCtrl.threeDLayer = true;
 	mainCtrl.position.setValue(camera.transform.position.value);
+	mainCtrl.position.dimensionsSeparated = separateDimensions;
 
     camCtrl.parent = mainCtrl;
 	targetCtrl.parent = mainCtrl;
@@ -481,20 +487,7 @@ Duik.Camera.rig = function( camera )
 		'result;'
 	].join('\n');
 
-	mainCtrl.orientation.expression = iExpr;
-	camCtrl.position.expression = iExpr;
-	camCtrl.orientation.expression = iExpr;
-	camCtrl.xRotation.expression = iExpr;
-	camCtrl.yRotation.expression = iExpr;
-	targetCtrl.position.expression = iExpr;
-	targetCtrl.orientation.expression = iExpr;
-	targetCtrl.xRotation.expression = iExpr;
-	targetCtrl.yRotation.expression = iExpr;
-	if (DuAE.version.version >= 16) targetCtrl.rotation.expression = iExpr;
-	else targetCtrl.rotation.expression = iExpr;
-
-	// Position
-	mainCtrl.position.expression = [ DuAEExpression.Id.CAMERA_RIG,
+	var mainPosExpr = [ DuAEExpression.Id.CAMERA_RIG,
 		fxLink,
 		gFreqFX,
 		gPosAmpFX,
@@ -554,6 +547,38 @@ Duik.Camera.rig = function( camera )
 		'}',
 		'result;'
 	].join('\n');
+
+	if (separateDimensions) {
+		camCtrl.transform.property("ADBE Position_0").expression = iExpr;
+		camCtrl.transform.property("ADBE Position_1").expression = iExpr;
+		camCtrl.transform.property("ADBE Position_2").expression = iExpr;
+
+		targetCtrl.transform.property("ADBE Position_0").expression = iExpr;
+		targetCtrl.transform.property("ADBE Position_1").expression = iExpr;
+		targetCtrl.transform.property("ADBE Position_2").expression = iExpr;
+
+		mainCtrl.transform.property("ADBE Position_0").expression = mainPosExpr;
+		mainCtrl.transform.property("ADBE Position_1").expression = mainPosExpr;
+		mainCtrl.transform.property("ADBE Position_2").expression = mainPosExpr;
+	}
+	else {
+		camCtrl.position.expression = iExpr;
+		targetCtrl.position.expression = iExpr;
+		mainCtrl.position.expression = mainPosExpr;
+	}
+
+	mainCtrl.orientation.expression = iExpr;
+
+	camCtrl.orientation.expression = iExpr;
+	camCtrl.xRotation.expression = iExpr;
+	camCtrl.yRotation.expression = iExpr;
+	
+	targetCtrl.orientation.expression = iExpr;
+	targetCtrl.xRotation.expression = iExpr;
+	targetCtrl.yRotation.expression = iExpr;
+	if (DuAE.version.version >= 16) targetCtrl.rotation.expression = iExpr;
+	else targetCtrl.rotation.expression = iExpr;
+
 	// X Rotation
 	mainCtrl.xRotation.expression = [ DuAEExpression.Id.CAMERA_RIG,
 		fxLink,

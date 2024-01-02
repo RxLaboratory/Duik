@@ -61,22 +61,26 @@ Duik.Constraint.createList = function(prop, addKeyframe) {
 
     var layer = prop.layer;
 
-    var listName = i18n._("List");
+    var internalListName = "List";
+    var listName = i18n._(internalListName);
     var name = prop.getProperty().name + ' | ' + listName;
     var pe;
     if (dim == 1) {
         pe = Duik.PseudoEffect.ONED_LIST;
     }
     else if (dim == 2) {
-        listName = i18n._("2DList");
+        internalListName = "2DList";
+        listName = i18n._(internalListName);
         pe = Duik.PseudoEffect.TWOD_LIST;
     }
     else if (dim == 3) {
-        listName = i18n._("3DList");
+        internalListName = "3DList";
+        listName = i18n._(internalListName);
         pe = Duik.PseudoEffect.THREED_LIST;
     }
     else if (dim == 4) {
-        listName = i18n._("Color List");
+        internalListName = "Color List";
+        listName = i18n._(internalListName);
         pe = Duik.PseudoEffect.COLOR_LIST;
     }
     else return null;
@@ -106,7 +110,7 @@ Duik.Constraint.createList = function(prop, addKeyframe) {
         'var result = null',
         'for (var i = 1, n = thisLayer("Effects").numProperties; i <= n; i++) {',
         '   var fx = thisLayer.effect(i);',
-        '   if (!checkDuikEffect(fx, "List")) continue;',
+        '   if (!checkDuikEffect(fx, "' + internalListName  + '")) continue;',
         '   if (!fx.name.indexOf(thisProperty.name) == 0) continue;',
         '   if (!fx.active) continue;',
         ''

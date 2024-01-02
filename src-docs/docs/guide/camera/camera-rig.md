@@ -23,6 +23,10 @@ Duik creates three controllers:
 - A position controller is used to control the camera only.
 - And a third controller controls only the point of interest.
 
+!!! tip
+    If the position dimensions are separated on the After Effects camera at the time it is rigged by Duik, Duik will also separate the dimensions of the controllers it creates.  
+    You can also separate or unify the dimensions later: copy the expression from the property before, in order to paste it back after you've separated or unified the dimensions.
+
 ## Effect
 
 An effect on the main camera controller helps you animate the camera, with nice interpolations for a smooth camera move, and advanced behaviors to simulate real cameras.
