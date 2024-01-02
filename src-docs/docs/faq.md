@@ -49,6 +49,17 @@ If you want to animate/adjust the arms, you can either adjust the values in the 
 !!! Note
     You can animate the switch between IK and FK, and Duik provides a tool to ease this [IK/FK switch](guide/animation/tools/ik-fk-switch.md) process.
 
+## FK on legs don't seem to work: the foot is detached from the leg
+
+Because of the way the *foot roll* is rigged[^legrig], legs can't be animated using FK if they've been rigged with the Auto-Rig, as you rarely need FK on legs but very often need the foot roll controls.
+
+To be able to animate a leg using FK (but without foot roll controls), there are two ways:
+
+- Rig it as a hominoid front leg (arm)[^legrig].
+- Create a custom rig, with a standard IK[^ik].
+
+[^legrig]: *cf. [Bones and Auto-Rig / Auto-rig / Arms and legs](guide/bones/autorig/leg.md)*
+[^ik]: *cf. [Links & Constraints / Kinematics](guide/constraints/kinematics.md)*
 
 ## Duik worked well, but it won’t start anymore. What can I do?
 
