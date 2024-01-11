@@ -49,6 +49,14 @@ def deploy():
     print("Deploying...")
 
     build_path = get_build_path()
+    
+    if E.IS_WIN:
+        build_path = os.path.join(build_path, "windows")
+    elif E.IS_LINUX:
+        build_path = os.path.join(build_path, "linux")
+    elif E.IS_MAC:
+        build_path = os.path.join(build_path, "mac")
+
     exe_built = ""
     exe_name = get_built_exe()
     if E.IS_WIN:

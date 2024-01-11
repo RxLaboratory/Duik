@@ -43,6 +43,13 @@ def get_qt_build_path(debug=False):
 
     build_path = get_build_path()
 
+    if E.IS_WIN:
+        build_path = os.path.join(build_path, "windows")
+    elif E.IS_LINUX:
+        build_path = os.path.join(build_path, "linux")
+    elif E.IS_MAC:
+        build_path = os.path.join(build_path, "mac")
+
     if not is_mingw(): # MinGW already creates the subfolders
         if debug:
             build_path = os.path.join(build_path,"debug")

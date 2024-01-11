@@ -38,12 +38,4 @@ def get_build_path():
     @brief Gets the build path
     """
     build_path = os.path.join(E.REPO_DIR, 'build')
-
-    if E.IS_WIN:
-        build_path = build_path + "/windows"
-    elif E.IS_LINUX:
-        build_path = build_path + "/linux"
-    elif E.IS_MAC:
-        build_path = build_path + "/mac"
-
     return abs_path(build_path)

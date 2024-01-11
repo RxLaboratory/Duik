@@ -38,6 +38,10 @@ def build_script(file_path):
     """!
     @brief Builds a JSX file
     @returns {str} The built script"""
+
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError("Can't build " + file_path + ". The file does not exist.")
+
     with open(file_path, 'r', encoding='utf8') as file:
         built_lines = []
         for line in file:
@@ -58,6 +62,11 @@ def build_script(file_path):
                     os.path.dirname(file_path),
                     include_path
                 )
+                
+                if not os.path.isfile(include_path):
+                    raise FileNotFoundError("Can't build " + os.path.basename(file_path) +
+                                            ". This included file can't be found: " + trimmed_line)
+                
                 built_lines.append("\n")
                 built_lines.append("// ====== " + os.path.basename(include_path) + "======\n")
                 built_lines.append("\n")
@@ -88,6 +97,7 @@ def build_file(file_path, build_path):
 
     with open(script_filedest, 'w', encoding='utf8') as f:
         f.writelines(script)
+    return script_filedest
 
 def build_api():
     """Builds all the API files"""
@@ -98,11 +108,33 @@ def build_api():
         raise ValueError("Environement doesn't contain JSX data.")
 
     build_path = get_api_build_path()
+    
+    multiple_api = len(E.ENV['jsx'].get('API_files', ())) > 1
+    api_file = ""
+    api_file_lines = []
+    if multiple_api:
+        # Prepare an include file
+        api_filename = E.ENV['src']['project'] + "_API.jsxinc"
+        api_file = os.path.join(build_path, api_filename)
+        build_path = os.path.join(build_path, 'libs')
+
     if not os.path.isdir(build_path):
         os.makedirs(build_path)
 
     for file in E.ENV['jsx'].get('API_files', ()):
-        build_file(file, build_path)
+        built_file = build_file(file, build_path)
+
+        if built_file.endswith("jsx"):
+            os.rename(built_file, built_file.replace("jsx", "jsxinc"))
+
+        api_file_lines.append(
+            '//@include "libs/' + os.path.basename(built_file)
+            )
+        api_file_lines.append("\n")
+    
+    if multiple_api:
+        with open(api_file, 'w', encoding='utf8') as f:
+            f.writelines(api_file_lines)
 
     print(">> API Built!")
 
@@ -117,7 +149,7 @@ def build_folder(scripts_dir, build_path):
 
     for file in os.listdir(scripts_dir):
         ext = file.split(".")[-1]
-        if ext not in ('jsx', 'jsxinc'):
+        if ext not in ('jsx'):
             continue
         p = os.path.join(scripts_dir, file)
         if not os.path.isfile(p):
@@ -149,7 +181,7 @@ def build_scriptUI():
 
     build_path = os.path.join(
         get_jsx_build_path(),
-        "ScriptUI Panels"
+        "Scripts", "ScriptUI Panels"
     )
     scripts_dir = os.path.join(
         E.REPO_DIR,
