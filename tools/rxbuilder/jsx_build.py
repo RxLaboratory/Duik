@@ -108,6 +108,10 @@ def build_api():
         raise ValueError("Environement doesn't contain JSX data.")
 
     build_path = get_api_build_path()
+    dist_path = os.path.join(E.REPO_DIR, 'dist')
+
+    if os.path.isdir(dist_path):
+        shutil.rmtree(dist_path)
     
     multiple_api = len(E.ENV['jsx'].get('API_files', ())) > 1
     api_file = ""
@@ -116,16 +120,30 @@ def build_api():
         # Prepare an include file
         api_filename = E.ENV['src']['project'] + "_API.jsxinc"
         api_file = os.path.join(build_path, api_filename)
+        api_dist_file = os.path.join(dist_path, api_filename)
         build_path = os.path.join(build_path, 'libs')
+        dist_path = os.path.join(dist_path, 'libs')
 
     if not os.path.isdir(build_path):
         os.makedirs(build_path)
+    if not os.path.isdir(dist_path):
+        os.makedirs(dist_path)
 
     for file in E.ENV['jsx'].get('API_files', ()):
         built_file = build_file(file, build_path)
 
         if built_file.endswith("jsx"):
             os.rename(built_file, built_file.replace("jsx", "jsxinc"))
+            built_file = built_file.replace("jsx", "jsxinc")
+        
+        # Copy to dist
+        dist_file = os.path.join(
+            dist_path,
+            os.path.basename(built_file)
+            )
+        if os.path.isfile(dist_file):
+            os.remove(dist_file)
+        shutil.copy(built_file, dist_file)
 
         api_file_lines.append(
             '//@include "libs/' + os.path.basename(built_file)
@@ -135,6 +153,9 @@ def build_api():
     if multiple_api:
         with open(api_file, 'w', encoding='utf8') as f:
             f.writelines(api_file_lines)
+        with open(api_dist_file, 'w', encoding='utf8') as f:
+            f.writelines(api_file_lines)
+        
 
     print(">> API Built!")
 

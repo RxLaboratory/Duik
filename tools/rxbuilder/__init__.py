@@ -15,6 +15,7 @@ from .qt_deploy import add_deploy_step as add_qt_deploy_step
 
 from .jsx_build import build as build_jsx
 from .jsx_install import update_dependencies as update_jsx_dependencies
+from .jsx_deploy import deploy as deploy_jsx
 
 from .mkdocs_build import build as build_mkdocs
 

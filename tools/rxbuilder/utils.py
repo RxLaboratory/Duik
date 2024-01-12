@@ -39,3 +39,10 @@ def get_build_path():
     """
     build_path = os.path.join(E.REPO_DIR, 'build')
     return abs_path(build_path)
+
+def zip_dir( dir, zip_file_handler ):
+    for root, dirs, files in os.walk(dir):
+        for file in files:
+            zip_file_handler.write(os.path.join(root, file),
+                                  os.path.join(root.replace(dir, ''), file)
+                                  )
