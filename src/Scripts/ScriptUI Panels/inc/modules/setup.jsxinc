@@ -1,0 +1,112 @@
+/**
+ * Returns the current After Effects version as a float<br />
+ * You have to <code>#include setup.jsxinc</code> in your script to make this method available; otherwise you can have more details with {@link DuAE.version}. 
+ * @return {float} The version
+ */
+function aeVersion()
+{
+    var reV = /^(\d+)\.?(\d*)\.?(\d*)\D?(\S*)/i;
+    var v = app.version.match( reV );
+
+    if (!v) return 0.0;
+
+    if (!v[ 1 ]) v[ 1 ]  = '0';
+	if (!v[ 2 ]) v[ 2 ]  = '0';
+	if (!v[ 3 ]) v[ 3 ]  = '0';
+	if (!v[ 4 ]) v[ 4 ]  = '';
+
+    var versionString = v[ 1 ] + '.' + v[ 2 ];
+    return parseFloat(versionString);
+}
+
+/**
+ * Has scripting file and network authorization<br />
+ * You have to <code>#include setup.jsxinc</code> in your script to make this method available.
+ * @return {Boolean} true if the preference for file and network access is enabled.
+ */
+function hasFileAndNetworkAccess()
+{
+    app.preferences.saveToDisk();
+    app.preferences.reload();
+    var ok = app.preferences.getPrefAsLong( "Main Pref Section v2", "Pref_SCRIPTING_FILE_NETWORK_SECURITY", PREFType.PREF_Type_MACHINE_SPECIFIC );
+	return ok == 1;
+}
+
+/**
+ * Displays an invitation to enable file and network access.<br />
+ * Won't do nothing if the script already has file and network access, just run the callback.<br />
+ * Use this method before loading any script which needs this authorization.<br />
+ * You have to <code>#include setup.jsxinc</code> in your script to make this method available.
+ * @param {string} scriptName - The name of the script, used in the UI.
+ * @param {boolean} [reInit=false] - Set to true to display to prompt to reinit/reinstall the script below the button to ask for file access.
+ * @param {function} [reInitMethod] - A function to run in order to reinit/reinstall the script as soon as we get file access, before running the callback
+ */
+function askFilesAndNetworkAccess(scriptName, reInit, reInitMethod )
+{
+    // Check if we already have file and network access
+    var hasAccess = hasFileAndNetworkAccess();
+    if ( hasAccess ) return true;
+
+
+    var ui = new Window('dialog', "File and network access");
+
+    reInit = def( reInit, false);
+
+    var ui_accessFileAndNetworkGroup = ui.add('group');
+    ui_accessFileAndNetworkGroup.orientation = 'column';
+
+    var accessExplanation = scriptName + " needs to be allowed to write files.\nPlease, check the box called 'Allow Scripts to write files...' in the scripting preferences of After Effects.";
+    var reInitPrompt = "/!\\ ======\n/!\\ It seems something went wrong with " + scriptName + " the last time you used it.\n/!\\ Check the box below to re-initialize {#} and try to make it work again.\n/!\\ ======";
+
+    var ui_reinitCheckbox;
+    
+    ui_accessFileAndNetworkGroup.add( 'statictext', undefined, accessExplanation,
+    {
+        multiline: true
+    } );
+
+    //if reinit add prompt
+    if (reInit)
+    {
+        ui_accessFileAndNetworkGroup.add( 'statictext', undefined, reInitPrompt,
+        {
+            multiline: true
+        } );
+        ui_reinitCheckbox = ui_accessFileAndNetworkGroup.add( 'checkbox', undefined, "Re-initialize " + scriptName + " before launch." );
+    }
+
+    var ui_buttonGroup = ui_accessFileAndNetworkGroup.add('group');
+    ui_buttonGroup.orientation = 'row';
+
+    var ui_cancelButton = ui_buttonGroup.add('button', undefined, "Cancel");
+    var ui_fileAndNetworkPrefButton = ui_buttonGroup.add( 'button', undefined, "Open preferences..." );
+
+    var accepted = true;
+
+    ui_cancelButton.onClick = function () { accepted = false; ui.close(); };
+
+    ui_fileAndNetworkPrefButton.onClick = function () { accepted = true; ui.close(); };
+
+    ui.show();
+
+    if ( hasFileAndNetworkAccess() )
+    {
+        if (reInit) if (ui_reinitCheckbox.value) reInitMethod();
+        return true;
+    }
+    if ( !accepted ) return false;
+
+    // Show prefs
+    if ( aeVersion() < 16.1 ) app.executeCommand( 2359 ); // General prefs
+    else app.executeCommand( 3131 ); // Scripting prefs
+
+    if ( hasFileAndNetworkAccess() )
+    {
+        if (reInit) if (ui_reinitCheckbox.value) reInitMethod();
+        return true;
+    }
+    else 
+    {
+        return askFilesAndNetworkAccess( scriptName, reInit, reInitMethod );
+    }
+}
