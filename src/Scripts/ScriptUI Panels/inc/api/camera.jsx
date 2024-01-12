@@ -17,6 +17,7 @@ Duik.Camera.Presets =
 
 /**
  * The list of camera functions
+ * @namespace
  */
 Duik.CmdLib['Camera'] = {};
 

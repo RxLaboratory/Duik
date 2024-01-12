@@ -19,6 +19,7 @@ Duik.Constraint.IKType = {
 
 /**
  * The list of constraint functions
+ * @namespace
  */
 Duik.CmdLib['Constraint'] = {};
 

@@ -7,6 +7,7 @@ Duik.Bone = {};
 
 /**
  * The list of bone functions
+ * @namespace
  */
 Duik.CmdLib['Bone'] = [];
 

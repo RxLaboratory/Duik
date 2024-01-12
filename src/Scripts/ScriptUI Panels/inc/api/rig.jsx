@@ -7,6 +7,7 @@ Duik.Rig = {};
 
 /**
  * The list of (auto)rigging functions
+ * @namespace
  */
 Duik.CmdLib['Auto-rig'] = {};
 

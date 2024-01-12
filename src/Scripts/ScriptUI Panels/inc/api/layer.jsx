@@ -10,6 +10,7 @@ Duik.Layer.sanitizing = false;
 
 /**
  * The list of layer functions
+ * @namespace
  */
 Duik.CmdLib['Layer'] = {};
 

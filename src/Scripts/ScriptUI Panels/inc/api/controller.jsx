@@ -316,6 +316,7 @@ DuESF.initMethods.push(Duik.Controller.aeInit);
 
 /**
  * The list of controller functions
+ * @namespace
  */
 Duik.CmdLib[ 'Controller' ] = {};
 Duik.CmdLib[ 'Controller' ][ "Rotation" ] = "Duik.Controller.fromLayers( Duik.Controller.Type.ROTATION )";

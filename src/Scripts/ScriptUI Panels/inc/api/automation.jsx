@@ -71,7 +71,7 @@ Duik.Automation.getNLAComps = function(nlaFolder) {
     var renderComp = null;
     for (var i = 1, n = nlaFolder.numItems; i <= n; i++) {
         var c = nlaFolder.item(i);
-        if (!c instanceof CompItem) continue;
+        if (!(c instanceof CompItem)) continue;
         if (c.name.indexOf(Duik.Automation.NLAPrefixes.ORIGINAL) == 0) {
             originalComp = c;
         }
@@ -89,6 +89,7 @@ Duik.Automation.getNLAComps = function(nlaFolder) {
 
 /**
  * The list of automation functions
+ * @namespace
  */
 Duik.CmdLib['Automation'] = {};
 

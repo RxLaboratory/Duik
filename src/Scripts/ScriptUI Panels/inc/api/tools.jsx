@@ -14,6 +14,7 @@ if (typeof $.global["DUIK_DATA"].editingExpressions === 'undefined') $.global["D
 
 /**
  * The list of tool functions
+ * @namespace
  */
 Duik.CmdLib["Tool"] = {};
 
@@ -144,10 +145,13 @@ Duik.Tool.editExpression = function (prop) {
     return expressionFile;
 }
 
+/**
+ * Reloads all expression edited with an external editor (using {@link Duik.Tool.editExpression})
+ */
 Duik.Tool.reloadExpressions = function() {
     DuAE.beginUndoGroup( i18n._("Edit expression"), false);
 
-    for (f in $.global["DUIK_DATA"].editingExpressions) {
+    for (var f in $.global["DUIK_DATA"].editingExpressions) {
         if (!$.global["DUIK_DATA"].editingExpressions.hasOwnProperty(f)) continue;
         var file = new File(f);
         if (file.exists) {
