@@ -2462,8 +2462,9 @@ declare namespace DuXMP {
      * Loads the XMP library if it has not been loaded yet. There is no need to call this function as it's called automatically by DuESF methods if needed.<br />
     Call it once if you plan to use XMP without the methods in DuESF.<br />
     Note that the XMP library is added statically as <code>ExternalObject.AdobeXMPScript</code>.
+     * @returns Init may fail, in this case the function returns false and the XMP lib can't be used.
      */
-    function init(): void;
+    function init(): boolean;
 }
 
 /**
@@ -8919,10 +8920,10 @@ declare namespace DuAEProjectXMP {
     /**
      * Gets the value of a property.
      * @param prop - The name of the property
-     * @param [type] - The property data type, one of: - XMPConst.STRING - XMPConst.INTEGER - XMPConst.NUMBER - XMPConst.BOOLEAN - XMPConst.XMPDATE
+     * @param [defaultVal] - A default value to be returned if the property is not found.
      * @returns The value
      */
-    function getPropertyValue(prop: string, type?: XMPConst): any;
+    function getPropertyValue(prop: string, defaultVal?: any): any;
     /**
      * Sets the value of a property.
      * @param prop - The name of the property

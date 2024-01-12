@@ -384,6 +384,7 @@ function progress(text, secText) {
     progressBar.value = progressBar.value + 1;
     statusLabel.text = text;
     statusSecLabel.text = secText;
+    $.writeln(text + " | " + secText);
     //win.window.update();
     updateUI();
 }

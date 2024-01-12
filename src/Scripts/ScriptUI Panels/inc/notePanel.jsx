@@ -51,9 +51,20 @@ function buildNotePanelUI( container )
     function loadProject()
     {
         noteEdit.text = "Project is not saved.";
+        noteEdit.enabled = false;
         label.setText( DuAEProject.name() );
         if (!app.project.file) return;
-        noteEdit.text = DuAEProjectXMP.getPropertyValue('duik_note');
+        var text = DuAEProjectXMP.getPropertyValue('duik_note', "Project notes");
+        if (text === null) {
+            noteEdit.text = "XMP Metadata can't be loaded.\n" +
+                "This is a rare issue with After Effects.\n" + 
+                "You can try to re-install or update After Effects to make it work.";
+        }
+        else {
+            noteEdit.enabled = true;
+            noteEdit.text = text;
+        }
+        
     }
 
     function save()
