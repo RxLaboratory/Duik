@@ -60,6 +60,22 @@ def build():
             os.path.join(build_path, 'docs', 'api', 'jsdoc.css')
         )
 
+    # Copy the reference to the built folder
+    api_build_path = get_api_build_path()
+    docs_path = os.path.join(
+            build_path,
+            'docs', 'api'
+        )
+    if os.path.isdir(api_build_path) and os.path.isdir(docs_path):
+        docs_build_path = os.path.join(
+            api_build_path,
+            'docs'
+        )
+        if os.path.isdir(docs_build_path):
+            shutil.rmtree(docs_build_path)
+        
+        shutil.copytree(docs_path, docs_build_path)
+
     print("> Building type defs...")
     bin_args = [ "cmd", "/c", "jsdoc", "-c", os.path.basename(conf_ts_path) ]
     jsdoc_process = subprocess.Popen(
