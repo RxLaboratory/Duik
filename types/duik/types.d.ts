@@ -4577,8 +4577,9 @@ declare namespace DuXMP {
      * Loads the XMP library if it has not been loaded yet. There is no need to call this function as it's called automatically by DuESF methods if needed.<br />
     Call it once if you plan to use XMP without the methods in DuESF.<br />
     Note that the XMP library is added statically as <code>ExternalObject.AdobeXMPScript</code>.
+     * @returns Init may fail, in this case the function returns false and the XMP lib can't be used.
      */
-    function init(): void;
+    function init(): boolean;
 }
 
 /**
@@ -11152,10 +11153,10 @@ declare namespace DuAEProjectXMP {
     /**
      * Gets the value of a property.
      * @param prop - The name of the property
-     * @param [type] - The property data type, one of: - XMPConst.STRING - XMPConst.INTEGER - XMPConst.NUMBER - XMPConst.BOOLEAN - XMPConst.XMPDATE
+     * @param [defaultVal] - A default value to be returned if the property is not found.
      * @returns The value
      */
-    function getPropertyValue(prop: string, type?: XMPConst): any;
+    function getPropertyValue(prop: string, defaultVal?: any): any;
     /**
      * Sets the value of a property.
      * @param prop - The name of the property
@@ -12790,15 +12791,6 @@ declare namespace DuIO {
          */
         function cleanImportData(data: any): any;
         /**
-         * Cleans data from a JSON before loading it.<br />
-        This is a low-level function which you may need only if building your own import formats.<br />
-        It cleans the data stored after having used {@link DuAEF.Interchange.animation.cleanAnimExportData}<br />
-        to be able to set the animations using the "setAnim" functions (see {@link DuAEF.DuAE.Layer.setAnim}, {@link DuAEF.DuAE.Property.setAnim}).
-         * @param keyframeData - The keyframe data which is being loaded
-         * @returns The data cleaned
-         */
-        function cleanKeyframeImportData(keyframeData: any): any;
-        /**
          * Gets the name of an After Effects interpolation type.<br />
         This is a low-level function which you should not need.<br />
         It used by {@link DuIO.Animation.cleanAnimExportData} to store interpolation with their names.
@@ -12806,14 +12798,6 @@ declare namespace DuIO {
          * @returns The interpolation name or empty string if not found
          */
         function keyframeInterpolationTypeToName(type: KeyframeInterpolationType): string;
-        /**
-         * Gets the After Effects interpolation type with its name.<br />
-        This is a low-level function which you should not need.<br />
-        It used by {@link DuAEF.Interchange.cleanAnimImportData} to set interpolation from their names.
-         * @param name - The interpolation name
-         * @returns The interpolation type or null if not found
-         */
-        function keyframeInterpolationNameToType(name: string): KeyframeInterpolationType;
     }
 }
 
