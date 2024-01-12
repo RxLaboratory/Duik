@@ -27,7 +27,8 @@ def deploy():
             dest = os.path.join(build_path, dest)
         if os.path.isfile(dest):
             os.remove(dest)
+        dest_dir = os.path.dirname(dest)
+        if not os.path.isdir(dest_dir):
+            os.makedirs(dest_dir)
 
         shutil.copy(src, dest)
-    
-    print(">> Files deployed!")

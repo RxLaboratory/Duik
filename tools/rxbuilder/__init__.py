@@ -8,6 +8,8 @@ import platform
 
 from .environment import Environment
 
+from .utils import get_build_path
+
 from .qt_build import build as build_qt
 from .qt_build import wipe as wipe_qt
 from .qt_deploy import deploy as deploy_qt

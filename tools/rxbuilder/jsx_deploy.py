@@ -34,7 +34,7 @@ def deploy_jsx(build_path, version):
 
 def deploy_api(build_path, version):
 
-    print(">> Deploying API")
+    print(">> Deploying API...")
 
     api_path = get_api_build_path()
     zip_file = os.path.join(build_path, os.path.basename(api_path) + version + '.zip')
