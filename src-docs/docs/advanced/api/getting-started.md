@@ -116,8 +116,8 @@ Don't forget to close the anonymous function we've created at the beginning to a
 // thisObj is either undefined (for stand alone script) or the panel containing the ui (for ScriptUI panel)
 (function(thisObj)
 {
-     // If you only need Duik, just include DuAEF_Duik_api at the beginning
-     #include "DuAEF_Duik_api.jsxinc";
+     // If you only need Duik, just include Duik_api at the beginning
+     #include "Duik_api.jsxinc";
      
      // Running the init() method of DuAEF is required to setup everything properly.
      DuAEF.init( "YourScriptName", "1.0.0", "YourCompanyName" );
