@@ -14,7 +14,7 @@ The Duik API comes in a few files:
 
 ### Using only Duik (and DuGR and DuIO)
 
-If you're only needing the Duik API, and perhaps the DuGR API or the DuIO API too, which are included in Duik, you just have to include `DuAEF_Duik.jsxinc` at the beginning of your own script.
+If you're only needing the Duik API, and perhaps the DuGR API or the DuIO API too, which are included in Duik, you just have to include `Duik_api.jsxinc` at the beginning of your own script.
 
 Here's an example.
 
