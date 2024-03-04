@@ -6,31 +6,31 @@ The API and its documentation can be downloaded from **[RxLaboratory](https://rx
 
 ## Include it in your script
 
-Just save the two files `Duik_api.jsxinc` and `DuAEF_Duik_api.jsxinc` in the folder where you're working and writing your own script.
+The Duik API comes in a few files:
 
-- `DuAEF_Duik_api.jsxinc` is the complete API, including all dependencies. This is the one you should use by default.
+- `Duik_api.jsxinc` is the complete API, including all dependencies. This is the only file you should include in your script by default.
 
-- `Duik_api.jsxinc` includes only the *Duik API* without any dependencies. You'll have to include dependencies by yourself; The list of these dependencies can be found in the [API reference](http://duik.rxlab.io/) (see *Requires* on the linked page). At the time we're writing this documentation, they're *DuAEF*, [*DuGR*](https://rxlaboratory.org/tools/dugr/) and [*DuIO*](https://rxlaboratory.org/tools/duio/). You may use this file if you plan to combine several different API using *DuAEF*, to be sure to include it only once.
+- A Subfolder called `libs` contains the actual API code, separated in a few different libraries. These may be useful if you need to handle specific versions of these libraries, if you know what you're doing... Have a look at the main `Duik_api.jsxinc` file if you want to see in which order they should be included in your scripts.
 
 ### Using only Duik (and DuGR and DuIO)
 
-If you're only needing the Duik API, and perhaps the DuGR API or the DuIO API too, which are included in Duik, you just have to include `DuAEF_Duik_api.jsxinc` at the beginning of your own script.
+If you're only needing the Duik API, and perhaps the DuGR API or the DuIO API too, which are included in Duik, you just have to include `Duik_api.jsxinc` at the beginning of your own script.
 
 Here's an example.
 
 ```js
 // Encapsulate everything to avoid global variables!
-// thisObj is either undefined (for stand alone script) or the panel containing the ui (for ScriptUI panel)
+// thisObj is either undefined (for stand alone script) or the panel containing the ui (for ScriptUI panels)
 (function(thisObj)
 {
-     // If you only need Duik, just include DuAEF_Duik_api at the beginning
+     // If you only need Duik, just include Duik_api at the beginning
      #include "Duik_api.jsxinc";
      
 ```
 
 ### Combining the Duik API with other APIs and DuAEF
 
-If you're going to include APIs other than Duik (or DuGR and DuIO which are already included in Duik), you'll need to include everything separately to be sure that all frameworks are included only once. In this case, include `Duik_api.jsxinc` and the other APIs at the beginning of your script.
+If you're going to include APIs other than Duik (or DuGR and DuIO which are already included in Duik), you'll need to include everything separately to be sure that all frameworks are included only once. In this case, include separately the different libraries at the beginning of your script.
 
 Here's an example:
 
@@ -44,6 +44,7 @@ Here's an example:
      #include "libs/DuAEF.jsxinc";
      #include "libs/DuGR_api.jsxinc";
      #include "libs/DuIO_api.jsxinc";
+     #include "libs/DuSan_api.jsxinc";
      // Duik API is divided into several files to workaround ExtendScript limitations on included files
      #include "libs/Duik_api_1.jsxinc";
      #include "libs/Duik_api_2.jsxinc";
@@ -115,8 +116,8 @@ Don't forget to close the anonymous function we've created at the beginning to a
 // thisObj is either undefined (for stand alone script) or the panel containing the ui (for ScriptUI panel)
 (function(thisObj)
 {
-     // If you only need Duik, just include DuAEF_Duik_api at the beginning
-     #include "DuAEF_Duik_api.jsxinc";
+     // If you only need Duik, just include Duik_api at the beginning
+     #include "Duik_api.jsxinc";
      
      // Running the init() method of DuAEF is required to setup everything properly.
      DuAEF.init( "YourScriptName", "1.0.0", "YourCompanyName" );
