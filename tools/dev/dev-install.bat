@@ -49,6 +49,7 @@ mklink "%aePath%\Duik Controllers.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\D
 mklink "%aePath%\Duik Layer Manager.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Layer Manager.jsx"
 mklink "%aePath%\Duik Notes.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Notes.jsx"
 mklink "%aePath%\Duik OCO.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik OCO.jsx"
+mklink "%aePath%\Duik Optimizer.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Optimizer.jsx"
 mklink "%aePath%\Duik Rigging.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Rigging.jsx"
 mklink "%aePath%\Duik Script Editor.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Script Editor.jsx"
 mklink "%aePath%\Duik Script Library.jsx" "%repoPath%\src\Scripts\ScriptUI Panels\Duik Script Library.jsx"

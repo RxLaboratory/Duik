@@ -130,6 +130,10 @@ declare namespace Duik {
          * The list of tool functions
          */
         namespace "Tool" { }
+        /**
+         * The list of performance functions
+         */
+        var 'Performance': any;
     }
     /**
      * Layers related tools.
@@ -360,7 +364,8 @@ declare namespace Duik {
         FEATHER = "",
         BONE_DATA = "",
         BONE_DATA_LIGHT = "",
-        BONE_NOODLE = ""
+        BONE_NOODLE = "",
+        SHIFTS = ""
     }
     /**
      * Pin related tools.
@@ -1673,6 +1678,13 @@ declare namespace Duik {
          */
         function swink(props?: PropertyBase[] | DuAEProperty[] | DuList | PropertyBase | DuAEProperty, blink?: boolean): DuAEProperty[];
         /**
+         * Adds the <i>Shifts</i> effect and expression to the properties.
+        The <i>Shifts</i> tool makes the property shift value at random (or regular, or quasi-regular) intervals
+         * @param [props] - The properties, the selected properties if omitted.
+         * @returns The Swink effect.
+         */
+        function shifts(props?: PropertyBase[] | DuAEProperty[] | DuList | PropertyBase | DuAEProperty): DuAEProperty | null;
+        /**
          * Adds a random but smooth animation to the selected properties.
          * @param [separateDimensions = false] - Use one value for each dimension/channel.
          * @param [individualControls = false] - Use one control for each of the properties.
@@ -2110,6 +2122,25 @@ declare namespace Duik {
          * Reloads all expression edited with an external editor (using {@link Duik.Tool.editExpression})
          */
         function reloadExpressions(): void;
+    }
+    /**
+     * Performance tools
+     */
+    namespace Performace {
+        /**
+         * The performance level for the optimizer
+         */
+        enum Level {
+            BEST = 1,
+            BETTER = 2,
+            BALANCED = 3,
+            FEATURES = 4
+        }
+        /**
+         * Optimizes the performance by changing some settings and comp and layer switches. Read the Duik doc for more details.
+         * @param [level = Duik.Performace.Level.BETTER] - The level of optimization
+         */
+        function optimize(level?: Duik.Performace.Level): void;
     }
 }
 
