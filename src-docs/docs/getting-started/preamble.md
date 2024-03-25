@@ -34,7 +34,7 @@ Terms followed with an **asterisk *** are defined in the [**glossary**](../misc/
     Notes provide more details or secondary information.
 
 !!! tip
-    Tips are advices or ideas to improve your work with Duik or After Effects.
+    Tips are suggestions or ideas to improve your work with Duik or After Effects.
 
 !!! warning
     Warnings highlight important information you shouldn't miss.
