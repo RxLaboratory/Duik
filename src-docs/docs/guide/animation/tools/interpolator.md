@@ -3,7 +3,7 @@
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_J02_Interpolator__EN_720.mp4)  
 *This video is part of [__the official comprehensive video course about Duik Ángela__](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)*
 
-The *Interpolate* help you interpolate[*](../../../misc/glossary.md) (and extrapolate[*](../../../misc/glossary.md)) your keyframe values with handy methods other than the usual Bézier and linear functions, or `loopIn()` and `loopOut()` expressions.
+The *Interpolator* help you interpolate[*](../../../misc/glossary.md) (and extrapolate[*](../../../misc/glossary.md)) your keyframe values with handy methods other than the usual Bézier and linear functions, or `loopIn()` and `loopOut()` expressions.
 
 ![](../../../img/illustration/Carl_Friedrich_Gauss_Notizblatt_mit_der_Zeichnung_einer_unbekannten_Frau_1804.jpg)  
 *Notepad with a drawing of an unknown woman, perhaps Johann Gauss born Osthoff,   
@@ -84,7 +84,7 @@ Using a *gaussian* function to interpolate the keyframes helps creating very nat
 ![](../../../img/ae/interp-gauss.png)  
 Gaussian *interpolation.*
 
-This function is also called a *bell* function because of the shape it generates. The resulting motion feels very natural, especially for characters, animals, to show their *will*: although the movement is very smooth, the acceleration is a bit faster than the deceleration, which perfectly mimics the actual acceleration and decelaration of *voluntary* movements.
+This function is also called a *bell* function because of the shape it generates. The resulting motion feels very natural, especially for characters, animals, to show their *will*: although the movement is very smooth, the acceleration is a bit faster than the deceleration, which perfectly mimics the actual acceleration and deceleration of *voluntary* movements.
 
 This acceleration and deceleration can easily be adjusted with the *Rate* property.
 
@@ -93,7 +93,7 @@ This acceleration and deceleration can easily be adjusted with the *Rate* proper
 
 ### Logistic (Sigmoid)
 
-To the contrary of the gaussian function, the interpolation using the logistic function is perfectly symetrical, with the same acceleration and deceleration (thus its other name, *Sigmoid*).
+To the contrary of the gaussian function, the interpolation using the logistic function is perfectly symmetrical, with the same acceleration and deceleration (thus its other name, *Sigmoid*).
 
 This may be useful for more mechanical movements.
 
@@ -128,7 +128,7 @@ Logarithmic *interpolation.*
 Exponential *interpolation.*
 
 
-They're very useful to animate apparitions or disparitions, objects comning in or getting out of the frame.
+They're very useful to animate apparitions or disappearances, objects coming in or getting out of the frame.
 
 Similarly to the *logistic (sigmoid)* function, what makes them interesting is that the generated movement never really stops, and this is especially difficult to setup precisely using standard Bézier functions.  
 The generated motion is also very smooth.
@@ -144,7 +144,7 @@ The Interpolator can also extrapolate the movement, continue it after the keyfra
 
 ![](../../../img/duik/animation/interpolator-effect-extrapolation.png)
 
-First, the the *Extrapolation* to property to `100 %` (or any value other than `0 %`) to enable it.
+First, the *Extrapolation* to property to `100 %` (or any value other than `0 %`) to enable it.
 
 !!! tip
     The *Extrapolation* property can be animated to enable, disable or adjust the extrapolation at any time.
@@ -159,7 +159,7 @@ There are several types of extrapolation:
     Continue *extrapolation after a* linear *interpolation.*  
     ![](../../../img/ae/interp-logistic-exrap-continue.png)  
     Continue *extrapolation before and after a* logistic *interpolation.*
-- **Offset**: the motion is repeaded, the values being added to the last known value.  
+- **Offset**: the motion is repeated, the values being added to the last known value.  
     ![](../../../img/ae/extrap-offset.png)  
     Offset *extrapolation.*
 - **Cycle**: the motion is repeated.  
@@ -175,7 +175,7 @@ There are several types of extrapolation:
     ![](../../../img/ae/extrap-bounce.png)  
     Bounce *extrapolation*.
 
-By default, the Interpolator extrapolates **before or after the existing keyframess**. You can also extrapolate **during still parts** of the animation, between keyframes. That's very useful for example to add some follow through animation every time the animation stops, even if there are other keyframes later in the timeline.
+By default, the Interpolator extrapolates **before or after the existing keyframes**. You can also extrapolate **during still parts** of the animation, between keyframes. That's very useful for example to add some follow through animation every time the animation stops, even if there are other keyframes later in the timeline.
 
 You can choose the **number of keyframes** to be used to extrapolate the motion (for the *Offset*, *Cycle*, and *Pingpong* modes only). If this is set to `0`, the Interpolator will use all available keyframes.
 

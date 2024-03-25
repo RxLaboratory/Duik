@@ -50,7 +50,7 @@ Depending on how you wish to customize the trail in the contents of the shape la
 *Using the advanced mode, the trail can look 3D*{style="font-size:0.8em;"}
 
 !!! tip
-    As the motion trail is contained in a shape layer, it's easy to change it’s appearance and use it as you wish! You can add and modify everything in the content of the Motion Trail layer.
+    As the motion trail is contained in a shape layer, it's easy to change it’s appearance, so use it as you wish! You can add and modify everything in the content of the Motion Trail layer.
 
 ### Sampling and performance
 

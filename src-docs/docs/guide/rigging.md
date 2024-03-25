@@ -32,7 +32,7 @@ Then, you're ready to animate:
 
 ***[Bones](bones/index.md)*** are layers you can add in your composition which will drive the animations, like the rig of a real puppet. The process is very simple: create or import your artwork in After Effects, add Bones and move them to the right spots (the joints of the limbs). Then you can rig those Bones and link the design layers to the corresponding Bone layers.
 
-This way, the rig you create is independant from the design. This means it’s easier to adjust the design even after the rig has been made, or even to re-use the same rig with other designs. Also, this rigging process is easier to fix or change if you ever need to adjust it even when you’re already in the animation process.
+This way, the rig you create is independent from the design. This means it’s easier to adjust the design even after the rig has been made, or even to re-use the same rig with other designs. Also, this rigging process is easier to fix or change if you ever need to adjust it even when you’re already in the animation process.
 
 ![RXLAB_VIDEO](https://rxlaboratory.org/wp-content/uploads/rx-videos/Duik17_A02-Parent__EN_720.mp4)  
 

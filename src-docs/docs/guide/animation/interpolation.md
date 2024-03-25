@@ -36,18 +36,18 @@ You can switch between the add or edit mode in the ![](../../img/duik/icons/opti
 1. **Select** some properties
 2. **Click one of the buttons** to add keyframes with the corresponding interpolation type.
 
-By default, Duik adds keyframes on all **animated properties** it'll find, but you can set it to only add keyframes on explicitely **selected properties** if you prefer.
+By default, Duik adds keyframes on all **animated properties** it'll find, but you can set it to only add keyframes on explicitly **selected properties** if you prefer.
 
 By default, Duik works only with **selected layers**, but you can tell it to use **all layers**; in this case it'll add keyframes in all properties of the composition, no matter the selection. Be careful, this may be a bit long if there are a lot of animated properties.
 
 ## Edit keyframe ease
 
-The second part of the temporal interpolation section is a keyframe ease editor, used to quickly adjust te keyframe ease on selected keyframes very quickly.
+The second part of the temporal interpolation section is a keyframe ease editor, used to quickly adjust the keyframe ease on selected keyframes very quickly.
 
 In After Effects, the keyframe ease, which actually controls the Bézier interpolation between keyframes, consists in two values:
 
 - The **influence** controls what would be the length of the tangent of the Bézier curve in the graph editor; for horizontal tangents (i.e. with `0` velocity), it directly controls the acceleration (ease out) and deceleration (ease in) of the motion around the keyframe.
-- The **velocity** is a signed value controlling the speed of the motion before (ease in) and after (ease out) the keyframe; the sign of the value tells the direction of the movement. In the graph editor, it is the angle of the tangents controling the Bézier curve.
+- The **velocity** is a signed value controlling the speed of the motion before (ease in) and after (ease out) the keyframe; the sign of the value tells the direction of the movement. In the graph editor, it is the angle of the tangents controlling the Bézier curve.
 
 ![](../../img/duik/animation/ease-edit.png)
 

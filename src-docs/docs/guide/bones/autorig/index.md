@@ -55,7 +55,7 @@ You can also set your preference for longer chains made of more than three bones
 
 ▷ Read the [*Constraints / Kinematics*](../../constraints/kinematics.md) section for more details about these options.
 
-If you **check the *Create a root controller* box**, the Auto-rig will **add a root, master controller** which can be used to translate and rotate the whole rig at once.
+If you **check the *Create a root controller* box**, the Auto-rig will **add a master controller** which can be used to translate and rotate the whole rig at once.
 
 Use the **baking options** to automatically [bake](../tools/bake.md)[^3] the bones before rigging them; this is important **to improve the performance** of the rig. It will "freeze" the bones as they are at the moment you rig them, as you should not need to change their appearance anymore.
 
@@ -63,7 +63,7 @@ Use the **baking options** to automatically [bake](../tools/bake.md)[^3] the bon
 
 Duik can create armatures for almost all type of animals and limbs, and the auto-rig can rig them automatically.
 
-Although the type of limbs are sorted into categories corresponding to different types of animals, you can combine arbitrarilly limbs from different categories. You could see these categories as different ways to rig and control the limbs, according to the way your character moves. This way you can create and rig any kind of character, from hybrids to robots.
+Although the type of limbs are sorted into categories corresponding to different types of animals, you can combine arbitrarily limbs from different categories. You could see these categories as different ways to rig and control the limbs, according to the way your character moves. This way you can create and rig any kind of character, from hybrids to robots.
 
 - [![](../../../img/duik/icons/arm.svg){style="width:1.2em;"} ![](../../../img/duik/icons/leg.svg){style="width:1.2em;"} **Arms and legs**](leg.md)
 - [![](../../../img/duik/icons/spine.svg){style="width:1.2em;"} **Spines**](spine.md)

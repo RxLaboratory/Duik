@@ -41,8 +41,8 @@ Finally, you can adjust the ***interpolation***[*](../../misc/glossary.md) betwe
 - *Hold (square)* disables interpolation. The value will *blink*.
 - *Linear* will result in a very simple interpoation without easing (a triangle).
 - *Smooth (sigmoid)* is the smoothest interpolation, similar to a sine function but with the ability to change the *easing* with the *Rate* value.  
-    This interpolation is symetrical, like a sine function.
-- *Natural (gaussian)* interpolates the value using the gaussian (*bell*) function, which results in an asymetrical acceleration and deceleration. With this interpolation, the motion is more dynamic, and the object looks alive; it is great for the arms swinging during a walk cycle for example.
+    This interpolation is symmetrical, like a sine function.
+- *Natural (gaussian)* interpolates the value using the gaussian (*bell*) function, which results in an asymmetrical acceleration and deceleration. With this interpolation, the motion is more dynamic, and the object looks alive; it is great for the arms swinging during a walk cycle for example.
 - *Slow down (logarithmic)* makes the motion start as fast as possible and quickly slow down when getting to the other value.
 - *Speed up (exponential)*  does the opposite of *Slow down*, making the motion start very slowly and speeding up as much as possible.
 

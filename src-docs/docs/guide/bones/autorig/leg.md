@@ -48,7 +48,7 @@ The foot roll effect is available only if the leg is a standard leg made of two 
 Use this effect to control all possible rotations of the foot, using different anchor points:
 
 - The *Toes* angle simply rotates the toes (or claws).
-- The *Tipetoe* angle rotates the foot from its tip, its very end, like a dancer tiptoeing.
+- The *Tiptoe* angle rotates the foot from its tip, its very end, like a dancer tiptoeing.
 - The *Heel* angle rotates the foot from the point of contact between the heel and the ground.
 - The *Foot roll* angle is a very useful control when animating a walk for example. Negative values rotate the foot the same way as the *Heel* value, and positive values raise the heel by rotating it around the toe joint, which happens at the end of each step during the walk, when the foot is behind the character, just before it raises to go forward again.
 
@@ -63,7 +63,7 @@ As all these values rotate (part of) the foot using different pivots, they shoul
 ![](../../../img/duik/bones/footroll_plantigrade.png)  
 *Different ways to rotate the foot: Rest pose, Foot rotation (using the controller),* Toe *angle,* Tiptoe *angle,* Heel *angle, and* Foot Roll *angle. Notice how the three last angles also move the knee.*
 
-For a precise control of the foot, make sure each joints and bones are perfectly located, especially the toe bone, the tip, and the heel, as shown on the picture above.
+For a precise control of the foot, make sure all joints and bones are perfectly located, especially the toe bone, the tip, and the heel, as shown on the picture above.
 
 !!! tip
     The *Tiptoe*, *Heel*, and *Foot roll* values all move the knee when they're animated, and make it difficult to control precisely the movement of the knee and the leg. You should avoid animating them when possible.
@@ -91,7 +91,7 @@ The foot roll effect is available only if the leg is a standard leg made of two 
 
 Use this effect to control all possible rotations of the foot, using different anchor points:
 
-- The *Tipetoe* angle rotates the foot from its tip, its very end, like a dancer tiptoeing.
+- The *Tiptoe* angle rotates the foot from its tip, its very end, like a dancer tiptoeing.
 - The *Claws* angle rotates the fingers or claws.
 - The *Foot roll* angle is a very useful control when animating a walk for example. It rotates the foot around the fingers/claws joint.
 

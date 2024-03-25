@@ -15,7 +15,11 @@ As there are many different types of animals, these limbs are sorted in categori
 *Tetrapod legs*
 
 ![](../../img/illustration/hominoid.png)  
-*Hominoids*
+*Hominoids
+
+Benjamin Waterhouse Hawkins
+
+Public Domain*
 
 | Type | Description | Examples | Notes |
 | ---- | ----------- | -------- | ----- |

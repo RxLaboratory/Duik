@@ -2,7 +2,7 @@
 
 ![](../../img/illustration/oco-angela.gif)
 
-*OCO* is the ***Open Cut-Out format***: it’s a format developped by RxLab., used to export, share, and import rigged characters dedicated to cut-out animation as it can be done in After Effects and many other software like Blender.
+*OCO* is the ***Open Cut-Out format***: it’s a format developed by RxLab., used to export, share, and import rigged characters dedicated to cut-out animation as it can be done in After Effects and many other software like Blender.
 
 With the support of OCO, Duik now also includes a lot of Meta-rigs, predefined armatures you can use to rig an entire character in a few clicks, thanks to the almighty Duik [Auto-rig](../bones/autorig/index.md).
 
@@ -64,14 +64,14 @@ Duik will collect all information from the bones in the current composition and 
 
 When creating the meta-rig, you can include an icon which should be a small PNG file.
 
-Set the approximative character height (from its lowest bone to the highest) so that information can be used when creating multiple characters in the same scene and automatically have them approximately at the right size. This height is in centimeters to be independent from the resolution.
+Set the approximate character height (from its lowest bone to the highest) so that information can be used when creating multiple characters in the same scene and automatically have them approximately at the right size. This height is in centimeters to be independent from the resolution.
 
 ### OCO Files
 
-The library is actually just a folder structure containing OCO files, which is by default located in your `Documents` folder. You can quickly open this folder with the ![](../../img/duik/icons/folder.svg){style="width:1em;"} folder button, or set a new folder to be used as the library with `[Alt] + [Click]`. In this case you must select (or create) an new `OCO.config` file which will contain all your OCO settings, shared accross all applications using OCO and this same config file.
+The library is actually just a folder structure containing OCO files, which is by default located in your `Documents` folder. You can quickly open this folder with the ![](../../img/duik/icons/folder.svg){style="width:1em;"} folder button, or set a new folder to be used as the library with `[Alt] + [Click]`. In this case you must select (or create) an new `OCO.config` file which will contain all your OCO settings, shared across all applications using OCO and this same config file.
 
 !!! tip
-    You can share this library (just send the files) or even synchronize it accross multiple devices using any syncing service or application like [*Syncthing*](https://syncthing.net/)[^2], *Dropbox*, *OneDrive*, etc.
+    You can share this library (just send the files) or even synchronize it across multiple devices using any syncing service or application like [*Syncthing*](https://syncthing.net/)[^2], *Dropbox*, *OneDrive*, etc.
 
 !!! note
     If you think your shiny brand new OCO Metarig deserves to be officially included in Duik, just send it to us with a friendly message on [contact.rxlab.info](http://contact.rxlab.info)!

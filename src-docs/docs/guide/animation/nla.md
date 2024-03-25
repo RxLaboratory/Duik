@@ -1,6 +1,6 @@
 # ![](../../img/duik/icons/nla.svg) Non-Linear Animation
 
-Using the *Non-Linear Animation* tool, abreviated as ***NLA***, you can edit animation clips the same way you would edit video clips in a non-linear editing sotware (*NLE*) like *Adobe Premiere* or *Avid Media Composer* for example, but right into *After Effects*, keeping all your animation editable at any time.
+Using the *Non-Linear Animation* tool, abbreviated as ***NLA***, you can edit animation clips the same way you would edit video clips in a non-linear editing software (*NLE*) like *Adobe Premiere* or *Avid Media Composer* for example, but right into *After Effects*, keeping all your animation editable at any time.
 
 ![](../../img/illustration/Theatreoptique.png)  
 *First public performance of Reynaud's 'Theatre Optique' in Paris,  
@@ -24,8 +24,8 @@ To use the *NLA*, you need to start from a base composition, containing what you
 Like other tools in Duik, **you first have to select what you're rigging/animating** and then click on the *Non-linear Animation* button. Depending on the selection, this is how Duik will create and rig the *NLA* using the active composition:
 
 1. If Duik finds any **selected properties**, it will rig them, and only them.
-2. Else, if Duik finds any **selected layers**, it will rig **all transform properties** (position, rotation, scale, opacity) of these layers, plus the **effects** if the layer is a Duik [**Controllers**](../controllers/index.md).
-3. Else, Duik will rig **all transform propeties and effects** of all Duik [**Controllers**](../controllers/index.md), if any.
+2. Else, if Duik finds any **selected layers**, it will rig **all transform properties** (position, rotation, scale, opacity) of these layers, plus the **effects** if the layer is a Duik [**Controller**](../controllers/index.md).
+3. Else, Duik will rig **all transform properties and effects** of all Duik [**Controllers**](../controllers/index.md), if any.
 4. Finally, if Duik did not find anything else, it will rig all transform properties of **all layers**.
 
 !!! note

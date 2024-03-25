@@ -7,7 +7,7 @@ There are four different modes to create controllers in Duik, which can be chose
 
 ![](../../../img/duik/controllers/types.png)
 
-***![](../../../img/duik/icons/ae_null.svg){style="width:1em;"} AE Null Objects*** and ***![](../../../img/duik/icons/controller_raster.svg){style="width:1em;"} Raster Layers*** have the best performance, but ***![](../../../img/duik/icons/controller.svg){style="width:1em;"} ![](../../../img/duik/icons/controller_draft.svg){style="width:1em;"} Shape Layers*** are easier to customize and include dynamic guides and references.
+***![](../../../img/duik/icons/ae_null.svg){style="width:1em;"} AE Null Objects*** and ***![](../../../img/duik/icons/controller_raster.svg){style="width:1em;"} Raster Layers*** have the best performance [^1], but ***![](../../../img/duik/icons/controller.svg){style="width:1em;"} ![](../../../img/duik/icons/controller_draft.svg){style="width:1em;"} Shape Layers*** are easier to customize and include dynamic guides and references.
 
 By default, when controllers are nulls, their scale is locked. This is optionnal and can be changed in this panel.
 

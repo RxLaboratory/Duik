@@ -13,7 +13,7 @@ It's both a panel in Duik, and a folder on your disk, so that it can easily be s
 
 ![](../../img/duik/animation/anim-library.png)
 
-You can use the field on the top of the panel to quickly search for animations and navigate in the caterogies.
+You can use the field on the top of the panel to quickly search for animations and navigate in the categories.
 
 1. **Select the layers** receiving the animation.
 2. **Select an animation** in the list.
@@ -26,7 +26,7 @@ By default, the library is in the `Duik` subfolder of your documents folder, whi
 With the next buttons, you can change how the items are sorted in the panel, and refresh the library if you've manually added new files or if something is missing in the list.
 
 !!! note
-    For now (2023) the animations are applied *as is*, which makes it necessary to manually adjust the position and other spatial values when transfering an animation from a character to another with different proportions. Other properties should work fine though.
+    For now (2024) the animations are applied *as is*, which makes it necessary to manually adjust the position and other spatial values when transferring an animation from a character to another with different proportions. Other properties should work fine though.
 
     This is going to change though as we're working on a way to automagically adapt animations to the character receiving it, by also storing the proportions from the original character to be able to apply a ratio before applying them to the new character (or prop).
 
@@ -69,7 +69,7 @@ Select an animation and click the ![](../../img/duik/icons/edit.svg){style="widt
 ![](../../img/duik/animation/anim-library-edit.png)
 
 !!! note
-    When updating the thumbnail, Duik will use the current frame of the active composition, which can be any composition and not necessarilly the one containing the original animation.
+    When updating the thumbnail, Duik will use the current frame of the active composition, which can be any composition and not necessarily the one containing the original animation.
 
 #### ![](../../img/duik/icons/remove.svg){style="width:1em;"} Remove
 
