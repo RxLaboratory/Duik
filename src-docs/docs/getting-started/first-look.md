@@ -28,7 +28,7 @@ As any modern script in *After Effects*, Duik has the form of a panel which can 
 The User Interface has been designed with these main ideas in mind:
 
 1. **Keep it close to the form of the user interface of** ***After Effects***
-    Using controls similar to the native controls of *After Effects* helps the user get started quickier. But it was not possible, for specific features and for performance and stability reasons, to make everything exactly the same as in *After Effects* and controls differ a bit. The idea is that Duik must not stand out too much when docked with other *After Effects* panels.
+    Using controls similar to the native controls of *After Effects* helps the user get started quicker. But it was not possible, for specific features and for performance and stability reasons, to make everything exactly the same as in *After Effects* and controls differ a bit. The idea is that Duik must not stand out too much when docked with other *After Effects* panels.
 2. **Do not use windows and dialogs**
     With very rare exceptions, everything Duik needs to display will be displayed in its main panel, it won't use dialogs and other windows, so you know where to find information, and you're not distracted by pop-ups. Also, there are no blocking windows (what's called *Modal Dialogs*), to keep an agile workflow.
 3. **Keep the UI as small as possible**  
@@ -45,7 +45,7 @@ The top bar shows the main categories (read below). The central panel is used to
 
 ### Categorization
 
-Duik is a comprehensive tool set for rigging and animation. This means there are a **lot** of tools available, but they are categorized in some useful panels, depending on what you're doing (animating, rigging, using cameras,etc.)
+Duik is a comprehensive tool set for rigging and animation. This means there are a **lot** of tools available, but they are categorized in some useful panels, depending on what you're doing (animating, rigging, using cameras, etc.)
 
 These categories are always available on the top bar.
 

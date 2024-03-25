@@ -26,7 +26,7 @@ The user interface of Duik is meant to be small and unobtrusive. It must let you
 
 ## Should I use Duik?
 
-**Rigging - no matter what software you use - is a complicated subject** that requires advanced knowledge of both character animation, the software you are using to do the rigging, and, ideally a good undersanding of anatomy.
+**Rigging - no matter what software you use - is a complicated subject** that requires advanced knowledge of both character animation, the software you are using to do the rigging, and, ideally a good understanding of anatomy.
 
 Before using Duik to create and animate character rigs, you should master:  
 

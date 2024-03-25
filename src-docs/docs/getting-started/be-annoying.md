@@ -15,13 +15,13 @@ And then, I decided I could share those tools with the rest of the world, if the
 
 What was I going to do? I had a new product, I could just sell it like almost everything else in our capitalist society, or even better, I could rent it to keep my customers as hostages. But I had a unique occasion to **think** about my own impact on the world. There are a lot of things I don’t like in our society: individualism, consumerism, competition… Everything is connected, intertwined. Because our society is capitalist, it makes people individualist competitors and consumers. It’s how things go. The question is: what will happen if we get really conscious of this? What will happen if we follow other paths?
 
-I chose to do things in a less common way, maybe even a rare way: I chose to give away my tools. I chose not to earn money with them, or at least, **I chose to let people choose if it was worth paying for**. I chose freedom, for myself, and for the rest of the world. I chose to let my tools open source, I chose to let people get, use, and modify them freely, instead of being worried of stealers and pirates. I chose to make my stuff available even for the poorest human being on earth. Because I think my choices can have an impact. Because I think that if I work outside of and against capitalism and consumerism, **if I show a different path, the path may be followed**, and maybe, maybe it’s a step to what I think is a better world. Politics, that’s just politics.
+I chose to do things in a less common way, maybe even a rare way: I chose to give away my tools. I chose not to earn money with them, or at least, **I chose to let people choose if it was worth paying for**. I chose freedom, for myself, and for the rest of the world. I chose to let my tools open source, I chose to let people get, use, and modify them freely, instead of being worried of thieves and pirates. I chose to make my stuff available even for the poorest human being on earth. Because I think my choices can have an impact. Because I think that if I work outside of and against capitalism and consumerism, **if I show a different path, the path may be followed**, and maybe, maybe it’s a step to what I think is a better world. Politics, that’s just politics.
 
 One is ready to accept a lot of compromises[^compromises] to be able to consume the easy way. But if one's been given the choice either to consume freely, or to donate time or money, one just consumes and nothing else. It's too easy to just download and use if it's "free", so much easier than making a donation first, or to contribute in any way.
 
 [^compromises]: Rent, pay, give away all one's personal data, be overwhelmed by ads...; when we don't have the choice, we're accepting all of this without protesting.
 
-It would have been easy to sell my tools. It would have been easy not to give any choice to the users. **But I chose a difficult path**. I know that most people won't understand it, **but I don't regret my choice**, and I would do it again - **even if I know I could be richer than I could ever have imagined** - because it's more important for me to show that another world is possible, where people are **free from property**, where **economy is subordoned to the well-being of all**, where **happiness comes from equality** of all the people. This better world already exists and just need to be extended, that's what I'm trying to show; you just have to join us.
+It would have been easy to sell my tools. It would have been easy not to give any choice to the users. **But I chose a difficult path**. I know that most people won't understand it, **but I don't regret my choice**, and I would do it again - **even if I know I could be richer than I could ever have imagined** - because it's more important for me to show that another world is possible, where people are **free from property**, where **economy is subordinated to the well-being of all**, where **happiness comes from equality** of all the people. This better world already exists and just needs to be extended, that's what I'm trying to show; you just have to join us.
 
 > Consume less, share better.
 > <figcaption>Hervé Kempf</figcaption>
@@ -36,7 +36,7 @@ It’s a big success, with even fewer contributors. There are less than 10 meani
 
 It's a big success, without earning even a single full-time salary in the country where it's developed (France).
 
-We estimate **less than 4% of our daily users** did contribute time or money to the project.
+We estimate **less than 4 % of our daily users** did contribute time or money to the project.
 
 It works, thanks to other ways of earning the missing money (selling tutorials and books for example). But imagine what we could do if more people contributed! If, for each download, we got a single US dollar, we would've got millions to improve the world together!
 
