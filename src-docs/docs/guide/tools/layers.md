@@ -16,7 +16,7 @@ The first line are quick buttons to create different kind of layers.
 - ![](../../img/duik/icons/solid.svg){style="width:1em;"} **Solid**.  
     Similarly to the *null layer* button, this creates a solid made with a shape layer and a simple rectangle. Another advantage here is that you can easily change its size with the *size* property of the rectangle, and its color can be animated.
 - ![](../../img/duik/icons/adjustment.svg){style="width:1em;"} **Adjustment layer**.  
-    Again, Duik uses a shape layer instead of a solid to create adjustement layers. The additional advantage here is that the content of the layer can be used as the alpha of the adjustment layer (i.e. a mask for the effects).
+    Again, Duik uses a shape layer instead of a solid to create adjustment layers. The additional advantage here is that the content of the layer can be used as the alpha of the adjustment layer (i.e. a mask for the effects).
 - ![](../../img/duik/icons/circle.svg){style="width:1em;"} ![](../../img/duik/icons/square.svg){style="width:1em;"} ![](../../img/duik/icons/rounded_square.svg){style="width:1em;"} ![](../../img/duik/icons/polygon.svg){style="width:1em;"} ![](../../img/duik/icons/star.svg){style="width:1em;"} **Primitives**.  
     The next buttons are a way to create primitive shapes perfectly centered in the composition with all their transform values initiated to `0` (or `100 %` for the scale and opacity).
 - ![](../../img/duik/icons/bone.svg){style="width:1em;"} **Duik [bone](../bones/index.md)**&nbsp;[^bone] (custom armature).  

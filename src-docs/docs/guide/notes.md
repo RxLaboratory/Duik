@@ -15,7 +15,7 @@ To use project notes, the project must exist (it must not be the default `untitl
 
 Project notes are saved in the project file, and can be viewed by anyone using Duik if you send them the project file[^xmp].
 
-[^xmp]: The note is store in the *XMP* Metadata inside the project file. *XMP* is a metadata format developped by Adobe.
+[^xmp]: The note is store in the *XMP* Metadata inside the project file. *XMP* is a metadata format developed by Adobe.
 
 When opening a new project, if the notes are not displayed in the note editor, just click the ![](../img/duik/icons/update.svg){style="width:1em;"} *refresh* button.
 
