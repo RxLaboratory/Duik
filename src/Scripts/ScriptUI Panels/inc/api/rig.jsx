@@ -1896,7 +1896,7 @@ Duik.Rig.fin = function( layers, customControllers )
         Duik.Constraint.fk( [arm, f], fkNull );
 
         // Remove arm ctrl duplicate
-        if (i != 0)
+        if (i != nfins-1)
         {
             var armEffect = DuAELayer.lastEffect( fkNull, 'ADBE Angle Control', 1);
             if (armEffect) armEffect.remove();

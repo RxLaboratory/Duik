@@ -3202,7 +3202,7 @@ Duik.Constraint.fk = function(layers, controller) {
     }
 
     //sort layers and parent them
-    var layers = DuAELayer.sortByParent(layers);
+    layers = DuAELayer.sortByParent(layers);
     layers = new DuList(layers);
     //reset rotation and scale if structures
     layers.do(Duik.Bone.resetTransform);
@@ -3241,7 +3241,7 @@ Duik.Constraint.fk = function(layers, controller) {
                 'var controller = null;',
                 'var result = value;',
                 'try { controller = effect("' + layerDataName + '")(1); } catch (e) {}',
-                'if ( controller !=null )',
+                'if ( controller != null )',
                 '{',
                 '   var fx = controller.effect("' + fkEffectName + '");',
                 '   result += controller.transform.rotation.value + fx(' + pe.props["Curve"].index + ').value;',
@@ -3265,7 +3265,7 @@ Duik.Constraint.fk = function(layers, controller) {
                 'var controller = null;',
                 'var result = value;',
                 'try { controller=effect("' + layerDataName + '")(1); } catch (e) {}',
-                'if (controller !=null && hasParent)',
+                'if (controller != null && hasParent)',
                 '{',
                 '   var fx = controller.effect("' + fkEffectName + '");',
                 '   var ctrlRot = controller.transform.rotation;',
