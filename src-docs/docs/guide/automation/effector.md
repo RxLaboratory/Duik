@@ -21,7 +21,7 @@ You can tweak the effector with the effect on the layer.
 
 ![](../../img/duik/automation/effector-effect.png)
 
-The slave property values will change according to the location of the anchor point their layer relative to the effector's shape, transitionning between the limits.
+The slave property values will change according to the location of the anchor point their layer relative to the effector's shape, transitioning between the limits.
 
 - The ***Inner limit*** is shown in green on the effector layer.
 - The ***Outer limit*** is shown in red.

@@ -61,7 +61,7 @@ You can tweak the way the pose is frozen in the additional panel, with `[Shift] 
 
 ![](../../img/duik/animation/freeze-options.png)
 
-By default, Duik freezes all **animated properties** it'll find, but you can set it to only freeze explicitely **selected properties** if you prefer.
+By default, Duik freezes all **animated properties** it'll find, but you can set it to only freeze explicitly **selected properties** if you prefer.
 
 By default, Duik works only with **selected layers**, but you can tell it to use **all layers**; in this case it'll freeze all animations in the composition, no matter the selection. Be careful, this may be a bit long if there are a lot of animated properties.
 
@@ -100,7 +100,7 @@ A new breakdown keyframe (pose) is created at the current time, with values in b
 `0 %` sets the breakdown at the value of the previous keyframe, `100 %` sets the breakdown at the value of the next keyframe.
 
 ![](../../img/duik/animation/tween-example.png)  
-*A `75 %` breakdown: you can see on the trajectory of the eft leg (and other controllers) the breakdown being at 75 % between the two extreme poses.  
+*A `75 %` breakdown: you can see on the trajectory of the left leg (and other controllers) the breakdown being at 75 % between the two extreme poses.  
 This is true for all animated properties like rotations and all other values.*
 
 You can tweak the way the tweening slider works in the additional panel, click the ![](../../img/duik/icons/options.svg){style="width:1em;"} options button.

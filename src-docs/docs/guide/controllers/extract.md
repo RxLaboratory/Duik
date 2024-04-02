@@ -54,7 +54,7 @@ This is the process to follow if you need to update a rig and replace a precompo
 4. __Extract__ its controllers.
 5. [__Paste__](../animation/tools/copy.md) or [__apply__](../animation/anim-library.md) the animation you've copied or saved.
 
-[^1]: *cf. [Animation](../animation/index.md) / Tools / [Animation Library](../animation/tools/copy.md)*.
+[^1]: *cf. [Animation](../animation/index.md) / Tools / [Copy - Cut - Paste](../animation/tools/copy.md)*.
 
 [^2]: *cf. [Animation](../animation/index.md) / [Animation Library](../animation/anim-library.md)*.
 

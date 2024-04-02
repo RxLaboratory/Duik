@@ -12,7 +12,7 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 First things first, if you'd like to contribute, come and say hi! We're here to help, give advice and just have a nice chat. Don't be afraid, we won't bite ;) Join us on [**chat.rxlab.info**](http://chat.rxlab.io), that's quick, easy, and anonymous.
 
-If you have any private enquiry or if you don't like our chat server, you can contact us using our contact form on [**contact.rxlab.info**](http://contact.rxlab.info), we'll reply by e-mail. *Please don't use this form to get support for the tools* but only for other and private enquiries.
+If you have any private inquiry or if you don't like our chat server, you can contact us using our contact form on [**contact.rxlab.info**](http://contact.rxlab.info), we'll reply by e-mail. *Please don't use this form to get support for the tools* but only for other and private inquiries.
 
 ### Help fund the development, support and distribution
 
@@ -54,7 +54,7 @@ The documentation uses the [*Markdown*](https://en.wikipedia.org/wiki/Markdown)&
 
 [^md]: *cf. [en.wikipedia.org/wiki/Markdown](https://en.wikipedia.org/wiki/Markdown)*
 
-These are the link to the Duik online documentation is [**duik.rxlab.guide**](http://duik.rxlab.guide)
+The link to the Duik online documentation is [**duik.rxlab.guide**](http://duik.rxlab.guide)
 
 ### Tutorials
 
@@ -62,15 +62,15 @@ The more tutorials available, the better!
 
 Don't hesitate to record either quick tips and tricks or complete courses. Post them on your favorite streaming service, paid or free, in any language, and [let us know](http://contact.rxlab.info) so we can share them!
 
-If you'd like and if your tutorial meets our quality requirements, it could become an "*official*" tutorial for your language which will include on the RxLab website and even add to our shop. [Contact us](http://contact.rxlab.info) if you feel your tutorial our course deserves it.
+If you'd like and if your tutorial meets our quality requirements, it could become an "*official*" tutorial for your language which will include on the RxLab website and even add to our shop. [Contact us](http://contact.rxlab.info) if you feel your tutorial or course deserves it.
 
 ### Translate
 
-We're trying to make Duik available in as many languages as possible. When we develop the tools, they're written in English first (as all programming languages use English keywords that makes things easier). But we'd like them to use [Esperanto](https://en.wikipedia.org/wiki/Esperanto)&nbsp;[^esperanto] as a default language, because there's no reason English should be the international language, *la lingvo internacia*. Of course, it is, and that won't change tomorrow, but we're trying to show it could be different.
+We're trying to make Duik available in as many languages as possible. When we develop the tools, they're written in English first (as all programming languages use English keywords that makes things easier). But we'd like them to use [Esperanto](https://en.wikipedia.org/wiki/Esperanto)&nbsp;[^esperanto] as a default language, because there's no reason English should be the international language, *la internacia lingvo*. Of course, it is, and that won't change tomorrow, but we're trying to show it could be different.
 
-[^esperanto]: Esperanto is the world's most widely spoken constructed international auxiliary language. Created in 1887, it is intended to be a universal second language for international communication, or "the international language" (la Lingvo Internacia). *cf. [en.wikipedia.org/wiki/Esperanto](https://en.wikipedia.org/wiki/Esperanto)*
+[^esperanto]: Esperanto is the world's most widely spoken constructed international auxiliary language. Created in 1887, it is intended to be a universal second language for international communication, or "the international language" (la Internacia Lingvo). *cf. [en.wikipedia.org/wiki/Esperanto](https://en.wikipedia.org/wiki/Esperanto)*
 
-The best would be that any user could use the tools in the language of its choice. We've noticed that when a tool is translated, its use grows a lot in countries where the new translation is spoken. These are the languages the most used by the users of the Duik:
+The best would be that any user could use the tools in the language of its choice. We've noticed that when a tool is translated, its use grows a lot in countries where the new translation is spoken. These are the languages the most used by the users of Duik:
 
 - (Esperanto)
 - English
@@ -102,7 +102,7 @@ If you prefer to translate the tools using an application, you'll first have to 
 
 If you find a bug (sorry!) or have a feature to request for a specific Rx Open Tool, let us know! It's very important we get feedback from the users to keep improving all the tools.
 
-No matter what, all bug requests and feature requests **must be posted [issue.rxlab.io](http://issue.rxlab.io)**.
+No matter what, all bug requests and feature requests **must be posted on [issue.rxlab.io](http://issue.rxlab.io)**.
 
 But it's a good idea to first join us on [our chat server: chat.rxlab.io](http://chat.rxlab.info) to make sure the issue is not already known or fixed, or if you need any help at all.
 

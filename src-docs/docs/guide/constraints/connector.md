@@ -11,7 +11,7 @@ A single master property can control many slave properties, but to the contrary 
 
 ## Before the connection
 
-All the properties which need to be animated together are prepared using keyframes. It's these keyframes which will be controlled by the master property, a bit like a time-remapping would do.
+All the properties which need to be animated together are prepared using keyframes. There are these keyframes which will be controlled by the master property, a bit like a time-remapping would do.
 
 The first step is to animate these slave properties; you can use as many keyframes as you need, and precisely adjust the interpolations[*](../../misc/glossary.md) if needed. You just have to make sure all the animations of the slave properties have exactly the same duration; if an animation needs to start after or end before the others, just copy and paste the first or last keyframe so that it starts or ends with a still part.
 

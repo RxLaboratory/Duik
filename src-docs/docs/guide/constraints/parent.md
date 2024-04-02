@@ -50,7 +50,7 @@ You can also choose to **inherit only the position** or **only the rotation**.
 
 You can increase the ***Motion Blur Precision*** if you notice motion blur artefacts, but be careful as this may have a very bad impact on performance.
 
-The transformation of the child layer is computed depending on the weights and the transformations of its parent layers from the beginning of the composition. When adding a new parent link, you may set a first keyframe on its weight to 0% and only raise the weight when you need the child to follow the parent.
+The transformation of the child layer is computed depending on the weights and the transformations of its parent layers from the beginning of the composition. When adding a new parent link, you may set a first keyframe on its weight to `0 %` and only raise the weight when you need the child to follow the parent.
 
 !!! warning
     This constraint must use complex expressions, especially if you need to inherit both the position and rotation. This is a problem regarding the performance; the longer the composition, the longer the time needed to compute the expressions: you should try to use this constraint only in short compositions.

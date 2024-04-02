@@ -4,13 +4,13 @@ After Effects is a Digital Compositing Software. This means that the image displ
 
 **After Effects is _not_ a character rigging and animation application.** Animating characters in After Effects is interesting though, thanks to it letting you work directly on the actual, rendered, animation. After Effects is very good at manipulating pixel assets (better than vectors), which makes it a decent software for cut-out character animation.
 
-These last two decades, a lot of third-party tools were built on top of these features, specifically made for character animation;&nbsp;Duik was the first in 2008, followed by others (*Rubberhose*, *Joystick and Sliders*, etc.). Before that, there was no proper character rigging in After Effects, and it was fine. Duik and these other tools brought high-level rigging and animation to After Effects, and great films were made with this technique, but it also brought a lot of performance issues. The way a compositing application like After Effects work is not made for performance.
+These last two decades, a lot of third-party tools were built on top of these features, specifically made for character animation;&nbsp;Duik was the first in 2008, followed by others (*Rubberhose*, *Joystick and Sliders*, etc.). Before that, there was no proper character rigging in After Effects, and it was fine. Duik and these other tools brought high-level rigging and animation to After Effects, and great films were made with this technique, but it also brought a lot of performance issues. The way a compositing application like After Effects works is not made for performance.
 
 It is important to always keep in mind what is going to slow down After Effects when animating characters and props, to be able to organize your projects in a way to limit these performance issues, and adjust the settings of your tools accordingly.
 
 ## Choose the right tool
 
-Honnestly, if you’re in some kind of very advanced rigging and animation project, if you’re in top-level quality and need both performance and versatility, After Effects may not be the right choice. Did you know [*South Park*](https://en.wikipedia.org/wiki/South_Park){target="_blank"} [^1] was made with [*Maya*](https://en.wikipedia.org/wiki/Autodesk_Maya){target="_blank"} [^2]? Why don’t you animate in [*Blender*](https://blender.org){target="_blank"} [^3] with a nice rig? You can rig 2D characters in 3D software, and you won’t have performance issues there.
+Honestly, if you’re in some kind of very advanced rigging and animation project, if you’re in top-level quality and need both performance and versatility, After Effects may not be the right choice. Did you know [*South Park*](https://en.wikipedia.org/wiki/South_Park){target="_blank"} [^1] was made with [*Maya*](https://en.wikipedia.org/wiki/Autodesk_Maya){target="_blank"} [^2]? Why don’t you animate in [*Blender*](https://blender.org){target="_blank"} [^3] with a nice rig? You can rig 2D characters in 3D software, and you won’t have performance issues there.
 
 But let's agree that sometimes, it’s easier and quicker to use less applications, to not have to render animations between different applications and to animate in the same software which will be used for compositing. In this case, Duik is the tool you need for character animation in After Effects.
 
@@ -24,7 +24,7 @@ Here's a checklist of what you can do to improve the performance in After Effect
 - Use the [Duik optimizer](../guide/performance.md)&nbsp;[^perfpanel] in the Performance panel.
 - Set the preview quality to *Off&nbsp;(Final&nbsp;Quality)*. Don't leave it to *Adaptive&nbsp;Resolution*.
 - Lower the preview resolution if you can (to *Half* or *Third*). Don't leave it to *Auto*.
-- Hide, and shy, unnneeded layers.
+- Hide, and shy, unneeded layers.
 - Hide the layer controls (`Ctrl + Shift + H`).
 - Cut/hide all layers as soon as they're outside of the frame of the composition.
 - Render or precompose (with a proxy!) the Shape Layers.
@@ -71,7 +71,7 @@ There are a few options to speed up the preview and your workflow in After Effec
 
 ## Layers
 
-The type of layers you use is of great importance to improve the performance. This table lists them from worst to best in termes of performance.
+The type of layers you use is of great importance to improve the performance. This table lists them from worst to best in terms of performance.
 
 | Type | Notes |
 | ---- | ----- |
@@ -87,7 +87,7 @@ As you can see in this table, there are two ways to improve the performance of t
 
 1. Always **hide the layer controls**.  
   This is by far **the best way to improve performance in After Effects** when manipulating layers.
-  The option is available in the `View ▶ View Options...` menu in After Effects, and they can be quickly toggled with the `Ctrl + Shift + H` shortcut. You may have to do this quite regularly as its a per-composition option.
+  The option is available in the `View ▶ View Options...` menu in After Effects, and they can be quickly toggled with the `Ctrl + Shift + H` shortcut. You may have to do this quite regularly as its a pre-composition option.
 2. Always prefer **raster layers**.  
   A raster layer will almost always be **faster to render** than a shape layer. If you don't need to animate the contents of a shape layer, you could precompose it, or, even better, render it to an openEXR file and replace the shape with the rendered image.
 
@@ -106,14 +106,14 @@ This is also true if for some time a layer is hidden beneath other layers, cutti
 
 Every time you use a bézier shape, After Effects has to rasterize it before it can display it and render the composition. This means the more shape layers you have, the lower the performance will be. Whenever it's possible, you should precompose the shape layer, to the smallest composition you can: this way the precomposition is a raster layer, a bitmap with actual pixels, and faster to render. You can even render this precomposition to an image sequence to replace it or use it as a proxy. Proxies are great!
 
-Of course, do not check the ![](../img/ae/continuous-rasterization.png) *continous rasterization* option on the precomposition layer or you'll lose all benefits of the precomposition. Read the *Precompositions* section below for more information.
+Of course, do not check the ![](../img/ae/continuous-rasterization.png) *continuous rasterization* option on the precomposition layer or you'll lose all benefits of the precomposition. Read the *Precompositions* section below for more information.
 
 !!! tip
     A shape layer without animation nor expressions in its content should always be replaced by an image.  
     Especially when using the puppet tool! As it works with the rendered pixels and not with the vector data, you won’t lose quality, there’s no need to keep the vectors. And precomposing the shape will fix a lot of issues…
 
 !!! tip
-    Even if the shape layer uses expressions in its content, it can be a good idea to precompose it. This way, you could temporarilly freeze time on the precomposition layer to disable all expressions inside and improve the performance when animating, and only remove the time remapping to adjust details and render the final animation. You could also render a proxy of the precomposition to keep the final result while animating other parts.
+    Even if the shape layer uses expressions in its content, it can be a good idea to precompose it. This way, you could temporarily freeze time on the precomposition layer to disable all expressions inside and improve the performance when animating, and only remove the time remapping to adjust details and render the final animation. You could also render a proxy of the precomposition to keep the final result while animating other parts.
 
 **It is _NOT_ a good idea to use shapes hoping to be able to scale them.**
 
@@ -146,7 +146,7 @@ Even when using these simpler bones, there are still a few expressions to contro
 
 ### Duik Controllers
 
-By default, Duik uses Shape Layers for controllers too. This enables the dynamic display of some guides and helpers directly inside the controller layer conotents, but, again, this has a bad impact on performance.
+By default, Duik uses Shape Layers for controllers too. This enables the dynamic display of some guides and helpers directly inside the controller layer contents, but, again, this has a bad impact on performance.
 
 If you don't need these guides, there are two ways to avoid using shape layers as controllers:
 
@@ -173,7 +173,7 @@ Now, imagine an expression, which, when it is evaluated (i.e. at each frame of t
 When dealing with complex expressions, just remember that the more expressions = the more performance issues you’ll have.
 
 In the end, expressions are *just animations* and could be replaced by keyframes to improve the performance.  
-After Effects can bake the expressions to keyframes for you, with the `Animation ▶ Keyframe Assitant ▶ Convert Expression to Keyframes` menu entry. This creates one keyframe per frame, then deactivates the expression.
+After Effects can bake the expressions to keyframes for you, with the `Animation ▶ Keyframe Assistant ▶ Convert Expression to Keyframes` menu entry. This creates one keyframe per frame, then deactivates the expression.
 
 Duik can also help you with that:&nbsp;the [*bake expression*](../guide/automation/tools/) tool in the [*Automation and expressions*](../guide/automation/index.md) panel has two better ways to convert expressions to keyframes:
 
@@ -205,13 +205,13 @@ Each time you duplicate a layer, you have to ask yourself if you can precompose 
 
 !!! tip
     Keep in mind that you can use expressions to link stuff from the precomposition to the main composition.  
-    With the [*Parent accross compositions*](../guide/constraints/parent.md) tool of Duik, you can even parent a layer in a precomposition to a layer outside of it.  
+    With the [*Parent across compositions*](../guide/constraints/parent.md) tool of Duik, you can even parent a layer in a precomposition to a layer outside of it.  
     The [*Extract Controllers*](../guide/controllers/extract.md) tool can be of great help too.
 
 When you precompose before duplicating the layer(s), all its transformation and effects will be rendered only once and only then they will be duplicated. Without precomposition, everything has to be rendered twice (or more if you duplicate again the same layer).
 
 !!! warning
-    If you enable the *continous rasterization* ![](../img/ae/continuous-rasterization.png) option, you'll lose all benefits of the precomposition on the rendering performance, as After Effects will re-render all layers inside the composition each time it is used with the option activated.
+    If you enable the *continuous rasterization* ![](../img/ae/continuous-rasterization.png) option, you'll lose all benefits of the precomposition on the rendering performance, as After Effects will re-render all layers inside the composition each time it is used with the option activated.
 
 #### Proxies
 
@@ -227,7 +227,7 @@ A few tools in Duik like [*extract controllers*](../guide/controllers/extract.md
 
 ### DuGR, Layer groups
 
-To handle lots of layers, we've developped another tool called [*DuGR*](https://rxlaboratory.org/tools/dugr) [^4]. By grouping layers, it makes it easy to isolate them, both in the timeline or the viewport (using solo and shy modes).
+To handle lots of layers, we've developed another tool called [*DuGR*](https://rxlaboratory.org/tools/dugr) [^4]. By grouping layers, it makes it easy to isolate them, both in the timeline or the viewport (using solo and shy modes).
 
 This helps to improve the performance in two ways:
 
@@ -252,7 +252,7 @@ A few settings ![](../img/ae/project-settings.png) can be tweaked per project to
 - `Video Rendering and Effects`  
   If you have a compatible GPU, you should always leave this option to use *Mercury GPU Acceleration*, unless you have rendering issues or GPU driver issues.
 - `Expressions`  
-   It is *said* that the new *JavaScript* engine is faster than the *Legacy ExtendScript* engine, but if that's true, it doesn't seem to be measurable. What's true is that some expressions may not work on both engines: some expressions may work only on the legacy engine whle others only on the JavaScript engine. All expressions used by Duik should be compatible with both engines, but sometimes switching the engine may fix some bugs. In doubt, always use the new JavaScript engine.
+   It is *said* that the new *JavaScript* engine is faster than the *Legacy ExtendScript* engine, but if that's true, it doesn't seem to be measurable. What's true is that some expressions may not work on both engines: some expressions may work only on the legacy engine while others only on the JavaScript engine. All expressions used by Duik should be compatible with both engines, but sometimes switching the engine may fix some bugs. In doubt, always use the new JavaScript engine.
 
 ## Formats
 
@@ -260,12 +260,12 @@ Not all formats are equal. If you’ve understood what we wrote just above, you 
 
 -  When rendering animations, most of the time it’s better and easier to use image sequences than video files. There is at least one very good and simple reason for it: if the render fails, you won’t have to start it all again, but just the remaining frames. If you want to change something in the animation, you will only have to render the corresponding frames.
 
-- You should use a format which suits your needs (color depth, alpha channel), but also a format which is fast to read and write by After Effects! Our advice is to use *OpenEXR* (with *PIZ* (lossless) or *DWA* (slightly lossy) compression) which handles 32bpc, and has an alpha channel. It is also way faster to read/write than *PNG* in After Effects, and files are usually smaller with *EXR*. It’s better than the *RAW* format of your camera, it’s great for storing HDRi. Premiere and other editting software, as well as Photoshop, can read them; as specified in the name, they’re open and widely compatible. What more could you ask for?
+- You should use a format which suits your needs (color depth, alpha channel), but also a format which is fast to read and write by After Effects! Our advice is to use *OpenEXR* (with *PIZ* (lossless) or *DWA* (slightly lossy) compression) which handles 32bpc, and has an alpha channel. It is also way faster to read/write than *PNG* in After Effects, and files are usually smaller with *EXR*. It’s better than the *RAW* format of your camera, it’s great for storing HDRi. Premiere and other editing software, as well as Photoshop, can read them; as specified in the name, they’re open and widely compatible. What more could you ask for?
 
 !!! tip
     You can render the audio to a simple `*.wav` file stored next to the image sequence.
 
-If you still prefer to use video files, you should choose a format which is also as fast as possible to read and write. Avoid *H.264* and *H.265* (*mp4*,etc.) and prefer *intra-frame* codecs like *Apple ProRes*, *Avid DnxHD*, or *Quicktime Animation*. Note that, although it's widely used, *ProRes* (and *DnxHD*/*DnxHR*) is a lossy codec which outputs huge files. *OpenEXR* sequences or *Quicktime Animation* are lossless (or optionally very slightly lossy if you wish even smaller files with *EXR*) and usually output much smaller files.
+If you still prefer using video files, you should choose a format which is also as fast as possible to read and write. Avoid *H.264* and *H.265* (*mp4*, etc.) and prefer *intra-frame* codecs like *Apple ProRes*, *Avid DnxHD*, or *Quicktime Animation*. Note that, although it's widely used, *ProRes* (and *DnxHD*/*DnxHR*) is a lossy codec which outputs huge files. *OpenEXR* sequences or *Quicktime Animation* are lossless (or optionally very slightly lossy if you wish even smaller files with *EXR*) and usually output much smaller files.
 
 ## After Effects
 
@@ -286,23 +286,17 @@ There's no solution here, except that now you know it, you can talk about it wit
 Sometimes, changing a few options in After Effects can improve the performance or fix issues. In most cases, leaving the default values should work well, but it may be useful to have a look at these specific preferences:
 
 - `Previews ▶ Viewer Quality`:  
-    - Set the *Zoom Quality* to *Faster* or *More Accurate Except Cached Preview* to improve a bit the performance when the viewer zoom is not set at 100%. Note that the difference is hardly noticeable, but sometimes, every little improvement is good to have.
+    - Set the *Zoom Quality* to *Faster* or *More Accurate Except Cached Preview* to improve a bit the performance when the viewer zoom is not set at 100 %. Note that the difference is hardly noticeable, but sometimes, every little improvement is good to have.
     - You can do the same for the *Color Management Quality* for color-managed projects.
-- `Previews ▶ Cache Frames When Idle`:  
-  This can also be toggled per composition in the `Composition ▶ Preview` menu.  
+- `Previews ▶ Cache Frames When Idle`: This can also be toggled per composition in the `Composition ▶ Preview` menu.  
   Caching frames when After Effects is idle does improve the performance, as sometimes frames will already be cached when you start working on a composition. But with very long compositions this can cause lots of issues by filling your computer's memory. In this case, all your programs may start to behave erratically or even crash after everything begins to lag a lot.
-- `Display ▶ Motion Path`:  
-  Displaying too long motion paths can be very laggy, especially if the motion path is the result of complex expressions. Be careful with that;&nbsp;it may be better to deactivate completely the motion paths and enable them only when needed. Unfortunately, there's no shortcut for that, but Duik may include a button for that in the future.
-- `Display ▶ Disable Thumbnails in Project Panel`:  
-  This option doesn't really improve the performance, but again, sometimes with very big projects, every little improvement helps.
-- `Media & Disk Cache ▶ Disk Cache`:  
-  When the disk cache is enabled, After Effects will save rendered frames to a temporary location on a specified disk. This is needed if your system runs with low *RAM* memory. If you have a lot of available memory (more that 32 or even 64GB) when working with After Effects, it may improve performance to disable the disk cache: in this case, After Effects saves the frames only into RAM, which is much faster than any disk. But in this case, you'll lose all the cache when closing After Effects or restarting your computer, to the contrary of the disk cache.  
+- `Display ▶ Motion Path`: Displaying too long motion paths can be very laggy, especially if the motion path is the result of complex expressions. Be careful with that;&nbsp;it may be better to deactivate completely the motion paths and enable them only when needed. Unfortunately, there's no shortcut for that, but Duik may include a button for that in the future.
+- `Display ▶ Disable Thumbnails in Project Panel`: This option doesn't really improve the performance, but again, sometimes with very big projects, every little improvement helps.
+- `Media & Disk Cache ▶ Disk Cache`: When the disk cache is enabled, After Effects will save rendered frames to a temporary location on a specified disk. This is needed if your system runs with low *RAM* memory. If you have a lot of available memory (more that 32 or even 64GB) when working with After Effects, it may improve performance to disable the disk cache: in this case, After Effects saves the frames only into RAM, which is much faster than any disk. But in this case, you'll lose all the cache when closing After Effects or restarting your computer, to the contrary of the disk cache.  
   A way to benefit from both worlds is to create a *Ram Disk*, read below for more information.
   No matter what, you should always choose a location on the fastest (SSD) possible disk on your system, separate from the disk containing your footage if possible.
-- `Memory & Performance ▶ Memory`:
-  Be careful with this option: due to the memory leaks explained in the previous section, the memory limit is not actually respected! It is easy to show that After Effects memory can be much higher than the limit set here, by just running a complex script (like Duik) a few times.
-- `Memory & Performance ▶ Performance`:
-  Using Multi-Frame Rendering usually improves performance, but in specific cases it may be better to deactivate this option: if you work with complex compositions, lots of expressions, or non-compatible effects, multi-frame rendering may actually slow down the rendering process:
+- `Memory & Performance ▶ Memory`: Be careful with this option: due to the memory leaks explained in the previous section, the memory limit is not actually respected! It is easy to show that After Effects memory can be much higher than the limit set here, by just running a complex script (like Duik) a few times.
+- `Memory & Performance ▶ Performance`: Using Multi-Frame Rendering usually improves performance, but in specific cases it may be better to deactivate this option: if you work with complex compositions, lots of expressions, or non-compatible effects, multi-frame rendering may actually slow down the rendering process:
     - It takes more time to start the rendering process when using multi-frame rendering. This can be a problem for previews:&nbsp;if you notice a long delay between requesting the preview and the render of the first frame, it may be because of multi-frame rendering and it's worth trying without it, then maybe enable it again just before the final render.
     - It may sometimes be actually slower to render than standard rendering, but that depends on what you're rendering. You'll have to test with your own project if you suspect it to slow down your renders, but that shouldn't be the case in the majority of projects. In doubt, leave it enabled.
 
@@ -323,7 +317,7 @@ Some features in Duik are especially slowing down After Effects, it's best to kn
 
 ### Parent constraint
 
-The [Parent constraint](../guide/constraints/parent.md) is a great tool but… It can be very computer-intensive. To be able to compute the location of a layer, it has to compute the previous movement of all its parents for all the previous frames of the composition. This means the longer the composition is, the slower it will be. Avoid using it in very long compositions, and try to use it only when necessary. Often, it is easier and quickier to just split the layer when its parent must change.
+The [Parent constraint](../guide/constraints/parent.md) is a great tool but… It can be very computer-intensive. To be able to compute the location of a layer, it has to compute the previous movement of all its parents for all the previous frames of the composition. This means the longer the composition is, the slower it will be. Avoid using it in very long compositions, and try to use it only when necessary. Often, it is easier and quicker to just split the layer when its parent must change.
 
 The other constraint are much lighter, it's better to try to use the orientation or position constraint whenever possible instead of the parent constraint.
 
@@ -342,7 +336,7 @@ The IK used in a character like the ones created by the [Auto-rigger](../guide/b
 
 The default [Kleaner](../guide/automation/kleaner.md) automation should not be an issue most of the time. But beware of the simulation! As every simulations, it involves a lot more computation and can quickly become a reason why your rig won’t work anymore. Try to use simulations as few as possible, and keep in mind that most of the time, animating hanging hairs or the antenna of a car is quick and easy with a few keyframes without even using the Kleaner.
 
-Simulation in the Kleaner happen only in multi-dimensionnal properties. You can completely disable simulations in the *Performance* section of the effect created by the Kleaner, as long as some other adjustment to further improve the performance according to your needs.
+Simulation in the Kleaner happen only in multi-dimensional properties. You can completely disable simulations in the *Performance* section of the effect created by the Kleaner, as long as some other adjustment to further improve the performance according to your needs.
 
 ![](../img/duik/automation/kleaner-effect-performance.png)
 
@@ -381,16 +375,16 @@ There are three important locations for your data when working with After Effect
 
 1. The system, where After Effects is installed. These files are mostly read when After Effects is launched, and then used just very little.
 2. The Disk Cache which stores the temporary rendered frames. This is the most used location.
-3. Your media files (footages). These files are read regularly to render your compositions.
+3. Your media files (footage). These files are read regularly to render your compositions.
 
 It doesn't really matter where you store the project files themselves (`*.aep`) as they're read/written only when loading and saving the files, and should not be very big files anyway.
 
-The best case scenario is to have at least three big different physical disks, as fast as possible (SSD), for each of the aforementionned locations, but if you can't afford it, you can perfectly use just two disks:
+The best case scenario is to have at least three big different physical disks, as fast as possible (SSD), for each of the aforementioned locations, but if you can't afford it, you can perfectly use just two disks:
 
 - A disk as fast as possible for both the system and the disk cache: the system files are not used so often, so it's fine to store the disk cache on the same disk.
-- Another disk to store your footage, which may be read at the same time the disk cache is read and written, so that will improve the performance to separate the footages. Note that the speed of this second disk is a bit less important, as the footages are mostly read and not written: it's always faster to read than write, and they're used a bit less than the disk cache.
+- Another disk to store your footage, which may be read at the same time the disk cache is read and written, so that will improve the performance to separate the footage. Note that the speed of this second disk is a bit less important, as the footage are mostly read and not written: it's always faster to read than write, and they're used a bit less than the disk cache.
 
-Both disks needs to be quite big:&nbsp;the system disk will store your operating system and all applications, and it's more comfortable to have a large disk cache. The disk storing your footages (and rendered files) needs to be able to store a potentially large amount of medias.
+Both disks need to be quite big:&nbsp;the system disk will store your operating system and all applications, and it's more comfortable to have a large disk cache. The disk storing your footage (and rendered files) needs to be able to store a potentially large amount of medias.
 
 It is not recommended to use a single disk, unless it's very fast (and big...).
 

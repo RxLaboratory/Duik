@@ -129,8 +129,7 @@ All this can be configured and animated in the effect of the controller.
     `100 %` is on one side, `-100 %` is the other side. Values in between allow for a smooth transition, to animate a foreshortening or fake 3D rotation of the limb.
 - ***Auto swing*** changes the side automatically according to a specific angle.  
     To help you set the limit precisely, you can use the guides to visualize it.
-- ***FK***:  
-    To animate using FK, you need to disable the IK (or set the weight to `0 %`) first.  
+- ***FK***: To animate using FK, you need to disable the IK (or set the weight to `0 %`) first.  
     You can then animate these rotation values to animate the limb using FK.  
     - ***Parent rotation***: if this is checked, the limb will rotate with its parent rotation.  
         Disabling it makes sure the limb always keep its own orientation no matter the rotation of its ancestors.

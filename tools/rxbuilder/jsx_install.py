@@ -37,7 +37,7 @@ def install_types(path, name):
         if os.path.exists(dest):
             os.remove(dest)
 
-        shutil.copy( src, dest )
+        os.symlink(  src, dest )
 
 def install_include(src_dist_path, dest_include_path):
     if not os.path.isabs(dest_include_path):
@@ -63,8 +63,8 @@ def install_include(src_dist_path, dest_include_path):
         if os.path.exists(dest):
             os.remove(dest)
 
-        shutil.copy( src, dest )
-        
+        os.symlink( src, dest )
+
 def install_dependency(dep):
     if 'name' not in dep:
             raise ValueError("Dependendy has no name.")
@@ -75,17 +75,17 @@ def install_dependency(dep):
     if 'repo_path' not in dep:
         print("Dependency doesn't have a repo, nothing to do.")
         return
-    
+
     dep_repo_path = dep['repo_path']
     if not os.path.isabs(dep_repo_path):
         dep_repo_path = os.path.join(
             E.REPO_DIR,
             dep_repo_path
         )
-    
+
     if not os.path.isdir(dep_repo_path):
         raise FileNotFoundError("Can't find the repo at " + dep_repo_path)
-    
+
     # Build the dependency
     build_script = os.path.join(
         dep_repo_path,
@@ -104,7 +104,7 @@ def install_dependency(dep):
         install_types(dep_types_path, name)
     else:
         print(">> No types to install")
-    
+
     # Check if we're including the dist somewhere
     if 'include_path' in dep:
         dep_dist_path = os.path.join( dep_repo_path, 'dist' )
