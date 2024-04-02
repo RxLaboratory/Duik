@@ -21,6 +21,9 @@ def rename_duik_zip():
         break
 
 if __name__ == '__main__':
+    # Install dependencies
+    B.update_jsx_dependencies()
+
     B.build_jsx()
     B.build_mkdocs()
     B.build_jsdoc()
