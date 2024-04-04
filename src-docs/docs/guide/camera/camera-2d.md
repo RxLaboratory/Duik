@@ -42,7 +42,7 @@ Camera Influence can be found in the effects of the generated or duplicated null
 - `< 0` negative values moves the level the other way than the camera; this simulates a camera rotating around a middle point in the set, which would be the level `0`.
 
 !!! tip
-    Let’s say we want to create the illusion of three dimensional space that has a main focus on the objects in the middleground (mg).
+    Let’s say we want to create the illusion of three dimensional space that has a main focus on the objects in the middleground (*mg*).
 
     You have a foreground (*fg*) layer, an *mg* layer, and a background (*bg*) layer.
 
@@ -53,7 +53,7 @@ Camera Influence can be found in the effects of the generated or duplicated null
     Now when you manipulate the controller, the background will move `50 %` that of the *mg* and the *fg* will move `50 %` more than the *mg*, giving the illusion of depth/parallax.
 
 !!! Warning
-    Duik will create a null called *Z* along with the 2D Camera, just ingore it and don’t try to modify, duplicate or move it. It’s needed to give the camera control it’s anchor point and some other calculations but you should not have to manipulate it by yourself.
+    Duik will create a null called *Z* along with the 2D Camera, just ignore it and don’t try to modify, duplicate or move it. It’s needed to give the camera control it’s anchor point and some other calculations but you should not have to manipulate it by yourself.
 
 If you need more or less layers to control other levels, you can remove or duplicate these null level layers, and just parent the actual background image layers to these null layers.
 
@@ -74,7 +74,7 @@ With the other modes, **Handheld**, **Shoulder**, **Tripod**, **Steadicam**, Dui
 The **Type of motion** changes the interpolation[*](../../misc/glossary.md) and extrapolation[*](../../misc/glossary.md) of the keyframes.  
 To generate a perfectly smooth and realistic movement on cameras from your keyframes, Duik uses different interpolation and extrapolation algorithms[*](../../misc/glossary.md), and you just have to set the type of motion you're animating:
 
-- **Start then stop movement**: The camera is still at the beginnning of the shot, then starts moving and stops moving before the end of the shot.
+- **Start then stop movement**: The camera is still at the beginning of the shot, then starts moving and stops moving before the end of the shot.
 - **Start of movement**: The camera is still at the beginning of the shot, starts moving, and the shot is cut before it starts to slow down.
 - **End of movement**: The camera is already moving at the beginning of the shot, slows down and stops moving.
 - **Easy-Bézier interpolation**: If you'd like to manually adjust the interpolation, this mode allows for fine tuning while keeping a small number of parameters to set.
@@ -83,7 +83,7 @@ To generate a perfectly smooth and realistic movement on cameras from your keyfr
 
 With all these types of motion, you can tweak the acceleration or deceleration of the camera with the **Easing / Acceleration** property. This property can be animated if you wish!
 
-The *Easy-Bézier* options are available in the end of the effec; they're similar to the Bézier mode of the [Interpolator](../animation/tools/interpolator.md)&nbsp;[^interpolator].
+The *Easy-Bézier* options are available in the end of the effect; they're similar to the Bézier mode of the [Interpolator](../animation/tools/interpolator.md)&nbsp;[^interpolator].
 
 [^interpolator]: *cf. [Animation](../animation/index.md) / Tools / [Interpolator](../animation/tools/interpolator.md)*.
 
@@ -91,7 +91,7 @@ The *Easy-Bézier* options are available in the end of the effec; they're simila
 
 Although you could animate directly the position of the camera controller layer, it should be easier and better to animate only from the effect, where all camera moves can be keyframed.
 
-Duik differenciates the translation of the camera, which generate a parallax effect, from the rotation or scale which should not generate any parallax[^parallax]. Of course, you can combine all of them.
+Duik differentiates the translation of the camera, which generate a parallax effect, from the rotation or scale which should not generate any parallax[^parallax]. Of course, you can combine all of them.
 
 [^parallax]: That's how it works in real life; there is no change of perspective with rotations, thus no parallax effect, in an ideal setup where the pivot would be exactly at the center of the censor (and the censor would be infinitely small). As this perfect case scenario is almost impossible, there may be a very small parallax when a camera is panning, which is the result of the censor actually translating a bit too instead of just rotating.
 
@@ -119,7 +119,7 @@ You can also animate the amplitude of the camera shake to make the camera shake 
 !!! tip
     You shouldn't have to change much the frequency values which should be the same for almost all cameras.
 
-As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure mutliple controllers use the same seed to generate the same motion).
+As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure multiple controllers use the same seed to generate the same motion).
 
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

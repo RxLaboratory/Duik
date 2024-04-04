@@ -42,7 +42,7 @@ With the other modes, **Handheld**, **Shoulder**, **Tripod**, **Steadicam**, Dui
 The **Type of motion** changes the interpolation[*](../../misc/glossary.md) and extrapolation[*](../../misc/glossary.md) of the keyframes.  
 To generate a perfectly smooth and realistic movement on cameras from your keyframes, Duik uses different interpolation and extrapolation algorithms[*](../../misc/glossary.md), and you just have to set the type of motion you're animating:
 
-- **Start then stop movement**: The camera is still at the beginnning of the shot, then starts moving and stops moving before the end of the shot.
+- **Start then stop movement**: The camera is still at the beginning of the shot, then starts moving and stops moving before the end of the shot.
 - **Start of movement**: The camera is still at the beginning of the shot, starts moving, and the shot is cut before it starts to slow down.
 - **End of movement**: The camera is already moving at the beginning of the shot, slows down and stops moving.
 - **Easy-Bézier interpolation**: If you'd like to manually adjust the interpolation, this mode allows for fine tuning while keeping a small number of parameters to set.
@@ -51,7 +51,7 @@ To generate a perfectly smooth and realistic movement on cameras from your keyfr
 
 With all these types of motion, you can tweak the acceleration or deceleration of the camera with the **Easing / Acceleration** property. This property can be animated if you wish!
 
-The *Easy-Bézier* options are available in the end of the effec; they're similar to the Bézier mode of the [Interpolator](../animation/tools/interpolator.md)&nbsp;[^interpolator].
+The *Easy-Bézier* options are available in the end of the effect; they're similar to the Bézier mode of the [Interpolator](../animation/tools/interpolator.md)&nbsp;[^interpolator].
 
 [^interpolator]: *cf. [Animation](../animation/index.md) / Tools / [Interpolator](../animation/tools/interpolator.md)*.
 
@@ -68,7 +68,7 @@ You can also animate the amplitude of the camera shake to make the camera shake 
 !!! tip
     You shouldn't have to change much the frequency values which should be the same for almost all cameras.
 
-As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure mutliple controllers use the same seed to generate the same motion).
+As with all other random values, you can change the **seed** in the advanced section of the effect, to test different versions of the motion (or to make sure multiple controllers use the same seed to generate the same motion).
 
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

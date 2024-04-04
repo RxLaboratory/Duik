@@ -7,7 +7,7 @@ This is very useful to automate repetitive tasks if you know a bit of scripting 
 
 From this editor, the complete [Duik API](../../../advanced/api/index.md) is already included and can be used to automate tasks even more easily.
 
-▷ Read the Avanced / [Duik API](../../../advanced/api/index.md) section for more information and examples about how to use the API to write your own scripts.
+▷ Read the Advanced / [Duik API](../../../advanced/api/index.md) section for more information and examples about how to use the API to write your own scripts.
 
 
 ![META](authors:Nicolas "Duduf" Dufresne;license:GNU-FDL;copyright:2022-2023;updated:2023-08-24)

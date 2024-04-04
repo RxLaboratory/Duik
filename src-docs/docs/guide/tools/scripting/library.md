@@ -4,12 +4,12 @@ The Script Library is similar to other libraries in Duik, such as the [OCO meta-
 
 ![](../../../img/duik/tools/script-lib.png)
 
-You can use the field on the top of the panel to quickly search for scripts and navigate in the caterogies.
+You can use the field on the top of the panel to quickly search for scripts and navigate in the categories.
 
 Some predefined categories are available by default, to list all available scripts in different locations on your system. These correspond to the default locations and scripts available with After Effects.
 
 To run a script, `[double click]` it or select it and click the ![](../../../img/duik/icons/run.svg){style="width:1em;"} *Run* button.  
-Dockable scripts (a.k.a. ScriptUI Panels) are launched as an After Effects dockable panel, but if you `[Alt] + [Click]` the *Run* button, Duik will try to launch their standard (not dockable) version. This may fails if the developer of the script didn't implement this feature.
+Dockable scripts (a.k.a. ScriptUI Panels) are launched as an After Effects dockable panel, but if you `[Alt] + [Click]` the *Run* button, Duik will try to launch their standard (not dockable) version. This may fail if the developer of the script didn't implement this feature.
 
 You can also quickly open scripts for edition from the library, by clicking the ![](../../../img/duik/icons/edit.svg){style="width:1em;"} *Edit* button when the script is selected. By default, the script is opened using the default system's editor corresponding to the file type of the script (usually `.jsx`). You can set a specific editor if you `[Shift] + [Click]` the button, or `[Alt] + [Click]` to open it in a simple editor included in the panel of Duik for [quick edition of small scripts](script-editor.md)&nbsp;[^editor].
 

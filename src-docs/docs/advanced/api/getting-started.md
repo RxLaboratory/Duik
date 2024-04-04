@@ -216,7 +216,7 @@ Example:
     }
 ```
 
-Some objects are available to make things easier. Especially with properties (to work around the dreaded *invalid object* from AE's strange behaviour).
+Some objects are available to make things easier. Especially with properties (to work around the dreaded *invalid object* from AE's strange behavior).
 
 ```js
     var comp = DuAEProject.getActiveComp();

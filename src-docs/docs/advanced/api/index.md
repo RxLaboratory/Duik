@@ -12,7 +12,7 @@ We need your help. Without your contributions, we could not continue our work to
 
 ____
 
-▹ You can [**donwload Duik and its API from rxLaboratory**](http://rxlaboratory.org/tools/duik).
+▹ You can [**download Duik and its API from rxLaboratory**](http://rxlaboratory.org/tools/duik).
 
 ▹ The [**source code is on Github**](https://github.com/RxLaboratory/Duik).
 
@@ -20,7 +20,7 @@ ____
 
 *Duik* is a comprehensive character rigging and animation tool set for After Effects. It is an end-user tool, which sits in its own panel in the UI of After Effects.
 
-To make it easier for people with basic scripting abilities to use Duik in their own scripts, automation, auto-rigs, etc, *Duik* also comes with an easy-to-use API. It may also be very useful to advanced developpers though, as it also includes a lot of low-level methods and a very comprehensive scripting framework for After Effects and more generally for Adobe Applications.
+To make it easier for people with basic scripting abilities to use Duik in their own scripts, automation, auto-rigs, etc, *Duik* also comes with an easy-to-use API. It may also be very useful to advanced developers though, as it also includes a lot of low-level methods and a very comprehensive scripting framework for After Effects and more generally for Adobe Applications.
 
 It is written in *[ExtendScript](http://extendscript.docsforadobe.dev/)* with the standard *[After Effects API](http://ae-scripting.docsforadobe.dev/)*.
 

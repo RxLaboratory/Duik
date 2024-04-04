@@ -40,7 +40,7 @@ Restart After Effects if it was open, and go to `Edit ► Keyboard Shortcuts`
 
 To assign `[Ctrl] + [P]` to the script (for example), first click on the `P` key on the keyboard image, to check what's already assigned to it and make sure you want to replace the default.
 
-Then type the name of the script in the search field to locate it, and just click on the empty space next to it, in the column labelled *Shortcut". The, just type your shortcut, et voilà !
+Then type the name of the script in the search field to locate it, and just click on the empty space next to it, in the column labeled *Shortcut". The, just type your shortcut, et voilà !
 
 [^1]:
     Once you've copied the API in the folder, you can add as many scripts using it as you wish, they will all share the same file. Be careful though, if different scripts need different versions of the API, you may have to rename the API file to store the different versions in the same folder, and update the `#include` line accordingly.
