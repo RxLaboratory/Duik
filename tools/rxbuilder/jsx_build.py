@@ -148,7 +148,7 @@ def build_api():
         api_file_lines.append(
             '//@include "libs/' + os.path.basename(built_file)
             )
-        api_file_lines.append("\n")
+        api_file_lines.append("\"\n")
     
     if multiple_api:
         with open(api_file, 'w', encoding='utf8') as f:
