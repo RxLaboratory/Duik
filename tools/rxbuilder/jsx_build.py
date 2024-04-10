@@ -51,7 +51,7 @@ def build_script(file_path):
                 # remove trailing ";" if any
                 if trimmed_line.endswith(";"):
                     trimmed_line = trimmed_line[:-1]
-                # Get the script and build it
+                # Get the script and build it.
                 split_line = trimmed_line.split(" ")
                 split_line.pop(0)
                 include_path = " ".join(split_line)
