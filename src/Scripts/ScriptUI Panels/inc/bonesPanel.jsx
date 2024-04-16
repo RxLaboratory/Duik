@@ -42,9 +42,9 @@ function buildBonesUI( tab, standAlone )
     var linkArtButton = toolsGroup.addButton(
         i18n._("Link art"),
         w12_link_to_bone,
-        i18n._("Automatically (try to) link the artwork layers to their corresponding bones.\n\n" + 
-            "By default, bones and artworks are matched using the layer names.\n\n" + 
-            "[Alt]: Use the distance between the layers (using the anchor points of the layers) instead of their names.")
+        i18n._("Automatically (try to) link the artwork layers to their corresponding bones.") + "\n\n" +
+        i18n._("By default, bones and artworks are matched using the layer names.") + "\n\n" +
+        i18n._("[Alt]: Use the distance between the layers (using the anchor points of the layers) instead of their names.")
     );
     linkArtButton.onClick = function() {
         DuScriptUI.progressBar.reset();

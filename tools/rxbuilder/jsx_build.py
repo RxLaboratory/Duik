@@ -42,7 +42,7 @@ def build_script(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("Can't build " + file_path + ". The file does not exist.")
 
-    with open(file_path, 'r', encoding='utf8') as file:
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
         built_lines = []
         for line in file:
             trimmed_line = line.strip()
@@ -51,7 +51,7 @@ def build_script(file_path):
                 # remove trailing ";" if any
                 if trimmed_line.endswith(";"):
                     trimmed_line = trimmed_line[:-1]
-                # Get the script and build it
+                # Get the script and build it.
                 split_line = trimmed_line.split(" ")
                 split_line.pop(0)
                 include_path = " ".join(split_line)
@@ -148,7 +148,7 @@ def build_api():
         api_file_lines.append(
             '//@include "libs/' + os.path.basename(built_file)
             )
-        api_file_lines.append("\n")
+        api_file_lines.append("\"\n")
     
     if multiple_api:
         with open(api_file, 'w', encoding='utf8') as f:
