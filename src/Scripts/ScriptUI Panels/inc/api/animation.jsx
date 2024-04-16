@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The animator's toolkit.
  * @namespace
  * @category Duik

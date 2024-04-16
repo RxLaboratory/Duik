@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The lazy animator's toolkit.
  * @namespace
  * @category Duik

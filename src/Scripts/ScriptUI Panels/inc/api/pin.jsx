@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Pin related tools.
  * @namespace
  * @category Duik

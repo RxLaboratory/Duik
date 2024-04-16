@@ -42,7 +42,7 @@ def build_script(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("Can't build " + file_path + ". The file does not exist.")
 
-    with open(file_path, 'r', encoding='utf8') as file:
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
         built_lines = []
         for line in file:
             trimmed_line = line.strip()

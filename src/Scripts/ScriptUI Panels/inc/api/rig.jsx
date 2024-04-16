@@ -1,4 +1,4 @@
-﻿/**
+/**
  * (Auto)Rigging tools.
  * @namespace
  * @category Duik
