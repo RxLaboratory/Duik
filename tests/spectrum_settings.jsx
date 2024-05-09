@@ -25,11 +25,19 @@
      * @returns {Boolean}
      */
     aeUI.useReducedContrast = function() {
-        return app.preferences.getPrefAsBool(
+        if (app.preferences.havePref(
             "Main Pref Section v2",
             "Use Reduced Contrast",
             PREFType.PREF_Type_MACHINE_INDEPENDENT
-            );
+        )) {
+            return app.preferences.getPrefAsBool(
+                "Main Pref Section v2",
+                "Use Reduced Contrast",
+                PREFType.PREF_Type_MACHINE_INDEPENDENT
+                );
+            }
+
+        return false;
     }
 
     /**
@@ -41,11 +49,18 @@
      * - Light is `> 0.5`.  The corresponding backgound color is [.96875, .96875, .96875, 1]
      */
     aeUI.brightness = function() {
-        return app.preferences.getPrefAsFloat(
+        if (app.preferences.havePref(
             "Main Pref Section v2",
             "User Interface Brightness (4) [0.0..1.0]",
             PREFType.PREF_Type_MACHINE_INDEPENDENT
-            );
+        )) {
+            return app.preferences.getPrefAsFloat(
+                "Main Pref Section v2",
+                "User Interface Brightness (4) [0.0..1.0]",
+                PREFType.PREF_Type_MACHINE_INDEPENDENT
+                );
+        }
+        return 0.2;
     }
 
     aeUI.isDarkest = function() {

@@ -1,7 +1,7 @@
 @echo off
 
 :: Edit these variables with the correct paths on your system
-::SET aeVersion=(2024)
+::SET aeVersion=2024
 SET aeVersion=(Beta)
 SET "aePath=C:\Program Files\Adobe\Adobe After Effects %aeVersion%\Support Files\Scripts\ScriptUI Panels"
 :: The repo is the current dir by default
@@ -14,7 +14,7 @@ if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 pushd "%CD%"
 CD /D "%~dp0"
 
-echo Installing "%repoPath%" in "%aeDir%"...
+echo Installing "%repoPath%" in "%aePath%"...
 
 :: (Trying to) remove older files
 del "%aePath%\DuCop.jsx"
