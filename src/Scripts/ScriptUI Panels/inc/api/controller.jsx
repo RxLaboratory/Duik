@@ -435,7 +435,7 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
         ctrl = comp.layers.addNull();
         // Center the anchor point
         ctrl.transform.anchorPoint.setValue([50,50]);
-        ctrl.transform.position.setValue( ctrl.transform.position.value - [50,50] );    
+        ctrl.transform.position.setValue( [comp.width/2, comp.height/2] );
     }
     else if (mode != Duik.Controller.LayerMode.RASTER) ctrl = comp.layers.addShape();
     else {
