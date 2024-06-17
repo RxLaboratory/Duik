@@ -1,1 +1,1 @@
-D:/RxLab/src/RxOT/After-Effects/DuSan/types/dusan/types.d.ts
+/mnt/WORK/RxLab/src/RxOT/After-Effects/DuSan/types/dusan/types.d.ts

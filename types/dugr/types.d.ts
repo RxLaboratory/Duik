@@ -1,1 +1,1 @@
-D:/RxLab/src/RxOT/After-Effects/DuGR/types/dugr/types.d.ts
+/mnt/WORK/RxLab/src/RxOT/After-Effects/DuGR/types/dugr/types.d.ts

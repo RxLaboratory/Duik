@@ -12,6 +12,8 @@ The Duik API comes in a few files:
 
 - A Subfolder called `libs` contains the actual API code, separated in a few different libraries. These may be useful if you need to handle specific versions of these libraries, if you know what you're doing... Have a look at the main `Duik_api.jsxinc` file if you want to see in which order they should be included in your scripts.
 
+All these files (both the `.jsxinc` file and the `libs` folder) need to be located next to your script in the following examples.
+
 ### Using only Duik (and DuGR and DuIO)
 
 If you're only needing the Duik API, and perhaps the DuGR API or the DuIO API too, which are included in Duik, you just have to include `Duik_api.jsxinc` at the beginning of your own script.
