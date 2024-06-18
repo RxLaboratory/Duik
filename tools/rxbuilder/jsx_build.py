@@ -112,7 +112,7 @@ def build_api():
 
     if os.path.isdir(dist_path):
         shutil.rmtree(dist_path)
-    
+
     multiple_api = len(E.ENV['jsx'].get('API_files', ())) > 1
     api_file = ""
     api_file_lines = []
@@ -135,7 +135,7 @@ def build_api():
         if built_file.endswith("jsx"):
             os.rename(built_file, built_file.replace("jsx", "jsxinc"))
             built_file = built_file.replace("jsx", "jsxinc")
-        
+
         # Copy to dist
         dist_file = os.path.join(
             dist_path,
@@ -149,7 +149,7 @@ def build_api():
             '//@include "libs/' + os.path.basename(built_file)
             )
         api_file_lines.append("\"\n")
-    
+
     if multiple_api:
         with open(api_file, 'w', encoding='utf8') as f:
             f.writelines(api_file_lines)
