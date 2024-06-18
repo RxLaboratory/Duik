@@ -2,8 +2,8 @@
     #include "Duik_api.jsxinc"
 
     // The script name must be "Duik" to get the default Duik settings
-    // {duikVersion} is replaced by our build script
-    DuAEF.init( "Duik", "{duikVersion}", "RxLaboratory" );
+    // %version% is replaced by our build script
+    DuAEF.init( "Duik", "%version%", "RxLaboratory" );
     DuAEF.enterRunTime();
 
     DuAE.beginUndoGroup( i18n._("Adjustment layer") );
