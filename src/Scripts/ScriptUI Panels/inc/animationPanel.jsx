@@ -409,7 +409,7 @@
 
     if (uiMode < 2) DuScriptUI.separator( animationGroup, uiMode <= 1 ? i18n._("Tweening") : ''  );
 
-    var tweenTools = DuScriptUI.toolBar(animationGroup);
+    var tweenTools = DuScriptUI.toolBar(animationGroup, 4);
 
     var splitKeyButton = tweenTools.addButton(
         i18n._("Split"),
