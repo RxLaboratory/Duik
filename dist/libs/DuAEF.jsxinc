@@ -2502,6 +2502,40 @@ DuColor.prototype.lighter = function( ratio )
 }
 
 /**
+ * Creates a new color lighter or darker depending on the difference between the APP_TEXT_COLOR (foreground color) and the APP_BACKGROUND_COLOR
+ * @param {int} [ratio=200] Pull ratio
+ * @returns {DuColor} The new color
+ */
+DuColor.prototype.pull = function( ratio )
+{
+	ratio = def(ratio,200);
+
+	if (DuColor.isUsingDarkMode()) {
+		return this.lighter(ratio);
+	}
+	else {
+		return this.darker(ratio);
+	}
+}
+
+/**
+ * Creates a new color lighter or darker depending on the difference between the APP_TEXT_COLOR (foreground color) and the APP_BACKGROUND_COLOR
+ * @param {int} [ratio=200] Push ratio
+ * @returns {DuColor} The new color
+ */
+DuColor.prototype.push = function( ratio )
+{
+	ratio = def(ratio,200);
+
+	if (DuColor.isUsingDarkMode()) {
+		return this.darker(ratio);
+	}
+	else {
+		return this.lighter(ratio);
+	}
+}
+
+/**
  * Compares two colors
  * @param {Boolean} [ignoreAlpha=false] Set to true to consider colors to be equal if they differ only by their alpha.
  * @param {int} [precision=4] The precision to use (the number of decimals to compare).
@@ -2657,6 +2691,13 @@ DuColor.init = function()
 	}
 }
 DuESF.initMethods.push(DuColor.init);
+
+/**
+ * Checks if the app is in "dark mode", i.e. the APP_TEXT_COLOR is lighter than the APP_BACKGROUND_COLOR
+ */
+DuColor.isUsingDarkMode = function() {
+	return DuColor.Color.APP_TEXT_COLOR.floatHSL()[2] > DuColor.Color.APP_BACKGROUND_COLOR.floatHSL()[2]
+}
 
 /**
 	* Creates a new DuColor from a hex code/array
@@ -10234,7 +10275,7 @@ DuScriptUI.titleBar = function( container, title, closeButton, pinButton ) {
     titleBar.spacing = 0;
     titleBar.orientation = 'row';
     titleBar.alignment = ['fill','top'];
-    DuScriptUI.setBackgroundColor( titleBar, DuColor.Color.APP_BACKGROUND_COLOR.lighter() );
+    DuScriptUI.setBackgroundColor( titleBar, DuColor.Color.APP_BACKGROUND_COLOR.pull(130) );
 
     titleBar.onClose = function() {};
     titleBar.onPin = function(p) {};
@@ -10471,7 +10512,7 @@ DuScriptUI.popUp = function( title, alignment, modal )
         borderless: true
     } );
 
-    DuScriptUI.setBackgroundColor(popup, DuColor.Color.APP_BACKGROUND_COLOR.darker());
+    DuScriptUI.setBackgroundColor(popup, DuColor.Color.APP_BACKGROUND_COLOR.push());
 
     popup.margins = 0;
     popup.spacing = 0;
@@ -11771,7 +11812,7 @@ DuScriptUI.button = function(container, text, image, helpTip, addOptionsPanel, o
             DuScriptUI.setTextColor(duButton.label, DuColor.Color.APP_HIGHLIGHT_COLOR);
         }
         else {
-            DuScriptUI.setBackgroundColor(mainGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.darker());
+            DuScriptUI.setBackgroundColor(mainGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.push());
         }
         
         DuScriptUI.highlightedControls.push(duButton);
@@ -11915,7 +11956,7 @@ DuScriptUI.smallbutton = function(container, text, helpTip, value) {
         DuScriptUI.dimControls();
 
         if (smallButton.label) DuScriptUI.setTextColor(smallButton.label, DuColor.Color.VERY_DARK_GREY);
-        DuScriptUI.setBackgroundColor(smallButton, DuColor.Color.APP_TEXT_COLOR.darker());
+        DuScriptUI.setBackgroundColor(smallButton, DuColor.Color.APP_TEXT_COLOR.push());
 
         DuScriptUI.highlightedControls.push(smallButton);
     }
@@ -12297,12 +12338,12 @@ DuScriptUI.checkUpdate = function ( callback, ui, showAlert )
 
     var titleGroup = DuScriptUI.group( ui_updateGroup );
     titleGroup.alignment = ['fill', 'top'];
-    DuScriptUI.setBackgroundColor( titleGroup, DuColor.Color.APP_BACKGROUND_COLOR.darker() );
+    DuScriptUI.setBackgroundColor( titleGroup, DuColor.Color.APP_BACKGROUND_COLOR.push() );
 
     DuScriptUI.staticText(
         titleGroup,
         DuString.args( "New {#}!", [ DuESF.scriptName ] ),
-        DuColor.Color.APP_TEXT_COLOR.lighter(130)
+        DuColor.Color.APP_TEXT_COLOR.pull(150)
         ).alignment = ['center','top'];
 
     var newVersionGroup = DuScriptUI.group( ui_updateGroup );
@@ -12317,7 +12358,7 @@ DuScriptUI.checkUpdate = function ( callback, ui, showAlert )
     DuScriptUI.staticText(
         newVersionGroup,
         update.version,
-        DuColor.Color.APP_TEXT_COLOR.lighter(115)
+        DuColor.Color.APP_TEXT_COLOR.pull(130)
         );
 
     var descriptionGroup = DuScriptUI.group( ui_updateGroup );
@@ -12328,12 +12369,12 @@ DuScriptUI.checkUpdate = function ( callback, ui, showAlert )
     var descriptionText = descriptionGroup.add("edittext", undefined, update.description, {multiline:true});
     descriptionText.alignment = ['fill','fill'];
     descriptionText.minimumSize = [-1,100];
-    DuScriptUI.setBackgroundColor( descriptionText, DuColor.Color.APP_BACKGROUND_COLOR.darker() );
+    DuScriptUI.setBackgroundColor( descriptionText, DuColor.Color.APP_BACKGROUND_COLOR.push() );
 
     DuScriptUI.staticText(
         ui_updateGroup,
         "Current version: " + DuESF.scriptVersion.fullVersion,
-        DuColor.Color.APP_TEXT_COLOR.darker(160)
+        DuColor.Color.APP_TEXT_COLOR.push(160)
         ).alignment = ['fill', 'bottom'];
 
     if (update.downloadURL)
@@ -12576,11 +12617,11 @@ DuScriptUI.separator = function( container, name, checkable, drawLine )
         if ( checkable ) separator.label = separator.add( 'checkbox', undefined, name );
         else separator.label = separator.add( 'statictext', undefined, name );
         separator.label.alignment = [ 'center', 'bottom' ];
-        if ( drawLine ) DuScriptUI.setBackgroundColor( separator, DuColor.Color.APP_BACKGROUND_COLOR.lighter() );
+        if ( drawLine ) DuScriptUI.setBackgroundColor( separator, DuColor.Color.APP_BACKGROUND_COLOR.pull(130) );
     }
     else if ( drawLine )
     {
-        DuScriptUI.setBackgroundColor( separator, DuColor.Color.APP_BACKGROUND_COLOR.darker(300) );
+        DuScriptUI.setBackgroundColor( separator, DuColor.Color.APP_BACKGROUND_COLOR.push() );
         var size = 1;
         if (DuESF.host == DuESF.HostApplication.AFTER_EFFECTS) size = 2;
         if (container.orientation == 'row')
@@ -12836,7 +12877,7 @@ DuScriptUI.checkBox = function( container, text, image, helpTip, textChecked, im
                     duCheckBox.image.visible = false;
                     if (duCheckBox.imageOnly)
                     {
-                        DuScriptUI.setBackgroundColor( duCheckBox.imageGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.darker() );
+                        DuScriptUI.setBackgroundColor( duCheckBox.imageGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.push() );
                     }
                 }
 
@@ -12913,7 +12954,7 @@ DuScriptUI.checkBox = function( container, text, image, helpTip, textChecked, im
         {
             if (!options.isTab) {
                 if (duCheckBox.hasLabel)
-                    DuScriptUI.setTextColor( duCheckBox.labelChecked, DuColor.Color.APP_HIGHLIGHT_COLOR.lighter(150) );
+                    DuScriptUI.setTextColor( duCheckBox.labelChecked, DuColor.Color.APP_HIGHLIGHT_COLOR.pull() );
                 else
                     DuScriptUI.setBackgroundColor( duCheckBox.buttonGroup, DuColor.Color.APP_HIGHLIGHT_COLOR );
             }
@@ -12930,7 +12971,7 @@ DuScriptUI.checkBox = function( container, text, image, helpTip, textChecked, im
                 if (duCheckBox.hasLabel)
                     DuScriptUI.setTextColor( duCheckBox.label, DuColor.Color.APP_HIGHLIGHT_COLOR );
                 else
-                    DuScriptUI.setBackgroundColor( duCheckBox.buttonGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.darker() );
+                    DuScriptUI.setBackgroundColor( duCheckBox.buttonGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.push() );
             }
             //outline
             else
@@ -12952,7 +12993,7 @@ DuScriptUI.checkBox = function( container, text, image, helpTip, textChecked, im
                 if (duCheckBox.hasLabel)
                     DuScriptUI.setTextColor( duCheckBox.labelChecked, DuColor.Color.APP_HIGHLIGHT_COLOR );
                 else
-                    DuScriptUI.setBackgroundColor( duCheckBox.buttonGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.darker() );
+                    DuScriptUI.setBackgroundColor( duCheckBox.buttonGroup, DuColor.Color.APP_HIGHLIGHT_COLOR.push() );
             }
             //outline
             else
@@ -13538,7 +13579,7 @@ DuScriptUI.editText = function( container, text, prefix, suffix, placeHolder, he
     niceEditText.static = niceEditText.add( 'statictext', undefined, options.prefix + staticText + options.suffix );
     niceEditText.static.alignment = [ 'fill', 'center' ];
     niceEditText.static.helpTip = options.helpTip;
-    if ( options.text == "" && options.placeHolder != "" ) DuScriptUI.setTextColor( niceEditText.static, DuColor.Color.APP_HIGHLIGHT_COLOR.darker(150) );
+    if ( options.text == "" && options.placeHolder != "" ) DuScriptUI.setTextColor( niceEditText.static, DuColor.Color.APP_HIGHLIGHT_COLOR.push(150) );
     else DuScriptUI.setTextColor( niceEditText.static, DuColor.Color.APP_HIGHLIGHT_COLOR );
     niceEditText.edit = niceEditText.add( 'edittext', undefined, options.text );
     niceEditText.edit.visible = false;
@@ -13583,7 +13624,7 @@ DuScriptUI.editText = function( container, text, prefix, suffix, placeHolder, he
         var staticText = '';
         if ( niceEditText.edit.text == '' && niceEditText.placeHolder != '' )
         {
-            DuScriptUI.setTextColor( niceEditText.static, niceEditText.textColor.darker(200) );
+            DuScriptUI.setTextColor( niceEditText.static, niceEditText.textColor.push(150) );
             staticText = niceEditText.placeHolder;
         }
         else
@@ -13713,7 +13754,7 @@ DuScriptUI.staticText = function( container, text, color, multiLine )
     options.text = def(options.text, text);
 
     multiLine = def(multiLine, options.text.indexOf("\n") >= 0 )
-    color = def(color, DuColor.Color.APP_TEXT_COLOR.darker(130) );
+    color = def(color, DuColor.Color.APP_TEXT_COLOR.push(130) );
 
     options.color = def(options.color, color);
     options.multiLine = def(options.multiLine, multiLine);
@@ -14808,7 +14849,7 @@ DuScriptUI.multiButton = function( container, text, image, helpTip, ignoreUIMode
         }
         else
         {
-            DuScriptUI.setBackgroundColor( multiButton, DuColor.Color.APP_HIGHLIGHT_COLOR.darker() );
+            DuScriptUI.setBackgroundColor( multiButton, DuColor.Color.APP_HIGHLIGHT_COLOR.push() );
         }
         
         DuScriptUI.highlightedControls.push( multiButton );
@@ -15059,6 +15100,7 @@ DuESF.initMethods.push( DuProgressBar.init );
 /**
  * @class
  * @name DuToolBar
+ * @augments Group
  * @classdesc For use with {@link DuScriptUI}.<br />
  * A Tool Bar.<br />
  * This is not a real class, and cannot be instanciated.<br />
@@ -15098,7 +15140,7 @@ DuScriptUI.toolBar = function( container, numCols )
     var toolsGroup = DuScriptUI.group( container, 'row' );
     toolsGroup.spacing = 3;
     toolsGroup.margins = 3;
-    DuScriptUI.setBackgroundColor(toolsGroup , DuColor.Color.APP_BACKGROUND_COLOR.darker() );
+    DuScriptUI.setBackgroundColor(toolsGroup , DuColor.Color.APP_BACKGROUND_COLOR.push() );
 
     toolsGroup.columns = [];
 
@@ -26857,22 +26899,22 @@ DuAEExpression.Library["limit"].expression = ['function limit(val, min, max, sof
 	'if (typeof min === \'undefined\') min = null;',
 	'if (typeof max === \'undefined\') max = null;',
 	'if (typeof softness === \'undefined\') softness = 0;',
-	'if (min == null && max == null) return val;',
+	'if (min === null && max === null) return val;',
 	'if (typeof val.length !== \'undefined\') {',
-	'var n = 0;',
+	'var n = val.length;',
 	'if (min !== null) {',
 	'if (typeof min.length === \'undefined\') {',
 	'min = [min];',
 	'while(min.length < val.length) min.push(min[0]);',
 	'}',
-	'n = Math.max(val.length, min.length);',
+	'n = Math.min(n, min.length);',
 	'}',
 	'else if (max !== null) {',
 	'if (typeof max.length === \'undefined\') {',
 	'max = [max];',
 	'while(max.length < val.length) max.push(max[0]);',
 	'}',
-	'n = Math.max(val.length, max.length);',
+	'n = Math.min(n, max.length);',
 	'}',
 	'for (var i = 0; i < n; i++) {',
 	'if (min !== null && max !== null) val[i] = limit(val[i], min[i], max[i], softness);',
@@ -26881,7 +26923,7 @@ DuAEExpression.Library["limit"].expression = ['function limit(val, min, max, sof
 	'}',
 	'return val;',
 	'}',
-	'if (max != null) {',
+	'if (max !== null) {',
 	'if (typeof max.length !== \'undefined\') max = max[0];',
 	'max = max - softness;',
 	'if ( val > max ) {',
@@ -26889,7 +26931,7 @@ DuAEExpression.Library["limit"].expression = ['function limit(val, min, max, sof
 	'return max + softness - softness / ( 1 + (val - max)/softness);',
 	'}',
 	'}',
-	'if (min != null) {',
+	'if (min !== null) {',
 	'if (typeof min.length !== \'undefined\') min = min[0];',
 	'min = min + softness;',
 	'if (val < min && min != null) {',

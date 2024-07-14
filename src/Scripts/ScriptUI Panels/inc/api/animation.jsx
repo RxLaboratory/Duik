@@ -2211,3 +2211,25 @@ Duik.Animation.switchIKFK = function( ctrls, addKeyframes ) {
 
     DuAE.endUndoGroup( i18n._("IK/FK Switch"));
 };
+
+Duik.CmdLib['Animation']["Clean Keyframes"] = "Duik.Animation.cleanKeyframes()";
+/**
+ * Removes all unneeded keyframes
+ * @param {Property|DuAEProperty|Property[]|DuAEProperty[]|DuList} [props=DuAEComp.getSelectedProps()] The properties 
+ */
+Duik.Animation.cleanKeyframes = function( props ) {
+    if (!isdef(props))
+        props = DuAEComp.getSelectedProps();
+
+    props = new DuList(props);
+    if (props.length() == 0) return;
+
+    DuAE.beginUndoGroup(i18n._("Clean keyframes"), false);
+
+    props.do(function (prop)
+    {
+        prop.cleanKeyframes();
+    });
+
+    DuAE.endUndoGroup(i18n._("Clean keyframes"));
+};

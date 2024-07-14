@@ -409,7 +409,7 @@
 
     if (uiMode < 2) DuScriptUI.separator( animationGroup, uiMode <= 1 ? i18n._("Tweening") : ''  );
 
-    var tweenTools = DuScriptUI.toolBar(animationGroup);
+    var tweenTools = DuScriptUI.toolBar(animationGroup, 4);
 
     var splitKeyButton = tweenTools.addButton(
         i18n._("Split"),
@@ -492,6 +492,13 @@
     );
     syncKeysButton.onClick = Duik.Animation.syncKeys; 
     syncKeysButton.onAltClick = function () { Duik.Animation.syncKeys(true); };
+
+    var cleanKeysButton = tweenTools.addButton(
+        i18n._("Clean"),
+        w16_kleaner,
+        i18n._("Remove unneeded keyframes.")
+    );
+    cleanKeysButton.onClick = Duik.Animation.cleanKeyframes;
 
     var tweenGroup = DuScriptUI.group( animationGroup, 'row' );
 

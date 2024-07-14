@@ -1253,7 +1253,9 @@ function buildBonesUI( tab, standAlone )
         line2,
         i18n._("Custom"),
         w16_custom,
-        i18n._("Add a custom armature."),
+        i18n._("Add a custom armature.")+
+        "\n\n"+
+        i18n._("[Ctrl]: Automatically parent the selected items (layers, path vertices or puppet pins) to the new bones."),
         true, // Options
         undefined, // localize
         undefined, // optionsWithoutButton
