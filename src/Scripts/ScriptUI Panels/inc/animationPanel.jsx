@@ -493,6 +493,13 @@
     syncKeysButton.onClick = Duik.Animation.syncKeys; 
     syncKeysButton.onAltClick = function () { Duik.Animation.syncKeys(true); };
 
+    var cleanKeysButton = tweenTools.addButton(
+        i18n._("Clean"),
+        w16_kleaner,
+        i18n._("Remove unneeded keyframes.")
+    );
+    cleanKeysButton.onClick = Duik.Animation.cleanKeyframes;
+
     var tweenGroup = DuScriptUI.group( animationGroup, 'row' );
 
     var tweenSettingsButton = DuScriptUI.button(
