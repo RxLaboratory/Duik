@@ -7800,27 +7800,56 @@ DuMath.length = function(value1, value2) {
  */
 DuMath.equals = function(value1, value2, floatPrecision) {
     floatPrecision = def(floatPrecision, 9);
-    value1 = new DuList(value1);
-    value2 = new DuList(value2);
 
-    if (value1.length() != value2.length()) return false;
+    var v1Array, v2Array;
+    if (value1 instanceof Array)
+        v1Array = value1;
+    else
+        v1Array = [value1];
+    if (value2 instanceof Array)
+        v2Array = value2;
+    else
+        v2Array = [value2];
 
-    var item1 = value1.next();
-    while(item1 !== null)
+    var count = v1Array.length;
+    if (count != v2Array.length)
+        return false;
+
+    for (var i = 0; i < count; i++)
     {
-        var item2 = value2.at(value1.current);
-        if (jstype(item1) !== jstype(item2)) return false;
-        if (jstype(item1) === 'array') return DuMath.equals(item1, item2, floatPrecision);
-        if (jstype(item1) !== 'number') return false;
+        var item1 = v1Array[i];
+        var item2 = v2Array[i];
 
-        if (floatPrecision >= 0) {
+        var itemType = jstype(item1);
+
+        // Not the same type is not equal
+        if (itemType !== jstype(item2))
+            return false;
+
+        // Arrays
+        if (itemType === 'array')
+        {
+            if (!DuMath.equals(item1, item2, floatPrecision))
+                return false;
+            continue;
+        }
+
+        // Not a number, can't compare
+        if (itemType !== 'number')
+            return false;
+
+        // Float comparison
+        if (floatPrecision >= 0)
+        {
             var mul = Math.pow(10, floatPrecision);
             var num1 = Math.round(item1 * mul) / mul;
             var num2 = Math.round(item2 * mul) / mul;
-            if (num1 != num2) return false;
-        } else  if (item1 != item2) return false;
-
-        item1 = value1.next();
+            if (num1 != num2)
+                return false;
+        }
+        // Number comparison
+        else if (item1 != item2)
+            return false;
     }
 
     return true;
@@ -23619,10 +23648,10 @@ DuAEProperty.prototype.setSpatialTangentsAtKey = function(key, inTangent, outTan
  * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
  * Removes all unneeded keyframes from the property.< br/>
  * Also checks the interpolation values to reset the correct display as linear/smooth.
- * @param {int} [precision=1] - The precision for float number comparison, number of decimals. Set to -1 to not use.
+ * @param {int} [precision=3] - The precision for float number comparison, number of decimals. Set to -1 to not use.
  */
 DuAEProperty.prototype.cleanKeyframes = function( precision ) {
-    precision = def(precision, 1);
+    precision = def(precision, 3);
     
     var prop = this.getProperty();
 
@@ -23643,7 +23672,8 @@ DuAEProperty.prototype.cleanKeyframes = function( precision ) {
             var cV = prop.keyValue(i);
             var pV = prop.valueAtTime(t - frameDuration, true);
             if (valueType == PropertyValueType.SHAPE) {
-                if (!DuAEProperty.shapeValueEquals(cV, pV, precision)) continue;
+                if (!DuAEProperty.shapeValueEquals(cV, pV, precision))
+                    continue;
             }
             else if (valueType == PropertyValueType.TEXT_DOCUMENT) {
                 if (!DuAEProperty.textValueEquals(cV, pV)) continue;
@@ -23653,12 +23683,15 @@ DuAEProperty.prototype.cleanKeyframes = function( precision ) {
             var nV = prop.valueAtTime(t + frameDuration, true);
 
             if (valueType == PropertyValueType.SHAPE) {
-                if (!DuAEProperty.shapeValueEquals(cV, nV, precision)) continue;
+                if (!DuAEProperty.shapeValueEquals(cV, nV, precision))
+                    continue;
             }
             else if (valueType == PropertyValueType.TEXT_DOCUMENT) {
-                if (!DuAEProperty.textValueEquals(cV, nV)) continue;
+                if (!DuAEProperty.textValueEquals(cV, nV))
+                    continue;
             }
-            else if (!DuMath.equals(nV, cV, precision)) continue;
+            else if (!DuMath.equals(nV, cV, precision))
+                continue;
 
             prop.removeKey(i);
 
@@ -24577,7 +24610,7 @@ DuAEProperty.prototype.quickBakeExpressions = function(frameStep) {
         propInfo.removeAnimation();
         // Set values
         try { prop.setValuesAtTimes(times, values); }
-        catch (e) {}
+        catch (e) { alert(e); }
         // Clean
         propInfo.cleanKeyframes();
         // Set Continuous
@@ -25447,16 +25480,20 @@ DuAEProperty.rename = function(prop, name) {
  * Compares two shape values
  * @param {Shape} shape1
  * @param {Shape} shape2
+ * @param {Number} [precision=3]
  * @return {bool} true if they're the same
  */
 DuAEProperty.shapeValueEquals = function( shape1, shape2, precision ) {
-    precision = def(precision, 1);
+    precision = def(precision, 3);
 
     if (shape1.closed != shape2.closed) return false;
 
-    if (!DuMath.equals(shape1.vertices, shape2.vertices, precision, true)) return false;
-    if (!DuMath.equals(shape1.inTangents, shape2.inTangents, precision)) return false;
-    if (!DuMath.equals(shape1.outTangents, shape2.outTangents, precision)) return false;
+    if (!DuMath.equals(shape1.vertices, shape2.vertices, precision))
+        return false;
+    if (!DuMath.equals(shape1.inTangents, shape2.inTangents, precision))
+        return false;
+    if (!DuMath.equals(shape1.outTangents, shape2.outTangents, precision))
+        return false;
     return true;
 }
 
@@ -30961,8 +30998,8 @@ DuAELayer.getSelectedProps = function(layer, filter, strict, caseSensitive) {
             } else if (typeof filter === "string") {
                 if (name.indexOf(filter) >= 0) props.push(prop);
                 else if (matchName.indexOf(filter) >= 0) props.push(prop);
-            } else if (prop.propertyType == PropertyType.PROPERTY) {
-                if (prop.propertyValueType == filter) props.push(prop);
+            } else if (prop.propertyType == PropertyType.PROPERTY && prop.propertyValueType == filter) {
+                props.push(prop);
             } else if (props.length == 0 && filter == PropertyValueType.SHAPE) {
                 if (matchName == 'ADBE Mask Atom') props.push(prop.property('ADBE Mask Shape'));
                 else if (matchName == 'ADBE Vector Shape - Group') props.push(prop.property('ADBE Vector Shape'));

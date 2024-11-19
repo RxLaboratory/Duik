@@ -493,21 +493,25 @@ Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
 
     //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
 
-    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions(mode, frameStep);
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS)
+        DuAEProject.bakeExpressions(mode, frameStep);
     else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
         var comps = DuAEProject.getSelectedComps();
         for (var i = 0, n = comps.length; i < n; i++) {
-            DuAEComp.bakeExpressions(mode, frameStep, comp);
+            DuAEComp.bakeExpressions(mode, frameStep, comps[i]);
         }
-    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions(mode, frameStep);
+    }
+    else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION)
+        DuAEComp.bakeExpressions(mode, frameStep);
     else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS) {
         var layers = DuAEComp.getSelectedLayers();
         for (var i = 0, n = layers.length; i < n; i++) {
             var p = new DuAEProperty(layers[i]);
             p.bakeExpressions(mode, frameStep);
         }
-    } else {
-        var props = DuAEComp.getSelectedProps();
+    }
+    else {
+        var props = DuAEComp.getSelectedProps(PropertyType.PROPERTY);
         for (var i = 0, n = props.length; i < n; i++) {
             var p = new DuAEProperty(props[i]);
             p.bakeExpressions(mode, frameStep);
