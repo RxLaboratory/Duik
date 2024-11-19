@@ -951,7 +951,7 @@ Duik.CmdLib['Automation']["Kleaner"] = "Duik.Automation.kleaner()";
 /**
  * Adds the <i>Kleaner</i> effect and expression to the properties.
  * The <i>Kleaner</i> (Keyframe Cleaner) makes it quick and easy to interpolate, add anticipation, overlap and follow through to any animation.
- * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @param {PropertyBase[]|DuAEProperty[]|DuList|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
  * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
  * @return {PropertyGroup|null} The Kleaner effect (or null if there's no property to setup).
  */
