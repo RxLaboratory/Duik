@@ -429,11 +429,27 @@ function createKleanerButton( container ) {
             i18n._("Limit the value the property can get.")
         )
 
+        function hasPathInSelection() {
+            var props = DuAEComp.getSelectedProps()
+            for(var i = 0; i < props.length; i++) {
+                if (props[i].isPath()) {
+                    alert("A path has been found in the selected properties, but the Kleaner can't work on path properties.\n\n"+
+                        "You can add Duik Pins to rig the path though, and then use the Kleaner on with the pins."
+                  );
+                  return true;
+                }   
+            }
+            return false;
+        }
+
         aliveButton.onClick = function() {
+            if (hasPathInSelection()) return;
             Duik.Automation.kleaner();
         };
 
         inanimateButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -444,6 +460,8 @@ function createKleanerButton( container ) {
         };
 
         trueStopButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -453,6 +471,8 @@ function createKleanerButton( container ) {
         };
 
         exactButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -465,6 +485,8 @@ function createKleanerButton( container ) {
         };
 
         springButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -476,6 +498,8 @@ function createKleanerButton( container ) {
         };
 
         springLightButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -495,6 +519,8 @@ function createKleanerButton( container ) {
         };
 
         bounceButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
             var effect = Duik.Automation.kleaner();
 
@@ -507,6 +533,8 @@ function createKleanerButton( container ) {
         };
 
         bounceLightButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
 
             var effect = Duik.Automation.kleaner();
@@ -529,6 +557,8 @@ function createKleanerButton( container ) {
         };
 
         limitsButton.onClick = function() {
+            if (hasPathInSelection()) return;
+
             DuAE.beginUndoGroup( i18n._("Kleaner"));
 
             var effect = Duik.Automation.kleaner();

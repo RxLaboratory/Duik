@@ -493,21 +493,25 @@ Duik.Automation.bakeExpressions = function(mode, frameStep, selectionMode) {
 
     //DuScriptUI.progressBar.stg("Baking expressions to keyframes");
 
-    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS) DuAEProject.bakeExpressions(mode, frameStep);
+    if (selectionMode == DuAE.SelectionMode.ALL_COMPOSITIONS)
+        DuAEProject.bakeExpressions(mode, frameStep);
     else if (selectionMode == DuAE.SelectionMode.SELECTED_COMPOSITIONS) {
         var comps = DuAEProject.getSelectedComps();
         for (var i = 0, n = comps.length; i < n; i++) {
-            DuAEComp.bakeExpressions(mode, frameStep, comp);
+            DuAEComp.bakeExpressions(mode, frameStep, comps[i]);
         }
-    } else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION) DuAEComp.bakeExpressions(mode, frameStep);
+    }
+    else if (selectionMode == DuAE.SelectionMode.ACTIVE_COMPOSITION)
+        DuAEComp.bakeExpressions(mode, frameStep);
     else if (selectionMode == DuAE.SelectionMode.SELECTED_LAYERS) {
         var layers = DuAEComp.getSelectedLayers();
         for (var i = 0, n = layers.length; i < n; i++) {
             var p = new DuAEProperty(layers[i]);
             p.bakeExpressions(mode, frameStep);
         }
-    } else {
-        var props = DuAEComp.getSelectedProps();
+    }
+    else {
+        var props = DuAEComp.getSelectedProps(PropertyType.PROPERTY);
         for (var i = 0, n = props.length; i < n; i++) {
             var p = new DuAEProperty(props[i]);
             p.bakeExpressions(mode, frameStep);
@@ -951,7 +955,7 @@ Duik.CmdLib['Automation']["Kleaner"] = "Duik.Automation.kleaner()";
 /**
  * Adds the <i>Kleaner</i> effect and expression to the properties.
  * The <i>Kleaner</i> (Keyframe Cleaner) makes it quick and easy to interpolate, add anticipation, overlap and follow through to any animation.
- * @param {PropertyBase[]|DuAEProperty[]|DuList.<PropertyBase>|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
+ * @param {PropertyBase[]|DuAEProperty[]|DuList|PropertyBase|DuAEProperty} [props] The properties, the selected properties if omitted (or the selected layers).
  * @param {PropertyGroup} [effect] The pseudo effect to use if it already exists.
  * @return {PropertyGroup|null} The Kleaner effect (or null if there's no property to setup).
  */
