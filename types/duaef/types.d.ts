@@ -6885,7 +6885,7 @@ declare class DuAEProperty {
      * <p><i><strong>Recursive</strong>: this method can run on a property group.</i></p>
     Removes all unneeded keyframes from the property.< br/>
     Also checks the interpolation values to reset the correct display as linear/smooth.
-     * @param [precision = 1] - The precision for float number comparison, number of decimals. Set to -1 to not use.
+     * @param [precision = 3] - The precision for float number comparison, number of decimals. Set to -1 to not use.
      */
     cleanKeyframes(precision?: int): void;
     /**
@@ -7201,7 +7201,7 @@ declare class DuAEProperty {
      * Compares two shape values
      * @returns true if they're the same
      */
-    static shapeValueEquals(shape1: Shape, shape2: Shape): boolean;
+    static shapeValueEquals(shape1: Shape, shape2: Shape, precision?: number): boolean;
     /**
      * Compares two text values
      * @returns true if they're the same

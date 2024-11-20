@@ -54,7 +54,7 @@ def replace_in_file( replacements, file ):
     with open( file, 'r', encoding='utf8' ) as infile:
         for line in infile:
             for src, target in replacements.items():
-                line = line.replace(src, target)
+                line = line.replace(src, str(target))
             lines.append(line)
     with open( file , 'w', encoding='utf8' ) as outfile:
         for line in lines:
