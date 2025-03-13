@@ -3074,10 +3074,10 @@ declare namespace DuScriptUI {
      * @param container - The container ('this' in the root of the calling script), either a Panel (when launched from the 'Window' menu) or null (when launched from 'file/scripts/run...')
      * @param [scriptName = DuESF.scriptName] - A name for this UI
      * @param [contentAlignment = DuScriptUI.defaultColumnAlignment] - The alignment of the content in the panel
-     * @param [borderless = false] - When true, creates a borderless window if container is not a panel
+     * @param [bless = false] - When true, creates a borderless window if container is not a panel
      * @returns The panel created, either a ScriptUI Panel or a ScriptUI Window.
      */
-    function mainPanel(container: Panel | null, scriptName?: string, contentAlignment?: string[], borderless?: string): DuPanel;
+    function mainPanel(container: Panel | null, scriptName?: string, contentAlignment?: string[], bless?: boolean): DuPanel;
     /**
      * Creates a borderless popup
      * @example
@@ -3146,7 +3146,7 @@ declare namespace DuScriptUI {
      * @param [optionsWithoutPanel = false] - Don't create the options popup panel (use <code>DuButton.onOptions</code> to add your own callback when the options are requested)
      * @returns The image button created.
      */
-    function button(container: Panel | Window | Group, text?: string, image?: string | DuBInary, helpTip?: string, addOptionsPanel?: boolean, orientation?: boolean, alignment?: boolean, localize?: boolean, ignoreUIMode?: boolean, optionsWithoutButton?: boolean, optionsButtonText?: string, optionsWithoutPanel?: boolean): DuButton;
+    function button(container: Panel | Window | Group, text?: string | any, image?: string | DuBInary, helpTip?: string, addOptionsPanel?: boolean, orientation?: boolean, alignment?: boolean, localize?: boolean, ignoreUIMode?: boolean, optionsWithoutButton?: boolean, optionsButtonText?: string, optionsWithoutPanel?: boolean): DuButton;
     /**
      * Creates a small button.
      * @param container - The ScriptUI Object which will contain and display the button.

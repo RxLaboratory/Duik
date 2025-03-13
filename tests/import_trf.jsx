@@ -168,7 +168,7 @@
                 y / s
             ];
 
-        field.center = [
+        fields.center = [
             fields.size[0] / 2,
             fields.size[1] / 2
         ]
