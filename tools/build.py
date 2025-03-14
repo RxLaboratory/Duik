@@ -301,7 +301,8 @@ def build_docs():
 
     # Replace the index
     index_path = os.path.join(API_DOCS_PATH, 'index.html')
-    os.remove(index_path)
+    if os.path.isfile(index_path):
+        os.remove(index_path)
     shutil.copy(
         os.path.join(API_DOCS_PATH, 'Duik.html'),
         index_path
