@@ -133,8 +133,6 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
         }
     }
 
-    // TODO Get/Create a master, parent orphan controllers to it
-    // Collect controllers
     var ctrls = [];
     var limbs = ocoDoc.getLimbs();
     for (var i  = 0, ni = limbs.length; i < ni; i++ )
@@ -171,12 +169,12 @@ Duik.Rig.auto = function ( bakeBones, bakeEnvelops, bakeNoodles, longChainMode, 
     }
 
     // If controllers are nulls, move them to the top of the comp
-    if ( OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE) == Duik.Controller.LayerMode.NULL) {
+    var ctrlType = OCO.config.get('after effects/controller layer type', Duik.Controller.LayerMode.SHAPE);
+    if ( ctrlType == Duik.Controller.LayerMode.NULL ) {
         for (var i = 0; i < ctrls.length; i++) {
             ctrls[i].moveBefore( comp.layer(1)
         ); };
     };
-    
 
     DuAEProject.setProgressMode( false );
     DuAE.endUndoGroup( i18n._("Auto-rig") );
