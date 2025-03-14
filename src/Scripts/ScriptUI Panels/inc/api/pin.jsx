@@ -599,9 +599,9 @@ Duik.Pin.getByName = function (comp,name,selectedOnly)
 /**
 	* Links the path to pins<br />
 	* Works with After Effects CC2018 (15.0) and newer only
-	* @param {Property|DuAEProperty} prop - The path property
-	* @param {bool} [tangents=true] - True to create bones for the tangents
-	* @param {bool} [createPinLayers=true] - True to create layers, false to only create a controller effect
+	* @param {Property|DuAEProperty} pathProp - The path property
+	* @param {Boolean} [tangents=true] - True to create bones for the tangents
+	* @param {Boolean} [createPinLayers=true] - True to create layers, false to only create a controller effect
 	* @return {DuAEProperty[]} The pin effects created.
 */
 Duik.Pin.rigPath = function( pathProp, tangents, createPinLayers )
