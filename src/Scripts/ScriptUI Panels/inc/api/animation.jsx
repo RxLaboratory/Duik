@@ -143,6 +143,8 @@ Duik.Animation.cut = function ( comp )
     comp = def(comp, DuAEProject.getActiveComp() );
     if(!comp) return;
 
+    DuAE.beginUndoGroup( i18n._("Cut animation"), false);
+
     var props = new DuList( DuAEComp.getSelectedProps() );
     // When modifying properties, keys are deselected. Let's keep the list.
     var selectedKeys = [];
@@ -159,6 +161,8 @@ Duik.Animation.cut = function ( comp )
             prop.removeKey(keys[i]);
         }
     });
+
+    DuAE.endUndoGroup( i18n._("Cut animation"));
     return animations;
 }
 

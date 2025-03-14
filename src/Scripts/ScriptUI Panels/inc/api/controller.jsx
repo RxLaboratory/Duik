@@ -923,6 +923,12 @@ Duik.Controller.create = function ( comp, type, layer, parent ) {
     DuAELayer.applyPreset( ctrl, preset );
     Duik.Controller.setColor( DuColor.Color.APP_HIGHLIGHT_COLOR, ctrl );
 
+    // Reset the side (to flip the controller if needed)
+    if ( layer != null) {
+        var side = Duik.Layer.side(layer);
+        Duik.Controller.setSide( side , ctrl);
+    }
+
     return ctrl;
 }
 
@@ -1671,11 +1677,25 @@ Duik.Controller.setLimbName = function ( limbName, layers ) {
 /**
  * Sets the side of the layer
  * @param {OCO.Side} side The side
- * @param {Layer[]} [layers=DuAEComp.getSelectedLayers()] The layer. If omitted, will use all selected layers in the comp
+ * @param {Layer[]|Layer|DuList.<Layer>|LayerCollection} [layers=Duik.Controller.get()] The controller. If omitted, will use all selected controllers in the comp
  */
 Duik.Controller.setSide = function ( side, layers ) {
     layers = def( layers, Duik.Controller.get() );
+    layers = new DuList(layers);
+
     Duik.Layer.setSide( side, layers );
+    // Flip the Left controllers
+    for (var i = 0, n = layers.length(); i < n; i++) {
+        var layer = layers.at(i);
+        if (layer instanceof ShapeLayer) {
+            var effect = layer.effect('Pseudo/DUIK Ctrl v03');
+            if (effect) {
+                effect.property('Flip').setValue(
+                    side == OCO.Side.LEFT ? 1 : 0
+                );
+            }
+        }
+    }
 }
 
 /**

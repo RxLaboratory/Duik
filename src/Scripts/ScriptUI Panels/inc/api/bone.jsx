@@ -22,7 +22,7 @@ Duik.CmdLib['Bone']["Arm"] = "Duik.Bone.arm()";
  * @param {Boolean} [forearm=true]  Whether to create a forearm
  * @param {Boolean} [hand=true]  Whether to create a hand
  * @param {Boolean} [claws=false]  Whether to add claws
- * @param {Boolean} [location=OCO.Location.FRONT]  The location of the arm
+ * @param {OCO.Location} [location=OCO.Location.FRONT]  The location of the arm
  * @param {boolean} [forceLink=false] - whether link the selected layers/properties to the new armature
  */
 Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, hand, claws, location, forceLink )
@@ -63,7 +63,7 @@ Duik.Bone.arm = function ( characterName, type, side, shoulder, arm, forearm, ha
 // Creates a limb on the selection, optionally linking the items
 Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
 {
-    var comp = DuAEProject.getActiveComp();
+    comp = def(comp,DuAEProject.getActiveComp());
     if (!comp) return [];
  
     // Links
@@ -99,10 +99,8 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
     var ok = false;
     it.do( function( layer )
     {
-        var side = Duik.Layer.side(layer);
-        var location = Duik.Layer.location(layer);
-        if (characterName == "") characterName = Duik.Layer.groupName(layer);
-        var limbName = Duik.Layer.name(layer);
+        if (characterName == "")
+            characterName = Duik.Layer.groupName(layer);
 
         //get paths
         var props = DuAELayer.getSelectedProps( layer, DuAEProperty.isPathProperty );
@@ -113,6 +111,17 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
             for (var i = 0, n = props.length; i < n; i++)
             {
                 var path = props[i];
+
+                var pathProp = new DuAEProperty( path ).pathProperty();
+                pathProp = pathProp.getProperty();
+                // don't rig twice the same (we may get either the prop or the group)
+                if (DuString.startsWith(
+                    pathProp.expression,
+                    '// Duik auto-rig')) {
+                        pathProp.expression = pathProp.expression.replace('// Duik auto-rig\n', '');
+                        continue;
+                    }
+
                 // create the OCODoc
                 var doc = OCODoc.fromComp( characterName, comp, [] );
                 var limb = limbCreator( doc );
@@ -121,7 +130,12 @@ Duik.Bone.createLimb = function ( comp, limbCreator, characterName, forceLink )
                 var boneLayers = doc.toComp( comp );
                 DuAELayer.moveInsideComp( boneLayers[0] );
                 // link
-                if (linkPath) Duik.Pin.linkPathToLayers( path, boneLayers );
+                if (linkPath)
+                    Duik.Pin.linkPathToLayers( path, boneLayers );
+
+                // don't rig twice the same (we may get either the prop or the group)
+                pathProp.expression = '// Duik auto-rig\n' + pathProp.expression;
+
                 ok = true;
             }
             if (layerToRemove) layerToRemove.remove();

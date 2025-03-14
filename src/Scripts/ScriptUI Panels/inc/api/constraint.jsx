@@ -2712,10 +2712,12 @@ Duik.Constraint.twoOneLayerIK = function(layer1, layer2, layer3, goal, controlle
 Duik.Constraint.bezierIK = function(layers, goal, controller, showGuides) {
     goal = def(goal, null);
     controller = def(controller, null);
-    if (controller == null && goal == null) throw "You must provide either a goal layer or a controller";
+    if (controller == null && goal == null)
+        throw "You must provide either a goal layer or a controller";
 
     showGuides = def(showGuides, true);
-    if (!showGuides) showGuides = false;
+    if (!showGuides)
+        showGuides = false;
 
     DuAE.beginUndoGroup( i18n._("B\u00e9zier IK"), false);
 
