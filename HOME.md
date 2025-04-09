@@ -24,19 +24,64 @@ This 17th version of Duik has been named after **[María Ángela Salazar Murillo
 
 ## Learn
 
-<table>
-<tbody>
-<tr>
-<td>
-<a href="https://rxlaboratory.org/product/duik-angela-user-guide/"><img src="https://rxlaboratory.org/wp-content/uploads/DSC4328-1024x1024.jpg"></a>
-</td>
-<td>
-<h3>The User Guide</h3>
+[![](https://rxlaboratory.org/wp-content/uploads/DSC4328-1024x1024.jpg)](https://rxlaboratory.org/product/duik-angela-user-guide/)
+
+### [The User Guide](https://rxlaboratory.org/product/duik-angela-user-guide/)
 
 [This illustrated user guide is a complete reference about every­thing in Duik](https://rxlaboratory.org/product/duik-angela-user-guide/), written by its developer, and includes all the tips, advice, explanations and details you’ll ever need to master character rigging and animation in After Effects and in general.
 
 *395 pages | 39€*
-</td>
-</tr>
-</tbody>
-</table>
+
+[![](https://rxlaboratory.org/wp-content/uploads/banner_en-1024x455.jpg)](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)
+
+### [The official video course](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)
+
+[The Official Comprehensive Course](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/) will teach you everything about Duik Ángela.
+
+*Lang: English | Français*  
+*11 h | Name your own price*
+
+[![](https://rxlaboratory.org/wp-content/uploads/banner_cute_robot-1024x455.jpg)](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
+
+### [Rig and animate a cute robot](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
+
+An exclusive 1-hour tutorial to [learn how to rig a character with Duik Ángela](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/) in After Effects!
+
+*Lang: English | Français*  
+*71 mn | Name your own price*
+
+[![](https://rxlaboratory.org/wp-content/uploads/banner_intro-1024x455.jpg)](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/)
+
+### [Introduction to Duik Ángela](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/)
+
+Discover Duik Ángela with this [free introductory tutorial](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/) and learn how to rig and animate a character in 15 minutes!
+
+*Lang: English | Français*  
+*16 mn | Free*
+
+[![](https://rxlaboratory.org/wp-content/uploads/Thumbnail_rect-1024x455.jpg)](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
+
+### [Comprehensive course about Animation](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
+
+[Learn (character) Animation](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/) in After Effects to make the best animation with Duik!
+
+*Lang: English | Français*  
+*8 h 30 mn | Name your own price*
+
+[![](https://rxlaboratory.org/wp-content/uploads/banner_10tuts-1024x455.jpg)](https://rxlaboratory.org/category/free-tutorials/)
+
+### [Free Tutorials](https://rxlaboratory.org/category/free-tutorials/)
+
+We’re regularly posting [free short tutorials](https://rxlaboratory.org/category/free-tutorials/) about Duik (and many other subjects) to help you learn everything you need and discover new tricks.
+
+*Lang: English | Français*  
+*Free*
+
+## Duik is Free and Open Source
+
+**Workers, Duik’s been made for you**. We hope that with Duik your work will be a bit faster, a bit easier. But **don’t let the Capital benefit from it**, your value isn’t diminished by the fact that you’re working better and faster: don’t lower your price, don’t accept tighter deadlines, not from your boss, nor your client.
+Just **spend the time you’ve saved using Duik with your family, your friends, doing what you like**, not what you’re forced to do.
+
+**Duik is free and open source because we want everyone to be able to use it**, as they wish, without constraints. We have a dream of where everyone can afford the tools they need.
+
+Duik is free and open source because everyone should be able to modify and share their own tools, and **no one should be tied to any form of organization, whether it’s a state or a company**. We have a dream of emancipation.
