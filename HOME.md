@@ -24,6 +24,8 @@ This 17th version of Duik has been named after **[María Ángela Salazar Murillo
 
 ## Learn
 
+---
+
 [![](https://rxlaboratory.org/wp-content/uploads/DSC4328-1024x1024.jpg)](https://rxlaboratory.org/product/duik-angela-user-guide/)
 
 ### [The User Guide](https://rxlaboratory.org/product/duik-angela-user-guide/)
@@ -31,6 +33,8 @@ This 17th version of Duik has been named after **[María Ángela Salazar Murillo
 [This illustrated user guide is a complete reference about every­thing in Duik](https://rxlaboratory.org/product/duik-angela-user-guide/), written by its developer, and includes all the tips, advice, explanations and details you’ll ever need to master character rigging and animation in After Effects and in general.
 
 *395 pages | 39€*
+
+---
 
 [![](https://rxlaboratory.org/wp-content/uploads/banner_en-1024x455.jpg)](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)
 
@@ -41,6 +45,8 @@ This 17th version of Duik has been named after **[María Ángela Salazar Murillo
 *Lang: English | Français*  
 *11 h | Name your own price*
 
+---
+
 [![](https://rxlaboratory.org/wp-content/uploads/banner_cute_robot-1024x455.jpg)](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
 
 ### [Rig and animate a cute robot](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
@@ -49,6 +55,8 @@ An exclusive 1-hour tutorial to [learn how to rig a character with Duik Ángela]
 
 *Lang: English | Français*  
 *71 mn | Name your own price*
+
+---
 
 [![](https://rxlaboratory.org/wp-content/uploads/banner_intro-1024x455.jpg)](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/)
 
@@ -59,6 +67,8 @@ Discover Duik Ángela with this [free introductory tutorial](https://rxlaborator
 *Lang: English | Français*  
 *16 mn | Free*
 
+---
+
 [![](https://rxlaboratory.org/wp-content/uploads/Thumbnail_rect-1024x455.jpg)](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
 
 ### [Comprehensive course about Animation](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
@@ -67,6 +77,8 @@ Discover Duik Ángela with this [free introductory tutorial](https://rxlaborator
 
 *Lang: English | Français*  
 *8 h 30 mn | Name your own price*
+
+---
 
 [![](https://rxlaboratory.org/wp-content/uploads/banner_10tuts-1024x455.jpg)](https://rxlaboratory.org/category/free-tutorials/)
 
