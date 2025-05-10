@@ -30052,9 +30052,15 @@ DuAEComp.setUniqueCompName = function(comp) {
  */
 DuAEComp.setUniqueLayerNames = function(layers, comp) {
     comp = def(comp, DuAEProject.getActiveComp());
-    if (!comp) return;
+    if (!comp)
+        return;
     layers = def(layers, comp.layers);
     var it = new DuList(layers);
+
+    // Only if needed, check first
+    if (!DuAEComp.hasUniqueLayerNames(comp))
+        return;
+
     it.do(function(layer) {
         var locked = layer.locked;
         layer.locked = false;
@@ -30066,6 +30072,30 @@ DuAEComp.setUniqueLayerNames = function(layers, comp) {
         layer.locked = locked;
     });
 }
+
+/**
+ * Checks if a comp has duplicate layer names
+ * @param {CompItem} [comp=DuAEProject.getActiveComp] - The composition
+ * @return {Boolean}
+ */
+DuAEComp.hasUniqueLayerNames = function(comp) {
+    comp = def(comp, DuAEProject.getActiveComp());
+    if (!comp)
+        return false;
+
+    for (var l = 1, n = comp.numLayers; l <= n; l++) {
+        var name = comp.layer(l).name;
+        for(var i = 1; i <= n; i++) {
+            if (i == l)
+                break;
+            if (name == comp.layer(i).name)
+                return true;
+        }
+    }
+    return false;
+}
+
+
 
 /**
  * Gets the After Effects selected properties in the current comp
@@ -30255,9 +30285,6 @@ DuAEComp.newUniqueLayerName = function(newName, comp, increment) {
         newName = nName.join(' | ');
     }//*/
 
-    // Let's try to remove any trailing number first, that's better
-    newName = DuString.trimNumbers(newName);
-
     increment = def(increment, true);
     comp = def(comp, DuAEProject.getActiveComp());
     var layerNames = [];
@@ -30265,7 +30292,8 @@ DuAEComp.newUniqueLayerName = function(newName, comp, increment) {
     var isAlreadyUnique = true;
     for (var i = 1; i <= comp.layers.length; i++) {
         var n = comp.layer(i).name;
-        if (n == newName) isAlreadyUnique = false;
+        if (n == newName)
+            isAlreadyUnique = false;
         // Ignore the last block
         /*var tName = n.split(' | ');
         if (tName.length == 4) {
@@ -30275,8 +30303,11 @@ DuAEComp.newUniqueLayerName = function(newName, comp, increment) {
         layerNames.push(n);
     }
     // Let's stop here if there's no need to change it
-    if (isAlreadyUnique) return newName;
+    if (isAlreadyUnique)
+        return newName;
 
+    // Let's try to remove any trailing number first, that's better
+    newName = DuString.trimNumbers(newName);
     newName = DuString.generateUnique(newName, layerNames, increment);
     // Ignore the last block
     //if (lastBlock != '') newName += ' | ' + lastBlock;
