@@ -17,3 +17,4 @@ SYSTEM = platform.system()
 VERSION = utils.read_version(REPO_PATH)
 YEAR = datetime.now().year
 IS_PRERELEASE = git.current_branch_name() not in ('main', 'master')
+DUIK_ANGELA_SRC = os.path.join(SRC_PATH, 'Scripts', 'ScriptUI Panels', 'Duik Angela.jsx')

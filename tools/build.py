@@ -41,7 +41,7 @@ def clean():
 def update_duaef(build_doc=True):
     """Builds and updates DuAEF"""
     if not os.path.isdir(DUAEF_REPO_PATH):
-        print('DuAEF repository not found, skipping DuESF build.')
+        print('>>> DuAEF repository not found, skipping DuESF build.')
         return
 
     if build_doc:
@@ -60,10 +60,15 @@ def update_duaef(build_doc=True):
         os.path.join(DUAEF_REPO_PATH, 'dist', 'setup.jsxinc'),
         os.path.join(REPO_PATH, 'src', 'Scripts', 'ScriptUI Panels', 'inc', 'modules', 'setup.jsxinc')
     )
-    shutil.copy(
-        os.path.join(DUAEF_REPO_PATH, 'types', 'duaef', 'types.d.ts'),
-        os.path.join(REPO_PATH, 'types', 'duaef', 'types.d.ts')
-    )
+    # Types may not build correctly
+    try:
+        shutil.copy(
+            os.path.join(DUAEF_REPO_PATH, 'types', 'duaef', 'types.d.ts'),
+            os.path.join(REPO_PATH, 'types', 'duaef', 'types.d.ts')
+        )
+    except FileNotFoundError:
+        print(">>> Warning: DuAEF Types couldn't be built.")
+        pass
 
 def update_dependencies(build_doc=True):
     """Builds and updates the dependencies:
