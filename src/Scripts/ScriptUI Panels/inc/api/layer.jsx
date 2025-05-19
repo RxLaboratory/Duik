@@ -551,8 +551,10 @@ Duik.Layer.sanitizeName = function(layer) {
         // In this case, check the second part
         if (typeStr != "") {
             match = g2.match(Duik.Layer.NameRegExp.SIMPLE);
-            g1 = DuString.trim( match[1] );
-            g2 = DuString.trim( match[2] ); 
+            if (match) {
+                g1 = DuString.trim( match[1] );
+                g2 = DuString.trim( match[2] );
+            }
         }
         
         if (g2 == "") nameStr = g1;
