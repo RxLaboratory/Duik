@@ -59,6 +59,5 @@ def main( ae_versions ):
 
 if __name__ == '__main__':
     main((
-            '2024',
-            '2025'
+            '2022',
         ))
