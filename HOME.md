@@ -26,65 +26,54 @@ This 17th version of Duik has been named after **[María Ángela Salazar Murillo
 
 ---
 
-[![](https://rxlaboratory.org/wp-content/uploads/DSC4328-1024x1024.jpg)](https://rxlaboratory.org/product/duik-angela-user-guide/)
+[![](https://rxlaboratory.org/wp-content/uploads/DSC4328-1024x1024.jpg)](https://rxlaboratorio.org/product/duik-angela-user-guide/)
 
-### [The User Guide](https://rxlaboratory.org/product/duik-angela-user-guide/)
+### [The User Guide](https://rxlaboratorio.org/product/duik-angela-user-guide/)
 
-[This illustrated user guide is a complete reference about every­thing in Duik](https://rxlaboratory.org/product/duik-angela-user-guide/), written by its developer, and includes all the tips, advice, explanations and details you’ll ever need to master character rigging and animation in After Effects and in general.
+[This illustrated user guide is a complete reference about every­thing in Duik](https://rxlaboratorio.org/product/duik-angela-user-guide/), written by its developer, and includes all the tips, advice, explanations and details you’ll ever need to master character rigging and animation in After Effects and in general.
 
 *395 pages | 39€*
 
 ---
 
-[![](https://rxlaboratory.org/wp-content/uploads/banner_en-1024x455.jpg)](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)
+[![](https://rxlaboratory.org/wp-content/uploads/banner_en-1024x455.jpg)](https://rxlaboratorio.org/rx-tutorial/duik-17/)
 
-### [The official video course](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/)
+### [The official video course](https://rxlaboratorio.org/rx-tutorial/duik-17/)
 
-[The Official Comprehensive Course](https://rxlaboratory.org/product/the-official-comprehensive-video-course-about-duik-angela/) will teach you everything about Duik Ángela.
+[The Official Comprehensive Course](https://rxlaboratorio.org/rx-tutorial/duik-17/) will teach you everything about Duik Ángela.
 
 *Lang: English | Français*  
 *11 h | Name your own price*
 
 ---
 
-[![](https://rxlaboratory.org/wp-content/uploads/banner_cute_robot-1024x455.jpg)](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
+[![](https://rxlaboratory.org/wp-content/uploads/banner_cute_robot-1024x455.jpg)](https://rxlaboratorio.org/rx-tutorial/duik-cute-robot/)
 
-### [Rig and animate a cute robot](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/)
+### [Rig and animate a cute robot](https://rxlaboratorio.org/rx-tutorial/duik-cute-robot/)
 
-An exclusive 1-hour tutorial to [learn how to rig a character with Duik Ángela](https://rxlaboratory.org/product/rig-and-animate-a-cute-robot-with-duik-angela-in-after-effects/) in After Effects!
+An exclusive 1-hour tutorial to [learn how to rig a character with Duik Ángela](https://rxlaboratorio.org/rx-tutorial/duik-cute-robot/) in After Effects!
 
 *Lang: English | Français*  
 *71 mn | Name your own price*
 
 ---
 
-[![](https://rxlaboratory.org/wp-content/uploads/banner_intro-1024x455.jpg)](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/)
+[![](https://rxlaboratory.org/wp-content/uploads/Thumbnail_rect-1024x455.jpg)](https://rxlaboratorio.org/rx-tutorial/tutorial-the-comprehensive-course-about-animation-with-after-effects/)
 
-### [Introduction to Duik Ángela](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/)
+### [Comprehensive course about Animation](https://rxlaboratorio.org/rx-tutorial/tutorial-the-comprehensive-course-about-animation-with-after-effects/)
 
-Discover Duik Ángela with this [free introductory tutorial](https://rxlaboratory.org/videos/free-introduction-to-duik-angela-en-fr/) and learn how to rig and animate a character in 15 minutes!
-
-*Lang: English | Français*  
-*16 mn | Free*
-
----
-
-[![](https://rxlaboratory.org/wp-content/uploads/Thumbnail_rect-1024x455.jpg)](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
-
-### [Comprehensive course about Animation](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/)
-
-[Learn (character) Animation](https://rxlaboratory.org/product/the-comprehensive-course-about-animation/) in After Effects to make the best animation with Duik!
+[Learn (character) Animation](https://rxlaboratorio.org/rx-tutorial/tutorial-the-comprehensive-course-about-animation-with-after-effects/) in After Effects to make the best animation with Duik!
 
 *Lang: English | Français*  
 *8 h 30 mn | Name your own price*
 
 ---
 
-[![](https://rxlaboratory.org/wp-content/uploads/banner_10tuts-1024x455.jpg)](https://rxlaboratory.org/category/free-tutorials/)
+[![](https://rxlaboratory.org/wp-content/uploads/banner_10tuts-1024x455.jpg)](https://rxlaboratorio.org/tutorials/)
 
-### [Free Tutorials](https://rxlaboratory.org/category/free-tutorials/)
+### [Free Tutorials](https://rxlaboratorio.org/tutorials/)
 
-We’re regularly posting [free short tutorials](https://rxlaboratory.org/category/free-tutorials/) about Duik (and many other subjects) to help you learn everything you need and discover new tricks.
+We’re regularly posting [free short tutorials](https://rxlaboratorio.org/tutorials/) about Duik (and many other subjects) to help you learn everything you need and discover new tricks.
 
 *Lang: English | Français*  
 *Free*
