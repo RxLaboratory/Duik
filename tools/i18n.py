@@ -17,7 +17,7 @@ def json2jsxinc( json_path ):
         jsxinc_data = ( 'var ' +
                         jsxinc_var +
                         ' = new DuBinary( "' +
-                        data.replace('\"', '\\"').replace('\\\\"', '\\\\\\"').replace('\n','\\n') +
+                        data.replace('\\','\\\\').replace('\"', '\\"').replace('\n','\\n') +
                         '", "' + jsxinc_name + '", "tr");\n' +
                         jsxinc_var + ';\n'
                     )
