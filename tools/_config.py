@@ -18,3 +18,24 @@ VERSION = utils.read_version(REPO_PATH)
 YEAR = datetime.now().year
 IS_PRERELEASE = git.current_branch_name() not in ('main', 'master')
 DUIK_ANGELA_SRC = os.path.join(SRC_PATH, 'Scripts', 'ScriptUI Panels', 'Duik Angela.jsx')
+
+ESTK_REPO_PATH = os.path.join(
+    Path(REPO_PATH).parent.parent.resolve(),
+    'ExtendScript'
+)
+GETTEXT_REPO_PATH = os.path.join(
+    ESTK_REPO_PATH,
+    'gettext.jsxinc'
+)
+
+LANGUAGES = (
+    'fr_FR',
+    'es_ES',
+    'zh_CN',
+    'zh_TW',
+    'ru_RU',
+    'de_DE',
+    'ja_JP',
+    'ko_KR',
+    'eo_UY',
+)
