@@ -18,7 +18,7 @@ from _config import (
     IS_PRERELEASE,
     DEPLOY_PATH
 )
-from rxbuilder import utils, jsx, mkdocs, jsdoc
+from rxbuilder_ import utils, jsx, mkdocs, jsdoc
 
 DUIK_TYPES_PATH = os.path.join(TYPES_PATH, 'duik')
 DUAEF_REPO_PATH = os.path.join(REPO_PATH, '..', 'DuAEF')

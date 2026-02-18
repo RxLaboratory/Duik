@@ -2,7 +2,7 @@ import os
 import platform
 from datetime import datetime
 from pathlib import Path
-from rxbuilder import utils, git
+from rxbuilder_ import utils, git
 
 REPO_PATH = utils.normpath(Path(__file__).parent.parent.resolve())
 SRC_PATH = os.path.join(REPO_PATH, 'src')
