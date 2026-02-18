@@ -7,11 +7,7 @@ function init()
     if (DuSystem.win) osName = 'Windows';
     else osName = 'macOS';
 
-    DuESF.bugReportURL = 'https://rxlaboratory.org/issues?rx-tool=Duik&rx-tool-version=' + scriptVersion +
-        '&rx-os=' + osName +
-        '&rx-os-version=' + DuString.trim( DuSystem.osVersion ) +
-        '&rx-host' + DuESF.hostApplicationName +
-        '&rx-host-version=' + DuESF.hostVersion.fullVersion;
+    DuESF.bugReportURL = 'https://github.com/RxLaboratory/Duik/issues';
 
     // Setting these may prove useful
     DuESF.chatURL = chatURL;
