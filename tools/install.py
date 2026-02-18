@@ -59,5 +59,6 @@ def main( ae_versions ):
 
 if __name__ == '__main__':
     main((
-            '2022',
+            '2026',
+            '(Beta)'
         ))
