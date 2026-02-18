@@ -596,19 +596,30 @@ function buildControllersUI(tab, standAlone)
             w16_essential_property
         );
         if (DuAE.version.version  < 17.0) extractModeSelector.setCurrentIndex( 0 );
-        else extractModeSelector.setCurrentIndex( 1 );
+        else extractModeSelector.setCurrentIndex( DuESF.scriptSettings.get("ctrls/useEssentialProperties", 1) );
+        extractModeSelector.onChange = function() {
+            DuESF.scriptSettings.set("ctrls/useEssentialProperties", extractModeSelector.index);
+            DuESF.scriptSettings.save();
+        }
 
         var extractBakeButton = DuScriptUI.checkBox(
             extractButton.optionsPanel,
             i18n._("Bake controllers"),
             w16_bake
         );
-        extractBakeButton.setChecked( true );
+        extractBakeButton.setChecked( DuESF.scriptSettings.get("ctrls/bakeOnExtract", true) );
+        extractBakeButton.onClick = function() {
+            DuESF.scriptSettings.set("ctrls/bakeOnExtract", extractBakeButton.checked);
+            DuESF.scriptSettings.save();
+        }
 
         extractButton.onClick = function() {
 
             var useEP = extractModeSelector.index == 1;
             var bake = extractBakeButton.checked;
+
+            
+           
 
             Duik.Controller.extract( undefined, useEP, bake);
         }

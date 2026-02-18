@@ -9,6 +9,8 @@ DuESF.preInitMethods.push(function ()
         Duik_eo_UY.toFile( outputFolder + 'Duik_eo.json', false );
         Duik_es_ES.toFile( outputFolder + 'Duik_es.json', false );
         Duik_fr_FR.toFile( outputFolder + 'Duik_fr.json', false );
+        Duik_ja_JP.toFile( outputFolder + 'Duik_ja.json', false );
+        Duik_ko_KR.toFile( outputFolder + 'Duik_ko.json', false );
         Duik_ru_RU.toFile( outputFolder + 'Duik_ru.json', false );
         Duik_zh_CN.toFile( outputFolder + 'Duik_zh.json', false );
         Duik_zh_TW.toFile( outputFolder + 'Duik_zh_TW.json', false );
