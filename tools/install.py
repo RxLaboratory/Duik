@@ -22,6 +22,7 @@ def install( ae_version ):
 
     if not os.path.isdir(ae_path):
         print(">> Can't install: After Effects "+ae_version+" not found.")
+        return
 
 
     # Symlink Duik
