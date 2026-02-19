@@ -19,12 +19,23 @@ Special thanks to all the supporters of Duduf on *Patreon*, the [Silver and Gold
 ### Translation
 
 - Ana Arce – Español, Esperanto
+- арина овсянникова - русский
+- clidada - 简体中文
+- IVG - русский
+- Mickael Beugnier - 日本語
 - MJ Nooker - русский
 - Muzammil Khalimov `@ever.visuals` - русский
 - Nicolas "Duduf" Dufresne - English, Français, Español, Picard/Ch'ti
 - Pascal Fuerst - Deutsch
 - René Andritsch - Deutsch
+- Даня - русский
 - [Songz Meng](https://github.com/msongz){target="_blank"} - 中文
+- Youngone Kim - 한국어
+- 袁鞋特 - 繁體中文
+- 赵嘉维 - 繁體中文
+
+*People listed here have contributed more than 100 words in languages which are more than 50&nbsp;% complete.*  
+*Note that other languages with active contributors are being translated, and [you can help here](https://translate-duik.rxlab.io/)!*
 
 ### Development Help and inspiration
 
